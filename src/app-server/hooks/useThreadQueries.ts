@@ -111,6 +111,57 @@ export function useThreadItems(
   });
 }
 
+export function useThreadGoal(threadId: string) {
+  const status = useAppServerStatus();
+
+  return useQuery({
+    queryKey: appServerQueryKeys.threadGoal(threadId),
+    queryFn: async () => {
+      const response = await requestAppServerMethod("thread/goal/get", { threadId });
+      return response.response;
+    },
+    enabled: Boolean(status.data && threadId),
+  });
+}
+
+export function useThreadAttachments(
+  threadId: string,
+  params: Omit<v2.ThreadAttachmentListParams, "threadId"> = {},
+) {
+  const status = useAppServerStatus();
+
+  return useQuery({
+    queryKey: appServerQueryKeys.threadAttachments(threadId, params),
+    queryFn: async () => {
+      const response = await requestAppServerMethod("thread/attachment/list", {
+        ...params,
+        threadId,
+      });
+      return response.response;
+    },
+    enabled: Boolean(status.data && threadId),
+  });
+}
+
+export function useThreadQueue(
+  threadId: string,
+  params: Omit<v2.ThreadQueueListParams, "threadId"> = {},
+) {
+  const status = useAppServerStatus();
+
+  return useQuery({
+    queryKey: appServerQueryKeys.threadQueue(threadId, params),
+    queryFn: async () => {
+      const response = await requestAppServerMethod("thread/queue/list", {
+        ...params,
+        threadId,
+      });
+      return response.response;
+    },
+    enabled: Boolean(status.data && threadId),
+  });
+}
+
 export type ThreadConversation = {
   thread: v2.ThreadReadResponse["thread"];
   turns: v2.ThreadTurnsListResponse;

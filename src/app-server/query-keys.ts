@@ -24,6 +24,11 @@ export const appServerQueryKeys = {
     ["app-server", "thread", threadId, "turns", params] as const,
   threadItems: (threadId: string, params: object) =>
     ["app-server", "thread", threadId, "items", params] as const,
+  threadGoal: (threadId: string) => ["app-server", "thread", threadId, "goal"] as const,
+  threadAttachments: (threadId: string, params: object) =>
+    ["app-server", "thread", threadId, "attachments", params] as const,
+  threadQueue: (threadId: string, params: object) =>
+    ["app-server", "thread", threadId, "queue", params] as const,
   threadConversation: (threadId: string, params: object) =>
     ["app-server", "thread", threadId, "conversation", params] as const,
 };

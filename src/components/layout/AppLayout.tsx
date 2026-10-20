@@ -1,6 +1,7 @@
 import { Outlet, useParams } from "react-router-dom";
 
 import { useUiPreferences } from "../../app/ui-preferences";
+import { ContextDrawer } from "../context/ContextDrawer";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { TopBar } from "./TopBar";
 
@@ -35,27 +36,15 @@ export function AppLayout() {
           </section>
         </div>
         {preferences.contextDrawerOpen && (
-          <aside className="context-drawer hidden w-80 shrink-0 border-l border-base-300 bg-base-100 xl:block">
-            <div className="flex items-center justify-between border-b border-base-300 px-4 py-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                  Workbench
-                </p>
-                <h2 className="font-semibold">Context</h2>
-              </div>
-              <button
-                className="btn btn-ghost btn-sm"
-                type="button"
-                aria-label="Close context panel"
-                onClick={() => update({ contextDrawerOpen: false })}
-              >
-                ×
-              </button>
-            </div>
-            <div className="context-drawer-slot p-4 text-sm text-base-content/60">
-              Activity, changes, and project context appear here while you work.
-            </div>
-          </aside>
+          <div className="hidden xl:block">
+            <ContextDrawer
+              activeTab={preferences.contextTab}
+              onClose={() => update({ contextDrawerOpen: false })}
+              onTabChange={(contextTab) => update({ contextTab })}
+              projectId={projectId}
+              threadId={threadId}
+            />
+          </div>
         )}
       </div>
     </main>
