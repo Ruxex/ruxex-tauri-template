@@ -72,6 +72,56 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
+  it("keeps structured command items and their live output", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/started",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          startedAtMs: 1,
+          item: {
+            type: "commandExecution",
+            id: "command-1",
+            pluginId: null,
+            scriptPath: null,
+            command: "pnpm test",
+            cwd: "/workspace",
+            processId: null,
+            source: "agent",
+            status: "inProgress",
+            commandActions: [],
+            aggregatedOutput: null,
+            exitCode: null,
+            durationMs: null,
+          },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/commandExecution/outputDelta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "command-1",
+          delta: "running\n",
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      {
+        id: "command-1",
+        type: "commandExecution",
+        text: "running\n",
+        raw: { type: "commandExecution", command: "pnpm test" },
+      },
+    ]);
+  });
+
   it("marks a turn completed while preserving its streamed items", () => {
     let state = createInitialEventState();
     state = reduceAppServerEvent(

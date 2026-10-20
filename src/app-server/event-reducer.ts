@@ -6,8 +6,9 @@ export type LiveConversationItem = {
   id: string;
   threadId: string;
   turnId: string;
-  type: "agentMessage" | "plan" | "reasoning";
+  type: v2.ThreadItem["type"];
   text: string;
+  raw?: v2.ThreadItem;
 };
 
 export type ThreadExecutionState = {
@@ -160,6 +161,20 @@ function reduceNotification(state: EventState, notification: ServerNotification)
       return addDelta(state, notification.params, "plan");
     case "item/reasoning/textDelta":
       return addDelta(state, notification.params, "reasoning");
+    case "item/started":
+    case "item/completed":
+      return upsertStructuredItem(state, notification.params);
+    case "item/commandExecution/outputDelta":
+      return addDelta(state, notification.params, "commandExecution");
+    case "item/fileChange/outputDelta":
+      return addDelta(state, notification.params, "fileChange");
+    case "item/mcpToolCall/progress":
+      return addDelta(state, {
+        threadId: notification.params.threadId,
+        turnId: notification.params.turnId,
+        itemId: notification.params.itemId,
+        delta: notification.params.message,
+      }, "mcpToolCall");
     case "serverRequest/resolved": {
       const requestId = requestKey(notification.params.requestId);
       if (!(requestId in state.pendingServerRequests)) {
@@ -172,6 +187,37 @@ function reduceNotification(state: EventState, notification: ServerNotification)
     default:
       return state;
   }
+}
+
+function upsertStructuredItem(
+  state: EventState,
+  params: { threadId: string; turnId: string; item: v2.ThreadItem },
+): EventState {
+  return updateThread(state, params.threadId, (thread) => {
+    const index = thread.items.findIndex((item) => item.id === params.item.id);
+    if (index === -1) {
+      return {
+        ...thread,
+        activeTurnId: thread.activeTurnId ?? params.turnId,
+        status: "running",
+        items: [
+          ...thread.items,
+          {
+            id: params.item.id,
+            threadId: params.threadId,
+            turnId: params.turnId,
+            type: params.item.type,
+            text: "",
+            raw: params.item,
+          },
+        ],
+      };
+    }
+
+    const items = [...thread.items];
+    items[index] = { ...items[index], raw: params.item, type: params.item.type };
+    return { ...thread, items };
+  });
 }
 
 function addDelta(
