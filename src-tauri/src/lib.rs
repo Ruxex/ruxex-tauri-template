@@ -103,6 +103,7 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::DESKTOP_EXPERIMENTAL_API;
+    use super::DesktopAppServerEvent;
     use super::DesktopAppServerErrorKind;
     use super::command_error;
     use super::desktop_product_identity;
@@ -154,6 +155,30 @@ mod tests {
             json!({
                 "kind": "transport",
                 "message": "socket closed",
+            })
+        );
+    }
+
+    #[test]
+    fn app_server_events_keep_the_tauri_payload_contract() {
+        let lagged = DesktopAppServerEvent::Lagged { skipped: 4 };
+        let notification = DesktopAppServerEvent::ServerNotification(json!({
+            "method": "thread/status/changed",
+            "params": { "threadId": "thread-1" },
+        }));
+
+        assert_eq!(
+            serde_json::to_value(lagged).unwrap(),
+            json!({ "type": "lagged", "data": { "skipped": 4 } })
+        );
+        assert_eq!(
+            serde_json::to_value(notification).unwrap(),
+            json!({
+                "type": "serverNotification",
+                "data": {
+                    "method": "thread/status/changed",
+                    "params": { "threadId": "thread-1" },
+                },
             })
         );
     }
