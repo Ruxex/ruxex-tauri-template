@@ -33,8 +33,9 @@ template does not require a sibling Ruxex checkout.
 
 The Tauri application bundles a platform-specific `ruxex-package` containing
 the Ruxex executable, the code-mode host, ripgrep, and the platform sandbox
-helper where applicable. Native binaries and Rusty V8 artifacts are not
-committed or distributed by this template.
+helper where applicable. This template repository does not include or publish
+platform-specific runtime binaries or Rusty V8 artifacts; staging is an
+explicit local or CI input.
 
 Stage those files with `scripts/stage-ruxex-package.py`, passing the paths to
 the built Ruxex executable and code-mode host plus `rg` and, on Linux,
