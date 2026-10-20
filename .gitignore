@@ -1,0 +1,9 @@
+node_modules/
+dist/
+target/
+__pycache__/
+*.py[cod]
+
+src-tauri/gen/
+src-tauri/resources/ruxex-package/*
+!src-tauri/resources/ruxex-package/.gitignore
