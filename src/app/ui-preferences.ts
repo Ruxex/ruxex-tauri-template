@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
 const UI_PREFERENCES_VERSION = 1;
@@ -26,6 +26,13 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
 };
 
 export type UiPreferencePatch = Partial<Omit<UiPreferences, "version">>;
+
+type UiPreferencesContextValue = {
+  preferences: UiPreferences;
+  update: (patch: UiPreferencePatch) => void;
+};
+
+const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(null);
 
 export function updateUiPreferences(
   preferences: UiPreferences,
@@ -81,7 +88,7 @@ function readStoredPreferences(): UiPreferences {
   return parseUiPreferences(window.localStorage.getItem(UI_PREFERENCES_KEY));
 }
 
-export function useUiPreferences() {
+function useStoredUiPreferences(): UiPreferencesContextValue {
   const [preferences, setPreferences] = useState(readStoredPreferences);
 
   useEffect(() => {
@@ -95,4 +102,17 @@ export function useUiPreferences() {
   }
 
   return { preferences, update };
+}
+
+export function UiPreferencesProvider({ children }: { children: ReactNode }) {
+  const value = useStoredUiPreferences();
+  return createElement(UiPreferencesContext.Provider, { value }, children);
+}
+
+export function useUiPreferences(): UiPreferencesContextValue {
+  const value = useContext(UiPreferencesContext);
+  if (!value) {
+    throw new Error("useUiPreferences must be used within UiPreferencesProvider");
+  }
+  return value;
 }

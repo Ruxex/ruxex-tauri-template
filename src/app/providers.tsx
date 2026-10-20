@@ -7,6 +7,7 @@ import {
   stopAppServerEventStore,
 } from "../app-server/event-store";
 import { queryClient } from "./query-client";
+import { UiPreferencesProvider } from "./ui-preferences";
 
 type AppProvidersProps = {
   router: Parameters<typeof RouterProvider>[0]["router"];
@@ -20,7 +21,9 @@ export function AppProviders({ router }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <UiPreferencesProvider>
+        <RouterProvider router={router} />
+      </UiPreferencesProvider>
     </QueryClientProvider>
   );
 }
