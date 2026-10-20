@@ -18,6 +18,10 @@ Tauri transport. It includes typed requests and responses, event handling,
 thread and turn hooks, project hooks, provider queries, and approval state.
 Use it as-is or adapt it to your own frontend architecture.
 
+The TypeScript App Server protocol is checked into `src/protocol/generated/`
+as the snapshot matching the pinned Ruxex revision, so a clone does not need a
+sibling Ruxex checkout for frontend typechecking.
+
 ## Prerequisites
 
 - Rust and Cargo from the Ruxex toolchain

@@ -15,15 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@ruxex/protocol": [
-        "../../crates/app-server-protocol/schema/typescript-experimental/index.ts"
-      ],
-      "@ruxex/protocol/*": [
-        "../../crates/app-server-protocol/schema/typescript-experimental/*"
-      ]
-    }
+    "baseUrl": "."
   },
   "include": ["src", "vite.config.ts"]
 }
