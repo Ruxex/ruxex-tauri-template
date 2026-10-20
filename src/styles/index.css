@@ -15,6 +15,35 @@ body {
   min-width: 320px;
 }
 
+.workbench-sidebar {
+  transition: width 160ms ease, padding 160ms ease;
+}
+
+.workbench-sidebar-collapsed {
+  width: 4.5rem;
+  padding-inline: 0.75rem;
+}
+
+[data-density="compact"] .workbench-main {
+  padding-block: 0.75rem;
+}
+
+@media (max-width: 1279px) {
+  .workbench-sidebar {
+    position: fixed;
+    z-index: 20;
+    inset-block: 0;
+    left: 0;
+    overflow-y: auto;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+  }
+
+  .workbench-sidebar-collapsed {
+    position: static;
+    box-shadow: none;
+  }
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;

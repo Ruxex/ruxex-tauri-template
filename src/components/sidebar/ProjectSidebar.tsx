@@ -4,13 +4,17 @@ import { useProjectList } from "../../app-server/hooks";
 import { ThreadList } from "./ThreadList";
 
 type ProjectSidebarProps = {
+  collapsed: boolean;
   selectedProjectId?: string;
   selectedThreadId?: string;
+  onToggle: () => void;
 };
 
 export function ProjectSidebar({
+  collapsed,
   selectedProjectId,
   selectedThreadId,
+  onToggle,
 }: ProjectSidebarProps) {
   const projects = useProjectList({
     limit: 100,
@@ -19,15 +23,38 @@ export function ProjectSidebar({
   });
 
   return (
-    <aside className="w-72 shrink-0 border-r border-base-300 bg-base-100 p-4">
+    <aside
+      className={`workbench-sidebar shrink-0 border-r border-base-300 bg-base-100 p-4 ${collapsed ? "workbench-sidebar-collapsed" : "w-72"}`}
+      aria-label="Project navigation"
+    >
       <div className="mb-5 flex items-center justify-between gap-2">
-        <Link className="text-lg font-semibold" to="/">
-          Ruxex Desktop
-        </Link>
-        <Link className="btn btn-primary btn-xs" to="/chat/new">
-          New chat
-        </Link>
+        {!collapsed && (
+          <Link className="truncate text-lg font-semibold" to="/">
+            Ruxex Desktop
+          </Link>
+        )}
+        <div className="flex items-center gap-1">
+          {!collapsed && (
+            <Link className="btn btn-primary btn-xs" to="/chat/new">
+              New chat
+            </Link>
+          )}
+          <button
+            className="btn btn-ghost btn-sm"
+            type="button"
+            aria-label={collapsed ? "Expand project sidebar" : "Collapse project sidebar"}
+            onClick={onToggle}
+          >
+            {collapsed ? "→" : "←"}
+          </button>
+        </div>
       </div>
+      {collapsed ? (
+        <Link className="btn btn-primary btn-sm w-full" to="/chat/new">
+          +
+        </Link>
+      ) : (
+        <>
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
@@ -71,6 +98,8 @@ export function ProjectSidebar({
           selectedThreadId={selectedThreadId}
         />
       </div>
+        </>
+      )}
     </aside>
   );
 }
