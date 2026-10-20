@@ -22,6 +22,22 @@ The TypeScript App Server protocol is checked into `src/protocol/generated/`
 as the snapshot matching the pinned Ruxex revision, so a clone does not need a
 sibling Ruxex checkout for frontend typechecking.
 
+## Workbench data boundary
+
+The reference UI is a three-region workbench: projects and threads on the
+left, the conversation and composer in the center, and Activity, Changes, or
+Context on the right. Its activity cards use typed App Server thread-item and
+event data, including messages, plans, reasoning, commands, file changes, MCP
+calls, and agent collaboration.
+
+Thread history, projects, goals, attachments, queued turns, approvals, model
+selection, and runtime state are never invented or persisted by the frontend.
+They are read from and changed through the App Server protocol. The only
+client-local persistence is versioned presentation state such as theme,
+density, and panel visibility, stored in browser/Tauri local storage under
+`ruxex.ui-preferences`. Unknown future protocol items are shown as collapsed
+activity details so the UI remains inspectable without guessing their meaning.
+
 ## Prerequisites
 
 - Rust and Cargo from the Ruxex toolchain
