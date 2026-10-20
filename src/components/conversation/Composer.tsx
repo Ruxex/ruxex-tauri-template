@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 
-import { buildUserTextInput, canSteerTurn } from "./conversation-model";
+import { buildUserTextInput } from "./conversation-model";
+import { ComposerOptions } from "./ComposerOptions";
+import type { SubmissionMode } from "./composer-model";
 import {
   useInterruptTurn,
   useQueueMessage,
@@ -13,8 +15,6 @@ type ComposerProps = {
   activeTurnId: string | null;
 };
 
-type SubmissionMode = "send" | "steer" | "queue";
-
 export function Composer({ threadId, activeTurnId }: ComposerProps) {
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
@@ -24,7 +24,6 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
   const queue = useQueueMessage();
   const interrupt = useInterruptTurn();
   const isPending = send.isPending || steer.isPending || queue.isPending || interrupt.isPending;
-  const canSteer = canSteerTurn(activeTurnId);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,29 +69,14 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
       />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
-          <select
-            className="select select-bordered select-sm"
-            value={mode}
-            onChange={(event) => setMode(event.target.value as SubmissionMode)}
+          <ComposerOptions
+            activeTurnId={activeTurnId}
             disabled={isPending}
-            aria-label="Submission mode"
-          >
-            <option value="send">Send</option>
-            <option value="steer" disabled={!canSteer}>
-              Steer active turn
-            </option>
-            <option value="queue" disabled={!canSteer}>
-              Queue next message
-            </option>
-          </select>
-          <button
-            className={`btn btn-sm ${planMode ? "btn-secondary" : "btn-ghost"}`}
-            type="button"
-            onClick={() => setPlanMode((value) => !value)}
-            disabled={isPending}
-          >
-            {planMode ? "Plan mode on" : "Plan mode"}
-          </button>
+            mode={mode}
+            onModeChange={setMode}
+            onPlanModeChange={() => setPlanMode((value) => !value)}
+            planMode={planMode}
+          />
         </div>
         <div className="flex gap-2">
           {activeTurnId && (

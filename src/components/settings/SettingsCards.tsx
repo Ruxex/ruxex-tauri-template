@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { UiDensity, UiTheme } from "../../app/ui-preferences";
 
 type ConnectionCardProps = {
   connected: boolean;
@@ -109,6 +110,64 @@ export function RuntimeSummary({
       <SummaryCard label="Models">{modelCount} available</SummaryCard>
       <SummaryCard label="Permissions">{permissionCount} profiles</SummaryCard>
       <SummaryCard label="Rate limits">{rateLimitName}</SummaryCard>
+    </section>
+  );
+}
+
+type UiPreferencesCardProps = {
+  theme: UiTheme;
+  density: UiDensity;
+  sidebarCollapsed: boolean;
+  contextDrawerOpen: boolean;
+  onThemeChange: (theme: UiTheme) => void;
+  onDensityChange: (density: UiDensity) => void;
+  onSidebarChange: (collapsed: boolean) => void;
+  onContextDrawerChange: (open: boolean) => void;
+};
+
+export function UiPreferencesCard({
+  theme,
+  density,
+  sidebarCollapsed,
+  contextDrawerOpen,
+  onThemeChange,
+  onDensityChange,
+  onSidebarChange,
+  onContextDrawerChange,
+}: UiPreferencesCardProps) {
+  return (
+    <section className="card border border-base-300 bg-base-100 shadow-sm">
+      <div className="card-body gap-4">
+        <div>
+          <h2 className="card-title">Interface</h2>
+          <p className="text-sm text-base-content/70">These are local presentation preferences only.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="form-control">
+            <span className="label-text">Theme</span>
+            <select className="select select-bordered select-sm mt-1" value={theme} onChange={(event) => onThemeChange(event.target.value as UiTheme)}>
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+          <label className="form-control">
+            <span className="label-text">Density</span>
+            <select className="select select-bordered select-sm mt-1" value={density} onChange={(event) => onDensityChange(event.target.value as UiDensity)}>
+              <option value="comfortable">Comfortable</option>
+              <option value="compact">Compact</option>
+            </select>
+          </label>
+        </div>
+        <label className="label cursor-pointer justify-start gap-3">
+          <input className="toggle" type="checkbox" checked={!sidebarCollapsed} onChange={(event) => onSidebarChange(!event.target.checked)} />
+          <span className="label-text">Show project sidebar</span>
+        </label>
+        <label className="label cursor-pointer justify-start gap-3">
+          <input className="toggle" type="checkbox" checked={contextDrawerOpen} onChange={(event) => onContextDrawerChange(event.target.checked)} />
+          <span className="label-text">Show context drawer</span>
+        </label>
+      </div>
     </section>
   );
 }

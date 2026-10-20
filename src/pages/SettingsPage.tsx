@@ -12,7 +12,9 @@ import {
   ConnectionCard,
   ProviderAccountCard,
   RuntimeSummary,
+  UiPreferencesCard,
 } from "../components/settings/SettingsCards";
+import { useUiPreferences } from "../app/ui-preferences";
 
 export function SettingsPage() {
   const status = useAppServerStatus();
@@ -22,6 +24,7 @@ export function SettingsPage() {
   const capabilities = useModelProviderCapabilities();
   const models = useModelList();
   const permissions = usePermissionProfiles();
+  const { preferences, update } = useUiPreferences();
 
   return (
     <div className="space-y-5">
@@ -49,6 +52,16 @@ export function SettingsPage() {
         modelCount={models.data?.data.length ?? 0}
         permissionCount={permissions.data?.data.length ?? 0}
         rateLimitName={account.data?.usage?.limitName ?? "Unavailable"}
+      />
+      <UiPreferencesCard
+        contextDrawerOpen={preferences.contextDrawerOpen}
+        density={preferences.density}
+        onContextDrawerChange={(contextDrawerOpen) => update({ contextDrawerOpen })}
+        onDensityChange={(density) => update({ density })}
+        onSidebarChange={(sidebarCollapsed) => update({ sidebarCollapsed })}
+        onThemeChange={(theme) => update({ theme })}
+        sidebarCollapsed={preferences.sidebarCollapsed}
+        theme={preferences.theme}
       />
     </div>
   );

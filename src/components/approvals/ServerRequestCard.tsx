@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import {
   buildApprovalResponse,
+  buildApprovalScope,
   buildUserInputResponse,
   canResolvePendingRequest,
   isRequestActionable,
@@ -30,6 +31,7 @@ export function ServerRequestCard({
     command?: string | null;
     questions?: Array<{ id: string; header: string; question: string }>;
   };
+  const scope = buildApprovalScope(request);
   const title = isUserInput
     ? "Input requested"
     : request.method.includes("requestApproval")
@@ -66,6 +68,14 @@ export function ServerRequestCard({
               {requestParams.command}
             </code>
           )}
+          <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
+            {Object.entries(scope).map(([key, value]) => (
+              <div className="flex min-w-0 gap-2" key={key}>
+                <dt className="font-medium">{key}</dt>
+                <dd className="truncate" title={value}>{value}</dd>
+              </div>
+            ))}
+          </dl>
           {isUserInput && requestParams.questions?.[0] && (
             <label className="form-control mt-2">
               <span className="label-text">{requestParams.questions[0].question}</span>
