@@ -57,6 +57,28 @@ describe("ProjectSidebar", () => {
     expect(within(panel).getByText("Recent chats")).toBeTruthy();
   });
 
+  it("keeps the rail and context panel bounded to the viewport", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="chats"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const sidebar = screen.getByRole("complementary", {
+      name: "Workspace sidebar",
+    });
+
+    expect(sidebar.className).toContain("h-dvh");
+    expect(sidebar.className).toContain("min-h-0");
+  });
+
   it("keeps navigation links accessible when the pane is collapsed", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 

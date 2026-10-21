@@ -16,6 +16,8 @@ body {
 }
 
 .workbench-sidebar {
+  height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
   transition: width 160ms ease;
 }
@@ -34,7 +36,7 @@ body {
     z-index: 20;
     inset-block: 0;
     left: 0;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
   }
 

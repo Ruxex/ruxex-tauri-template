@@ -60,12 +60,12 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar flex min-h-screen shrink-0 ${collapsed ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
+      className={`workbench-sidebar flex h-dvh min-h-0 shrink-0 ${collapsed ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
       aria-label="Workspace sidebar"
     >
       <nav
         aria-label="Workspace navigation"
-        className="flex w-16 shrink-0 flex-col items-center border-r border-base-300 bg-base-100 py-3"
+        className="flex h-full min-h-0 w-16 shrink-0 flex-col items-center border-r border-base-300 bg-base-100 py-3"
       >
         <Link
           aria-label="Ruxex Desktop home"
@@ -205,7 +205,7 @@ function ChatsSidebar({
   return (
     <aside
       aria-label="Chats sidebar"
-      className="flex min-h-0 w-72 flex-col bg-base-100 p-4"
+      className="flex h-full min-h-0 w-72 flex-col bg-base-100 p-4"
     >
       <SidebarHeader label="Chats" onClose={onClose} />
       <Link className="btn btn-primary mb-6 w-full" to="/chat/new">
@@ -266,7 +266,10 @@ function ChatsSidebar({
 
 function SettingsSidebar({ onClose }: { onClose: () => void }) {
   return (
-    <aside aria-label="Settings sidebar" className="w-72 bg-base-100 p-4">
+    <aside
+      aria-label="Settings sidebar"
+      className="h-full min-h-0 w-72 overflow-y-auto bg-base-100 p-4"
+    >
       <SidebarHeader label="Settings" onClose={onClose} />
       <nav aria-label="Settings sections" className="menu w-full gap-1 p-0">
         <li>
@@ -292,7 +295,7 @@ function RouteSidebar({
   return (
     <aside
       aria-label={`${panel.label} sidebar`}
-      className="w-72 bg-base-100 p-4"
+      className="h-full min-h-0 w-72 overflow-y-auto bg-base-100 p-4"
     >
       <SidebarHeader label={panel.label} onClose={onClose} />
       <div className="rounded-box bg-base-200 p-4 text-sm text-base-content/70">

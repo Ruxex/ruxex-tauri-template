@@ -30,8 +30,8 @@ export function AppLayout() {
   }
 
   return (
-    <main className="workbench min-h-screen bg-base-200 text-base-content">
-      <div className="flex min-h-screen">
+    <main className="workbench h-dvh overflow-hidden bg-base-200 text-base-content">
+      <div className="flex h-full min-h-0">
         <ProjectSidebar
           activePanel={activePanel}
           collapsed={preferences.sidebarCollapsed}
@@ -42,7 +42,7 @@ export function AppLayout() {
             update({ sidebarCollapsed: !preferences.sidebarCollapsed })
           }
         />
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 min-h-0 flex-1 flex-col">
           <TopBar
             contextDrawerOpen={preferences.contextDrawerOpen}
             onToggleContext={() =>
@@ -52,12 +52,12 @@ export function AppLayout() {
               update({ sidebarCollapsed: !preferences.sidebarCollapsed })
             }
           />
-          <section className="workbench-main mx-auto max-w-[1440px] p-4 sm:p-6">
+          <section className="workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 overflow-y-auto p-4 sm:p-6">
             <Outlet />
           </section>
         </div>
         {preferences.contextDrawerOpen && (
-          <div className="hidden xl:block">
+          <div className="hidden h-full min-h-0 xl:block">
             <ContextDrawer
               activeTab={preferences.contextTab}
               onClose={() => update({ contextDrawerOpen: false })}

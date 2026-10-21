@@ -75,7 +75,7 @@ export function ContextDrawer({
   }
 
   return (
-    <aside className="context-drawer flex min-h-screen w-80 shrink-0 flex-col border-l border-base-300 bg-base-100">
+    <aside className="context-drawer flex h-full min-h-0 w-80 shrink-0 flex-col border-l border-base-300 bg-base-100">
       <div className="flex items-center justify-between border-b border-base-300 px-4 py-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">Workbench</p>
