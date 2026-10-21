@@ -71,6 +71,15 @@ python3 scripts/test_stage_ruxex_package.py
 pnpm tauri dev
 ```
 
+ブラウザ上でモックApp Serverに接続したUI全体を確認する場合は、次を実行します。
+
+```sh
+make mock-app-server
+```
+
+このモードでは `VITE_MOCK_APP_SERVER=1` が有効になり、Tauriのinvoke/eventブリッジと
+基本的なApp Server応答がインメモリで置き換えられます。
+
 The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.
 

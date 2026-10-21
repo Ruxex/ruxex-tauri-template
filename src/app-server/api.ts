@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import type { ClientRequest, ClientResponse, RequestId } from "../protocol";
+import { getMockAppServer } from "./mock-runtime";
+import { isMockAppServerRuntime } from "./runtime";
 
 export type AppServerStatus = {
   socketPath: string;
@@ -30,12 +32,20 @@ function nextRequestId(): number {
 }
 
 export function ensureAppServer(): Promise<AppServerStatus> {
+  if (isMockAppServerRuntime) {
+    return Promise.resolve(getMockAppServer().status);
+  }
   return invoke<AppServerStatus>("ensure_app_server");
 }
 
 export function requestAppServer<Request extends ClientRequest>(
   request: Request,
 ): Promise<ResponseFor<Request>> {
+  if (isMockAppServerRuntime) {
+    return getMockAppServer().invoke("app_server_request", { request }) as Promise<
+      ResponseFor<Request>
+    >;
+  }
   return invoke<ClientResponse>("app_server_request", { request }) as Promise<
     ResponseFor<Request>
   >;
