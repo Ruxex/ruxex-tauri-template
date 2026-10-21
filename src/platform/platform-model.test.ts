@@ -1,0 +1,57 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  normalizeDeepLink,
+  validateRemoteEndpoint,
+  validateScheduleSpec,
+  validateWorktreePath,
+} from "./platform-model";
+
+describe("platform model boundaries", () => {
+  it("accepts only known ruxex deep-link targets", () => {
+    expect(normalizeDeepLink("ruxex://thread/thread-1")).toEqual({
+      kind: "thread",
+      id: "thread-1",
+    });
+    expect(normalizeDeepLink("ruxex://project/project-1")).toEqual({
+      kind: "project",
+      id: "project-1",
+    });
+    expect(normalizeDeepLink("https://thread/thread-1")).toBeNull();
+    expect(normalizeDeepLink("ruxex://thread/../etc")).toBeNull();
+  });
+
+  it("requires a secure or loopback websocket endpoint", () => {
+    expect(validateRemoteEndpoint("wss://example.test/rpc")).toEqual({
+      url: "wss://example.test/rpc",
+    });
+    expect(validateRemoteEndpoint("ws://127.0.0.1:8080/rpc")).toEqual({
+      url: "ws://127.0.0.1:8080/rpc",
+    });
+    expect(validateRemoteEndpoint("ws://example.test/rpc")).toBeNull();
+    expect(validateRemoteEndpoint("https://example.test/rpc")).toBeNull();
+  });
+
+  it("validates one-shot and recurring schedule definitions", () => {
+    expect(
+      validateScheduleSpec({
+        name: "nightly",
+        prompt: "run checks",
+        cadence: { kind: "daily", hour: 2, minute: 30 },
+      }),
+    ).toBe(true);
+    expect(
+      validateScheduleSpec({
+        name: "bad",
+        prompt: "",
+        cadence: { kind: "daily", hour: 25, minute: 0 },
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps worktree destinations inside the selected workspace root", () => {
+    expect(validateWorktreePath("/workspace/repo", "/workspace/repo/.worktrees/a")).toBe(true);
+    expect(validateWorktreePath("/workspace/repo", "/workspace/other")).toBe(false);
+    expect(validateWorktreePath("/workspace/repo", "/workspace/repo/../other")).toBe(false);
+  });
+});

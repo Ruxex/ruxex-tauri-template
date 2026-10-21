@@ -22,6 +22,8 @@ use tauri::Emitter;
 use tauri::Manager;
 use tauri::State;
 
+mod platform;
+
 #[derive(Default)]
 struct AppState {
     initialization: tauri::async_runtime::Mutex<()>,

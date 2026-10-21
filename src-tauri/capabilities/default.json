@@ -3,5 +3,9 @@
   "identifier": "default",
   "description": "Minimal local capability set for Ruxex Desktop",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    "notification:default",
+    "opener:default"
+  ]
 }
