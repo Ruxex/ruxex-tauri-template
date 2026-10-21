@@ -20,6 +20,7 @@
     "stage:runtime": "python3 scripts/stage-ruxex-package.py"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@tanstack/react-query": "^5.90.0",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-deep-link": "^2.6.2",

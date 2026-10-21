@@ -100,6 +100,29 @@ describe("ProjectSidebar", () => {
     expect(within(rail).getByRole("button", { name: "New chat" })).toBeTruthy();
   });
 
+  it("renders Heroicons in the icon rail", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="chats"
+          collapsed
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+
+    expect(
+      within(rail).getByRole("button", { name: "Chats" }).querySelector("svg"),
+    ).toBeTruthy();
+  });
+
   it("keeps settings separate from the primary navigation at the bottom", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 

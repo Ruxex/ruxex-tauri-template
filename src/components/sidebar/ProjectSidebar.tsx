@@ -1,3 +1,12 @@
+import type { ComponentType, SVGProps } from "react";
+import {
+  ChatBubbleLeftRightIcon,
+  CheckIcon,
+  ClockIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
 import { useProjectList } from "../../app-server/hooks";
@@ -11,25 +20,37 @@ export type SidebarPanel =
   | "schedules"
   | "settings";
 
+type SidebarIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
 type SidebarPanelDefinition = {
   id: SidebarPanel;
   label: string;
-  icon: string;
+  icon: SidebarIcon;
   route?: string;
 };
 
 const SIDEBAR_PANELS: readonly SidebarPanelDefinition[] = [
-  { id: "chats", label: "Chats", icon: "▤" },
-  { id: "new-chat", label: "New chat", icon: "+", route: "/chat/new" },
-  { id: "approvals", label: "Approvals", icon: "✓", route: "/approvals" },
+  { id: "chats", label: "Chats", icon: ChatBubbleLeftRightIcon },
+  { id: "new-chat", label: "New chat", icon: PlusIcon, route: "/chat/new" },
+  {
+    id: "approvals",
+    label: "Approvals",
+    icon: CheckIcon,
+    route: "/approvals",
+  },
   {
     id: "capabilities",
     label: "Capabilities",
-    icon: "✦",
+    icon: SparklesIcon,
     route: "/capabilities",
   },
-  { id: "schedules", label: "Schedules", icon: "◷", route: "/schedules" },
-  { id: "settings", label: "Settings", icon: "⚙", route: "/settings" },
+  { id: "schedules", label: "Schedules", icon: ClockIcon, route: "/schedules" },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Cog6ToothIcon,
+    route: "/settings",
+  },
 ];
 
 type ProjectSidebarProps = {
@@ -89,7 +110,7 @@ export function ProjectSidebar({
           <RailButton
             active={activePanel === "settings"}
             label="Settings"
-            icon="⚙"
+            icon={Cog6ToothIcon}
             onClick={() =>
               selectPanel(SIDEBAR_PANELS[SIDEBAR_PANELS.length - 1])
             }
@@ -115,10 +136,12 @@ function RailButton({
   onClick,
 }: {
   active: boolean;
-  icon: string;
+  icon: SidebarIcon;
   label: string;
   onClick: () => void;
 }) {
+  const Icon = icon;
+
   return (
     <button
       aria-label={label}
@@ -128,7 +151,7 @@ function RailButton({
       type="button"
       onClick={onClick}
     >
-      <span aria-hidden="true">{icon}</span>
+      <Icon aria-hidden="true" className="size-5" />
     </button>
   );
 }
