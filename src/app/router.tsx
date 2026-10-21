@@ -8,6 +8,7 @@ import { CapabilitiesPage } from "../pages/CapabilitiesPage";
 import { ApprovalCenter } from "../components/approvals/ApprovalCenter";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
+import { ModelPage } from "../pages/ModelPage";
 import { NewChatPage } from "../pages/NewChatPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { SettingsPage } from "../pages/SettingsPage";
@@ -34,6 +35,7 @@ export const router = createHashRouter([
         children: [
           { index: true, element: <SettingsOverviewPage /> },
           { path: "appearance", element: <AppearancePage /> },
+          { path: "models", element: <ModelPage /> },
           { path: "account", element: <AccountPage /> },
         ],
       },

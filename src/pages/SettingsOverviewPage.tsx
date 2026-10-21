@@ -1,34 +1,21 @@
 import {
-  useAccount,
   useAppServerEvents,
   useAppServerConnection,
   useAppServerStatus,
-  useModelList,
-  useModelProvider,
-  useModelProviderCapabilities,
-  usePermissionProfiles,
 } from "../app-server/hooks";
 import { isDesktopRuntime } from "../app-server/runtime";
 import { useUiPreferences } from "../app/ui-preferences";
 import { RemoteConnectionCard } from "../components/connection/RemoteConnectionCard";
 import {
-  CapabilitiesCard,
   ConnectionCard,
   LanguageCard,
   NotificationsCard,
-  ProviderAccountCard,
-  RuntimeSummary,
 } from "../components/settings/SettingsCards";
 
 export function SettingsOverviewPage() {
   const status = useAppServerStatus();
   const connection = useAppServerConnection();
   const events = useAppServerEvents();
-  const account = useAccount();
-  const provider = useModelProvider();
-  const capabilities = useModelProviderCapabilities();
-  const models = useModelList();
-  const permissions = usePermissionProfiles();
   const { preferences, update } = useUiPreferences();
 
   return (
@@ -48,13 +35,6 @@ export function SettingsOverviewPage() {
           isFetching={status.isFetching}
           onReconnect={() => void status.refetch()}
         />
-        <ProviderAccountCard
-          provider={
-            provider.data?.name ?? account.data?.providerId ?? "Unavailable"
-          }
-          authStatus={account.data?.authStatus ?? "Unknown"}
-          account={account.data?.displayName ?? "Not signed in"}
-        />
       </section>
       {isDesktopRuntime && (
         <RemoteConnectionCard
@@ -72,12 +52,6 @@ export function SettingsOverviewPage() {
           onDisconnect={() => void connection.disconnect.mutate()}
         />
       )}
-      <CapabilitiesCard capabilities={capabilities.data ?? {}} />
-      <RuntimeSummary
-        modelCount={models.data?.data.length ?? 0}
-        permissionCount={permissions.data?.data.length ?? 0}
-        rateLimitName={account.data?.usage?.limitName ?? "Unavailable"}
-      />
       <LanguageCard
         language={preferences.language}
         onLanguageChange={(language) => update({ language })}

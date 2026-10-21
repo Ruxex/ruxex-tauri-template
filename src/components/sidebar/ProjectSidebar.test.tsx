@@ -194,6 +194,7 @@ describe("ProjectSidebar", () => {
     expect(
       within(panel).getByRole("link", { name: "Appearance" }),
     ).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "Models" })).toBeTruthy();
     expect(within(panel).getByRole("link", { name: "Account" })).toBeTruthy();
   });
 });
