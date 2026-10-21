@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -43,10 +43,8 @@ describe("ProjectSidebar", () => {
 
     expect(navigation.querySelector('a[href="/threads"]')).toBeTruthy();
     expect(navigation.querySelector('a[href="/chat/new"]')).toBeTruthy();
-    expect(navigation.querySelector('a[href="/account"]')).toBeTruthy();
     expect(navigation.querySelector('a[href="/approvals"]')).toBeTruthy();
     expect(navigation.querySelector('a[href="/capabilities"]')).toBeTruthy();
-    expect(navigation.querySelector('a[href="/settings"]')).toBeTruthy();
     expect(navigation.querySelector('a[href="/schedules"]')).toBeTruthy();
   });
 
@@ -65,5 +63,34 @@ describe("ProjectSidebar", () => {
     expect(
       screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
     ).toBe("/chat/new");
+  });
+
+  it("keeps settings separate from the primary navigation at the bottom", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar collapsed={false} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const primaryNavigation = screen.getByRole("navigation", {
+      name: "Primary navigation",
+    });
+    const settingsNavigation = screen.getByRole("navigation", {
+      name: "Settings navigation",
+    });
+
+    expect(
+      within(primaryNavigation).queryByRole("link", { name: "Account" }),
+    ).toBeNull();
+    expect(
+      within(primaryNavigation).queryByRole("link", { name: "Settings" }),
+    ).toBeNull();
+    expect(
+      within(settingsNavigation)
+        .getByRole("link", { name: "Settings" })
+        .getAttribute("href"),
+    ).toBe("/settings");
   });
 });

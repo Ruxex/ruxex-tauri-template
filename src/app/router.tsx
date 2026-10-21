@@ -1,4 +1,4 @@
-import { createHashRouter } from "react-router-dom";
+import { createHashRouter, Navigate } from "react-router-dom";
 
 import { AppLayout } from "../components/layout/AppLayout";
 import { AccountPage } from "../pages/AccountPage";
@@ -10,6 +10,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { NewChatPage } from "../pages/NewChatPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { SettingsPage } from "../pages/SettingsPage";
+import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
 import { ThreadPage } from "../pages/ThreadPage";
 import { ThreadsPage } from "../pages/ThreadsPage";
@@ -21,9 +22,19 @@ export const router = createHashRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
-      { path: "account", element: <AccountPage /> },
+      {
+        path: "account",
+        element: <Navigate replace to="/settings/account" />,
+      },
       { path: "approvals", element: <ApprovalCenter /> },
-      { path: "settings", element: <SettingsPage /> },
+      {
+        path: "settings",
+        element: <SettingsPage />,
+        children: [
+          { index: true, element: <SettingsOverviewPage /> },
+          { path: "account", element: <AccountPage /> },
+        ],
+      },
       { path: "schedules", element: <SchedulesPage /> },
       { path: "capabilities", element: <CapabilitiesPage /> },
       { path: "archive", element: <ArchivePage /> },

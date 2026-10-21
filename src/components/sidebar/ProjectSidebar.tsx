@@ -6,12 +6,16 @@ import { ThreadList } from "./ThreadList";
 const PRIMARY_NAV_ITEMS = [
   { label: "Threads", compactLabel: "T", to: "/threads" },
   { label: "New chat", compactLabel: "+", to: "/chat/new" },
-  { label: "Account", compactLabel: "A", to: "/account" },
   { label: "Approvals", compactLabel: "!", to: "/approvals" },
   { label: "Capabilities", compactLabel: "C", to: "/capabilities" },
-  { label: "Settings", compactLabel: "S", to: "/settings" },
   { label: "Schedules", compactLabel: "R", to: "/schedules" },
 ] as const;
+
+const SETTINGS_NAV_ITEM = {
+  label: "Settings",
+  compactLabel: "S",
+  to: "/settings",
+} as const;
 
 type ProjectSidebarProps = {
   collapsed: boolean;
@@ -34,7 +38,7 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar shrink-0 border-r border-base-300 bg-base-100 p-4 ${collapsed ? "workbench-sidebar-collapsed" : "w-72"}`}
+      className={`workbench-sidebar flex min-h-screen shrink-0 flex-col border-r border-base-300 bg-base-100 p-4 ${collapsed ? "workbench-sidebar-collapsed" : "w-72"}`}
       aria-label="Project navigation"
     >
       <div className="mb-5 flex items-center justify-between gap-2">
@@ -56,82 +60,107 @@ export function ProjectSidebar({
           </button>
         </div>
       </div>
-      <nav aria-label="Primary navigation" className="mb-6">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <nav aria-label="Primary navigation" className="mb-6">
+          {!collapsed && (
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+              Navigation
+            </p>
+          )}
+          <ul className="menu w-full gap-1 p-0">
+            {PRIMARY_NAV_ITEMS.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  aria-label={item.label}
+                  className={({ isActive }) =>
+                    `${isActive ? "active " : ""}${collapsed ? "justify-center px-2" : ""}`
+                  }
+                  title={collapsed ? item.label : undefined}
+                  to={item.to}
+                >
+                  <span aria-hidden={collapsed}>
+                    {collapsed ? item.compactLabel : item.label}
+                  </span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
         {!collapsed && (
-          <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-base-content/60">
-            Navigation
-          </p>
+          <>
+            <div className="mb-6">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                  Projects
+                </p>
+                <NavLink className="link link-primary text-xs" to="/threads">
+                  All
+                </NavLink>
+              </div>
+              {projects.isLoading && (
+                <span className="loading loading-spinner loading-sm" />
+              )}
+              {projects.isError && (
+                <p className="text-xs text-error">Unable to load projects.</p>
+              )}
+              <ul className="menu w-full gap-1 p-0">
+                {projects.data?.data.map((project) => (
+                  <li key={project.id}>
+                    <NavLink
+                      className={
+                        selectedProjectId === project.id ? "active" : undefined
+                      }
+                      to={`/projects/${project.id}`}
+                    >
+                      <span className="truncate">{project.name}</span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+              {!projects.isLoading && !projects.data?.data.length && (
+                <p className="text-xs text-base-content/60">No projects yet.</p>
+              )}
+            </div>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                  {selectedProjectId ? "Project chats" : "Recent chats"}
+                </p>
+                <Link className="link link-primary text-xs" to="/threads">
+                  Browse
+                </Link>
+              </div>
+              <ThreadList
+                projectId={selectedProjectId}
+                selectedThreadId={selectedThreadId}
+              />
+            </div>
+          </>
         )}
+      </div>
+      <nav
+        aria-label="Settings navigation"
+        className="mt-4 border-t border-base-300 pt-4"
+      >
         <ul className="menu w-full gap-1 p-0">
-          {PRIMARY_NAV_ITEMS.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                aria-label={item.label}
-                className={({ isActive }) =>
-                  `${isActive ? "active " : ""}${collapsed ? "justify-center px-2" : ""}`
-                }
-                title={collapsed ? item.label : undefined}
-                to={item.to}
-              >
-                <span aria-hidden={collapsed}>
-                  {collapsed ? item.compactLabel : item.label}
-                </span>
-              </NavLink>
-            </li>
-          ))}
+          <li>
+            <NavLink
+              aria-label={SETTINGS_NAV_ITEM.label}
+              className={({ isActive }) =>
+                `${isActive ? "active " : ""}${collapsed ? "justify-center px-2" : ""}`
+              }
+              title={collapsed ? SETTINGS_NAV_ITEM.label : undefined}
+              to={SETTINGS_NAV_ITEM.to}
+            >
+              <span aria-hidden={collapsed}>
+                {collapsed
+                  ? SETTINGS_NAV_ITEM.compactLabel
+                  : SETTINGS_NAV_ITEM.label}
+              </span>
+            </NavLink>
+          </li>
         </ul>
       </nav>
-      {!collapsed && (
-        <>
-          <div className="mb-6">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                Projects
-              </p>
-              <NavLink className="link link-primary text-xs" to="/threads">
-                All
-              </NavLink>
-            </div>
-            {projects.isLoading && (
-              <span className="loading loading-spinner loading-sm" />
-            )}
-            {projects.isError && (
-              <p className="text-xs text-error">Unable to load projects.</p>
-            )}
-            <ul className="menu w-full gap-1 p-0">
-              {projects.data?.data.map((project) => (
-                <li key={project.id}>
-                  <NavLink
-                    className={
-                      selectedProjectId === project.id ? "active" : undefined
-                    }
-                    to={`/projects/${project.id}`}
-                  >
-                    <span className="truncate">{project.name}</span>
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-            {!projects.isLoading && !projects.data?.data.length && (
-              <p className="text-xs text-base-content/60">No projects yet.</p>
-            )}
-          </div>
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                {selectedProjectId ? "Project chats" : "Recent chats"}
-              </p>
-              <Link className="link link-primary text-xs" to="/threads">
-                Browse
-              </Link>
-            </div>
-            <ThreadList
-              projectId={selectedProjectId}
-              selectedThreadId={selectedThreadId}
-            />
-          </div>
-        </>
-      )}
     </aside>
   );
 }
