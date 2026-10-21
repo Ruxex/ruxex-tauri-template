@@ -49,32 +49,33 @@ export function RemoteConnectionCard({
           </p>
         </div>
         <form className="grid gap-3" onSubmit={submit}>
-          <label className="form-control">
+          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
             <span className="label-text">Remote WebSocket URL</span>
             <input
               aria-label="Remote WebSocket URL"
-              className="input input-bordered input-sm mt-1"
+              className="input input-bordered input-sm w-full max-w-sm justify-self-end"
               onChange={(event) => setUrl(event.target.value)}
               placeholder="wss://server.example/rpc"
               value={url}
             />
           </label>
-          <label className="form-control">
+          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
             <span className="label-text">Authentication token</span>
             <input
               aria-label="Authentication token"
               autoComplete="off"
-              className="input input-bordered input-sm mt-1"
+              className="input input-bordered input-sm w-full max-w-sm justify-self-end"
               onChange={(event) => setAuthToken(event.target.value)}
               type="password"
               value={authToken}
             />
           </label>
-          {(validationError ?? error) !== null && (validationError ?? error) !== undefined && (
-            <p className="text-sm text-error">
-              {validationError ?? String(error)}
-            </p>
-          )}
+          {(validationError ?? error) !== null &&
+            (validationError ?? error) !== undefined && (
+              <p className="text-sm text-error">
+                {validationError ?? String(error)}
+              </p>
+            )}
           <div className="flex justify-end gap-2">
             {endpointKind === "websocket" && (
               <button

@@ -38,7 +38,7 @@ export function SettingsOverviewPage() {
         </p>
         <h2 className="text-2xl font-semibold">General</h2>
       </div>
-      <section className="grid gap-4 md:grid-cols-2">
+      <section className="grid gap-4">
         <ConnectionCard
           connected={events.connected}
           appServerVersion={status.data?.appServerVersion}

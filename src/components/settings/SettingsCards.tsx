@@ -23,8 +23,12 @@ export function ConnectionCard({
       <div className="card-body">
         <h2 className="card-title">Connection</h2>
         <dl className="grid gap-2 text-sm">
-          <SettingRow label="Status">{connected ? "Connected" : "Disconnected"}</SettingRow>
-          <SettingRow label="App-server">{appServerVersion ?? "Unavailable"}</SettingRow>
+          <SettingRow label="Status">
+            {connected ? "Connected" : "Disconnected"}
+          </SettingRow>
+          <SettingRow label="App-server">
+            {appServerVersion ?? "Unavailable"}
+          </SettingRow>
           <SettingRow label="Live state">
             {resynchronizing ? "Resynchronizing" : "Synchronized"}
           </SettingRow>
@@ -79,11 +83,13 @@ export function CapabilitiesCard({
     <section className="card border border-base-300 bg-base-100 shadow-sm">
       <div className="card-body">
         <h2 className="card-title">Capabilities</h2>
-        <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 text-sm">
           {Object.entries(capabilities).map(([name, enabled]) => (
             <div className="flex justify-between gap-3" key={name}>
               <span>{name}</span>
-              <span className={enabled ? "text-success" : "text-base-content/50"}>
+              <span
+                className={`${enabled ? "text-success" : "text-base-content/50"} text-right`}
+              >
                 {String(enabled)}
               </span>
             </div>
@@ -106,7 +112,7 @@ export function RuntimeSummary({
   rateLimitName,
 }: RuntimeSummaryProps) {
   return (
-    <section className="grid gap-4 md:grid-cols-3">
+    <section className="grid gap-4">
       <SummaryCard label="Models">{modelCount} available</SummaryCard>
       <SummaryCard label="Permissions">{permissionCount} profiles</SummaryCard>
       <SummaryCard label="Rate limits">{rateLimitName}</SummaryCard>
@@ -140,53 +146,87 @@ export function UiPreferencesCard({
       <div className="card-body gap-4">
         <div>
           <h2 className="card-title">Interface</h2>
-          <p className="text-sm text-base-content/70">These are local presentation preferences only.</p>
+          <p className="text-sm text-base-content/70">
+            These are local presentation preferences only.
+          </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="form-control">
+        <div className="grid gap-3">
+          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
             <span className="label-text">Theme</span>
-            <select className="select select-bordered select-sm mt-1" value={theme} onChange={(event) => onThemeChange(event.target.value as UiTheme)}>
+            <select
+              className="select select-bordered select-sm w-40 justify-self-end"
+              value={theme}
+              onChange={(event) => onThemeChange(event.target.value as UiTheme)}
+            >
               <option value="system">System</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
           </label>
-          <label className="form-control">
+          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
             <span className="label-text">Density</span>
-            <select className="select select-bordered select-sm mt-1" value={density} onChange={(event) => onDensityChange(event.target.value as UiDensity)}>
+            <select
+              className="select select-bordered select-sm w-40 justify-self-end"
+              value={density}
+              onChange={(event) =>
+                onDensityChange(event.target.value as UiDensity)
+              }
+            >
               <option value="comfortable">Comfortable</option>
               <option value="compact">Compact</option>
             </select>
           </label>
         </div>
-        <label className="label cursor-pointer justify-start gap-3">
-          <input className="toggle" type="checkbox" checked={!sidebarCollapsed} onChange={(event) => onSidebarChange(!event.target.checked)} />
+        <label className="label cursor-pointer justify-between gap-3">
           <span className="label-text">Show project sidebar</span>
+          <input
+            className="toggle"
+            type="checkbox"
+            checked={!sidebarCollapsed}
+            onChange={(event) => onSidebarChange(!event.target.checked)}
+          />
         </label>
-        <label className="label cursor-pointer justify-start gap-3">
-          <input className="toggle" type="checkbox" checked={contextDrawerOpen} onChange={(event) => onContextDrawerChange(event.target.checked)} />
+        <label className="label cursor-pointer justify-between gap-3">
           <span className="label-text">Show context drawer</span>
+          <input
+            className="toggle"
+            type="checkbox"
+            checked={contextDrawerOpen}
+            onChange={(event) => onContextDrawerChange(event.target.checked)}
+          />
         </label>
       </div>
     </section>
   );
 }
 
-function SettingRow({ label, children }: { label: string; children: ReactNode }) {
+function SettingRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex justify-between gap-3">
       <dt>{label}</dt>
-      <dd>{children}</dd>
+      <dd className="text-right">{children}</dd>
     </div>
   );
 }
 
-function SummaryCard({ label, children }: { label: string; children: ReactNode }) {
+function SummaryCard({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div className="card border border-base-300 bg-base-100 shadow-sm">
       <div className="card-body">
         <h2 className="card-title text-base">{label}</h2>
-        <p>{children}</p>
+        <p className="text-right">{children}</p>
       </div>
     </div>
   );

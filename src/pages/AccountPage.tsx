@@ -26,18 +26,18 @@ export function AccountPage() {
             <h1 className="card-title text-3xl">Account information</h1>
           </div>
           <div className="rounded-box bg-base-200 p-4">
-            <dl className="grid gap-3 sm:grid-cols-2">
-              <div>
+            <dl className="grid gap-3">
+              <div className="flex justify-between gap-3">
                 <dt className="text-sm text-base-content/60">Status</dt>
-                <dd className="font-medium">
+                <dd className="text-right font-medium">
                   {data?.authStatus === "authenticated"
                     ? "Authenticated"
                     : "Authentication required"}
                 </dd>
               </div>
-              <div>
+              <div className="flex justify-between gap-3">
                 <dt className="text-sm text-base-content/60">Account type</dt>
-                <dd className="font-medium">
+                <dd className="text-right font-medium">
                   {data?.account?.type ?? "Not signed in"}
                 </dd>
               </div>
