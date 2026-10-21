@@ -278,6 +278,9 @@ function SettingsSidebar({ onClose }: { onClose: () => void }) {
           </NavLink>
         </li>
         <li>
+          <NavLink to="/settings/appearance">Appearance</NavLink>
+        </li>
+        <li>
           <NavLink to="/settings/account">Account</NavLink>
         </li>
       </nav>

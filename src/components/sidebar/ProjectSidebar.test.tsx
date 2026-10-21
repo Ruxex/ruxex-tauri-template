@@ -168,6 +168,9 @@ describe("ProjectSidebar", () => {
       name: "Settings sidebar",
     });
     expect(within(panel).getByRole("link", { name: "General" })).toBeTruthy();
+    expect(
+      within(panel).getByRole("link", { name: "Appearance" }),
+    ).toBeTruthy();
     expect(within(panel).getByRole("link", { name: "Account" })).toBeTruthy();
   });
 });

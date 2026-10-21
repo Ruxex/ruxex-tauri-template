@@ -9,14 +9,12 @@ import {
   usePermissionProfiles,
 } from "../app-server/hooks";
 import { isDesktopRuntime } from "../app-server/runtime";
-import { useUiPreferences } from "../app/ui-preferences";
 import { RemoteConnectionCard } from "../components/connection/RemoteConnectionCard";
 import {
   CapabilitiesCard,
   ConnectionCard,
   ProviderAccountCard,
   RuntimeSummary,
-  UiPreferencesCard,
 } from "../components/settings/SettingsCards";
 
 export function SettingsOverviewPage() {
@@ -28,7 +26,6 @@ export function SettingsOverviewPage() {
   const capabilities = useModelProviderCapabilities();
   const models = useModelList();
   const permissions = usePermissionProfiles();
-  const { preferences, update } = useUiPreferences();
 
   return (
     <div className="space-y-5">
@@ -76,18 +73,6 @@ export function SettingsOverviewPage() {
         modelCount={models.data?.data.length ?? 0}
         permissionCount={permissions.data?.data.length ?? 0}
         rateLimitName={account.data?.usage?.limitName ?? "Unavailable"}
-      />
-      <UiPreferencesCard
-        contextDrawerOpen={preferences.contextDrawerOpen}
-        density={preferences.density}
-        onContextDrawerChange={(contextDrawerOpen) =>
-          update({ contextDrawerOpen })
-        }
-        onDensityChange={(density) => update({ density })}
-        onSidebarChange={(sidebarCollapsed) => update({ sidebarCollapsed })}
-        onThemeChange={(theme) => update({ theme })}
-        sidebarCollapsed={preferences.sidebarCollapsed}
-        theme={preferences.theme}
       />
     </div>
   );
