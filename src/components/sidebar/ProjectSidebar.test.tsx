@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -28,24 +34,27 @@ describe("ProjectSidebar", () => {
     });
   });
 
-  it("renders the primary navigation in the left pane", async () => {
+  it("renders the chats context panel beside the icon rail", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
     render(
       <MemoryRouter>
-        <ProjectSidebar collapsed={false} onToggle={vi.fn()} />
+        <ProjectSidebar
+          activePanel="chats"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
       </MemoryRouter>,
     );
 
-    const navigation = screen.getByRole("navigation", {
-      name: "Primary navigation",
+    const panel = screen.getByRole("complementary", {
+      name: "Chats sidebar",
     });
 
-    expect(navigation.querySelector('a[href="/threads"]')).toBeTruthy();
-    expect(navigation.querySelector('a[href="/chat/new"]')).toBeTruthy();
-    expect(navigation.querySelector('a[href="/approvals"]')).toBeTruthy();
-    expect(navigation.querySelector('a[href="/capabilities"]')).toBeTruthy();
-    expect(navigation.querySelector('a[href="/schedules"]')).toBeTruthy();
+    expect(panel.querySelector('a[href="/chat/new"]')).toBeTruthy();
+    expect(within(panel).getByText("Projects")).toBeTruthy();
+    expect(within(panel).getByText("Recent chats")).toBeTruthy();
   });
 
   it("keeps navigation links accessible when the pane is collapsed", async () => {
@@ -53,16 +62,20 @@ describe("ProjectSidebar", () => {
 
     render(
       <MemoryRouter>
-        <ProjectSidebar collapsed onToggle={vi.fn()} />
+        <ProjectSidebar
+          activePanel="chats"
+          collapsed
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Threads" }).getAttribute("href"),
-    ).toBe("/threads");
-    expect(
-      screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
-    ).toBe("/chat/new");
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+    expect(within(rail).getByRole("button", { name: "Chats" })).toBeTruthy();
+    expect(within(rail).getByRole("button", { name: "New chat" })).toBeTruthy();
   });
 
   it("keeps settings separate from the primary navigation at the bottom", async () => {
@@ -70,27 +83,69 @@ describe("ProjectSidebar", () => {
 
     render(
       <MemoryRouter>
-        <ProjectSidebar collapsed={false} onToggle={vi.fn()} />
+        <ProjectSidebar
+          activePanel="chats"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
       </MemoryRouter>,
     );
 
-    const primaryNavigation = screen.getByRole("navigation", {
-      name: "Primary navigation",
-    });
-    const settingsNavigation = screen.getByRole("navigation", {
-      name: "Settings navigation",
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
     });
 
+    expect(within(rail).getByRole("button", { name: "Settings" })).toBeTruthy();
     expect(
-      within(primaryNavigation).queryByRole("link", { name: "Account" }),
-    ).toBeNull();
-    expect(
-      within(primaryNavigation).queryByRole("link", { name: "Settings" }),
-    ).toBeNull();
-    expect(
-      within(settingsNavigation)
-        .getByRole("link", { name: "Settings" })
-        .getAttribute("href"),
-    ).toBe("/settings");
+      screen.queryByRole("complementary", { name: "Chats sidebar" }),
+    ).toBeTruthy();
+  });
+
+  it("uses an icon rail to switch the visible sidebar panel", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="chats"
+          collapsed={false}
+          onPanelChange={onPanelChange}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+    expect(within(rail).getByRole("button", { name: "Chats" })).toBeTruthy();
+    expect(within(rail).getByRole("button", { name: "Settings" })).toBeTruthy();
+
+    fireEvent.click(within(rail).getByRole("button", { name: "Settings" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("settings");
+  });
+
+  it("shows settings tabs in the settings sidebar panel", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <ProjectSidebar
+          activePanel="settings"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", {
+      name: "Settings sidebar",
+    });
+    expect(within(panel).getByRole("link", { name: "General" })).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "Account" })).toBeTruthy();
   });
 });

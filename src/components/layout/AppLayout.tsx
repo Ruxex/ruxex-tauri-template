@@ -1,25 +1,46 @@
-import { Outlet, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { useUiPreferences } from "../../app/ui-preferences";
 import { ContextDrawer } from "../context/ContextDrawer";
-import { ProjectSidebar } from "../sidebar/ProjectSidebar";
+import { ProjectSidebar, type SidebarPanel } from "../sidebar/ProjectSidebar";
 import { TopBar } from "./TopBar";
 
 export function AppLayout() {
+  const location = useLocation();
   const { projectId, threadId } = useParams<{
     projectId?: string;
     threadId?: string;
   }>();
   const { preferences, update } = useUiPreferences();
+  const routePanel = sidebarPanelForPath(location.pathname);
+  const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
+
+  useEffect(() => {
+    setActivePanel(routePanel);
+  }, [routePanel]);
+
+  function handlePanelChange(panel: SidebarPanel) {
+    if (panel === activePanel && !preferences.sidebarCollapsed) {
+      update({ sidebarCollapsed: true });
+      return;
+    }
+    setActivePanel(panel);
+    update({ sidebarCollapsed: false });
+  }
 
   return (
     <main className="workbench min-h-screen bg-base-200 text-base-content">
       <div className="flex min-h-screen">
         <ProjectSidebar
+          activePanel={activePanel}
           collapsed={preferences.sidebarCollapsed}
           selectedProjectId={projectId}
           selectedThreadId={threadId}
-          onToggle={() => update({ sidebarCollapsed: !preferences.sidebarCollapsed })}
+          onPanelChange={handlePanelChange}
+          onToggle={() =>
+            update({ sidebarCollapsed: !preferences.sidebarCollapsed })
+          }
         />
         <div className="min-w-0 flex-1">
           <TopBar
@@ -49,4 +70,23 @@ export function AppLayout() {
       </div>
     </main>
   );
+}
+
+function sidebarPanelForPath(pathname: string): SidebarPanel {
+  if (pathname.startsWith("/settings")) {
+    return "settings";
+  }
+  if (pathname.startsWith("/chat/new")) {
+    return "new-chat";
+  }
+  if (pathname.startsWith("/approvals")) {
+    return "approvals";
+  }
+  if (pathname.startsWith("/capabilities")) {
+    return "capabilities";
+  }
+  if (pathname.startsWith("/schedules")) {
+    return "schedules";
+  }
+  return "chats";
 }

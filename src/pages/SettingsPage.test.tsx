@@ -9,7 +9,7 @@ import { SettingsPage } from "./SettingsPage";
 describe("SettingsPage", () => {
   afterEach(cleanup);
 
-  it("provides Codex-style settings tabs including the account tab", () => {
+  it("renders the settings content shell", () => {
     render(
       <MemoryRouter initialEntries={["/settings"]}>
         <Routes>
@@ -18,12 +18,6 @@ describe("SettingsPage", () => {
       </MemoryRouter>,
     );
 
-    const tabs = screen.getByRole("tablist", { name: "Settings sections" });
-
     expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
-    expect(tabs.querySelector('a[href="/settings"]')).toBeTruthy();
-    expect(tabs.querySelector('a[href="/settings/account"]')).toBeTruthy();
-    expect(screen.getByText("General")).toBeTruthy();
-    expect(screen.getByText("Account")).toBeTruthy();
   });
 });

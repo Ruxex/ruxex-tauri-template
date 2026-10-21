@@ -16,12 +16,12 @@ body {
 }
 
 .workbench-sidebar {
-  transition: width 160ms ease, padding 160ms ease;
+  overflow: hidden;
+  transition: width 160ms ease;
 }
 
 .workbench-sidebar-collapsed {
-  width: 4.5rem;
-  padding-inline: 0.75rem;
+  width: 4rem;
 }
 
 [data-density="compact"] .workbench-main {
