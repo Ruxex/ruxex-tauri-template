@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CapabilitiesCard,
   ConnectionCard,
+  LanguageCard,
+  NotificationsCard,
   RuntimeSummary,
   UiPreferencesCard,
 } from "./SettingsCards";
@@ -104,5 +106,17 @@ describe("settings card layout", () => {
     );
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
+  });
+
+  it("renders language and notification settings in general panels", () => {
+    render(
+      <>
+        <LanguageCard language="system" onLanguageChange={vi.fn()} />
+        <NotificationsCard enabled onEnabledChange={vi.fn()} />
+      </>,
+    );
+
+    expect(screen.getByLabelText("Language")).toBeTruthy();
+    expect(screen.getByLabelText("Desktop notifications")).toBeTruthy();
   });
 });

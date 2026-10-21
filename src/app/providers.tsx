@@ -17,6 +17,16 @@ type AppProvidersProps = {
 };
 
 export function AppProviders({ router }: AppProvidersProps) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UiPreferencesProvider>
+        <AppRuntime router={router} />
+      </UiPreferencesProvider>
+    </QueryClientProvider>
+  );
+}
+
+function AppRuntime({ router }: AppProvidersProps) {
   useAppServerNotifications();
 
   useEffect(() => {
@@ -45,11 +55,5 @@ export function AppProviders({ router }: AppProvidersProps) {
     };
   }, [router]);
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <UiPreferencesProvider>
-        <RouterProvider router={router} />
-      </UiPreferencesProvider>
-    </QueryClientProvider>
-  );
+  return <RouterProvider router={router} />;
 }

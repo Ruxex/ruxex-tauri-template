@@ -50,7 +50,7 @@ describe("settings and composer selectors", () => {
       density: "compact",
       colorScheme: "dark",
       theme: { accentColor: "violet" },
-      version: 2,
+      version: 3,
     });
   });
 });

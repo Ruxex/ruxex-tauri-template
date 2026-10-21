@@ -74,6 +74,18 @@ describe("notification adapter", () => {
     expect(send).toHaveBeenCalledOnce();
   });
 
+  it("suppresses notifications when the preference is disabled", async () => {
+    const send = vi.fn().mockResolvedValue(undefined);
+    const dispatcher = createNotificationDispatcher({
+      enabled: () => false,
+      isFocused: () => false,
+      send,
+    });
+
+    await expect(dispatcher.dispatch(completed())).resolves.toBe(false);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("requests permission before sending a native notification", async () => {
     isPermissionGranted.mockResolvedValueOnce(false);
     requestPermission.mockResolvedValueOnce("granted");

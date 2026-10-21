@@ -76,7 +76,7 @@ describe("UI preference persistence", () => {
     });
 
     expect(next).toMatchObject({
-      version: 2,
+      version: 3,
       colorScheme: "light",
       theme: { accentColor: "rose" },
     });

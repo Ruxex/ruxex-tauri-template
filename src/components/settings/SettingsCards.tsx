@@ -3,6 +3,7 @@ import type {
   UiAccentColor,
   UiColorScheme,
   UiDensity,
+  UiLanguage,
   UiTheme,
 } from "../../app/ui-preferences";
 
@@ -137,6 +138,65 @@ export function RuntimeSummary({
         <SettingRow label="Permissions">{permissionCount} profiles</SettingRow>
         <SettingRow label="Rate limits">{rateLimitName}</SettingRow>
       </dl>
+    </SettingsPanel>
+  );
+}
+
+export function LanguageCard({
+  language,
+  onLanguageChange,
+}: {
+  language: UiLanguage;
+  onLanguageChange: (language: UiLanguage) => void;
+}) {
+  return (
+    <SettingsPanel title="Language">
+      <div className="text-sm">
+        <SettingControlRow controlId="settings-language" label="Language">
+          <select
+            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+            id="settings-language"
+            value={language}
+            onChange={(event) =>
+              onLanguageChange(event.target.value as UiLanguage)
+            }
+          >
+            <option value="system">System default</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+          </select>
+        </SettingControlRow>
+      </div>
+    </SettingsPanel>
+  );
+}
+
+export function NotificationsCard({
+  enabled,
+  onEnabledChange,
+}: {
+  enabled: boolean;
+  onEnabledChange: (enabled: boolean) => void;
+}) {
+  return (
+    <SettingsPanel
+      title="Notifications"
+      description="Control desktop notifications when the app is in the background."
+    >
+      <div className="text-sm">
+        <SettingControlRow
+          controlId="settings-desktop-notifications"
+          label="Desktop notifications"
+        >
+          <input
+            className="toggle justify-self-end"
+            checked={enabled}
+            id="settings-desktop-notifications"
+            onChange={(event) => onEnabledChange(event.target.checked)}
+            type="checkbox"
+          />
+        </SettingControlRow>
+      </div>
     </SettingsPanel>
   );
 }

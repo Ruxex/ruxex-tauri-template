@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { useUiPreferences } from "../../app/ui-preferences";
 import { useAppServerEventStore } from "../event-store";
 import { isDesktopRuntime } from "../runtime";
 import {
@@ -17,8 +18,12 @@ export function useServerRequests() {
 
 export function useAppServerNotifications() {
   const events = useAppServerEventStore();
+  const { preferences } = useUiPreferences();
+  const notificationsEnabled = useRef(preferences.notifications.desktop);
+  notificationsEnabled.current = preferences.notifications.desktop;
   const dispatcher = useRef(
     createNotificationDispatcher({
+      enabled: () => notificationsEnabled.current,
       isFocused: () => typeof document !== "undefined" && document.hasFocus(),
       send: sendDesktopNotification,
     }),

@@ -8,9 +8,10 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 2;
+const UI_PREFERENCES_VERSION = 3;
 
 export type UiColorScheme = "system" | "light" | "dark";
+export type UiLanguage = "system" | "en" | "ja";
 export const UI_ACCENT_COLORS = [
   "blue",
   "violet",
@@ -20,6 +21,7 @@ export const UI_ACCENT_COLORS = [
 ] as const;
 export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export type UiTheme = { accentColor: UiAccentColor };
+export type UiNotifications = { desktop: boolean };
 export type ContextTab = "activity" | "changes" | "context";
 export type UiDensity = "comfortable" | "compact";
 
@@ -28,6 +30,8 @@ export type UiPreferences = {
   sidebarCollapsed: boolean;
   contextDrawerOpen: boolean;
   contextTab: ContextTab;
+  language: UiLanguage;
+  notifications: UiNotifications;
   colorScheme: UiColorScheme;
   theme: UiTheme;
   density: UiDensity;
@@ -38,6 +42,8 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   sidebarCollapsed: false,
   contextDrawerOpen: true,
   contextTab: "activity",
+  language: "system",
+  notifications: { desktop: true },
   colorScheme: "system",
   theme: { accentColor: "blue" },
   density: "comfortable",
@@ -74,7 +80,9 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
     const parsed: unknown = JSON.parse(raw);
     if (
       !isRecord(parsed) ||
-      (parsed.version !== 1 && parsed.version !== UI_PREFERENCES_VERSION)
+      (parsed.version !== 1 &&
+        parsed.version !== 2 &&
+        parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
     }
@@ -97,6 +105,19 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         ["activity", "changes", "context"],
         DEFAULT_UI_PREFERENCES.contextTab,
       ),
+      language: readEnum(
+        parsed.language,
+        ["system", "en", "ja"],
+        DEFAULT_UI_PREFERENCES.language,
+      ),
+      notifications: {
+        desktop: readBoolean(
+          isRecord(parsed.notifications)
+            ? parsed.notifications.desktop
+            : undefined,
+          DEFAULT_UI_PREFERENCES.notifications.desktop,
+        ),
+      },
       colorScheme: readEnum(
         parsed.colorScheme ?? legacyColorScheme,
         ["system", "light", "dark"],
@@ -156,6 +177,12 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
     document.documentElement.dataset.theme = preferences.colorScheme;
     document.documentElement.dataset.accent = preferences.theme.accentColor;
     document.documentElement.dataset.density = preferences.density;
+    document.documentElement.lang =
+      preferences.language === "system"
+        ? navigator.language.startsWith("ja")
+          ? "ja"
+          : "en"
+        : preferences.language;
   }, [preferences]);
 
   function update(patch: UiPreferencePatch) {

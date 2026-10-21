@@ -47,11 +47,13 @@ export function classifyAppServerEvent(
 }
 
 export type NotificationDispatcherOptions = {
+  enabled?: () => boolean;
   isFocused: () => boolean;
   send: (candidate: NotificationCandidate) => Promise<void>;
 };
 
 export function createNotificationDispatcher({
+  enabled = () => true,
   isFocused,
   send,
 }: NotificationDispatcherOptions) {
@@ -60,7 +62,12 @@ export function createNotificationDispatcher({
   return {
     async dispatch(event: AppServerEvent): Promise<boolean> {
       const candidate = classifyAppServerEvent(event);
-      if (!candidate || isFocused() || delivered.has(candidate.id)) {
+      if (
+        !candidate ||
+        !enabled() ||
+        isFocused() ||
+        delivered.has(candidate.id)
+      ) {
         return false;
       }
       await send(candidate);
