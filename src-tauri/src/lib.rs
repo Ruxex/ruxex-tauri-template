@@ -2,8 +2,10 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicI64, Ordering};
 
 use base64::Engine;
+use chrono::Utc;
 use ruxex_app_server_client::AppServerEvent;
 use ruxex_app_server_client::AppServerRequestHandle;
 use ruxex_app_server_client::RemoteAppServerClient;
@@ -24,6 +26,8 @@ use tauri::Manager;
 use tauri::State;
 
 mod platform;
+mod scheduler;
+mod worktree;
 
 #[derive(Default)]
 struct AppState {
@@ -31,6 +35,7 @@ struct AppState {
     request_handle: tauri::async_runtime::Mutex<Option<AppServerRequestHandle>>,
     status: tauri::async_runtime::Mutex<Option<AppServerStatus>>,
     shutdown: tauri::async_runtime::Mutex<Option<tauri::async_runtime::Sender<()>>>,
+    schedule_lock: tauri::async_runtime::Mutex<()>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -104,7 +109,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
-        .setup(|_app| {
+        .setup(|app| {
             let home = desktop_ruxex_home().map_err(std::io::Error::other)?;
 
             // The setup hook runs before Tauri exposes commands or starts the
@@ -114,6 +119,13 @@ pub fn run() {
                 std::env::set_var("RUXEX_HOME", &home);
                 std::env::set_var("RUXEX_SQLITE_HOME", &home);
             }
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    let _ = run_due_schedules(&app_handle).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -123,6 +135,15 @@ pub fn run() {
             app_server_connection_status,
             read_image_file,
             open_browser_window,
+            schedule_list,
+            schedule_create,
+            schedule_update,
+            schedule_delete,
+            schedule_run_now,
+            worktree_list,
+            worktree_create,
+            worktree_remove,
+            worktree_open,
             app_server_request,
             app_server_resolve_server_request,
             app_server_reject_server_request
@@ -388,6 +409,257 @@ fn open_browser_window(url: String) -> CommandResult<()> {
         command_error(
             DesktopAppServerErrorKind::Initialization,
             format!("failed to open browser URL: {error}"),
+        )
+    })
+}
+
+static NEXT_SCHEDULE_REQUEST_ID: AtomicI64 = AtomicI64::new(10_000_000);
+
+fn next_schedule_request_id() -> i64 {
+    NEXT_SCHEDULE_REQUEST_ID.fetch_add(1, Ordering::Relaxed)
+}
+
+fn schedule_error(message: impl Into<String>) -> DesktopAppServerError {
+    command_error(DesktopAppServerErrorKind::Initialization, message)
+}
+
+fn schedule_home() -> Result<PathBuf, DesktopAppServerError> {
+    desktop_ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))
+}
+
+fn schedule_file_error(message: String) -> DesktopAppServerError {
+    command_error(DesktopAppServerErrorKind::Initialization, message)
+}
+
+#[tauri::command]
+async fn schedule_list(
+    state: State<'_, AppState>,
+) -> CommandResult<Vec<scheduler::ScheduleRecord>> {
+    let _lock = state.schedule_lock.lock().await;
+    let home = schedule_home()?;
+    Ok(scheduler::load(&home)
+        .map_err(schedule_file_error)?
+        .schedules)
+}
+
+#[tauri::command]
+async fn schedule_create(
+    state: State<'_, AppState>,
+    input: scheduler::ScheduleInput,
+) -> CommandResult<scheduler::ScheduleRecord> {
+    let _lock = state.schedule_lock.lock().await;
+    let home = schedule_home()?;
+    let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
+    let id = format!("schedule-{}-{}", Utc::now().timestamp_millis(), std::process::id());
+    let record = scheduler::new_record(id, input, Utc::now()).map_err(schedule_error)?;
+    file.schedules.push(record.clone());
+    scheduler::save(&home, &file).map_err(schedule_file_error)?;
+    Ok(record)
+}
+
+#[tauri::command]
+async fn schedule_update(
+    state: State<'_, AppState>,
+    id: String,
+    input: scheduler::ScheduleInput,
+) -> CommandResult<scheduler::ScheduleRecord> {
+    let _lock = state.schedule_lock.lock().await;
+    let home = schedule_home()?;
+    let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
+    let index = file
+        .schedules
+        .iter()
+        .position(|schedule| schedule.id == id)
+        .ok_or_else(|| schedule_error("schedule not found"))?;
+    let previous = &file.schedules[index];
+    let mut record = scheduler::new_record(id, input, Utc::now()).map_err(schedule_error)?;
+    record.enabled = previous.enabled;
+    record.last_run = previous.last_run.clone();
+    file.schedules[index] = record.clone();
+    scheduler::save(&home, &file).map_err(schedule_file_error)?;
+    Ok(record)
+}
+
+#[tauri::command]
+async fn schedule_delete(
+    state: State<'_, AppState>,
+    id: String,
+) -> CommandResult<()> {
+    let _lock = state.schedule_lock.lock().await;
+    let home = schedule_home()?;
+    let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
+    let before = file.schedules.len();
+    file.schedules.retain(|schedule| schedule.id != id);
+    if file.schedules.len() == before {
+        return Err(schedule_error("schedule not found"));
+    }
+    scheduler::save(&home, &file).map_err(schedule_file_error)
+}
+
+#[tauri::command]
+async fn schedule_run_now(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> CommandResult<scheduler::ScheduleRecord> {
+    let _lock = state.schedule_lock.lock().await;
+    let home = schedule_home()?;
+    let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
+    let index = file
+        .schedules
+        .iter()
+        .position(|schedule| schedule.id == id)
+        .ok_or_else(|| schedule_error("schedule not found"))?;
+    let mut record = file.schedules[index].clone();
+    let now = Utc::now();
+    let result = dispatch_schedule(&app, &record).await;
+    record.last_run = Some(scheduler::ScheduleRun {
+        at: now.to_rfc3339(),
+        success: result.is_ok(),
+        message: result.as_ref().map(|_| "dispatched".to_string()).unwrap_or_else(|error| error.clone()),
+    });
+    if let Ok(Some(thread_id)) = result {
+        record.thread_id = Some(thread_id);
+    }
+    if let Some(next) = scheduler::next_after_run(&record.cadence, now) {
+        record.next_run_at = next.to_rfc3339();
+    } else {
+        record.enabled = false;
+    }
+    file.schedules[index] = record.clone();
+    scheduler::save(&home, &file).map_err(schedule_file_error)?;
+    Ok(record)
+}
+
+async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let _lock = state.schedule_lock.lock().await;
+    let home = desktop_ruxex_home()?;
+    let mut file = scheduler::load(&home)?;
+    let now = Utc::now();
+    let due_ids = file
+        .schedules
+        .iter()
+        .filter(|schedule| {
+            schedule.enabled
+                && chrono::DateTime::parse_from_rfc3339(&schedule.next_run_at)
+                    .map(|next| next.with_timezone(&Utc) <= now)
+                    .unwrap_or(false)
+        })
+        .map(|schedule| schedule.id.clone())
+        .collect::<Vec<_>>();
+    for id in &due_ids {
+        let Some(index) = file.schedules.iter().position(|schedule| schedule.id == *id) else {
+            continue;
+        };
+        let mut record = file.schedules[index].clone();
+        let result = dispatch_schedule(app, &record).await;
+        record.last_run = Some(scheduler::ScheduleRun {
+            at: now.to_rfc3339(),
+            success: result.is_ok(),
+            message: result.as_ref().map(|_| "dispatched".to_string()).unwrap_or_else(|error| error.clone()),
+        });
+        if let Ok(Some(thread_id)) = result {
+            record.thread_id = Some(thread_id);
+        }
+        if let Some(next) = scheduler::next_after_run(&record.cadence, now) {
+            record.next_run_at = next.to_rfc3339();
+        } else {
+            record.enabled = false;
+        }
+        file.schedules[index] = record;
+    }
+    if !due_ids.is_empty() {
+        scheduler::save(&home, &file)?;
+    }
+    Ok(())
+}
+
+async fn dispatch_schedule(app: &AppHandle, schedule: &scheduler::ScheduleRecord) -> Result<Option<String>, String> {
+    let state = app.state::<AppState>();
+    let handle = request_handle(&state)
+        .await
+        .map_err(|error| error.message)?;
+    let thread_id = if let Some(thread_id) = &schedule.thread_id {
+        let request = schedule_request(
+            "thread/resume",
+            serde_json::json!({ "threadId": thread_id, "excludeTurns": true }),
+        )?;
+        send_schedule_request(&handle, request).await?;
+        Some(thread_id.clone())
+    } else {
+        let request = schedule_request("thread/start", serde_json::json!({}))?;
+        let response = send_schedule_request(&handle, request).await?;
+        response
+            .get("thread")
+            .and_then(|thread| thread.get("id"))
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| "thread/start response did not include a thread id".to_string())
+            .map(Some)?
+    };
+    let request = schedule_request(
+        "turn/start",
+        serde_json::json!({
+            "threadId": thread_id.as_deref().unwrap_or_default(),
+            "input": [{ "type": "text", "text": schedule.prompt, "text_elements": [] }]
+        }),
+    )?;
+    send_schedule_request(&handle, request).await?;
+    Ok(thread_id)
+}
+
+fn schedule_request(method: &str, params: Value) -> Result<ClientRequest, String> {
+    serde_json::from_value(serde_json::json!({
+        "method": method,
+        "id": next_schedule_request_id(),
+        "params": params,
+    }))
+    .map_err(|error| format!("failed to build {method} request: {error}"))
+}
+
+async fn send_schedule_request(
+    handle: &AppServerRequestHandle,
+    request: ClientRequest,
+) -> Result<Value, String> {
+    let method = request.method_name();
+    handle
+        .request(request)
+        .await
+        .map_err(|error| format!("{method} transport error: {error}"))?
+        .map_err(|error| format!("{method} failed: {} (code {})", error.message, error.code))
+}
+
+#[tauri::command]
+fn worktree_list(root: String) -> CommandResult<Vec<worktree::WorktreeRecord>> {
+    worktree::list(Path::new(&root)).map_err(schedule_error)
+}
+
+#[tauri::command]
+fn worktree_create(
+    request: worktree::WorktreeCreateRequest,
+) -> CommandResult<worktree::WorktreeRecord> {
+    worktree::create(&request).map_err(schedule_error)
+}
+
+#[tauri::command]
+fn worktree_remove(request: worktree::WorktreeRemoveRequest) -> CommandResult<()> {
+    worktree::remove(&request).map_err(schedule_error)
+}
+
+#[tauri::command]
+fn worktree_open(root: String, path: String) -> CommandResult<()> {
+    let exists = worktree::list(Path::new(&root))
+        .map_err(schedule_error)?
+        .into_iter()
+        .any(|worktree| worktree.path == path);
+    if !exists {
+        return Err(schedule_error("worktree path is not registered in the repository"));
+    }
+    tauri_plugin_opener::open_path(path, None::<&str>).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to open worktree: {error}"),
         )
     })
 }

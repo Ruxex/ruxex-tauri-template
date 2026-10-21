@@ -72,6 +72,9 @@ export function TopBar({
         <NavLink className="btn btn-ghost btn-sm" to="/settings">
           Settings
         </NavLink>
+        <NavLink className="btn btn-ghost btn-sm" to="/schedules">
+          Schedules
+        </NavLink>
       </nav>
       <div className="badge badge-outline gap-2">
         <span

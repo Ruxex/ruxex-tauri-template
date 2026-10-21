@@ -19,6 +19,7 @@ tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
 base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 ruxex-app-server-client = { version = "0.1.0", git = "https://github.com/Ruxex/ruxex.git", rev = "851c24d5733c1fb3179d067a087a84d2a6a7c3e4" }
 ruxex-app-server-daemon = { version = "0.1.0", git = "https://github.com/Ruxex/ruxex.git", rev = "851c24d5733c1fb3179d067a087a84d2a6a7c3e4" }
 ruxex-app-server-protocol = { version = "0.1.0", git = "https://github.com/Ruxex/ruxex.git", rev = "851c24d5733c1fb3179d067a087a84d2a6a7c3e4" }
@@ -37,4 +38,4 @@ tauri-runtime = "=2.10.1"
 tauri-plugin-deep-link = "2.4.0"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-opener = "2.5.0"
-tokio = { version = "1", features = ["macros", "sync"] }
+tokio = { version = "1", features = ["macros", "sync", "time"] }

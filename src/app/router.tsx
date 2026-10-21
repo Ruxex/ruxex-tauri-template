@@ -10,6 +10,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { NewChatPage } from "../pages/NewChatPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { SettingsPage } from "../pages/SettingsPage";
+import { SchedulesPage } from "../pages/SchedulesPage";
 import { ThreadPage } from "../pages/ThreadPage";
 import { ThreadsPage } from "../pages/ThreadsPage";
 
@@ -23,6 +24,7 @@ export const router = createHashRouter([
       { path: "account", element: <AccountPage /> },
       { path: "approvals", element: <ApprovalCenter /> },
       { path: "settings", element: <SettingsPage /> },
+      { path: "schedules", element: <SchedulesPage /> },
       { path: "capabilities", element: <CapabilitiesPage /> },
       { path: "archive", element: <ArchivePage /> },
       { path: "threads", element: <ThreadsPage /> },

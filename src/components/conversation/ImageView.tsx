@@ -43,7 +43,11 @@ export function ImageView({ path, url }: ImageViewProps) {
   }
   if (!source) {
     return (
-      <span className="loading loading-spinner" aria-label="Loading image" />
+      <span
+        aria-label="Loading image"
+        className="loading loading-spinner"
+        role="status"
+      />
     );
   }
 

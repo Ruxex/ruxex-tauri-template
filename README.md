@@ -66,15 +66,28 @@ the built Ruxex executable and code-mode host plus `rg` and, on Linux,
 The reference application currently provides server-backed thread history,
 projects, queue and goal controls, approval requests, image input, Markdown
 and code/diff rendering, inline review startup, MCP status/reload, Skills,
-Plugins, and collaboration-mode inventory.
+Plugins, collaboration-mode inventory, and a typed local/remote App Server
+connection UI.
 
-Some desktop capabilities require protocol or platform inputs that this
-template does not invent: browser/computer-use and screenshots, native OS
-notification/deep-link registration, scheduled or remote continuation,
-native worktree orchestration, artifact viewers, and signed Linux/macOS
-release artifacts. Those boundaries are intentionally explicit; integrations
-can be added behind the App Server and Tauri plugin interfaces when their
-contracts are available.
+The four desktop capability boundaries are implemented behind explicit
+protocol and platform adapters:
+
+- Browser/Computer Use reads `config/read` and `configRequirements/read`, keeps
+  the App Server authoritative for execution and approvals, presents dynamic
+  tool images and `imageView` screenshots, and opens validated HTTP(S) URLs.
+- Native notifications cover completed turns, pending server requests, and
+  disconnects, with permission, duplicate, and focused-window suppression.
+  `ruxex://thread/<id>` and `ruxex://project/<id>` deep links are normalized
+  before navigation.
+- Schedules are persisted under the Desktop Ruxex home, support one-shot,
+  daily, and weekly cadence, retain failed runs, and can start or resume a
+  thread through the active local or remote App Server connection.
+- Native Git worktree commands list, create, open, and remove worktrees with
+  repository-root, branch, and dirty-removal checks. Dirty removal requires
+  an explicit force action.
+
+Artifact viewers and signed Linux/macOS release artifacts remain outside this
+template's scope.
 
 ## Development
 

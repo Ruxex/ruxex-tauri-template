@@ -23,6 +23,11 @@ vi.mock("../components/common/ThreadCard", () => ({
     thread: { id: string; name?: string | null };
   }) => <div data-testid="project-thread">{thread.name ?? thread.id}</div>,
 }));
+vi.mock("../components/projects/WorktreeCard", () => ({
+  WorktreeCard: ({ root }: { root: string }) => (
+    <div data-testid="worktree-card">{root}</div>
+  ),
+}));
 
 describe("ProjectHomePage", () => {
   afterEach(cleanup);
@@ -58,6 +63,7 @@ describe("ProjectHomePage", () => {
 
     expect(screen.getByRole("heading", { name: "Ruxex" })).toBeTruthy();
     expect(screen.getByText("Project chat")).toBeTruthy();
+    expect(screen.getByTestId("worktree-card").textContent).toBe("/workspace");
     expect(
       screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
     ).toBe("/projects/project-1/chat/new");

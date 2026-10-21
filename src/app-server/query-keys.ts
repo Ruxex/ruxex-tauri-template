@@ -6,6 +6,8 @@ export const appServerQueryKeys = {
   connection: ["app-server", "connection"] as const,
   config: (params: object) => ["app-server", "config", params] as const,
   configRequirements: ["app-server", "config-requirements"] as const,
+  schedules: ["platform", "schedules"] as const,
+  worktrees: (root: string) => ["platform", "worktrees", root] as const,
   models: ["app-server", "models"] as const,
   provider: ["app-server", "provider"] as const,
   providerCapabilities: ["app-server", "provider", "capabilities"] as const,
