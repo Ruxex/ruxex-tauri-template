@@ -61,13 +61,42 @@ Stage those files with `scripts/stage-ruxex-package.py`, passing the paths to
 the built Ruxex executable and code-mode host plus `rg` and, on Linux,
 `bwrap`. The staged directory is intentionally ignored by Git.
 
+## Capability boundary
+
+The reference application currently provides server-backed thread history,
+projects, queue and goal controls, approval requests, image input, Markdown
+and code/diff rendering, inline review startup, MCP status/reload, Skills,
+Plugins, collaboration-mode inventory, and a typed local/remote App Server
+connection UI.
+
+The four desktop capability boundaries are implemented behind explicit
+protocol and platform adapters:
+
+- Browser/Computer Use reads `config/read` and `configRequirements/read`, keeps
+  the App Server authoritative for execution and approvals, presents dynamic
+  tool images and `imageView` screenshots, and opens validated HTTP(S) URLs.
+- Native notifications cover completed turns, pending server requests, and
+  disconnects, with permission, duplicate, and focused-window suppression.
+  `ruxex://thread/<id>` and `ruxex://project/<id>` deep links are normalized
+  before navigation.
+- Schedules are persisted under the Desktop Ruxex home, support one-shot,
+  daily, and weekly cadence, retain failed runs, and can start or resume a
+  thread through the active local or remote App Server connection.
+- Native Git worktree commands list, create, open, and remove worktrees with
+  repository-root, branch, and dirty-removal checks. Dirty removal requires
+  an explicit force action.
+
+Artifact viewers and signed Linux/macOS release artifacts remain outside this
+template's scope.
+
 ## Development
 
 ```sh
 pnpm install
-pnpm check
-pnpm test
-python3 scripts/test_stage_ruxex_package.py
+just check-tests
+just package-test
+just rust-test
+just build
 pnpm tauri dev
 ```
 
@@ -79,6 +108,12 @@ make mock-app-server
 
 このモードでは `VITE_MOCK_APP_SERVER=1` が有効になり、Tauriのinvoke/eventブリッジと
 基本的なApp Server応答がインメモリで置き換えられます。
+
+The `justfile` is the supported local verification entrypoint. `just
+check-tests` runs the frontend type and lint checks plus the Vitest suite;
+`just package-test` validates runtime-package staging; `just rust-test` runs
+the Tauri bridge tests; and `just verify` runs all checks and the frontend
+build.
 
 The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.

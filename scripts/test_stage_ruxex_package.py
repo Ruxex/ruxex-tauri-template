@@ -13,6 +13,17 @@ SPEC.loader.exec_module(MODULE)
 
 
 class StageRuxexPackageTest(unittest.TestCase):
+    def _runtime_inputs(self, root: Path) -> dict[str, Path]:
+        inputs = root / "inputs"
+        inputs.mkdir()
+        paths = {}
+        for name in ("ruxex", "ruxex-code-mode-host", "rg", "bwrap"):
+            path = inputs / name
+            path.write_text(name, encoding="utf-8")
+            path.chmod(0o755)
+            paths[name] = path
+        return paths
+
     def test_preserves_repository_ignore_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -147,6 +158,70 @@ class StageRuxexPackageTest(unittest.TestCase):
             )
             self.assertTrue(os.access(output / "bin/ruxex", os.X_OK))
             MODULE.validate_package(output, "0.1.0", "x86_64-unknown-linux-gnu")
+
+    def test_rejects_a_missing_runtime_binary(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._runtime_inputs(root)
+            old_argv = MODULE.sys.argv
+            try:
+                MODULE.sys.argv = [
+                    str(SCRIPT),
+                    "--output",
+                    str(root / "package"),
+                    "--ruxex-bin",
+                    str(root / "inputs" / "missing-ruxex"),
+                    "--code-mode-host",
+                    str(paths["ruxex-code-mode-host"]),
+                    "--rg",
+                    str(paths["rg"]),
+                    "--bwrap",
+                    str(paths["bwrap"]),
+                ]
+                with self.assertRaisesRegex(SystemExit, "missing .*ruxex"):
+                    MODULE.main()
+            finally:
+                MODULE.sys.argv = old_argv
+
+    def test_rejects_a_manifest_that_does_not_match_the_staged_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for relative in ("bin/ruxex", "bin/ruxex-code-mode-host", "ruxex-path/rg", "ruxex-resources/bwrap"):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("tool", encoding="utf-8")
+                path.chmod(0o755)
+            (root / "ruxex-package.json").write_text(
+                '{"version":"wrong","target":"wrong","entrypoint":"bin/ruxex"}',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(SystemExit, "unexpected staged Ruxex package manifest"):
+                MODULE.validate_package(root, "0.1.0", "x86_64-unknown-linux-gnu")
+
+    def test_refuses_to_stage_into_the_filesystem_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._runtime_inputs(root)
+            old_argv = MODULE.sys.argv
+            try:
+                MODULE.sys.argv = [
+                    str(SCRIPT),
+                    "--output",
+                    "/",
+                    "--ruxex-bin",
+                    str(paths["ruxex"]),
+                    "--code-mode-host",
+                    str(paths["ruxex-code-mode-host"]),
+                    "--rg",
+                    str(paths["rg"]),
+                    "--bwrap",
+                    str(paths["bwrap"]),
+                ]
+                with self.assertRaisesRegex(SystemExit, "filesystem root"):
+                    MODULE.main()
+            finally:
+                MODULE.sys.argv = old_argv
 
 
 if __name__ == "__main__":

@@ -1,8 +1,13 @@
 import { Link, useParams } from "react-router-dom";
 
 import { useProject, useProjectThreads } from "../app-server/hooks";
-import { EmptyState, ErrorState, LoadingState } from "../components/common/AsyncState";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "../components/common/AsyncState";
 import { ThreadCard } from "../components/common/ThreadCard";
+import { WorktreeCard } from "../components/projects/WorktreeCard";
 
 export function ProjectHomePage() {
   const { projectId = "" } = useParams<{ projectId: string }>();
@@ -21,13 +26,19 @@ export function ProjectHomePage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-primary">Project</p>
+          <p className="text-sm font-medium uppercase tracking-wide text-primary">
+            Project
+          </p>
           <h1 className="text-3xl font-semibold">{details.name}</h1>
           <p className="mt-2 text-sm text-base-content/70">
-            {details.roots.length} workspace root{details.roots.length === 1 ? "" : "s"}
+            {details.roots.length} workspace root
+            {details.roots.length === 1 ? "" : "s"}
           </p>
         </div>
-        <Link className="btn btn-primary" to={`/projects/${projectId}/chat/new`}>
+        <Link
+          className="btn btn-primary"
+          to={`/projects/${projectId}/chat/new`}
+        >
           New chat
         </Link>
       </div>
@@ -48,6 +59,7 @@ export function ProjectHomePage() {
           </div>
         </div>
       </section>
+      {details.roots[0]?.path && <WorktreeCard root={details.roots[0].path} />}
     </div>
   );
 }

@@ -33,6 +33,9 @@ export async function startAppServerEventStore(): Promise<void> {
   const generation = ++lifecycleGeneration;
   const start = (async () => {
     const nextUnlisten = await listenToAppServerEvents((event) => {
+      if (generation !== lifecycleGeneration) {
+        return;
+      }
       snapshot = reduceAppServerEvent(snapshot, event);
       notify();
     });

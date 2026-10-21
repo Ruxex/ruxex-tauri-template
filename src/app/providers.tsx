@@ -1,11 +1,14 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider } from "react-router-dom";
 import { useEffect } from "react";
+import { RouterProvider } from "react-router-dom";
 
 import {
   startAppServerEventStore,
   stopAppServerEventStore,
 } from "../app-server/event-store";
+import { useAppServerNotifications } from "../app-server/hooks";
+import { isDesktopRuntime } from "../app-server/runtime";
+import { pathForDeepLink, startDeepLinkListener } from "../platform/deep-links";
 import { queryClient } from "./query-client";
 import { UiPreferencesProvider } from "./ui-preferences";
 
@@ -14,10 +17,33 @@ type AppProvidersProps = {
 };
 
 export function AppProviders({ router }: AppProvidersProps) {
+  useAppServerNotifications();
+
   useEffect(() => {
     void startAppServerEventStore();
     return stopAppServerEventStore;
   }, []);
+
+  useEffect(() => {
+    if (!isDesktopRuntime) {
+      return;
+    }
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void startDeepLinkListener((target) => {
+      void router.navigate(pathForDeepLink(target));
+    }).then((unlisten) => {
+      if (cancelled) {
+        unlisten();
+      } else {
+        stop = unlisten;
+      }
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>

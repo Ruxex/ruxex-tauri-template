@@ -16,10 +16,12 @@ describe("app-server event store", () => {
 
   it("exposes reducer state and marks a lagged stream for resynchronization", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
-    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
-      handler = next;
-      return () => undefined;
-    });
+    listenToAppServerEvents.mockImplementation(
+      async (next: (event: AppServerEvent) => void) => {
+        handler = next;
+        return () => undefined;
+      },
+    );
 
     const store = await import("./event-store");
     await store.startAppServerEventStore();
@@ -39,14 +41,16 @@ describe("app-server event store", () => {
     const secondUnlisten = vi.fn();
     listenToAppServerEvents
       .mockImplementationOnce(
-        () => new Promise((resolve) => {
-          resolveFirst = resolve;
-        }),
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          }),
       )
       .mockImplementationOnce(
-        () => new Promise((resolve) => {
-          resolveSecond = resolve;
-        }),
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve;
+          }),
       );
 
     const store = await import("./event-store");
@@ -62,5 +66,65 @@ describe("app-server event store", () => {
     await secondStart;
     store.stopAppServerEventStore();
     expect(secondUnlisten).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores events from a replaced connection listener", async () => {
+    const handlers: Array<(event: AppServerEvent) => void> = [];
+    listenToAppServerEvents.mockImplementation(
+      async (next: (event: AppServerEvent) => void) => {
+        handlers.push(next);
+        return vi.fn();
+      },
+    );
+
+    const store = await import("./event-store");
+    await store.startAppServerEventStore();
+    store.stopAppServerEventStore();
+    await store.startAppServerEventStore();
+
+    handlers[0]?.({ type: "lagged", data: { skipped: 99 } });
+    handlers[1]?.({ type: "lagged", data: { skipped: 2 } });
+
+    expect(store.getAppServerEventSnapshot()).toMatchObject({
+      connected: true,
+      resynchronizing: true,
+      skippedEvents: 2,
+    });
+  });
+
+  it("ignores events from a listener after the store has stopped", async () => {
+    let handler: ((event: AppServerEvent) => void) | undefined;
+    const unlisten = vi.fn();
+    listenToAppServerEvents.mockImplementationOnce(
+      async (next: (event: AppServerEvent) => void) => {
+        handler = next;
+        return unlisten;
+      },
+    );
+
+    const store = await import("./event-store");
+    await store.startAppServerEventStore();
+    store.stopAppServerEventStore();
+
+    handler?.({ type: "lagged", data: { skipped: 99 } });
+
+    expect(store.getAppServerEventSnapshot()).toMatchObject({
+      connected: false,
+      resynchronizing: false,
+      skippedEvents: 0,
+    });
+  });
+
+  it("allows a failed listener setup to be retried", async () => {
+    listenToAppServerEvents
+      .mockRejectedValueOnce(new Error("listener unavailable"))
+      .mockResolvedValueOnce(vi.fn());
+
+    const store = await import("./event-store");
+    await expect(store.startAppServerEventStore()).rejects.toThrow(
+      "listener unavailable",
+    );
+    await expect(store.startAppServerEventStore()).resolves.toBeUndefined();
+    expect(store.getAppServerEventSnapshot().connected).toBe(true);
   });
 });

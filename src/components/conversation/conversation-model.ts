@@ -9,6 +9,9 @@ export type ConversationViewItem = {
   category: "message" | "activity";
   title: string;
   metadata?: Record<string, string>;
+  imagePath?: string;
+  imageUrls?: string[];
+  browserUrl?: string;
 };
 
 export function mergeConversationItems(
@@ -100,13 +103,44 @@ export function normalizeThreadItem(
         turnId,
         item.type,
         `MCP: ${item.server} / ${item.tool}`,
-        item.error ? JSON.stringify(item.error) : item.result ? JSON.stringify(item.result) : "Tool call completed.",
+        item.error
+          ? JSON.stringify(item.error)
+          : item.result
+            ? JSON.stringify(item.result)
+            : "Tool call completed.",
         compactMetadata({
           server: item.server,
           tool: item.tool,
           status: item.status,
         }),
       );
+    case "dynamicToolCall": {
+      const imageUrls = (item.contentItems ?? []).flatMap((content) =>
+        content.type === "inputImage" ? [content.imageUrl] : [],
+      );
+      const browserUrl = findHttpUrl(item.arguments);
+      return {
+        ...messageActivity(
+          item.id,
+          turnId,
+          item.type,
+          `Tool: ${item.tool}`,
+          safeJson(item.arguments),
+          compactMetadata({
+            namespace: item.namespace,
+            status: item.status,
+            success: item.success === null ? null : String(item.success),
+          }),
+        ),
+        ...(imageUrls.length > 0 ? { imageUrls } : {}),
+        ...(browserUrl ? { browserUrl } : {}),
+      };
+    }
+    case "imageView":
+      return {
+        ...messageActivity(item.id, turnId, item.type, "Screenshot", item.path),
+        imagePath: item.path,
+      };
     case "collabAgentToolCall":
       return messageActivity(
         item.id,
@@ -151,7 +185,12 @@ function liveItemToViewItem(item: LiveConversationItem): ConversationViewItem {
     turnId: item.turnId,
     type: item.type,
     category: isMessage ? "message" : "activity",
-    title: item.type === "agentMessage" ? "Ruxex" : item.type === "plan" ? "Plan" : "Reasoning",
+    title:
+      item.type === "agentMessage"
+        ? "Ruxex"
+        : item.type === "plan"
+          ? "Plan"
+          : "Reasoning",
     text: item.text,
   };
 }
@@ -167,9 +206,15 @@ function messageActivity(
   return { id, turnId, type, category: "activity", title, text, metadata };
 }
 
-function compactMetadata(values: Record<string, string | number | null>): Record<string, string> | undefined {
-  const entries = Object.entries(values).filter(([, value]) => value !== null && value !== "");
-  return entries.length > 0 ? Object.fromEntries(entries.map(([key, value]) => [key, String(value)])) : undefined;
+function compactMetadata(
+  values: Record<string, string | number | null>,
+): Record<string, string> | undefined {
+  const entries = Object.entries(values).filter(
+    ([, value]) => value !== null && value !== "",
+  );
+  return entries.length > 0
+    ? Object.fromEntries(entries.map(([key, value]) => [key, String(value)]))
+    : undefined;
 }
 
 function safeJson(value: unknown): string {
@@ -178,4 +223,26 @@ function safeJson(value: unknown): string {
   } catch {
     return "This activity cannot be previewed.";
   }
+}
+
+function findHttpUrl(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:"
+        ? url.toString()
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  if (Array.isArray(value)) {
+    return value.map(findHttpUrl).find((url): url is string => Boolean(url));
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value)
+      .map(findHttpUrl)
+      .find((url): url is string => Boolean(url));
+  }
+  return undefined;
 }
