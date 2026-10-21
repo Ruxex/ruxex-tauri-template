@@ -139,23 +139,15 @@ export function RuntimeSummary({
 type UiPreferencesCardProps = {
   theme: UiTheme;
   density: UiDensity;
-  sidebarCollapsed: boolean;
-  contextDrawerOpen: boolean;
   onThemeChange: (theme: UiTheme) => void;
   onDensityChange: (density: UiDensity) => void;
-  onSidebarChange: (collapsed: boolean) => void;
-  onContextDrawerChange: (open: boolean) => void;
 };
 
 export function UiPreferencesCard({
   theme,
   density,
-  sidebarCollapsed,
-  contextDrawerOpen,
   onThemeChange,
   onDensityChange,
-  onSidebarChange,
-  onContextDrawerChange,
 }: UiPreferencesCardProps) {
   return (
     <SettingsPanel
@@ -187,30 +179,6 @@ export function UiPreferencesCard({
             <option value="comfortable">Comfortable</option>
             <option value="compact">Compact</option>
           </select>
-        </SettingControlRow>
-        <SettingControlRow
-          controlId="settings-project-sidebar"
-          label="Show project sidebar"
-        >
-          <input
-            className="toggle"
-            id="settings-project-sidebar"
-            type="checkbox"
-            checked={!sidebarCollapsed}
-            onChange={(event) => onSidebarChange(!event.target.checked)}
-          />
-        </SettingControlRow>
-        <SettingControlRow
-          controlId="settings-context-drawer"
-          label="Show context drawer"
-        >
-          <input
-            className="toggle"
-            id="settings-context-drawer"
-            type="checkbox"
-            checked={contextDrawerOpen}
-            onChange={(event) => onContextDrawerChange(event.target.checked)}
-          />
         </SettingControlRow>
       </div>
     </SettingsPanel>

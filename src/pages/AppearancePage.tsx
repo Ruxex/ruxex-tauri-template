@@ -13,15 +13,9 @@ export function AppearancePage() {
         <h2 className="text-2xl font-semibold">Appearance</h2>
       </div>
       <UiPreferencesCard
-        contextDrawerOpen={preferences.contextDrawerOpen}
         density={preferences.density}
-        onContextDrawerChange={(contextDrawerOpen) =>
-          update({ contextDrawerOpen })
-        }
         onDensityChange={(density) => update({ density })}
-        onSidebarChange={(sidebarCollapsed) => update({ sidebarCollapsed })}
         onThemeChange={(theme) => update({ theme })}
-        sidebarCollapsed={preferences.sidebarCollapsed}
         theme={preferences.theme}
       />
     </div>

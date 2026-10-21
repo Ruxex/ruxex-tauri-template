@@ -83,13 +83,9 @@ describe("settings card layout", () => {
       <>
         <CapabilitiesCard capabilities={{ browser: true, shell: false }} />
         <UiPreferencesCard
-          contextDrawerOpen
           density="comfortable"
-          onContextDrawerChange={vi.fn()}
           onDensityChange={vi.fn()}
-          onSidebarChange={vi.fn()}
           onThemeChange={vi.fn()}
-          sidebarCollapsed={false}
           theme="system"
         />
       </>,
@@ -104,5 +100,7 @@ describe("settings card layout", () => {
     expect(screen.getByText("Theme").closest("div")?.className).toContain(
       "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
     );
+    expect(screen.queryByText("Show project sidebar")).toBeNull();
+    expect(screen.queryByText("Show context drawer")).toBeNull();
   });
 });
