@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useCollaborationModes = vi.hoisted(() => vi.fn());
+const useConfig = vi.hoisted(() => vi.fn());
+const useConfigRequirements = vi.hoisted(() => vi.fn());
 const useMcpServerStatus = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
@@ -17,6 +19,8 @@ const reloadMcp = vi.hoisted(() => ({
 
 vi.mock("../app-server/hooks", () => ({
   useCollaborationModes,
+  useConfig,
+  useConfigRequirements,
   useMcpServerStatus,
   usePluginList,
   useReloadMcpServers,
@@ -30,6 +34,8 @@ describe("CapabilitiesPage", () => {
     reloadMcp.mutateAsync.mockReset();
     reloadMcp.mutateAsync.mockResolvedValue({});
     useReloadMcpServers.mockReturnValue(reloadMcp);
+    useConfig.mockReturnValue({ data: { config: null } });
+    useConfigRequirements.mockReturnValue({ data: { requirements: null } });
     useMcpServerStatus.mockReturnValue({
       data: {
         data: [

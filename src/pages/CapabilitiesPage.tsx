@@ -1,16 +1,21 @@
 import {
   useCollaborationModes,
+  useConfig,
+  useConfigRequirements,
   useMcpServerStatus,
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
 } from "../app-server/hooks";
+import { BrowserComputerUseCard } from "../components/capabilities/BrowserComputerUseCard";
 
 export function CapabilitiesPage() {
   const mcp = useMcpServerStatus({ detail: "full" });
   const skills = useSkillsList();
   const plugins = usePluginList();
   const collaborationModes = useCollaborationModes();
+  const config = useConfig();
+  const configRequirements = useConfigRequirements();
   const reloadMcp = useReloadMcpServers();
 
   return (
@@ -37,6 +42,10 @@ export function CapabilitiesPage() {
       {reloadMcp.isError && (
         <p className="alert alert-error">{String(reloadMcp.error)}</p>
       )}
+      <BrowserComputerUseCard
+        config={config.data?.config ?? null}
+        requirements={configRequirements.data?.requirements ?? null}
+      />
       <section className="grid gap-4 lg:grid-cols-2">
         <article className="card border border-base-300 bg-base-100 shadow-sm">
           <div className="card-body">

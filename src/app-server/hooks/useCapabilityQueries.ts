@@ -63,6 +63,35 @@ export function useCollaborationModes() {
   });
 }
 
+export function useConfig(params: v2.ConfigReadParams = {}) {
+  const status = useAppServerStatus();
+
+  return useQuery<v2.ConfigReadResponse>({
+    queryKey: appServerQueryKeys.config(params),
+    queryFn: async () => {
+      const response = await requestAppServerMethod("config/read", params);
+      return response.response;
+    },
+    enabled: Boolean(status.data),
+  });
+}
+
+export function useConfigRequirements() {
+  const status = useAppServerStatus();
+
+  return useQuery<v2.ConfigRequirementsReadResponse>({
+    queryKey: appServerQueryKeys.configRequirements,
+    queryFn: async () => {
+      const response = await requestAppServerMethod(
+        "configRequirements/read",
+        undefined,
+      );
+      return response.response;
+    },
+    enabled: Boolean(status.data),
+  });
+}
+
 export function useCallMcpTool() {
   return useMutation({
     mutationFn: async (params: v2.McpServerToolCallParams) => {

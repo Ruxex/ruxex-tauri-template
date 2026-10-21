@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const openBrowserWindow = vi.hoisted(() => vi.fn());
+
+vi.mock("../../platform/native", () => ({ openBrowserWindow }));
 
 import { ActivityItem } from "./ActivityItem";
 
@@ -46,6 +50,28 @@ describe("ActivityItem", () => {
     expect(screen.getByTestId("diff-added").textContent).toContain("+added");
     expect(screen.getByTestId("diff-removed").textContent).toContain(
       "-removed",
+    );
+  });
+
+  it("offers an explicit browser action for Browser tool results", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "browser-1",
+          turnId: "turn-1",
+          type: "dynamicToolCall",
+          category: "activity",
+          title: "Tool: browser.navigate",
+          text: "opened",
+          browserUrl: "https://example.test/session",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open in browser" }));
+
+    expect(openBrowserWindow).toHaveBeenCalledWith(
+      "https://example.test/session",
     );
   });
 });

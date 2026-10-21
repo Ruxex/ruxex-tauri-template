@@ -35,6 +35,8 @@ describe("capability query and mutation hooks", () => {
     ["useMcpServerStatus", "mcpServerStatus/list", { limit: 10 }],
     ["usePluginList", "plugin/list", {}],
     ["useCollaborationModes", "collaborationMode/list", {}],
+    ["useConfig", "config/read", { includeLayers: true }],
+    ["useConfigRequirements", "configRequirements/read", undefined],
   ] as const)("maps %s to %s", async (hookName, method, params) => {
     const hooks = await import("./useCapabilityQueries");
     const hook = hooks[hookName] as (value?: never) => { isSuccess: boolean };

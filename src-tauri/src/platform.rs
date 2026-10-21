@@ -44,6 +44,28 @@ pub fn validate_remote_endpoint(value: &str) -> Option<String> {
     allowed.then(|| url.to_string())
 }
 
+pub fn validate_browser_url(value: &str) -> Option<String> {
+    let url = Url::parse(value).ok()?;
+    if url.host_str().is_none() || url.username() != "" || url.password().is_some() {
+        return None;
+    }
+    matches!(url.scheme(), "http" | "https").then(|| url.to_string())
+}
+
+pub fn is_path_under_any_root(path: &Path, roots: &[&Path]) -> bool {
+    path.is_absolute() && roots.iter().any(|root| path.starts_with(root))
+}
+
+pub fn image_mime_type(path: &Path) -> Option<&'static str> {
+    match path.extension()?.to_str()?.to_ascii_lowercase().as_str() {
+        "png" => Some("image/png"),
+        "jpg" | "jpeg" => Some("image/jpeg"),
+        "gif" => Some("image/gif"),
+        "webp" => Some("image/webp"),
+        _ => None,
+    }
+}
+
 pub fn validate_schedule(name: &str, prompt: &str, hour: u8, minute: u8) -> bool {
     !name.trim().is_empty() && name.len() <= 120 && !prompt.trim().is_empty() && hour < 24 && minute < 60
 }
@@ -74,7 +96,8 @@ fn is_parent(component: Component<'_>) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{normalize_deep_link, validate_remote_endpoint, validate_schedule, validate_worktree_path};
+    use super::{image_mime_type, is_path_under_any_root, normalize_deep_link, validate_browser_url, validate_remote_endpoint, validate_schedule, validate_worktree_path};
+    use std::path::Path;
 
     #[test]
     fn accepts_known_deep_links_and_rejects_other_schemes() {
@@ -90,6 +113,23 @@ mod tests {
         assert_eq!(validate_remote_endpoint("ws://127.0.0.1:8080/rpc"), Some("ws://127.0.0.1:8080/rpc".to_string()));
         assert_eq!(validate_remote_endpoint("ws://example.test/rpc"), None);
         assert_eq!(validate_remote_endpoint("https://example.test/rpc"), None);
+    }
+
+    #[test]
+    fn validates_browser_urls_and_image_types() {
+        assert_eq!(validate_browser_url("https://example.test/path?q=1"), Some("https://example.test/path?q=1".to_string()));
+        assert_eq!(validate_browser_url("file:///tmp/secret"), None);
+        assert_eq!(validate_browser_url("javascript:alert(1)"), None);
+        assert_eq!(image_mime_type(Path::new("capture.PNG")), Some("image/png"));
+        assert_eq!(image_mime_type(Path::new("capture.txt")), None);
+    }
+
+    #[test]
+    fn restricts_image_paths_to_allowed_absolute_roots() {
+        let workspace = Path::new("/workspace");
+        assert!(is_path_under_any_root(Path::new("/workspace/capture.png"), &[workspace]));
+        assert!(!is_path_under_any_root(Path::new("/workspace-other/capture.png"), &[workspace]));
+        assert!(!is_path_under_any_root(Path::new("relative/capture.png"), &[workspace]));
     }
 
     #[test]

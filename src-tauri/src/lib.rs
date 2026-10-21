@@ -3,6 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
+use base64::Engine;
 use ruxex_app_server_client::AppServerEvent;
 use ruxex_app_server_client::AppServerRequestHandle;
 use ruxex_app_server_client::RemoteAppServerClient;
@@ -120,6 +121,8 @@ pub fn run() {
             connect_app_server,
             disconnect_app_server,
             app_server_connection_status,
+            read_image_file,
+            open_browser_window,
             app_server_request,
             app_server_resolve_server_request,
             app_server_reject_server_request
@@ -312,6 +315,81 @@ fn desktop_ruxex_home() -> Result<PathBuf, String> {
     fs::create_dir_all(&home)
         .map_err(|error| format!("failed to create Desktop Ruxex home: {error}"))?;
     Ok(home)
+}
+
+#[tauri::command]
+fn read_image_file(path: String) -> CommandResult<String> {
+    let requested = PathBuf::from(&path);
+    if !requested.is_absolute() {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "image path must be absolute",
+        ));
+    }
+    let canonical = requested.canonicalize().map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("image path cannot be opened: {error}"),
+        )
+    })?;
+    let home = desktop_ruxex_home()
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let workspace = std::env::current_dir().map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to resolve workspace root: {error}"),
+        )
+    })?;
+    let roots = [home, workspace];
+    let canonical_roots = roots
+        .iter()
+        .filter_map(|root| root.canonicalize().ok())
+        .collect::<Vec<_>>();
+    let root_refs = canonical_roots.iter().map(PathBuf::as_path).collect::<Vec<_>>();
+    if !platform::is_path_under_any_root(&canonical, &root_refs) {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "image path is outside the Ruxex or workspace roots",
+        ));
+    }
+    let mime = platform::image_mime_type(&canonical).ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "only png, jpeg, gif, and webp images are supported",
+        )
+    })?;
+    let bytes = fs::read(&canonical).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to read image: {error}"),
+        )
+    })?;
+    if bytes.len() > 16 * 1024 * 1024 {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "image exceeds the 16 MiB presentation limit",
+        ));
+    }
+    Ok(format!(
+        "data:{mime};base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(bytes)
+    ))
+}
+
+#[tauri::command]
+fn open_browser_window(url: String) -> CommandResult<()> {
+    let url = platform::validate_browser_url(&url).ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "browser URL must use http:// or https://",
+        )
+    })?;
+    tauri_plugin_opener::open_url(url, None::<&str>).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to open browser URL: {error}"),
+        )
+    })
 }
 
 async fn connect_unix_socket(
