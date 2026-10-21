@@ -15,7 +15,7 @@ use ruxex_app_server_protocol::RequestId;
 use ruxex_app_server_protocol::Result as JsonRpcResult;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_home_dir::ProductIdentity;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::AppHandle;
 use tauri::Emitter;
@@ -29,6 +29,7 @@ struct AppState {
     initialization: tauri::async_runtime::Mutex<()>,
     request_handle: tauri::async_runtime::Mutex<Option<AppServerRequestHandle>>,
     status: tauri::async_runtime::Mutex<Option<AppServerStatus>>,
+    shutdown: tauri::async_runtime::Mutex<Option<tauri::async_runtime::Sender<()>>>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -36,6 +37,25 @@ struct AppState {
 struct AppServerStatus {
     socket_path: String,
     app_server_version: String,
+    endpoint_kind: AppServerEndpointKind,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+enum AppServerEndpointKind {
+    Local,
+    Websocket,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+enum AppServerEndpoint {
+    Local,
+    Websocket {
+        url: String,
+        #[serde(rename = "authToken")]
+        auth_token: Option<String>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -79,6 +99,9 @@ enum DesktopAppServerEvent {
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
         .setup(|_app| {
             let home = desktop_ruxex_home().map_err(std::io::Error::other)?;
@@ -94,6 +117,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             ensure_app_server,
+            connect_app_server,
+            disconnect_app_server,
+            app_server_connection_status,
             app_server_request,
             app_server_resolve_server_request,
             app_server_reject_server_request
@@ -105,6 +131,9 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::DESKTOP_EXPERIMENTAL_API;
+    use super::AppServerEndpoint;
+    use super::AppServerEndpointKind;
+    use super::AppServerStatus;
     use super::DesktopAppServerEvent;
     use super::DesktopAppServerErrorKind;
     use super::command_error;
@@ -188,6 +217,31 @@ mod tests {
         );
     }
 
+    #[test]
+    fn app_server_status_and_remote_endpoints_keep_the_bridge_contract() {
+        let status = AppServerStatus {
+            socket_path: "wss://example.test/rpc".to_string(),
+            app_server_version: "remote".to_string(),
+            endpoint_kind: AppServerEndpointKind::Websocket,
+        };
+        assert_eq!(
+            serde_json::to_value(status).unwrap(),
+            json!({
+                "socketPath": "wss://example.test/rpc",
+                "appServerVersion": "remote",
+                "endpointKind": "websocket",
+            })
+        );
+
+        let endpoint: AppServerEndpoint = serde_json::from_value(json!({
+            "kind": "websocket",
+            "url": "wss://example.test/rpc",
+            "authToken": "memory-only-token",
+        }))
+        .unwrap();
+        assert!(matches!(endpoint, AppServerEndpoint::Websocket { url, auth_token: Some(token) } if url == "wss://example.test/rpc" && token == "memory-only-token"));
+    }
+
     fn package_fixture(name: &str, with_manifest: bool) -> PathBuf {
         let path = std::env::temp_dir().join(format!("ruxex-desktop-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
@@ -260,7 +314,7 @@ fn desktop_ruxex_home() -> Result<PathBuf, String> {
     Ok(home)
 }
 
-async fn connect_app_server(
+async fn connect_unix_socket(
     socket_path: AbsolutePathBuf,
 ) -> Result<RemoteAppServerClient, std::io::Error> {
     RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
@@ -274,26 +328,97 @@ async fn connect_app_server(
     .await
 }
 
-#[tauri::command]
-async fn ensure_app_server(
-    app: AppHandle,
-    state: State<'_, AppState>,
+async fn connect_remote_socket(
+    url: String,
+    auth_token: Option<String>,
+) -> CommandResult<RemoteAppServerClient> {
+    let websocket_url = platform::validate_remote_endpoint(&url).ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Connection,
+            "remote endpoint must be wss:// or loopback ws://",
+        )
+    })?;
+    RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
+        endpoint: RemoteAppServerEndpoint::WebSocket {
+            websocket_url,
+            auth_token,
+        },
+        client_name: desktop_product_identity().product_name().to_string(),
+        client_version: env!("CARGO_PKG_VERSION").to_string(),
+        experimental_api: DESKTOP_EXPERIMENTAL_API,
+        opt_out_notification_methods: Vec::new(),
+        channel_capacity: 128,
+    })
+    .await
+    .map_err(|error| command_error(DesktopAppServerErrorKind::Connection, error.to_string()))
+}
+
+async fn install_connection(
+    app: &AppHandle,
+    state: &State<'_, AppState>,
+    mut client: RemoteAppServerClient,
+    status: AppServerStatus,
 ) -> CommandResult<AppServerStatus> {
-    let _initialization = state.initialization.lock().await;
-    if let Some(status) = state.status.lock().await.clone() {
-        return Ok(status);
+    let old_shutdown = state.shutdown.lock().await.take();
+    if let Some(sender) = old_shutdown {
+        let _ = sender.send(()).await;
     }
 
+    let request_handle = client.request_handle();
+    *state.request_handle.lock().await = Some(AppServerRequestHandle::Remote(request_handle));
+    *state.status.lock().await = Some(status.clone());
+
+    let (shutdown_tx, mut shutdown_rx) = tauri::async_runtime::channel(1);
+    *state.shutdown.lock().await = Some(shutdown_tx);
+    let event_app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        loop {
+            tokio::select! {
+                _ = shutdown_rx.recv() => break,
+                event = client.next_event() => {
+                    let Some(event) = event else { break };
+                    let payload = match event {
+                        AppServerEvent::Lagged { skipped } => DesktopAppServerEvent::Lagged { skipped },
+                        AppServerEvent::ServerNotification(notification) => {
+                            match serde_json::to_value(notification) {
+                                Ok(notification) => DesktopAppServerEvent::ServerNotification(notification),
+                                Err(error) => DesktopAppServerEvent::Disconnected {
+                                    message: format!("failed to serialize server notification: {error}"),
+                                },
+                            }
+                        }
+                        AppServerEvent::ServerRequest(request) => match serde_json::to_value(request) {
+                            Ok(request) => DesktopAppServerEvent::ServerRequest(request),
+                            Err(error) => DesktopAppServerEvent::Disconnected {
+                                message: format!("failed to serialize server request: {error}"),
+                            },
+                        },
+                        AppServerEvent::Disconnected { message } => {
+                            DesktopAppServerEvent::Disconnected { message }
+                        }
+                    };
+                    if event_app.emit("app-server-event", payload).is_err() {
+                        break;
+                    }
+                }
+            }
+        }
+        let _ = client.shutdown().await;
+    });
+
+    Ok(status)
+}
+
+async fn connect_local_endpoint(app: &AppHandle) -> CommandResult<(RemoteAppServerClient, AppServerStatus)> {
     let home = desktop_ruxex_home()
         .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-    let socket_path =
-        ruxex_app_server_client::app_server_control_socket_path(&home).map_err(|error| {
-            command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
-        })?;
-    let (client, bootstrapped_version) = match connect_app_server(socket_path.clone()).await {
-        Ok(client) => (client, None),
+    let socket_path = ruxex_app_server_client::app_server_control_socket_path(&home).map_err(|error| {
+        command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
+    })?;
+    let (client, effective_socket_path, bootstrapped_version) = match connect_unix_socket(socket_path.clone()).await {
+        Ok(client) => (client, socket_path, None),
         Err(_) => {
-            let package_source = runtime_package_source(&app)
+            let package_source = runtime_package_source(app)
                 .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
             let bootstrap = ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
                 &package_source,
@@ -303,63 +428,74 @@ async fn ensure_app_server(
                 ],
             )
             .await
-            .map_err(|error| {
-                command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}"))
-            })?;
-            let socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
-                .map_err(|error| {
-                    command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
-                })?;
-            let client = connect_app_server(socket_path).await.map_err(|error| {
+            .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}")))?;
+            let effective_socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
+                .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error.to_string()))?;
+            let client = connect_unix_socket(effective_socket_path.clone()).await.map_err(|error| {
                 command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
             })?;
-            (client, Some(bootstrap.app_server_version))
+            (client, effective_socket_path, Some(bootstrap.app_server_version))
         }
     };
-
     let status = AppServerStatus {
-        socket_path: socket_path.display().to_string(),
-        app_server_version: client
-            .server_version()
-            .map(str::to_owned)
-            .or(bootstrapped_version)
-            .unwrap_or_else(|| "unknown".to_string()),
+        socket_path: effective_socket_path.display().to_string(),
+        app_server_version: client.server_version().map(str::to_owned).or(bootstrapped_version).unwrap_or_else(|| "unknown".to_string()),
+        endpoint_kind: AppServerEndpointKind::Local,
     };
-    let request_handle = client.request_handle();
-    *state.request_handle.lock().await = Some(AppServerRequestHandle::Remote(request_handle));
-    *state.status.lock().await = Some(status.clone());
+    Ok((client, status))
+}
 
-    let event_app = app.clone();
-    tauri::async_runtime::spawn(async move {
-        let mut client = client;
-        while let Some(event) = client.next_event().await {
-            let payload = match event {
-                AppServerEvent::Lagged { skipped } => DesktopAppServerEvent::Lagged { skipped },
-                AppServerEvent::ServerNotification(notification) => {
-                    match serde_json::to_value(notification) {
-                        Ok(notification) => DesktopAppServerEvent::ServerNotification(notification),
-                        Err(error) => DesktopAppServerEvent::Disconnected {
-                            message: format!("failed to serialize server notification: {error}"),
-                        },
-                    }
-                }
-                AppServerEvent::ServerRequest(request) => match serde_json::to_value(request) {
-                    Ok(request) => DesktopAppServerEvent::ServerRequest(request),
-                    Err(error) => DesktopAppServerEvent::Disconnected {
-                        message: format!("failed to serialize server request: {error}"),
-                    },
-                },
-                AppServerEvent::Disconnected { message } => {
-                    DesktopAppServerEvent::Disconnected { message }
-                }
+#[tauri::command]
+async fn connect_app_server(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    endpoint: AppServerEndpoint,
+) -> CommandResult<AppServerStatus> {
+    let _initialization = state.initialization.lock().await;
+    let (client, status) = match endpoint {
+        AppServerEndpoint::Local => connect_local_endpoint(&app).await?,
+        AppServerEndpoint::Websocket { url, auth_token } => {
+            let client = connect_remote_socket(url.clone(), auth_token).await?;
+            let status = AppServerStatus {
+                socket_path: url,
+                app_server_version: client.server_version().unwrap_or("unknown").to_string(),
+                endpoint_kind: AppServerEndpointKind::Websocket,
             };
-            if event_app.emit("app-server-event", payload).is_err() {
-                break;
-            }
+            (client, status)
         }
-    });
+    };
+    install_connection(&app, &state, client, status).await
+}
 
-    Ok(status)
+#[tauri::command]
+async fn disconnect_app_server(state: State<'_, AppState>) -> CommandResult<()> {
+    let _initialization = state.initialization.lock().await;
+    if let Some(sender) = state.shutdown.lock().await.take() {
+        let _ = sender.send(()).await;
+    }
+    *state.request_handle.lock().await = None;
+    *state.status.lock().await = None;
+    Ok(())
+}
+
+#[tauri::command]
+async fn app_server_connection_status(
+    state: State<'_, AppState>,
+) -> CommandResult<Option<AppServerStatus>> {
+    Ok(state.status.lock().await.clone())
+}
+
+#[tauri::command]
+async fn ensure_app_server(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<AppServerStatus> {
+    let _initialization = state.initialization.lock().await;
+    if let Some(status) = state.status.lock().await.clone() {
+        return Ok(status);
+    }
+    let (client, status) = connect_local_endpoint(&app).await?;
+    install_connection(&app, &state, client, status).await
 }
 
 #[tauri::command]

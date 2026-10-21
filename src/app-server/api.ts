@@ -5,7 +5,12 @@ import type { ClientRequest, ClientResponse, RequestId } from "../protocol";
 export type AppServerStatus = {
   socketPath: string;
   appServerVersion: string;
+  endpointKind?: "local" | "websocket";
 };
+
+export type AppServerEndpoint =
+  | { kind: "local" }
+  | { kind: "websocket"; url: string; authToken?: string };
 
 type ResponseFor<Request extends ClientRequest> = Extract<
   ClientResponse,
@@ -31,6 +36,20 @@ function nextRequestId(): number {
 
 export function ensureAppServer(): Promise<AppServerStatus> {
   return invoke<AppServerStatus>("ensure_app_server");
+}
+
+export function connectAppServer(
+  endpoint: AppServerEndpoint,
+): Promise<AppServerStatus> {
+  return invoke<AppServerStatus>("connect_app_server", { endpoint });
+}
+
+export function disconnectAppServer(): Promise<void> {
+  return invoke("disconnect_app_server");
+}
+
+export function appServerConnectionStatus(): Promise<AppServerStatus | null> {
+  return invoke<AppServerStatus | null>("app_server_connection_status");
 }
 
 export function requestAppServer<Request extends ClientRequest>(

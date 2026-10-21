@@ -68,6 +68,30 @@ describe("app-server event store", () => {
     expect(secondUnlisten).toHaveBeenCalledTimes(1);
   });
 
+  it("ignores events from a replaced connection listener", async () => {
+    const handlers: Array<(event: AppServerEvent) => void> = [];
+    listenToAppServerEvents.mockImplementation(
+      async (next: (event: AppServerEvent) => void) => {
+        handlers.push(next);
+        return vi.fn();
+      },
+    );
+
+    const store = await import("./event-store");
+    await store.startAppServerEventStore();
+    store.stopAppServerEventStore();
+    await store.startAppServerEventStore();
+
+    handlers[0]?.({ type: "lagged", data: { skipped: 99 } });
+    handlers[1]?.({ type: "lagged", data: { skipped: 2 } });
+
+    expect(store.getAppServerEventSnapshot()).toMatchObject({
+      connected: true,
+      resynchronizing: true,
+      skippedEvents: 2,
+    });
+  });
+
   it("ignores events from a listener after the store has stopped", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
     const unlisten = vi.fn();
