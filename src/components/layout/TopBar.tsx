@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   useAccount,
@@ -53,29 +53,6 @@ export function TopBar({
           Workspace
         </Link>
       </div>
-      <nav className="flex items-center gap-1" aria-label="Main navigation">
-        <NavLink className="btn btn-ghost btn-sm" to="/threads">
-          Threads
-        </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/chat/new">
-          New chat
-        </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/account">
-          Account
-        </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/approvals">
-          Approvals
-        </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/capabilities">
-          Capabilities
-        </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/settings">
-          Settings
-        </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/schedules">
-          Schedules
-        </NavLink>
-      </nav>
       <div className="badge badge-outline gap-2">
         <span
           className={`status ${connectionLabel === "Connected" ? "status-success" : "status-warning"}`}
