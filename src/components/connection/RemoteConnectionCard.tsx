@@ -46,22 +46,22 @@ export function RemoteConnectionCard({
       description="Tokens are kept in memory and sent only when connecting."
     >
       <form className="divide-y divide-base-300 text-sm" onSubmit={submit}>
-        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+        <label className="grid grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 max-sm:grid-cols-1 max-sm:items-start">
           <span className="label-text">Remote WebSocket URL</span>
           <input
             aria-label="Remote WebSocket URL"
-            className="input input-bordered input-sm w-full max-w-sm justify-self-end"
+            className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             onChange={(event) => setUrl(event.target.value)}
             placeholder="wss://server.example/rpc"
             value={url}
           />
         </label>
-        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+        <label className="grid grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 max-sm:grid-cols-1 max-sm:items-start">
           <span className="label-text">Authentication token</span>
           <input
             aria-label="Authentication token"
             autoComplete="off"
-            className="input input-bordered input-sm w-full max-w-sm justify-self-end"
+            className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             onChange={(event) => setAuthToken(event.target.value)}
             type="password"
             value={authToken}

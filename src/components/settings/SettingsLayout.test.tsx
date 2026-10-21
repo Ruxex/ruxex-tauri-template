@@ -24,7 +24,9 @@ describe("settings card layout", () => {
     );
 
     const statusRow = screen.getByText("Status").parentElement;
-    expect(statusRow?.className).toContain("grid-cols-[minmax(0,1fr)_auto]");
+    expect(statusRow?.className).toContain(
+      "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
+    );
     expect(statusRow?.querySelector("dd")?.className).toContain("text-right");
   });
 
@@ -73,7 +75,7 @@ describe("settings card layout", () => {
 
     expect(
       screen.getByText("Models").closest("section")?.className,
-    ).not.toMatch(/(?:sm|md|lg):grid-cols-/);
+    ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
   });
 
   it("keeps capability rows and preference fields vertically stacked", () => {
@@ -98,9 +100,9 @@ describe("settings card layout", () => {
         .getByRole("heading", { name: "Capabilities" })
         .closest("section")
         ?.querySelector("div.grid")?.className,
-    ).not.toMatch(/(?:sm|md|lg):grid-cols-/);
+    ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
     expect(screen.getByText("Theme").closest("div")?.className).toContain(
-      "grid-cols-[minmax(0,1fr)_auto]",
+      "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
     );
   });
 });

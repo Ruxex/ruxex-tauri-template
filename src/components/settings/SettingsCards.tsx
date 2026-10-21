@@ -165,7 +165,7 @@ export function UiPreferencesCard({
       <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow controlId="settings-theme" label="Theme">
           <select
-            className="select select-bordered select-sm w-40 justify-self-end"
+            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-theme"
             value={theme}
             onChange={(event) => onThemeChange(event.target.value as UiTheme)}
@@ -177,7 +177,7 @@ export function UiPreferencesCard({
         </SettingControlRow>
         <SettingControlRow controlId="settings-density" label="Density">
           <select
-            className="select select-bordered select-sm w-40 justify-self-end"
+            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-density"
             value={density}
             onChange={(event) =>
@@ -225,9 +225,11 @@ export function SettingRow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 max-sm:grid-cols-1 max-sm:items-start">
       <dt className="min-w-0">{label}</dt>
-      <dd className="min-w-0 max-w-[65%] text-right">{children}</dd>
+      <dd className="min-w-0 w-full max-w-full justify-self-end text-right">
+        {children}
+      </dd>
     </div>
   );
 }
@@ -242,7 +244,7 @@ function SettingControlRow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 max-sm:grid-cols-1 max-sm:items-start">
       <label className="label-text" htmlFor={controlId}>
         {label}
       </label>
