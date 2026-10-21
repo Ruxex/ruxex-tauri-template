@@ -16,7 +16,8 @@ describe("AppearancePage", () => {
       preferences: {
         sidebarCollapsed: false,
         contextDrawerOpen: true,
-        theme: "system",
+        colorScheme: "system",
+        theme: { accentColor: "blue" },
         density: "comfortable",
       },
       update: vi.fn(),

@@ -83,10 +83,12 @@ describe("settings card layout", () => {
       <>
         <CapabilitiesCard capabilities={{ browser: true, shell: false }} />
         <UiPreferencesCard
+          onAccentColorChange={vi.fn()}
+          onColorSchemeChange={vi.fn()}
+          colorScheme="system"
           density="comfortable"
           onDensityChange={vi.fn()}
-          onThemeChange={vi.fn()}
-          theme="system"
+          theme={{ accentColor: "blue" }}
         />
       </>,
     );
@@ -97,7 +99,7 @@ describe("settings card layout", () => {
         .closest("section")
         ?.querySelector("div.grid")?.className,
     ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
-    expect(screen.getByText("Theme").closest("div")?.className).toContain(
+    expect(screen.getByText("Color mode").closest("div")?.className).toContain(
       "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
     );
     expect(screen.queryByText("Show project sidebar")).toBeNull();

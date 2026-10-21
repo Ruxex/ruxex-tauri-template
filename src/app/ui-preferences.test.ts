@@ -24,13 +24,24 @@ describe("ui preferences", () => {
       updateUiPreferences(DEFAULT_UI_PREFERENCES, {
         sidebarCollapsed: true,
         contextTab: "changes",
-        theme: "dark",
+        colorScheme: "dark",
+        theme: { accentColor: "violet" },
       }),
     ).toEqual({
       ...DEFAULT_UI_PREFERENCES,
       sidebarCollapsed: true,
       contextTab: "changes",
-      theme: "dark",
+      colorScheme: "dark",
+      theme: { accentColor: "violet" },
+    });
+  });
+
+  it("migrates the previous light-dark theme value", () => {
+    expect(
+      parseUiPreferences(JSON.stringify({ version: 1, theme: "dark" })),
+    ).toMatchObject({
+      colorScheme: "dark",
+      theme: { accentColor: "blue" },
     });
   });
 });

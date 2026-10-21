@@ -13,9 +13,13 @@ export function AppearancePage() {
         <h2 className="text-2xl font-semibold">Appearance</h2>
       </div>
       <UiPreferencesCard
+        colorScheme={preferences.colorScheme}
         density={preferences.density}
+        onAccentColorChange={(accentColor) =>
+          update({ theme: { ...preferences.theme, accentColor } })
+        }
+        onColorSchemeChange={(colorScheme) => update({ colorScheme })}
         onDensityChange={(density) => update({ density })}
-        onThemeChange={(theme) => update({ theme })}
         theme={preferences.theme}
       />
     </div>

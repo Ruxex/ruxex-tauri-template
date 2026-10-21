@@ -15,6 +15,31 @@ body {
   min-width: 320px;
 }
 
+:root[data-accent="blue"] {
+  --color-primary: oklch(57% 0.22 255);
+  --color-primary-content: oklch(100% 0 0);
+}
+
+:root[data-accent="violet"] {
+  --color-primary: oklch(58% 0.24 292);
+  --color-primary-content: oklch(100% 0 0);
+}
+
+:root[data-accent="emerald"] {
+  --color-primary: oklch(58% 0.18 160);
+  --color-primary-content: oklch(100% 0 0);
+}
+
+:root[data-accent="amber"] {
+  --color-primary: oklch(72% 0.18 75);
+  --color-primary-content: oklch(24% 0.05 75);
+}
+
+:root[data-accent="rose"] {
+  --color-primary: oklch(60% 0.22 20);
+  --color-primary-content: oklch(100% 0 0);
+}
+
 .workbench-sidebar {
   height: 100dvh;
   max-height: 100dvh;

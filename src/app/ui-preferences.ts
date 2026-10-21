@@ -1,9 +1,25 @@
-import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 1;
+const UI_PREFERENCES_VERSION = 2;
 
-export type UiTheme = "system" | "light" | "dark";
+export type UiColorScheme = "system" | "light" | "dark";
+export const UI_ACCENT_COLORS = [
+  "blue",
+  "violet",
+  "emerald",
+  "amber",
+  "rose",
+] as const;
+export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
+export type UiTheme = { accentColor: UiAccentColor };
 export type ContextTab = "activity" | "changes" | "context";
 export type UiDensity = "comfortable" | "compact";
 
@@ -12,6 +28,7 @@ export type UiPreferences = {
   sidebarCollapsed: boolean;
   contextDrawerOpen: boolean;
   contextTab: ContextTab;
+  colorScheme: UiColorScheme;
   theme: UiTheme;
   density: UiDensity;
 };
@@ -21,7 +38,8 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   sidebarCollapsed: false,
   contextDrawerOpen: true,
   contextTab: "activity",
-  theme: "system",
+  colorScheme: "system",
+  theme: { accentColor: "blue" },
   density: "comfortable",
 };
 
@@ -32,7 +50,9 @@ type UiPreferencesContextValue = {
   update: (patch: UiPreferencePatch) => void;
 };
 
-const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(null);
+const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(
+  null,
+);
 
 export function updateUiPreferences(
   preferences: UiPreferences,
@@ -52,17 +72,48 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
 
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed) || parsed.version !== UI_PREFERENCES_VERSION) {
+    if (
+      !isRecord(parsed) ||
+      (parsed.version !== 1 && parsed.version !== UI_PREFERENCES_VERSION)
+    ) {
       return DEFAULT_UI_PREFERENCES;
     }
 
+    const legacyColorScheme = parsed.version === 1 ? parsed.theme : undefined;
+    const storedTheme = isRecord(parsed.theme) ? parsed.theme : undefined;
+
     return {
       version: UI_PREFERENCES_VERSION,
-      sidebarCollapsed: readBoolean(parsed.sidebarCollapsed, DEFAULT_UI_PREFERENCES.sidebarCollapsed),
-      contextDrawerOpen: readBoolean(parsed.contextDrawerOpen, DEFAULT_UI_PREFERENCES.contextDrawerOpen),
-      contextTab: readEnum(parsed.contextTab, ["activity", "changes", "context"], DEFAULT_UI_PREFERENCES.contextTab),
-      theme: readEnum(parsed.theme, ["system", "light", "dark"], DEFAULT_UI_PREFERENCES.theme),
-      density: readEnum(parsed.density, ["comfortable", "compact"], DEFAULT_UI_PREFERENCES.density),
+      sidebarCollapsed: readBoolean(
+        parsed.sidebarCollapsed,
+        DEFAULT_UI_PREFERENCES.sidebarCollapsed,
+      ),
+      contextDrawerOpen: readBoolean(
+        parsed.contextDrawerOpen,
+        DEFAULT_UI_PREFERENCES.contextDrawerOpen,
+      ),
+      contextTab: readEnum(
+        parsed.contextTab,
+        ["activity", "changes", "context"],
+        DEFAULT_UI_PREFERENCES.contextTab,
+      ),
+      colorScheme: readEnum(
+        parsed.colorScheme ?? legacyColorScheme,
+        ["system", "light", "dark"],
+        DEFAULT_UI_PREFERENCES.colorScheme,
+      ),
+      theme: {
+        accentColor: readEnum(
+          storedTheme?.accentColor,
+          UI_ACCENT_COLORS,
+          DEFAULT_UI_PREFERENCES.theme.accentColor,
+        ),
+      },
+      density: readEnum(
+        parsed.density,
+        ["comfortable", "compact"],
+        DEFAULT_UI_PREFERENCES.density,
+      ),
     };
   } catch {
     return DEFAULT_UI_PREFERENCES;
@@ -77,8 +128,14 @@ function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function readEnum<T extends string>(value: unknown, values: readonly T[], fallback: T): T {
-  return typeof value === "string" && values.includes(value as T) ? (value as T) : fallback;
+function readEnum<T extends string>(
+  value: unknown,
+  values: readonly T[],
+  fallback: T,
+): T {
+  return typeof value === "string" && values.includes(value as T)
+    ? (value as T)
+    : fallback;
 }
 
 function readStoredPreferences(): UiPreferences {
@@ -92,8 +149,12 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
   const [preferences, setPreferences] = useState(readStoredPreferences);
 
   useEffect(() => {
-    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(preferences));
-    document.documentElement.dataset.theme = preferences.theme;
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify(preferences),
+    );
+    document.documentElement.dataset.theme = preferences.colorScheme;
+    document.documentElement.dataset.accent = preferences.theme.accentColor;
     document.documentElement.dataset.density = preferences.density;
   }, [preferences]);
 
@@ -112,7 +173,9 @@ export function UiPreferencesProvider({ children }: { children: ReactNode }) {
 export function useUiPreferences(): UiPreferencesContextValue {
   const value = useContext(UiPreferencesContext);
   if (!value) {
-    throw new Error("useUiPreferences must be used within UiPreferencesProvider");
+    throw new Error(
+      "useUiPreferences must be used within UiPreferencesProvider",
+    );
   }
   return value;
 }

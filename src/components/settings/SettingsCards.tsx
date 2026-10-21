@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
-import type { UiDensity, UiTheme } from "../../app/ui-preferences";
+import type {
+  UiAccentColor,
+  UiColorScheme,
+  UiDensity,
+  UiTheme,
+} from "../../app/ui-preferences";
 
 export function SettingsPanel({
   title,
@@ -137,16 +142,20 @@ export function RuntimeSummary({
 }
 
 type UiPreferencesCardProps = {
+  colorScheme: UiColorScheme;
   theme: UiTheme;
   density: UiDensity;
-  onThemeChange: (theme: UiTheme) => void;
+  onColorSchemeChange: (colorScheme: UiColorScheme) => void;
+  onAccentColorChange: (accentColor: UiAccentColor) => void;
   onDensityChange: (density: UiDensity) => void;
 };
 
 export function UiPreferencesCard({
+  colorScheme,
   theme,
   density,
-  onThemeChange,
+  onColorSchemeChange,
+  onAccentColorChange,
   onDensityChange,
 }: UiPreferencesCardProps) {
   return (
@@ -155,16 +164,34 @@ export function UiPreferencesCard({
       description="These are local presentation preferences only."
     >
       <div className="divide-y divide-base-300 text-sm">
-        <SettingControlRow controlId="settings-theme" label="Theme">
+        <SettingControlRow controlId="settings-color-scheme" label="Color mode">
           <select
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
-            id="settings-theme"
-            value={theme}
-            onChange={(event) => onThemeChange(event.target.value as UiTheme)}
+            id="settings-color-scheme"
+            value={colorScheme}
+            onChange={(event) =>
+              onColorSchemeChange(event.target.value as UiColorScheme)
+            }
           >
             <option value="system">System</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
+          </select>
+        </SettingControlRow>
+        <SettingControlRow controlId="settings-theme" label="Theme">
+          <select
+            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+            id="settings-theme"
+            value={theme.accentColor}
+            onChange={(event) =>
+              onAccentColorChange(event.target.value as UiAccentColor)
+            }
+          >
+            <option value="blue">Blue</option>
+            <option value="violet">Violet</option>
+            <option value="emerald">Emerald</option>
+            <option value="amber">Amber</option>
+            <option value="rose">Rose</option>
           </select>
         </SettingControlRow>
         <SettingControlRow controlId="settings-density" label="Density">

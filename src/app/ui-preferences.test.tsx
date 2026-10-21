@@ -17,9 +17,16 @@ function Probe() {
   return (
     <button
       type="button"
-      onClick={() => update({ density: "compact", theme: "dark" })}
+      onClick={() =>
+        update({
+          colorScheme: "dark",
+          density: "compact",
+          theme: { accentColor: "violet" },
+        })
+      }
     >
-      {preferences.theme}:{preferences.density}
+      {preferences.colorScheme}:{preferences.theme.accentColor}:
+      {preferences.density}
     </button>
   );
 }
@@ -47,7 +54,8 @@ describe("UI preference persistence", () => {
           sidebarCollapsed: true,
           contextDrawerOpen: "yes",
           contextTab: "unknown",
-          theme: "dark",
+          colorScheme: "dark",
+          theme: { accentColor: "violet" },
           density: "compact",
         }),
       ),
@@ -55,24 +63,34 @@ describe("UI preference persistence", () => {
       sidebarCollapsed: true,
       contextDrawerOpen: true,
       contextTab: "activity",
-      theme: "dark",
+      colorScheme: "dark",
+      theme: { accentColor: "violet" },
       density: "compact",
     });
   });
 
   it("updates presentation preferences without changing the version", () => {
     const next = updateUiPreferences(DEFAULT_UI_PREFERENCES, {
-      theme: "light",
+      colorScheme: "light",
+      theme: { accentColor: "rose" },
     });
 
-    expect(next).toMatchObject({ version: 1, theme: "light" });
-    expect(DEFAULT_UI_PREFERENCES.theme).toBe("system");
+    expect(next).toMatchObject({
+      version: 2,
+      colorScheme: "light",
+      theme: { accentColor: "rose" },
+    });
+    expect(DEFAULT_UI_PREFERENCES.colorScheme).toBe("system");
   });
 
   it("loads, persists, and applies provider preferences to document data attributes", () => {
     window.localStorage.setItem(
       UI_PREFERENCES_KEY,
-      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, theme: "light" }),
+      JSON.stringify({
+        ...DEFAULT_UI_PREFERENCES,
+        colorScheme: "light",
+        theme: { accentColor: "emerald" },
+      }),
     );
     render(
       <UiPreferencesProvider>
@@ -80,14 +98,21 @@ describe("UI preference persistence", () => {
       </UiPreferencesProvider>,
     );
 
-    expect(screen.getByRole("button").textContent).toBe("light:comfortable");
+    expect(screen.getByRole("button").textContent).toBe(
+      "light:emerald:comfortable",
+    );
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.accent).toBe("emerald");
     fireEvent.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("button").textContent).toBe("dark:compact");
+    expect(screen.getByRole("button").textContent).toBe("dark:violet:compact");
     expect(
       JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
-    ).toMatchObject({ theme: "dark", density: "compact" });
+    ).toMatchObject({
+      colorScheme: "dark",
+      theme: { accentColor: "violet" },
+      density: "compact",
+    });
     expect(document.documentElement.dataset.density).toBe("compact");
   });
 });
