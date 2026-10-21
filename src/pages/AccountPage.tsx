@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 
 import { useAccount } from "../app-server/hooks";
+import {
+  SettingRow,
+  SettingsPanel,
+} from "../components/settings/SettingsCards";
 
 export function AccountPage() {
   const account = useAccount();
@@ -16,40 +20,31 @@ export function AccountPage() {
   const data = account.data;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="card border border-base-300 bg-base-100 shadow-sm">
-        <div className="card-body gap-5">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-primary">
-              Account
-            </p>
-            <h1 className="card-title text-3xl">Account information</h1>
-          </div>
-          <div className="rounded-box bg-base-200 p-4">
-            <dl className="grid gap-3">
-              <div className="flex justify-between gap-3">
-                <dt className="text-sm text-base-content/60">Status</dt>
-                <dd className="text-right font-medium">
-                  {data?.authStatus === "authenticated"
-                    ? "Authenticated"
-                    : "Authentication required"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-sm text-base-content/60">Account type</dt>
-                <dd className="text-right font-medium">
-                  {data?.account?.type ?? "Not signed in"}
-                </dd>
-              </div>
-            </dl>
-          </div>
-          {data?.authStatus !== "authenticated" && (
-            <Link className="btn btn-primary self-end" to="/login">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
+      <div>
+        <p className="text-sm font-medium uppercase tracking-wide text-primary">
+          Account
+        </p>
+      </div>
+      <SettingsPanel title="Account information">
+        <dl className="divide-y divide-base-300 text-sm">
+          <SettingRow label="Status">
+            {data?.authStatus === "authenticated"
+              ? "Authenticated"
+              : "Authentication required"}
+          </SettingRow>
+          <SettingRow label="Account type">
+            {data?.account?.type ?? "Not signed in"}
+          </SettingRow>
+        </dl>
+        {data?.authStatus !== "authenticated" && (
+          <div className="flex justify-end px-5 py-4">
+            <Link className="btn btn-primary" to="/login">
               Log in
             </Link>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </SettingsPanel>
     </div>
   );
 }

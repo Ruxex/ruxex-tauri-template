@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import type { AppServerEndpoint } from "../../app-server/api";
 import { validateRemoteEndpoint } from "../../platform/platform-model";
+import { SettingsPanel } from "../settings/SettingsCards";
 
 type RemoteConnectionCardProps = {
   endpointKind: "local" | "websocket" | null | undefined;
@@ -40,63 +41,58 @@ export function RemoteConnectionCard({
   }
 
   return (
-    <section className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body">
-        <div>
-          <h2 className="card-title">Remote App Server</h2>
-          <p className="text-sm text-base-content/70">
-            Tokens are kept in memory and sent only when connecting.
-          </p>
-        </div>
-        <form className="grid gap-3" onSubmit={submit}>
-          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
-            <span className="label-text">Remote WebSocket URL</span>
-            <input
-              aria-label="Remote WebSocket URL"
-              className="input input-bordered input-sm w-full max-w-sm justify-self-end"
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder="wss://server.example/rpc"
-              value={url}
-            />
-          </label>
-          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
-            <span className="label-text">Authentication token</span>
-            <input
-              aria-label="Authentication token"
-              autoComplete="off"
-              className="input input-bordered input-sm w-full max-w-sm justify-self-end"
-              onChange={(event) => setAuthToken(event.target.value)}
-              type="password"
-              value={authToken}
-            />
-          </label>
-          {(validationError ?? error) !== null &&
-            (validationError ?? error) !== undefined && (
-              <p className="text-sm text-error">
-                {validationError ?? String(error)}
-              </p>
-            )}
-          <div className="flex justify-end gap-2">
-            {endpointKind === "websocket" && (
-              <button
-                className="btn btn-sm btn-ghost"
-                disabled={isDisconnecting}
-                onClick={onDisconnect}
-                type="button"
-              >
-                {isDisconnecting ? "Disconnecting…" : "Disconnect remote"}
-              </button>
-            )}
+    <SettingsPanel
+      title="Remote App Server"
+      description="Tokens are kept in memory and sent only when connecting."
+    >
+      <form className="divide-y divide-base-300 text-sm" onSubmit={submit}>
+        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+          <span className="label-text">Remote WebSocket URL</span>
+          <input
+            aria-label="Remote WebSocket URL"
+            className="input input-bordered input-sm w-full max-w-sm justify-self-end"
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="wss://server.example/rpc"
+            value={url}
+          />
+        </label>
+        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+          <span className="label-text">Authentication token</span>
+          <input
+            aria-label="Authentication token"
+            autoComplete="off"
+            className="input input-bordered input-sm w-full max-w-sm justify-self-end"
+            onChange={(event) => setAuthToken(event.target.value)}
+            type="password"
+            value={authToken}
+          />
+        </label>
+        {(validationError ?? error) !== null &&
+          (validationError ?? error) !== undefined && (
+            <p className="px-5 py-3 text-error">
+              {validationError ?? String(error)}
+            </p>
+          )}
+        <div className="flex justify-end gap-2 px-5 py-4">
+          {endpointKind === "websocket" && (
             <button
-              className="btn btn-sm btn-primary"
-              disabled={isConnecting}
-              type="submit"
+              className="btn btn-sm btn-ghost"
+              disabled={isDisconnecting}
+              onClick={onDisconnect}
+              type="button"
             >
-              {isConnecting ? "Connecting…" : "Connect remote"}
+              {isDisconnecting ? "Disconnecting…" : "Disconnect remote"}
             </button>
-          </div>
-        </form>
-      </div>
-    </section>
+          )}
+          <button
+            className="btn btn-sm btn-primary"
+            disabled={isConnecting}
+            type="submit"
+          >
+            {isConnecting ? "Connecting…" : "Connect remote"}
+          </button>
+        </div>
+      </form>
+    </SettingsPanel>
   );
 }

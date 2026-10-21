@@ -1,6 +1,28 @@
 import type { ReactNode } from "react";
 import type { UiDensity, UiTheme } from "../../app/ui-preferences";
 
+export function SettingsPanel({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-sm">
+      <div className="border-b border-base-300 px-5 py-4">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {description && (
+          <p className="mt-1 text-sm text-base-content/70">{description}</p>
+        )}
+      </div>
+      <div className="divide-y divide-base-300">{children}</div>
+    </section>
+  );
+}
+
 type ConnectionCardProps = {
   connected: boolean;
   appServerVersion?: string;
@@ -19,25 +41,24 @@ export function ConnectionCard({
   onReconnect,
 }: ConnectionCardProps) {
   return (
-    <section className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body">
-        <h2 className="card-title">Connection</h2>
-        <dl className="grid gap-2 text-sm">
-          <SettingRow label="Status">
-            {connected ? "Connected" : "Disconnected"}
-          </SettingRow>
-          <SettingRow label="App-server">
-            {appServerVersion ?? "Unavailable"}
-          </SettingRow>
-          <SettingRow label="Live state">
-            {resynchronizing ? "Resynchronizing" : "Synchronized"}
-          </SettingRow>
-        </dl>
-        {error !== undefined && error !== null && (
-          <p className="mt-2 text-sm text-error">{String(error)}</p>
-        )}
+    <SettingsPanel title="Connection">
+      <dl className="divide-y divide-base-300 text-sm">
+        <SettingRow label="Status">
+          {connected ? "Connected" : "Disconnected"}
+        </SettingRow>
+        <SettingRow label="App-server">
+          {appServerVersion ?? "Unavailable"}
+        </SettingRow>
+        <SettingRow label="Live state">
+          {resynchronizing ? "Resynchronizing" : "Synchronized"}
+        </SettingRow>
+      </dl>
+      {error !== undefined && error !== null && (
+        <p className="px-5 py-3 text-sm text-error">{String(error)}</p>
+      )}
+      <div className="flex justify-end px-5 py-4">
         <button
-          className="btn btn-sm self-end"
+          className="btn btn-sm"
           type="button"
           onClick={onReconnect}
           disabled={isFetching}
@@ -45,7 +66,7 @@ export function ConnectionCard({
           {isFetching ? "Reconnecting…" : "Reconnect"}
         </button>
       </div>
-    </section>
+    </SettingsPanel>
   );
 }
 
@@ -61,16 +82,13 @@ export function ProviderAccountCard({
   account,
 }: ProviderAccountCardProps) {
   return (
-    <section className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body">
-        <h2 className="card-title">Provider and account</h2>
-        <dl className="grid gap-2 text-sm">
-          <SettingRow label="Provider">{provider}</SettingRow>
-          <SettingRow label="Auth">{authStatus}</SettingRow>
-          <SettingRow label="Account">{account}</SettingRow>
-        </dl>
-      </div>
-    </section>
+    <SettingsPanel title="Provider and account">
+      <dl className="divide-y divide-base-300 text-sm">
+        <SettingRow label="Provider">{provider}</SettingRow>
+        <SettingRow label="Auth">{authStatus}</SettingRow>
+        <SettingRow label="Account">{account}</SettingRow>
+      </dl>
+    </SettingsPanel>
   );
 }
 
@@ -80,23 +98,19 @@ export function CapabilitiesCard({
   capabilities: Record<string, boolean | string>;
 }) {
   return (
-    <section className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body">
-        <h2 className="card-title">Capabilities</h2>
-        <div className="grid gap-2 text-sm">
-          {Object.entries(capabilities).map(([name, enabled]) => (
-            <div className="flex justify-between gap-3" key={name}>
-              <span>{name}</span>
-              <span
-                className={`${enabled ? "text-success" : "text-base-content/50"} text-right`}
-              >
-                {String(enabled)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+    <SettingsPanel title="Capabilities">
+      <dl className="divide-y divide-base-300 text-sm">
+        {Object.entries(capabilities).map(([name, enabled]) => (
+          <SettingRow label={name} key={name}>
+            <span
+              className={`${enabled ? "text-success" : "text-base-content/50"} text-right`}
+            >
+              {String(enabled)}
+            </span>
+          </SettingRow>
+        ))}
+      </dl>
+    </SettingsPanel>
   );
 }
 
@@ -112,11 +126,13 @@ export function RuntimeSummary({
   rateLimitName,
 }: RuntimeSummaryProps) {
   return (
-    <section className="grid gap-4">
-      <SummaryCard label="Models">{modelCount} available</SummaryCard>
-      <SummaryCard label="Permissions">{permissionCount} profiles</SummaryCard>
-      <SummaryCard label="Rate limits">{rateLimitName}</SummaryCard>
-    </section>
+    <SettingsPanel title="Runtime summary">
+      <dl className="divide-y divide-base-300 text-sm">
+        <SettingRow label="Models">{modelCount} available</SettingRow>
+        <SettingRow label="Permissions">{permissionCount} profiles</SettingRow>
+        <SettingRow label="Rate limits">{rateLimitName}</SettingRow>
+      </dl>
+    </SettingsPanel>
   );
 }
 
@@ -142,65 +158,66 @@ export function UiPreferencesCard({
   onContextDrawerChange,
 }: UiPreferencesCardProps) {
   return (
-    <section className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body gap-4">
-        <div>
-          <h2 className="card-title">Interface</h2>
-          <p className="text-sm text-base-content/70">
-            These are local presentation preferences only.
-          </p>
-        </div>
-        <div className="grid gap-3">
-          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
-            <span className="label-text">Theme</span>
-            <select
-              className="select select-bordered select-sm w-40 justify-self-end"
-              value={theme}
-              onChange={(event) => onThemeChange(event.target.value as UiTheme)}
-            >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-          <label className="grid grid-cols-[1fr_auto] items-center gap-3">
-            <span className="label-text">Density</span>
-            <select
-              className="select select-bordered select-sm w-40 justify-self-end"
-              value={density}
-              onChange={(event) =>
-                onDensityChange(event.target.value as UiDensity)
-              }
-            >
-              <option value="comfortable">Comfortable</option>
-              <option value="compact">Compact</option>
-            </select>
-          </label>
-        </div>
-        <label className="label cursor-pointer justify-between gap-3">
-          <span className="label-text">Show project sidebar</span>
+    <SettingsPanel
+      title="Interface"
+      description="These are local presentation preferences only."
+    >
+      <div className="divide-y divide-base-300 text-sm">
+        <SettingControlRow controlId="settings-theme" label="Theme">
+          <select
+            className="select select-bordered select-sm w-40 justify-self-end"
+            id="settings-theme"
+            value={theme}
+            onChange={(event) => onThemeChange(event.target.value as UiTheme)}
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </SettingControlRow>
+        <SettingControlRow controlId="settings-density" label="Density">
+          <select
+            className="select select-bordered select-sm w-40 justify-self-end"
+            id="settings-density"
+            value={density}
+            onChange={(event) =>
+              onDensityChange(event.target.value as UiDensity)
+            }
+          >
+            <option value="comfortable">Comfortable</option>
+            <option value="compact">Compact</option>
+          </select>
+        </SettingControlRow>
+        <SettingControlRow
+          controlId="settings-project-sidebar"
+          label="Show project sidebar"
+        >
           <input
             className="toggle"
+            id="settings-project-sidebar"
             type="checkbox"
             checked={!sidebarCollapsed}
             onChange={(event) => onSidebarChange(!event.target.checked)}
           />
-        </label>
-        <label className="label cursor-pointer justify-between gap-3">
-          <span className="label-text">Show context drawer</span>
+        </SettingControlRow>
+        <SettingControlRow
+          controlId="settings-context-drawer"
+          label="Show context drawer"
+        >
           <input
             className="toggle"
+            id="settings-context-drawer"
             type="checkbox"
             checked={contextDrawerOpen}
             onChange={(event) => onContextDrawerChange(event.target.checked)}
           />
-        </label>
+        </SettingControlRow>
       </div>
-    </section>
+    </SettingsPanel>
   );
 }
 
-function SettingRow({
+export function SettingRow({
   label,
   children,
 }: {
@@ -208,26 +225,28 @@ function SettingRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex justify-between gap-3">
-      <dt>{label}</dt>
-      <dd className="text-right">{children}</dd>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+      <dt className="min-w-0">{label}</dt>
+      <dd className="min-w-0 max-w-[65%] text-right">{children}</dd>
     </div>
   );
 }
 
-function SummaryCard({
+function SettingControlRow({
+  controlId,
   label,
   children,
 }: {
+  controlId: string;
   label: string;
   children: ReactNode;
 }) {
   return (
-    <div className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body">
-        <h2 className="card-title text-base">{label}</h2>
-        <p className="text-right">{children}</p>
-      </div>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5">
+      <label className="label-text" htmlFor={controlId}>
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

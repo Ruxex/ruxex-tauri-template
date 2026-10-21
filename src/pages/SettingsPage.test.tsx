@@ -18,6 +18,10 @@ describe("SettingsPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
+    const heading = screen.getByRole("heading", { name: "Settings" });
+    expect(heading).toBeTruthy();
+    expect(heading.parentElement?.parentElement?.className).toContain(
+      "max-w-3xl",
+    );
   });
 });

@@ -24,8 +24,42 @@ describe("settings card layout", () => {
     );
 
     const statusRow = screen.getByText("Status").parentElement;
-    expect(statusRow?.className).toContain("justify-between");
+    expect(statusRow?.className).toContain("grid-cols-[minmax(0,1fr)_auto]");
     expect(statusRow?.querySelector("dd")?.className).toContain("text-right");
+  });
+
+  it("separates rows inside each settings panel", () => {
+    render(
+      <ConnectionCard
+        connected
+        isFetching={false}
+        onReconnect={vi.fn()}
+        resynchronizing={false}
+      />,
+    );
+
+    const connectionPanel = screen
+      .getByRole("heading", { name: "Connection" })
+      .closest("section");
+
+    expect(connectionPanel?.className).toContain("overflow-hidden");
+    expect(connectionPanel?.querySelector("dl")?.className).toContain(
+      "divide-y",
+    );
+  });
+
+  it("groups runtime summaries into a single panel", () => {
+    render(
+      <RuntimeSummary
+        modelCount={3}
+        permissionCount={2}
+        rateLimitName="Standard"
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Runtime summary" }),
+    ).toBeTruthy();
   });
 
   it("keeps settings summary cards in one vertical column", () => {
@@ -65,8 +99,8 @@ describe("settings card layout", () => {
         .closest("section")
         ?.querySelector("div.grid")?.className,
     ).not.toMatch(/(?:sm|md|lg):grid-cols-/);
-    expect(screen.getByText("Theme").closest("label")?.className).toContain(
-      "grid-cols-[1fr_auto]",
+    expect(screen.getByText("Theme").closest("div")?.className).toContain(
+      "grid-cols-[minmax(0,1fr)_auto]",
     );
   });
 });

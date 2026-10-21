@@ -30,6 +30,11 @@ describe("AccountPage", () => {
 
     expect(screen.getByText("Authenticated")).toBeTruthy();
     expect(screen.getByText("apiKey")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("heading", { name: "Account information" })
+        .closest("section")?.className,
+    ).toContain("overflow-hidden");
     expect(screen.queryByRole("link", { name: "Log in" })).toBeNull();
   });
 
