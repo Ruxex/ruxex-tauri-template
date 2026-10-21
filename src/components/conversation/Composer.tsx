@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 
+import { buildImageUserInput } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
 import { ComposerOptions } from "./ComposerOptions";
 import type { SubmissionMode } from "./composer-model";
@@ -19,20 +20,56 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [planMode, setPlanMode] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const attachmentInput = useRef<HTMLInputElement>(null);
   const send = useSendMessage();
   const steer = useSteerTurn();
   const queue = useQueueMessage();
   const interrupt = useInterruptTurn();
-  const isPending = send.isPending || steer.isPending || queue.isPending || interrupt.isPending;
+  const isPending =
+    send.isPending || steer.isPending || queue.isPending || interrupt.isPending;
+
+  function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    if (file && !file.type.startsWith("image/")) {
+      setImageFile(null);
+      setAttachmentError("Only image attachments are supported.");
+      event.target.value = "";
+      return;
+    }
+    setImageFile(file);
+    setAttachmentError(null);
+  }
+
+  function readImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("Unable to read image attachment."));
+        }
+      });
+      reader.addEventListener("error", () =>
+        reject(reader.error ?? new Error("Unable to read image attachment.")),
+      );
+      reader.readAsDataURL(file);
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
-    if (!text || isPending) {
+    if ((!text && !imageFile) || isPending) {
       return;
     }
-    const input = [buildUserTextInput(text)];
+    const input = text ? [buildUserTextInput(text)] : [];
     try {
+      if (imageFile) {
+        input.unshift(buildImageUserInput(await readImage(imageFile)));
+      }
       if (mode === "steer") {
         if (!activeTurnId) {
           return;
@@ -52,13 +89,21 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
         });
       }
       setMessage("");
+      setImageFile(null);
+      setAttachmentError(null);
+      if (attachmentInput.current) {
+        attachmentInput.current.value = "";
+      }
     } catch {
       // Mutation state renders the error below the composer.
     }
   }
 
   return (
-    <form className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm" onSubmit={(event) => void handleSubmit(event)}>
+    <form
+      className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
+      onSubmit={(event) => void handleSubmit(event)}
+    >
       <textarea
         className="textarea textarea-ghost min-h-24 w-full resize-none"
         value={message}
@@ -67,6 +112,22 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
         disabled={isPending}
         aria-label="Message"
       />
+      <input
+        ref={attachmentInput}
+        accept="image/*"
+        className="hidden"
+        onChange={handleAttachmentChange}
+        type="file"
+        aria-label="Image attachment"
+      />
+      {imageFile && (
+        <p
+          className="mt-2 text-sm text-base-content/70"
+          data-testid="selected-image"
+        >
+          Attached image: {imageFile.name}
+        </p>
+      )}
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <ComposerOptions
@@ -75,6 +136,7 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
             mode={mode}
             onModeChange={setMode}
             onPlanModeChange={() => setPlanMode((value) => !value)}
+            onAttach={() => attachmentInput.current?.click()}
             planMode={planMode}
           />
         </div>
@@ -83,20 +145,37 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
             <button
               className="btn btn-error btn-sm btn-outline"
               type="button"
-              onClick={() => void interrupt.mutateAsync({ threadId, turnId: activeTurnId })}
+              onClick={() =>
+                void interrupt.mutateAsync({ threadId, turnId: activeTurnId })
+              }
               disabled={isPending}
             >
               Stop
             </button>
           )}
-          <button className="btn btn-primary btn-sm" type="submit" disabled={isPending || !message.trim()}>
-            {isPending ? "Working…" : mode === "queue" ? "Queue" : mode === "steer" ? "Steer" : "Send"}
+          <button
+            className="btn btn-primary btn-sm"
+            type="submit"
+            disabled={isPending || (!message.trim() && !imageFile)}
+          >
+            {isPending
+              ? "Working…"
+              : mode === "queue"
+                ? "Queue"
+                : mode === "steer"
+                  ? "Steer"
+                  : "Send"}
           </button>
         </div>
       </div>
-      {(send.error || steer.error || queue.error || interrupt.error) && (
+      {(attachmentError ||
+        send.error ||
+        steer.error ||
+        queue.error ||
+        interrupt.error) && (
         <p className="mt-2 text-sm text-error">
-          {String(send.error || steer.error || queue.error || interrupt.error)}
+          {attachmentError ||
+            String(send.error || steer.error || queue.error || interrupt.error)}
         </p>
       )}
     </form>

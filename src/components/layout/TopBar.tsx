@@ -66,6 +66,9 @@ export function TopBar({
         <NavLink className="btn btn-ghost btn-sm" to="/approvals">
           Approvals
         </NavLink>
+        <NavLink className="btn btn-ghost btn-sm" to="/capabilities">
+          Capabilities
+        </NavLink>
         <NavLink className="btn btn-ghost btn-sm" to="/settings">
           Settings
         </NavLink>

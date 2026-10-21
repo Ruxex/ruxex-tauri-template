@@ -3,6 +3,7 @@ import { createHashRouter } from "react-router-dom";
 import { AppLayout } from "../components/layout/AppLayout";
 import { AccountPage } from "../pages/AccountPage";
 import { ArchivePage } from "../pages/ArchivePage";
+import { CapabilitiesPage } from "../pages/CapabilitiesPage";
 import { ApprovalCenter } from "../components/approvals/ApprovalCenter";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
@@ -22,6 +23,7 @@ export const router = createHashRouter([
       { path: "account", element: <AccountPage /> },
       { path: "approvals", element: <ApprovalCenter /> },
       { path: "settings", element: <SettingsPage /> },
+      { path: "capabilities", element: <CapabilitiesPage /> },
       { path: "archive", element: <ArchivePage /> },
       { path: "threads", element: <ThreadsPage /> },
       { path: "chat/new", element: <NewChatPage /> },

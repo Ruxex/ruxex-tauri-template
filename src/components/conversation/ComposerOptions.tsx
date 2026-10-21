@@ -11,6 +11,7 @@ type ComposerOptionsProps = {
   planMode: boolean;
   onModeChange: (mode: SubmissionMode) => void;
   onPlanModeChange: () => void;
+  onAttach: () => void;
 };
 
 export function ComposerOptions({
@@ -20,6 +21,7 @@ export function ComposerOptions({
   planMode,
   onModeChange,
   onPlanModeChange,
+  onAttach,
 }: ComposerOptionsProps) {
   const modes = availableSubmissionModes(activeTurnId);
   return (
@@ -32,8 +34,12 @@ export function ComposerOptions({
         aria-label="Submission mode"
       >
         <option value="send">{submissionModeLabel("send")}</option>
-        <option value="steer" disabled={!modes.includes("steer")}>{submissionModeLabel("steer")}</option>
-        <option value="queue" disabled={!modes.includes("queue")}>{submissionModeLabel("queue")}</option>
+        <option value="steer" disabled={!modes.includes("steer")}>
+          {submissionModeLabel("steer")}
+        </option>
+        <option value="queue" disabled={!modes.includes("queue")}>
+          {submissionModeLabel("queue")}
+        </option>
       </select>
       <button
         className={`btn btn-sm ${planMode ? "btn-secondary" : "btn-ghost"}`}
@@ -46,10 +52,11 @@ export function ComposerOptions({
       <button
         className="btn btn-ghost btn-sm"
         type="button"
-        disabled
-        title="Attachment upload must be implemented through the App Server attachment API."
+        disabled={disabled}
+        onClick={onAttach}
+        title="Attach an image"
       >
-        Attach
+        Attach image
       </button>
     </div>
   );

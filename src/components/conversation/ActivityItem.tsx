@@ -1,4 +1,5 @@
 import type { ConversationViewItem } from "./conversation-model";
+import { MarkdownContent } from "./MarkdownContent";
 
 export function ActivityItem({ item }: { item: ConversationViewItem }) {
   return (
@@ -13,12 +14,14 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
             {Object.entries(item.metadata).map(([key, value]) => (
               <div className="flex min-w-0 gap-2" key={key}>
                 <dt className="shrink-0 font-medium">{key}</dt>
-                <dd className="truncate" title={value}>{value}</dd>
+                <dd className="truncate" title={value}>
+                  {value}
+                </dd>
               </div>
             ))}
           </dl>
         )}
-        <p className="whitespace-pre-wrap text-sm text-base-content/80">{item.text || "…"}</p>
+        <MarkdownContent text={item.text || "…"} />
       </div>
     </details>
   );

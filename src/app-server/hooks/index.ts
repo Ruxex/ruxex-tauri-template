@@ -1,5 +1,6 @@
 export * from "./useAccount";
 export * from "./useAppServerEvents";
+export * from "./useCapabilityQueries";
 export * from "./useProjects";
 export * from "./useThreads";
 export * from "./useTurns";

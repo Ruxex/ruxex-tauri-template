@@ -1,4 +1,5 @@
 import type { ConversationViewItem } from "./conversation-model";
+import { MarkdownContent } from "./MarkdownContent";
 
 type ConversationItemProps = {
   item: ConversationViewItem;
@@ -12,7 +13,7 @@ export function ConversationItem({ item }: ConversationItemProps) {
         {item.title}
       </div>
       <div className={`chat-bubble ${isUser ? "chat-bubble-primary" : ""}`}>
-        <p className="whitespace-pre-wrap">{item.text || "…"}</p>
+        <MarkdownContent text={item.text || "…"} />
       </div>
     </article>
   );

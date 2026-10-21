@@ -61,15 +61,37 @@ Stage those files with `scripts/stage-ruxex-package.py`, passing the paths to
 the built Ruxex executable and code-mode host plus `rg` and, on Linux,
 `bwrap`. The staged directory is intentionally ignored by Git.
 
+## Capability boundary
+
+The reference application currently provides server-backed thread history,
+projects, queue and goal controls, approval requests, image input, Markdown
+and code/diff rendering, inline review startup, MCP status/reload, Skills,
+Plugins, and collaboration-mode inventory.
+
+Some desktop capabilities require protocol or platform inputs that this
+template does not invent: browser/computer-use and screenshots, native OS
+notification/deep-link registration, scheduled or remote continuation,
+native worktree orchestration, artifact viewers, and signed Linux/macOS
+release artifacts. Those boundaries are intentionally explicit; integrations
+can be added behind the App Server and Tauri plugin interfaces when their
+contracts are available.
+
 ## Development
 
 ```sh
 pnpm install
-pnpm check
-pnpm test
-python3 scripts/test_stage_ruxex_package.py
+just check-tests
+just package-test
+just rust-test
+just build
 pnpm tauri dev
 ```
+
+The `justfile` is the supported local verification entrypoint. `just
+check-tests` runs the frontend type and lint checks plus the Vitest suite;
+`just package-test` validates runtime-package staging; `just rust-test` runs
+the Tauri bridge tests; and `just verify` runs all checks and the frontend
+build.
 
 The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.

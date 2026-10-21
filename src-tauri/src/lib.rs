@@ -108,8 +108,11 @@ mod tests {
     use super::command_error;
     use super::desktop_product_identity;
     use super::desktop_ruxex_home_from_user_home;
+    use super::select_runtime_package;
     use serde_json::json;
+    use std::fs;
     use std::path::Path;
+    use std::path::PathBuf;
 
     #[test]
     fn desktop_home_is_isolated_under_user_home() {
@@ -181,6 +184,49 @@ mod tests {
                 },
             })
         );
+    }
+
+    fn package_fixture(name: &str, with_manifest: bool) -> PathBuf {
+        let path = std::env::temp_dir().join(format!("ruxex-desktop-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&path);
+        fs::create_dir_all(&path).unwrap();
+        if with_manifest {
+            fs::write(path.join("ruxex-package.json"), "{}\n").unwrap();
+        }
+        path
+    }
+
+    #[test]
+    fn runtime_package_selection_prefers_bundled_resources() {
+        let resource = package_fixture("resource", true);
+        let development = package_fixture("development", true);
+
+        assert_eq!(select_runtime_package(&resource, &development).unwrap(), resource);
+
+        let _ = fs::remove_dir_all(development);
+        let _ = fs::remove_dir_all(resource);
+    }
+
+    #[test]
+    fn runtime_package_selection_falls_back_to_development_resources() {
+        let resource = package_fixture("missing-resource", false);
+        let development = package_fixture("fallback", true);
+
+        assert_eq!(select_runtime_package(&resource, &development).unwrap(), development);
+
+        let _ = fs::remove_dir_all(resource);
+        let _ = fs::remove_dir_all(development);
+    }
+
+    #[test]
+    fn runtime_package_selection_reports_both_missing_locations() {
+        let resource = std::env::temp_dir().join("ruxex-desktop-no-resource");
+        let development = std::env::temp_dir().join("ruxex-desktop-no-development");
+        let error = select_runtime_package(&resource, &development).unwrap_err();
+
+        assert!(error.contains("bundled Ruxex runtime package not found"));
+        assert!(error.contains(&resource.display().to_string()));
+        assert!(error.contains(&development.display().to_string()));
     }
 }
 
@@ -394,17 +440,19 @@ fn runtime_package_source(app: &AppHandle) -> Result<PathBuf, String> {
         .resource_dir()
         .map_err(|error| format!("failed to resolve application resources: {error}"))?
         .join("ruxex-package");
-    if resource_package.join("ruxex-package.json").is_file() {
-        return Ok(resource_package);
-    }
-
     let development_package = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("resources")
         .join("ruxex-package");
-    if development_package.join("ruxex-package.json").is_file() {
-        return Ok(development_package);
-    }
+    select_runtime_package(&resource_package, &development_package)
+}
 
+fn select_runtime_package(resource_package: &Path, development_package: &Path) -> Result<PathBuf, String> {
+    if resource_package.join("ruxex-package.json").is_file() {
+        return Ok(resource_package.to_path_buf());
+    }
+    if development_package.join("ruxex-package.json").is_file() {
+        return Ok(development_package.to_path_buf());
+    }
     Err(format!(
         "bundled Ruxex runtime package not found at {} or {}",
         resource_package.display(),
