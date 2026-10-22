@@ -162,7 +162,9 @@ describe("ProjectSidebar", () => {
     expect(installed?.open).toBe(false);
     fireEvent.click(installed?.querySelector("summary") as HTMLElement);
     expect(installed?.open).toBe(true);
-    expect(within(installed as HTMLElement).getByText("Lint tools")).toBeTruthy();
+    expect(
+      within(installed as HTMLElement).getByText("Lint tools"),
+    ).toBeTruthy();
   });
 
   it("keeps the rail and context panel bounded to the viewport", async () => {
@@ -256,7 +258,14 @@ describe("ProjectSidebar", () => {
       within(rail)
         .getAllByRole("button")
         .map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["Home", "Projects", "Plugins", "Automation", "Account", "Settings"]);
+    ).toEqual([
+      "Home",
+      "Projects",
+      "Plugins",
+      "Automation",
+      "Account",
+      "Settings",
+    ]);
 
     const secondaryNavigation = within(rail).getByTestId(
       "secondary-navigation",

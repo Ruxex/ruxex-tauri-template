@@ -3,7 +3,8 @@ import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { useUiPreferences } from "../../app/ui-preferences";
 import { ContextDrawer } from "../context/ContextDrawer";
-import { ProjectSidebar, type SidebarPanel } from "../sidebar/ProjectSidebar";
+import { ProjectSidebar } from "../sidebar/ProjectSidebar";
+import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
 export function AppLayout() {
@@ -64,23 +65,4 @@ export function AppLayout() {
       </div>
     </main>
   );
-}
-
-function sidebarPanelForPath(pathname: string): SidebarPanel {
-  if (pathname.startsWith("/settings/account")) {
-    return "account";
-  }
-  if (pathname.startsWith("/settings")) {
-    return "settings";
-  }
-  if (pathname.startsWith("/projects")) {
-    return "projects";
-  }
-  if (pathname.startsWith("/capabilities")) {
-    return "plugins";
-  }
-  if (pathname.startsWith("/schedules")) {
-    return "automation";
-  }
-  return "home";
 }
