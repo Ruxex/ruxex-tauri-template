@@ -150,6 +150,35 @@ describe("thread mutation hooks", () => {
     });
   });
 
+  it("invalidates one thread prefix and one thread-list prefix", async () => {
+    const { useSetThreadGoal } = await import("./useThreadMutations");
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(() => useSetThreadGoal(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () =>
+      result.current.mutateAsync({
+        threadId: "thread-1",
+        objective: "Ship safely",
+      }),
+    );
+
+    expect(invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
+      queryKey: ["app-server", "thread", "thread-1"],
+    });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
+      queryKey: ["app-server", "threads"],
+    });
+  });
+
   it("does not invalidate after a failed rename", async () => {
     requestAppServerMethod.mockRejectedValueOnce(
       new Error("thread unavailable"),

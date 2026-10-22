@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { BellIcon } from "@heroicons/react/24/outline";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -9,8 +10,10 @@ import {
   LanguageCard,
   NotificationsCard,
   RuntimeSummary,
+  SettingsPanel,
   UiPreferencesCard,
 } from "./SettingsCards";
+import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
 
 describe("settings card layout", () => {
   afterEach(cleanup);
@@ -123,6 +126,25 @@ describe("settings card layout", () => {
 
     expect(screen.getByLabelText("Language")).toBeTruthy();
     expect(screen.getByLabelText("Desktop notifications")).toBeTruthy();
-    expect(screen.getByLabelText("Notification sound")).toBeTruthy();
+    const soundSelect = screen.getByLabelText("Notification sound");
+    for (const option of UI_NOTIFICATION_SOUND_OPTIONS) {
+      expect(
+        within(soundSelect).getAllByRole("option", { name: option.label }),
+      ).toHaveLength(1);
+    }
+  });
+
+  it("keeps an explicitly supplied icon when the panel title changes", () => {
+    render(
+      <SettingsPanel icon={BellIcon} title="Renamed notification settings">
+        <p>Content</p>
+      </SettingsPanel>,
+    );
+
+    expect(
+      screen
+        .getByRole("heading", { name: "Renamed notification settings" })
+        .querySelector("svg"),
+    ).toBeTruthy();
   });
 });

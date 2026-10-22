@@ -5,7 +5,6 @@ import {
   GlobeAltIcon,
   LinkIcon,
   PaintBrushIcon,
-  ServerStackIcon,
   SparklesIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -17,32 +16,22 @@ import type {
   UiNotificationSound,
   UiTheme,
 } from "../../app/ui-preferences";
+import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
 import { formatErrorMessage } from "../../app/error-message";
 
-type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
-
-const settingsPanelIcons: Record<string, SettingsPanelIcon> = {
-  Connection: LinkIcon,
-  "Provider and account": UserCircleIcon,
-  Capabilities: SparklesIcon,
-  "Runtime summary": CpuChipIcon,
-  Language: GlobeAltIcon,
-  Notifications: BellIcon,
-  Interface: PaintBrushIcon,
-  "Remote App Server": ServerStackIcon,
-};
+export type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 export function SettingsPanel({
   title,
   description,
+  icon: Icon,
   children,
 }: {
   title: string;
   description?: string;
+  icon?: SettingsPanelIcon;
   children: ReactNode;
 }) {
-  const Icon = settingsPanelIcons[title];
-
   return (
     <section className="overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-sm">
       <div className="border-b border-base-300 px-5 py-4">
@@ -77,7 +66,7 @@ export function ConnectionCard({
   onReconnect,
 }: ConnectionCardProps) {
   return (
-    <SettingsPanel title="Connection">
+    <SettingsPanel icon={LinkIcon} title="Connection">
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Status">
           {connected ? "Connected" : "Disconnected"}
@@ -120,7 +109,7 @@ export function ProviderAccountCard({
   account,
 }: ProviderAccountCardProps) {
   return (
-    <SettingsPanel title="Provider and account">
+    <SettingsPanel icon={UserCircleIcon} title="Provider and account">
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Provider">{provider}</SettingRow>
         <SettingRow label="Auth">{authStatus}</SettingRow>
@@ -136,7 +125,7 @@ export function CapabilitiesCard({
   capabilities: Record<string, boolean | string>;
 }) {
   return (
-    <SettingsPanel title="Capabilities">
+    <SettingsPanel icon={SparklesIcon} title="Capabilities">
       <dl className="divide-y divide-base-300 text-sm">
         {Object.entries(capabilities).map(([name, enabled]) => (
           <SettingRow label={name} key={name}>
@@ -164,7 +153,7 @@ export function RuntimeSummary({
   rateLimitName,
 }: RuntimeSummaryProps) {
   return (
-    <SettingsPanel title="Runtime summary">
+    <SettingsPanel icon={CpuChipIcon} title="Runtime summary">
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Models">{modelCount} available</SettingRow>
         <SettingRow label="Permissions">{permissionCount} profiles</SettingRow>
@@ -182,7 +171,7 @@ export function LanguageCard({
   onLanguageChange: (language: UiLanguage) => void;
 }) {
   return (
-    <SettingsPanel title="Language">
+    <SettingsPanel icon={GlobeAltIcon} title="Language">
       <div className="text-sm">
         <SettingControlRow controlId="settings-language" label="Language">
           <select
@@ -216,6 +205,7 @@ export function NotificationsCard({
 }) {
   return (
     <SettingsPanel
+      icon={BellIcon}
       title="Notifications"
       description="Control desktop notifications when the app is in the background."
     >
@@ -244,9 +234,11 @@ export function NotificationsCard({
               onSoundChange(event.target.value as UiNotificationSound)
             }
           >
-            <option value="system">System default</option>
-            <option value="Ping">Ping (macOS)</option>
-            <option value="message-new-instant">Message (Linux)</option>
+            {UI_NOTIFICATION_SOUND_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </SettingControlRow>
       </div>
@@ -273,6 +265,7 @@ export function UiPreferencesCard({
 }: UiPreferencesCardProps) {
   return (
     <SettingsPanel
+      icon={PaintBrushIcon}
       title="Interface"
       description="These are local presentation preferences only."
     >

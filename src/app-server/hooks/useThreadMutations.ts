@@ -16,9 +16,6 @@ function invalidateThreadData(
     queryKey: appServerQueryKeys.thread(threadId),
   });
   void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
-  void queryClient.invalidateQueries({
-    queryKey: ["app-server", "thread", threadId],
-  });
 }
 
 export function useCreateThread() {

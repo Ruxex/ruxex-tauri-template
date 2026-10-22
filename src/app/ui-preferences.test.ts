@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_UI_PREFERENCES,
+  UI_NOTIFICATION_SOUND_OPTIONS,
   parseUiPreferences,
   updateUiPreferences,
 } from "./ui-preferences";
@@ -43,5 +44,18 @@ describe("ui preferences", () => {
       colorScheme: "dark",
       theme: { accentColor: "blue" },
     });
+  });
+
+  it("parses every notification sound declared by the option metadata", () => {
+    for (const option of UI_NOTIFICATION_SOUND_OPTIONS) {
+      expect(
+        parseUiPreferences(
+          JSON.stringify({
+            ...DEFAULT_UI_PREFERENCES,
+            notifications: { desktop: true, sound: option.value },
+          }),
+        ).notifications.sound,
+      ).toBe(option.value);
+    }
   });
 });

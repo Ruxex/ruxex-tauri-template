@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { LinkIcon, PowerIcon } from "@heroicons/react/24/outline";
+import {
+  LinkIcon,
+  PowerIcon,
+  ServerStackIcon,
+} from "@heroicons/react/24/outline";
 
 import type { AppServerEndpoint } from "../../app-server/api";
 import { formatErrorMessage } from "../../app/error-message";
@@ -44,6 +48,7 @@ export function RemoteConnectionCard({
 
   return (
     <SettingsPanel
+      icon={ServerStackIcon}
       title="Remote App Server"
       description="Tokens are kept in memory and sent only when connecting."
     >

@@ -21,12 +21,15 @@ export const UI_ACCENT_COLORS = [
 ] as const;
 export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export type UiTheme = { accentColor: UiAccentColor };
-export const UI_NOTIFICATION_SOUNDS = [
-  "system",
-  "Ping",
-  "message-new-instant",
+export const UI_NOTIFICATION_SOUND_OPTIONS = [
+  { value: "system", label: "System default" },
+  { value: "Ping", label: "Ping (macOS)" },
+  { value: "message-new-instant", label: "Message (Linux)" },
 ] as const;
-export type UiNotificationSound = (typeof UI_NOTIFICATION_SOUNDS)[number];
+export type UiNotificationSound =
+  (typeof UI_NOTIFICATION_SOUND_OPTIONS)[number]["value"];
+export const UI_NOTIFICATION_SOUNDS: readonly UiNotificationSound[] =
+  UI_NOTIFICATION_SOUND_OPTIONS.map((option) => option.value);
 export type UiNotifications = {
   desktop: boolean;
   sound: UiNotificationSound;
