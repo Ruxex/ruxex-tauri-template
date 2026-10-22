@@ -25,6 +25,7 @@ tauri-build = { version = "2.4.1", features = [] }
 anyhow = "1"
 base64 = "0.22"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+chrono-tz = "0.10"
 # The desktop bridge uses the stable 0.4.2 client, protocol, daemon, and path APIs directly.
 ruxex = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3", default-features = false, features = ["app-server", "cli"] }
 ruxex-app-server-client = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
