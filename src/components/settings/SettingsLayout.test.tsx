@@ -112,11 +112,17 @@ describe("settings card layout", () => {
     render(
       <>
         <LanguageCard language="system" onLanguageChange={vi.fn()} />
-        <NotificationsCard enabled onEnabledChange={vi.fn()} />
+        <NotificationsCard
+          enabled
+          onEnabledChange={vi.fn()}
+          onSoundChange={vi.fn()}
+          sound="system"
+        />
       </>,
     );
 
     expect(screen.getByLabelText("Language")).toBeTruthy();
     expect(screen.getByLabelText("Desktop notifications")).toBeTruthy();
+    expect(screen.getByLabelText("Notification sound")).toBeTruthy();
   });
 });

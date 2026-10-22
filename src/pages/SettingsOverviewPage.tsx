@@ -56,6 +56,10 @@ export function SettingsOverviewPage() {
         onEnabledChange={(desktop) =>
           update({ notifications: { ...preferences.notifications, desktop } })
         }
+        onSoundChange={(sound) =>
+          update({ notifications: { ...preferences.notifications, sound } })
+        }
+        sound={preferences.notifications.sound}
       />
     </div>
   );

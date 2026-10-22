@@ -8,7 +8,7 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 3;
+const UI_PREFERENCES_VERSION = 4;
 
 export type UiColorScheme = "system" | "light" | "dark";
 export type UiLanguage = "system" | "en" | "ja";
@@ -21,7 +21,16 @@ export const UI_ACCENT_COLORS = [
 ] as const;
 export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export type UiTheme = { accentColor: UiAccentColor };
-export type UiNotifications = { desktop: boolean };
+export const UI_NOTIFICATION_SOUNDS = [
+  "system",
+  "Ping",
+  "message-new-instant",
+] as const;
+export type UiNotificationSound = (typeof UI_NOTIFICATION_SOUNDS)[number];
+export type UiNotifications = {
+  desktop: boolean;
+  sound: UiNotificationSound;
+};
 export type ContextTab = "activity" | "changes" | "context";
 export type UiDensity = "comfortable" | "compact";
 
@@ -43,7 +52,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   contextDrawerOpen: true,
   contextTab: "activity",
   language: "system",
-  notifications: { desktop: true },
+  notifications: { desktop: true, sound: "system" },
   colorScheme: "system",
   theme: { accentColor: "blue" },
   density: "comfortable",
@@ -82,6 +91,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
       !isRecord(parsed) ||
       (parsed.version !== 1 &&
         parsed.version !== 2 &&
+        parsed.version !== 3 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
@@ -116,6 +126,13 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
             ? parsed.notifications.desktop
             : undefined,
           DEFAULT_UI_PREFERENCES.notifications.desktop,
+        ),
+        sound: readEnum(
+          isRecord(parsed.notifications)
+            ? parsed.notifications.sound
+            : undefined,
+          UI_NOTIFICATION_SOUNDS,
+          DEFAULT_UI_PREFERENCES.notifications.sound,
         ),
       },
       colorScheme: readEnum(

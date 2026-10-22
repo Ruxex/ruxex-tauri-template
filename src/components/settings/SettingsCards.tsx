@@ -14,6 +14,7 @@ import type {
   UiColorScheme,
   UiDensity,
   UiLanguage,
+  UiNotificationSound,
   UiTheme,
 } from "../../app/ui-preferences";
 import { formatErrorMessage } from "../../app/error-message";
@@ -205,9 +206,13 @@ export function LanguageCard({
 export function NotificationsCard({
   enabled,
   onEnabledChange,
+  sound,
+  onSoundChange,
 }: {
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
+  sound: UiNotificationSound;
+  onSoundChange: (sound: UiNotificationSound) => void;
 }) {
   return (
     <SettingsPanel
@@ -226,6 +231,23 @@ export function NotificationsCard({
             onChange={(event) => onEnabledChange(event.target.checked)}
             type="checkbox"
           />
+        </SettingControlRow>
+        <SettingControlRow
+          controlId="settings-notification-sound"
+          label="Notification sound"
+        >
+          <select
+            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+            id="settings-notification-sound"
+            value={sound}
+            onChange={(event) =>
+              onSoundChange(event.target.value as UiNotificationSound)
+            }
+          >
+            <option value="system">System default</option>
+            <option value="Ping">Ping (macOS)</option>
+            <option value="message-new-instant">Message (Linux)</option>
+          </select>
         </SettingControlRow>
       </div>
     </SettingsPanel>

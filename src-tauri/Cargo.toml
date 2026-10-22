@@ -6,6 +6,10 @@ license = "Apache-2.0"
 publish = false
 build = "build.rs"
 
+[features]
+default = ["example"]
+example = []
+
 [lib]
 name = "ruxex_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
@@ -18,15 +22,18 @@ path = "src/main.rs"
 tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
+anyhow = "1"
 base64 = "0.22"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
-# The facade does not yet re-export the client, protocol, daemon, or absolute-path APIs used below.
-ruxex = { version = "0.3.2", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.3.2", default-features = false, features = ["app-server"] }
-ruxex-app-server-client = { version = "0.3.2", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.3.2" }
-ruxex-app-server-daemon = { version = "0.3.2", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.3.2" }
-ruxex-app-server-protocol = { version = "0.3.2", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.3.2" }
-ruxex-utils-absolute-path = { version = "0.3.2", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.3.2" }
+# The desktop bridge uses the stable 0.4.2 client, protocol, daemon, and path APIs directly.
+ruxex = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3", default-features = false, features = ["app-server", "cli"] }
+ruxex-app-server-client = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
+ruxex-app-server-daemon = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
+ruxex-app-server-protocol = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
+ruxex-arg0 = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
+ruxex-utils-absolute-path = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
 dirs = "6"
+futures = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 url = "2"

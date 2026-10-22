@@ -102,4 +102,23 @@ describe("notification adapter", () => {
       body: "done",
     });
   });
+
+  it("passes the selected native sound to the notification plugin", async () => {
+    isPermissionGranted.mockResolvedValueOnce(true);
+
+    await sendDesktopNotification(
+      {
+        id: "turn-1",
+        title: "Turn completed",
+        body: "done",
+      },
+      "Ping",
+    );
+
+    expect(sendNotification).toHaveBeenCalledWith({
+      title: "Turn completed",
+      body: "done",
+      sound: "Ping",
+    });
+  });
 });

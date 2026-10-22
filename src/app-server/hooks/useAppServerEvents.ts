@@ -21,11 +21,14 @@ export function useAppServerNotifications() {
   const { preferences } = useUiPreferences();
   const notificationsEnabled = useRef(preferences.notifications.desktop);
   notificationsEnabled.current = preferences.notifications.desktop;
+  const notificationSound = useRef(preferences.notifications.sound);
+  notificationSound.current = preferences.notifications.sound;
   const dispatcher = useRef(
     createNotificationDispatcher({
       enabled: () => notificationsEnabled.current,
       isFocused: () => typeof document !== "undefined" && document.hasFocus(),
-      send: sendDesktopNotification,
+      send: (candidate) =>
+        sendDesktopNotification(candidate, notificationSound.current),
     }),
   ).current;
 

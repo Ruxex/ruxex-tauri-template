@@ -29,6 +29,15 @@ use tauri::State;
 mod platform;
 mod scheduler;
 mod worktree;
+#[cfg(feature = "example")]
+mod example_provider;
+
+#[cfg(feature = "example")]
+pub fn run_example_provider_host() -> anyhow::Result<()> {
+    ruxex_arg0::arg0_dispatch_or_else(|arg0_paths| async move {
+        example_provider::run(arg0_paths, desktop_product_identity()).await
+    })
+}
 
 #[derive(Default)]
 struct AppState {
@@ -791,23 +800,97 @@ async fn connect_local_endpoint(app: &AppHandle) -> CommandResult<(RemoteAppServ
     let (client, effective_socket_path, bootstrapped_version) = match connect_unix_socket(socket_path.clone()).await {
         Ok(client) => (client, socket_path, None),
         Err(_) => {
-            let package_source = runtime_package_source(app)
-                .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-            let bootstrap = ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
-                &package_source,
-                &[
-                    OsString::from(ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
-                    OsString::from("--managed-daemon"),
-                ],
-            )
-            .await
-            .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}")))?;
-            let effective_socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
-                .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error.to_string()))?;
-            let client = connect_unix_socket(effective_socket_path.clone()).await.map_err(|error| {
-                command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
-            })?;
-            (client, effective_socket_path, Some(bootstrap.app_server_version))
+            #[cfg(feature = "example")]
+            let _ = app;
+
+            #[cfg(feature = "example")]
+            {
+                let executable = std::env::current_exe().map_err(|error| {
+                    command_error(
+                        DesktopAppServerErrorKind::Lifecycle,
+                        format!("failed to resolve the desktop executable: {error}"),
+                    )
+                })?;
+                let lifecycle = ruxex_app_server_daemon::run_with_host_executable(
+                    ruxex_app_server_daemon::LifecycleCommand::Start,
+                    &executable,
+                    &[
+                        OsString::from(ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
+                        OsString::from("--managed-daemon"),
+                    ],
+                )
+                .await
+                .map_err(|error| {
+                    command_error(
+                        DesktopAppServerErrorKind::Lifecycle,
+                        format!("failed to start the example provider app-server: {error:#}"),
+                    )
+                })?;
+                let effective_socket_path =
+                    AbsolutePathBuf::from_absolute_path(lifecycle.socket_path.clone()).map_err(
+                        |error| {
+                            command_error(
+                                DesktopAppServerErrorKind::Initialization,
+                                error.to_string(),
+                            )
+                        },
+                    )?;
+                let client = connect_unix_socket(effective_socket_path.clone())
+                    .await
+                    .map_err(|error| {
+                        command_error(
+                            DesktopAppServerErrorKind::Initialization,
+                            error.to_string(),
+                        )
+                    })?;
+                (
+                    client,
+                    effective_socket_path,
+                    lifecycle
+                        .app_server_version
+                        .or_else(|| Some("0.4.2".to_string())),
+                )
+            }
+
+            #[cfg(not(feature = "example"))]
+            {
+                let package_source = runtime_package_source(app)
+                    .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+                let bootstrap =
+                    ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
+                        &package_source,
+                        &[
+                            OsString::from(
+                                ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG,
+                            ),
+                            OsString::from("--managed-daemon"),
+                        ],
+                    )
+                    .await
+                    .map_err(|error| {
+                        command_error(
+                            DesktopAppServerErrorKind::Lifecycle,
+                            format!("{error:#}"),
+                        )
+                    })?;
+                let effective_socket_path =
+                    AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
+                        .map_err(|error| {
+                            command_error(
+                                DesktopAppServerErrorKind::Initialization,
+                                error.to_string(),
+                            )
+                        })?;
+                let client = connect_unix_socket(effective_socket_path.clone())
+                    .await
+                    .map_err(|error| {
+                        command_error(
+                            DesktopAppServerErrorKind::Initialization,
+                            error.to_string(),
+                        )
+                    })?;
+                (client, effective_socket_path, Some(bootstrap.app_server_version))
+            }
         }
     };
     let status = AppServerStatus {
@@ -945,6 +1028,7 @@ async fn request_handle(state: &State<'_, AppState>) -> CommandResult<AppServerR
     })
 }
 
+#[cfg(not(feature = "example"))]
 fn runtime_package_source(app: &AppHandle) -> Result<PathBuf, String> {
     let resource_package = app
         .path()
@@ -957,7 +1041,11 @@ fn runtime_package_source(app: &AppHandle) -> Result<PathBuf, String> {
     select_runtime_package(&resource_package, &development_package)
 }
 
-fn select_runtime_package(resource_package: &Path, development_package: &Path) -> Result<PathBuf, String> {
+#[cfg(any(not(feature = "example"), test))]
+fn select_runtime_package(
+    resource_package: &Path,
+    development_package: &Path,
+) -> Result<PathBuf, String> {
     if resource_package.join("ruxex-package.json").is_file() {
         return Ok(resource_package.to_path_buf());
     }

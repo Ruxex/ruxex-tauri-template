@@ -5,6 +5,7 @@ import {
 } from "@tauri-apps/plugin-notification";
 
 import type { AppServerEvent } from "../app-server/events";
+import type { UiNotificationSound } from "../app/ui-preferences";
 
 export type NotificationCandidate = {
   id: string;
@@ -79,12 +80,17 @@ export function createNotificationDispatcher({
 
 export async function sendDesktopNotification(
   candidate: NotificationCandidate,
+  sound: UiNotificationSound = "system",
 ): Promise<void> {
   let granted = await isPermissionGranted();
   if (!granted) {
     granted = (await requestPermission()) === "granted";
   }
   if (granted) {
-    sendNotification({ title: candidate.title, body: candidate.body });
+    sendNotification({
+      title: candidate.title,
+      body: candidate.body,
+      ...(sound === "system" ? {} : { sound }),
+    });
   }
 }

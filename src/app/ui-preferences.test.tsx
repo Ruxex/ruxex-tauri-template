@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_UI_PREFERENCES,
   UI_PREFERENCES_KEY,
+  UI_NOTIFICATION_SOUNDS,
   UiPreferencesProvider,
   parseUiPreferences,
   updateUiPreferences,
@@ -67,6 +68,13 @@ describe("UI preference persistence", () => {
       theme: { accentColor: "violet" },
       density: "compact",
     });
+    expect(parseUiPreferences(JSON.stringify({
+      version: 4,
+      notifications: { desktop: true, sound: "message-new-instant" },
+    }))).toMatchObject({
+      notifications: { desktop: true, sound: "message-new-instant" },
+    });
+    expect(UI_NOTIFICATION_SOUNDS).toContain("system");
   });
 
   it("updates presentation preferences without changing the version", () => {
@@ -76,7 +84,7 @@ describe("UI preference persistence", () => {
     });
 
     expect(next).toMatchObject({
-      version: 3,
+      version: 4,
       colorScheme: "light",
       theme: { accentColor: "rose" },
     });
