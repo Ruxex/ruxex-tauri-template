@@ -1,4 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeftOnRectangleIcon,
+  Bars3Icon,
+  Squares2X2Icon,
+} from "@heroicons/react/24/outline";
 
 import {
   useAccount,
@@ -46,7 +51,7 @@ export function TopBar({
         aria-label="Toggle project sidebar"
         onClick={onToggleSidebar}
       >
-        ☰
+        <Bars3Icon aria-hidden="true" className="size-5" />
       </button>
       <div className="flex min-w-0 flex-1">
         <Link className="text-xl font-semibold" to="/">
@@ -66,6 +71,7 @@ export function TopBar({
         onClick={onToggleContext}
         aria-pressed={contextDrawerOpen}
       >
+        <Squares2X2Icon aria-hidden="true" className="size-4" />
         Context
       </button>
       {account.data?.account && (
@@ -80,6 +86,7 @@ export function TopBar({
               .catch(() => undefined);
           }}
         >
+          <ArrowLeftOnRectangleIcon aria-hidden="true" className="size-4" />
           {logout.isPending ? "Logging out…" : "Log out"}
         </button>
       )}

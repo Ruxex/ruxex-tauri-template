@@ -1,4 +1,10 @@
 import {
+  AdjustmentsHorizontalIcon,
+  ClipboardDocumentListIcon,
+  PaperClipIcon,
+} from "@heroicons/react/24/outline";
+
+import {
   availableSubmissionModes,
   submissionModeLabel,
   type SubmissionMode,
@@ -26,27 +32,36 @@ export function ComposerOptions({
   const modes = availableSubmissionModes(activeTurnId);
   return (
     <div className="flex flex-wrap gap-2">
-      <select
-        className="select select-bordered select-sm"
-        value={modes.includes(mode) ? mode : "send"}
-        onChange={(event) => onModeChange(event.target.value as SubmissionMode)}
-        disabled={disabled}
-        aria-label="Submission mode"
-      >
-        <option value="send">{submissionModeLabel("send")}</option>
-        <option value="steer" disabled={!modes.includes("steer")}>
-          {submissionModeLabel("steer")}
-        </option>
-        <option value="queue" disabled={!modes.includes("queue")}>
-          {submissionModeLabel("queue")}
-        </option>
-      </select>
+      <div className="flex items-center gap-1">
+        <AdjustmentsHorizontalIcon
+          aria-hidden="true"
+          className="size-4 text-base-content/60"
+        />
+        <select
+          className="select select-bordered select-sm"
+          value={modes.includes(mode) ? mode : "send"}
+          onChange={(event) =>
+            onModeChange(event.target.value as SubmissionMode)
+          }
+          disabled={disabled}
+          aria-label="Submission mode"
+        >
+          <option value="send">{submissionModeLabel("send")}</option>
+          <option value="steer" disabled={!modes.includes("steer")}>
+            {submissionModeLabel("steer")}
+          </option>
+          <option value="queue" disabled={!modes.includes("queue")}>
+            {submissionModeLabel("queue")}
+          </option>
+        </select>
+      </div>
       <button
         className={`btn btn-sm ${planMode ? "btn-secondary" : "btn-ghost"}`}
         type="button"
         onClick={onPlanModeChange}
         disabled={disabled}
       >
+        <ClipboardDocumentListIcon aria-hidden="true" className="size-4" />
         {planMode ? "Plan mode on" : "Plan mode"}
       </button>
       <button
@@ -56,6 +71,7 @@ export function ComposerOptions({
         onClick={onAttach}
         title="Attach an image"
       >
+        <PaperClipIcon aria-hidden="true" className="size-4" />
         Attach image
       </button>
     </div>

@@ -45,6 +45,11 @@ describe("ReviewControls", () => {
         delivery: "inline",
       }),
     );
+    expect(
+      screen
+        .getByRole("button", { name: "Review changes" })
+        .querySelector("svg"),
+    ).toBeTruthy();
     expect(screen.getByText("Review started.")).toBeTruthy();
   });
 

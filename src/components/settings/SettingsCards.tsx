@@ -1,4 +1,14 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
+import {
+  BellIcon,
+  CpuChipIcon,
+  GlobeAltIcon,
+  LinkIcon,
+  PaintBrushIcon,
+  ServerStackIcon,
+  SparklesIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
 import type {
   UiAccentColor,
   UiColorScheme,
@@ -6,6 +16,19 @@ import type {
   UiLanguage,
   UiTheme,
 } from "../../app/ui-preferences";
+
+type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+const settingsPanelIcons: Record<string, SettingsPanelIcon> = {
+  Connection: LinkIcon,
+  "Provider and account": UserCircleIcon,
+  Capabilities: SparklesIcon,
+  "Runtime summary": CpuChipIcon,
+  Language: GlobeAltIcon,
+  Notifications: BellIcon,
+  Interface: PaintBrushIcon,
+  "Remote App Server": ServerStackIcon,
+};
 
 export function SettingsPanel({
   title,
@@ -16,10 +39,15 @@ export function SettingsPanel({
   description?: string;
   children: ReactNode;
 }) {
+  const Icon = settingsPanelIcons[title];
+
   return (
     <section className="overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-sm">
       <div className="border-b border-base-300 px-5 py-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          {Icon && <Icon aria-hidden="true" className="size-5 text-primary" />}
+          {title}
+        </h2>
         {description && (
           <p className="mt-1 text-sm text-base-content/70">{description}</p>
         )}

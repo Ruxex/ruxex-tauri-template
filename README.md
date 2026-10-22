@@ -92,12 +92,12 @@ template's scope.
 ## Development
 
 ```sh
-pnpm install
-just check-tests
-just package-test
-just rust-test
-just build
-pnpm tauri dev
+make install
+make check-tests
+make package-test
+make rust-test
+make build
+make run
 ```
 
 ブラウザ上でモックApp Serverに接続したUI全体を確認する場合は、次を実行します。
@@ -109,11 +109,11 @@ make mock-app-server
 このモードでは `VITE_MOCK_APP_SERVER=1` が有効になり、Tauriのinvoke/eventブリッジと
 基本的なApp Server応答がインメモリで置き換えられます。
 
-The `justfile` is the supported local verification entrypoint. `just
+The `Makefile` is the supported local verification entrypoint. `make
 check-tests` runs the frontend type and lint checks plus the Vitest suite;
-`just package-test` validates runtime-package staging; `just rust-test` runs
-the Tauri bridge tests; and `just verify` runs all checks and the frontend
-build.
+`make package-test` validates runtime-package staging; `make rust-test` runs
+the Tauri bridge tests; `make verify` runs all checks and the frontend build;
+and `make run` starts the Tauri development application.
 
 The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.

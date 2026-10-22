@@ -33,6 +33,11 @@ describe("WorktreeCard", () => {
   it("shows dirty worktrees and requires an explicit force checkbox", async () => {
     const { WorktreeCard } = await import("./WorktreeCard");
     render(<WorktreeCard root="/repo" />);
+    expect(
+      screen
+        .getByRole("heading", { name: "Git worktrees" })
+        .querySelector("svg"),
+    ).toBeTruthy();
     expect(screen.getByText("feature")).toBeTruthy();
     expect(screen.getByText("Dirty")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Remove feature" }));

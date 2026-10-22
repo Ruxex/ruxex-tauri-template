@@ -4,8 +4,11 @@ import {
   CheckIcon,
   ClockIcon,
   Cog6ToothIcon,
+  DocumentTextIcon,
+  InformationCircleIcon,
   PlusIcon,
   SparklesIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
@@ -204,7 +207,7 @@ function SidebarHeader({
         type="button"
         onClick={onClose}
       >
-        ×
+        <XMarkIcon aria-hidden="true" className="size-4" />
       </button>
     </div>
   );
@@ -232,6 +235,7 @@ function ChatsSidebar({
     >
       <SidebarHeader label="Chats" onClose={onClose} />
       <Link className="btn btn-primary mb-6 w-full" to="/chat/new">
+        <PlusIcon aria-hidden="true" className="size-4" />
         New chat
       </Link>
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -297,17 +301,27 @@ function SettingsSidebar({ onClose }: { onClose: () => void }) {
       <nav aria-label="Settings sections" className="menu w-full gap-1 p-0">
         <li>
           <NavLink end to="/settings">
+            <InformationCircleIcon aria-hidden="true" className="size-4" />
             General
           </NavLink>
         </li>
         <li>
-          <NavLink to="/settings/appearance">Appearance</NavLink>
+          <NavLink to="/settings/appearance">
+            <SparklesIcon aria-hidden="true" className="size-4" />
+            Appearance
+          </NavLink>
         </li>
         <li>
-          <NavLink to="/settings/models">Models</NavLink>
+          <NavLink to="/settings/models">
+            <DocumentTextIcon aria-hidden="true" className="size-4" />
+            Models
+          </NavLink>
         </li>
         <li>
-          <NavLink to="/settings/account">Account</NavLink>
+          <NavLink to="/settings/account">
+            <ChatBubbleLeftRightIcon aria-hidden="true" className="size-4" />
+            Account
+          </NavLink>
         </li>
       </nav>
     </aside>

@@ -32,6 +32,9 @@ describe("ComposerOptions", () => {
       "disabled",
       false,
     );
+    expect(
+      screen.getByRole("button", { name: "Attach image" }).querySelector("svg"),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Attach image" }));
     expect(onAttach).toHaveBeenCalledTimes(1);
   });
@@ -59,5 +62,8 @@ describe("ComposerOptions", () => {
 
     expect(onModeChange).toHaveBeenCalledWith("queue");
     expect(onPlanModeChange).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("button", { name: "Plan mode" }).querySelector("svg"),
+    ).toBeTruthy();
   });
 });

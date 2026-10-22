@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 import { useStartReview } from "../../app-server/hooks";
 
@@ -28,6 +29,7 @@ export function ReviewControls({ threadId }: { threadId: string }) {
         disabled={review.isPending}
         onClick={() => void startReview()}
       >
+        <MagnifyingGlassIcon aria-hidden="true" className="size-4" />
         {review.isPending ? "Starting review…" : "Review changes"}
       </button>
       {message && <span className="text-sm text-success">{message}</span>}

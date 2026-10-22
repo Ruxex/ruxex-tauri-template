@@ -12,6 +12,46 @@ import { ActivityItem } from "./ActivityItem";
 describe("ActivityItem", () => {
   afterEach(cleanup);
 
+  it.each([
+    ["commandExecution", "Command"],
+    ["dynamicToolCall", "Tool"],
+    ["mcpToolCall", "MCP tool"],
+  ])("renders a dedicated icon for %s activity", (type, label) => {
+    render(
+      <ActivityItem
+        item={{
+          id: `${type}-1`,
+          turnId: "turn-1",
+          type,
+          category: "activity",
+          title: label,
+          text: "done",
+          metadata: { status: "completed" },
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText(label)).toBeTruthy();
+  });
+
+  it("shows a spinner while an activity is in progress", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "mcp-progress-1",
+          turnId: "turn-1",
+          type: "mcpToolCall",
+          category: "activity",
+          title: "MCP: docs / search",
+          text: "waiting for tool",
+          metadata: { status: "inProgress" },
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Running" })).toBeTruthy();
+  });
+
   it("keeps diagnostic metadata visible in a collapsed activity", () => {
     render(
       <ActivityItem

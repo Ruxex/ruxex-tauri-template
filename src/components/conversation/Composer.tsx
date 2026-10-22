@@ -1,4 +1,11 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  ArrowPathIcon,
+  ArrowUturnRightIcon,
+  PaperAirplaneIcon,
+  QueueListIcon,
+  StopIcon,
+} from "@heroicons/react/24/outline";
 
 import { buildImageUserInput } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
@@ -29,6 +36,13 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
   const interrupt = useInterruptTurn();
   const isPending =
     send.isPending || steer.isPending || queue.isPending || interrupt.isPending;
+  const SubmitIcon = isPending
+    ? ArrowPathIcon
+    : mode === "queue"
+      ? QueueListIcon
+      : mode === "steer"
+        ? ArrowUturnRightIcon
+        : PaperAirplaneIcon;
 
   function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
@@ -150,6 +164,7 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
               }
               disabled={isPending}
             >
+              <StopIcon aria-hidden="true" className="size-4" />
               Stop
             </button>
           )}
@@ -158,6 +173,10 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
             type="submit"
             disabled={isPending || (!message.trim() && !imageFile)}
           >
+            <SubmitIcon
+              aria-hidden="true"
+              className={`size-4 ${isPending ? "animate-spin" : ""}`}
+            />
             {isPending
               ? "Working…"
               : mode === "queue"

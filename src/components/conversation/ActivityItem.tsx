@@ -1,14 +1,77 @@
+import type { ComponentType, SVGProps } from "react";
+
+import {
+  ArrowPathIcon,
+  BoltIcon,
+  ClipboardDocumentListIcon,
+  CommandLineIcon,
+  DocumentCheckIcon,
+  LightBulbIcon,
+  PhotoIcon,
+  ServerStackIcon,
+  UserGroupIcon,
+  WrenchScrewdriverIcon,
+} from "@heroicons/react/24/outline";
+
 import type { ConversationViewItem } from "./conversation-model";
 import { ImageView } from "./ImageView";
 import { MarkdownContent } from "./MarkdownContent";
 import { openBrowserWindow } from "../../platform/native";
 
+type ActivityIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+type ActivityPresentation = {
+  icon: ActivityIcon;
+  label: string;
+};
+
+const activityPresentations: Record<string, ActivityPresentation> = {
+  commandExecution: { icon: CommandLineIcon, label: "Command" },
+  dynamicToolCall: { icon: WrenchScrewdriverIcon, label: "Tool" },
+  mcpToolCall: { icon: ServerStackIcon, label: "MCP tool" },
+  fileChange: { icon: DocumentCheckIcon, label: "File changes" },
+  plan: { icon: ClipboardDocumentListIcon, label: "Plan" },
+  reasoning: { icon: LightBulbIcon, label: "Reasoning" },
+  imageView: { icon: PhotoIcon, label: "Screenshot" },
+  collabAgentToolCall: { icon: UserGroupIcon, label: "Agent collaboration" },
+};
+
+const fallbackPresentation: ActivityPresentation = {
+  icon: BoltIcon,
+  label: "Activity",
+};
+
 export function ActivityItem({ item }: { item: ConversationViewItem }) {
+  const presentation = activityPresentations[item.type] ?? fallbackPresentation;
+  const isInProgress =
+    item.metadata?.status === "inProgress" ||
+    item.metadata?.status === "running";
+  const Icon = presentation.icon;
+
   return (
     <details className="collapse collapse-arrow border border-base-300 bg-base-100">
       <summary className="collapse-title flex items-center gap-2 py-3 text-sm font-medium">
+        <span
+          aria-label={presentation.label}
+          className="inline-flex shrink-0"
+          role="img"
+          title={presentation.label}
+        >
+          <Icon aria-hidden="true" className="size-4 text-base-content/70" />
+          {isInProgress && (
+            <ArrowPathIcon
+              aria-hidden="true"
+              className="size-3 animate-spin text-primary"
+            />
+          )}
+        </span>
         <span>{item.title}</span>
         <span className="badge badge-ghost badge-sm">{item.type}</span>
+        {isInProgress && (
+          <span aria-label="Running" className="sr-only" role="status">
+            Running
+          </span>
+        )}
       </summary>
       <div className="collapse-content">
         {item.imagePath && <ImageView path={item.imagePath} />}

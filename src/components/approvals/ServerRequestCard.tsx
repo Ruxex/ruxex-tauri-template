@@ -1,4 +1,12 @@
 import { useState } from "react";
+import {
+  CheckIcon,
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
+  ServerIcon,
+  ShieldCheckIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import {
@@ -37,6 +45,11 @@ export function ServerRequestCard({
     : request.method.includes("requestApproval")
       ? "Approval requested"
       : "Server request";
+  const RequestIcon = isUserInput
+    ? QuestionMarkCircleIcon
+    : request.method.includes("requestApproval")
+      ? ShieldCheckIcon
+      : ServerIcon;
 
   async function resolve(decision: ApprovalDecision) {
     const result = buildApprovalResponse(request, decision);
@@ -60,7 +73,10 @@ export function ServerRequestCard({
       <div className="card-body gap-3 p-4">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <h2 className="card-title text-base">{title}</h2>
+            <h2 className="card-title text-base">
+              <RequestIcon aria-hidden="true" className="size-5" />
+              {title}
+            </h2>
             <span className="badge badge-warning">{String(request.id)}</span>
           </div>
           {requestParams.command && (
@@ -72,13 +88,17 @@ export function ServerRequestCard({
             {Object.entries(scope).map(([key, value]) => (
               <div className="flex min-w-0 gap-2" key={key}>
                 <dt className="font-medium">{key}</dt>
-                <dd className="truncate" title={value}>{value}</dd>
+                <dd className="truncate" title={value}>
+                  {value}
+                </dd>
               </div>
             ))}
           </dl>
           {isUserInput && requestParams.questions?.[0] && (
             <label className="form-control mt-2">
-              <span className="label-text">{requestParams.questions[0].question}</span>
+              <span className="label-text">
+                {requestParams.questions[0].question}
+              </span>
               <input
                 className="input input-bordered input-sm mt-1"
                 value={answer}
@@ -88,35 +108,66 @@ export function ServerRequestCard({
             </label>
           )}
           {!isRequestActionable(request) && (
-            <p className="mt-2 text-sm text-error">Malformed or unsupported request payload.</p>
+            <p className="mt-2 text-sm text-error">
+              Malformed or unsupported request payload.
+            </p>
           )}
           {!connected && (
             <p className="mt-2 text-sm text-warning">
-              Disconnected. This request will remain pending; reconnect before responding.
+              Disconnected. This request will remain pending; reconnect before
+              responding.
             </p>
           )}
         </div>
         <div className="card-actions justify-end">
           {actionable && isUserInput && (
-            <button className="btn btn-primary btn-sm" type="button" onClick={() => void submitInput()} disabled={!answer.trim()}>
+            <button
+              className="btn btn-primary btn-sm"
+              type="button"
+              onClick={() => void submitInput()}
+              disabled={!answer.trim()}
+            >
+              <CheckIcon aria-hidden="true" className="size-4" />
               Submit
             </button>
           )}
-          {actionable && !isUserInput && request.method.includes("requestApproval") && (
-            <>
-              <button className="btn btn-success btn-sm" type="button" onClick={() => void resolve("accept")}>
-                Allow
+          {actionable &&
+            !isUserInput &&
+            request.method.includes("requestApproval") && (
+              <>
+                <button
+                  className="btn btn-success btn-sm"
+                  type="button"
+                  onClick={() => void resolve("accept")}
+                >
+                  <CheckIcon aria-hidden="true" className="size-4" />
+                  Allow
+                </button>
+                <button
+                  className="btn btn-error btn-sm btn-outline"
+                  type="button"
+                  onClick={() => void resolve("decline")}
+                >
+                  <XMarkIcon aria-hidden="true" className="size-4" />
+                  Deny
+                </button>
+              </>
+            )}
+          {actionable &&
+            !isUserInput &&
+            !request.method.includes("requestApproval") && (
+              <button
+                className="btn btn-error btn-sm btn-outline"
+                type="button"
+                onClick={() => void onReject("Unsupported server request")}
+              >
+                <ExclamationTriangleIcon
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                Reject
               </button>
-              <button className="btn btn-error btn-sm btn-outline" type="button" onClick={() => void resolve("decline")}>
-                Deny
-              </button>
-            </>
-          )}
-          {actionable && !isUserInput && !request.method.includes("requestApproval") && (
-            <button className="btn btn-error btn-sm btn-outline" type="button" onClick={() => void onReject("Unsupported server request") }>
-              Reject
-            </button>
-          )}
+            )}
         </div>
       </div>
     </article>

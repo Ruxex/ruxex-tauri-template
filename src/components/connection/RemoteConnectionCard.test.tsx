@@ -21,6 +21,12 @@ describe("RemoteConnectionCard", () => {
       />,
     );
 
+    expect(
+      screen
+        .getByRole("heading", { name: "Remote App Server" })
+        .querySelector("svg"),
+    ).toBeTruthy();
+
     fireEvent.change(screen.getByLabelText("Remote WebSocket URL"), {
       target: { value: "wss://example.test/rpc" },
     });
@@ -55,7 +61,9 @@ describe("RemoteConnectionCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Connect remote" }));
 
     expect(onConnect).not.toHaveBeenCalled();
-    expect(screen.getByText("Use wss:// or a loopback ws:// endpoint.")).toBeTruthy();
+    expect(
+      screen.getByText("Use wss:// or a loopback ws:// endpoint."),
+    ).toBeTruthy();
   });
 
   it("offers disconnect for an active remote connection", () => {

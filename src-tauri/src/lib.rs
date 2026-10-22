@@ -6,6 +6,8 @@ use std::sync::atomic::{AtomicI64, Ordering};
 
 use base64::Engine;
 use chrono::Utc;
+use ruxex::ProductIdentity;
+use ruxex::app_server::app_server_control_socket_path;
 use ruxex_app_server_client::AppServerEvent;
 use ruxex_app_server_client::AppServerRequestHandle;
 use ruxex_app_server_client::RemoteAppServerClient;
@@ -17,7 +19,6 @@ use ruxex_app_server_protocol::JSONRPCErrorError;
 use ruxex_app_server_protocol::RequestId;
 use ruxex_app_server_protocol::Result as JsonRpcResult;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
-use ruxex_utils_home_dir::ProductIdentity;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::AppHandle;
@@ -762,7 +763,7 @@ async fn install_connection(
 async fn connect_local_endpoint(app: &AppHandle) -> CommandResult<(RemoteAppServerClient, AppServerStatus)> {
     let home = desktop_ruxex_home()
         .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-    let socket_path = ruxex_app_server_client::app_server_control_socket_path(&home).map_err(|error| {
+    let socket_path = app_server_control_socket_path(&home).map_err(|error| {
         command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
     })?;
     let (client, effective_socket_path, bootstrapped_version) = match connect_unix_socket(socket_path.clone()).await {

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { LinkIcon, PowerIcon } from "@heroicons/react/24/outline";
 
 import type { AppServerEndpoint } from "../../app-server/api";
 import { validateRemoteEndpoint } from "../../platform/platform-model";
@@ -81,6 +82,7 @@ export function RemoteConnectionCard({
               onClick={onDisconnect}
               type="button"
             >
+              <PowerIcon aria-hidden="true" className="size-4" />
               {isDisconnecting ? "Disconnecting…" : "Disconnect remote"}
             </button>
           )}
@@ -89,6 +91,7 @@ export function RemoteConnectionCard({
             disabled={isConnecting}
             type="submit"
           >
+            <LinkIcon aria-hidden="true" className="size-4" />
             {isConnecting ? "Connecting…" : "Connect remote"}
           </button>
         </div>

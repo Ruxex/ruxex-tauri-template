@@ -41,6 +41,11 @@ describe("ServerRequestCard", () => {
 
     expect(screen.getAllByText("pnpm check")).toHaveLength(2);
     expect(screen.getByText("/workspace")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("heading", { name: "Approval requested" })
+        .querySelector("svg"),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Allow" }));
 
     expect(onResolve).toHaveBeenCalledWith({ decision: "accept" });

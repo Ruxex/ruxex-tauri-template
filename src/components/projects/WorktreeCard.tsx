@@ -1,4 +1,10 @@
 import { useState } from "react";
+import {
+  FolderOpenIcon,
+  CodeBracketIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 
 import { useWorktrees } from "../../app-server/hooks";
 
@@ -11,7 +17,10 @@ export function WorktreeCard({ root }: { root: string }) {
     <section className="card border border-base-300 bg-base-100 shadow-sm">
       <div className="card-body gap-3">
         <div>
-          <h2 className="card-title">Git worktrees</h2>
+          <h2 className="card-title">
+            <CodeBracketIcon aria-hidden="true" className="size-5" />
+            Git worktrees
+          </h2>
           <p className="text-sm text-base-content/70">Repository: {root}</p>
         </div>
         <form
@@ -39,6 +48,7 @@ export function WorktreeCard({ root }: { root: string }) {
             disabled={worktrees.create.isPending}
             type="submit"
           >
+            <PlusIcon aria-hidden="true" className="size-4" />
             Create worktree
           </button>
         </form>
@@ -85,6 +95,7 @@ export function WorktreeCard({ root }: { root: string }) {
                     onClick={() => worktrees.open.mutate(worktree.path)}
                     type="button"
                   >
+                    <FolderOpenIcon aria-hidden="true" className="size-4" />
                     Open
                   </button>
                   <button
@@ -95,6 +106,7 @@ export function WorktreeCard({ root }: { root: string }) {
                     }
                     type="button"
                   >
+                    <TrashIcon aria-hidden="true" className="size-4" />
                     Remove
                   </button>
                 </div>

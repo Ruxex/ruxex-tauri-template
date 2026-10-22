@@ -99,6 +99,28 @@ describe("conversation workspace selectors", () => {
     });
   });
 
+  it("keeps raw live tool progress labeled and marked in progress", () => {
+    const items = mergeConversationItems(
+      [],
+      [
+        {
+          id: "mcp-progress-1",
+          threadId: "thread-1",
+          turnId: "turn-1",
+          type: "mcpToolCall",
+          text: "waiting for tool",
+        },
+      ],
+    );
+
+    expect(items[0]).toMatchObject({
+      type: "mcpToolCall",
+      category: "activity",
+      title: "MCP tool",
+      metadata: { status: "inProgress" },
+    });
+  });
+
   it("gives structured activities stable titles and useful summaries", () => {
     const fileChange = normalizeThreadItem("turn-3", {
       type: "fileChange",
@@ -133,8 +155,16 @@ describe("conversation workspace selectors", () => {
       agentsStates: {},
     });
 
-    expect(fileChange).toMatchObject({ type: "fileChange", title: "Changes", category: "activity" });
-    expect(mcpCall).toMatchObject({ type: "mcpToolCall", title: "MCP: docs / search", category: "activity" });
+    expect(fileChange).toMatchObject({
+      type: "fileChange",
+      title: "Changes",
+      category: "activity",
+    });
+    expect(mcpCall).toMatchObject({
+      type: "mcpToolCall",
+      title: "MCP: docs / search",
+      category: "activity",
+    });
     expect(collaboration).toMatchObject({
       type: "collabAgentToolCall",
       title: "Agent collaboration",

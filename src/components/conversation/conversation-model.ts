@@ -180,19 +180,49 @@ function liveItemToViewItem(item: LiveConversationItem): ConversationViewItem {
   }
 
   const isMessage = item.type === "agentMessage";
+  if (isMessage) {
+    return {
+      id: item.id,
+      turnId: item.turnId,
+      type: item.type,
+      category: "message",
+      title: "Ruxex",
+      text: item.text,
+    };
+  }
+
   return {
     id: item.id,
     turnId: item.turnId,
     type: item.type,
-    category: isMessage ? "message" : "activity",
-    title:
-      item.type === "agentMessage"
-        ? "Ruxex"
-        : item.type === "plan"
-          ? "Plan"
-          : "Reasoning",
+    category: "activity",
+    title: liveActivityTitle(item.type),
     text: item.text,
+    metadata: { status: "inProgress" },
   };
+}
+
+function liveActivityTitle(type: string): string {
+  switch (type) {
+    case "commandExecution":
+      return "Command";
+    case "fileChange":
+      return "Changes";
+    case "mcpToolCall":
+      return "MCP tool";
+    case "dynamicToolCall":
+      return "Tool";
+    case "plan":
+      return "Plan";
+    case "reasoning":
+      return "Reasoning";
+    case "imageView":
+      return "Screenshot";
+    case "collabAgentToolCall":
+      return "Agent collaboration";
+    default:
+      return "Activity";
+  }
 }
 
 function messageActivity(
