@@ -5,6 +5,7 @@ import {
   deleteSchedule,
   listSchedules,
   runScheduleNow,
+  setScheduleEnabled,
   updateSchedule,
   type ScheduleInput,
 } from "../../platform/schedules";
@@ -33,6 +34,11 @@ export function useSchedules() {
       updateSchedule(id, input),
     onSuccess: invalidate,
   });
+  const setEnabled = useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      setScheduleEnabled(id, enabled),
+    onSuccess: invalidate,
+  });
   const remove = useMutation({
     mutationFn: deleteSchedule,
     onSuccess: invalidate,
@@ -42,5 +48,5 @@ export function useSchedules() {
     onSuccess: invalidate,
   });
 
-  return { query, create, update, remove, runNow };
+  return { query, create, update, setEnabled, remove, runNow };
 }

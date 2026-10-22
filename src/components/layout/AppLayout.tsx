@@ -4,7 +4,7 @@ import { Outlet, useLocation, useParams } from "react-router-dom";
 import { useUiPreferences } from "../../app/ui-preferences";
 import { ContextDrawer } from "../context/ContextDrawer";
 import { ProjectSidebar, type SidebarPanel } from "../sidebar/ProjectSidebar";
-import { TopBar } from "./TopBar";
+import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
 export function AppLayout() {
   const location = useLocation();
@@ -14,6 +14,7 @@ export function AppLayout() {
   }>();
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
+  const isProjectPage = location.pathname.startsWith("/projects");
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
 
   useEffect(() => {
@@ -30,11 +31,13 @@ export function AppLayout() {
   }
 
   return (
-    <main className="workbench h-dvh overflow-hidden bg-base-200 text-base-content">
-      <div className="flex h-full min-h-0">
+    <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
+      <BrowserNavigationBar />
+      <div className="flex min-h-0 flex-1">
         <ProjectSidebar
           activePanel={activePanel}
           collapsed={preferences.sidebarCollapsed}
+          contextPanelHidden={isProjectPage}
           selectedProjectId={projectId}
           selectedThreadId={threadId}
           onPanelChange={handlePanelChange}
@@ -43,15 +46,6 @@ export function AppLayout() {
           }
         />
         <div className="flex min-w-0 min-h-0 flex-1 flex-col">
-          <TopBar
-            contextDrawerOpen={preferences.contextDrawerOpen}
-            onToggleContext={() =>
-              update({ contextDrawerOpen: !preferences.contextDrawerOpen })
-            }
-            onToggleSidebar={() =>
-              update({ sidebarCollapsed: !preferences.sidebarCollapsed })
-            }
-          />
           <section className="workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 overflow-y-auto p-4 sm:p-6">
             <Outlet />
           </section>
@@ -73,20 +67,20 @@ export function AppLayout() {
 }
 
 function sidebarPanelForPath(pathname: string): SidebarPanel {
+  if (pathname.startsWith("/settings/account")) {
+    return "account";
+  }
   if (pathname.startsWith("/settings")) {
     return "settings";
   }
-  if (pathname.startsWith("/chat/new")) {
-    return "new-chat";
-  }
-  if (pathname.startsWith("/approvals")) {
-    return "approvals";
+  if (pathname.startsWith("/projects")) {
+    return "projects";
   }
   if (pathname.startsWith("/capabilities")) {
-    return "capabilities";
+    return "plugins";
   }
   if (pathname.startsWith("/schedules")) {
-    return "schedules";
+    return "automation";
   }
-  return "chats";
+  return "home";
 }

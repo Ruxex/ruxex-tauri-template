@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { useWorktrees } from "../../app-server/hooks";
+import { formatErrorMessage } from "../../app/error-message";
 
 export function WorktreeCard({ root }: { root: string }) {
   const worktrees = useWorktrees(root);
@@ -66,7 +67,7 @@ export function WorktreeCard({ root }: { root: string }) {
         )}
         {worktrees.query.isError && (
           <p className="text-sm text-error">
-            Unable to load worktrees: {String(worktrees.query.error)}
+            Unable to load worktrees: {formatErrorMessage(worktrees.query.error)}
           </p>
         )}
         <ul className="space-y-2">

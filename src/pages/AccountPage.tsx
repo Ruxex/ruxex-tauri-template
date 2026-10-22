@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { formatErrorMessage } from "../app/error-message";
 import { useAccount } from "../app-server/hooks";
 import {
   SettingRow,
@@ -14,7 +15,9 @@ export function AccountPage() {
   }
 
   if (account.isError) {
-    return <p className="alert alert-error">{String(account.error)}</p>;
+    return (
+      <p className="alert alert-error">{formatErrorMessage(account.error)}</p>
+    );
   }
 
   const data = account.data;

@@ -11,6 +11,7 @@ import { buildImageUserInput } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
 import { ComposerOptions } from "./ComposerOptions";
 import type { SubmissionMode } from "./composer-model";
+import { formatErrorMessage } from "../../app/error-message";
 import {
   useInterruptTurn,
   useQueueMessage,
@@ -194,7 +195,9 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
         interrupt.error) && (
         <p className="mt-2 text-sm text-error">
           {attachmentError ||
-            String(send.error || steer.error || queue.error || interrupt.error)}
+            formatErrorMessage(
+              send.error || steer.error || queue.error || interrupt.error,
+            )}
         </p>
       )}
     </form>

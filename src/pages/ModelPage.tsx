@@ -20,12 +20,7 @@ export function ModelPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-primary">
-          Settings
-        </p>
-        <h2 className="text-2xl font-semibold">Models</h2>
-      </div>
+      <h2 className="text-2xl font-semibold">Models</h2>
       <ProviderAccountCard
         provider={
           provider.data?.name ?? account.data?.providerId ?? "Unavailable"

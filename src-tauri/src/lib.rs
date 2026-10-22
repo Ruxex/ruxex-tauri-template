@@ -107,6 +107,7 @@ enum DesktopAppServerEvent {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
@@ -139,6 +140,7 @@ pub fn run() {
             schedule_list,
             schedule_create,
             schedule_update,
+            schedule_set_enabled,
             schedule_delete,
             schedule_run_now,
             worktree_list,
@@ -477,6 +479,26 @@ async fn schedule_update(
     record.enabled = previous.enabled;
     record.last_run = previous.last_run.clone();
     file.schedules[index] = record.clone();
+    scheduler::save(&home, &file).map_err(schedule_file_error)?;
+    Ok(record)
+}
+
+#[tauri::command]
+async fn schedule_set_enabled(
+    state: State<'_, AppState>,
+    id: String,
+    enabled: bool,
+) -> CommandResult<scheduler::ScheduleRecord> {
+    let _lock = state.schedule_lock.lock().await;
+    let home = schedule_home()?;
+    let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
+    let index = file
+        .schedules
+        .iter()
+        .position(|schedule| schedule.id == id)
+        .ok_or_else(|| schedule_error("schedule not found"))?;
+    file.schedules[index].enabled = enabled;
+    let record = file.schedules[index].clone();
     scheduler::save(&home, &file).map_err(schedule_file_error)?;
     Ok(record)
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { formatErrorMessage } from "../../app/error-message";
 import { readImageFile } from "../../platform/native";
 
 type ImageViewProps = {
@@ -26,7 +27,11 @@ export function ImageView({ path, url }: ImageViewProps) {
         })
         .catch((reason: unknown) => {
           if (active) {
-            setError(reason instanceof Error ? reason.message : String(reason));
+            setError(
+              reason instanceof Error
+                ? reason.message
+                : formatErrorMessage(reason),
+            );
           }
         });
     } else if (!url || !isAllowedImageUrl(url)) {

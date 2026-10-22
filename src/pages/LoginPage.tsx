@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAccount, useLogin } from "../app-server/hooks";
+import { formatErrorMessage } from "../app/error-message";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -47,7 +48,9 @@ export function LoginPage() {
               required
             />
           </label>
-          {login.isError && <p className="text-error">{String(login.error)}</p>}
+          {login.isError && (
+            <p className="text-error">{formatErrorMessage(login.error)}</p>
+          )}
           <div className="card-actions items-center justify-between">
             <Link className="link link-hover" to="/">
               Back home

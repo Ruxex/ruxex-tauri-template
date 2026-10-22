@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
+import { formatErrorMessage } from "../../app/error-message";
 import { useStartReview } from "../../app-server/hooks";
 
 export function ReviewControls({ threadId }: { threadId: string }) {
@@ -34,7 +35,9 @@ export function ReviewControls({ threadId }: { threadId: string }) {
       </button>
       {message && <span className="text-sm text-success">{message}</span>}
       {review.isError && (
-        <span className="text-sm text-error">{String(review.error)}</span>
+        <span className="text-sm text-error">
+          {formatErrorMessage(review.error)}
+        </span>
       )}
     </div>
   );

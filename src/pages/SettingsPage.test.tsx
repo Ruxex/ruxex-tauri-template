@@ -9,7 +9,7 @@ import { SettingsPage } from "./SettingsPage";
 describe("SettingsPage", () => {
   afterEach(cleanup);
 
-  it("renders the settings content shell", () => {
+  it("renders the settings content shell without a fixed settings label", () => {
     render(
       <MemoryRouter initialEntries={["/settings"]}>
         <Routes>
@@ -18,9 +18,9 @@ describe("SettingsPage", () => {
       </MemoryRouter>,
     );
 
-    const heading = screen.getByRole("heading", { name: "Settings" });
-    expect(heading).toBeTruthy();
-    expect(heading.parentElement?.parentElement?.className).toContain(
+    expect(screen.queryByRole("heading", { name: "Settings" })).toBeNull();
+    expect(screen.queryByText("Workspace")).toBeNull();
+    expect(document.querySelector("div.max-w-3xl")?.className).toContain(
       "max-w-3xl",
     );
   });

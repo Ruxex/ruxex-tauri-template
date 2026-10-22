@@ -11,6 +11,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { ModelPage } from "../pages/ModelPage";
 import { NewChatPage } from "../pages/NewChatPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
+import { ProjectsPage } from "../pages/ProjectsPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
@@ -45,6 +46,7 @@ export const router = createHashRouter([
       { path: "threads", element: <ThreadsPage /> },
       { path: "chat/new", element: <NewChatPage /> },
       { path: "chat/:threadId", element: <ThreadPage /> },
+      { path: "projects", element: <ProjectsPage /> },
       { path: "projects/:projectId", element: <ProjectHomePage /> },
       { path: "projects/:projectId/chat/new", element: <NewChatPage /> },
     ],

@@ -16,6 +16,7 @@ import type {
   UiLanguage,
   UiTheme,
 } from "../../app/ui-preferences";
+import { formatErrorMessage } from "../../app/error-message";
 
 type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -88,7 +89,9 @@ export function ConnectionCard({
         </SettingRow>
       </dl>
       {error !== undefined && error !== null && (
-        <p className="px-5 py-3 text-sm text-error">{String(error)}</p>
+        <p className="px-5 py-3 text-sm text-error">
+          {formatErrorMessage(error)}
+        </p>
       )}
       <div className="flex justify-end px-5 py-4">
         <button

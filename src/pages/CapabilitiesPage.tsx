@@ -1,3 +1,6 @@
+import { useSearchParams } from "react-router-dom";
+
+import { formatErrorMessage } from "../app/error-message";
 import {
   useCollaborationModes,
   useConfig,
@@ -9,7 +12,12 @@ import {
 } from "../app-server/hooks";
 import { BrowserComputerUseCard } from "../components/capabilities/BrowserComputerUseCard";
 
+type CapabilityTab = "plugins" | "skills";
+
 export function CapabilitiesPage() {
+  const [searchParams] = useSearchParams();
+  const activeTab: CapabilityTab =
+    searchParams.get("tab") === "skills" ? "skills" : "plugins";
   const mcp = useMcpServerStatus({ detail: "full" });
   const skills = useSkillsList();
   const plugins = usePluginList();
@@ -22,13 +30,9 @@ export function CapabilitiesPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-primary">
-            Extensions
-          </p>
-          <h1 className="text-3xl font-semibold">Capabilities</h1>
-          <p className="mt-2 text-sm text-base-content/70">
-            Server-backed MCP servers, Skills, Plugins, and collaboration modes.
-          </p>
+          <h1 className="text-3xl font-semibold">
+            {activeTab === "plugins" ? "Plugins" : "Skills"}
+          </h1>
         </div>
         <button
           className="btn btn-primary"
@@ -40,7 +44,9 @@ export function CapabilitiesPage() {
         </button>
       </div>
       {reloadMcp.isError && (
-        <p className="alert alert-error">{String(reloadMcp.error)}</p>
+        <p className="alert alert-error">
+          {formatErrorMessage(reloadMcp.error)}
+        </p>
       )}
       <BrowserComputerUseCard
         config={config.data?.config ?? null}
@@ -53,7 +59,7 @@ export function CapabilitiesPage() {
             {mcp.isLoading && <span className="loading loading-spinner" />}
             {mcp.isError && (
               <p className="text-error">
-                Unable to load MCP servers: {String(mcp.error)}
+                Unable to load MCP servers: {formatErrorMessage(mcp.error)}
               </p>
             )}
             {!mcp.isLoading && !mcp.data?.data.length && (
@@ -84,67 +90,76 @@ export function CapabilitiesPage() {
             </ul>
           </div>
         </article>
-        <article className="card border border-base-300 bg-base-100 shadow-sm">
-          <div className="card-body">
-            <h2 className="card-title">Skills</h2>
-            {skills.isLoading && <span className="loading loading-spinner" />}
-            {skills.isError && (
-              <p className="text-error">
-                Unable to load Skills: {String(skills.error)}
-              </p>
-            )}
-            {!skills.isLoading && !skills.data?.data.length && (
-              <p className="text-sm text-base-content/60">
-                No Skills discovered.
-              </p>
-            )}
-            <ul className="space-y-2">
-              {skills.data?.data.map((entry) => (
-                <li className="rounded-box bg-base-200 p-3" key={entry.cwd}>
-                  <p className="text-xs text-base-content/60">{entry.cwd}</p>
-                  <p className="mt-1 font-medium">
-                    {entry.skills.length
-                      ? entry.skills.map((skill) => skill.name).join(", ")
-                      : "No skills"}
-                  </p>
-                  {entry.errors.length > 0 && (
-                    <p className="mt-1 text-xs text-error">
-                      {entry.errors.length} discovery errors
+        {activeTab === "skills" ? (
+          <article
+            className="card border border-base-300 bg-base-100 shadow-sm"
+            id="skills"
+          >
+            <div className="card-body">
+              <h2 className="card-title">Skills</h2>
+              {skills.isLoading && <span className="loading loading-spinner" />}
+              {skills.isError && (
+                <p className="text-error">
+                  Unable to load Skills: {formatErrorMessage(skills.error)}
+                </p>
+              )}
+              {!skills.isLoading && !skills.data?.data.length && (
+                <p className="text-sm text-base-content/60">
+                  No Skills discovered.
+                </p>
+              )}
+              <ul className="space-y-2">
+                {skills.data?.data.map((entry) => (
+                  <li className="rounded-box bg-base-200 p-3" key={entry.cwd}>
+                    <p className="text-xs text-base-content/60">{entry.cwd}</p>
+                    <p className="mt-1 font-medium">
+                      {entry.skills.length
+                        ? entry.skills.map((skill) => skill.name).join(", ")
+                        : "No skills"}
                     </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
+                    {entry.errors.length > 0 && (
+                      <p className="mt-1 text-xs text-error">
+                        {entry.errors.length} discovery errors
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ) : (
+          <article
+            className="card border border-base-300 bg-base-100 shadow-sm"
+            id="plugins"
+          >
+            <div className="card-body">
+              <h2 className="card-title">Plugins</h2>
+              {plugins.isLoading && <span className="loading loading-spinner" />}
+              {plugins.isError && (
+                <p className="text-error">
+                  Unable to load Plugins: {formatErrorMessage(plugins.error)}
+                </p>
+              )}
+              <ul className="space-y-3">
+                {plugins.data?.marketplaces.map((marketplace) => (
+                  <li key={marketplace.name}>
+                    <p className="font-medium">{marketplace.name}</p>
+                    <p className="text-sm text-base-content/60">
+                      {marketplace.plugins.length} plugins
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              {plugins.data?.marketplaceLoadErrors.length ? (
+                <p className="mt-2 text-sm text-error">
+                  {plugins.data.marketplaceLoadErrors.length} marketplace errors
+                </p>
+              ) : null}
+            </div>
+          </article>
+        )}
       </section>
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="card border border-base-300 bg-base-100 shadow-sm">
-          <div className="card-body">
-            <h2 className="card-title">Plugins</h2>
-            {plugins.isLoading && <span className="loading loading-spinner" />}
-            {plugins.isError && (
-              <p className="text-error">
-                Unable to load Plugins: {String(plugins.error)}
-              </p>
-            )}
-            <ul className="space-y-3">
-              {plugins.data?.marketplaces.map((marketplace) => (
-                <li key={marketplace.name}>
-                  <p className="font-medium">{marketplace.name}</p>
-                  <p className="text-sm text-base-content/60">
-                    {marketplace.plugins.length} plugins
-                  </p>
-                </li>
-              ))}
-            </ul>
-            {plugins.data?.marketplaceLoadErrors.length ? (
-              <p className="mt-2 text-sm text-error">
-                {plugins.data.marketplaceLoadErrors.length} marketplace errors
-              </p>
-            ) : null}
-          </div>
-        </article>
         <article className="card border border-base-300 bg-base-100 shadow-sm">
           <div className="card-body">
             <h2 className="card-title">Collaboration modes</h2>
@@ -153,8 +168,8 @@ export function CapabilitiesPage() {
             )}
             {collaborationModes.isError && (
               <p className="text-error">
-                Unable to load collaboration modes:{" "}
-                {String(collaborationModes.error)}
+                Unable to load collaboration modes: {" "}
+                {formatErrorMessage(collaborationModes.error)}
               </p>
             )}
             <ul className="space-y-2">

@@ -40,6 +40,13 @@ export function updateSchedule(
   return invoke<ScheduleRecord>("schedule_update", { id, input });
 }
 
+export function setScheduleEnabled(
+  id: string,
+  enabled: boolean,
+): Promise<ScheduleRecord> {
+  return invoke<ScheduleRecord>("schedule_set_enabled", { id, enabled });
+}
+
 export function deleteSchedule(id: string): Promise<void> {
   return invoke("schedule_delete", { id });
 }

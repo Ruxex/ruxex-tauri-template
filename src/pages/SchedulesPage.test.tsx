@@ -34,12 +34,17 @@ describe("SchedulesPage", () => {
       },
       create: { mutate: vi.fn(), isPending: false, isError: false },
       update: { mutate: vi.fn(), isPending: false },
+      setEnabled: {
+        mutate: vi.fn(),
+        isPending: false,
+        isError: false,
+      },
       remove: { mutate: vi.fn(), isPending: false },
       runNow: { mutate: vi.fn(), isPending: false },
     });
   });
 
-  it("shows persisted schedules and exposes run-now/delete actions", async () => {
+  it("shows persisted schedules and confirms run-now/delete actions", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
 
@@ -48,41 +53,118 @@ describe("SchedulesPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Run now: Nightly checks" }),
     );
+    expect(screen.getByRole("heading", { name: "Run schedule now?" })).toBeTruthy();
+    const schedule = useSchedules.mock.results[0]?.value;
+    expect(schedule.runNow.mutate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Run now" }));
+    expect(schedule.runNow.mutate).toHaveBeenCalledWith(
+      "schedule-1",
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
     fireEvent.click(
       screen.getByRole("button", { name: "Delete: Nightly checks" }),
     );
+    expect(screen.getByRole("heading", { name: "Delete schedule?" })).toBeTruthy();
+    expect(schedule.remove.mutate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(schedule.remove.mutate).toHaveBeenCalledWith(
+      "schedule-1",
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+  });
+
+  it("opens a schedule in the edit modal and saves changes", async () => {
+    const { SchedulesPage } = await import("./SchedulesPage");
+    render(<SchedulesPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit schedule: Nightly checks" }),
+    );
+    expect(screen.getByRole("heading", { name: "Edit schedule" })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Schedule name"), {
+      target: { value: "Morning checks" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     const schedule = useSchedules.mock.results[0]?.value;
-    expect(schedule.runNow.mutate).toHaveBeenCalledWith("schedule-1");
-    expect(schedule.remove.mutate).toHaveBeenCalledWith("schedule-1");
+    expect(schedule.update.mutate).toHaveBeenCalledWith(
+      {
+        id: "schedule-1",
+        input: {
+          name: "Morning checks",
+          prompt: "run checks",
+          threadId: null,
+          cadence: { kind: "daily", hour: 2, minute: 30 },
+        },
+      },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+  });
+
+  it("updates the enabled state from the edit modal", async () => {
+    const { SchedulesPage } = await import("./SchedulesPage");
+    render(<SchedulesPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit schedule: Nightly checks" }),
+    );
+    fireEvent.click(screen.getByLabelText("Enable schedule"));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const schedule = useSchedules.mock.results[0]?.value;
+    const updateOptions = schedule.update.mutate.mock.calls[0]?.[1];
+    updateOptions?.onSuccess();
+    expect(schedule.setEnabled.mutate).toHaveBeenCalledWith(
+      { id: "schedule-1", enabled: false },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+  });
+
+  it("toggles a schedule from the list", async () => {
+    const { SchedulesPage } = await import("./SchedulesPage");
+    render(<SchedulesPage />);
+
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Disable schedule: Nightly checks" }),
+    );
+
+    const schedule = useSchedules.mock.results[0]?.value;
+    expect(schedule.setEnabled.mutate).toHaveBeenCalledWith({
+      id: "schedule-1",
+      enabled: false,
+    });
   });
 
   it("creates a daily remote-continuation schedule", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
+    fireEvent.click(screen.getByRole("button", { name: "New schedule" }));
     fireEvent.change(screen.getByLabelText("Schedule name"), {
       target: { value: "Remote checks" },
     });
-    fireEvent.change(screen.getByLabelText("Prompt"), {
+    fireEvent.change(screen.getByLabelText("Instructions"), {
       target: { value: "run remote checks" },
-    });
-    fireEvent.change(screen.getByLabelText("Thread ID (optional)"), {
-      target: { value: "thread-remote" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create schedule" }));
 
     const schedule = useSchedules.mock.results[0]?.value;
-    expect(schedule.create.mutate).toHaveBeenCalledWith({
-      name: "Remote checks",
-      prompt: "run remote checks",
-      threadId: "thread-remote",
-      cadence: { kind: "daily", hour: 9, minute: 0 },
-    });
+    expect(schedule.create.mutate).toHaveBeenCalledWith(
+      {
+        name: "Remote checks",
+        prompt: "run remote checks",
+        threadId: null,
+        cadence: { kind: "daily", hour: 9, minute: 0 },
+      },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
   });
 
   it("rejects a one-time schedule without a valid time", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
+    fireEvent.click(screen.getByRole("button", { name: "New schedule" }));
     fireEvent.change(screen.getByLabelText("Cadence"), {
       target: { value: "once" },
     });

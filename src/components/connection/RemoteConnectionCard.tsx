@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { LinkIcon, PowerIcon } from "@heroicons/react/24/outline";
 
 import type { AppServerEndpoint } from "../../app-server/api";
+import { formatErrorMessage } from "../../app/error-message";
 import { validateRemoteEndpoint } from "../../platform/platform-model";
 import { SettingsPanel } from "../settings/SettingsCards";
 
@@ -71,7 +72,7 @@ export function RemoteConnectionCard({
         {(validationError ?? error) !== null &&
           (validationError ?? error) !== undefined && (
             <p className="px-5 py-3 text-error">
-              {validationError ?? String(error)}
+              {validationError ?? formatErrorMessage(error)}
             </p>
           )}
         <div className="flex justify-end gap-2 px-5 py-4">

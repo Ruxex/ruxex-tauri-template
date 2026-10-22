@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { useState } from "react";
 
+import { formatErrorMessage } from "../app/error-message";
 import { useThreadList, useThreadSearch } from "../app-server/hooks";
 import { ThreadCard } from "../components/common/ThreadCard";
 
@@ -37,7 +38,9 @@ export function ThreadsPage() {
         <span className="loading loading-spinner loading-lg" />
       )}
       {threads.isError && (
-        <p className="alert alert-error">{String(threads.error)}</p>
+        <p className="alert alert-error">
+          {formatErrorMessage(threads.error)}
+        </p>
       )}
       {!threads.isLoading && !searchResults.isLoading && rows.length === 0 && (
         <div className="card border border-dashed border-base-300 bg-base-100">
