@@ -68,10 +68,14 @@ describe("UI preference persistence", () => {
       theme: { accentColor: "violet" },
       density: "compact",
     });
-    expect(parseUiPreferences(JSON.stringify({
-      version: 4,
-      notifications: { desktop: true, sound: "message-new-instant" },
-    }))).toMatchObject({
+    expect(
+      parseUiPreferences(
+        JSON.stringify({
+          version: 4,
+          notifications: { desktop: true, sound: "message-new-instant" },
+        }),
+      ),
+    ).toMatchObject({
       notifications: { desktop: true, sound: "message-new-instant" },
     });
     expect(UI_NOTIFICATION_SOUNDS).toContain("system");
