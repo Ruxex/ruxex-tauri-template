@@ -53,7 +53,13 @@ describe("useSchedules", () => {
         name: "Checks",
         prompt: "run checks",
         threadId: null,
-        cadence: { kind: "daily", hour: 2, minute: 30 },
+        cadence: {
+          kind: "daily",
+          hour: 2,
+          minute: 30,
+          timeZone: "UTC",
+        },
+        enabled: true,
       });
       await result.current.runNow.mutateAsync("schedule-1");
       await result.current.remove.mutateAsync("schedule-1");

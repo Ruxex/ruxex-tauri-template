@@ -20,7 +20,13 @@ describe("schedule native bridge", () => {
       name: "Checks",
       prompt: "run checks",
       threadId: null,
-      cadence: { kind: "daily", hour: 2, minute: 30 } as const,
+      cadence: {
+        kind: "daily",
+        hour: 2,
+        minute: 30,
+        timeZone: "UTC",
+      } as const,
+      enabled: true,
     };
 
     await expect(schedules.listSchedules()).resolves.toEqual([record]);

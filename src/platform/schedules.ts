@@ -2,14 +2,21 @@ import { invoke } from "@tauri-apps/api/core";
 
 export type ScheduleCadence =
   | { kind: "once"; at: string }
-  | { kind: "daily"; hour: number; minute: number }
-  | { kind: "weekly"; weekday: number; hour: number; minute: number };
+  | { kind: "daily"; hour: number; minute: number; timeZone: string | null }
+  | {
+      kind: "weekly";
+      weekday: number;
+      hour: number;
+      minute: number;
+      timeZone: string | null;
+    };
 
 export type ScheduleInput = {
   name: string;
   prompt: string;
   threadId: string | null;
   cadence: ScheduleCadence;
+  enabled: boolean;
 };
 
 export type ScheduleRun = {
@@ -21,7 +28,6 @@ export type ScheduleRun = {
 export type ScheduleRecord = ScheduleInput & {
   id: string;
   nextRunAt: string;
-  enabled: boolean;
   lastRun: ScheduleRun | null;
 };
 
