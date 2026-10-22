@@ -8,11 +8,12 @@ use ruxex_app_server_protocol::ClientRequest;
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State};
 
-use crate::scheduler::{self, ScheduleInput, ScheduleRecord};
-use crate::{
-    AppState, CommandResult, DesktopAppServerError, DesktopAppServerErrorKind, command_error,
-    desktop_ruxex_home, request_handle,
+use crate::app_server::{AppServerState, request_handle};
+use crate::desktop::ruxex_home;
+use crate::error::{
+    CommandResult, DesktopAppServerError, DesktopAppServerErrorKind, command_error,
 };
+use crate::scheduler::{self, ScheduleInput, ScheduleRecord};
 
 static NEXT_SCHEDULE_REQUEST_ID: AtomicI64 = AtomicI64::new(10_000_000);
 
@@ -26,7 +27,7 @@ fn schedule_error(message: impl Into<String>) -> DesktopAppServerError {
 }
 
 fn schedule_home() -> Result<std::path::PathBuf, DesktopAppServerError> {
-    desktop_ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))
+    ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))
 }
 
 fn schedule_file_error(message: String) -> DesktopAppServerError {
@@ -137,7 +138,7 @@ pub(crate) async fn schedule_run_now(
 
 pub(crate) async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
     let state = app.state::<ScheduleState>();
-    let home = desktop_ruxex_home()?;
+    let home = ruxex_home()?;
     let now = Utc::now();
     let due_ids = {
         let _guard = state.lock.lock().await;
@@ -199,7 +200,7 @@ async fn dispatch_schedule(
     app: &AppHandle,
     schedule: ScheduleRecord,
 ) -> Result<Option<String>, String> {
-    let state = app.state::<AppState>();
+    let state = app.state::<AppServerState>();
     let handle = request_handle(&state)
         .await
         .map_err(|error| error.message)?;
