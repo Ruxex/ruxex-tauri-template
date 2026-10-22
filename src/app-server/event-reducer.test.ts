@@ -276,6 +276,47 @@ describe("reduceAppServerEvent", () => {
     expect(state.threads["thread-1"]?.items[0]?.text).toBe("once");
   });
 
+  it("bounds seen event ids to the history capacity", () => {
+    let state = createInitialEventState();
+
+    for (let index = 0; index < 201; index += 1) {
+      state = reduceAppServerEvent(
+        state,
+        notification({
+          method: "future/notification",
+          params: { sequence: index },
+        }),
+      );
+    }
+
+    expect(state.history).toHaveLength(200);
+    expect(state.seenEventIds.size).toBe(200);
+  });
+
+  it("accepts an identity again after it leaves the deduplication window", () => {
+    const oldest = notification({
+      method: "future/notification",
+      params: { sequence: 0 },
+    });
+    let state = reduceAppServerEvent(createInitialEventState(), oldest);
+
+    for (let index = 1; index < 201; index += 1) {
+      state = reduceAppServerEvent(
+        state,
+        notification({
+          method: "future/notification",
+          params: { sequence: index },
+        }),
+      );
+    }
+
+    const replayed = reduceAppServerEvent(state, oldest);
+
+    expect(replayed).not.toBe(state);
+    expect(replayed.history).toHaveLength(200);
+    expect(replayed.history.at(-1)?.event).toEqual(oldest);
+  });
+
   it("retains unknown notifications in history without inventing thread state", () => {
     const event = notification({
       method: "future/notification",

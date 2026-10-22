@@ -74,12 +74,11 @@ export function reduceAppServerEvent(
     return state;
   }
 
-  const seenEventIds = new Set(state.seenEventIds);
-  seenEventIds.add(eventId);
   const history = [
     ...state.history,
     { id: eventId, event },
   ].slice(-MAX_HISTORY);
+  const seenEventIds = new Set(history.map((entry) => entry.id));
 
   const nextState: EventState = {
     ...state,
