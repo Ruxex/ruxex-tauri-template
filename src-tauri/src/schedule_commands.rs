@@ -1,8 +1,9 @@
+use std::collections::HashSet;
 use std::future::Future;
 use std::path::Path;
 use std::sync::atomic::{AtomicI64, Ordering};
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use ruxex_app_server_client::AppServerRequestHandle;
 use ruxex_app_server_protocol::ClientRequest;
 use serde_json::Value;
@@ -19,7 +20,24 @@ static NEXT_SCHEDULE_REQUEST_ID: AtomicI64 = AtomicI64::new(10_000_000);
 
 #[derive(Default)]
 pub(crate) struct ScheduleState {
-    lock: tauri::async_runtime::Mutex<()>,
+    lock: tauri::async_runtime::Mutex<ScheduleStateInner>,
+}
+
+#[derive(Default)]
+struct ScheduleStateInner {
+    in_flight: HashSet<String>,
+}
+
+#[derive(Clone, Copy)]
+enum RunMode {
+    Manual,
+    Due(DateTime<Utc>),
+}
+
+enum RunScheduleOutcome {
+    Completed(Box<ScheduleRecord>),
+    Missing,
+    Skipped,
 }
 
 fn schedule_error(message: impl Into<String>) -> DesktopAppServerError {
@@ -128,12 +146,18 @@ pub(crate) async fn schedule_run_now(
     id: String,
 ) -> CommandResult<ScheduleRecord> {
     let home = schedule_home()?;
-    run_schedule_with(&home, &state, &id, |schedule| {
+    match run_schedule_with(&home, &state, &id, RunMode::Manual, |schedule| {
         dispatch_schedule(&app, schedule)
     })
     .await
     .map_err(schedule_file_error)?
-    .ok_or_else(|| schedule_error("schedule was deleted during dispatch"))
+    {
+        RunScheduleOutcome::Completed(record) => Ok(*record),
+        RunScheduleOutcome::Missing => Err(schedule_error(
+            "schedule not found or was deleted during dispatch",
+        )),
+        RunScheduleOutcome::Skipped => Err(schedule_error("schedule is already running")),
+    }
 }
 
 pub(crate) async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
@@ -145,18 +169,13 @@ pub(crate) async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
         scheduler::load(&home)?
             .schedules
             .into_iter()
-            .filter(|schedule| {
-                schedule.enabled
-                    && chrono::DateTime::parse_from_rfc3339(&schedule.next_run_at)
-                        .map(|next| next.with_timezone(&Utc) <= now)
-                        .unwrap_or(false)
-            })
+            .filter(|schedule| is_due(schedule, now))
             .map(|schedule| schedule.id)
             .collect::<Vec<_>>()
     };
 
     for id in due_ids {
-        run_schedule_with(&home, &state, &id, |schedule| {
+        run_schedule_with(&home, &state, &id, RunMode::Due(now), |schedule| {
             dispatch_schedule(app, schedule)
         })
         .await?;
@@ -168,32 +187,55 @@ async fn run_schedule_with<F, Fut>(
     home: &Path,
     state: &ScheduleState,
     id: &str,
+    mode: RunMode,
     dispatch: F,
-) -> Result<Option<ScheduleRecord>, String>
+) -> Result<RunScheduleOutcome, String>
 where
     F: FnOnce(ScheduleRecord) -> Fut,
     Fut: Future<Output = Result<Option<String>, String>>,
 {
     let snapshot = {
-        let _guard = state.lock.lock().await;
-        scheduler::load(home)?
+        let mut guard = state.lock.lock().await;
+        let Some(snapshot) = scheduler::load(home)?
             .schedules
             .into_iter()
             .find(|schedule| schedule.id == id)
-            .ok_or_else(|| "schedule not found".to_string())?
+        else {
+            return Ok(RunScheduleOutcome::Missing);
+        };
+        if let RunMode::Due(now) = mode
+            && !is_due(&snapshot, now)
+        {
+            return Ok(RunScheduleOutcome::Skipped);
+        }
+        if !guard.in_flight.insert(id.to_string()) {
+            return Ok(RunScheduleOutcome::Skipped);
+        }
+        snapshot
     };
     let started_at = Utc::now();
     let result = dispatch(snapshot).await;
 
-    let _guard = state.lock.lock().await;
-    let mut file = scheduler::load(home)?;
-    let Some(index) = file.schedules.iter().position(|schedule| schedule.id == id) else {
-        return Ok(None);
-    };
-    let record = scheduler::apply_run_result(&file.schedules[index], started_at, result);
-    file.schedules[index] = record.clone();
-    scheduler::save(home, &file)?;
-    Ok(Some(record))
+    let mut guard = state.lock.lock().await;
+    let finalization = (|| {
+        let mut file = scheduler::load(home)?;
+        let Some(index) = file.schedules.iter().position(|schedule| schedule.id == id) else {
+            return Ok(RunScheduleOutcome::Missing);
+        };
+        let record = scheduler::apply_run_result(&file.schedules[index], started_at, result);
+        file.schedules[index] = record.clone();
+        scheduler::save(home, &file)?;
+        Ok(RunScheduleOutcome::Completed(Box::new(record)))
+    })();
+    guard.in_flight.remove(id);
+    finalization
+}
+
+fn is_due(schedule: &ScheduleRecord, now: DateTime<Utc>) -> bool {
+    schedule.enabled
+        && chrono::DateTime::parse_from_rfc3339(&schedule.next_run_at)
+            .map(|next| next.with_timezone(&Utc) <= now)
+            .unwrap_or(false)
 }
 
 async fn dispatch_schedule(
@@ -262,10 +304,13 @@ async fn send_schedule_request(
 mod tests {
     use std::fs;
     use std::path::{Path, PathBuf};
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
 
-    use chrono::{DateTime, Utc};
+    use chrono::{DateTime, Duration, Utc};
+    use tokio::sync::Notify;
 
-    use super::{ScheduleState, run_schedule_with};
+    use super::{RunMode, RunScheduleOutcome, ScheduleState, run_schedule_with};
     use crate::scheduler::{
         ScheduleCadence, ScheduleFile, ScheduleInput, load, new_record, save, updated_record,
     };
@@ -304,9 +349,19 @@ mod tests {
             home,
             &ScheduleFile {
                 schedules: vec![record],
+                ..ScheduleFile::default()
             },
         )
         .unwrap();
+    }
+
+    fn completed(outcome: RunScheduleOutcome) -> crate::scheduler::ScheduleRecord {
+        match outcome {
+            RunScheduleOutcome::Completed(record) => *record,
+            RunScheduleOutcome::Missing | RunScheduleOutcome::Skipped => {
+                panic!("expected completed schedule run")
+            }
+        }
     }
 
     #[test]
@@ -316,14 +371,15 @@ mod tests {
             let state = ScheduleState::default();
             store_record(&home, "Original");
 
-            let result = run_schedule_with(&home, &state, "schedule-1", |_| async {
-                assert!(state.lock.try_lock().is_ok());
-                Ok(None)
-            })
-            .await
-            .unwrap();
+            let result =
+                run_schedule_with(&home, &state, "schedule-1", RunMode::Manual, |_| async {
+                    assert!(state.lock.try_lock().is_ok());
+                    Ok(None)
+                })
+                .await
+                .unwrap();
 
-            assert!(result.is_some());
+            assert!(matches!(result, RunScheduleOutcome::Completed(_)));
             let _ = fs::remove_dir_all(home);
         });
     }
@@ -335,18 +391,19 @@ mod tests {
             let state = ScheduleState::default();
             store_record(&home, "Original");
 
-            let result = run_schedule_with(&home, &state, "schedule-1", |_| async {
-                let _guard = state.lock.lock().await;
-                let mut file = load(&home).unwrap();
-                file.schedules[0] =
-                    updated_record(&file.schedules[0], input("Edited during dispatch"), now())
-                        .unwrap();
-                save(&home, &file).unwrap();
-                Ok(Some("thread-created".to_string()))
-            })
-            .await
-            .unwrap()
-            .unwrap();
+            let result =
+                run_schedule_with(&home, &state, "schedule-1", RunMode::Manual, |_| async {
+                    let _guard = state.lock.lock().await;
+                    let mut file = load(&home).unwrap();
+                    file.schedules[0] =
+                        updated_record(&file.schedules[0], input("Edited during dispatch"), now())
+                            .unwrap();
+                    save(&home, &file).unwrap();
+                    Ok(Some("thread-created".to_string()))
+                })
+                .await
+                .map(completed)
+                .unwrap();
 
             assert_eq!(result.name, "Edited during dispatch");
             assert_eq!(result.thread_id.as_deref(), Some("thread-created"));
@@ -362,15 +419,16 @@ mod tests {
             let state = ScheduleState::default();
             store_record(&home, "Original");
 
-            let result = run_schedule_with(&home, &state, "schedule-1", |_| async {
-                let _guard = state.lock.lock().await;
-                save(&home, &ScheduleFile::default()).unwrap();
-                Ok(None)
-            })
-            .await
-            .unwrap();
+            let result =
+                run_schedule_with(&home, &state, "schedule-1", RunMode::Manual, |_| async {
+                    let _guard = state.lock.lock().await;
+                    save(&home, &ScheduleFile::default()).unwrap();
+                    Ok(None)
+                })
+                .await
+                .unwrap();
 
-            assert!(result.is_none());
+            assert!(matches!(result, RunScheduleOutcome::Missing));
             assert!(load(&home).unwrap().schedules.is_empty());
             let _ = fs::remove_dir_all(home);
         });
@@ -386,17 +444,25 @@ mod tests {
             store_record(&manual_home, "Manual");
             store_record(&due_home, "Due");
 
-            let manual = run_schedule_with(&manual_home, &manual_state, "schedule-1", |_| async {
-                Err("offline".to_string())
-            })
+            let manual = run_schedule_with(
+                &manual_home,
+                &manual_state,
+                "schedule-1",
+                RunMode::Manual,
+                |_| async { Err("offline".to_string()) },
+            )
             .await
-            .unwrap()
+            .map(completed)
             .unwrap();
-            let due = run_schedule_with(&due_home, &due_state, "schedule-1", |_| async {
-                Err("offline".to_string())
-            })
+            let due = run_schedule_with(
+                &due_home,
+                &due_state,
+                "schedule-1",
+                RunMode::Due(now() + Duration::days(1)),
+                |_| async { Err("offline".to_string()) },
+            )
             .await
-            .unwrap()
+            .map(completed)
             .unwrap();
 
             assert_eq!(manual.last_run.unwrap().message, "offline");
@@ -404,6 +470,88 @@ mod tests {
             assert_eq!(manual.next_run_at, due.next_run_at);
             let _ = fs::remove_dir_all(manual_home);
             let _ = fs::remove_dir_all(due_home);
+        });
+    }
+
+    #[test]
+    fn due_run_rechecks_enabled_state_after_candidate_scan() {
+        tauri::async_runtime::block_on(async {
+            let home = fixture("due-recheck");
+            let state = ScheduleState::default();
+            store_record(&home, "Due");
+
+            {
+                let _guard = state.lock.lock().await;
+                let mut file = load(&home).unwrap();
+                file.schedules[0].enabled = false;
+                save(&home, &file).unwrap();
+            }
+
+            let dispatched = AtomicBool::new(false);
+            let outcome = run_schedule_with(
+                &home,
+                &state,
+                "schedule-1",
+                RunMode::Due(now() + Duration::days(1)),
+                |_| async {
+                    dispatched.store(true, Ordering::SeqCst);
+                    Ok(None)
+                },
+            )
+            .await
+            .unwrap();
+
+            assert!(matches!(outcome, RunScheduleOutcome::Skipped));
+            assert!(!dispatched.load(Ordering::SeqCst));
+            let _ = fs::remove_dir_all(home);
+        });
+    }
+
+    #[test]
+    fn manual_and_due_runs_claim_the_schedule_once() {
+        tauri::async_runtime::block_on(async {
+            let home = fixture("in-flight");
+            let state = ScheduleState::default();
+            store_record(&home, "Due");
+            let started = Arc::new(Notify::new());
+            let release = Arc::new(Notify::new());
+            let second_dispatched = AtomicBool::new(false);
+
+            let first_started = Arc::clone(&started);
+            let first_release = Arc::clone(&release);
+            let first = run_schedule_with(
+                &home,
+                &state,
+                "schedule-1",
+                RunMode::Manual,
+                move |_| async move {
+                    first_started.notify_one();
+                    first_release.notified().await;
+                    Ok(None)
+                },
+            );
+            let second = async {
+                started.notified().await;
+                let outcome = run_schedule_with(
+                    &home,
+                    &state,
+                    "schedule-1",
+                    RunMode::Due(now() + Duration::days(1)),
+                    |_| async {
+                        second_dispatched.store(true, Ordering::SeqCst);
+                        Ok(None)
+                    },
+                )
+                .await;
+                release.notify_one();
+                outcome
+            };
+
+            let (first, second) = futures::join!(first, second);
+            assert!(matches!(first.unwrap(), RunScheduleOutcome::Completed(_)));
+            assert!(matches!(second.unwrap(), RunScheduleOutcome::Skipped));
+            assert!(!second_dispatched.load(Ordering::SeqCst));
+            let _ = fs::remove_dir_all(home);
         });
     }
 }

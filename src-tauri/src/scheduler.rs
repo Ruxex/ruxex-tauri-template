@@ -6,6 +6,7 @@ use chrono_tz::Tz;
 use serde::{Deserialize, Serialize};
 
 const SCHEDULES_FILE: &str = "schedules.json";
+const CURRENT_SCHEMA_VERSION: u8 = 1;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
@@ -64,9 +65,21 @@ pub struct ScheduleRecord {
     pub last_run: Option<ScheduleRun>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct ScheduleFile {
+    #[serde(default)]
+    pub schema_version: u8,
     pub schedules: Vec<ScheduleRecord>,
+}
+
+impl Default for ScheduleFile {
+    fn default() -> Self {
+        Self {
+            schema_version: CURRENT_SCHEMA_VERSION,
+            schedules: Vec::new(),
+        }
+    }
 }
 
 pub fn file_path(home: &Path) -> PathBuf {
@@ -74,13 +87,41 @@ pub fn file_path(home: &Path) -> PathBuf {
 }
 
 pub fn load(home: &Path) -> Result<ScheduleFile, String> {
+    load_at(home, Utc::now())
+}
+
+fn load_at(home: &Path, now: DateTime<Utc>) -> Result<ScheduleFile, String> {
     let path = file_path(home);
     if !path.exists() {
         return Ok(ScheduleFile::default());
     }
     let content =
         fs::read_to_string(&path).map_err(|error| format!("failed to read schedules: {error}"))?;
-    serde_json::from_str(&content).map_err(|error| format!("failed to decode schedules: {error}"))
+    let mut file: ScheduleFile = serde_json::from_str(&content)
+        .map_err(|error| format!("failed to decode schedules: {error}"))?;
+    if file.schema_version < CURRENT_SCHEMA_VERSION {
+        for schedule in &mut file.schedules {
+            if matches!(
+                schedule.cadence,
+                ScheduleCadence::Daily {
+                    time_zone: None,
+                    ..
+                } | ScheduleCadence::Weekly {
+                    time_zone: None,
+                    ..
+                }
+            ) {
+                schedule.next_run_at = next_run_after(&schedule.cadence, now)
+                    .ok_or_else(|| {
+                        format!("failed to migrate next run for schedule {}", schedule.id)
+                    })?
+                    .to_rfc3339();
+            }
+        }
+        file.schema_version = CURRENT_SCHEMA_VERSION;
+        save(home, &file)?;
+    }
+    Ok(file)
 }
 
 pub fn save(home: &Path, schedules: &ScheduleFile) -> Result<(), String> {
@@ -297,7 +338,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::{
-        ScheduleCadence, ScheduleFile, ScheduleInput, ScheduleRun, apply_run_result, load,
+        ScheduleCadence, ScheduleFile, ScheduleInput, ScheduleRun, apply_run_result, load, load_at,
         new_record, next_after_run, next_run_after, save, updated_record,
     };
     use chrono::{DateTime, Duration, Utc};
@@ -363,6 +404,7 @@ mod tests {
             &home,
             &ScheduleFile {
                 schedules: vec![record.clone()],
+                ..ScheduleFile::default()
             },
         )
         .unwrap();
@@ -433,6 +475,43 @@ mod tests {
                 time_zone: None,
             }
         ));
+    }
+
+    #[test]
+    fn migrates_legacy_record_next_run_before_due_checks() {
+        let home = PathBuf::from(format!(
+            "{}/ruxex-scheduler-legacy-test-{}",
+            std::env::temp_dir().display(),
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&home);
+        fs::create_dir_all(&home).unwrap();
+        fs::write(
+            super::file_path(&home),
+            serde_json::json!({
+                "schedules": [{
+                    "id": "schedule-legacy",
+                    "name": "Legacy",
+                    "prompt": "run it",
+                    "threadId": null,
+                    "cadence": { "kind": "daily", "hour": 9, "minute": 15 },
+                    "nextRunAt": "2099-01-01T00:00:00Z",
+                    "enabled": true,
+                    "lastRun": null
+                }]
+            })
+            .to_string(),
+        )
+        .unwrap();
+
+        let migrated = load_at(&home, now()).unwrap();
+        let record = &migrated.schedules[0];
+        assert_eq!(
+            record.next_run_at,
+            next_run_after(&record.cadence, now()).unwrap().to_rfc3339()
+        );
+        assert_eq!(load_at(&home, now() + Duration::days(1)).unwrap(), migrated);
+        let _ = fs::remove_dir_all(home);
     }
 
     #[test]
