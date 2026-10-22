@@ -110,7 +110,8 @@ fn load_at(home: &Path, now: DateTime<Utc>) -> Result<ScheduleFile, String> {
                     time_zone: None,
                     ..
                 }
-            ) {
+            ) && !parse_timestamp(&schedule.next_run_at).is_some_and(|next| next <= now)
+            {
                 schedule.next_run_at = next_run_after(&schedule.cadence, now)
                     .ok_or_else(|| {
                         format!("failed to migrate next run for schedule {}", schedule.id)
@@ -511,6 +512,40 @@ mod tests {
             next_run_after(&record.cadence, now()).unwrap().to_rfc3339()
         );
         assert_eq!(load_at(&home, now() + Duration::days(1)).unwrap(), migrated);
+        let _ = fs::remove_dir_all(home);
+    }
+
+    #[test]
+    fn preserves_overdue_legacy_record_for_catch_up() {
+        let home = PathBuf::from(format!(
+            "{}/ruxex-scheduler-overdue-legacy-test-{}",
+            std::env::temp_dir().display(),
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&home);
+        fs::create_dir_all(&home).unwrap();
+        let overdue = "2026-10-20T09:15:00Z";
+        fs::write(
+            super::file_path(&home),
+            serde_json::json!({
+                "schedules": [{
+                    "id": "schedule-overdue",
+                    "name": "Overdue legacy",
+                    "prompt": "catch up",
+                    "threadId": null,
+                    "cadence": { "kind": "daily", "hour": 9, "minute": 15 },
+                    "nextRunAt": overdue,
+                    "enabled": true,
+                    "lastRun": null
+                }]
+            })
+            .to_string(),
+        )
+        .unwrap();
+
+        let migrated = load_at(&home, now()).unwrap();
+
+        assert_eq!(migrated.schedules[0].next_run_at, overdue);
         let _ = fs::remove_dir_all(home);
     }
 
