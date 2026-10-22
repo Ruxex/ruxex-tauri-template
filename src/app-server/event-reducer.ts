@@ -1,4 +1,9 @@
-import type { RequestId, ServerNotification, ServerRequest, v2 } from "../protocol";
+import type {
+  RequestId,
+  ServerNotification,
+  ServerRequest,
+  v2,
+} from "../protocol";
 
 import type { AppServerEvent } from "./events";
 
@@ -74,10 +79,9 @@ export function reduceAppServerEvent(
     return state;
   }
 
-  const history = [
-    ...state.history,
-    { id: eventId, event },
-  ].slice(-MAX_HISTORY);
+  const history = [...state.history, { id: eventId, event }].slice(
+    -MAX_HISTORY,
+  );
   const seenEventIds = new Set(history.map((entry) => entry.id));
 
   const nextState: EventState = {
@@ -103,10 +107,13 @@ export function reduceAppServerEvent(
       resynchronizing: true,
       lastError: event.data.message,
       threads: Object.fromEntries(
-        Object.entries(state.threads).map(([threadId, thread]) => [threadId, {
-          ...thread,
-          status: thread.activeTurnId ? "resynchronizing" : thread.status,
-        }]),
+        Object.entries(state.threads).map(([threadId, thread]) => [
+          threadId,
+          {
+            ...thread,
+            status: thread.activeTurnId ? "resynchronizing" : thread.status,
+          },
+        ]),
       ),
     };
   }
@@ -114,7 +121,11 @@ export function reduceAppServerEvent(
   if (event.type === "serverRequest") {
     const request = event.data;
     const requestId = request.id;
-    const params = request.params as { threadId?: string; turnId?: string; itemId?: string };
+    const params = request.params as {
+      threadId?: string;
+      turnId?: string;
+      itemId?: string;
+    };
     return {
       ...nextState,
       pendingServerRequests: {
@@ -134,7 +145,10 @@ export function reduceAppServerEvent(
   return reduceNotification(nextState, event.data);
 }
 
-function reduceNotification(state: EventState, notification: ServerNotification): EventState {
+function reduceNotification(
+  state: EventState,
+  notification: ServerNotification,
+): EventState {
   switch (notification.method) {
     case "turn/started": {
       const { threadId, turn } = notification.params;
@@ -168,12 +182,16 @@ function reduceNotification(state: EventState, notification: ServerNotification)
     case "item/fileChange/outputDelta":
       return addDelta(state, notification.params, "fileChange");
     case "item/mcpToolCall/progress":
-      return addDelta(state, {
-        threadId: notification.params.threadId,
-        turnId: notification.params.turnId,
-        itemId: notification.params.itemId,
-        delta: notification.params.message,
-      }, "mcpToolCall");
+      return addDelta(
+        state,
+        {
+          threadId: notification.params.threadId,
+          turnId: notification.params.turnId,
+          itemId: notification.params.itemId,
+          delta: notification.params.message,
+        },
+        "mcpToolCall",
+      );
     case "serverRequest/resolved": {
       const requestId = requestKey(notification.params.requestId);
       if (!(requestId in state.pendingServerRequests)) {
@@ -214,7 +232,11 @@ function upsertStructuredItem(
     }
 
     const items = [...thread.items];
-    items[index] = { ...items[index], raw: params.item, type: params.item.type };
+    items[index] = {
+      ...items[index],
+      raw: params.item,
+      type: params.item.type,
+    };
     return { ...thread, items };
   });
 }
@@ -247,7 +269,12 @@ function addDelta(
     const item = thread.items[index];
     const items = [...thread.items];
     items[index] = { ...item, text: item.text + params.delta };
-    return { ...thread, activeTurnId: thread.activeTurnId ?? params.turnId, status: "running", items };
+    return {
+      ...thread,
+      activeTurnId: thread.activeTurnId ?? params.turnId,
+      status: "running",
+      items,
+    };
   });
 }
 
@@ -283,7 +310,9 @@ function requestKey(requestId: RequestId): string {
   return String(requestId);
 }
 
-function serverRequestKind(request: ServerRequest): PendingServerRequest["kind"] {
+function serverRequestKind(
+  request: ServerRequest,
+): PendingServerRequest["kind"] {
   const method = typeof request.method === "string" ? request.method : "";
   if (method.includes("requestApproval")) {
     return "approval";
