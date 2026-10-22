@@ -44,7 +44,13 @@ pub fn create(request: &WorktreeCreateRequest) -> Result<WorktreeRecord, String>
     validate_branch(&request.branch)?;
     let output = git(
         &root,
-        ["worktree", "add", "-b", request.branch.as_str(), request.destination.as_str()],
+        [
+            "worktree",
+            "add",
+            "-b",
+            request.branch.as_str(),
+            request.destination.as_str(),
+        ],
     )?;
     if !output.status.success() {
         return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
@@ -123,7 +129,10 @@ fn validate_destination(root: &Path, destination: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn parse_worktree_list(output: &std::process::Output, root: &Path) -> Result<Vec<WorktreeRecord>, String> {
+fn parse_worktree_list(
+    output: &std::process::Output,
+    root: &Path,
+) -> Result<Vec<WorktreeRecord>, String> {
     if !output.status.success() {
         return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
     }
@@ -133,7 +142,13 @@ fn parse_worktree_list(output: &std::process::Output, root: &Path) -> Result<Vec
     let mut branch = None;
     let mut locked = false;
     let mut prunable = false;
-    let flush = |records: &mut Vec<WorktreeRecord>, path: &mut Option<String>, commit: &mut String, branch: &mut Option<String>, locked: &mut bool, prunable: &mut bool| -> Result<(), String> {
+    let flush = |records: &mut Vec<WorktreeRecord>,
+                 path: &mut Option<String>,
+                 commit: &mut String,
+                 branch: &mut Option<String>,
+                 locked: &mut bool,
+                 prunable: &mut bool|
+     -> Result<(), String> {
         let Some(path_value) = path.take() else {
             return Ok(());
         };
@@ -152,9 +167,23 @@ fn parse_worktree_list(output: &std::process::Output, root: &Path) -> Result<Vec
     };
     for line in String::from_utf8_lossy(&output.stdout).lines() {
         if line.is_empty() {
-            flush(&mut records, &mut path, &mut commit, &mut branch, &mut locked, &mut prunable)?;
+            flush(
+                &mut records,
+                &mut path,
+                &mut commit,
+                &mut branch,
+                &mut locked,
+                &mut prunable,
+            )?;
         } else if let Some(value) = line.strip_prefix("worktree ") {
-            flush(&mut records, &mut path, &mut commit, &mut branch, &mut locked, &mut prunable)?;
+            flush(
+                &mut records,
+                &mut path,
+                &mut commit,
+                &mut branch,
+                &mut locked,
+                &mut prunable,
+            )?;
             path = Some(value.to_string());
         } else if let Some(value) = line.strip_prefix("HEAD ") {
             commit = value.to_string();
@@ -166,7 +195,14 @@ fn parse_worktree_list(output: &std::process::Output, root: &Path) -> Result<Vec
             prunable = true;
         }
     }
-    flush(&mut records, &mut path, &mut commit, &mut branch, &mut locked, &mut prunable)?;
+    flush(
+        &mut records,
+        &mut path,
+        &mut commit,
+        &mut branch,
+        &mut locked,
+        &mut prunable,
+    )?;
     if records.is_empty() && root.exists() {
         return Err("Git returned no worktrees".to_string());
     }
@@ -196,13 +232,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{create, list, remove, validate_branch, WorktreeCreateRequest, WorktreeRemoveRequest};
+    use super::{
+        WorktreeCreateRequest, WorktreeRemoveRequest, create, list, remove, validate_branch,
+    };
     use std::fs;
     use std::path::PathBuf;
     use std::process::Command;
 
     fn git(root: &PathBuf, args: &[&str]) {
-        let output = Command::new("git").arg("-C").arg(root).args(args).output().unwrap();
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
         assert!(output.status.success(), "{:?}", output);
     }
 
@@ -234,7 +277,12 @@ mod tests {
         })
         .unwrap();
         assert_eq!(created.branch.as_deref(), Some("feature"));
-        assert!(list(&root).unwrap().iter().any(|worktree| worktree.path == destination.display().to_string()));
+        assert!(
+            list(&root)
+                .unwrap()
+                .iter()
+                .any(|worktree| worktree.path == destination.display().to_string())
+        );
         remove(&WorktreeRemoveRequest {
             root: root.display().to_string(),
             path: destination.display().to_string(),

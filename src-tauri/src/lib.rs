@@ -26,11 +26,11 @@ use tauri::Emitter;
 use tauri::Manager;
 use tauri::State;
 
+#[cfg(feature = "example")]
+mod example_provider;
 mod platform;
 mod scheduler;
 mod worktree;
-#[cfg(feature = "example")]
-mod example_provider;
 
 #[cfg(feature = "example")]
 pub fn run_example_provider_host() -> anyhow::Result<()> {
@@ -166,12 +166,12 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::DESKTOP_EXPERIMENTAL_API;
     use super::AppServerEndpoint;
     use super::AppServerEndpointKind;
     use super::AppServerStatus;
-    use super::DesktopAppServerEvent;
+    use super::DESKTOP_EXPERIMENTAL_API;
     use super::DesktopAppServerErrorKind;
+    use super::DesktopAppServerEvent;
     use super::command_error;
     use super::desktop_product_identity;
     use super::desktop_ruxex_home_from_user_home;
@@ -275,11 +275,14 @@ mod tests {
             "authToken": "memory-only-token",
         }))
         .unwrap();
-        assert!(matches!(endpoint, AppServerEndpoint::Websocket { url, auth_token: Some(token) } if url == "wss://example.test/rpc" && token == "memory-only-token"));
+        assert!(
+            matches!(endpoint, AppServerEndpoint::Websocket { url, auth_token: Some(token) } if url == "wss://example.test/rpc" && token == "memory-only-token")
+        );
     }
 
     fn package_fixture(name: &str, with_manifest: bool) -> PathBuf {
-        let path = std::env::temp_dir().join(format!("ruxex-desktop-{name}-{}", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("ruxex-desktop-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).unwrap();
         if with_manifest {
@@ -293,7 +296,10 @@ mod tests {
         let resource = package_fixture("resource", true);
         let development = package_fixture("development", true);
 
-        assert_eq!(select_runtime_package(&resource, &development).unwrap(), resource);
+        assert_eq!(
+            select_runtime_package(&resource, &development).unwrap(),
+            resource
+        );
 
         let _ = fs::remove_dir_all(development);
         let _ = fs::remove_dir_all(resource);
@@ -304,7 +310,10 @@ mod tests {
         let resource = package_fixture("missing-resource", false);
         let development = package_fixture("fallback", true);
 
-        assert_eq!(select_runtime_package(&resource, &development).unwrap(), development);
+        assert_eq!(
+            select_runtime_package(&resource, &development).unwrap(),
+            development
+        );
 
         let _ = fs::remove_dir_all(resource);
         let _ = fs::remove_dir_all(development);
@@ -378,7 +387,10 @@ fn read_image_file(path: String) -> CommandResult<String> {
         .iter()
         .filter_map(|root| root.canonicalize().ok())
         .collect::<Vec<_>>();
-    let root_refs = canonical_roots.iter().map(PathBuf::as_path).collect::<Vec<_>>();
+    let root_refs = canonical_roots
+        .iter()
+        .map(PathBuf::as_path)
+        .collect::<Vec<_>>();
     if !platform::is_path_under_any_root(&canonical, &root_refs) {
         return Err(command_error(
             DesktopAppServerErrorKind::Initialization,
@@ -462,7 +474,11 @@ async fn schedule_create(
     let _lock = state.schedule_lock.lock().await;
     let home = schedule_home()?;
     let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
-    let id = format!("schedule-{}-{}", Utc::now().timestamp_millis(), std::process::id());
+    let id = format!(
+        "schedule-{}-{}",
+        Utc::now().timestamp_millis(),
+        std::process::id()
+    );
     let record = scheduler::new_record(id, input, Utc::now()).map_err(schedule_error)?;
     file.schedules.push(record.clone());
     scheduler::save(&home, &file).map_err(schedule_file_error)?;
@@ -513,10 +529,7 @@ async fn schedule_set_enabled(
 }
 
 #[tauri::command]
-async fn schedule_delete(
-    state: State<'_, AppState>,
-    id: String,
-) -> CommandResult<()> {
+async fn schedule_delete(state: State<'_, AppState>, id: String) -> CommandResult<()> {
     let _lock = state.schedule_lock.lock().await;
     let home = schedule_home()?;
     let mut file = scheduler::load(&home).map_err(schedule_file_error)?;
@@ -548,7 +561,10 @@ async fn schedule_run_now(
     record.last_run = Some(scheduler::ScheduleRun {
         at: now.to_rfc3339(),
         success: result.is_ok(),
-        message: result.as_ref().map(|_| "dispatched".to_string()).unwrap_or_else(|error| error.clone()),
+        message: result
+            .as_ref()
+            .map(|_| "dispatched".to_string())
+            .unwrap_or_else(|error| error.clone()),
     });
     if let Ok(Some(thread_id)) = result {
         record.thread_id = Some(thread_id);
@@ -581,7 +597,11 @@ async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
         .map(|schedule| schedule.id.clone())
         .collect::<Vec<_>>();
     for id in &due_ids {
-        let Some(index) = file.schedules.iter().position(|schedule| schedule.id == *id) else {
+        let Some(index) = file
+            .schedules
+            .iter()
+            .position(|schedule| schedule.id == *id)
+        else {
             continue;
         };
         let mut record = file.schedules[index].clone();
@@ -589,7 +609,10 @@ async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
         record.last_run = Some(scheduler::ScheduleRun {
             at: now.to_rfc3339(),
             success: result.is_ok(),
-            message: result.as_ref().map(|_| "dispatched".to_string()).unwrap_or_else(|error| error.clone()),
+            message: result
+                .as_ref()
+                .map(|_| "dispatched".to_string())
+                .unwrap_or_else(|error| error.clone()),
         });
         if let Ok(Some(thread_id)) = result {
             record.thread_id = Some(thread_id);
@@ -607,7 +630,10 @@ async fn run_due_schedules(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-async fn dispatch_schedule(app: &AppHandle, schedule: &scheduler::ScheduleRecord) -> Result<Option<String>, String> {
+async fn dispatch_schedule(
+    app: &AppHandle,
+    schedule: &scheduler::ScheduleRecord,
+) -> Result<Option<String>, String> {
     let state = app.state::<AppState>();
     let handle = request_handle(&state)
         .await
@@ -686,7 +712,9 @@ fn worktree_open(root: String, path: String) -> CommandResult<()> {
         .into_iter()
         .any(|worktree| worktree.path == path);
     if !exists {
-        return Err(schedule_error("worktree path is not registered in the repository"));
+        return Err(schedule_error(
+            "worktree path is not registered in the repository",
+        ));
     }
     tauri_plugin_opener::open_path(path, None::<&str>).map_err(|error| {
         command_error(
@@ -791,74 +819,32 @@ async fn install_connection(
     Ok(status)
 }
 
-async fn connect_local_endpoint(app: &AppHandle) -> CommandResult<(RemoteAppServerClient, AppServerStatus)> {
+async fn connect_local_endpoint(
+    app: &AppHandle,
+) -> CommandResult<(RemoteAppServerClient, AppServerStatus)> {
     let home = desktop_ruxex_home()
         .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let socket_path = app_server_control_socket_path(&home).map_err(|error| {
         command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
     })?;
-    let (client, effective_socket_path, bootstrapped_version) = match connect_unix_socket(socket_path.clone()).await {
-        Ok(client) => (client, socket_path, None),
-        Err(_) => {
-            #[cfg(feature = "example")]
-            let _ = app;
+    let (client, effective_socket_path, bootstrapped_version) =
+        match connect_unix_socket(socket_path.clone()).await {
+            Ok(client) => (client, socket_path, None),
+            Err(_) => {
+                #[cfg(feature = "example")]
+                let _ = app;
 
-            #[cfg(feature = "example")]
-            {
-                let executable = std::env::current_exe().map_err(|error| {
-                    command_error(
-                        DesktopAppServerErrorKind::Lifecycle,
-                        format!("failed to resolve the desktop executable: {error}"),
-                    )
-                })?;
-                let lifecycle = ruxex_app_server_daemon::run_with_host_executable(
-                    ruxex_app_server_daemon::LifecycleCommand::Start,
-                    &executable,
-                    &[
-                        OsString::from(ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
-                        OsString::from("--managed-daemon"),
-                    ],
-                )
-                .await
-                .map_err(|error| {
-                    command_error(
-                        DesktopAppServerErrorKind::Lifecycle,
-                        format!("failed to start the example provider app-server: {error:#}"),
-                    )
-                })?;
-                let effective_socket_path =
-                    AbsolutePathBuf::from_absolute_path(lifecycle.socket_path.clone()).map_err(
-                        |error| {
-                            command_error(
-                                DesktopAppServerErrorKind::Initialization,
-                                error.to_string(),
-                            )
-                        },
-                    )?;
-                let client = connect_unix_socket(effective_socket_path.clone())
-                    .await
-                    .map_err(|error| {
+                #[cfg(feature = "example")]
+                {
+                    let executable = std::env::current_exe().map_err(|error| {
                         command_error(
-                            DesktopAppServerErrorKind::Initialization,
-                            error.to_string(),
+                            DesktopAppServerErrorKind::Lifecycle,
+                            format!("failed to resolve the desktop executable: {error}"),
                         )
                     })?;
-                (
-                    client,
-                    effective_socket_path,
-                    lifecycle
-                        .app_server_version
-                        .or_else(|| Some("0.4.2".to_string())),
-                )
-            }
-
-            #[cfg(not(feature = "example"))]
-            {
-                let package_source = runtime_package_source(app)
-                    .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-                let bootstrap =
-                    ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
-                        &package_source,
+                    let lifecycle = ruxex_app_server_daemon::run_with_host_executable(
+                        ruxex_app_server_daemon::LifecycleCommand::Start,
+                        &executable,
                         &[
                             OsString::from(
                                 ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG,
@@ -870,32 +856,83 @@ async fn connect_local_endpoint(app: &AppHandle) -> CommandResult<(RemoteAppServ
                     .map_err(|error| {
                         command_error(
                             DesktopAppServerErrorKind::Lifecycle,
-                            format!("{error:#}"),
+                            format!("failed to start the example provider app-server: {error:#}"),
                         )
                     })?;
-                let effective_socket_path =
-                    AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
+                    let effective_socket_path =
+                        AbsolutePathBuf::from_absolute_path(lifecycle.socket_path.clone())
+                            .map_err(|error| {
+                                command_error(
+                                    DesktopAppServerErrorKind::Initialization,
+                                    error.to_string(),
+                                )
+                            })?;
+                    let client = connect_unix_socket(effective_socket_path.clone())
+                        .await
                         .map_err(|error| {
                             command_error(
                                 DesktopAppServerErrorKind::Initialization,
                                 error.to_string(),
                             )
                         })?;
-                let client = connect_unix_socket(effective_socket_path.clone())
+                    (
+                        client,
+                        effective_socket_path,
+                        lifecycle
+                            .app_server_version
+                            .or_else(|| Some("0.4.2".to_string())),
+                    )
+                }
+
+                #[cfg(not(feature = "example"))]
+                {
+                    let package_source = runtime_package_source(app).map_err(|error| {
+                        command_error(DesktopAppServerErrorKind::Lifecycle, error)
+                    })?;
+                    let bootstrap = ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
+                        &package_source,
+                        &[
+                            OsString::from(
+                                ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG,
+                            ),
+                            OsString::from("--managed-daemon"),
+                        ],
+                    )
                     .await
                     .map_err(|error| {
-                        command_error(
-                            DesktopAppServerErrorKind::Initialization,
-                            error.to_string(),
-                        )
+                        command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}"))
                     })?;
-                (client, effective_socket_path, Some(bootstrap.app_server_version))
+                    let effective_socket_path =
+                        AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
+                            .map_err(|error| {
+                                command_error(
+                                    DesktopAppServerErrorKind::Initialization,
+                                    error.to_string(),
+                                )
+                            })?;
+                    let client = connect_unix_socket(effective_socket_path.clone())
+                        .await
+                        .map_err(|error| {
+                            command_error(
+                                DesktopAppServerErrorKind::Initialization,
+                                error.to_string(),
+                            )
+                        })?;
+                    (
+                        client,
+                        effective_socket_path,
+                        Some(bootstrap.app_server_version),
+                    )
+                }
             }
-        }
-    };
+        };
     let status = AppServerStatus {
         socket_path: effective_socket_path.display().to_string(),
-        app_server_version: client.server_version().map(str::to_owned).or(bootstrapped_version).unwrap_or_else(|| "unknown".to_string()),
+        app_server_version: client
+            .server_version()
+            .map(str::to_owned)
+            .or(bootstrapped_version)
+            .unwrap_or_else(|| "unknown".to_string()),
         endpoint_kind: AppServerEndpointKind::Local,
     };
     Ok((client, status))
