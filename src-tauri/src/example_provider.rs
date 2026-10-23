@@ -234,12 +234,16 @@ fn fixed_chat_stream() -> ruxex::provider::ProviderChatStream {
     ]))
 }
 
+pub(crate) fn provider_descriptor() -> ProviderDescriptor {
+    ExampleProvider::provider_descriptor()
+}
+
 fn provider_factory() -> ruxex::cli::ProviderRuntimeFactory {
     fn runtime(init: ProviderInit) -> AppServerRuntime {
         AppServerRuntimeBuilder::build_from_provider_factory::<ExampleProvider>(init)
     }
 
-    (runtime, ExampleProvider::provider_descriptor())
+    (runtime, provider_descriptor())
 }
 
 pub async fn run(

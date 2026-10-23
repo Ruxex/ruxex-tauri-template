@@ -38,6 +38,9 @@ pub fn run() {
         .setup(|app| {
             let home = desktop::ruxex_home().map_err(std::io::Error::other)?;
 
+            #[cfg(feature = "example")]
+            desktop::initialize_provider_home(&home).map_err(std::io::Error::other)?;
+
             // The setup hook runs before Tauri exposes commands or starts the
             // app-server child, so these process-wide values are safe to set
             // once here and are inherited by the managed daemon.

@@ -1,6 +1,11 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "example")]
+use std::fs::OpenOptions;
+#[cfg(feature = "example")]
+use std::io::{ErrorKind, Write};
+
 use base64::Engine;
 use ruxex::ProductIdentity;
 
@@ -31,6 +36,60 @@ pub(crate) fn ruxex_home() -> Result<PathBuf, String> {
     fs::create_dir_all(&home)
         .map_err(|error| format!("failed to create Desktop Ruxex home: {error}"))?;
     Ok(home)
+}
+
+#[cfg(feature = "example")]
+pub(crate) fn initialize_provider_home(home: &Path) -> Result<(), String> {
+    let identity = product_identity();
+    let marker_file = identity.home_marker_file();
+    let descriptor = crate::example_provider::provider_descriptor();
+    match ruxex::provider::mount_provider_home_with_marker(home, marker_file, &descriptor) {
+        Ok(_) => Ok(()),
+        Err(ruxex::provider::ProviderHomeError::MissingMarker { .. }) => {
+            let marker_path = home.join(marker_file);
+            let marker = ruxex::provider::ProviderHomeMarker::from(&descriptor);
+            let contents = serde_json::to_string_pretty(&marker)
+                .map_err(|error| format!("failed to serialize Desktop provider marker: {error}"))?;
+            let mut marker_handle = match OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&marker_path)
+            {
+                Ok(handle) => handle,
+                Err(error) if error.kind() == ErrorKind::AlreadyExists => {
+                    return ruxex::provider::mount_provider_home_with_marker(
+                        home,
+                        marker_file,
+                        &descriptor,
+                    )
+                    .map(|_| ())
+                    .map_err(|error| {
+                        format!("failed to initialize Desktop provider home: {error}")
+                    });
+                }
+                Err(error) => {
+                    return Err(format!(
+                        "failed to create Desktop provider marker `{}`: {error}",
+                        marker_path.display()
+                    ));
+                }
+            };
+            if let Err(error) = marker_handle
+                .write_all(format!("{contents}\n").as_bytes())
+                .and_then(|_| marker_handle.flush())
+            {
+                let _ = fs::remove_file(&marker_path);
+                return Err(format!(
+                    "failed to write Desktop provider marker `{}`: {error}",
+                    marker_path.display()
+                ));
+            }
+            Ok(())
+        }
+        Err(error) => Err(format!(
+            "failed to initialize Desktop provider home: {error}"
+        )),
+    }
 }
 
 #[tauri::command]
@@ -151,6 +210,9 @@ mod tests {
 
     use super::{product_identity, ruxex_home_from_user_home, select_runtime_package};
 
+    #[cfg(feature = "example")]
+    use super::initialize_provider_home;
+
     #[test]
     fn desktop_home_is_isolated_under_user_home() {
         assert_eq!(
@@ -166,6 +228,43 @@ mod tests {
         assert_eq!(identity.product_name(), "Ruxex Desktop");
         assert_eq!(identity.product_slug(), "ruxex-desktop");
         assert_eq!(identity.home_dir_name(), ".ruxex_desktop");
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn example_provider_home_initialization_writes_and_validates_marker() {
+        let home = std::env::temp_dir().join(format!(
+            "ruxex-desktop-provider-home-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&home);
+
+        initialize_provider_home(&home).unwrap();
+        let marker_path = home.join(product_identity().home_marker_file());
+        let marker = fs::read_to_string(&marker_path).unwrap();
+        let marker: serde_json::Value = serde_json::from_str(&marker).unwrap();
+        assert_eq!(marker["providerKind"], "example");
+
+        initialize_provider_home(&home).unwrap();
+
+        let _ = fs::remove_dir_all(home);
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn legacy_nonempty_home_is_initialized_without_deleting_data() {
+        let home =
+            std::env::temp_dir().join(format!("ruxex-desktop-legacy-home-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&home);
+        fs::create_dir_all(home.join("app-server-daemon")).unwrap();
+        fs::write(home.join("schedules.json"), "[]\n").unwrap();
+
+        initialize_provider_home(&home).unwrap();
+
+        assert!(home.join("schedules.json").is_file());
+        assert!(home.join(product_identity().home_marker_file()).is_file());
+
+        let _ = fs::remove_dir_all(home);
     }
 
     fn package_fixture(name: &str, with_manifest: bool) -> PathBuf {
