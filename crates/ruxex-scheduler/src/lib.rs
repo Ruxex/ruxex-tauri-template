@@ -1,9 +1,21 @@
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Datelike, Duration, Local, LocalResult, NaiveDate, TimeZone, Utc};
 use chrono_tz::Tz;
 use serde::{Deserialize, Deserializer, Serialize};
+use tokio::sync::Mutex;
+
+mod app_server;
+pub use app_server::{
+    AppServerDispatcher, ScheduleDispatcher, build_thread_request, build_turn_request,
+};
+
+#[derive(Default)]
+pub struct SchedulerState {
+    in_flight: Mutex<HashSet<String>>,
+}
 
 const SCHEDULES_FILE: &str = "schedules.json";
 const CURRENT_SCHEMA_VERSION: u8 = 1;
@@ -144,6 +156,179 @@ impl Default for ScheduleFile {
 
 pub fn file_path(home: &Path) -> PathBuf {
     home.join(SCHEDULES_FILE)
+}
+
+impl SchedulerState {
+    pub async fn list(&self, home: &Path) -> Result<Vec<ScheduleRecord>, String> {
+        let _guard = self.in_flight.lock().await;
+        Ok(load(home)?.schedules)
+    }
+
+    pub async fn create(
+        &self,
+        home: &Path,
+        input: ScheduleInput,
+    ) -> Result<ScheduleRecord, String> {
+        let _guard = self.in_flight.lock().await;
+        let mut file = load(home)?;
+        let id = format!(
+            "schedule-{}-{}",
+            Utc::now().timestamp_millis(),
+            std::process::id()
+        );
+        let record = new_record(id, input, Utc::now())?;
+        file.schedules.push(record.clone());
+        save(home, &file)?;
+        Ok(record)
+    }
+
+    pub async fn update(
+        &self,
+        home: &Path,
+        id: &str,
+        input: ScheduleInput,
+    ) -> Result<ScheduleRecord, String> {
+        let _guard = self.in_flight.lock().await;
+        let mut file = load(home)?;
+        let index = file
+            .schedules
+            .iter()
+            .position(|schedule| schedule.id == id)
+            .ok_or_else(|| "schedule not found".to_string())?;
+        let record = updated_record(&file.schedules[index], input, Utc::now())?;
+        file.schedules[index] = record.clone();
+        save(home, &file)?;
+        Ok(record)
+    }
+
+    pub async fn set_enabled(
+        &self,
+        home: &Path,
+        id: &str,
+        enabled: bool,
+    ) -> Result<ScheduleRecord, String> {
+        let _guard = self.in_flight.lock().await;
+        let mut file = load(home)?;
+        let index = file
+            .schedules
+            .iter()
+            .position(|schedule| schedule.id == id)
+            .ok_or_else(|| "schedule not found".to_string())?;
+        file.schedules[index].enabled = enabled;
+        let record = file.schedules[index].clone();
+        save(home, &file)?;
+        Ok(record)
+    }
+
+    pub async fn delete(&self, home: &Path, id: &str) -> Result<(), String> {
+        let _guard = self.in_flight.lock().await;
+        let mut file = load(home)?;
+        let before = file.schedules.len();
+        file.schedules.retain(|schedule| schedule.id != id);
+        if file.schedules.len() == before {
+            return Err("schedule not found".to_string());
+        }
+        save(home, &file)
+    }
+
+    pub async fn run_now<D: ScheduleDispatcher>(
+        &self,
+        home: &Path,
+        id: &str,
+        dispatcher: Option<&D>,
+    ) -> Result<ScheduleRecord, String> {
+        match self
+            .run_schedule_with(home, id, RunMode::Manual, dispatcher)
+            .await?
+        {
+            RunScheduleOutcome::Completed(record) => Ok(*record),
+            RunScheduleOutcome::Missing => Err("schedule not found or was deleted during dispatch".to_string()),
+            RunScheduleOutcome::Skipped => Err("schedule is already running".to_string()),
+        }
+    }
+
+    pub async fn run_due<D: ScheduleDispatcher>(
+        &self,
+        home: &Path,
+        dispatcher: Option<&D>,
+    ) -> Result<(), String> {
+        let now = Utc::now();
+        let due_ids = {
+            let _guard = self.in_flight.lock().await;
+            load(home)?
+                .schedules
+                .into_iter()
+                .filter(|schedule| is_due(schedule, now))
+                .map(|schedule| schedule.id)
+                .collect::<Vec<_>>()
+        };
+
+        for id in due_ids {
+            self.run_schedule_with(home, &id, RunMode::Due(now), dispatcher)
+                .await?;
+        }
+        Ok(())
+    }
+
+    async fn run_schedule_with<D: ScheduleDispatcher>(
+        &self,
+        home: &Path,
+        id: &str,
+        mode: RunMode,
+        dispatcher: Option<&D>,
+    ) -> Result<RunScheduleOutcome, String> {
+        let snapshot = {
+            let mut guard = self.in_flight.lock().await;
+            let Some(snapshot) = load(home)?.schedules.into_iter().find(|schedule| schedule.id == id)
+            else {
+                return Ok(RunScheduleOutcome::Missing);
+            };
+            if let RunMode::Due(now) = mode && !is_due(&snapshot, now) {
+                return Ok(RunScheduleOutcome::Skipped);
+            }
+            if !guard.insert(id.to_string()) {
+                return Ok(RunScheduleOutcome::Skipped);
+            }
+            snapshot
+        };
+        let started_at = Utc::now();
+        let result = match dispatcher {
+            Some(dispatcher) => dispatcher.dispatch(snapshot).await,
+            None => Err("app server unavailable".to_string()),
+        };
+
+        let mut guard = self.in_flight.lock().await;
+        let finalization = (|| {
+            let mut file = load(home)?;
+            let Some(index) = file.schedules.iter().position(|schedule| schedule.id == id) else {
+                return Ok(RunScheduleOutcome::Missing);
+            };
+            let record = apply_run_result(&file.schedules[index], started_at, result);
+            file.schedules[index] = record.clone();
+            save(home, &file)?;
+            Ok(RunScheduleOutcome::Completed(Box::new(record)))
+        })();
+        guard.remove(id);
+        finalization
+    }
+}
+
+enum RunMode {
+    Manual,
+    Due(DateTime<Utc>),
+}
+
+enum RunScheduleOutcome {
+    Completed(Box<ScheduleRecord>),
+    Missing,
+    Skipped,
+}
+
+fn is_due(schedule: &ScheduleRecord, now: DateTime<Utc>) -> bool {
+    schedule.enabled
+        && DateTime::parse_from_rfc3339(&schedule.next_run_at)
+            .map(|next| next.with_timezone(&Utc) <= now)
+            .unwrap_or(false)
 }
 
 pub fn load(home: &Path) -> Result<ScheduleFile, String> {

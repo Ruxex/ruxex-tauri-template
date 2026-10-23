@@ -10942,6 +10942,8 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "chrono-tz",
+ "ruxex-app-server-client",
+ "ruxex-app-server-protocol",
  "serde",
  "serde_json",
  "tokio",
