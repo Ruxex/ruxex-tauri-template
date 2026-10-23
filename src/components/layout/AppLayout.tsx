@@ -39,7 +39,6 @@ export function AppLayout() {
           activePanel={activePanel}
           collapsed={preferences.sidebarCollapsed}
           contextPanelHidden={isProjectPage}
-          selectedProjectId={projectId}
           selectedThreadId={threadId}
           onPanelChange={handlePanelChange}
           onToggle={() =>

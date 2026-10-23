@@ -1,9 +1,9 @@
-import type { Dispatch, FormEvent } from "react";
 import {
   CalendarDaysIcon,
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import type { Dispatch, FormEvent } from "react";
 
 import type { ScheduleFormAction, ScheduleFormState } from "./schedule-form";
 import {
@@ -83,7 +83,7 @@ export function ScheduleEditorDialog({
               value={form.prompt}
             />
           </label>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3">
             <label className="form-control">
               <select
                 aria-label="Cadence"
@@ -105,34 +105,30 @@ export function ScheduleEditorDialog({
             {form.cadenceKind === "weekly" && (
               <fieldset className="form-control">
                 <legend className="text-sm">Weekdays</legend>
-                <div className="mt-1 grid grid-cols-2 gap-2 rounded-lg border border-base-300 p-2 sm:grid-cols-4">
+                <div className="mt-2 grid grid-cols-7 gap-2 rounded-lg border border-base-300 p-2">
                   {WEEKDAYS.map((day, index) => (
-                    <label
-                      className="label cursor-pointer justify-start gap-2"
+                    <button
+                      aria-pressed={form.weekdays.includes(String(index))}
+                      aria-label={day}
+                      className={`btn btn-sm size-11 rounded-full p-0 text-sm font-semibold ${form.weekdays.includes(String(index)) ? "btn-primary" : "btn-ghost border border-base-300 bg-base-100"}`}
                       key={day}
+                      title={day}
+                      type="button"
+                      onClick={() => {
+                        const value = String(index);
+                        const weekdays = form.weekdays.includes(value)
+                          ? form.weekdays.filter((weekday) => weekday !== value)
+                          : [...form.weekdays, value].sort(
+                              (left, right) => Number(left) - Number(right),
+                            );
+                        dispatch({
+                          type: "weekdaysChanged",
+                          value: weekdays,
+                        });
+                      }}
                     >
-                      <input
-                        aria-label={`Weekday ${day}`}
-                        checked={form.weekdays.includes(String(index))}
-                        className="checkbox checkbox-primary checkbox-sm"
-                        onChange={() => {
-                          const value = String(index);
-                          const weekdays = form.weekdays.includes(value)
-                            ? form.weekdays.filter(
-                                (weekday) => weekday !== value,
-                              )
-                            : [...form.weekdays, value].sort(
-                                (left, right) => Number(left) - Number(right),
-                              );
-                          dispatch({
-                            type: "weekdaysChanged",
-                            value: weekdays,
-                          });
-                        }}
-                        type="checkbox"
-                      />
-                      <span className="label-text">{day}</span>
-                    </label>
+                      {day.slice(0, 1)}
+                    </button>
                   ))}
                 </div>
               </fieldset>

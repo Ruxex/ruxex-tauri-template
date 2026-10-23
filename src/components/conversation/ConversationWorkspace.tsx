@@ -26,6 +26,11 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     conversation.data.items.data,
     liveThread?.items ?? [],
   );
+  const latestTurn = conversation.data.turns.data.at(-1);
+  const turnError =
+    liveThread?.completedTurn?.error ??
+    (latestTurn?.status === "failed" ? latestTurn.error : null);
+
   return (
     <div className="flex min-h-[calc(100vh-9rem)] flex-col gap-4">
       <header>
@@ -40,6 +45,14 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         {liveThread?.status === "resynchronizing" && (
           <p className="mt-2 text-sm text-warning">
             Reconnecting and resynchronizing this chat…
+          </p>
+        )}
+        {turnError && (
+          <p className="alert alert-error mt-2" role="alert">
+            <span>Turn failed: {turnError.message}</span>
+            {turnError.additionalDetails && (
+              <span>{turnError.additionalDetails}</span>
+            )}
           </p>
         )}
         <ReviewControls threadId={threadId} />

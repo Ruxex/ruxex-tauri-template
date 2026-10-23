@@ -119,7 +119,7 @@ describe("ProjectSidebar", () => {
     expect(recentChatsSection?.open).toBe(false);
   });
 
-  it("renders the projects context panel separately from home", async () => {
+  it("uses the generic route panel for projects", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
     render(
@@ -133,8 +133,11 @@ describe("ProjectSidebar", () => {
       </MemoryRouter>,
     );
 
+    const panel = screen.getByRole("complementary", {
+      name: "Projects sidebar",
+    });
     expect(
-      screen.getByRole("complementary", { name: "Projects sidebar" }),
+      within(panel).getByText("Open projects in the workspace."),
     ).toBeTruthy();
   });
 

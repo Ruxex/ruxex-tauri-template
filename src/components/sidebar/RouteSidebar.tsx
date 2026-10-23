@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 
 import { HomeSidebar } from "./HomeSidebar";
 import { PluginsSidebar } from "./PluginsSidebar";
-import { ProjectsSidebar } from "./ProjectsSidebar";
 import { SettingsSidebar } from "./SettingsSidebar";
 import { SidebarHeader } from "./SidebarHeader";
 import {
@@ -14,25 +13,16 @@ import {
 export function SidebarContextPanel({
   activePanel,
   onClose,
-  selectedProjectId,
   selectedThreadId,
 }: {
   activePanel: SidebarPanel;
   onClose: () => void;
-  selectedProjectId?: string;
   selectedThreadId?: string;
 }) {
   switch (activePanel) {
     case "home":
       return (
         <HomeSidebar onClose={onClose} selectedThreadId={selectedThreadId} />
-      );
-    case "projects":
-      return (
-        <ProjectsSidebar
-          onClose={onClose}
-          selectedProjectId={selectedProjectId}
-        />
       );
     case "plugins":
       return <PluginsSidebar onClose={onClose} />;

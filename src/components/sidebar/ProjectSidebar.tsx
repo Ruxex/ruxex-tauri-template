@@ -12,7 +12,6 @@ type ProjectSidebarProps = {
   activePanel: SidebarPanel;
   collapsed: boolean;
   contextPanelHidden?: boolean;
-  selectedProjectId?: string;
   selectedThreadId?: string;
   onPanelChange: (panel: SidebarPanel) => void;
   onToggle: () => void;
@@ -22,7 +21,6 @@ export function ProjectSidebar({
   activePanel,
   collapsed,
   contextPanelHidden = false,
-  selectedProjectId,
   selectedThreadId,
   onPanelChange,
   onToggle,
@@ -80,7 +78,6 @@ export function ProjectSidebar({
         <SidebarContextPanel
           activePanel={activePanel}
           onClose={onToggle}
-          selectedProjectId={selectedProjectId}
           selectedThreadId={selectedThreadId}
         />
       )}
