@@ -9,7 +9,7 @@ export type RemoteEndpointConfig = {
 export type ScheduleCadence =
   | { kind: "once"; at: string }
   | { kind: "daily"; hour: number; minute: number }
-  | { kind: "weekly"; weekday: number; hour: number; minute: number };
+  | { kind: "weekly"; weekdays: number[]; hour: number; minute: number };
 
 export type ScheduleSpec = {
   name: string;
@@ -28,7 +28,13 @@ export function normalizeDeepLink(value: string): DeepLinkTarget | null {
     return null;
   }
 
-  if (url.protocol !== "ruxex:" || url.username || url.password || url.search || url.hash) {
+  if (
+    url.protocol !== "ruxex:" ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash
+  ) {
     return null;
   }
 
@@ -40,7 +46,9 @@ export function normalizeDeepLink(value: string): DeepLinkTarget | null {
   return { kind: url.hostname, id };
 }
 
-export function validateRemoteEndpoint(value: string): RemoteEndpointConfig | null {
+export function validateRemoteEndpoint(
+  value: string,
+): RemoteEndpointConfig | null {
   let url: URL;
   try {
     url = new URL(value);
@@ -72,15 +80,20 @@ export function validateScheduleSpec(value: ScheduleSpec): boolean {
       return validTime(value.cadence.hour, value.cadence.minute);
     case "weekly":
       return (
-        Number.isInteger(value.cadence.weekday) &&
-        value.cadence.weekday >= 0 &&
-        value.cadence.weekday <= 6 &&
+        value.cadence.weekdays.length > 0 &&
+        value.cadence.weekdays.every(
+          (weekday) =>
+            Number.isInteger(weekday) && weekday >= 0 && weekday <= 6,
+        ) &&
         validTime(value.cadence.hour, value.cadence.minute)
       );
   }
 }
 
-export function validateWorktreePath(root: string, destination: string): boolean {
+export function validateWorktreePath(
+  root: string,
+  destination: string,
+): boolean {
   if (!root.startsWith("/") || !destination.startsWith("/")) {
     return false;
   }
@@ -112,11 +125,20 @@ function decodePathSegment(pathname: string): string | null {
 }
 
 function isLoopbackHost(hostname: string): boolean {
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  return (
+    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
+  );
 }
 
 function validTime(hour: number, minute: number): boolean {
-  return Number.isInteger(hour) && hour >= 0 && hour <= 23 && Number.isInteger(minute) && minute >= 0 && minute <= 59;
+  return (
+    Number.isInteger(hour) &&
+    hour >= 0 &&
+    hour <= 23 &&
+    Number.isInteger(minute) &&
+    minute >= 0 &&
+    minute <= 59
+  );
 }
 
 function trimTrailingSlashes(value: string): string {

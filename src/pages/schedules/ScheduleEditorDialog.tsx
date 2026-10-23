@@ -103,25 +103,39 @@ export function ScheduleEditorDialog({
               </select>
             </label>
             {form.cadenceKind === "weekly" && (
-              <label className="form-control">
-                <select
-                  aria-label="Weekday"
-                  className="select select-bordered mt-1 w-full"
-                  onChange={(event) =>
-                    dispatch({
-                      type: "weekdayChanged",
-                      value: event.target.value,
-                    })
-                  }
-                  value={form.weekday}
-                >
+              <fieldset className="form-control">
+                <legend className="text-sm">Weekdays</legend>
+                <div className="mt-1 grid grid-cols-2 gap-2 rounded-lg border border-base-300 p-2 sm:grid-cols-4">
                   {WEEKDAYS.map((day, index) => (
-                    <option key={day} value={index}>
-                      {day}
-                    </option>
+                    <label
+                      className="label cursor-pointer justify-start gap-2"
+                      key={day}
+                    >
+                      <input
+                        aria-label={`Weekday ${day}`}
+                        checked={form.weekdays.includes(String(index))}
+                        className="checkbox checkbox-primary checkbox-sm"
+                        onChange={() => {
+                          const value = String(index);
+                          const weekdays = form.weekdays.includes(value)
+                            ? form.weekdays.filter(
+                                (weekday) => weekday !== value,
+                              )
+                            : [...form.weekdays, value].sort(
+                                (left, right) => Number(left) - Number(right),
+                              );
+                          dispatch({
+                            type: "weekdaysChanged",
+                            value: weekdays,
+                          });
+                        }}
+                        type="checkbox"
+                      />
+                      <span className="label-text">{day}</span>
+                    </label>
                   ))}
-                </select>
-              </label>
+                </div>
+              </fieldset>
             )}
           </div>
           {form.cadenceKind === "once" ? (

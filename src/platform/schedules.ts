@@ -5,7 +5,7 @@ export type ScheduleCadence =
   | { kind: "daily"; hour: number; minute: number; timeZone: string | null }
   | {
       kind: "weekly";
-      weekday: number;
+      weekdays: number[];
       hour: number;
       minute: number;
       timeZone: string | null;

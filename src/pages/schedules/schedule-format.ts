@@ -27,7 +27,7 @@ export function cadenceLabel(state: ScheduleFormState) {
   }
   const time = state.runAtTime || "09:00";
   return state.cadenceKind === "weekly"
-    ? `Every ${WEEKDAYS[Number(state.weekday)] ?? "week"} · ${time}`
+    ? `Every ${weekdayLabel(state.weekdays.map(Number))} · ${time}`
     : `Every day · ${time}`;
 }
 
@@ -37,8 +37,17 @@ export function scheduleCadenceLabel(cadence: ScheduleCadence) {
   }
   const time = `${String(cadence.hour).padStart(2, "0")}:${String(cadence.minute).padStart(2, "0")}`;
   return cadence.kind === "weekly"
-    ? `Every ${WEEKDAYS[cadence.weekday] ?? "week"} · ${time}`
+    ? `Every ${weekdayLabel(cadence.weekdays)} · ${time}`
     : `Every day · ${time}`;
+}
+
+function weekdayLabel(weekdays: readonly number[]) {
+  const labels = weekdays
+    .map((weekday) => WEEKDAYS[weekday])
+    .filter((weekday): weekday is (typeof WEEKDAYS)[number] =>
+      Boolean(weekday),
+    );
+  return labels.length > 0 ? labels.join(", ") : "week";
 }
 
 export function formatDateTime(value: string) {

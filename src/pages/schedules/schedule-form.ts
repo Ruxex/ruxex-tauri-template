@@ -9,7 +9,7 @@ export type ScheduleFormState = {
   prompt: string;
   cadenceKind: ScheduleCadence["kind"];
   runAtTime: string;
-  weekday: string;
+  weekdays: string[];
   onceAt: string;
   enabled: boolean;
 };
@@ -20,7 +20,7 @@ export type ScheduleFormAction =
   | { type: "promptChanged"; value: string }
   | { type: "cadenceChanged"; value: ScheduleCadence["kind"] }
   | { type: "runAtTimeChanged"; value: string }
-  | { type: "weekdayChanged"; value: string }
+  | { type: "weekdaysChanged"; value: string[] }
   | { type: "onceAtChanged"; value: string }
   | { type: "enabledChanged"; value: boolean };
 
@@ -37,7 +37,7 @@ export function createScheduleFormState(
       prompt: "",
       cadenceKind: "daily",
       runAtTime: "09:00",
-      weekday: "1",
+      weekdays: ["1"],
       onceAt: "",
       enabled: true,
     };
@@ -49,7 +49,7 @@ export function createScheduleFormState(
       prompt: schedule.prompt,
       cadenceKind: "once",
       runAtTime: "09:00",
-      weekday: "1",
+      weekdays: ["1"],
       onceAt: toDateTimeLocalValue(schedule.cadence.at),
       enabled: schedule.enabled,
     };
@@ -60,10 +60,10 @@ export function createScheduleFormState(
     prompt: schedule.prompt,
     cadenceKind: schedule.cadence.kind,
     runAtTime: `${pad(schedule.cadence.hour)}:${pad(schedule.cadence.minute)}`,
-    weekday:
+    weekdays:
       schedule.cadence.kind === "weekly"
-        ? String(schedule.cadence.weekday)
-        : "1",
+        ? schedule.cadence.weekdays.map(String)
+        : ["1"],
     onceAt: "",
     enabled: schedule.enabled,
   };
@@ -84,8 +84,8 @@ export function scheduleFormReducer(
       return { ...state, cadenceKind: action.value };
     case "runAtTimeChanged":
       return { ...state, runAtTime: action.value };
-    case "weekdayChanged":
-      return { ...state, weekday: action.value };
+    case "weekdaysChanged":
+      return { ...state, weekdays: action.value };
     case "onceAtChanged":
       return { ...state, onceAt: action.value };
     case "enabledChanged":
@@ -105,6 +105,13 @@ export function scheduleInputFromForm(
     };
   }
 
+  if (state.cadenceKind === "weekly" && state.weekdays.length === 0) {
+    return {
+      ok: false,
+      message: "Choose at least one weekday for the weekly schedule.",
+    };
+  }
+
   const [hour, minute] = state.runAtTime.split(":").map(Number);
   const cadence: ScheduleCadence =
     state.cadenceKind === "once"
@@ -112,7 +119,7 @@ export function scheduleInputFromForm(
       : state.cadenceKind === "weekly"
         ? {
             kind: "weekly",
-            weekday: Number(state.weekday),
+            weekdays: state.weekdays.map(Number),
             hour,
             minute,
             timeZone,

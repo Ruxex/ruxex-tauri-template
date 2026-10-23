@@ -31,7 +31,7 @@ describe("schedule form model", () => {
       prompt: "",
       cadenceKind: "daily",
       runAtTime: "09:00",
-      weekday: "1",
+      weekdays: ["1"],
       onceAt: "",
       enabled: true,
     });
@@ -41,7 +41,7 @@ describe("schedule form model", () => {
       prompt: "run checks",
       cadenceKind: "daily",
       runAtTime: "02:30",
-      weekday: "1",
+      weekdays: ["1"],
       onceAt: "",
       enabled: false,
     });
@@ -51,7 +51,7 @@ describe("schedule form model", () => {
         record({
           cadence: {
             kind: "weekly",
-            weekday: 5,
+            weekdays: [2, 4],
             hour: 18,
             minute: 45,
             timeZone: "Europe/London",
@@ -61,7 +61,7 @@ describe("schedule form model", () => {
     ).toMatchObject({
       cadenceKind: "weekly",
       runAtTime: "18:45",
-      weekday: "5",
+      weekdays: ["2", "4"],
     });
 
     expect(
@@ -116,7 +116,7 @@ describe("schedule form model", () => {
       {
         ...createScheduleFormState(),
         cadenceKind: "weekly",
-        weekday: "4",
+        weekdays: ["2", "4"],
         runAtTime: "18:45",
       },
       "America/New_York",
@@ -126,13 +126,23 @@ describe("schedule form model", () => {
       input: {
         cadence: {
           kind: "weekly",
-          weekday: 4,
+          weekdays: [2, 4],
           hour: 18,
           minute: 45,
           timeZone: "America/New_York",
         },
         enabled: true,
       },
+    });
+
+    expect(
+      scheduleInputFromForm(
+        { ...createScheduleFormState(), cadenceKind: "weekly", weekdays: [] },
+        "Asia/Tokyo",
+      ),
+    ).toEqual({
+      ok: false,
+      message: "Choose at least one weekday for the weekly schedule.",
     });
   });
 

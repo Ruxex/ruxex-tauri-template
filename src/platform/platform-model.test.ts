@@ -47,11 +47,31 @@ describe("platform model boundaries", () => {
         cadence: { kind: "daily", hour: 25, minute: 0 },
       }),
     ).toBe(false);
+    expect(
+      validateScheduleSpec({
+        name: "twice-weekly",
+        prompt: "run checks",
+        cadence: { kind: "weekly", weekdays: [2, 4], hour: 15, minute: 0 },
+      }),
+    ).toBe(true);
+    expect(
+      validateScheduleSpec({
+        name: "no-days",
+        prompt: "run checks",
+        cadence: { kind: "weekly", weekdays: [], hour: 15, minute: 0 },
+      }),
+    ).toBe(false);
   });
 
   it("keeps worktree destinations inside the selected workspace root", () => {
-    expect(validateWorktreePath("/workspace/repo", "/workspace/repo/.worktrees/a")).toBe(true);
-    expect(validateWorktreePath("/workspace/repo", "/workspace/other")).toBe(false);
-    expect(validateWorktreePath("/workspace/repo", "/workspace/repo/../other")).toBe(false);
+    expect(
+      validateWorktreePath("/workspace/repo", "/workspace/repo/.worktrees/a"),
+    ).toBe(true);
+    expect(validateWorktreePath("/workspace/repo", "/workspace/other")).toBe(
+      false,
+    );
+    expect(
+      validateWorktreePath("/workspace/repo", "/workspace/repo/../other"),
+    ).toBe(false);
   });
 });
