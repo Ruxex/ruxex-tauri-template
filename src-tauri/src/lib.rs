@@ -5,9 +5,20 @@ mod error;
 mod example_provider;
 mod platform;
 mod schedule_commands;
-mod scheduler;
 mod worktree;
 mod worktree_commands;
+
+const SCHEDULE_POLL_INTERVAL_SECS: u64 = 60;
+
+#[cfg(test)]
+mod tests {
+    use super::SCHEDULE_POLL_INTERVAL_SECS;
+
+    #[test]
+    fn scheduler_poll_interval_is_one_minute() {
+        assert_eq!(SCHEDULE_POLL_INTERVAL_SECS, 60);
+    }
+}
 
 #[cfg(feature = "example")]
 pub fn run_example_provider_host() -> anyhow::Result<()> {
@@ -38,7 +49,8 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 loop {
                     let _ = schedule_commands::run_due_schedules(&app_handle).await;
-                    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(SCHEDULE_POLL_INTERVAL_SECS))
+                        .await;
                 }
             });
             Ok(())

@@ -92,7 +92,9 @@ impl<'de> Deserialize<'de> for ScheduleCadence {
                 minute,
                 time_zone,
             } => Ok(Self::Weekly {
-                weekdays: weekdays.or_else(|| weekday.map(|day| vec![day])).unwrap_or_default(),
+                weekdays: weekdays
+                    .or_else(|| weekday.map(|day| vec![day]))
+                    .unwrap_or_default(),
                 hour,
                 minute,
                 time_zone,
@@ -242,7 +244,9 @@ impl SchedulerState {
             .await?
         {
             RunScheduleOutcome::Completed(record) => Ok(*record),
-            RunScheduleOutcome::Missing => Err("schedule not found or was deleted during dispatch".to_string()),
+            RunScheduleOutcome::Missing => {
+                Err("schedule not found or was deleted during dispatch".to_string())
+            }
             RunScheduleOutcome::Skipped => Err("schedule is already running".to_string()),
         }
     }
@@ -279,11 +283,16 @@ impl SchedulerState {
     ) -> Result<RunScheduleOutcome, String> {
         let snapshot = {
             let mut guard = self.in_flight.lock().await;
-            let Some(snapshot) = load(home)?.schedules.into_iter().find(|schedule| schedule.id == id)
+            let Some(snapshot) = load(home)?
+                .schedules
+                .into_iter()
+                .find(|schedule| schedule.id == id)
             else {
                 return Ok(RunScheduleOutcome::Missing);
             };
-            if let RunMode::Due(now) = mode && !is_due(&snapshot, now) {
+            if let RunMode::Due(now) = mode
+                && !is_due(&snapshot, now)
+            {
                 return Ok(RunScheduleOutcome::Skipped);
             }
             if !guard.insert(id.to_string()) {
@@ -556,8 +565,9 @@ where
     for _ in 0..=7 {
         let selected = match cadence {
             ScheduleCadence::Daily { .. } => true,
-            ScheduleCadence::Weekly { weekdays, .. } => weekdays
-                .contains(&date.weekday().num_days_from_sunday().try_into().ok()?),
+            ScheduleCadence::Weekly { weekdays, .. } => {
+                weekdays.contains(&date.weekday().num_days_from_sunday().try_into().ok()?)
+            }
             ScheduleCadence::Once { .. } => false,
         };
         if selected {
@@ -646,17 +656,19 @@ mod tests {
         );
 
         for weekdays in [vec![], vec![7]] {
-            assert!(new_record(
-                "schedule-invalid".to_string(),
-                input(ScheduleCadence::Weekly {
-                    weekdays,
-                    hour: 15,
-                    minute: 0,
-                    time_zone: Some("UTC".to_string()),
-                }),
-                now(),
-            )
-            .is_err());
+            assert!(
+                new_record(
+                    "schedule-invalid".to_string(),
+                    input(ScheduleCadence::Weekly {
+                        weekdays,
+                        hour: 15,
+                        minute: 0,
+                        time_zone: Some("UTC".to_string()),
+                    }),
+                    now(),
+                )
+                .is_err()
+            );
         }
     }
 
@@ -745,11 +757,7 @@ mod tests {
             now(),
         )
         .unwrap();
-        let updated = apply_run_result(
-            &once,
-            now(),
-            Ok(Some("thread-1".to_string())),
-        );
+        let updated = apply_run_result(&once, now(), Ok(Some("thread-1".to_string())));
 
         assert!(!updated.enabled);
         assert_eq!(updated.thread_id.as_deref(), Some("thread-1"));
@@ -757,9 +765,6 @@ mod tests {
     }
 
     fn temp_home(label: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "ruxex-scheduler-{label}-{}",
-            std::process::id()
-        ))
+        std::env::temp_dir().join(format!("ruxex-scheduler-{label}-{}", std::process::id()))
     }
 }

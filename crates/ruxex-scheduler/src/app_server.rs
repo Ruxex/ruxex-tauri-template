@@ -42,7 +42,9 @@ impl ScheduleDispatcher for AppServerDispatcher<'_> {
                     .and_then(|thread| thread.get("id"))
                     .and_then(Value::as_str)
                     .map(str::to_owned)
-                    .ok_or_else(|| "thread/start response did not include a thread id".to_string())?
+                    .ok_or_else(|| {
+                        "thread/start response did not include a thread id".to_string()
+                    })?
             };
 
             send_request(
@@ -105,8 +107,8 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     use crate::{
-        ScheduleCadence, ScheduleDispatcher, ScheduleInput, ScheduleRecord, SchedulerState,
-        build_thread_request, build_turn_request, load, new_record, save, ScheduleFile,
+        ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, ScheduleRecord,
+        SchedulerState, build_thread_request, build_turn_request, load, new_record, save,
     };
     use chrono::Utc;
 
@@ -172,9 +174,14 @@ mod tests {
 
     #[test]
     fn builds_start_resume_and_turn_requests() {
-        assert_eq!(build_thread_request(None).unwrap().method_name(), "thread/start");
         assert_eq!(
-            build_thread_request(Some("thread-1")).unwrap().method_name(),
+            build_thread_request(None).unwrap().method_name(),
+            "thread/start"
+        );
+        assert_eq!(
+            build_thread_request(Some("thread-1"))
+                .unwrap()
+                .method_name(),
             "thread/resume"
         );
         assert_eq!(
@@ -211,7 +218,10 @@ mod tests {
         assert_eq!(updated.thread_id.as_deref(), Some("thread-1"));
         assert!(updated.last_run.unwrap().success);
         assert_eq!(&*calls.lock().unwrap(), &["schedule-1"]);
-        assert_eq!(load(&home).unwrap().schedules[0].thread_id.as_deref(), Some("thread-1"));
+        assert_eq!(
+            load(&home).unwrap().schedules[0].thread_id.as_deref(),
+            Some("thread-1")
+        );
     }
 
     #[tokio::test]
