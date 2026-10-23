@@ -9,7 +9,8 @@ use tokio::sync::Mutex;
 
 mod app_server;
 pub use app_server::{
-    AppServerDispatcher, ScheduleDispatcher, build_thread_request, build_turn_request,
+    AppServerDispatcher, AppServerLogDirection, ScheduleDispatcher, build_thread_request,
+    build_turn_request, format_app_server_log, log_app_server_io,
 };
 
 #[derive(Default)]

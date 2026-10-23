@@ -3,11 +3,47 @@ use std::sync::atomic::{AtomicI64, Ordering};
 
 use ruxex_app_server_client::AppServerRequestHandle;
 use ruxex_app_server_protocol::ClientRequest;
-use serde_json::Value;
+use serde::Serialize;
+use serde_json::{Value, json};
 
 use crate::ScheduleRecord;
 
 static NEXT_REQUEST_ID: AtomicI64 = AtomicI64::new(10_000_000);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AppServerLogDirection {
+    ToAppServer,
+    FromAppServer,
+}
+
+pub fn format_app_server_log(direction: AppServerLogDirection, payload: &Value) -> String {
+    let (color, header) = match direction {
+        AppServerLogDirection::ToAppServer => (36, "[tauri→]"),
+        AppServerLogDirection::FromAppServer => (32, "[←app]"),
+    };
+    let payload = serde_json::to_string(payload).unwrap_or_else(|error| {
+        format!(
+            "{{\"loggingError\":\"failed to serialize log payload: {}\"}}",
+            error
+        )
+    });
+    format!("\x1b[{color}m{header}\x1b[0m {payload}")
+}
+
+pub fn log_app_server_io<T: Serialize>(direction: AppServerLogDirection, payload: &T) {
+    #[cfg(debug_assertions)]
+    {
+        let payload = serde_json::to_value(payload).unwrap_or_else(|error| {
+            serde_json::json!({
+                "loggingError": format!("failed to serialize log payload: {error}"),
+            })
+        });
+        println!("{}", format_app_server_log(direction, &payload));
+    }
+
+    #[cfg(not(debug_assertions))]
+    let _ = (direction, payload);
+}
 
 pub trait ScheduleDispatcher {
     fn dispatch(
@@ -95,17 +131,49 @@ async fn send_request(
     request: ClientRequest,
 ) -> Result<Value, String> {
     let method = request.method_name();
-    handle
-        .request(request)
-        .await
-        .map_err(|error| format!("{method} transport error: {error}"))?
-        .map_err(|error| format!("{method} failed: {} (code {})", error.message, error.code))
+    let request_id = request.id().clone();
+    log_app_server_io(AppServerLogDirection::ToAppServer, &request);
+
+    let result = match handle.request(request).await {
+        Ok(Ok(result)) => result,
+        Ok(Err(error)) => {
+            let message = format!("{method} failed: {} (code {})", error.message, error.code);
+            log_app_server_io(
+                AppServerLogDirection::FromAppServer,
+                &json!({
+                    "method": method,
+                    "id": request_id,
+                    "error": { "message": error.message, "code": error.code },
+                }),
+            );
+            return Err(message);
+        }
+        Err(error) => {
+            let message = format!("{method} transport error: {error}");
+            log_app_server_io(
+                AppServerLogDirection::FromAppServer,
+                &json!({
+                    "method": method,
+                    "id": request_id,
+                    "error": { "kind": "transport", "message": message },
+                }),
+            );
+            return Err(message);
+        }
+    };
+
+    log_app_server_io(
+        AppServerLogDirection::FromAppServer,
+        &json!({ "method": method, "id": request_id, "response": result }),
+    );
+    Ok(result)
 }
 
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
 
+    use super::{AppServerLogDirection, format_app_server_log};
     use crate::{
         ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, ScheduleRecord,
         SchedulerState, build_thread_request, build_turn_request, load, new_record, save,
@@ -166,6 +234,24 @@ mod tests {
             enabled: true,
             last_run: None,
         }
+    }
+
+    #[test]
+    fn formats_colored_app_server_direction_headers() {
+        assert_eq!(
+            format_app_server_log(
+                AppServerLogDirection::ToAppServer,
+                &serde_json::json!({ "method": "thread/start" }),
+            ),
+            "\x1b[36m[tauri→]\x1b[0m {\"method\":\"thread/start\"}",
+        );
+        assert_eq!(
+            format_app_server_log(
+                AppServerLogDirection::FromAppServer,
+                &serde_json::json!({ "type": "serverNotification" }),
+            ),
+            "\x1b[32m[←app]\x1b[0m {\"type\":\"serverNotification\"}",
+        );
     }
 
     fn home(label: &str) -> std::path::PathBuf {

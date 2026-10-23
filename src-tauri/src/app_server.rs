@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, State};
 
+use ruxex_scheduler::{AppServerLogDirection, log_app_server_io};
+
 use crate::desktop::{product_identity, ruxex_home};
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
@@ -145,6 +147,7 @@ async fn install_connection(
                             DesktopAppServerEvent::Disconnected { message }
                         }
                     };
+                    log_app_server_io(AppServerLogDirection::FromAppServer, &payload);
                     if event_app.emit("app-server-event", payload).is_err() {
                         break;
                     }
@@ -338,27 +341,41 @@ pub(crate) async fn app_server_request(
     let request_handle = request_handle(&state).await?;
     let method = request.method_name();
     let request_id = request.id().clone();
-    let result = request_handle
-        .request(request)
-        .await
-        .map_err(|error| {
-            command_error(
-                DesktopAppServerErrorKind::Transport,
-                format!("{method} transport error: {error}"),
-            )
-        })?
-        .map_err(|error| {
-            command_error(
-                DesktopAppServerErrorKind::Server,
-                format!("{method} failed: {} (code {})", error.message, error.code),
-            )
-        })?;
+    log_app_server_io(AppServerLogDirection::ToAppServer, &request);
+    let result = match request_handle.request(request).await {
+        Ok(Ok(result)) => result,
+        Ok(Err(error)) => {
+            let message = format!("{method} failed: {} (code {})", error.message, error.code);
+            log_app_server_io(
+                AppServerLogDirection::FromAppServer,
+                &serde_json::json!({
+                    "method": method,
+                    "id": request_id,
+                    "error": { "message": error.message, "code": error.code },
+                }),
+            );
+            return Err(command_error(DesktopAppServerErrorKind::Server, message));
+        }
+        Err(error) => {
+            let message = format!("{method} transport error: {error}");
+            log_app_server_io(
+                AppServerLogDirection::FromAppServer,
+                &serde_json::json!({
+                    "method": method,
+                    "id": request_id,
+                    "error": { "kind": "transport", "message": message },
+                }),
+            );
+            return Err(command_error(DesktopAppServerErrorKind::Transport, message));
+        }
+    };
 
     let response = serde_json::json!({
         "method": method,
         "id": request_id,
         "response": result,
     });
+    log_app_server_io(AppServerLogDirection::FromAppServer, &response);
     serde_json::from_value(response).map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Decode,
@@ -373,8 +390,12 @@ pub(crate) async fn app_server_resolve_server_request(
     request_id: RequestId,
     result: JsonRpcResult,
 ) -> CommandResult<()> {
-    request_handle(&state)
-        .await?
+    let request_handle = request_handle(&state).await?;
+    log_app_server_io(
+        AppServerLogDirection::ToAppServer,
+        &serde_json::json!({ "id": &request_id, "result": &result }),
+    );
+    request_handle
         .resolve_server_request(request_id, result)
         .await
         .map_err(|error| command_error(DesktopAppServerErrorKind::Transport, error.to_string()))?;
@@ -387,8 +408,12 @@ pub(crate) async fn app_server_reject_server_request(
     request_id: RequestId,
     error: JSONRPCErrorError,
 ) -> CommandResult<()> {
-    request_handle(&state)
-        .await?
+    let request_handle = request_handle(&state).await?;
+    log_app_server_io(
+        AppServerLogDirection::ToAppServer,
+        &serde_json::json!({ "id": &request_id, "error": &error }),
+    );
+    request_handle
         .reject_server_request(request_id, error)
         .await
         .map_err(|error| command_error(DesktopAppServerErrorKind::Transport, error.to_string()))?;
