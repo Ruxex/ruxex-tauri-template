@@ -25,13 +25,13 @@ tauri-build = { version = "2.4.1", features = [] }
 anyhow = "1"
 base64 = "0.22"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
-# The desktop bridge uses the stable 0.4.2 client, protocol, daemon, and path APIs directly.
-ruxex = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3", default-features = false, features = ["app-server", "cli"] }
-ruxex-app-server-client = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
-ruxex-app-server-daemon = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
-ruxex-app-server-protocol = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
-ruxex-arg0 = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
-ruxex-utils-absolute-path = { version = "0.4.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.3" }
+# The desktop bridge uses the stable 0.4.4 client, protocol, daemon, and path APIs directly.
+ruxex = { version = "0.4.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.4", default-features = false, features = ["app-server", "cli"] }
+ruxex-app-server-client = { version = "0.4.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.4" }
+ruxex-app-server-daemon = { version = "0.4.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.4" }
+ruxex-app-server-protocol = { version = "0.4.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.4" }
+ruxex-arg0 = { version = "0.4.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.4" }
+ruxex-utils-absolute-path = { version = "0.4.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.4" }
 dirs = "6"
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }
