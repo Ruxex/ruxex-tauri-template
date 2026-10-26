@@ -15,7 +15,6 @@ describe("AppearancePage", () => {
     useUiPreferences.mockReturnValue({
       preferences: {
         sidebarCollapsed: false,
-        contextDrawerOpen: true,
         colorScheme: "system",
         theme: { accentColor: "blue" },
         density: "comfortable",

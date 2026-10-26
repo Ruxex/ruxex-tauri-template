@@ -2,7 +2,7 @@ mod app_server;
 mod desktop;
 mod error;
 #[cfg(feature = "example")]
-mod example_provider;
+use ruxex_provider_host_example::dummy_provider;
 mod platform;
 mod schedule_commands;
 mod worktree;
@@ -21,9 +21,21 @@ mod tests {
 }
 
 #[cfg(feature = "example")]
-pub fn run_example_provider_host() -> anyhow::Result<()> {
+pub fn run_dummy_provider_host() -> anyhow::Result<()> {
     ruxex_arg0::arg0_dispatch_or_else(|arg0_paths| async move {
-        example_provider::run(arg0_paths, desktop::product_identity()).await
+        let exit = ruxex::cli::run_host_app_server_daemon_with_provider_factory_and_identity(
+            arg0_paths,
+            Default::default(),
+            Default::default(),
+            false,
+            dummy_provider::provider_factory(),
+            desktop::product_identity(),
+        )
+        .await?;
+        if exit == ruxex::app_server::AppServerExit::Forced {
+            std::process::exit(0);
+        }
+        Ok(())
     })
 }
 
@@ -60,6 +72,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_server::ensure_app_server,
+            app_server::app_server_daemon_control,
             app_server::connect_app_server,
             app_server::disconnect_app_server,
             app_server::app_server_connection_status,

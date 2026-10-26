@@ -1,10 +1,10 @@
 import {
   createContext,
   createElement,
+  type ReactNode,
   useContext,
   useEffect,
   useState,
-  type ReactNode,
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
@@ -34,14 +34,11 @@ export type UiNotifications = {
   desktop: boolean;
   sound: UiNotificationSound;
 };
-export type ContextTab = "activity" | "changes" | "context";
 export type UiDensity = "comfortable" | "compact";
 
 export type UiPreferences = {
   version: typeof UI_PREFERENCES_VERSION;
   sidebarCollapsed: boolean;
-  contextDrawerOpen: boolean;
-  contextTab: ContextTab;
   language: UiLanguage;
   notifications: UiNotifications;
   colorScheme: UiColorScheme;
@@ -52,8 +49,6 @@ export type UiPreferences = {
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   version: UI_PREFERENCES_VERSION,
   sidebarCollapsed: false,
-  contextDrawerOpen: true,
-  contextTab: "activity",
   language: "system",
   notifications: { desktop: true, sound: "system" },
   colorScheme: "system",
@@ -108,15 +103,6 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
       sidebarCollapsed: readBoolean(
         parsed.sidebarCollapsed,
         DEFAULT_UI_PREFERENCES.sidebarCollapsed,
-      ),
-      contextDrawerOpen: readBoolean(
-        parsed.contextDrawerOpen,
-        DEFAULT_UI_PREFERENCES.contextDrawerOpen,
-      ),
-      contextTab: readEnum(
-        parsed.contextTab,
-        ["activity", "changes", "context"],
-        DEFAULT_UI_PREFERENCES.contextTab,
       ),
       language: readEnum(
         parsed.language,

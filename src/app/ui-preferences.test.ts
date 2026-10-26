@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_UI_PREFERENCES,
-  UI_NOTIFICATION_SOUND_OPTIONS,
   parseUiPreferences,
+  UI_NOTIFICATION_SOUND_OPTIONS,
   updateUiPreferences,
 } from "./ui-preferences";
 
@@ -24,14 +24,12 @@ describe("ui preferences", () => {
     expect(
       updateUiPreferences(DEFAULT_UI_PREFERENCES, {
         sidebarCollapsed: true,
-        contextTab: "changes",
         colorScheme: "dark",
         theme: { accentColor: "violet" },
       }),
     ).toEqual({
       ...DEFAULT_UI_PREFERENCES,
       sidebarCollapsed: true,
-      contextTab: "changes",
       colorScheme: "dark",
       theme: { accentColor: "violet" },
     });

@@ -9,6 +9,9 @@ use std::io::{ErrorKind, Write};
 use base64::Engine;
 use ruxex::ProductIdentity;
 
+#[cfg(feature = "example")]
+use ruxex_provider_host_example::dummy_provider;
+
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
 
@@ -42,9 +45,24 @@ pub(crate) fn ruxex_home() -> Result<PathBuf, String> {
 pub(crate) fn initialize_provider_home(home: &Path) -> Result<(), String> {
     let identity = product_identity();
     let marker_file = identity.home_marker_file();
-    let descriptor = crate::example_provider::provider_descriptor();
+    let descriptor = dummy_provider::provider_factory().1;
     match ruxex::provider::mount_provider_home_with_marker(home, marker_file, &descriptor) {
         Ok(_) => Ok(()),
+        Err(ruxex::provider::ProviderHomeError::DescriptorMismatch {
+            expected, actual, ..
+        }) if actual.provider_kind == "example" && expected.provider_kind == "dummy" => {
+            let marker_path = home.join(marker_file);
+            let contents = serde_json::to_string_pretty(&expected).map_err(|error| {
+                format!("failed to serialize migrated provider marker: {error}")
+            })?;
+            fs::write(&marker_path, format!("{contents}\n")).map_err(|error| {
+                format!(
+                    "failed to migrate Desktop provider marker `{}`: {error}",
+                    marker_path.display()
+                )
+            })?;
+            Ok(())
+        }
         Err(ruxex::provider::ProviderHomeError::MissingMarker { .. }) => {
             let marker_path = home.join(marker_file);
             let marker = ruxex::provider::ProviderHomeMarker::from(&descriptor);
@@ -232,7 +250,7 @@ mod tests {
 
     #[cfg(feature = "example")]
     #[test]
-    fn example_provider_home_initialization_writes_and_validates_marker() {
+    fn dummy_provider_home_initialization_writes_and_validates_marker() {
         let home = std::env::temp_dir().join(format!(
             "ruxex-desktop-provider-home-{}",
             std::process::id()
@@ -243,9 +261,42 @@ mod tests {
         let marker_path = home.join(product_identity().home_marker_file());
         let marker = fs::read_to_string(&marker_path).unwrap();
         let marker: serde_json::Value = serde_json::from_str(&marker).unwrap();
-        assert_eq!(marker["providerKind"], "example");
+        assert_eq!(marker["providerKind"], "dummy");
 
         initialize_provider_home(&home).unwrap();
+
+        let _ = fs::remove_dir_all(home);
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn legacy_example_provider_home_is_migrated_to_dummy() {
+        let home = std::env::temp_dir().join(format!(
+            "ruxex-desktop-legacy-example-home-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&home);
+        fs::create_dir_all(&home).unwrap();
+        fs::write(
+            home.join(product_identity().home_marker_file()),
+            serde_json::json!({
+                "formatVersion": 2,
+                "providerKind": "example",
+                "providerProtocolVersion": ruxex::model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION,
+                "serverSignature": "legacy-example-signature"
+            })
+            .to_string(),
+        )
+        .unwrap();
+
+        initialize_provider_home(&home).unwrap();
+
+        let marker: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(home.join(product_identity().home_marker_file())).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(marker["providerKind"], "dummy");
+        assert_eq!(marker["serverSignature"], "legacy-example-signature");
 
         let _ = fs::remove_dir_all(home);
     }

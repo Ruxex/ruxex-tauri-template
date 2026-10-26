@@ -19,16 +19,15 @@ thread and turn hooks, project hooks, provider queries, and approval state.
 Use it as-is or adapt it to your own frontend architecture.
 
 The TypeScript App Server protocol is checked into `src/protocol/generated/`
-as the snapshot matching the pinned Ruxex revision, so a clone does not need a
-sibling Ruxex checkout for frontend typechecking.
+as the snapshot matching the pinned Ruxex v0.4.9 revision, so a clone does not
+need a sibling Ruxex checkout for frontend typechecking.
 
 ## Workbench data boundary
 
-The reference UI is a three-region workbench: projects and threads on the
-left, the conversation and composer in the center, and Activity, Changes, or
-Context on the right. Its activity cards use typed App Server thread-item and
-event data, including messages, plans, reasoning, commands, file changes, MCP
-calls, and agent collaboration.
+The reference UI is a two-region workbench: projects and threads on the left,
+and the conversation and composer in the center. Its activity cards use typed
+App Server thread-item and event data, including messages, plans, reasoning,
+commands, file changes, MCP calls, and agent collaboration.
 
 Thread history, projects, goals, attachments, queued turns, approvals, model
 selection, and runtime state are never invented or persisted by the frontend.
@@ -45,9 +44,9 @@ activity details so the UI remains inspectable without guessing their meaning.
 - Tauri's platform prerequisites
 - Python 3 for runtime-package staging tests
 
-The Rust dependencies currently use a pinned Git revision of the Ruxex
-repository while the public integration boundary is being finalized. The
-template does not require a sibling Ruxex checkout.
+The Rust dependencies use the pinned Ruxex v0.4.9 Git tag while the public
+integration boundary is being finalized. The template does not require a
+sibling Ruxex checkout.
 
 ## Runtime package
 

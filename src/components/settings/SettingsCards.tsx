@@ -5,9 +5,14 @@ import {
   GlobeAltIcon,
   LinkIcon,
   PaintBrushIcon,
+  ServerIcon,
   SparklesIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import type {
+  AppServerDaemonAction,
+  AppServerDaemonOutput,
+} from "../../app-server/daemon-api";
 import type {
   UiAccentColor,
   UiColorScheme,
@@ -92,6 +97,61 @@ export function ConnectionCard({
         >
           {isFetching ? "Reconnecting…" : "Reconnect"}
         </button>
+      </div>
+    </SettingsPanel>
+  );
+}
+
+export function AppServerCard({
+  daemon,
+  daemonError,
+  controlError,
+  isAvailable,
+  isPending,
+  onAction,
+}: {
+  daemon?: AppServerDaemonOutput;
+  daemonError?: unknown;
+  controlError?: unknown;
+  isAvailable: boolean;
+  isPending: boolean;
+  onAction: (action: Exclude<AppServerDaemonAction, "version">) => void;
+}) {
+  const error = controlError ?? daemonError;
+
+  return (
+    <SettingsPanel
+      icon={ServerIcon}
+      title="AppServer"
+      description="Control the managed Ruxex AppServer daemon."
+    >
+      <dl className="divide-y divide-base-300 text-sm">
+        <SettingRow label="Status">{daemon?.status ?? "Unavailable"}</SettingRow>
+        <SettingRow label="AppServer version">
+          {daemon?.appServerVersion ?? "Unavailable"}
+        </SettingRow>
+        <SettingRow label="PID">{daemon?.pid ?? "Unavailable"}</SettingRow>
+        <SettingRow label="Socket">
+          {daemon?.socketPath ?? "Unavailable"}
+        </SettingRow>
+      </dl>
+      {error !== undefined && error !== null && (
+        <p className="px-5 py-3 text-sm text-error">
+          {formatErrorMessage(error)}
+        </p>
+      )}
+      <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
+        {(["start", "restart", "stop"] as const).map((action) => (
+          <button
+            className="btn btn-sm"
+            disabled={!isAvailable || isPending}
+            key={action}
+            onClick={() => onAction(action)}
+            type="button"
+          >
+            {action[0].toUpperCase() + action.slice(1)}
+          </button>
+        ))}
       </div>
     </SettingsPanel>
   );

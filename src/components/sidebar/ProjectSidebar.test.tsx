@@ -119,7 +119,7 @@ describe("ProjectSidebar", () => {
     expect(recentChatsSection?.open).toBe(false);
   });
 
-  it("uses the generic route panel for projects", async () => {
+  it("does not mount a context panel for projects", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
     render(
@@ -133,12 +133,9 @@ describe("ProjectSidebar", () => {
       </MemoryRouter>,
     );
 
-    const panel = screen.getByRole("complementary", {
-      name: "Projects sidebar",
-    });
     expect(
-      within(panel).getByText("Open projects in the workspace."),
-    ).toBeTruthy();
+      screen.queryByRole("complementary", { name: "Projects sidebar" }),
+    ).toBeNull();
   });
 
   it("renders plugin and skill navigation with collapsed installed plugins", async () => {

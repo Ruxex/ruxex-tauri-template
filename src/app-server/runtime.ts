@@ -4,3 +4,8 @@ export const isMockAppServerRuntime =
 export const isDesktopRuntime =
   isMockAppServerRuntime ||
   (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window);
+
+export const isNativeDesktopRuntime =
+  !isMockAppServerRuntime &&
+  typeof window !== "undefined" &&
+  "__TAURI_INTERNALS__" in window;

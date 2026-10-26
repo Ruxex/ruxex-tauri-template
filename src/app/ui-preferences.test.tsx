@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   DEFAULT_UI_PREFERENCES,
-  UI_PREFERENCES_KEY,
-  UI_NOTIFICATION_SOUNDS,
-  UiPreferencesProvider,
   parseUiPreferences,
+  UI_NOTIFICATION_SOUNDS,
+  UI_PREFERENCES_KEY,
+  UiPreferencesProvider,
   updateUiPreferences,
   useUiPreferences,
 } from "./ui-preferences";
@@ -53,8 +53,6 @@ describe("UI preference persistence", () => {
         JSON.stringify({
           version: 1,
           sidebarCollapsed: true,
-          contextDrawerOpen: "yes",
-          contextTab: "unknown",
           colorScheme: "dark",
           theme: { accentColor: "violet" },
           density: "compact",
@@ -62,8 +60,6 @@ describe("UI preference persistence", () => {
       ),
     ).toMatchObject({
       sidebarCollapsed: true,
-      contextDrawerOpen: true,
-      contextTab: "activity",
       colorScheme: "dark",
       theme: { accentColor: "violet" },
       density: "compact",

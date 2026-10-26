@@ -2,20 +2,17 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { useUiPreferences } from "../../app/ui-preferences";
-import { ContextDrawer } from "../context/ContextDrawer";
-import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
+import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
 export function AppLayout() {
   const location = useLocation();
-  const { projectId, threadId } = useParams<{
-    projectId?: string;
+  const { threadId } = useParams<{
     threadId?: string;
   }>();
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
-  const isProjectPage = location.pathname.startsWith("/projects");
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
 
   useEffect(() => {
@@ -38,7 +35,6 @@ export function AppLayout() {
         <ProjectSidebar
           activePanel={activePanel}
           collapsed={preferences.sidebarCollapsed}
-          contextPanelHidden={isProjectPage}
           selectedThreadId={threadId}
           onPanelChange={handlePanelChange}
           onToggle={() =>
@@ -50,17 +46,6 @@ export function AppLayout() {
             <Outlet />
           </section>
         </div>
-        {preferences.contextDrawerOpen && (
-          <div className="hidden h-full min-h-0 xl:block">
-            <ContextDrawer
-              activeTab={preferences.contextTab}
-              onClose={() => update({ contextDrawerOpen: false })}
-              onTabChange={(contextTab) => update({ contextTab })}
-              projectId={projectId}
-              threadId={threadId}
-            />
-          </div>
-        )}
       </div>
     </main>
   );

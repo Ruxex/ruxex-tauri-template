@@ -2,6 +2,7 @@ import { createHashRouter, Navigate } from "react-router-dom";
 
 import { AppLayout } from "../components/layout/AppLayout";
 import { AccountPage } from "../pages/AccountPage";
+import { AppServerPage } from "../pages/AppServerPage";
 import { AppearancePage } from "../pages/AppearancePage";
 import { ArchivePage } from "../pages/ArchivePage";
 import { CapabilitiesPage } from "../pages/CapabilitiesPage";
@@ -37,6 +38,7 @@ export const router = createHashRouter([
           { index: true, element: <SettingsOverviewPage /> },
           { path: "appearance", element: <AppearancePage /> },
           { path: "models", element: <ModelPage /> },
+          { path: "app-server", element: <AppServerPage /> },
           { path: "account", element: <AccountPage /> },
         ],
       },

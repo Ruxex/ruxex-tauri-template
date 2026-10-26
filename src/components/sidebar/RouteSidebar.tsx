@@ -1,14 +1,14 @@
 import { NavLink } from "react-router-dom";
 
 import { HomeSidebar } from "./HomeSidebar";
-import { PluginsSidebar } from "./PluginsSidebar";
-import { SettingsSidebar } from "./SettingsSidebar";
-import { SidebarHeader } from "./SidebarHeader";
 import {
   SIDEBAR_PANELS,
   type SidebarPanel,
   type SidebarPanelDefinition,
 } from "./navigation";
+import { PluginsSidebar } from "./PluginsSidebar";
+import { SettingsSidebar } from "./SettingsSidebar";
+import { SidebarHeader } from "./SidebarHeader";
 
 export function SidebarContextPanel({
   activePanel,
@@ -28,6 +28,8 @@ export function SidebarContextPanel({
       return <PluginsSidebar onClose={onClose} />;
     case "settings":
       return <SettingsSidebar onClose={onClose} />;
+    case "projects":
+      return null;
     default: {
       const panel = SIDEBAR_PANELS.find((item) => item.id === activePanel);
       return panel ? <RouteSidebar panel={panel} onClose={onClose} /> : null;

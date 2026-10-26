@@ -1,6 +1,7 @@
 import {
   DocumentTextIcon,
   InformationCircleIcon,
+  ServerIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
@@ -31,6 +32,12 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
           <NavLink to="/settings/models">
             <DocumentTextIcon aria-hidden="true" className="size-4" />
             Models
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/settings/app-server">
+            <ServerIcon aria-hidden="true" className="size-4" />
+            AppServer
           </NavLink>
         </li>
       </nav>

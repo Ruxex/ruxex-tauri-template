@@ -1,17 +1,16 @@
 import { useNavigate } from "react-router-dom";
 
-import { SidebarContextPanel } from "./RouteSidebar";
 import {
   SIDEBAR_PANELS,
   type SidebarIcon,
   type SidebarPanel,
   type SidebarPanelDefinition,
 } from "./navigation";
+import { SidebarContextPanel } from "./RouteSidebar";
 
 type ProjectSidebarProps = {
   activePanel: SidebarPanel;
   collapsed: boolean;
-  contextPanelHidden?: boolean;
   selectedThreadId?: string;
   onPanelChange: (panel: SidebarPanel) => void;
   onToggle: () => void;
@@ -20,7 +19,6 @@ type ProjectSidebarProps = {
 export function ProjectSidebar({
   activePanel,
   collapsed,
-  contextPanelHidden = false,
   selectedThreadId,
   onPanelChange,
   onToggle,
@@ -41,7 +39,7 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar flex h-full min-h-0 shrink-0 ${collapsed || contextPanelHidden ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
+      className={`workbench-sidebar flex h-full min-h-0 shrink-0 ${collapsed || activePanel === "projects" ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
       aria-label="Workspace sidebar"
     >
       <nav
@@ -74,7 +72,7 @@ export function ProjectSidebar({
           ))}
         </div>
       </nav>
-      {!collapsed && !contextPanelHidden && (
+      {!collapsed && activePanel !== "projects" && (
         <SidebarContextPanel
           activePanel={activePanel}
           onClose={onToggle}

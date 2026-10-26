@@ -8,11 +8,8 @@ const useUiPreferences = vi.hoisted(() => vi.fn());
 const projectSidebarProps = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app/ui-preferences", () => ({ useUiPreferences }));
-vi.mock("../context/ContextDrawer", () => ({
-  ContextDrawer: () => <aside data-testid="context-drawer" />,
-}));
 vi.mock("../sidebar/ProjectSidebar", () => ({
-  ProjectSidebar: (props: { contextPanelHidden?: boolean }) => {
+  ProjectSidebar: (props: Record<string, unknown>) => {
     projectSidebarProps(props);
     return <aside data-testid="project-sidebar" />;
   },
@@ -23,11 +20,9 @@ import { AppLayout } from "./AppLayout";
 describe("AppLayout", () => {
   afterEach(cleanup);
 
-  it("places browser navigation above all workspace panes", () => {
+  it("does not render the removed context drawer", () => {
     useUiPreferences.mockReturnValue({
       preferences: {
-        contextDrawerOpen: true,
-        contextTab: "context",
         sidebarCollapsed: false,
       },
       update: vi.fn(),
@@ -48,14 +43,12 @@ describe("AppLayout", () => {
     expect(screen.getByTestId("project-sidebar").parentElement).not.toBe(
       navigation.parentElement,
     );
-    expect(screen.getByTestId("context-drawer")).toBeTruthy();
+    expect(screen.queryByTestId("context-drawer")).toBeNull();
   });
 
-  it("hides the context sidebar on project pages", () => {
+  it("does not pass a context-panel visibility flag on project pages", () => {
     useUiPreferences.mockReturnValue({
       preferences: {
-        contextDrawerOpen: false,
-        contextTab: "context",
         sidebarCollapsed: false,
       },
       update: vi.fn(),
@@ -67,8 +60,8 @@ describe("AppLayout", () => {
       </MemoryRouter>,
     );
 
-    expect(projectSidebarProps).toHaveBeenCalledWith(
-      expect.objectContaining({ contextPanelHidden: true }),
+    expect(projectSidebarProps.mock.calls[0]?.[0]).not.toHaveProperty(
+      "contextPanelHidden",
     );
   });
 });
