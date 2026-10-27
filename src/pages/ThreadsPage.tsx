@@ -3,7 +3,11 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 
 import { formatErrorMessage } from "../app/error-message";
-import { useThreadList, useThreadSearch } from "../app-server/hooks";
+import {
+  useAppServerEvents,
+  useThreadList,
+  useThreadSearch,
+} from "../app-server/hooks";
 import { ThreadCard } from "../components/common/ThreadCard";
 import { organizeTasks } from "../components/tasks/task-organizer";
 
@@ -11,10 +15,21 @@ export function ThreadsPage() {
   const [search, setSearch] = useState("");
   const threads = useThreadList({ limit: 50 });
   const searchResults = useThreadSearch(search);
+  const events = useAppServerEvents();
   const rows = search.trim()
     ? (searchResults.data?.data.map((result) => result.thread) ?? [])
     : (threads.data?.data ?? []);
-  const groups = organizeTasks(rows);
+  const groups = organizeTasks(
+    rows.map((thread) => ({
+      ...thread,
+      liveStatus: events.threads[thread.id]?.status,
+      waitingForRequest: Object.values(events.pendingServerRequests).some(
+        (request) => request.threadId === thread.id,
+      ),
+    })),
+  );
+  const searchError =
+    search.trim() && searchResults.isError ? searchResults.error : null;
 
   return (
     <div className="space-y-4">
@@ -42,16 +57,22 @@ export function ThreadsPage() {
       {threads.isError && (
         <p className="alert alert-error">{formatErrorMessage(threads.error)}</p>
       )}
-      {!threads.isLoading && !searchResults.isLoading && rows.length === 0 && (
-        <div className="card border border-dashed border-base-300 bg-base-100">
-          <div className="card-body items-center text-center">
-            <p>No threads yet.</p>
-            <Link className="btn btn-sm btn-primary" to="/chat/new">
-              Start a chat
-            </Link>
-          </div>
-        </div>
+      {searchError && (
+        <p className="alert alert-error">{formatErrorMessage(searchError)}</p>
       )}
+      {!threads.isLoading &&
+        !searchResults.isLoading &&
+        !searchError &&
+        rows.length === 0 && (
+          <div className="card border border-dashed border-base-300 bg-base-100">
+            <div className="card-body items-center text-center">
+              <p>No threads yet.</p>
+              <Link className="btn btn-sm btn-primary" to="/chat/new">
+                Start a chat
+              </Link>
+            </div>
+          </div>
+        )}
       <div className="space-y-5">
         {(
           [

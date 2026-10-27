@@ -117,4 +117,19 @@ describe("task workspace model", () => {
       workspacePath: "/workspace/project",
     });
   });
+
+  it("keeps an active task running while it is resynchronizing", () => {
+    expect(
+      getTaskWorkspaceStatus({
+        latestTurn: turn("completed"),
+        liveThread: {
+          activeTurnId: "turn-2",
+          status: "resynchronizing",
+        },
+        pendingRequestCount: 0,
+        reconnecting: true,
+        thread: thread(),
+      }).status,
+    ).toBe("running");
+  });
 });

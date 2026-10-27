@@ -57,6 +57,8 @@ function taskStatusFromLiveThread(
       return "failed";
     case "interrupted":
       return "stopped";
+    case "resynchronizing":
+      return liveThread.activeTurnId ? "running" : undefined;
     default:
       return undefined;
   }

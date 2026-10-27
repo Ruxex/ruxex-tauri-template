@@ -28,7 +28,6 @@ export function TaskContextPanel({
   onOpenContext,
   onStartReview,
   review,
-  threadId,
   workspacePath,
 }: TaskContextPanelProps) {
   useEffect(() => {
@@ -43,7 +42,7 @@ export function TaskContextPanel({
   return (
     <aside
       aria-label="Task context panel"
-      className="rounded-box border border-base-300 bg-base-100 p-4 shadow-sm lg:max-w-2xl lg:self-end"
+      className="fixed inset-4 z-20 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-box border border-base-300 bg-base-100 p-4 shadow-lg lg:static lg:max-h-none lg:max-w-2xl lg:self-end lg:shadow-sm"
       role="dialog"
     >
       <div className="flex items-center justify-between gap-3">
@@ -84,7 +83,6 @@ export function TaskContextPanel({
             changedFiles={changedFiles}
             onStartReview={onStartReview}
             review={review}
-            threadId={threadId}
             workspacePath={workspacePath}
           />
         )}

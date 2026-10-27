@@ -18,7 +18,6 @@ type ReviewWorkspaceProps = {
   changedFiles: ReviewFileChange[];
   onStartReview: () => void;
   review: ReviewMutationState;
-  threadId: string;
   worktree?: { clean: boolean; path: string };
   workspacePath?: string | null;
 };
@@ -28,15 +27,11 @@ export function ReviewWorkspace({
   changedFiles,
   onStartReview,
   review,
-  threadId,
   worktree,
   workspacePath,
 }: ReviewWorkspaceProps) {
   return (
-    <section
-      aria-label={`Review context for ${threadId}`}
-      className="space-y-4"
-    >
+    <section aria-label="Review context" className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">Review</h3>

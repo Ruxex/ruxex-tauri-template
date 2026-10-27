@@ -6,8 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadSearch = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({ useThreadList, useThreadSearch }));
+vi.mock("../app-server/hooks", () => ({
+  useAppServerEvents,
+  useThreadList,
+  useThreadSearch,
+}));
 vi.mock("../components/common/ThreadCard", () => ({
   ThreadCard: ({
     thread,
@@ -31,6 +36,10 @@ describe("ThreadsPage", () => {
       data: { data: [{ thread: { id: "thread-2", name: "Search result" } }] },
       isLoading: false,
       isError: false,
+    });
+    useAppServerEvents.mockReturnValue({
+      pendingServerRequests: {},
+      threads: {},
     });
   });
 
@@ -91,5 +100,27 @@ describe("ThreadsPage", () => {
     expect(
       screen.getByRole("link", { name: "Start a chat" }).getAttribute("href"),
     ).toBe("/chat/new");
+  });
+
+  it("shows search errors instead of an empty-state message", async () => {
+    useThreadSearch.mockReturnValue({
+      data: undefined,
+      error: new Error("Search unavailable"),
+      isError: true,
+      isLoading: false,
+    });
+    const { ThreadsPage } = await import("./ThreadsPage");
+
+    render(
+      <MemoryRouter>
+        <ThreadsPage />
+      </MemoryRouter>,
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Search chats" }), {
+      target: { value: "compiler" },
+    });
+
+    expect(screen.getByText(/Search unavailable/)).toBeTruthy();
+    expect(screen.queryByText("No threads yet.")).toBeNull();
   });
 });

@@ -59,21 +59,25 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   function handleStop() {
     const turnId = liveThread?.activeTurnId;
     if (turnId) {
-      void interruptTurn.mutateAsync({ threadId, turnId });
+      void interruptTurn
+        .mutateAsync({ threadId, turnId })
+        .catch(() => undefined);
     }
   }
 
   function handleResume() {
-    void resumeThread.mutateAsync({ threadId });
+    void resumeThread.mutateAsync({ threadId }).catch(() => undefined);
   }
 
   function handleStartReview() {
     setActiveContextTab("review");
-    void startReview.mutateAsync({
-      threadId,
-      target: { type: "uncommittedChanges" },
-      delivery: "inline",
-    });
+    void startReview
+      .mutateAsync({
+        threadId,
+        target: { type: "uncommittedChanges" },
+        delivery: "inline",
+      })
+      .catch(() => undefined);
   }
 
   const changedFiles = items
@@ -139,6 +143,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         connected={events.connected ?? true}
         items={items}
         liveItems={liveThread?.items ?? []}
+        liveStatus={liveThread?.status}
         onReject={handleReject}
         onResolve={handleResolve}
         pendingRequests={pendingRequests}

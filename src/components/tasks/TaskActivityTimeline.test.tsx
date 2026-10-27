@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { ConversationViewItem } from "../conversation/conversation-model";
@@ -62,6 +62,8 @@ function pendingRequest(threadId: string): PendingServerRequest {
 }
 
 describe("TaskActivityTimeline", () => {
+  afterEach(cleanup);
+
   it("renders messages, activities, and actionable pending requests", async () => {
     const onResolve = vi.fn().mockResolvedValue(undefined);
     const onReject = vi.fn().mockResolvedValue(undefined);
@@ -121,5 +123,31 @@ describe("TaskActivityTimeline", () => {
     );
 
     expect(screen.getByText("No activity yet.")).toBeTruthy();
+  });
+
+  it("does not keep completed activity marked busy", () => {
+    render(
+      <TaskActivityTimeline
+        connected
+        items={[]}
+        liveItems={[
+          {
+            id: "live-1",
+            threadId: "thread-1",
+            turnId: "turn-1",
+            type: "agentMessage",
+            text: "Done",
+          },
+        ]}
+        liveStatus="completed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("Task activity").getAttribute("aria-busy"),
+    ).toBe("false");
   });
 });

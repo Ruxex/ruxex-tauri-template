@@ -2,6 +2,7 @@ import type {
   PendingServerRequest,
   LiveConversationItem,
 } from "../../app-server/event-reducer";
+import type { ThreadExecutionState } from "../../app-server/event-reducer";
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
 import { ActivityItem } from "../conversation/ActivityItem";
 import { ConversationItem } from "../conversation/ConversationItem";
@@ -11,6 +12,7 @@ type TaskActivityTimelineProps = {
   connected: boolean;
   items: ConversationViewItem[];
   liveItems: LiveConversationItem[];
+  liveStatus?: ThreadExecutionState["status"];
   onReject: (
     requestId: PendingServerRequest["requestId"],
     message: string,
@@ -26,11 +28,14 @@ export function TaskActivityTimeline({
   connected,
   items,
   liveItems,
+  liveStatus,
   onReject,
   onResolve,
   pendingRequests,
 }: TaskActivityTimelineProps) {
-  const isBusy = liveItems.length > 0;
+  const isBusy =
+    liveItems.length > 0 &&
+    (liveStatus === "running" || liveStatus === "resynchronizing");
 
   return (
     <section
