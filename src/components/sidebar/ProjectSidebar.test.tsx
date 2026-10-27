@@ -106,11 +106,15 @@ describe("ProjectSidebar", () => {
         name: /Build the sidebar/,
       }),
     ).toBeTruthy();
+    expect(within(projectGroup as HTMLElement).queryByText("gpt-5")).toBeNull();
 
     const recentChatsSection = within(panel)
       .getByText("Recent chats")
       .closest("details");
     expect(recentChatsSection?.open).toBe(true);
+    expect(
+      within(recentChatsSection as HTMLElement).queryByText("gpt-5"),
+    ).toBeNull();
 
     fireEvent.click(
       recentChatsSection?.querySelector("summary") as HTMLElement,

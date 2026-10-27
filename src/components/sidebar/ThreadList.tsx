@@ -35,9 +35,6 @@ export function ThreadList({ projectId, selectedThreadId }: ThreadListProps) {
               <span className="block truncate">
                 {thread.name || thread.preview || "Untitled chat"}
               </span>
-              <span className="block truncate text-xs opacity-60">
-                {thread.model || "Default model"}
-              </span>
             </span>
           </Link>
         </li>
