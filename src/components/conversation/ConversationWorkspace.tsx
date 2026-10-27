@@ -1,17 +1,30 @@
 import {
   useAppServerEvents,
+  useInterruptTurn,
+  useProject,
+  useResumeThread,
+  useStartReview,
   useThreadConversation,
 } from "../../app-server/hooks";
+import {
+  rejectServerRequestWithMessage,
+  resolveServerRequest,
+} from "../../app-server/api";
+import { formatErrorMessage } from "../../app/error-message";
 import { Composer } from "./Composer";
-import { ConversationItem } from "./ConversationItem";
-import { ActivityItem } from "./ActivityItem";
-import { ReviewControls } from "./ReviewControls";
 import { mergeConversationItems } from "./conversation-model";
+import { TaskActivityTimeline } from "../tasks/TaskActivityTimeline";
+import { TaskHeader } from "../tasks/TaskHeader";
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
   const liveThread = events.threads[threadId];
+  const thread = conversation.data?.thread;
+  const project = useProject(thread?.projectId ?? "");
+  const interruptTurn = useInterruptTurn();
+  const resumeThread = useResumeThread();
+  const startReview = useStartReview();
 
   if (conversation.isLoading) {
     return <span className="loading loading-spinner loading-lg" />;
@@ -27,50 +40,79 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     liveThread?.items ?? [],
   );
   const latestTurn = conversation.data.turns.data.at(-1);
+  const pendingRequests = Object.values(
+    events.pendingServerRequests ?? {},
+  ).filter((request) => request.threadId === threadId);
   const turnError =
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
+  const actionError =
+    interruptTurn.error ?? resumeThread.error ?? startReview.error;
+
+  function handleStop() {
+    const turnId = liveThread?.activeTurnId;
+    if (turnId) {
+      void interruptTurn.mutateAsync({ threadId, turnId });
+    }
+  }
+
+  function handleResume() {
+    void resumeThread.mutateAsync({ threadId });
+  }
+
+  function handleStartReview() {
+    void startReview.mutateAsync({
+      threadId,
+      target: { type: "uncommittedChanges" },
+      delivery: "inline",
+    });
+  }
+
+  async function handleResolve(requestId: string | number, result: unknown) {
+    await resolveServerRequest(requestId, result);
+  }
+
+  async function handleReject(requestId: string | number, message: string) {
+    await rejectServerRequestWithMessage(requestId, message);
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-9rem)] flex-col gap-4">
-      <header>
-        <p className="text-sm font-medium uppercase tracking-wide text-primary">
-          Conversation
+      <TaskHeader
+        latestTurn={latestTurn}
+        liveThread={liveThread}
+        onResume={handleResume}
+        onStartReview={handleStartReview}
+        onStop={handleStop}
+        pendingRequestCount={pendingRequests.length}
+        projectName={project.data?.project.name}
+        projectRoots={project.data?.project.roots.map((root) => root.path)}
+        reconnecting={Boolean(
+          events.resynchronizing || liveThread?.status === "resynchronizing",
+        )}
+        thread={conversation.data.thread}
+      />
+      {actionError && (
+        <p className="alert alert-error" role="alert">
+          {formatErrorMessage(actionError)}
         </p>
-        <h1 className="text-2xl font-semibold">
-          {conversation.data.thread.name ||
-            conversation.data.thread.preview ||
-            "Untitled chat"}
-        </h1>
-        {liveThread?.status === "resynchronizing" && (
-          <p className="mt-2 text-sm text-warning">
-            Reconnecting and resynchronizing this chat…
-          </p>
-        )}
-        {turnError && (
-          <p className="alert alert-error mt-2" role="alert">
-            <span>Turn failed: {turnError.message}</span>
-            {turnError.additionalDetails && (
-              <span>{turnError.additionalDetails}</span>
-            )}
-          </p>
-        )}
-        <ReviewControls threadId={threadId} />
-      </header>
-      <section className="min-h-0 flex-1 space-y-4 overflow-y-auto rounded-box border border-base-300 bg-base-200 p-4">
-        {items.length === 0 && (
-          <p className="py-12 text-center text-base-content/60">
-            No messages yet.
-          </p>
-        )}
-        {items.map((item) =>
-          item.type === "userMessage" || item.type === "agentMessage" ? (
-            <ConversationItem item={item} key={item.id} />
-          ) : (
-            <ActivityItem item={item} key={item.id} />
-          ),
-        )}
-      </section>
+      )}
+      {turnError && (
+        <p className="alert alert-error" role="alert">
+          <span>Turn failed: {turnError.message}</span>
+          {turnError.additionalDetails && (
+            <span>{turnError.additionalDetails}</span>
+          )}
+        </p>
+      )}
+      <TaskActivityTimeline
+        connected={events.connected ?? true}
+        items={items}
+        liveItems={liveThread?.items ?? []}
+        onReject={handleReject}
+        onResolve={handleResolve}
+        pendingRequests={pendingRequests}
+      />
       <Composer
         threadId={threadId}
         activeTurnId={liveThread?.activeTurnId ?? null}

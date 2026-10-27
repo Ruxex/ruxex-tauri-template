@@ -142,7 +142,10 @@ export function reduceAppServerEvent(
     };
   }
 
-  return reduceNotification(nextState, event.data);
+  return reduceNotification(
+    { ...nextState, resynchronizing: false },
+    event.data,
+  );
 }
 
 function reduceNotification(

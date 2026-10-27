@@ -21,6 +21,27 @@ const serverRequest = (data: unknown): AppServerEvent => ({
 });
 
 describe("reduceAppServerEvent", () => {
+  it("clears reconnecting after a fresh server notification", () => {
+    let state = reduceAppServerEvent(createInitialEventState(), {
+      type: "disconnected",
+      data: { message: "connection lost" },
+    });
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "inProgress" },
+        },
+      }),
+    );
+
+    expect(state.resynchronizing).toBe(false);
+    expect(state.threads["thread-1"]?.status).toBe("running");
+  });
+
   it("accumulates agent message deltas in order and tracks the active turn", () => {
     let state = createInitialEventState();
     state = reduceAppServerEvent(
