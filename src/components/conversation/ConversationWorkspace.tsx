@@ -11,9 +11,14 @@ import {
   resolveServerRequest,
 } from "../../app-server/api";
 import { formatErrorMessage } from "../../app/error-message";
+import { useState } from "react";
 import { Composer } from "./Composer";
 import { mergeConversationItems } from "./conversation-model";
 import { TaskActivityTimeline } from "../tasks/TaskActivityTimeline";
+import {
+  TaskContextPanel,
+  type TaskContextTab,
+} from "../tasks/TaskContextPanel";
 import { TaskHeader } from "../tasks/TaskHeader";
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
@@ -25,6 +30,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const interruptTurn = useInterruptTurn();
   const resumeThread = useResumeThread();
   const startReview = useStartReview();
+  const [activeContextTab, setActiveContextTab] =
+    useState<TaskContextTab | null>(null);
 
   if (conversation.isLoading) {
     return <span className="loading loading-spinner loading-lg" />;
@@ -61,12 +68,21 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   }
 
   function handleStartReview() {
+    setActiveContextTab("review");
     void startReview.mutateAsync({
       threadId,
       target: { type: "uncommittedChanges" },
       delivery: "inline",
     });
   }
+
+  const changedFiles = items
+    .filter((item) => item.type === "fileChange")
+    .map((item) => ({
+      id: item.id,
+      metadata: item.metadata,
+      text: item.text,
+    }));
 
   async function handleResolve(requestId: string | number, result: unknown) {
     await resolveServerRequest(requestId, result);
@@ -81,6 +97,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
       <TaskHeader
         latestTurn={latestTurn}
         liveThread={liveThread}
+        onOpenContext={setActiveContextTab}
         onResume={handleResume}
         onStartReview={handleStartReview}
         onStop={handleStop}
@@ -92,6 +109,19 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         )}
         thread={conversation.data.thread}
       />
+      {activeContextTab && (
+        <TaskContextPanel
+          activeTab={activeContextTab}
+          branch={conversation.data.thread.gitInfo?.branch}
+          changedFiles={changedFiles}
+          onClose={() => setActiveContextTab(null)}
+          onOpenContext={setActiveContextTab}
+          onStartReview={handleStartReview}
+          review={startReview}
+          threadId={threadId}
+          workspacePath={conversation.data.thread.cwd}
+        />
+      )}
       {actionError && (
         <p className="alert alert-error" role="alert">
           {formatErrorMessage(actionError)}

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { v2 } from "../../protocol";
 import { TaskHeader } from "./TaskHeader";
@@ -64,6 +64,8 @@ function renderHeader(
 }
 
 describe("TaskHeader", () => {
+  afterEach(cleanup);
+
   it("shows task context and actions without model/provider information", () => {
     const onStartReview = vi.fn();
     const onStop = vi.fn();
@@ -117,5 +119,18 @@ describe("TaskHeader", () => {
 
     expect(screen.getByText("Reconnecting…")).toBeTruthy();
     expect(screen.getByText("2 pending requests")).toBeTruthy();
+  });
+
+  it("opens context tabs without exposing provider-specific actions", () => {
+    const onOpenContext = vi.fn();
+    renderHeader({ onOpenContext });
+
+    fireEvent.click(screen.getByRole("button", { name: "Review changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open terminal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open files" }));
+
+    expect(onOpenContext).toHaveBeenNthCalledWith(1, "review");
+    expect(onOpenContext).toHaveBeenNthCalledWith(2, "terminal");
+    expect(onOpenContext).toHaveBeenNthCalledWith(3, "files");
   });
 });

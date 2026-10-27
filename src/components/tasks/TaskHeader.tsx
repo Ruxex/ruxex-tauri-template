@@ -1,5 +1,6 @@
 import type { ThreadExecutionState } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
+import type { TaskContextTab } from "./TaskContextPanel";
 import { taskStatusClassName, taskStatusLabel } from "./task-status";
 import { getTaskWorkspaceStatus } from "./task-workspace-model";
 
@@ -7,6 +8,7 @@ type TaskHeaderProps = {
   latestTurn?: v2.Turn | null;
   liveThread?: ThreadExecutionState | null;
   onResume: () => void;
+  onOpenContext?: (tab: TaskContextTab) => void;
   onStartReview: () => void;
   onStop: () => void;
   pendingRequestCount: number;
@@ -19,6 +21,7 @@ type TaskHeaderProps = {
 export function TaskHeader({
   latestTurn,
   liveThread,
+  onOpenContext,
   onResume,
   onStartReview,
   onStop,
@@ -39,6 +42,11 @@ export function TaskHeader({
   const title = thread.name || thread.preview || "Untitled task";
   const canStop = Boolean(liveThread?.activeTurnId);
   const canResume = workspace.status === "stopped";
+
+  function openReview() {
+    onStartReview();
+    onOpenContext?.("review");
+  }
 
   return (
     <header className="space-y-3 rounded-box border border-base-300 bg-base-100 p-4 shadow-sm">
@@ -94,10 +102,28 @@ export function TaskHeader({
           <button
             className="btn btn-ghost btn-sm"
             type="button"
-            onClick={onStartReview}
+            onClick={openReview}
           >
             Review changes
           </button>
+          {onOpenContext && (
+            <>
+              <button
+                className="btn btn-ghost btn-sm"
+                type="button"
+                onClick={() => onOpenContext("terminal")}
+              >
+                Open terminal
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                type="button"
+                onClick={() => onOpenContext("files")}
+              >
+                Open files
+              </button>
+            </>
+          )}
         </div>
       </div>
       {workspace.reconnecting && (
