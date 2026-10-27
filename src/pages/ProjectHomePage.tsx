@@ -33,18 +33,26 @@ export function ProjectHomePage() {
             {details.roots.length} workspace root
             {details.roots.length === 1 ? "" : "s"}
           </p>
-          {details.roots[0]?.path && (
-            <p className="mt-1 truncate text-xs text-base-content/60">
-              {details.roots[0].path}
-            </p>
-          )}
+          <p className="mt-1 truncate text-xs text-base-content/60">
+            {details.roots[0]?.path ?? "No workspace root configured"}
+          </p>
         </div>
-        <Link
-          className="btn btn-primary"
-          to={`/projects/${projectId}/chat/new`}
-        >
-          New task
-        </Link>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Link
+            className="btn btn-primary"
+            to={`/projects/${projectId}/chat/new`}
+          >
+            New task
+          </Link>
+          <details className="dropdown dropdown-end">
+            <summary className="btn btn-ghost">Project menu</summary>
+            <ul className="menu dropdown-content z-10 mt-2 w-44 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+              <li>
+                <Link to="/settings">Settings</Link>
+              </li>
+            </ul>
+          </details>
+        </div>
       </div>
       <section className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body">

@@ -23,12 +23,6 @@ vi.mock("../components/common/ThreadCard", () => ({
     thread: { id: string; name?: string | null };
   }) => <div data-testid="project-thread">{thread.name ?? thread.id}</div>,
 }));
-vi.mock("../components/projects/WorktreeCard", () => ({
-  WorktreeCard: ({ root }: { root: string }) => (
-    <div data-testid="worktree-card">{root}</div>
-  ),
-}));
-
 describe("ProjectHomePage", () => {
   afterEach(cleanup);
 
@@ -68,7 +62,34 @@ describe("ProjectHomePage", () => {
     expect(
       screen.getByRole("link", { name: "New task" }).getAttribute("href"),
     ).toBe("/projects/project-1/chat/new");
+    expect(screen.getByText("Project menu")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Settings" }).getAttribute("href")).toBe(
+      "/settings",
+    );
     expect(screen.queryByTestId("worktree-card")).toBeNull();
+  });
+
+  it("explains when a project has no workspace root", async () => {
+    useProject.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: {
+        project: {
+          id: "project-1",
+          name: "Ruxex",
+          roots: [],
+        },
+      },
+    });
+    const { ProjectHomePage } = await import("./ProjectHomePage");
+
+    render(
+      <MemoryRouter>
+        <ProjectHomePage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("No workspace root configured")).toBeTruthy();
   });
 
   it("renders a stable error state when project loading fails", async () => {
