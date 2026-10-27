@@ -19,6 +19,19 @@ export function AppLayout() {
     setActivePanel(routePanel);
   }, [routePanel]);
 
+  useEffect(() => {
+    if (preferences.sidebarCollapsed) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        update({ sidebarCollapsed: true });
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [preferences.sidebarCollapsed, update]);
+
   function handlePanelChange(panel: SidebarPanel) {
     if (panel === activePanel && !preferences.sidebarCollapsed) {
       update({ sidebarCollapsed: true });
@@ -32,6 +45,14 @@ export function AppLayout() {
     <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
       <BrowserNavigationBar />
       <div className="flex min-h-0 flex-1">
+        {!preferences.sidebarCollapsed && (
+          <button
+            aria-label="Close sidebar overlay"
+            className="workbench-sidebar-backdrop"
+            type="button"
+            onClick={() => update({ sidebarCollapsed: true })}
+          />
+        )}
         <ProjectSidebar
           activePanel={activePanel}
           collapsed={preferences.sidebarCollapsed}

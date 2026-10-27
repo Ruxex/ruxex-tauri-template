@@ -5,9 +5,14 @@ import { TaskListItem } from "../tasks/TaskListItem";
 type ThreadListProps = {
   projectId?: string;
   selectedThreadId?: string;
+  onSelect?: () => void;
 };
 
-export function ThreadList({ projectId, selectedThreadId }: ThreadListProps) {
+export function ThreadList({
+  projectId,
+  selectedThreadId,
+  onSelect,
+}: ThreadListProps) {
   const threads = useThreadList(
     projectId ? projectThreadListParams(projectId) : { limit: 50 },
   );
@@ -29,6 +34,7 @@ export function ThreadList({ projectId, selectedThreadId }: ThreadListProps) {
           <TaskListItem
             selected={selectedThreadId === thread.id}
             thread={thread}
+            onClick={onSelect}
           />
         </li>
       ))}

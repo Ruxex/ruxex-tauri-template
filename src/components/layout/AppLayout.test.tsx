@@ -64,4 +64,24 @@ describe("AppLayout", () => {
       "contextPanelHidden",
     );
   });
+
+  it("closes the expanded sidebar with Escape", () => {
+    const update = vi.fn();
+    useUiPreferences.mockReturnValue({
+      preferences: {
+        sidebarCollapsed: false,
+      },
+      update,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+
+    expect(update).toHaveBeenCalledWith({ sidebarCollapsed: true });
+  });
 });

@@ -51,6 +51,10 @@ body {
   width: 4rem;
 }
 
+.workbench-sidebar-backdrop {
+  display: none;
+}
+
 [data-density="compact"] .workbench-main {
   padding-block: 0.75rem;
 }
@@ -68,6 +72,14 @@ body {
   .workbench-sidebar-collapsed {
     position: static;
     box-shadow: none;
+  }
+
+  .workbench-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 10;
+    inset: 2rem 0 0;
+    background: rgb(0 0 0 / 24%);
   }
 }
 

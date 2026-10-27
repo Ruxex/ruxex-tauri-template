@@ -83,44 +83,20 @@ describe("ProjectSidebar", () => {
     });
 
     expect(panel.querySelector('a[href="/chat/new"]')).toBeTruthy();
-    const projectsSection = within(panel)
-      .getByText("Projects")
-      .closest("details");
-    expect(projectsSection?.open).toBe(true);
-
-    fireEvent.click(projectsSection?.querySelector("summary") as HTMLElement);
-
-    expect(projectsSection?.open).toBe(false);
-    fireEvent.click(projectsSection?.querySelector("summary") as HTMLElement);
-    expect(projectsSection?.open).toBe(true);
-
-    const project = within(panel).getByText("Project Alpha");
-    const projectGroup = project.closest("details");
-    expect(projectGroup?.open).toBe(false);
-
-    fireEvent.click(project);
-
-    expect(projectGroup?.open).toBe(true);
+    expect(within(panel).getByText("Recent tasks")).toBeTruthy();
+    expect(within(panel).getByText("Projects")).toBeTruthy();
     expect(
-      within(projectGroup as HTMLElement).getByRole("link", {
-        name: /Build the sidebar/,
-      }),
+      within(panel)
+        .getByRole("link", { name: /Project Alpha/ })
+        .getAttribute("href"),
+    ).toBe("/projects/project-1");
+    expect(
+      within(panel).getByRole("link", { name: "Settings" }).getAttribute("href"),
+    ).toBe("/settings");
+    expect(
+      within(panel).getByRole("link", { name: /Build the sidebar/ }),
     ).toBeTruthy();
-    expect(within(projectGroup as HTMLElement).queryByText("gpt-5")).toBeNull();
-
-    const recentChatsSection = within(panel)
-      .getByText("Recent chats")
-      .closest("details");
-    expect(recentChatsSection?.open).toBe(true);
-    expect(
-      within(recentChatsSection as HTMLElement).queryByText("gpt-5"),
-    ).toBeNull();
-
-    fireEvent.click(
-      recentChatsSection?.querySelector("summary") as HTMLElement,
-    );
-
-    expect(recentChatsSection?.open).toBe(false);
+    expect(within(panel).queryByText("gpt-5")).toBeNull();
   });
 
   it("does not mount a context panel for projects", async () => {

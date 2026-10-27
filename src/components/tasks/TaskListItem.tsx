@@ -21,6 +21,7 @@ type TaskListItemProps = {
   worktreeLabel?: string;
   selected?: boolean;
   showPreview?: boolean;
+  onClick?: () => void;
 };
 
 export function TaskListItem({
@@ -30,6 +31,7 @@ export function TaskListItem({
   worktreeLabel,
   selected = false,
   showPreview = false,
+  onClick,
 }: TaskListItemProps) {
   const title = thread.name || thread.preview || "Untitled task";
   const statusLabel = status ? taskStatusLabel(status) : null;
@@ -38,6 +40,7 @@ export function TaskListItem({
     <Link
       className={`block min-w-0 rounded-box border border-transparent p-3 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "bg-base-200" : ""}`}
       to={`/chat/${thread.id}`}
+      onClick={onClick}
     >
       <span className="block min-w-0 truncate font-medium">{title}</span>
       {showPreview && thread.preview && thread.preview !== title && (
