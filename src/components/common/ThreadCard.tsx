@@ -42,7 +42,7 @@ export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps
           {thread.preview || "No preview available."}
         </p>
         <div className="text-xs text-base-content/50">
-          {thread.model || "Unknown model"} · {new Date(thread.updatedAt * 1000).toLocaleString()}
+          Updated {new Date(thread.updatedAt * 1000).toLocaleString()}
         </div>
         {actions && <div className="card-actions justify-end">{actions}</div>}
       </div>

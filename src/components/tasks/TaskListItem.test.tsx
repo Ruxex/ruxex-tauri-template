@@ -1,0 +1,71 @@
+// @vitest-environment jsdom
+
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, expect, it } from "vitest";
+
+import { TaskListItem } from "./TaskListItem";
+
+describe("TaskListItem", () => {
+  it("renders task context without exposing model or provider details", () => {
+    render(
+      <MemoryRouter>
+        <TaskListItem
+          status="running"
+          projectName="Project Alpha"
+          worktreeLabel="feature/sidebar"
+          thread={{
+            id: "thread-1",
+            model: "gpt-5",
+            name: "Build the sidebar",
+            preview: "Implement the sidebar",
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /Build the sidebar/ }).getAttribute(
+        "href",
+      ),
+    ).toBe("/chat/thread-1");
+    expect(screen.getByText("Running")).toBeTruthy();
+    expect(screen.getByText("Project Alpha")).toBeTruthy();
+    expect(screen.getByText("feature/sidebar")).toBeTruthy();
+    expect(screen.getByText(/Updated/)).toBeTruthy();
+    expect(screen.queryByText("gpt-5")).toBeNull();
+  });
+
+  it("falls back to the preview or an untitled label", () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <TaskListItem
+          thread={{
+            id: "thread-1",
+            name: null,
+            preview: "Inspect the repository",
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Inspect the repository")).toBeTruthy();
+
+    rerender(
+      <MemoryRouter>
+        <TaskListItem
+          thread={{
+            id: "thread-2",
+            name: null,
+            preview: "",
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Untitled task")).toBeTruthy();
+  });
+});

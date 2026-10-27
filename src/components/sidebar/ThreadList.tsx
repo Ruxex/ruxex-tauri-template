@@ -1,7 +1,6 @@
-import { Link } from "react-router-dom";
-
 import { useThreadList } from "../../app-server/hooks";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
+import { TaskListItem } from "../tasks/TaskListItem";
 
 type ThreadListProps = {
   projectId?: string;
@@ -27,16 +26,10 @@ export function ThreadList({ projectId, selectedThreadId }: ThreadListProps) {
     <ul className="menu w-full gap-1 p-0">
       {threads.data.data.map((thread) => (
         <li key={thread.id}>
-          <Link
-            className={selectedThreadId === thread.id ? "active" : undefined}
-            to={`/chat/${thread.id}`}
-          >
-            <span className="min-w-0">
-              <span className="block truncate">
-                {thread.name || thread.preview || "Untitled chat"}
-              </span>
-            </span>
-          </Link>
+          <TaskListItem
+            selected={selectedThreadId === thread.id}
+            thread={thread}
+          />
         </li>
       ))}
     </ul>
