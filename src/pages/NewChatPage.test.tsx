@@ -12,6 +12,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const navigate = vi.hoisted(() => vi.fn());
 const useCreateThread = vi.hoisted(() => vi.fn());
 const useModelList = vi.hoisted(() => vi.fn());
+const useParams = vi.hoisted(() => vi.fn());
+const useProjectList = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 const createThread = vi.hoisted(() => ({
@@ -27,11 +29,12 @@ const sendMessage = vi.hoisted(() => ({
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigate,
-  useParams: () => ({ projectId: "project-1" }),
+  useParams,
 }));
 vi.mock("../app-server/hooks", () => ({
   useCreateThread,
   useModelList,
+  useProjectList,
   useProject,
   useSendMessage,
 }));
@@ -45,6 +48,7 @@ describe("NewChatPage", () => {
     sendMessage.mutateAsync.mockReset();
     createThread.error = null;
     sendMessage.error = null;
+    useParams.mockReturnValue({ projectId: "project-1" });
     createThread.mutateAsync.mockResolvedValue({
       thread: { id: "thread-new" },
     });
@@ -58,9 +62,30 @@ describe("NewChatPage", () => {
         ],
       },
     });
-    useProject.mockReturnValue({
-      data: { project: { roots: [{ path: "/workspace/project" }] } },
+    useProjectList.mockReturnValue({
+      data: {
+        data: [
+          { id: "project-1", name: "Project Alpha" },
+          { id: "project-2", name: "Project Beta" },
+        ],
+      },
+      isLoading: false,
+      isError: false,
     });
+    useProject.mockImplementation((projectId: string) => ({
+      data: {
+        project: {
+          roots: [
+            {
+              path:
+                projectId === "project-2"
+                  ? "/workspace/other"
+                  : "/workspace/project",
+            },
+          ],
+        },
+      },
+    }));
   });
 
   it("creates a project-scoped thread, sends the first message, and navigates", async () => {
@@ -76,7 +101,7 @@ describe("NewChatPage", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Inspect this project" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Start chat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start task" }));
 
     await waitFor(() =>
       expect(createThread.mutateAsync).toHaveBeenCalledWith({
@@ -105,11 +130,34 @@ describe("NewChatPage", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Try again" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Start chat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start task" }));
 
     await waitFor(() => expect(createThread.mutateAsync).toHaveBeenCalled());
     expect(sendMessage.mutateAsync).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("uses a project selected from an unscoped new task", async () => {
+    useParams.mockReturnValue({ projectId: undefined });
+    const { NewChatPage } = await import("./NewChatPage");
+
+    render(<NewChatPage />);
+    fireEvent.change(screen.getByLabelText("Project"), {
+      target: { value: "project-2" },
+    });
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Inspect the selected project" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start task" }));
+
+    await waitFor(() =>
+      expect(createThread.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: "project-2",
+          cwd: "/workspace/other",
+        }),
+      ),
+    );
   });
 
   it("renders an existing mutation error below the form", async () => {

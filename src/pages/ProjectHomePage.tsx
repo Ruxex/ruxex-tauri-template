@@ -7,7 +7,6 @@ import {
   LoadingState,
 } from "../components/common/AsyncState";
 import { ThreadCard } from "../components/common/ThreadCard";
-import { WorktreeCard } from "../components/projects/WorktreeCard";
 
 export function ProjectHomePage() {
   const { projectId = "" } = useParams<{ projectId: string }>();
@@ -34,23 +33,28 @@ export function ProjectHomePage() {
             {details.roots.length} workspace root
             {details.roots.length === 1 ? "" : "s"}
           </p>
+          {details.roots[0]?.path && (
+            <p className="mt-1 truncate text-xs text-base-content/60">
+              {details.roots[0].path}
+            </p>
+          )}
         </div>
         <Link
           className="btn btn-primary"
           to={`/projects/${projectId}/chat/new`}
         >
-          New chat
+          New task
         </Link>
       </div>
       <section className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body">
-          <h2 className="card-title">Recent chats</h2>
+          <h2 className="card-title">Tasks</h2>
           {threads.isLoading && <LoadingState size="sm" />}
           {threads.isError && (
             <ErrorState>Unable to load project chats.</ErrorState>
           )}
           {!threads.isLoading && !threads.data?.data.length && (
-            <EmptyState>No chats in this project yet.</EmptyState>
+            <EmptyState>No tasks in this project yet.</EmptyState>
           )}
           <div className="grid gap-3">
             {threads.data?.data.map((thread) => (
@@ -59,7 +63,6 @@ export function ProjectHomePage() {
           </div>
         </div>
       </section>
-      {details.roots[0]?.path && <WorktreeCard root={details.roots[0].path} />}
     </div>
   );
 }

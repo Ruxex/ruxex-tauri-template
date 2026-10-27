@@ -52,7 +52,7 @@ describe("ProjectHomePage", () => {
     });
   });
 
-  it("renders project details and recent chats", async () => {
+  it("renders the project workspace and task list", async () => {
     const { ProjectHomePage } = await import("./ProjectHomePage");
 
     render(
@@ -62,11 +62,13 @@ describe("ProjectHomePage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Ruxex" })).toBeTruthy();
+    expect(screen.getByText("/workspace")).toBeTruthy();
     expect(screen.getByText("Project chat")).toBeTruthy();
-    expect(screen.getByTestId("worktree-card").textContent).toBe("/workspace");
+    expect(screen.getByRole("heading", { name: "Tasks" })).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
+      screen.getByRole("link", { name: "New task" }).getAttribute("href"),
     ).toBe("/projects/project-1/chat/new");
+    expect(screen.queryByTestId("worktree-card")).toBeNull();
   });
 
   it("renders a stable error state when project loading fails", async () => {

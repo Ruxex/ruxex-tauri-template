@@ -56,7 +56,7 @@ describe("desktop app-server flow", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Review this project" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Start chat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start task" }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/chat/thread-created"));
 

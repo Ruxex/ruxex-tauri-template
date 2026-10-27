@@ -6,12 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useCreateThread = vi.hoisted(() => vi.fn());
 const useModelList = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
+const useProjectList = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useCreateThread,
   useModelList,
   useProject,
+  useProjectList,
   useSendMessage,
 }));
 vi.mock("react-router-dom", async () => {
@@ -33,6 +35,11 @@ describe("HomePage", () => {
     });
     useModelList.mockReturnValue({ data: { data: [] } });
     useProject.mockReturnValue({ data: undefined });
+    useProjectList.mockReturnValue({
+      data: { data: [] },
+      isError: false,
+      isLoading: false,
+    });
     useSendMessage.mockReturnValue({
       error: null,
       isPending: false,
@@ -49,6 +56,7 @@ describe("HomePage", () => {
     expect(screen.getByLabelText("Model")).toBeTruthy();
     expect(screen.getByLabelText("Reasoning")).toBeTruthy();
     expect(screen.getByLabelText("Permissions")).toBeTruthy();
+    expect(screen.getByLabelText("Project")).toBeTruthy();
     expect(screen.getByLabelText("Message")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Attach image" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Voice input" })).toBeTruthy();

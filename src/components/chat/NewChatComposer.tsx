@@ -1,4 +1,10 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MicrophoneIcon,
@@ -12,10 +18,12 @@ import {
   useCreateThread,
   useModelList,
   useProject,
+  useProjectList,
   useSendMessage,
 } from "../../app-server/hooks";
 import { formatErrorMessage } from "../../app/error-message";
 import type { v2 } from "../../protocol";
+import { ProjectSelector } from "../tasks/ProjectSelector";
 
 type NewChatComposerProps = {
   projectId?: string;
@@ -30,7 +38,13 @@ export function NewChatComposer({
 }: NewChatComposerProps) {
   const navigate = useNavigate();
   const models = useModelList();
-  const project = useProject(projectId ?? "");
+  const projects = useProjectList({
+    limit: 100,
+    sortKey: "position",
+    sortDirection: "asc",
+  });
+  const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
+  const project = useProject(selectedProjectId);
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
   const [model, setModel] = useState("");
@@ -41,6 +55,10 @@ export function NewChatComposer({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const attachmentInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setSelectedProjectId(projectId ?? "");
+  }, [projectId]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +87,7 @@ export function NewChatComposer({
       }[permissionMode];
       const thread = await createThread.mutateAsync({
         ...(model ? { model } : {}),
-        ...(projectId ? { projectId } : {}),
+        ...(selectedProjectId ? { projectId: selectedProjectId } : {}),
         ...(root ? { cwd: root } : {}),
         ...permissionSettings,
         ...(reasoningEffort
@@ -211,6 +229,14 @@ export function NewChatComposer({
                 <option value="full-access">Full access</option>
               </select>
             </div>
+            <ProjectSelector
+              disabled={isPending}
+              isError={projects.isError}
+              isLoading={projects.isLoading}
+              onChange={setSelectedProjectId}
+              projects={projects.data?.data ?? []}
+              value={selectedProjectId}
+            />
             <div className="ml-auto flex items-center gap-1">
               <select
                 className="select select-ghost select-sm min-w-36"
@@ -275,9 +301,17 @@ export function NewChatComposer({
         onSubmit={(event) => void handleSubmit(event)}
       >
         <div className="mb-6 border-b border-base-300 pb-5">
-          <h1 className="text-3xl font-semibold tracking-tight">New chat</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">New task</h1>
         </div>
         <div className="grid gap-5">
+          <ProjectSelector
+            disabled={isPending}
+            isError={projects.isError}
+            isLoading={projects.isLoading}
+            onChange={setSelectedProjectId}
+            projects={projects.data?.data ?? []}
+            value={selectedProjectId}
+          />
           <label className="form-control">
             <span className="label-text font-medium">Model</span>
             <select
@@ -327,7 +361,7 @@ export function NewChatComposer({
               disabled={isPending}
               type="submit"
             >
-              {isPending ? "Starting…" : "Start chat"}
+              {isPending ? "Starting…" : "Start task"}
             </button>
           </div>
         </div>
