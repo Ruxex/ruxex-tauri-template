@@ -1,12 +1,15 @@
 import {
   Cog6ToothIcon,
   FolderIcon,
+  MagnifyingGlassIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 import { useProjectList } from "../../app-server/hooks";
 import { ThreadList } from "../sidebar/ThreadList";
+import { TaskSearchDialog } from "./TaskSearchDialog";
 
 export function TaskSidebarSections({
   onClose,
@@ -15,6 +18,7 @@ export function TaskSidebarSections({
   onClose: () => void;
   selectedThreadId?: string;
 }) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const projects = useProjectList({
     limit: 100,
     sortKey: "position",
@@ -22,10 +26,7 @@ export function TaskSidebarSections({
   });
 
   return (
-    <nav
-      aria-label="Task navigation"
-      className="flex min-h-0 flex-1 flex-col"
-    >
+    <nav aria-label="Task navigation" className="flex min-h-0 flex-1 flex-col">
       <Link
         className="btn btn-primary mb-5 w-full"
         to="/chat/new"
@@ -34,6 +35,23 @@ export function TaskSidebarSections({
         <PlusIcon aria-hidden="true" className="size-4" />
         New task
       </Link>
+      <button
+        className="btn btn-ghost mb-4 w-full justify-start"
+        type="button"
+        onClick={() => setSearchOpen(true)}
+      >
+        <MagnifyingGlassIcon aria-hidden="true" className="size-4" />
+        Search tasks
+      </button>
+      {searchOpen && (
+        <TaskSearchDialog
+          onClose={() => setSearchOpen(false)}
+          onSelect={() => {
+            setSearchOpen(false);
+            onClose();
+          }}
+        />
+      )}
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
         <section aria-labelledby="recent-tasks-heading">

@@ -31,13 +31,13 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
         <li>
           <NavLink to="/settings/models">
             <DocumentTextIcon aria-hidden="true" className="size-4" />
-            Models
+            Models / Engines
           </NavLink>
         </li>
         <li>
           <NavLink to="/settings/app-server">
             <ServerIcon aria-hidden="true" className="size-4" />
-            AppServer
+            Runtime
           </NavLink>
         </li>
       </nav>

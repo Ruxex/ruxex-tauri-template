@@ -65,7 +65,9 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    expect(screen.getAllByRole("heading", { name: "AppServer" })).toHaveLength(2);
+    expect(screen.getAllByRole("heading", { name: "AppServer" })).toHaveLength(
+      2,
+    );
     expect(screen.getByText("running")).toBeTruthy();
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
@@ -115,9 +117,7 @@ describe("AppServerPage", () => {
   });
 
   it("disables lifecycle controls outside the native runtime", () => {
-    useAppServerDaemon.mockReturnValue(
-      useDaemonResult({ isAvailable: false }),
-    );
+    useAppServerDaemon.mockReturnValue(useDaemonResult({ isAvailable: false }));
 
     render(<AppServerPage />);
 
@@ -157,7 +157,9 @@ describe("AppServerPage", () => {
     render(<AppServerPage />);
 
     expect(screen.getByText("Unavailable")).toBeTruthy();
-    expect(screen.getByText("Error: in-process initialization failed")).toBeTruthy();
+    expect(
+      screen.getByText("Error: in-process initialization failed"),
+    ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 });
@@ -167,14 +169,15 @@ describe("SettingsSidebar AppServer navigation", () => {
     cleanup();
   });
 
-  it("links to the AppServer settings section", () => {
+  it("links to the Runtime settings section", () => {
     render(
       <MemoryRouter initialEntries={["/settings"]}>
         <SettingsSidebar onClose={vi.fn()} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("link", { name: "AppServer" }).getAttribute("href"))
-      .toBe("/settings/app-server");
+    expect(
+      screen.getByRole("link", { name: "Runtime" }).getAttribute("href"),
+    ).toBe("/settings/app-server");
   });
 });

@@ -5,14 +5,16 @@ import { useState } from "react";
 import { formatErrorMessage } from "../app/error-message";
 import { useThreadList, useThreadSearch } from "../app-server/hooks";
 import { ThreadCard } from "../components/common/ThreadCard";
+import { organizeTasks } from "../components/tasks/task-organizer";
 
 export function ThreadsPage() {
   const [search, setSearch] = useState("");
   const threads = useThreadList({ limit: 50 });
   const searchResults = useThreadSearch(search);
   const rows = search.trim()
-    ? searchResults.data?.data.map((result) => result.thread) ?? []
-    : threads.data?.data ?? [];
+    ? (searchResults.data?.data.map((result) => result.thread) ?? [])
+    : (threads.data?.data ?? []);
+  const groups = organizeTasks(rows);
 
   return (
     <div className="space-y-4">
@@ -38,9 +40,7 @@ export function ThreadsPage() {
         <span className="loading loading-spinner loading-lg" />
       )}
       {threads.isError && (
-        <p className="alert alert-error">
-          {formatErrorMessage(threads.error)}
-        </p>
+        <p className="alert alert-error">{formatErrorMessage(threads.error)}</p>
       )}
       {!threads.isLoading && !searchResults.isLoading && rows.length === 0 && (
         <div className="card border border-dashed border-base-300 bg-base-100">
@@ -52,10 +52,33 @@ export function ThreadsPage() {
           </div>
         </div>
       )}
-      <div className="grid gap-3">
-        {rows.map((thread) => (
-          <ThreadCard key={thread.id} thread={thread} />
-        ))}
+      <div className="space-y-5">
+        {(
+          [
+            ["Pinned", groups.pinned],
+            ["Active", groups.active],
+            ["Recent", groups.recent],
+          ] as const
+        ).map(([label, group]) =>
+          group.length > 0 ? (
+            <section
+              aria-labelledby={`${label.toLowerCase()}-tasks-heading`}
+              key={label}
+            >
+              <h2
+                className="mb-2 text-sm font-semibold uppercase tracking-wide text-base-content/60"
+                id={`${label.toLowerCase()}-tasks-heading`}
+              >
+                {label} tasks
+              </h2>
+              <div className="grid gap-3">
+                {group.map((thread) => (
+                  <ThreadCard key={thread.id} thread={thread} />
+                ))}
+              </div>
+            </section>
+          ) : null,
+        )}
       </div>
     </div>
   );

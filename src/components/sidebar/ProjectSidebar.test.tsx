@@ -39,10 +39,10 @@ describe("ProjectSidebar", () => {
             model: "gpt-5",
             name: "Build the sidebar",
             preview: null,
-          status: {
-            type: "active",
-            activeFlags: ["waitingOnApproval"],
-          },
+            status: {
+              type: "active",
+              activeFlags: ["waitingOnApproval"],
+            },
           },
         ],
       },
@@ -101,7 +101,9 @@ describe("ProjectSidebar", () => {
         .getAttribute("href"),
     ).toBe("/projects/project-1");
     expect(
-      within(panel).getByRole("link", { name: "Settings" }).getAttribute("href"),
+      within(panel)
+        .getByRole("link", { name: "Settings" })
+        .getAttribute("href"),
     ).toBe("/settings");
     expect(
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
@@ -323,7 +325,9 @@ describe("ProjectSidebar", () => {
     expect(
       within(panel).getByRole("link", { name: "Appearance" }),
     ).toBeTruthy();
-    expect(within(panel).getByRole("link", { name: "Models" })).toBeTruthy();
+    expect(
+      within(panel).getByRole("link", { name: "Models / Engines" }),
+    ).toBeTruthy();
     expect(within(panel).queryByRole("link", { name: "Account" })).toBeNull();
   });
 });
