@@ -40,12 +40,20 @@ pub fn run_dummy_provider_host() -> anyhow::Result<()> {
 }
 
 pub fn run() {
+    let arg0_path_guard = ruxex_arg0::arg0_dispatch();
+    let arg0_paths = arg0_path_guard
+        .as_ref()
+        .map(|guard| guard.paths().clone())
+        .unwrap_or_default();
     tauri::Builder::default()
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
-        .manage(app_server::AppServerState::default())
+        .manage(app_server::AppServerState::with_arg0_paths(
+            arg0_paths,
+            arg0_path_guard,
+        ))
         .manage(schedule_commands::ScheduleState::default())
         .setup(|app| {
             let home = desktop::ruxex_home().map_err(std::io::Error::other)?;

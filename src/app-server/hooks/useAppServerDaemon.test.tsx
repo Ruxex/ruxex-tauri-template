@@ -30,10 +30,10 @@ const runningDaemon: AppServerDaemonOutput = {
   backend: "pid",
   pid: 42,
   managedRuxexPath: "/tmp/ruxex-desktop",
-  managedRuxexVersion: "0.4.9",
+  managedRuxexVersion: "0.4.10",
   socketPath: "/tmp/ruxex.sock",
-  cliVersion: "0.4.9",
-  appServerVersion: "0.4.9",
+  cliVersion: "0.4.10",
+  appServerVersion: "0.4.10",
 };
 
 const startedDaemon: AppServerDaemonOutput = {
@@ -52,8 +52,14 @@ const stoppedDaemon: AppServerDaemonOutput = {
 
 const connectedStatus: AppServerStatus = {
   socketPath: "/tmp/ruxex.sock",
-  appServerVersion: "0.4.9",
+  appServerVersion: "0.4.10",
   endpointKind: "local",
+};
+
+const inProcessStatus: AppServerStatus = {
+  ...connectedStatus,
+  socketPath: "in-process",
+  mode: "inprocess",
 };
 
 describe("useAppServerDaemon", () => {
@@ -77,6 +83,59 @@ describe("useAppServerDaemon", () => {
       expect(result.current.status.isSuccess).toBe(true);
       expect(controlAppServerDaemon).toHaveBeenCalledWith("version");
       expect(result.current.status.data).toEqual(runningDaemon);
+    });
+  });
+
+  it("does not query daemon controls in InProcess mode", async () => {
+    ensureAppServer.mockResolvedValue(inProcessStatus);
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("inprocess");
+      expect(result.current.isAvailable).toBe(false);
+    });
+    expect(controlAppServerDaemon).not.toHaveBeenCalled();
+  });
+
+  it("surfaces App Server initialization errors and disables daemon controls", async () => {
+    const error = new Error("in-process initialization failed");
+    ensureAppServer.mockRejectedValue(error);
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await waitFor(() => {
+      expect(result.current.appServerError).toBe(error);
+      expect(result.current.isAvailable).toBe(false);
+    });
+    expect(controlAppServerDaemon).not.toHaveBeenCalled();
+  });
+
+  it("retains the last local mode when the connection status is cleared", async () => {
+    ensureAppServer.mockResolvedValue(inProcessStatus);
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await waitFor(() => expect(result.current.mode).toBe("inprocess"));
+    act(() => {
+      client.setQueryData(appServerQueryKeys.status, null);
+    });
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("inprocess");
+      expect(result.current.isAvailable).toBe(false);
     });
   });
 

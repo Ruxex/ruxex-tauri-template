@@ -1,13 +1,22 @@
 use std::ffi::OsString;
+use std::sync::Arc;
 
+#[cfg(not(feature = "example"))]
+use ruxex::ModelProviderFactory;
 use ruxex::app_server::app_server_control_socket_path;
 use ruxex_app_server_client::{
-    AppServerEvent, AppServerRequestHandle, RemoteAppServerClient, RemoteAppServerConnectArgs,
+    AppServerClient, AppServerEvent, AppServerRequestHandle, InProcessAppServerClient,
+    InProcessClientStartArgs, RemoteAppServerClient, RemoteAppServerConnectArgs,
     RemoteAppServerEndpoint,
 };
 use ruxex_app_server_protocol::{
-    ClientRequest, ClientResponse, JSONRPCErrorError, RequestId, Result as JsonRpcResult,
+    ClientRequest, ClientResponse, ConfigWarningNotification, JSONRPCErrorError, RequestId,
+    Result as JsonRpcResult,
 };
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::config::{Config, ConfigOverrides};
+use ruxex_protocol::protocol::SessionSource;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -20,13 +29,37 @@ use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
 
 const DESKTOP_EXPERIMENTAL_API: bool = true;
+const APP_SERVER_MODE_ENV_VAR: &str = "RUXEX_APP_SERVER_MODE";
 
-#[derive(Default)]
 pub(crate) struct AppServerState {
     initialization: tauri::async_runtime::Mutex<()>,
     request_handle: tauri::async_runtime::Mutex<Option<AppServerRequestHandle>>,
     status: tauri::async_runtime::Mutex<Option<AppServerStatus>>,
     shutdown: tauri::async_runtime::Mutex<Option<tauri::async_runtime::Sender<()>>>,
+    arg0_paths: Arg0DispatchPaths,
+    _arg0_path_guard: Option<ruxex_arg0::Arg0PathEntryGuard>,
+}
+
+impl AppServerState {
+    pub(crate) fn with_arg0_paths(
+        arg0_paths: Arg0DispatchPaths,
+        arg0_path_guard: Option<ruxex_arg0::Arg0PathEntryGuard>,
+    ) -> Self {
+        Self {
+            initialization: tauri::async_runtime::Mutex::new(()),
+            request_handle: tauri::async_runtime::Mutex::new(None),
+            status: tauri::async_runtime::Mutex::new(None),
+            shutdown: tauri::async_runtime::Mutex::new(None),
+            arg0_paths,
+            _arg0_path_guard: arg0_path_guard,
+        }
+    }
+}
+
+impl Default for AppServerState {
+    fn default() -> Self {
+        Self::with_arg0_paths(Arg0DispatchPaths::default(), None)
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -35,6 +68,55 @@ pub(crate) struct AppServerStatus {
     socket_path: String,
     app_server_version: String,
     endpoint_kind: AppServerEndpointKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mode: Option<AppServerMode>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum AppServerMode {
+    Daemon,
+    InProcess,
+}
+
+fn parse_app_server_mode(value: Option<&str>) -> Result<AppServerMode, String> {
+    match value.unwrap_or("daemon") {
+        "daemon" => Ok(AppServerMode::Daemon),
+        "inprocess" => Ok(AppServerMode::InProcess),
+        value => Err(format!(
+            "unsupported {APP_SERVER_MODE_ENV_VAR} value `{value}`; expected `daemon` or `inprocess`"
+        )),
+    }
+}
+
+fn configured_app_server_mode() -> CommandResult<AppServerMode> {
+    parse_app_server_mode(std::env::var(APP_SERVER_MODE_ENV_VAR).ok().as_deref())
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))
+}
+
+fn resolve_in_process_paths(
+    arg0_paths: &Arg0DispatchPaths,
+) -> CommandResult<(
+    std::path::PathBuf,
+    ruxex_app_server_client::ExecServerRuntimePaths,
+)> {
+    let executable = arg0_paths.ruxex_self_exe.clone().ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "failed to resolve the desktop executable for in-process App Server helpers",
+        )
+    })?;
+    let runtime_paths = ruxex_app_server_client::ExecServerRuntimePaths::new(
+        executable.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
+    )
+    .map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to initialize in-process execution paths: {error}"),
+        )
+    })?;
+    Ok((executable, runtime_paths))
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
@@ -126,7 +208,7 @@ async fn connect_remote_socket(
 async fn install_connection(
     app: &AppHandle,
     state: &State<'_, AppServerState>,
-    mut client: RemoteAppServerClient,
+    mut client: AppServerClient,
     status: AppServerStatus,
 ) -> CommandResult<AppServerStatus> {
     let old_shutdown = state.shutdown.lock().await.take();
@@ -135,7 +217,7 @@ async fn install_connection(
     }
 
     let request_handle = client.request_handle();
-    *state.request_handle.lock().await = Some(AppServerRequestHandle::Remote(request_handle));
+    *state.request_handle.lock().await = Some(request_handle);
     *state.status.lock().await = Some(status.clone());
 
     let (shutdown_tx, mut shutdown_rx) = tauri::async_runtime::channel(1);
@@ -196,17 +278,25 @@ fn should_clear_connection_for_daemon_control(
         && status.is_none_or(|status| status.endpoint_kind == AppServerEndpointKind::Local)
 }
 
-async fn connect_local_endpoint(
+async fn connect_daemon_endpoint(
     app: &AppHandle,
-) -> CommandResult<(RemoteAppServerClient, AppServerStatus)> {
+) -> CommandResult<(AppServerClient, AppServerStatus)> {
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let socket_path = app_server_control_socket_path(&home).map_err(|error| {
         command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
     })?;
-    let (client, effective_socket_path, bootstrapped_version) =
+    let (client, effective_socket_path, bootstrapped_version, connected_version) =
         match connect_unix_socket(socket_path.clone()).await {
-            Ok(client) => (client, socket_path, None),
+            Ok(client) => {
+                let connected_version = client.server_version().map(str::to_owned);
+                (
+                    AppServerClient::Remote(client),
+                    socket_path,
+                    None,
+                    connected_version,
+                )
+            }
             Err(_) => {
                 #[cfg(feature = "example")]
                 let _ = app;
@@ -253,11 +343,12 @@ async fn connect_local_endpoint(
                             )
                         })?;
                     (
-                        client,
+                        AppServerClient::Remote(client),
                         effective_socket_path,
                         lifecycle
                             .app_server_version
                             .or_else(|| Some("0.4.2".to_string())),
+                        None,
                     )
                 }
 
@@ -297,23 +388,142 @@ async fn connect_local_endpoint(
                             )
                         })?;
                     (
-                        client,
+                        AppServerClient::Remote(client),
                         effective_socket_path,
                         Some(bootstrap.app_server_version),
+                        None,
                     )
                 }
             }
         };
     let status = AppServerStatus {
         socket_path: effective_socket_path.display().to_string(),
-        app_server_version: client
-            .server_version()
-            .map(str::to_owned)
+        app_server_version: connected_version
             .or(bootstrapped_version)
             .unwrap_or_else(|| "unknown".to_string()),
         endpoint_kind: AppServerEndpointKind::Local,
+        mode: Some(AppServerMode::Daemon),
     };
     Ok((client, status))
+}
+
+async fn connect_in_process_endpoint(
+    arg0_paths: Arg0DispatchPaths,
+) -> CommandResult<(AppServerClient, AppServerStatus)> {
+    let _home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let (executable, runtime_paths) = resolve_in_process_paths(&arg0_paths)?;
+    let config = Config::load_with_cli_overrides_and_harness_overrides(
+        Vec::new(),
+        ConfigOverrides {
+            ruxex_self_exe: Some(executable.clone()),
+            ..ConfigOverrides::default()
+        },
+    )
+    .await
+    .map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to load in-process App Server config: {error}"),
+        )
+    })?;
+
+    #[cfg(feature = "example")]
+    let provider_factory = crate::dummy_provider::provider_factory();
+    #[cfg(not(feature = "example"))]
+    let provider_factory = (
+        ruxex_app_server_client::AppServerRuntimeBuilder::build_from_provider_factory::<
+            ruxex_providers::ResponsesModelProvider,
+        >,
+        ruxex_providers::ResponsesModelProvider::provider_descriptor(),
+    );
+    let provider_init = ruxex_app_server_client::provider_init_from_config_with_descriptor(
+        &config,
+        true,
+        &provider_factory.1,
+    )
+    .await
+    .map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to initialize the in-process provider: {error}"),
+        )
+    })?;
+    let runtime = (provider_factory.0)(provider_init);
+    let state_db = ruxex_core::init_state_db(&config).await;
+    let environment_manager = ruxex_app_server_client::EnvironmentManager::from_ruxex_home(
+        &config.ruxex_home,
+        Some(runtime_paths),
+        config.http_client_factory(),
+    )
+    .await
+    .map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to initialize in-process environment manager: {error}"),
+        )
+    })?;
+    let config_warnings = config
+        .startup_warnings
+        .iter()
+        .cloned()
+        .map(|summary| ConfigWarningNotification {
+            summary,
+            details: None,
+            path: None,
+            range: None,
+        })
+        .collect();
+    let product_identity = product_identity();
+    let client = InProcessAppServerClient::start(InProcessClientStartArgs {
+        arg0_paths,
+        config: Arc::new(config),
+        cli_overrides: Vec::new(),
+        loader_overrides: LoaderOverrides::default(),
+        strict_config: false,
+        log_db: None,
+        state_db,
+        environment_manager: Arc::new(environment_manager),
+        config_warnings,
+        session_source: SessionSource::Cli,
+        enable_api_key_env: true,
+        runtime: Some(runtime),
+        client_name: product_identity.product_name().to_string(),
+        client_version: env!("CARGO_PKG_VERSION").to_string(),
+        experimental_api: DESKTOP_EXPERIMENTAL_API,
+        opt_out_notification_methods: Vec::new(),
+        channel_capacity: ruxex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY,
+        product_identity,
+    })
+    .await
+    .map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to start in-process App Server: {error}"),
+        )
+    })?;
+    let client = AppServerClient::InProcess(client);
+    let app_server_version = client
+        .identity()
+        .map(|identity| identity.version.clone())
+        .unwrap_or_else(|| "unknown".to_string());
+    let status = AppServerStatus {
+        socket_path: "in-process".to_string(),
+        app_server_version,
+        endpoint_kind: AppServerEndpointKind::Local,
+        mode: Some(AppServerMode::InProcess),
+    };
+    Ok((client, status))
+}
+
+async fn connect_local_endpoint(
+    app: &AppHandle,
+    arg0_paths: Arg0DispatchPaths,
+) -> CommandResult<(AppServerClient, AppServerStatus)> {
+    match configured_app_server_mode()? {
+        AppServerMode::Daemon => connect_daemon_endpoint(app).await,
+        AppServerMode::InProcess => connect_in_process_endpoint(arg0_paths).await,
+    }
 }
 
 #[tauri::command]
@@ -324,15 +534,17 @@ pub(crate) async fn connect_app_server(
 ) -> CommandResult<AppServerStatus> {
     let _initialization = state.initialization.lock().await;
     let (client, status) = match endpoint {
-        AppServerEndpoint::Local => connect_local_endpoint(&app).await?,
+        AppServerEndpoint::Local => connect_local_endpoint(&app, state.arg0_paths.clone()).await?,
         AppServerEndpoint::Websocket { url, auth_token } => {
             let client = connect_remote_socket(url.clone(), auth_token).await?;
+            let app_server_version = client.server_version().unwrap_or("unknown").to_string();
             let status = AppServerStatus {
                 socket_path: url,
-                app_server_version: client.server_version().unwrap_or("unknown").to_string(),
+                app_server_version,
                 endpoint_kind: AppServerEndpointKind::Websocket,
+                mode: None,
             };
-            (client, status)
+            (AppServerClient::Remote(client), status)
         }
     };
     install_connection(&app, &state, client, status).await
@@ -352,6 +564,16 @@ pub(crate) async fn app_server_daemon_control(
 ) -> CommandResult<ruxex_app_server_daemon::LifecycleOutput> {
     let _initialization = state.initialization.lock().await;
     let status = state.status.lock().await.clone();
+    if status
+        .as_ref()
+        .is_some_and(|status| status.mode == Some(AppServerMode::InProcess))
+        || (status.is_none() && configured_app_server_mode()? == AppServerMode::InProcess)
+    {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            "App Server daemon controls are unavailable in InProcess mode",
+        ));
+    }
     if should_clear_connection_for_daemon_control(action, status.as_ref()) {
         clear_connection_state(&state).await;
     }
@@ -403,7 +625,7 @@ pub(crate) async fn ensure_app_server(
     if let Some(status) = state.status.lock().await.clone() {
         return Ok(status);
     }
-    let (client, status) = connect_local_endpoint(&app).await?;
+    let (client, status) = connect_local_endpoint(&app, state.arg0_paths.clone()).await?;
     install_connection(&app, &state, client, status).await
 }
 
@@ -507,13 +729,53 @@ pub(crate) async fn request_handle(
 
 #[cfg(test)]
 mod tests {
+    use ruxex_arg0::Arg0DispatchPaths;
     use serde_json::json;
 
     use super::{
-        AppServerDaemonAction, AppServerEndpoint, AppServerEndpointKind, AppServerStatus,
-        DESKTOP_EXPERIMENTAL_API, DesktopAppServerEvent,
-        should_clear_connection_for_daemon_control,
+        AppServerDaemonAction, AppServerEndpoint, AppServerEndpointKind, AppServerMode,
+        AppServerStatus, DESKTOP_EXPERIMENTAL_API, DesktopAppServerEvent, parse_app_server_mode,
+        resolve_in_process_paths, should_clear_connection_for_daemon_control,
     };
+
+    #[test]
+    fn app_server_mode_defaults_to_daemon() {
+        assert_eq!(parse_app_server_mode(None).unwrap(), AppServerMode::Daemon);
+        assert_eq!(
+            parse_app_server_mode(Some("daemon")).unwrap(),
+            AppServerMode::Daemon
+        );
+        assert_eq!(
+            parse_app_server_mode(Some("inprocess")).unwrap(),
+            AppServerMode::InProcess
+        );
+    }
+
+    #[test]
+    fn app_server_mode_rejects_unknown_values() {
+        let error = parse_app_server_mode(Some("invalid")).unwrap_err();
+        assert!(error.contains("RUXEX_APP_SERVER_MODE"));
+        assert!(error.contains("daemon"));
+        assert!(error.contains("inprocess"));
+    }
+
+    #[test]
+    fn in_process_paths_include_the_sandbox_helper() {
+        let paths = Arg0DispatchPaths {
+            ruxex_self_exe: Some("/tmp/ruxex-desktop".into()),
+            ruxex_linux_sandbox_exe: Some("/tmp/ruxex-linux-sandbox".into()),
+        };
+        let (executable, runtime_paths) = resolve_in_process_paths(&paths).unwrap();
+
+        assert_eq!(executable, std::path::PathBuf::from("/tmp/ruxex-desktop"));
+        assert_eq!(
+            runtime_paths
+                .ruxex_linux_sandbox_exe
+                .as_ref()
+                .map(|path| path.display().to_string()),
+            Some("/tmp/ruxex-linux-sandbox".to_string())
+        );
+    }
 
     #[test]
     fn desktop_connects_with_experimental_protocol_capability() {
@@ -559,11 +821,13 @@ mod tests {
             socket_path: "/tmp/app-server.sock".to_string(),
             app_server_version: "local".to_string(),
             endpoint_kind: AppServerEndpointKind::Local,
+            mode: Some(AppServerMode::Daemon),
         };
         let remote = AppServerStatus {
             socket_path: "wss://example.test/rpc".to_string(),
             app_server_version: "remote".to_string(),
             endpoint_kind: AppServerEndpointKind::Websocket,
+            mode: None,
         };
 
         assert!(should_clear_connection_for_daemon_control(
@@ -610,6 +874,7 @@ mod tests {
             socket_path: "wss://example.test/rpc".to_string(),
             app_server_version: "remote".to_string(),
             endpoint_kind: AppServerEndpointKind::Websocket,
+            mode: None,
         };
         assert_eq!(
             serde_json::to_value(status).unwrap(),
@@ -617,6 +882,22 @@ mod tests {
                 "socketPath": "wss://example.test/rpc",
                 "appServerVersion": "remote",
                 "endpointKind": "websocket",
+            })
+        );
+
+        let status = AppServerStatus {
+            socket_path: "/tmp/app-server.sock".to_string(),
+            app_server_version: "local".to_string(),
+            endpoint_kind: AppServerEndpointKind::Local,
+            mode: Some(AppServerMode::InProcess),
+        };
+        assert_eq!(
+            serde_json::to_value(status).unwrap(),
+            json!({
+                "socketPath": "/tmp/app-server.sock",
+                "appServerVersion": "local",
+                "endpointKind": "local",
+                "mode": "inprocess",
             })
         );
 

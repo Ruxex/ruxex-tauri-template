@@ -17,10 +17,10 @@ const runningDaemon: AppServerDaemonOutput = {
   backend: "pid",
   pid: 42,
   managedRuxexPath: "/tmp/ruxex-desktop",
-  managedRuxexVersion: "0.4.9",
+  managedRuxexVersion: "0.4.10",
   socketPath: "/tmp/ruxex.sock",
-  cliVersion: "0.4.9",
-  appServerVersion: "0.4.9",
+  cliVersion: "0.4.10",
+  appServerVersion: "0.4.10",
 };
 
 function useDaemonResult(
@@ -43,7 +43,10 @@ function createDaemonResult() {
       isError: false,
       error: null as unknown,
     },
+    appServerError: undefined as unknown,
+    appServerReady: true,
     isAvailable: true,
+    mode: "daemon" as "daemon" | "inprocess",
   };
 }
 
@@ -64,7 +67,7 @@ describe("AppServerPage", () => {
 
     expect(screen.getAllByRole("heading", { name: "AppServer" })).toHaveLength(2);
     expect(screen.getByText("running")).toBeTruthy();
-    expect(screen.getByText("0.4.9")).toBeTruthy();
+    expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
     expect(screen.getByText("/tmp/ruxex.sock")).toBeTruthy();
 
@@ -124,6 +127,38 @@ describe("AppServerPage", () => {
         true,
       );
     }
+  });
+
+  it("renders InProcess mode without daemon lifecycle controls", () => {
+    useAppServerDaemon.mockReturnValue(
+      useDaemonResult({ mode: "inprocess", isAvailable: false }),
+    );
+
+    render(<AppServerPage />);
+
+    expect(screen.getByText("InProcess mode")).toBeTruthy();
+    expect(screen.queryByText("PID")).toBeNull();
+    expect(screen.queryByText("Socket")).toBeNull();
+    for (const name of ["Start", "Restart", "Stop"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+  });
+
+  it("shows App Server initialization errors without daemon controls", () => {
+    useAppServerDaemon.mockReturnValue(
+      useDaemonResult({
+        appServerError: new Error("in-process initialization failed"),
+        appServerReady: false,
+        isAvailable: false,
+        mode: undefined,
+      }),
+    );
+
+    render(<AppServerPage />);
+
+    expect(screen.getByText("Unavailable")).toBeTruthy();
+    expect(screen.getByText("Error: in-process initialization failed")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 });
 

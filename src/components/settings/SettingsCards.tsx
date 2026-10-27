@@ -106,53 +106,84 @@ export function AppServerCard({
   daemon,
   daemonError,
   controlError,
+  appServerError,
+  appServerReady,
   isAvailable,
   isPending,
+  mode,
   onAction,
 }: {
+  appServerError?: unknown;
+  appServerReady: boolean;
   daemon?: AppServerDaemonOutput;
   daemonError?: unknown;
   controlError?: unknown;
   isAvailable: boolean;
   isPending: boolean;
+  mode?: "daemon" | "inprocess";
   onAction: (action: Exclude<AppServerDaemonAction, "version">) => void;
 }) {
-  const error = controlError ?? daemonError;
+  const inProcess = mode === "inprocess";
+  const error = appServerError ?? controlError ?? daemonError;
+  const showDaemonControls =
+    !inProcess && appServerReady && appServerError == null;
+  const modeLabel = inProcess
+    ? "InProcess mode"
+    : appServerReady && appServerError == null
+      ? "Daemon mode"
+      : "Unavailable";
 
   return (
     <SettingsPanel
       icon={ServerIcon}
       title="AppServer"
-      description="Control the managed Ruxex AppServer daemon."
+      description={
+        inProcess
+          ? "The Ruxex AppServer is running in this process."
+          : appServerReady && appServerError == null
+            ? "Control the managed Ruxex AppServer daemon."
+            : "The Ruxex AppServer is unavailable."
+      }
     >
       <dl className="divide-y divide-base-300 text-sm">
-        <SettingRow label="Status">{daemon?.status ?? "Unavailable"}</SettingRow>
-        <SettingRow label="AppServer version">
-          {daemon?.appServerVersion ?? "Unavailable"}
-        </SettingRow>
-        <SettingRow label="PID">{daemon?.pid ?? "Unavailable"}</SettingRow>
-        <SettingRow label="Socket">
-          {daemon?.socketPath ?? "Unavailable"}
-        </SettingRow>
+        <SettingRow label="Mode">{modeLabel}</SettingRow>
+        {inProcess ? (
+          <SettingRow label="Status">Running in this process</SettingRow>
+        ) : (
+          <>
+            <SettingRow label="Status">
+              {daemon?.status ?? "Unavailable"}
+            </SettingRow>
+            <SettingRow label="AppServer version">
+              {daemon?.appServerVersion ?? "Unavailable"}
+            </SettingRow>
+            <SettingRow label="PID">{daemon?.pid ?? "Unavailable"}</SettingRow>
+            <SettingRow label="Socket">
+              {daemon?.socketPath ?? "Unavailable"}
+            </SettingRow>
+          </>
+        )}
       </dl>
       {error !== undefined && error !== null && (
         <p className="px-5 py-3 text-sm text-error">
           {formatErrorMessage(error)}
         </p>
       )}
-      <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
-        {(["start", "restart", "stop"] as const).map((action) => (
-          <button
-            className="btn btn-sm"
-            disabled={!isAvailable || isPending}
-            key={action}
-            onClick={() => onAction(action)}
-            type="button"
-          >
-            {action[0].toUpperCase() + action.slice(1)}
-          </button>
-        ))}
-      </div>
+      {showDaemonControls && (
+        <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
+          {(["start", "restart", "stop"] as const).map((action) => (
+            <button
+              className="btn btn-sm"
+              disabled={!isAvailable || isPending}
+              key={action}
+              onClick={() => onAction(action)}
+              type="button"
+            >
+              {action[0].toUpperCase() + action.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
     </SettingsPanel>
   );
 }

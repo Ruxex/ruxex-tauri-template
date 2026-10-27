@@ -25,14 +25,18 @@ tauri-build = { version = "2.4.1", features = [] }
 anyhow = "1"
 base64 = "0.22"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
-# The desktop bridge uses the stable 0.4.9 client, protocol, daemon, and path APIs directly.
-ruxex = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9", default-features = false, features = ["app-server", "cli"] }
-ruxex-provider-host-example = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9", features = ["dummy-provider"], optional = true }
-ruxex-app-server-client = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9" }
-ruxex-app-server-daemon = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9" }
-ruxex-app-server-protocol = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9" }
-ruxex-arg0 = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9" }
-ruxex-utils-absolute-path = { version = "0.4.9", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.9" }
+# The desktop bridge uses the stable 0.4.10 client, protocol, daemon, and path APIs directly.
+ruxex = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10", default-features = false, features = ["app-server", "cli"] }
+ruxex-provider-host-example = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10", features = ["dummy-provider"], optional = true }
+ruxex-app-server-client = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-app-server-daemon = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-app-server-protocol = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-arg0 = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-config = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-core = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-protocol = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-providers = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
+ruxex-utils-absolute-path = { version = "0.4.10", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.4.10" }
 dirs = "6"
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }

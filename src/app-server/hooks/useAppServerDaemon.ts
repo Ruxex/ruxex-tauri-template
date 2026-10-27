@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import { ensureAppServer, type AppServerStatus } from "../api";
 import {
@@ -10,6 +11,20 @@ import { isNativeDesktopRuntime } from "../runtime";
 
 export function useAppServerDaemon() {
   const queryClient = useQueryClient();
+  const [lastMode, setLastMode] = useState<AppServerStatus["mode"]>();
+  const appServerStatus = useQuery({
+    queryKey: appServerQueryKeys.status,
+    queryFn: ensureAppServer,
+    enabled: isNativeDesktopRuntime,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  useEffect(() => {
+    if (appServerStatus.data) {
+      setLastMode(appServerStatus.data.mode);
+    }
+  }, [appServerStatus.data]);
+  const mode = appServerStatus.data?.mode ?? lastMode;
   const hasLocalConnection = () =>
     [
       queryClient.getQueryData<AppServerStatus>(appServerQueryKeys.connection),
@@ -19,7 +34,10 @@ export function useAppServerDaemon() {
   const status = useQuery({
     queryKey: appServerQueryKeys.daemonStatus,
     queryFn: () => controlAppServerDaemon("version"),
-    enabled: isNativeDesktopRuntime,
+    enabled:
+      isNativeDesktopRuntime &&
+      appServerStatus.isSuccess &&
+      mode !== "inprocess",
     retry: false,
     staleTime: 0,
   });
@@ -36,13 +54,17 @@ export function useAppServerDaemon() {
         }
         return;
       }
-      if (action === "version" || !isNativeDesktopRuntime) {
+      if (
+        action === "version" ||
+        !isNativeDesktopRuntime ||
+        mode === "inprocess"
+      ) {
         return;
       }
 
-      const appServerStatus = await ensureAppServer();
-      queryClient.setQueryData(appServerQueryKeys.connection, appServerStatus);
-      queryClient.setQueryData(appServerQueryKeys.status, appServerStatus);
+      const connectedStatus = await ensureAppServer();
+      queryClient.setQueryData(appServerQueryKeys.connection, connectedStatus);
+      queryClient.setQueryData(appServerQueryKeys.status, connectedStatus);
     },
     onError: (_error, action) => {
       if (action !== "version" && hasLocalConnection()) {
@@ -52,5 +74,16 @@ export function useAppServerDaemon() {
     },
   });
 
-  return { status, control, isAvailable: isNativeDesktopRuntime };
+  return {
+    status,
+    control,
+    isAvailable:
+      isNativeDesktopRuntime &&
+      appServerStatus.isSuccess &&
+      appServerStatus.error == null &&
+      mode !== "inprocess",
+    mode,
+    appServerError: appServerStatus.error,
+    appServerReady: !isNativeDesktopRuntime || appServerStatus.isSuccess,
+  };
 }

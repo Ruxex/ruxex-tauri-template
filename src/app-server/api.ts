@@ -8,6 +8,7 @@ export type AppServerStatus = {
   socketPath: string;
   appServerVersion: string;
   endpointKind?: "local" | "websocket";
+  mode?: "daemon" | "inprocess";
 };
 
 export type AppServerEndpoint =

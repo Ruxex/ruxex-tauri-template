@@ -19,7 +19,7 @@ thread and turn hooks, project hooks, provider queries, and approval state.
 Use it as-is or adapt it to your own frontend architecture.
 
 The TypeScript App Server protocol is checked into `src/protocol/generated/`
-as the snapshot matching the pinned Ruxex v0.4.9 revision, so a clone does not
+as the snapshot matching the pinned Ruxex v0.4.10 revision, so a clone does not
 need a sibling Ruxex checkout for frontend typechecking.
 
 ## Workbench data boundary
@@ -44,7 +44,7 @@ activity details so the UI remains inspectable without guessing their meaning.
 - Tauri's platform prerequisites
 - Python 3 for runtime-package staging tests
 
-The Rust dependencies use the pinned Ruxex v0.4.9 Git tag while the public
+The Rust dependencies use the pinned Ruxex v0.4.10 Git tag while the public
 integration boundary is being finalized. The template does not require a
 sibling Ruxex checkout.
 
@@ -59,6 +59,22 @@ explicit local or CI input.
 Stage those files with `scripts/stage-ruxex-package.py`, passing the paths to
 the built Ruxex executable and code-mode host plus `rg` and, on Linux,
 `bwrap`. The staged directory is intentionally ignored by Git.
+
+## App Server runtime mode
+
+The Tauri application selects its local App Server mode from the
+`RUXEX_APP_SERVER_MODE` environment variable at launch:
+
+```sh
+RUXEX_APP_SERVER_MODE=daemon pnpm tauri dev
+RUXEX_APP_SERVER_MODE=inprocess pnpm tauri dev
+```
+
+The default is `daemon`, which keeps the managed App Server lifecycle controls
+in Settings. `inprocess` embeds the App Server in the Tauri process; Settings
+shows `InProcess mode` and hides the daemon PID, socket, and Start/Restart/Stop
+controls. The mode is selected at startup and cannot be changed while the app
+is running.
 
 ## Capability boundary
 

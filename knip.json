@@ -1,0 +1,5 @@
+{
+  "ignoreIssues": {
+    "src/protocol/generated/**": ["exports", "types"]
+  }
+}
