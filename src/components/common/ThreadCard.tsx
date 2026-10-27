@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+
+import { useAppServerEvents } from "../../app-server/hooks";
+import { TaskListItem } from "../tasks/TaskListItem";
+import { taskStatusFromThreadStatus } from "../tasks/task-status";
+import type { v2 } from "../../protocol";
 
 type ThreadSummary = {
   id: string;
@@ -7,6 +11,7 @@ type ThreadSummary = {
   preview: string;
   model?: string | null;
   updatedAt: number;
+  status?: v2.ThreadStatus;
 };
 
 type ThreadCardProps = {
@@ -16,34 +21,33 @@ type ThreadCardProps = {
 };
 
 export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps) {
+  const events = useAppServerEvents();
+  const taskStatus = taskStatusFromThreadStatus(
+    thread.status,
+    events.threads[thread.id]?.status,
+    Object.values(events.pendingServerRequests).some(
+      (request) => request.threadId === thread.id,
+    ),
+  );
+
   if (compact) {
     return (
-      <Link
-        className="rounded-box block border border-base-300 p-4 transition hover:border-primary"
-        to={`/chat/${thread.id}`}
-      >
-        <span className="font-medium">
-          {thread.name || thread.preview || "Untitled thread"}
-        </span>
-        <span className="mt-1 block line-clamp-2 text-sm text-base-content/70">
-          {thread.preview || "No preview available."}
-        </span>
-      </Link>
+      <TaskListItem
+        showPreview
+        status={taskStatus}
+        thread={thread}
+      />
     );
   }
 
   return (
     <article className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary">
       <div className="card-body gap-2 p-5">
-        <Link className="card-title text-lg hover:text-primary" to={`/chat/${thread.id}`}>
-          {thread.name || thread.preview || "Untitled thread"}
-        </Link>
-        <p className="line-clamp-2 text-sm text-base-content/70">
-          {thread.preview || "No preview available."}
-        </p>
-        <div className="text-xs text-base-content/50">
-          Updated {new Date(thread.updatedAt * 1000).toLocaleString()}
-        </div>
+        <TaskListItem
+          showPreview
+          status={taskStatus}
+          thread={thread}
+        />
         {actions && <div className="card-actions justify-end">{actions}</div>}
       </div>
     </article>

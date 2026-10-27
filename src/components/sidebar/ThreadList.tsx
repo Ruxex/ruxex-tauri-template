@@ -1,6 +1,7 @@
-import { useThreadList } from "../../app-server/hooks";
+import { useAppServerEvents, useThreadList } from "../../app-server/hooks";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
 import { TaskListItem } from "../tasks/TaskListItem";
+import { taskStatusFromThreadStatus } from "../tasks/task-status";
 
 type ThreadListProps = {
   projectId?: string;
@@ -14,8 +15,16 @@ export function ThreadList({
   onSelect,
 }: ThreadListProps) {
   const threads = useThreadList(
-    projectId ? projectThreadListParams(projectId) : { limit: 50 },
+    projectId
+      ? projectThreadListParams(projectId)
+      : {
+          archived: false,
+          limit: 50,
+          sortKey: "recency_at",
+          sortDirection: "desc",
+        },
   );
+  const events = useAppServerEvents();
 
   if (threads.isLoading) {
     return <span className="loading loading-spinner loading-sm" />;
@@ -33,6 +42,13 @@ export function ThreadList({
         <li key={thread.id}>
           <TaskListItem
             selected={selectedThreadId === thread.id}
+            status={taskStatusFromThreadStatus(
+              thread.status,
+              events.threads[thread.id]?.status,
+              Object.values(events.pendingServerRequests).some(
+                (request) => request.threadId === thread.id,
+              ),
+            )}
             thread={thread}
             onClick={onSelect}
           />

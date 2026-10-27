@@ -6,10 +6,12 @@ import { describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
+  useAppServerEvents,
 }));
 
 describe("TaskSidebarSections", () => {
@@ -32,6 +34,10 @@ describe("TaskSidebarSections", () => {
       },
       isError: false,
       isLoading: false,
+    });
+    useAppServerEvents.mockReturnValue({
+      pendingServerRequests: {},
+      threads: {},
     });
     const onClose = vi.fn();
     const { TaskSidebarSections } = await import("./TaskSidebarSections");

@@ -84,4 +84,21 @@ describe("AppLayout", () => {
 
     expect(update).toHaveBeenCalledWith({ sidebarCollapsed: true });
   });
+
+  it("does not leave an overlay over the project page", () => {
+    useUiPreferences.mockReturnValue({
+      preferences: {
+        sidebarCollapsed: false,
+      },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/projects"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Close sidebar overlay" })).toBeNull();
+  });
 });

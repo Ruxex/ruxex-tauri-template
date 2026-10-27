@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { v2 } from "../../protocol";
 
-import { TASK_STATUSES, taskStatusLabel } from "./task-status";
+import {
+  TASK_STATUSES,
+  taskStatusFromThreadStatus,
+  taskStatusLabel,
+} from "./task-status";
 
 describe("task status", () => {
   it.each([
@@ -21,5 +26,15 @@ describe("task status", () => {
       "failed",
       "stopped",
     ]);
+  });
+
+  it.each([
+    [{ type: "active", activeFlags: [] }, "running"],
+    [{ type: "active", activeFlags: ["waitingOnApproval"] }, "waiting"],
+    [{ type: "active", activeFlags: ["waitingOnUserInput"] }, "waiting"],
+    [{ type: "systemError" }, "failed"],
+    [{ type: "idle" }, undefined],
+  ] as const)("maps thread status %o to %s", (status, expected) => {
+    expect(taskStatusFromThreadStatus(status as v2.ThreadStatus)).toBe(expected);
   });
 });

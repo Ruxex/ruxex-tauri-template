@@ -12,11 +12,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
+  useAppServerEvents,
   usePluginList,
 }));
 
@@ -37,11 +39,19 @@ describe("ProjectSidebar", () => {
             model: "gpt-5",
             name: "Build the sidebar",
             preview: null,
+          status: {
+            type: "active",
+            activeFlags: ["waitingOnApproval"],
+          },
           },
         ],
       },
       isLoading: false,
       isError: false,
+    });
+    useAppServerEvents.mockReturnValue({
+      pendingServerRequests: {},
+      threads: {},
     });
     usePluginList.mockReturnValue({
       data: {
@@ -96,7 +106,16 @@ describe("ProjectSidebar", () => {
     expect(
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
     ).toBeTruthy();
+    expect(
+      within(panel).getByRole("status", { name: "Task status: Waiting" }),
+    ).toBeTruthy();
     expect(within(panel).queryByText("gpt-5")).toBeNull();
+    expect(useThreadList).toHaveBeenCalledWith({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
   });
 
   it("does not mount a context panel for projects", async () => {

@@ -45,7 +45,7 @@ export function AppLayout() {
     <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
       <BrowserNavigationBar />
       <div className="flex min-h-0 flex-1">
-        {!preferences.sidebarCollapsed && (
+        {!preferences.sidebarCollapsed && activePanel !== "projects" && (
           <button
             aria-label="Close sidebar overlay"
             className="workbench-sidebar-backdrop"

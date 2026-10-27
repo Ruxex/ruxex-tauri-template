@@ -150,6 +150,7 @@ export function NewChatComposer({
   }
 
   const isPending = createThread.isPending || sendMessage.isPending;
+  const isProjectLoading = Boolean(selectedProjectId && project.isLoading);
   const error = attachmentError ?? createThread.error ?? sendMessage.error;
 
   if (presentation === "chat") {
@@ -276,7 +277,11 @@ export function NewChatComposer({
             </div>
             <button
               className="btn btn-primary btn-circle size-10"
-              disabled={isPending || (!message.trim() && !imageFile)}
+              disabled={
+                isPending ||
+                isProjectLoading ||
+                (!message.trim() && !imageFile)
+              }
               type="submit"
               aria-label="Send message"
               title="Send message"
@@ -341,6 +346,22 @@ export function NewChatComposer({
             </select>
           </label>
           <label className="form-control">
+            <span className="label-text font-medium">Permissions</span>
+            <select
+              aria-label="Permissions"
+              className="select select-bordered mt-2 min-h-11"
+              disabled={isPending}
+              onChange={(event) =>
+                setPermissionMode(event.target.value as PermissionMode)
+              }
+              value={permissionMode}
+            >
+              <option value="workspace">Ask before changes</option>
+              <option value="read-only">Read-only</option>
+              <option value="full-access">Full access</option>
+            </select>
+          </label>
+          <label className="form-control">
             <span className="label-text font-medium">Message</span>
             <textarea
               className="textarea textarea-bordered mt-2 min-h-40"
@@ -358,7 +379,7 @@ export function NewChatComposer({
           <div className="flex justify-end">
             <button
               className="btn btn-primary min-h-11"
-              disabled={isPending}
+              disabled={isPending || isProjectLoading}
               type="submit"
             >
               {isPending ? "Starting…" : "Start task"}

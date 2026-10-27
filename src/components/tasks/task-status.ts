@@ -1,3 +1,6 @@
+import type { v2 } from "../../protocol";
+import type { ThreadExecutionState } from "../../app-server/event-reducer";
+
 export const TASK_STATUSES = [
   "running",
   "waiting",
@@ -33,4 +36,24 @@ export function taskStatusClassName(status: TaskStatus): string {
     case "stopped":
       return "badge-ghost";
   }
+}
+
+export function taskStatusFromThreadStatus(
+  status: v2.ThreadStatus | undefined,
+  liveStatus?: ThreadExecutionState["status"],
+  waitingForRequest = false,
+): TaskStatus | undefined {
+  if (waitingForRequest) return "waiting";
+  if (liveStatus === "running") return "running";
+  if (liveStatus === "completed") return "completed";
+  if (liveStatus === "failed") return "failed";
+  if (liveStatus === "interrupted") return "stopped";
+  if (!status) return undefined;
+  if (status.type === "systemError") return "failed";
+  if (status.type !== "active") return undefined;
+  return status.activeFlags.some(
+    (flag) => flag === "waitingOnApproval" || flag === "waitingOnUserInput",
+  )
+    ? "waiting"
+    : "running";
 }

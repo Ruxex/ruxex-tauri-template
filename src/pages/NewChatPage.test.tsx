@@ -160,6 +160,29 @@ describe("NewChatPage", () => {
     );
   });
 
+  it("passes the selected permissions to a new task", async () => {
+    useParams.mockReturnValue({ projectId: undefined });
+    const { NewChatPage } = await import("./NewChatPage");
+
+    render(<NewChatPage />);
+    fireEvent.change(screen.getByLabelText("Permissions"), {
+      target: { value: "full-access" },
+    });
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Run the task" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start task" }));
+
+    await waitFor(() =>
+      expect(createThread.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          approvalPolicy: "never",
+          sandbox: "danger-full-access",
+        }),
+      ),
+    );
+  });
+
   it("renders an existing mutation error below the form", async () => {
     createThread.error = new Error("create failed");
     const { NewChatPage } = await import("./NewChatPage");
