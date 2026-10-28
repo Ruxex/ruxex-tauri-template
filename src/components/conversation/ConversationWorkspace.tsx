@@ -97,7 +97,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-9rem)] flex-col gap-4">
+    <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col gap-4">
       <TaskHeader
         latestTurn={latestTurn}
         liveThread={liveThread}
@@ -148,10 +148,12 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
       />
-      <Composer
-        threadId={threadId}
-        activeTurnId={liveThread?.activeTurnId ?? null}
-      />
+      <div className="shrink-0">
+        <Composer
+          threadId={threadId}
+          activeTurnId={liveThread?.activeTurnId ?? null}
+        />
+      </div>
     </div>
   );
 }

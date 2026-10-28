@@ -18,7 +18,9 @@ vi.mock("../../app-server/hooks", () => ({
   useStartReview,
   useThreadConversation,
 }));
-vi.mock("./Composer", () => ({ Composer: () => null }));
+vi.mock("./Composer", () => ({
+  Composer: () => <div data-testid="composer" />,
+}));
 vi.mock("./ReviewControls", () => ({ ReviewControls: () => null }));
 
 describe("ConversationWorkspace", () => {
@@ -88,5 +90,22 @@ describe("ConversationWorkspace", () => {
     expect(
       screen.getByRole("status", { name: "Task status: Failed" }),
     ).toBeTruthy();
+
+    const composer = screen.getByTestId("composer");
+    const root = composer.closest("div.flex");
+    expect(root).not.toBeNull();
+    expect(root?.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["h-[calc(100dvh-9rem)]", "min-h-0"]),
+    );
+    expect(composer.parentElement?.className.split(/\s+/)).toContain(
+      "shrink-0",
+    );
+    expect(
+      screen
+        .getByRole("region", { name: "Task activity" })
+        .className.split(/\s+/),
+    ).toEqual(
+      expect.arrayContaining(["flex-1", "min-h-0", "overflow-y-auto"]),
+    );
   });
 });
