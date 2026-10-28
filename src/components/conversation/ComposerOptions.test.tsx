@@ -12,7 +12,6 @@ describe("ComposerOptions", () => {
     const onAttach = vi.fn();
     render(
       <ComposerOptions
-        activeTurnId={null}
         disabled={false}
         onPlanModeChange={vi.fn()}
         onAttach={onAttach}
@@ -37,7 +36,6 @@ describe("ComposerOptions", () => {
     const onPlanModeChange = vi.fn();
     render(
       <ComposerOptions
-        activeTurnId="turn-1"
         disabled={false}
         onPlanModeChange={onPlanModeChange}
         onAttach={vi.fn()}
@@ -67,7 +65,7 @@ describe("ComposerOptions", () => {
 
     expect(screen.queryByRole("combobox")).toBeNull();
     fireEvent.click(
-      screen.getByRole("button", { name: "Submission mode menu" }),
+      screen.getByLabelText("Submission mode menu"),
     );
     expect(screen.getByRole("menuitem", { name: "Send" })).toHaveProperty(
       "disabled",
@@ -97,7 +95,7 @@ describe("ComposerOptions", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Submission mode menu" }),
+      screen.getByLabelText("Submission mode menu"),
     );
     expect(screen.getByRole("menuitem", { name: /Steer/ })).toHaveProperty(
       "disabled",

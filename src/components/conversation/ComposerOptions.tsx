@@ -64,13 +64,11 @@ export function SubmissionModeMenu({
       <summary
         className="btn btn-primary btn-sm join-item px-2"
         aria-label="Submission mode menu"
-        role="button"
       >
         <span aria-hidden="true">▾</span>
       </summary>
       <ul
         className="menu dropdown-content z-20 mt-2 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
-        role="menu"
       >
         {options.map((option) => (
           <li key={option}>

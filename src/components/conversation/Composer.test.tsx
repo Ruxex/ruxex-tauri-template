@@ -155,7 +155,7 @@ describe("Composer", () => {
       target: { value: "Queue this" },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Submission mode menu" }),
+      screen.getByLabelText("Submission mode menu"),
     );
     fireEvent.click(screen.getByRole("menuitem", { name: /Queue/ }));
     fireEvent.click(screen.getByRole("button", { name: "Queue" }));
