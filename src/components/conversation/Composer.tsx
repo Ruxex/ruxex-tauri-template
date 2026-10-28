@@ -1,4 +1,10 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import {
   ArrowPathIcon,
   ArrowUturnRightIcon,
@@ -9,7 +15,10 @@ import {
 
 import { buildImageUserInput } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
-import { ComposerOptions } from "./ComposerOptions";
+import {
+  ComposerOptions,
+  SubmissionModeMenu,
+} from "./ComposerOptions";
 import type { SubmissionMode } from "./composer-model";
 import { formatErrorMessage } from "../../app/error-message";
 import {
@@ -74,6 +83,14 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
     });
   }
 
+  function handleMessageKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || !event.shiftKey) {
+      return;
+    }
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
@@ -123,6 +140,7 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
         className="textarea textarea-ghost min-h-24 w-full resize-none"
         value={message}
         onChange={(event) => setMessage(event.target.value)}
+        onKeyDown={handleMessageKeyDown}
         placeholder="Ask Ruxex to work on something…"
         disabled={isPending}
         aria-label="Message"
@@ -146,10 +164,7 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <ComposerOptions
-            activeTurnId={activeTurnId}
             disabled={isPending}
-            mode={mode}
-            onModeChange={setMode}
             onPlanModeChange={() => setPlanMode((value) => !value)}
             onAttach={() => attachmentInput.current?.click()}
             planMode={planMode}
@@ -169,23 +184,31 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
               Stop
             </button>
           )}
-          <button
-            className="btn btn-primary btn-sm"
-            type="submit"
-            disabled={isPending || (!message.trim() && !imageFile)}
-          >
-            <SubmitIcon
-              aria-hidden="true"
-              className={`size-4 ${isPending ? "animate-spin" : ""}`}
+          <div className="join">
+            <button
+              className="btn btn-primary btn-sm join-item"
+              type="submit"
+              disabled={isPending || (!message.trim() && !imageFile)}
+            >
+              <SubmitIcon
+                aria-hidden="true"
+                className={`size-4 ${isPending ? "animate-spin" : ""}`}
+              />
+              {isPending
+                ? "Working…"
+                : mode === "queue"
+                  ? "Queue"
+                  : mode === "steer"
+                    ? "Steer"
+                    : "Send"}
+            </button>
+            <SubmissionModeMenu
+              activeTurnId={activeTurnId}
+              disabled={isPending}
+              mode={mode}
+              onModeChange={setMode}
             />
-            {isPending
-              ? "Working…"
-              : mode === "queue"
-                ? "Queue"
-                : mode === "steer"
-                  ? "Steer"
-                  : "Send"}
-          </button>
+          </div>
         </div>
       </div>
       {(attachmentError ||

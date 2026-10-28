@@ -1,60 +1,25 @@
 import {
-  AdjustmentsHorizontalIcon,
   ClipboardDocumentListIcon,
   PaperClipIcon,
 } from "@heroicons/react/24/outline";
 
-import {
-  availableSubmissionModes,
-  submissionModeLabel,
-  type SubmissionMode,
-} from "./composer-model";
+import { availableSubmissionModes, type SubmissionMode } from "./composer-model";
 
 type ComposerOptionsProps = {
-  activeTurnId: string | null;
   disabled: boolean;
-  mode: SubmissionMode;
   planMode: boolean;
-  onModeChange: (mode: SubmissionMode) => void;
   onPlanModeChange: () => void;
   onAttach: () => void;
 };
 
 export function ComposerOptions({
-  activeTurnId,
   disabled,
-  mode,
   planMode,
-  onModeChange,
   onPlanModeChange,
   onAttach,
 }: ComposerOptionsProps) {
-  const modes = availableSubmissionModes(activeTurnId);
   return (
     <div className="flex flex-wrap gap-2">
-      <div className="flex items-center gap-1">
-        <AdjustmentsHorizontalIcon
-          aria-hidden="true"
-          className="size-4 text-base-content/60"
-        />
-        <select
-          className="select select-bordered select-sm"
-          value={modes.includes(mode) ? mode : "send"}
-          onChange={(event) =>
-            onModeChange(event.target.value as SubmissionMode)
-          }
-          disabled={disabled}
-          aria-label="Submission mode"
-        >
-          <option value="send">{submissionModeLabel("send")}</option>
-          <option value="steer" disabled={!modes.includes("steer")}>
-            {submissionModeLabel("steer")}
-          </option>
-          <option value="queue" disabled={!modes.includes("queue")}>
-            {submissionModeLabel("queue")}
-          </option>
-        </select>
-      </div>
       <button
         className={`btn btn-sm ${planMode ? "btn-secondary" : "btn-ghost"}`}
         type="button"
@@ -75,5 +40,56 @@ export function ComposerOptions({
         Attach image
       </button>
     </div>
+  );
+}
+
+type SubmissionModeMenuProps = {
+  activeTurnId: string | null;
+  disabled: boolean;
+  mode: SubmissionMode;
+  onModeChange: (mode: SubmissionMode) => void;
+};
+
+export function SubmissionModeMenu({
+  activeTurnId,
+  disabled,
+  mode,
+  onModeChange,
+}: SubmissionModeMenuProps) {
+  const modes = availableSubmissionModes(activeTurnId);
+  const options: SubmissionMode[] = ["send", "steer", "queue"];
+
+  return (
+    <details className="dropdown dropdown-end">
+      <summary
+        className="btn btn-primary btn-sm join-item px-2"
+        aria-label="Submission mode menu"
+        role="button"
+      >
+        <span aria-hidden="true">▾</span>
+      </summary>
+      <ul
+        className="menu dropdown-content z-20 mt-2 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+        role="menu"
+      >
+        {options.map((option) => (
+          <li key={option}>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={disabled || !modes.includes(option)}
+              aria-current={mode === option ? "true" : undefined}
+              onClick={() => onModeChange(option)}
+            >
+              {option === "send"
+                ? "Send"
+                : option === "steer"
+                  ? "Steer active turn"
+                  : "Queue next message"}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }

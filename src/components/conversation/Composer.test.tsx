@@ -114,4 +114,83 @@ describe("Composer", () => {
       "diagram.png",
     );
   });
+
+  it("keeps Enter for newlines and sends with Shift+Enter", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    const message = screen.getByLabelText("Message");
+    fireEvent.change(message, { target: { value: "Do the work" } });
+
+    fireEvent.keyDown(message, { key: "Enter", shiftKey: false });
+    expect(sendMutation).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(message, { key: "Enter", shiftKey: true });
+
+    await waitFor(() => expect(sendMutation).toHaveBeenCalled());
+    expect(sendMutation).toHaveBeenCalledWith({
+      threadId: "thread-1",
+      input: [{ type: "text", text: "Do the work", text_elements: [] }],
+      turnTrigger: null,
+    });
+  });
+
+  it("does not submit an empty message with Shift+Enter", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.keyDown(screen.getByLabelText("Message"), {
+      key: "Enter",
+      shiftKey: true,
+    });
+
+    await waitFor(() => expect(sendMutation).not.toHaveBeenCalled());
+  });
+
+  it("uses the selected queue mode from the submission menu", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId="turn-1" />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Queue this" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Submission mode menu" }),
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: /Queue/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Queue" }));
+
+    await waitFor(() => expect(queueMutation).toHaveBeenCalled());
+    expect(queueMutation).toHaveBeenCalledWith({
+      threadId: "thread-1",
+      input: [{ type: "text", text: "Queue this", text_elements: [] }],
+    });
+  });
+
+  it("keeps image-only input sendable with Shift+Enter", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Image attachment"), {
+      target: {
+        files: [new File(["png"], "diagram.png", { type: "image/png" })],
+      },
+    });
+    fireEvent.keyDown(screen.getByLabelText("Message"), {
+      key: "Enter",
+      shiftKey: true,
+    });
+
+    await waitFor(() => expect(sendMutation).toHaveBeenCalled());
+    expect(sendMutation).toHaveBeenCalledWith({
+      threadId: "thread-1",
+      input: [
+        {
+          type: "image",
+          url: expect.stringMatching(/^data:image\/png;base64,/),
+        },
+      ],
+      turnTrigger: null,
+    });
+  });
 });
