@@ -64,6 +64,11 @@ describe("ComposerOptions", () => {
     );
 
     expect(screen.queryByRole("combobox")).toBeNull();
+    expect(
+      screen.getByLabelText("Submission mode menu").parentElement?.className.split(
+        /\s+/,
+      ),
+    ).toContain("dropdown-top");
     fireEvent.click(
       screen.getByLabelText("Submission mode menu"),
     );

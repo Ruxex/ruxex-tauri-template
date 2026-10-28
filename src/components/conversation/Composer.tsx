@@ -84,7 +84,11 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
   }
 
   function handleMessageKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== "Enter" || !event.shiftKey) {
+    if (
+      event.nativeEvent.isComposing ||
+      event.key !== "Enter" ||
+      !event.shiftKey
+    ) {
       return;
     }
     event.preventDefault();

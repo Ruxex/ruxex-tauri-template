@@ -135,6 +135,21 @@ describe("Composer", () => {
     });
   });
 
+  it("does not send while an IME composition is active", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    const message = screen.getByLabelText("Message");
+    fireEvent.change(message, { target: { value: "入力中" } });
+    fireEvent.keyDown(message, {
+      key: "Enter",
+      shiftKey: true,
+      isComposing: true,
+    });
+
+    await waitFor(() => expect(sendMutation).not.toHaveBeenCalled());
+  });
+
   it("does not submit an empty message with Shift+Enter", async () => {
     const { Composer } = await import("./Composer");
 
