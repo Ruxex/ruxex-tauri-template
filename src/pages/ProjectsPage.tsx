@@ -27,18 +27,7 @@ export function ProjectsPage() {
         </Link>
       </header>
 
-      <section aria-labelledby="project-list-heading">
-        <div className="flex items-end justify-between gap-4 border-b border-base-300 pb-3">
-          <div>
-            <h2 className="text-lg font-semibold" id="project-list-heading">
-              Your projects
-            </h2>
-            <p className="mt-1 text-sm text-base-content/60">
-              {projects.data?.data.length ?? 0} workspace
-              {(projects.data?.data.length ?? 0) === 1 ? "" : "s"}
-            </p>
-          </div>
-        </div>
+      <section>
         <div className="pt-4">
           {projects.isLoading && <LoadingState size="sm" />}
           {projects.isError && (
@@ -53,10 +42,6 @@ export function ProjectsPage() {
                   className="mx-auto size-8 text-base-content/35"
                 />
                 <h3 className="mt-3 font-semibold">No projects yet</h3>
-                <p className="mt-1 text-sm text-base-content/60">
-                  Create your first project to keep its chats and workspace
-                  together.
-                </p>
                 <Link
                   className="btn btn-sm btn-primary mt-4"
                   to="/projects/new"
@@ -66,65 +51,67 @@ export function ProjectsPage() {
                 </Link>
               </div>
             )}
-          <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
-            <table aria-label="Projects" className="table">
-              <thead>
-                <tr>
-                  <th>Project</th>
-                  <th>Workspace</th>
-                  <th>Roots</th>
-                  <th>
-                    <span className="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.data?.data.map((project) => {
-                  const projectMetadata = parseProjectMetadata(
-                    project.metadata,
-                  );
-                  return (
-                    <tr className="hover" key={project.id}>
-                      <td>
-                        <Link
-                          className="flex min-w-40 items-center gap-3 font-semibold hover:text-primary"
-                          to={`/projects/${project.id}`}
-                        >
-                          <span
-                            className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
+          {projects.data?.data.length ? (
+            <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
+              <table aria-label="Projects" className="table">
+                <thead>
+                  <tr>
+                    <th>Project</th>
+                    <th>Workspace</th>
+                    <th>Roots</th>
+                    <th>
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.data?.data.map((project) => {
+                    const projectMetadata = parseProjectMetadata(
+                      project.metadata,
+                    );
+                    return (
+                      <tr className="hover" key={project.id}>
+                        <td>
+                          <Link
+                            className="flex min-w-40 items-center gap-3 font-semibold hover:text-primary"
+                            to={`/projects/${project.id}`}
                           >
-                            <ProjectIcon
-                              aria-hidden="true"
-                              className="size-4"
-                              icon={projectMetadata.icon}
-                            />
+                            <span
+                              className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
+                            >
+                              <ProjectIcon
+                                aria-hidden="true"
+                                className="size-4"
+                                icon={projectMetadata.icon}
+                              />
+                            </span>
+                            <span className="truncate">{project.name}</span>
+                          </Link>
+                        </td>
+                        <td className="max-w-80">
+                          <span className="block truncate font-mono text-xs text-base-content/65">
+                            {project.roots[0]?.path ??
+                              "No workspace root configured"}
                           </span>
-                          <span className="truncate">{project.name}</span>
-                        </Link>
-                      </td>
-                      <td className="max-w-80">
-                        <span className="block truncate font-mono text-xs text-base-content/65">
-                          {project.roots[0]?.path ??
-                            "No workspace root configured"}
-                        </span>
-                      </td>
-                      <td className="text-sm text-base-content/70">
-                        {project.roots.length}
-                      </td>
-                      <td className="text-right">
-                        <Link
-                          className="btn btn-ghost btn-sm"
-                          to={`/projects/${project.id}`}
-                        >
-                          Open
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="text-sm text-base-content/70">
+                          {project.roots.length}
+                        </td>
+                        <td className="text-right">
+                          <Link
+                            className="btn btn-ghost btn-sm"
+                            to={`/projects/${project.id}`}
+                          >
+                            Open
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
         </div>
       </section>
     </div>

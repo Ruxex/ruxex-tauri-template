@@ -37,6 +37,7 @@ describe("ProjectsPage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Your projects" })).toBeNull();
     expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Project" })).toBeTruthy();
     expect(screen.queryByRole("columnheader", { name: "Type" })).toBeNull();
@@ -52,5 +53,27 @@ describe("ProjectsPage", () => {
       screen.getByRole("link", { name: "New project" }).getAttribute("href"),
     ).toBe("/projects/new");
     expect(screen.queryByLabelText("Project name")).toBeNull();
+  });
+
+  it("keeps the empty state concise without an empty project table", async () => {
+    useProjectList.mockReturnValue({
+      data: { data: [] },
+      isLoading: false,
+      isError: false,
+    });
+    const { ProjectsPage } = await import("./ProjectsPage");
+
+    render(
+      <MemoryRouter>
+        <ProjectsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("No projects yet")).toBeTruthy();
+    expect(screen.queryByText(/Create your first project/)).toBeNull();
+    expect(screen.queryByRole("table", { name: "Projects" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Create project" }).getAttribute("href"),
+    ).toBe("/projects/new");
   });
 });
