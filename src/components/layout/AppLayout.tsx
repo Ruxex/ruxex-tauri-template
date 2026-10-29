@@ -55,7 +55,7 @@ export function AppLayout() {
         projectTitle={project.data?.project.name}
       />
       <div className="flex min-h-0 flex-1">
-        {!preferences.sidebarCollapsed && activePanel !== "projects" && (
+        {!preferences.sidebarCollapsed && (
           <button
             aria-label="Close sidebar overlay"
             className="workbench-sidebar-backdrop"

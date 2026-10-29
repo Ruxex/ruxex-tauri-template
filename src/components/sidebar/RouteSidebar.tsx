@@ -21,6 +21,8 @@ export function SidebarContextPanel({
 }) {
   switch (activePanel) {
     case "home":
+    case "account":
+    case "projects":
       return (
         <HomeSidebar onClose={onClose} selectedThreadId={selectedThreadId} />
       );
@@ -28,8 +30,6 @@ export function SidebarContextPanel({
       return <PluginsSidebar onClose={onClose} />;
     case "settings":
       return <SettingsSidebar onClose={onClose} />;
-    case "projects":
-      return null;
     default: {
       const panel = SIDEBAR_PANELS.find((item) => item.id === activePanel);
       return panel ? <RouteSidebar panel={panel} onClose={onClose} /> : null;

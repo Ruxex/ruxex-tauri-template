@@ -1,5 +1,4 @@
 import { ChatSidebarSections } from "../chats/ChatSidebarSections";
-import { SidebarHeader } from "./SidebarHeader";
 
 export function HomeSidebar({
   onClose,
@@ -10,10 +9,9 @@ export function HomeSidebar({
 }) {
   return (
     <aside
-      aria-label="Home sidebar"
+      aria-label="Chat sidebar"
       className="flex h-full min-h-0 w-72 flex-col bg-base-100 p-4"
     >
-      <SidebarHeader label="Home" onClose={onClose} />
       <ChatSidebarSections
         onClose={onClose}
         selectedThreadId={selectedThreadId}

@@ -93,7 +93,7 @@ describe("AppLayout", () => {
     expect(update).toHaveBeenCalledWith({ sidebarCollapsed: true });
   });
 
-  it("does not leave an overlay over the project page", () => {
+  it("shows the sidebar overlay on the project page", () => {
     useUiPreferences.mockReturnValue({
       preferences: {
         sidebarCollapsed: false,
@@ -108,8 +108,8 @@ describe("AppLayout", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: "Close sidebar overlay" }),
-    ).toBeNull();
+      screen.getByRole("button", { name: "Close sidebar overlay" }),
+    ).toBeTruthy();
   });
 
   it("uses the selected thread title in the shared navigation bar", () => {

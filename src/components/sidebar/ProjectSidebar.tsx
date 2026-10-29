@@ -39,7 +39,7 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar flex h-full min-h-0 shrink-0 ${collapsed || activePanel === "projects" ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
+      className={`workbench-sidebar flex h-full min-h-0 shrink-0 ${collapsed ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
       aria-label="Workspace sidebar"
     >
       <nav
@@ -72,7 +72,7 @@ export function ProjectSidebar({
           ))}
         </div>
       </nav>
-      {!collapsed && activePanel !== "projects" && (
+      {!collapsed && (
         <SidebarContextPanel
           activePanel={activePanel}
           onClose={onToggle}

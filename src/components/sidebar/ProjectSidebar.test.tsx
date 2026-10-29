@@ -74,7 +74,7 @@ describe("ProjectSidebar", () => {
     });
   });
 
-  it("renders the home context panel beside the icon rail", async () => {
+  it("renders the shared chat panel beside the icon rail on the home route", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
     render(
@@ -88,13 +88,12 @@ describe("ProjectSidebar", () => {
       </MemoryRouter>,
     );
 
-    const panel = screen.getByRole("complementary", {
-      name: "Home sidebar",
-    });
+    const panel = screen.getByRole("complementary", { name: "Chat sidebar" });
 
     expect(panel.querySelector('a[href="/"]')).toBeTruthy();
     expect(within(panel).getByText("Recent chats")).toBeTruthy();
     expect(within(panel).getByText("Projects")).toBeTruthy();
+    expect(within(panel).queryByText("Home")).toBeNull();
     expect(
       within(panel)
         .getByRole("link", { name: /Project Alpha/ })
@@ -120,24 +119,35 @@ describe("ProjectSidebar", () => {
     });
   });
 
-  it("does not mount a context panel for projects", async () => {
-    const { ProjectSidebar } = await import("./ProjectSidebar");
+  it.each(["account", "projects"] as const)(
+    "renders the shared chat panel for %s",
+    async (activePanel) => {
+      const { ProjectSidebar } = await import("./ProjectSidebar");
 
-    render(
-      <MemoryRouter>
-        <ProjectSidebar
-          activePanel="projects"
-          collapsed={false}
-          onPanelChange={vi.fn()}
-          onToggle={vi.fn()}
-        />
-      </MemoryRouter>,
-    );
+      render(
+        <MemoryRouter>
+          <ProjectSidebar
+            activePanel={activePanel}
+            collapsed={false}
+            onPanelChange={vi.fn()}
+            onToggle={vi.fn()}
+          />
+        </MemoryRouter>,
+      );
 
-    expect(
-      screen.queryByRole("complementary", { name: "Projects sidebar" }),
-    ).toBeNull();
-  });
+      const panel = screen.getByRole("complementary", {
+        name: "Chat sidebar",
+      });
+      expect(within(panel).getByText("Recent chats")).toBeTruthy();
+      expect(within(panel).getByText("Projects")).toBeTruthy();
+      expect(
+        within(panel).getByRole("link", { name: /Project Alpha/ }),
+      ).toBeTruthy();
+      expect(
+        within(panel).getByRole("link", { name: /Build the sidebar/ }),
+      ).toBeTruthy();
+    },
+  );
 
   it("renders plugin and skill navigation with collapsed installed plugins", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
