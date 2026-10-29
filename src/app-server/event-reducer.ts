@@ -159,6 +159,7 @@ function reduceNotification(
         ...thread,
         activeTurnId: turn.id,
         status: "running",
+        items: [],
         completedTurn: null,
       }));
     }

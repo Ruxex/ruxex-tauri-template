@@ -46,7 +46,7 @@ export function TaskActivityTimeline({
       {pendingRequests.map((pending) => (
         <ServerRequestCard
           connected={connected}
-          key={String(pending.requestId)}
+          key={`request:${String(pending.requestId)}`}
           onReject={(message) => onReject(pending.requestId, message)}
           onResolve={(result) => onResolve(pending.requestId, result)}
           pending={pending}
@@ -54,9 +54,12 @@ export function TaskActivityTimeline({
       ))}
       {items.map((item) =>
         item.category === "message" ? (
-          <ConversationItem item={item} key={item.id} />
+          <ConversationItem
+            item={item}
+            key={`item:${item.turnId}:${item.id}`}
+          />
         ) : (
-          <ActivityItem item={item} key={item.id} />
+          <ActivityItem item={item} key={`item:${item.turnId}:${item.id}`} />
         ),
       )}
       {items.length === 0 && pendingRequests.length === 0 && (

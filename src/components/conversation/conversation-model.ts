@@ -1,5 +1,8 @@
 import type { v2 } from "../../protocol";
-import type { LiveConversationItem } from "../../app-server/event-reducer";
+import type {
+  LiveConversationItem,
+  ThreadExecutionState,
+} from "../../app-server/event-reducer";
 
 export type ConversationViewItem = {
   id: string;
@@ -17,20 +20,25 @@ export type ConversationViewItem = {
 export function mergeConversationItems(
   authoritative: v2.ThreadItemsListResponse["data"],
   live: LiveConversationItem[],
+  liveStatus?: ThreadExecutionState["status"],
 ): ConversationViewItem[] {
-  const liveById = new Map(live.map((item) => [item.id, item]));
+  const liveById = new Map(
+    live.map((item) => [conversationItemKey(item.turnId, item.id), item]),
+  );
   const seen = new Set<string>();
   const merged = authoritative.map(({ turnId, item }) => {
-    seen.add(item.id);
-    const liveItem = liveById.get(item.id);
+    const key = conversationItemKey(turnId, item.id);
+    seen.add(key);
+    const liveItem = liveById.get(key);
     return liveItem
-      ? liveItemToViewItem(liveItem)
+      ? liveItemToViewItem(liveItem, liveStatus)
       : normalizeThreadItem(turnId, item);
   });
 
   for (const item of live) {
-    if (!seen.has(item.id)) {
-      merged.push(liveItemToViewItem(item));
+    const key = conversationItemKey(item.turnId, item.id);
+    if (!seen.has(key)) {
+      merged.push(liveItemToViewItem(item, liveStatus));
     }
   }
   return merged;
@@ -173,10 +181,16 @@ export function canSteerTurn(activeTurnId: string | null): boolean {
   return Boolean(activeTurnId);
 }
 
-function liveItemToViewItem(item: LiveConversationItem): ConversationViewItem {
+function liveItemToViewItem(
+  item: LiveConversationItem,
+  liveStatus?: ThreadExecutionState["status"],
+): ConversationViewItem {
   if (item.raw) {
     const normalized = normalizeThreadItem(item.turnId, item.raw);
-    return item.text ? { ...normalized, text: item.text } : normalized;
+    const viewItem = item.text
+      ? { ...normalized, text: item.text }
+      : normalized;
+    return normalizeLiveActivityStatus(viewItem, liveStatus);
   }
 
   const isMessage = item.type === "agentMessage";
@@ -198,8 +212,50 @@ function liveItemToViewItem(item: LiveConversationItem): ConversationViewItem {
     category: "activity",
     title: liveActivityTitle(item.type),
     text: item.text,
-    metadata: { status: "inProgress" },
+    metadata: { status: activityStatusForLiveStatus(liveStatus) },
   };
+}
+
+function conversationItemKey(turnId: string, itemId: string): string {
+  return `${turnId}:${itemId}`;
+}
+
+function normalizeLiveActivityStatus(
+  item: ConversationViewItem,
+  liveStatus?: ThreadExecutionState["status"],
+): ConversationViewItem {
+  if (
+    !item.metadata ||
+    !["inProgress", "running"].includes(item.metadata.status) ||
+    liveStatus === undefined ||
+    liveStatus === "running" ||
+    liveStatus === "resynchronizing"
+  ) {
+    return item;
+  }
+
+  return {
+    ...item,
+    metadata: {
+      ...item.metadata,
+      status: activityStatusForLiveStatus(liveStatus),
+    },
+  };
+}
+
+function activityStatusForLiveStatus(
+  liveStatus?: ThreadExecutionState["status"],
+): string {
+  switch (liveStatus) {
+    case "failed":
+      return "failed";
+    case "interrupted":
+      return "interrupted";
+    case "completed":
+      return "completed";
+    default:
+      return "inProgress";
+  }
 }
 
 function liveActivityTitle(type: string): string {

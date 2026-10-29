@@ -2,6 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { ConversationViewItem } from "../conversation/conversation-model";
@@ -13,8 +14,13 @@ const serverRequest = vi.hoisted(() => vi.fn());
 
 vi.mock("../conversation/ActivityItem", () => ({
   ActivityItem: (props: { item: ConversationViewItem }) => {
+    const [instance] = useState(() => Math.random().toString());
     activity(props);
-    return <div data-testid="activity-item">Activity: {props.item.title}</div>;
+    return (
+      <div data-instance={instance} data-testid="activity-item">
+        Activity: {props.item.title}
+      </div>
+    );
   },
 }));
 vi.mock("../conversation/ConversationItem", () => ({
@@ -149,5 +155,39 @@ describe("TaskActivityTimeline", () => {
     expect(
       screen.getByLabelText("Task activity").getAttribute("aria-busy"),
     ).toBe("false");
+  });
+
+  it("reconciles activities by turn and item identity", () => {
+    const baseItem: ConversationViewItem = {
+      id: "command-1",
+      turnId: "turn-1",
+      type: "commandExecution",
+      category: "activity",
+      title: "Command",
+      text: "first",
+    };
+    const props = {
+      connected: true,
+      items: [baseItem],
+      liveItems: [],
+      onReject: vi.fn(),
+      onResolve: vi.fn(),
+      pendingRequests: [],
+    };
+    const { rerender } = render(<TaskActivityTimeline {...props} />);
+    const firstInstance = screen
+      .getByTestId("activity-item")
+      .getAttribute("data-instance");
+
+    rerender(
+      <TaskActivityTimeline
+        {...props}
+        items={[{ ...baseItem, turnId: "turn-2", text: "second" }]}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("activity-item").getAttribute("data-instance"),
+    ).not.toBe(firstInstance);
   });
 });

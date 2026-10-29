@@ -45,6 +45,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const items = mergeConversationItems(
     conversation.data.items.data,
     liveThread?.items ?? [],
+    liveThread?.status,
   );
   const latestTurn = conversation.data.turns.data.at(-1);
   const pendingRequests = Object.values(

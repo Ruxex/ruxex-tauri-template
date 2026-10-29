@@ -9,6 +9,29 @@ import {
 } from "./conversation-model";
 
 describe("conversation workspace selectors", () => {
+  function commandItem(
+    id: string,
+    command: string,
+    output: string,
+    status: "inProgress" | "completed",
+  ) {
+    return {
+      type: "commandExecution",
+      id,
+      pluginId: null,
+      scriptPath: null,
+      command,
+      cwd: "/workspace",
+      processId: null,
+      source: "agent",
+      status,
+      commandActions: [],
+      aggregatedOutput: output,
+      exitCode: status === "completed" ? 0 : null,
+      durationMs: null,
+    };
+  }
+
   it("renders authoritative transcript items and replaces a live streaming item by id", () => {
     const authoritative = [
       {
@@ -119,6 +142,55 @@ describe("conversation workspace selectors", () => {
       title: "MCP tool",
       metadata: { status: "inProgress" },
     });
+  });
+
+  it("matches live items by turn and item identity", () => {
+    const authoritative = [
+      {
+        turnId: "turn-1",
+        item: commandItem("command-1", "echo old", "old output", "completed"),
+      },
+      {
+        turnId: "turn-2",
+        item: commandItem("command-1", "echo new", "saved output", "completed"),
+      },
+    ] as never;
+    const live: LiveConversationItem[] = [
+      {
+        id: "command-1",
+        threadId: "thread-1",
+        turnId: "turn-2",
+        type: "commandExecution",
+        text: "live output",
+        raw: commandItem("command-1", "echo new", "", "inProgress") as never,
+      },
+    ];
+
+    expect(mergeConversationItems(authoritative, live)).toMatchObject([
+      { turnId: "turn-1", text: "old output" },
+      {
+        turnId: "turn-2",
+        text: "live output",
+        metadata: { status: "inProgress" },
+      },
+    ]);
+  });
+
+  it("stops a raw live activity spinner when its turn has completed", () => {
+    const live: LiveConversationItem[] = [
+      {
+        id: "command-1",
+        threadId: "thread-1",
+        turnId: "turn-1",
+        type: "commandExecution",
+        text: "output",
+        raw: commandItem("command-1", "sleep 1", "", "inProgress") as never,
+      },
+    ];
+
+    const [item] = mergeConversationItems([], live, "completed");
+
+    expect(item).toMatchObject({ metadata: { status: "completed" } });
   });
 
   it("gives structured activities stable titles and useful summaries", () => {

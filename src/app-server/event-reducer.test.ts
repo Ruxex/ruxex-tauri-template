@@ -218,6 +218,48 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
+  it("starts a fresh live item window when a new turn starts", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/commandExecution/outputDelta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "command-1",
+          delta: "done\n",
+        },
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/completed",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "completed", items: [] },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-2", status: "inProgress" },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]).toMatchObject({
+      activeTurnId: "turn-2",
+      status: "running",
+      items: [],
+    });
+  });
+
   it("keeps approval requests keyed by request id until resolved", () => {
     let state = createInitialEventState();
     const request = serverRequest({
