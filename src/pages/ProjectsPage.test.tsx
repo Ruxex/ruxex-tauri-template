@@ -77,6 +77,15 @@ describe("ProjectsPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Project name" }), {
       target: { value: "New project" },
     });
+    fireEvent.change(screen.getByRole("combobox", { name: "Project icon" }), {
+      target: { value: "code" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Project type" }), {
+      target: { value: "library" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Project color" }), {
+      target: { value: "violet" },
+    });
     fireEvent.click(
       screen.getByRole("button", { name: "Select workspace folder" }),
     );
@@ -90,6 +99,7 @@ describe("ProjectsPage", () => {
       expect.objectContaining({
         name: "New project",
         roots: [{ path: "/workspace/selected" }],
+        metadata: { icon: "code", type: "library", color: "violet" },
         idempotencyKey: expect.any(String),
       }),
       expect.objectContaining({ onSuccess: expect.any(Function) }),

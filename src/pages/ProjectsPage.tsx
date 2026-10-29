@@ -13,6 +13,16 @@ import {
   ErrorState,
   LoadingState,
 } from "../components/common/AsyncState";
+import { ProjectIcon } from "../components/projects/ProjectIcon";
+import { ProjectMetadataFields } from "../components/projects/ProjectMetadataFields";
+import {
+  DEFAULT_PROJECT_METADATA,
+  parseProjectMetadata,
+  projectColorClassName,
+  projectMetadataToRecord,
+  projectTypeLabel,
+  type ProjectMetadata,
+} from "../components/projects/project-metadata";
 
 function newIdempotencyKey() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -28,6 +38,9 @@ export function ProjectsPage() {
   const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
   const [name, setName] = useState("");
   const [root, setRoot] = useState("");
+  const [metadata, setMetadata] = useState<ProjectMetadata>(
+    DEFAULT_PROJECT_METADATA,
+  );
   const [rootSelectionError, setRootSelectionError] = useState<string | null>(
     null,
   );
@@ -59,12 +72,14 @@ export function ProjectsPage() {
       {
         name: projectName,
         roots: root.trim() ? [{ path: root.trim() }] : [],
+        metadata: projectMetadataToRecord(metadata),
         idempotencyKey: newIdempotencyKey(),
       },
       {
         onSuccess: () => {
           setName("");
           setRoot("");
+          setMetadata(DEFAULT_PROJECT_METADATA);
           setIsCreatePanelOpen(false);
         },
       },
@@ -173,6 +188,7 @@ export function ProjectsPage() {
                   </p>
                 )}
               </div>
+              <ProjectMetadataFields value={metadata} onChange={setMetadata} />
               <div className="flex justify-end">
                 <button
                   className="btn btn-primary min-h-11 whitespace-nowrap"
@@ -241,6 +257,7 @@ export function ProjectsPage() {
               <thead>
                 <tr>
                   <th>Project</th>
+                  <th>Type</th>
                   <th>Workspace</th>
                   <th>Roots</th>
                   <th>
@@ -249,18 +266,29 @@ export function ProjectsPage() {
                 </tr>
               </thead>
               <tbody>
-                {projects.data?.data.map((project) => (
+                {projects.data?.data.map((project) => {
+                  const projectMetadata = parseProjectMetadata(project.metadata);
+                  return (
                   <tr className="hover" key={project.id}>
                     <td>
                       <Link
                         className="flex min-w-40 items-center gap-3 font-semibold hover:text-primary"
                         to={`/projects/${project.id}`}
                       >
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <FolderIcon aria-hidden="true" className="size-4" />
+                        <span
+                          className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
+                        >
+                          <ProjectIcon
+                            aria-hidden="true"
+                            className="size-4"
+                            icon={projectMetadata.icon}
+                          />
                         </span>
                         <span className="truncate">{project.name}</span>
                       </Link>
+                    </td>
+                    <td className="whitespace-nowrap text-sm text-base-content/70">
+                      {projectTypeLabel(projectMetadata.type)}
                     </td>
                     <td className="max-w-80">
                       <span className="block truncate font-mono text-xs text-base-content/65">
@@ -279,7 +307,8 @@ export function ProjectsPage() {
                       </Link>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

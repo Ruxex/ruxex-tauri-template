@@ -20,6 +20,16 @@ import {
   ErrorState,
   LoadingState,
 } from "../components/common/AsyncState";
+import { ProjectIcon } from "../components/projects/ProjectIcon";
+import { ProjectMetadataFields } from "../components/projects/ProjectMetadataFields";
+import {
+  DEFAULT_PROJECT_METADATA,
+  parseProjectMetadata,
+  projectColorClassName,
+  projectMetadataToRecord,
+  projectTypeLabel,
+  type ProjectMetadata,
+} from "../components/projects/project-metadata";
 import { ThreadCard } from "../components/common/ThreadCard";
 
 export function ProjectHomePage() {
@@ -33,6 +43,9 @@ export function ProjectHomePage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editRoot, setEditRoot] = useState("");
+  const [editMetadata, setEditMetadata] = useState<ProjectMetadata>(
+    DEFAULT_PROJECT_METADATA,
+  );
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [rootSelectionError, setRootSelectionError] = useState<string | null>(
@@ -47,10 +60,12 @@ export function ProjectHomePage() {
   }
 
   const details = project.data.project;
+  const projectMetadata = parseProjectMetadata(details.metadata);
 
   function handleOpenEditDialog() {
     setEditName(details.name);
     setEditRoot(details.roots[0]?.path ?? "");
+    setEditMetadata(projectMetadata);
     setEditError(null);
     setRootSelectionError(null);
     setIsEditDialogOpen(true);
@@ -93,6 +108,7 @@ export function ProjectHomePage() {
         roots: editRoot.trim()
           ? [{ path: editRoot.trim() }, ...details.roots.slice(1)]
           : details.roots.slice(1),
+        metadata: projectMetadataToRecord(editMetadata, details.metadata),
       },
       {
         onError: (error) => setEditError(formatErrorMessage(error)),
@@ -125,18 +141,34 @@ export function ProjectHomePage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-primary">
-            Project
-          </p>
-          <h1 className="text-3xl font-semibold">{details.name}</h1>
-          <p className="mt-2 text-sm text-base-content/70">
-            {details.roots.length} workspace root
-            {details.roots.length === 1 ? "" : "s"}
-          </p>
-          <p className="mt-1 truncate text-xs text-base-content/60">
-            {details.roots[0]?.path ?? "No workspace root configured"}
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <span
+            className={`mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl ${projectColorClassName(projectMetadata.color)}`}
+          >
+            <ProjectIcon
+              aria-hidden="true"
+              className="size-6"
+              icon={projectMetadata.icon}
+            />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium uppercase tracking-wide text-primary">
+              Project
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-semibold">{details.name}</h1>
+              <span className="badge badge-ghost">
+                {projectTypeLabel(projectMetadata.type)}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-base-content/70">
+              {details.roots.length} workspace root
+              {details.roots.length === 1 ? "" : "s"}
+            </p>
+            <p className="mt-1 truncate text-xs text-base-content/60">
+              {details.roots[0]?.path ?? "No workspace root configured"}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
@@ -251,6 +283,10 @@ export function ProjectHomePage() {
                   </p>
                 )}
               </div>
+              <ProjectMetadataFields
+                value={editMetadata}
+                onChange={setEditMetadata}
+              />
               <div className="flex justify-end">
                 <button
                   className="btn btn-primary min-h-11 whitespace-nowrap"

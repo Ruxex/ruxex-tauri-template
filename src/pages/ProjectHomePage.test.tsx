@@ -112,6 +112,15 @@ describe("ProjectHomePage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Project name" }), {
       target: { value: "  Updated Ruxex  " },
     });
+    fireEvent.change(screen.getByRole("combobox", { name: "Project icon" }), {
+      target: { value: "code" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Project type" }), {
+      target: { value: "library" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Project color" }), {
+      target: { value: "violet" },
+    });
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
         name: "Selected workspace folder: /workspace",
@@ -131,6 +140,7 @@ describe("ProjectHomePage", () => {
         projectId: "project-1",
         name: "Updated Ruxex",
         roots: [{ path: "/workspace/selected" }],
+        metadata: { icon: "code", type: "library", color: "violet" },
       },
       expect.objectContaining({
         onError: expect.any(Function),
@@ -192,6 +202,7 @@ describe("ProjectHomePage", () => {
         projectId: "project-1",
         name: "Updated Ruxex",
         roots: [{ path: "/workspace" }, { path: "/workspace/extra" }],
+        metadata: { icon: "folder", type: "other", color: "blue" },
       },
       expect.anything(),
     );
