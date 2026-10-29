@@ -25,11 +25,11 @@ describe("ChatListItem", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen
-        .getByRole("link", { name: /Build the sidebar/ })
-        .getAttribute("href"),
-    ).toBe("/chat/thread-1");
+    const chatLink = screen.getByRole("link", { name: /Build the sidebar/ });
+    expect(chatLink.getAttribute("href")).toBe("/chat/thread-1");
+    expect(chatLink.className).toContain("px-3");
+    expect(chatLink.className).toContain("py-2");
+    expect(chatLink.className).not.toContain("p-3");
     expect(screen.getByText("Running")).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();
     expect(screen.getByText("feature/sidebar")).toBeTruthy();
