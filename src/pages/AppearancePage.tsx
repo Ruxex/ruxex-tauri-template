@@ -8,14 +8,16 @@ export function AppearancePage() {
     <div className="space-y-5">
       <h2 className="text-2xl font-semibold">Appearance</h2>
       <UiPreferencesCard
+        chatFontSize={preferences.chatFontSize}
         colorScheme={preferences.colorScheme}
-        density={preferences.density}
         onAccentColorChange={(accentColor) =>
           update({ theme: { ...preferences.theme, accentColor } })
         }
+        onChatFontSizeChange={(chatFontSize) => update({ chatFontSize })}
         onColorSchemeChange={(colorScheme) => update({ colorScheme })}
-        onDensityChange={(density) => update({ density })}
+        onUiFontSizeChange={(uiFontSize) => update({ uiFontSize })}
         theme={preferences.theme}
+        uiFontSize={preferences.uiFontSize}
       />
     </div>
   );

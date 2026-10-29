@@ -42,15 +42,17 @@ describe("settings and composer selectors", () => {
   it("updates only presentation preferences locally", () => {
     expect(
       updateUiPreferences(DEFAULT_UI_PREFERENCES, {
-        density: "compact",
+        chatFontSize: 24,
         colorScheme: "dark",
         theme: { accentColor: "violet" },
+        uiFontSize: 12,
       }),
     ).toMatchObject({
-      density: "compact",
+      chatFontSize: 24,
       colorScheme: "dark",
       theme: { accentColor: "violet" },
-      version: 4,
+      uiFontSize: 12,
+      version: 5,
     });
   });
 });

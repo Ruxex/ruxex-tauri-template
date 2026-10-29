@@ -99,10 +99,12 @@ describe("settings card layout", () => {
         <CapabilitiesCard capabilities={{ browser: true, shell: false }} />
         <UiPreferencesCard
           onAccentColorChange={vi.fn()}
+          onChatFontSizeChange={vi.fn()}
           onColorSchemeChange={vi.fn()}
+          onUiFontSizeChange={vi.fn()}
           colorScheme="system"
-          density="comfortable"
-          onDensityChange={vi.fn()}
+          chatFontSize={16}
+          uiFontSize={16}
           theme={{ accentColor: "blue" }}
         />
       </>,

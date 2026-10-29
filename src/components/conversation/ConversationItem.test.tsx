@@ -22,7 +22,7 @@ describe("ConversationItem", () => {
       />,
     );
 
-    expect(screen.getByText("You")).toBeTruthy();
+    expect(screen.queryByText("You")).toBeNull();
     expect(screen.getByText("Inspect").tagName).toBe("STRONG");
     expect(screen.getByText("src").tagName).toBe("CODE");
     expect(screen.getByRole("article").className).toContain("chat-end");

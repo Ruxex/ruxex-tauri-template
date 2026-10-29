@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_UI_PREFERENCES,
@@ -20,14 +20,15 @@ function Probe() {
       type="button"
       onClick={() =>
         update({
+          chatFontSize: 24,
           colorScheme: "dark",
-          density: "compact",
           theme: { accentColor: "violet" },
+          uiFontSize: 12,
         })
       }
     >
       {preferences.colorScheme}:{preferences.theme.accentColor}:
-      {preferences.density}
+      {preferences.chatFontSize}px:{preferences.uiFontSize}px
     </button>
   );
 }
@@ -36,7 +37,8 @@ describe("UI preference persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.dataset.theme = "";
-    document.documentElement.dataset.density = "";
+    document.documentElement.dataset.chatFontSize = "";
+    document.documentElement.dataset.uiFontSize = "";
   });
 
   it("uses defaults for missing, malformed, and versioned data", () => {
@@ -55,14 +57,16 @@ describe("UI preference persistence", () => {
           sidebarCollapsed: true,
           colorScheme: "dark",
           theme: { accentColor: "violet" },
-          density: "compact",
+          chatFontSize: 24,
+          uiFontSize: 12,
         }),
       ),
     ).toMatchObject({
       sidebarCollapsed: true,
       colorScheme: "dark",
       theme: { accentColor: "violet" },
-      density: "compact",
+      chatFontSize: 24,
+      uiFontSize: 12,
     });
     expect(
       parseUiPreferences(
@@ -84,7 +88,7 @@ describe("UI preference persistence", () => {
     });
 
     expect(next).toMatchObject({
-      version: 4,
+      version: 5,
       colorScheme: "light",
       theme: { accentColor: "rose" },
     });
@@ -107,20 +111,41 @@ describe("UI preference persistence", () => {
     );
 
     expect(screen.getByRole("button").textContent).toBe(
-      "light:emerald:comfortable",
+      "light:emerald:16px:16px",
     );
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.dataset.accent).toBe("emerald");
     fireEvent.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("button").textContent).toBe("dark:violet:compact");
+    expect(screen.getByRole("button").textContent).toBe(
+      "dark:violet:24px:12px",
+    );
     expect(
       JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
     ).toMatchObject({
       colorScheme: "dark",
       theme: { accentColor: "violet" },
-      density: "compact",
+      chatFontSize: 24,
+      uiFontSize: 12,
     });
-    expect(document.documentElement.dataset.density).toBe("compact");
+    expect(document.documentElement.dataset.chatFontSize).toBe("24");
+    expect(document.documentElement.dataset.uiFontSize).toBe("12");
+  });
+
+  it("resolves system color mode from the OS preference", () => {
+    const matchMedia = vi.fn().mockReturnValue({ matches: true });
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: matchMedia,
+    });
+
+    render(
+      <UiPreferencesProvider>
+        <Probe />
+      </UiPreferencesProvider>,
+    );
+
+    expect(matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: dark)");
+    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 });

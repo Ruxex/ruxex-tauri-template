@@ -132,7 +132,7 @@ describe("AppLayout", () => {
 
   it("keeps the chat chrome fixed while the content section scrolls", () => {
     useUiPreferences.mockReturnValue({
-      preferences: { sidebarCollapsed: false },
+      preferences: { sidebarCollapsed: false, chatFontSize: 18 },
       update: vi.fn(),
     });
 
@@ -153,6 +153,7 @@ describe("AppLayout", () => {
     expect(section?.className).toContain("min-h-0");
     expect(section?.className).toContain("overflow-y-auto");
     expect(section?.className).toContain("p-0");
+    expect(section?.getAttribute("data-chat-font-size")).toBe("18");
     expect(main.getAttribute("data-conversation-scroll")).toBeNull();
     expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
   });

@@ -15,12 +15,17 @@ import type {
 import type {
   UiAccentColor,
   UiColorScheme,
-  UiDensity,
+  UiFontSize,
   UiLanguage,
   UiNotificationSound,
   UiTheme,
 } from "../../app/ui-preferences";
-import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
+import {
+  UI_FONT_SIZE_MAX,
+  UI_FONT_SIZE_MIN,
+  UI_NOTIFICATION_SOUND_OPTIONS,
+  clampUiFontSize,
+} from "../../app/ui-preferences";
 import { formatErrorMessage } from "../../app/error-message";
 
 export type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -318,19 +323,23 @@ export function NotificationsCard({
 type UiPreferencesCardProps = {
   colorScheme: UiColorScheme;
   theme: UiTheme;
-  density: UiDensity;
+  chatFontSize: UiFontSize;
+  uiFontSize: UiFontSize;
   onColorSchemeChange: (colorScheme: UiColorScheme) => void;
   onAccentColorChange: (accentColor: UiAccentColor) => void;
-  onDensityChange: (density: UiDensity) => void;
+  onChatFontSizeChange: (fontSize: UiFontSize) => void;
+  onUiFontSizeChange: (fontSize: UiFontSize) => void;
 };
 
 export function UiPreferencesCard({
   colorScheme,
   theme,
-  density,
+  chatFontSize,
+  uiFontSize,
   onColorSchemeChange,
   onAccentColorChange,
-  onDensityChange,
+  onChatFontSizeChange,
+  onUiFontSizeChange,
 }: UiPreferencesCardProps) {
   return (
     <SettingsPanel
@@ -369,18 +378,43 @@ export function UiPreferencesCard({
             <option value="rose">Rose</option>
           </select>
         </SettingControlRow>
-        <SettingControlRow controlId="settings-density" label="Density">
-          <select
-            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
-            id="settings-density"
-            value={density}
-            onChange={(event) =>
-              onDensityChange(event.target.value as UiDensity)
-            }
-          >
-            <option value="comfortable">Comfortable</option>
-            <option value="compact">Compact</option>
-          </select>
+        <SettingControlRow
+          controlId="settings-chat-font-size"
+          label="Chat font size"
+        >
+          <input
+            className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+            id="settings-chat-font-size"
+            max={UI_FONT_SIZE_MAX}
+            min={UI_FONT_SIZE_MIN}
+            onBlur={() => onChatFontSizeChange(clampUiFontSize(chatFontSize))}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (Number.isFinite(value)) onChatFontSizeChange(value);
+            }}
+            step="1"
+            type="number"
+            value={chatFontSize}
+          />
+        </SettingControlRow>
+        <SettingControlRow
+          controlId="settings-ui-font-size"
+          label="UI font size"
+        >
+          <input
+            className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+            id="settings-ui-font-size"
+            max={UI_FONT_SIZE_MAX}
+            min={UI_FONT_SIZE_MIN}
+            onBlur={() => onUiFontSizeChange(clampUiFontSize(uiFontSize))}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (Number.isFinite(value)) onUiFontSizeChange(value);
+            }}
+            step="1"
+            type="number"
+            value={uiFontSize}
+          />
         </SettingControlRow>
       </div>
     </SettingsPanel>

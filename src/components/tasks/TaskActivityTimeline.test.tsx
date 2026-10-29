@@ -146,6 +146,9 @@ describe("TaskActivityTimeline", () => {
     expect(screen.getByText("Message: Implemented the change")).toBeTruthy();
     expect(screen.getByText("Activity: Command")).toBeTruthy();
     expect(screen.getByText("Pending request: 42")).toBeTruthy();
+    const timeline = screen.getByRole("region", { name: "Task activity" });
+    expect(timeline.className).not.toContain("border");
+    expect(timeline.className).not.toContain("rounded-box");
     fireEvent.click(screen.getByRole("button", { name: "Resolve request" }));
 
     await vi.waitFor(() =>

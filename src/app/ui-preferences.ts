@@ -8,7 +8,7 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 4;
+const UI_PREFERENCES_VERSION = 5;
 
 export type UiColorScheme = "system" | "light" | "dark";
 export type UiLanguage = "system" | "en" | "ja";
@@ -21,6 +21,18 @@ export const UI_ACCENT_COLORS = [
 ] as const;
 export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export type UiTheme = { accentColor: UiAccentColor };
+export const UI_FONT_SIZE_MIN = 10;
+export const UI_FONT_SIZE_MAX = 32;
+export const DEFAULT_UI_FONT_SIZE = 16;
+export type UiFontSize = number;
+
+export function clampUiFontSize(value: number): UiFontSize {
+  if (!Number.isFinite(value)) return DEFAULT_UI_FONT_SIZE;
+  return Math.min(
+    UI_FONT_SIZE_MAX,
+    Math.max(UI_FONT_SIZE_MIN, Math.round(value)),
+  );
+}
 export const UI_NOTIFICATION_SOUND_OPTIONS = [
   { value: "system", label: "System default" },
   { value: "Ping", label: "Ping (macOS)" },
@@ -34,8 +46,6 @@ export type UiNotifications = {
   desktop: boolean;
   sound: UiNotificationSound;
 };
-export type UiDensity = "comfortable" | "compact";
-
 export type UiPreferences = {
   version: typeof UI_PREFERENCES_VERSION;
   sidebarCollapsed: boolean;
@@ -43,7 +53,8 @@ export type UiPreferences = {
   notifications: UiNotifications;
   colorScheme: UiColorScheme;
   theme: UiTheme;
-  density: UiDensity;
+  chatFontSize: UiFontSize;
+  uiFontSize: UiFontSize;
 };
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -53,7 +64,8 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   notifications: { desktop: true, sound: "system" },
   colorScheme: "system",
   theme: { accentColor: "blue" },
-  density: "comfortable",
+  chatFontSize: DEFAULT_UI_FONT_SIZE,
+  uiFontSize: DEFAULT_UI_FONT_SIZE,
 };
 
 export type UiPreferencePatch = Partial<Omit<UiPreferences, "version">>;
@@ -90,6 +102,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
       (parsed.version !== 1 &&
         parsed.version !== 2 &&
         parsed.version !== 3 &&
+        parsed.version !== 4 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
@@ -136,10 +149,13 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
           DEFAULT_UI_PREFERENCES.theme.accentColor,
         ),
       },
-      density: readEnum(
-        parsed.density,
-        ["comfortable", "compact"],
-        DEFAULT_UI_PREFERENCES.density,
+      chatFontSize: readFontSize(
+        parsed.chatFontSize,
+        DEFAULT_UI_PREFERENCES.chatFontSize,
+      ),
+      uiFontSize: readFontSize(
+        parsed.uiFontSize,
+        DEFAULT_UI_PREFERENCES.uiFontSize,
       ),
     };
   } catch {
@@ -165,11 +181,31 @@ function readEnum<T extends string>(
     : fallback;
 }
 
+function readFontSize(value: unknown, fallback: UiFontSize): UiFontSize {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= UI_FONT_SIZE_MIN &&
+    value <= UI_FONT_SIZE_MAX
+    ? value
+    : fallback;
+}
+
 function readStoredPreferences(): UiPreferences {
   if (typeof window === "undefined") {
     return DEFAULT_UI_PREFERENCES;
   }
   return parseUiPreferences(window.localStorage.getItem(UI_PREFERENCES_KEY));
+}
+
+function resolvedColorScheme(colorScheme: UiColorScheme): "light" | "dark" {
+  if (colorScheme !== "system") {
+    return colorScheme;
+  }
+
+  return typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function useStoredUiPreferences(): UiPreferencesContextValue {
@@ -180,9 +216,24 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
       UI_PREFERENCES_KEY,
       JSON.stringify(preferences),
     );
-    document.documentElement.dataset.theme = preferences.colorScheme;
+    document.documentElement.dataset.theme = resolvedColorScheme(
+      preferences.colorScheme,
+    );
     document.documentElement.dataset.accent = preferences.theme.accentColor;
-    document.documentElement.dataset.density = preferences.density;
+    document.documentElement.dataset.chatFontSize = String(
+      preferences.chatFontSize,
+    );
+    document.documentElement.dataset.uiFontSize = String(
+      preferences.uiFontSize,
+    );
+    document.documentElement.style.setProperty(
+      "--ruxex-ui-font-size",
+      `${preferences.uiFontSize}px`,
+    );
+    document.documentElement.style.setProperty(
+      "--ruxex-chat-font-size",
+      `${preferences.chatFontSize}px`,
+    );
     document.documentElement.lang =
       preferences.language === "system"
         ? navigator.language.startsWith("ja")

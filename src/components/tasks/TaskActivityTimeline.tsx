@@ -43,7 +43,7 @@ export function TaskActivityTimeline({
     <section
       aria-busy={isBusy}
       aria-label="Task activity"
-      className="space-y-4 rounded-box border border-base-300 bg-base-200 p-4"
+      className="space-y-4 bg-base-200 p-4"
       ref={timelineRef}
     >
       {pendingRequests.map((pending) => (

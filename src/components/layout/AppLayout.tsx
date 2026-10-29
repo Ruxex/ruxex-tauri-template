@@ -72,6 +72,9 @@ export function AppLayout() {
             className={`workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 ${
               isChatRoute ? "overflow-y-auto p-0" : "overflow-y-auto p-4 sm:p-6"
             }`}
+            data-chat-font-size={
+              isChatRoute ? preferences.chatFontSize : undefined
+            }
             data-conversation-scroll={isChatRoute ? "true" : undefined}
           >
             <Outlet />
