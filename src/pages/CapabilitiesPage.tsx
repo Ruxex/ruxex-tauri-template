@@ -3,8 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { formatErrorMessage } from "../app/error-message";
 import {
   useCollaborationModes,
-  useConfig,
-  useConfigRequirements,
   useInstallPlugin,
   useMcpServerStatus,
   usePluginList,
@@ -12,7 +10,6 @@ import {
   useSkillsList,
   useUpgradeMarketplace,
 } from "../app-server/hooks";
-import { BrowserComputerUseCard } from "../components/capabilities/BrowserComputerUseCard";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
 
@@ -27,8 +24,6 @@ export function CapabilitiesPage() {
   const skills = useSkillsList();
   const plugins = usePluginList();
   const collaborationModes = useCollaborationModes();
-  const config = useConfig();
-  const configRequirements = useConfigRequirements();
   const reloadMcp = useReloadMcpServers();
   const installPlugin = useInstallPlugin();
   const upgradeMarketplace = useUpgradeMarketplace();
@@ -61,10 +56,6 @@ export function CapabilitiesPage() {
           {formatErrorMessage(reloadMcp.error)}
         </p>
       )}
-      <BrowserComputerUseCard
-        config={config.data?.config ?? null}
-        requirements={configRequirements.data?.requirements ?? null}
-      />
       {activeTab === "mcp" ? (
         <section className="grid gap-4 lg:grid-cols-2">
           <article className="card border border-base-300 bg-base-100 shadow-sm">

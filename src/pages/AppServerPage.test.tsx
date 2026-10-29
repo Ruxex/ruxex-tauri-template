@@ -12,11 +12,15 @@ import { AppServerPage } from "./AppServerPage";
 const useAppServerDaemon = vi.hoisted(() => vi.fn());
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useAppServerStatus = vi.hoisted(() => vi.fn());
+const useConfig = vi.hoisted(() => vi.fn());
+const useConfigRequirements = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useAppServerDaemon,
   useAppServerEvents,
   useAppServerStatus,
+  useConfig,
+  useConfigRequirements,
 }));
 
 const runningDaemon: AppServerDaemonOutput = {
@@ -82,6 +86,10 @@ describe("AppServerPage", () => {
       resynchronizing: false,
     });
     useAppServerStatus.mockReset().mockReturnValue(createStatusResult());
+    useConfig.mockReset().mockReturnValue({ data: { config: null } });
+    useConfigRequirements
+      .mockReset()
+      .mockReturnValue({ data: { requirements: null } });
   });
 
   it("renders local connection and daemon details in one panel", () => {
@@ -107,6 +115,29 @@ describe("AppServerPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
     expect(status.refetch).toHaveBeenCalledOnce();
+  });
+
+  it("renders Browser and Computer Use status in Runtime settings", () => {
+    useConfig.mockReturnValue({
+      data: { config: { browser_use: {}, computer_use: {} } },
+    });
+    useConfigRequirements.mockReturnValue({
+      data: {
+        requirements: {
+          browserUse: {},
+          computerUse: {},
+          allowBrowserAndComputerUse: true,
+        },
+      },
+    });
+
+    render(<AppServerPage />);
+
+    expect(
+      screen.getByRole("heading", { name: "Browser and Computer Use" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Browser use")).toBeTruthy();
+    expect(screen.getByText("Computer use")).toBeTruthy();
   });
 
   it("disables lifecycle controls while an action is pending", () => {
@@ -186,7 +217,7 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    expect(screen.getByText("Unavailable")).toBeTruthy();
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(0);
     expect(
       screen.getByText("Error: in-process initialization failed"),
     ).toBeTruthy();

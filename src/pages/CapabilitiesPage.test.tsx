@@ -5,8 +5,6 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useCollaborationModes = vi.hoisted(() => vi.fn());
-const useConfig = vi.hoisted(() => vi.fn());
-const useConfigRequirements = vi.hoisted(() => vi.fn());
 const useMcpServerStatus = vi.hoisted(() => vi.fn());
 const useInstallPlugin = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
@@ -34,8 +32,6 @@ const upgradeMarketplace = vi.hoisted(() => ({
 
 vi.mock("../app-server/hooks", () => ({
   useCollaborationModes,
-  useConfig,
-  useConfigRequirements,
   useMcpServerStatus,
   useInstallPlugin,
   usePluginList,
@@ -57,8 +53,6 @@ describe("CapabilitiesPage", () => {
     upgradeMarketplace.mutateAsync.mockReset();
     upgradeMarketplace.mutateAsync.mockResolvedValue({});
     useUpgradeMarketplace.mockReturnValue(upgradeMarketplace);
-    useConfig.mockReturnValue({ data: { config: null } });
-    useConfigRequirements.mockReturnValue({ data: { requirements: null } });
     useMcpServerStatus.mockReturnValue({
       data: {
         data: [
