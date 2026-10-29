@@ -23,7 +23,8 @@ export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export type UiTheme = { accentColor: UiAccentColor };
 export const UI_FONT_SIZE_MIN = 10;
 export const UI_FONT_SIZE_MAX = 32;
-export const DEFAULT_UI_FONT_SIZE = 16;
+export const DEFAULT_CHAT_FONT_SIZE = 12;
+export const DEFAULT_UI_FONT_SIZE = 14;
 export type UiFontSize = number;
 
 export function clampUiFontSize(value: number): UiFontSize {
@@ -64,7 +65,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   notifications: { desktop: true, sound: "system" },
   colorScheme: "system",
   theme: { accentColor: "blue" },
-  chatFontSize: DEFAULT_UI_FONT_SIZE,
+  chatFontSize: DEFAULT_CHAT_FONT_SIZE,
   uiFontSize: DEFAULT_UI_FONT_SIZE,
 };
 

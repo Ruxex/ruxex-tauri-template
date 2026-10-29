@@ -20,8 +20,8 @@ describe("AppearancePage", () => {
         sidebarCollapsed: false,
         colorScheme: "system",
         theme: { accentColor: "blue" },
-        chatFontSize: 16,
-        uiFontSize: 16,
+        chatFontSize: 12,
+        uiFontSize: 14,
       },
       update: vi.fn(),
     });
@@ -44,6 +44,9 @@ describe("AppearancePage", () => {
     expect(chatFontSize.getAttribute("type")).toBe("number");
     expect(chatFontSize.getAttribute("min")).toBe("10");
     expect(chatFontSize.getAttribute("max")).toBe("32");
-    expect(chatFontSize.getAttribute("value")).toBe("16");
+    expect(chatFontSize.getAttribute("value")).toBe("12");
+    expect(screen.getByLabelText("UI font size").getAttribute("value")).toBe(
+      "14",
+    );
   });
 });

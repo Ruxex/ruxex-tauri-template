@@ -41,8 +41,8 @@ body {
 }
 
 :root {
-  --ruxex-ui-font-size: 16px;
-  --ruxex-chat-font-size: 16px;
+  --ruxex-ui-font-size: 14px;
+  --ruxex-chat-font-size: 12px;
   --ruxex-font-size-base: var(--ruxex-ui-font-size);
   --text-xs: calc(var(--ruxex-ui-font-size) * 0.75);
   --text-sm: calc(var(--ruxex-ui-font-size) * 0.875);

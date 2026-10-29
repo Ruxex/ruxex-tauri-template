@@ -2,6 +2,7 @@ import {
   useAppServerEvents,
   useThreadConversation,
 } from "../../app-server/hooks";
+import { useUiPreferences } from "../../app/ui-preferences";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
@@ -13,6 +14,7 @@ import { TaskActivityTimeline } from "../tasks/TaskActivityTimeline";
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
+  const { preferences } = useUiPreferences();
   const liveThread = events.threads[threadId];
 
   if (conversation.isLoading) {
@@ -55,6 +57,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         </p>
       )}
       <TaskActivityTimeline
+        chatFontSize={preferences.chatFontSize}
         connected={events.connected ?? true}
         items={items}
         liveItems={liveThread?.items ?? []}
@@ -63,7 +66,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
       />
-      <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3">
+      <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3 pb-2">
         <Composer
           threadId={threadId}
           activeTurnId={liveThread?.activeTurnId ?? null}

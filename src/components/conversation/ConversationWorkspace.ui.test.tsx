@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
+const useUiPreferences = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
   useThreadConversation,
 }));
+vi.mock("../../app/ui-preferences", () => ({ useUiPreferences }));
 vi.mock("./Composer", () => ({
   Composer: () => <div data-testid="composer" />,
 }));
@@ -17,6 +19,9 @@ describe("ConversationWorkspace", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    useUiPreferences.mockReturnValue({
+      preferences: { chatFontSize: 18 },
+    });
     useThreadConversation.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -77,11 +82,18 @@ describe("ConversationWorkspace", () => {
       ]),
     );
     expect(root?.className.split(/\s+/)).not.toContain("h-full");
-    expect(composer.parentElement?.className.split(/\s+/)).toContain("sticky");
+    expect(composer.parentElement?.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["sticky", "pb-2"]),
+    );
     expect(
       screen
         .getByRole("region", { name: "Task activity" })
         .className.split(/\s+/),
     ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
+    expect(
+      screen
+        .getByRole("region", { name: "Task activity" })
+        .getAttribute("data-chat-font-size"),
+    ).toBe("18");
   });
 });

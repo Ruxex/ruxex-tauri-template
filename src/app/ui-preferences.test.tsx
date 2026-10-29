@@ -111,7 +111,7 @@ describe("UI preference persistence", () => {
     );
 
     expect(screen.getByRole("button").textContent).toBe(
-      "light:emerald:16px:16px",
+      "light:emerald:12px:14px",
     );
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.dataset.accent).toBe("emerald");
