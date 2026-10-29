@@ -90,7 +90,9 @@ export function ProjectHomePage() {
       {
         projectId,
         name,
-        roots: editRoot.trim() ? [{ path: editRoot.trim() }] : [],
+        roots: editRoot.trim()
+          ? [{ path: editRoot.trim() }, ...details.roots.slice(1)]
+          : details.roots.slice(1),
       },
       {
         onError: (error) => setEditError(formatErrorMessage(error)),

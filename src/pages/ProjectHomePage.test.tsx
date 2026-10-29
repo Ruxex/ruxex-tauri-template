@@ -159,6 +159,44 @@ describe("ProjectHomePage", () => {
     expect(mutate).not.toHaveBeenCalled();
   });
 
+  it("preserves additional workspace roots when editing the project", async () => {
+    const mutate = vi.fn();
+    useUpdateProject.mockReturnValue({ isPending: false, mutate });
+    useProject.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: {
+        project: {
+          id: "project-1",
+          name: "Ruxex",
+          roots: [{ path: "/workspace" }, { path: "/workspace/extra" }],
+        },
+      },
+    });
+    const { ProjectHomePage } = await import("./ProjectHomePage");
+
+    render(
+      <MemoryRouter>
+        <ProjectHomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit project" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Project name" }), {
+      target: { value: "Updated Ruxex" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save project" }));
+
+    expect(mutate).toHaveBeenCalledWith(
+      {
+        projectId: "project-1",
+        name: "Updated Ruxex",
+        roots: [{ path: "/workspace" }, { path: "/workspace/extra" }],
+      },
+      expect.anything(),
+    );
+  });
+
   it("deletes the project and navigates back to the project list", async () => {
     const mutate = vi.fn((_params, options) => options.onSuccess());
     useDeleteProject.mockReturnValue({ isPending: false, mutate });
