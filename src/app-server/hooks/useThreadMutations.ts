@@ -3,8 +3,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
 import {
+  invalidateThreadAttachments,
+  invalidateThreadConversation,
+  invalidateThreadGoal,
   invalidateThreadList,
-  invalidateThreadQueries,
+  invalidateThreadMetadata,
+  invalidateThreadQueue,
 } from "../query-invalidation";
 import { ensureThreadResumed } from "../thread-session";
 
@@ -53,22 +57,19 @@ export function useRenameThread() {
       return response.response;
     },
     onSuccess: (_response, params) => {
-      invalidateThreadQueries(queryClient, params.threadId);
+      invalidateThreadMetadata(queryClient, params.threadId);
+      invalidateThreadList(queryClient);
     },
   });
 }
 
 export function useResumeThread() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (params: v2.ThreadResumeParams) => {
       const response = await requestAppServerMethod("thread/resume", params);
       return response.response;
     },
-    onSuccess: (_response, params) => {
-      invalidateThreadQueries(queryClient, params.threadId);
-    },
+    onSuccess: () => undefined,
   });
 }
 
@@ -81,8 +82,10 @@ export function useRevertThread() {
       const response = await requestAppServerMethod("thread/revert", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+    onSuccess: (_response, params) => {
+      invalidateThreadConversation(queryClient, params.threadId);
+      invalidateThreadList(queryClient);
+    },
   });
 }
 
@@ -107,7 +110,7 @@ export function useSetThreadGoal() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadGoal(queryClient, params.threadId),
   });
 }
 
@@ -123,7 +126,7 @@ export function useClearThreadGoal() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadGoal(queryClient, params.threadId),
   });
 }
 
@@ -139,7 +142,7 @@ export function useAddThreadAttachment() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadAttachments(queryClient, params.threadId),
   });
 }
 
@@ -155,7 +158,7 @@ export function useRemoveThreadAttachment() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadAttachments(queryClient, params.threadId),
   });
 }
 
@@ -171,7 +174,7 @@ export function useUpdateThreadSettings() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadMetadata(queryClient, params.threadId),
   });
 }
 
@@ -187,7 +190,7 @@ export function useUpdateThreadQueue() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadQueue(queryClient, params.threadId),
   });
 }
 
@@ -203,7 +206,7 @@ export function useDeleteThreadQueueItem() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadQueue(queryClient, params.threadId),
   });
 }
 
@@ -219,7 +222,7 @@ export function useReorderThreadQueue() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadQueue(queryClient, params.threadId),
   });
 }
 
@@ -235,6 +238,6 @@ export function useStartThreadQueue() {
       return response.response;
     },
     onSuccess: (_response, params) =>
-      invalidateThreadQueries(queryClient, params.threadId),
+      invalidateThreadQueue(queryClient, params.threadId),
   });
 }

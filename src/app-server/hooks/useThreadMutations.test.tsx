@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -178,7 +178,7 @@ describe("thread mutation hooks", () => {
     });
   });
 
-  it("invalidates one thread prefix and one thread-list prefix", async () => {
+  it("invalidates only the thread goal query after updating the goal", async () => {
     const { useSetThreadGoal } = await import("./useThreadMutations");
     const client = new QueryClient({
       defaultOptions: {
@@ -198,12 +198,9 @@ describe("thread mutation hooks", () => {
       }),
     );
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: ["app-server", "thread", "thread-1"],
-    });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: ["app-server", "threads"],
+    expect(invalidateQueries).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "thread", "thread-1", "goal"],
     });
   });
 

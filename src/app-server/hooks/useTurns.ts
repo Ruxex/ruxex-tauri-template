@@ -2,7 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
-import { invalidateThreadQueries } from "../query-invalidation";
+import {
+  invalidateThreadConversation,
+  invalidateThreadList,
+  invalidateThreadQueue,
+} from "../query-invalidation";
 import { ensureThreadResumed } from "../thread-session";
 
 export function useSendMessage() {
@@ -13,7 +17,10 @@ export function useSendMessage() {
       const response = await requestAppServerMethod("turn/start", params);
       return response.response;
     },
-    onSuccess: (_response, params) => invalidateThreadQueries(queryClient, params.threadId),
+    onSuccess: (_response, params) => {
+      invalidateThreadConversation(queryClient, params.threadId);
+      invalidateThreadList(queryClient);
+    },
   });
 }
 
@@ -24,7 +31,10 @@ export function useInterruptTurn() {
       const response = await requestAppServerMethod("turn/interrupt", params);
       return response.response;
     },
-    onSuccess: (_response, params) => invalidateThreadQueries(queryClient, params.threadId),
+    onSuccess: (_response, params) => {
+      invalidateThreadConversation(queryClient, params.threadId);
+      invalidateThreadList(queryClient);
+    },
   });
 }
 
@@ -35,20 +45,26 @@ export function useSteerTurn() {
       const response = await requestAppServerMethod("turn/steer", params);
       return response.response;
     },
-    onSuccess: (_response, params) => invalidateThreadQueries(queryClient, params.threadId),
+    onSuccess: (_response, params) => {
+      invalidateThreadConversation(queryClient, params.threadId);
+      invalidateThreadList(queryClient);
+    },
   });
 }
 
 export function useQueueMessage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: Omit<v2.ThreadQueueAddParams, "clientUserMessageId">) => {
+    mutationFn: async (
+      params: Omit<v2.ThreadQueueAddParams, "clientUserMessageId">,
+    ) => {
       const response = await requestAppServerMethod("thread/queue/add", {
         ...params,
         clientUserMessageId: `desktop-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       });
       return response.response;
     },
-    onSuccess: (_response, params) => invalidateThreadQueries(queryClient, params.threadId),
+    onSuccess: (_response, params) =>
+      invalidateThreadQueue(queryClient, params.threadId),
   });
 }

@@ -6,6 +6,51 @@ export function invalidateThreadList(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
 }
 
+export function invalidateThreadConversation(
+  queryClient: QueryClient,
+  threadId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: appServerQueryKeys.threadConversationRoot(threadId),
+  });
+}
+
+export function invalidateThreadMetadata(
+  queryClient: QueryClient,
+  threadId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: appServerQueryKeys.threadMetadata(threadId),
+  });
+}
+
+export function invalidateThreadGoal(
+  queryClient: QueryClient,
+  threadId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: appServerQueryKeys.threadGoal(threadId),
+  });
+}
+
+export function invalidateThreadAttachments(
+  queryClient: QueryClient,
+  threadId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: appServerQueryKeys.threadAttachmentsRoot(threadId),
+  });
+}
+
+export function invalidateThreadQueue(
+  queryClient: QueryClient,
+  threadId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: appServerQueryKeys.threadQueueRoot(threadId),
+  });
+}
+
 export function invalidateThreadQueries(
   queryClient: QueryClient,
   threadId: string,

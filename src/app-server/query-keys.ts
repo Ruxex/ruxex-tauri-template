@@ -29,14 +29,40 @@ export const appServerQueryKeys = {
   threadSearch: (params: v2.ThreadSearchParams) =>
     ["app-server", "threads", "search", params] as const,
   thread: (threadId: string) => ["app-server", "thread", threadId] as const,
+  threadMetadata: (threadId: string) =>
+    ["app-server", "thread", threadId, "metadata"] as const,
+  threadConversationRoot: (threadId: string) =>
+    ["app-server", "thread", threadId, "conversation"] as const,
+  threadTurnsRoot: (threadId: string) =>
+    ["app-server", "thread", threadId, "conversation", "turns"] as const,
   threadTurns: (threadId: string, params: object) =>
-    ["app-server", "thread", threadId, "turns", params] as const,
+    [
+      "app-server",
+      "thread",
+      threadId,
+      "conversation",
+      "turns",
+      params,
+    ] as const,
+  threadItemsRoot: (threadId: string) =>
+    ["app-server", "thread", threadId, "conversation", "items"] as const,
   threadItems: (threadId: string, params: object) =>
-    ["app-server", "thread", threadId, "items", params] as const,
+    [
+      "app-server",
+      "thread",
+      threadId,
+      "conversation",
+      "items",
+      params,
+    ] as const,
   threadGoal: (threadId: string) =>
     ["app-server", "thread", threadId, "goal"] as const,
+  threadAttachmentsRoot: (threadId: string) =>
+    ["app-server", "thread", threadId, "attachments"] as const,
   threadAttachments: (threadId: string, params: object) =>
     ["app-server", "thread", threadId, "attachments", params] as const,
+  threadQueueRoot: (threadId: string) =>
+    ["app-server", "thread", threadId, "queue"] as const,
   threadQueue: (threadId: string, params: object) =>
     ["app-server", "thread", threadId, "queue", params] as const,
   threadConversation: (threadId: string, params: object) =>

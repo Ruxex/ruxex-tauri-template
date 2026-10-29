@@ -62,7 +62,10 @@ export function useThread(threadId: string, includeTurns = false) {
   const status = useAppServerStatus();
 
   return useQuery({
-    queryKey: [...appServerQueryKeys.thread(threadId), { includeTurns }],
+    queryKey: [
+      ...appServerQueryKeys.threadMetadata(threadId),
+      { includeTurns },
+    ],
     queryFn: async () => {
       const response = await requestAppServerMethod("thread/read", {
         threadId,
@@ -118,7 +121,9 @@ export function useThreadGoal(threadId: string) {
   return useQuery({
     queryKey: appServerQueryKeys.threadGoal(threadId),
     queryFn: async () => {
-      const response = await requestAppServerMethod("thread/goal/get", { threadId });
+      const response = await requestAppServerMethod("thread/goal/get", {
+        threadId,
+      });
       return response.response;
     },
     enabled: Boolean(status.data && threadId),

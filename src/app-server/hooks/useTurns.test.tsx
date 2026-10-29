@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -45,7 +45,11 @@ describe("turn mutation hooks", () => {
       threadId: "thread-1",
       excludeTurns: true,
     });
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "turn/start", params);
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
+      2,
+      "turn/start",
+      params,
+    );
   });
 
   it("interrupts and steers the selected active turn", async () => {
@@ -126,7 +130,7 @@ describe("turn mutation hooks", () => {
     );
 
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["app-server", "thread", "thread-1"],
+      queryKey: ["app-server", "thread", "thread-1", "conversation"],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "threads"],
