@@ -2,10 +2,6 @@ export type DeepLinkTarget =
   | { kind: "thread"; id: string }
   | { kind: "project"; id: string };
 
-export type RemoteEndpointConfig = {
-  url: string;
-};
-
 export type ScheduleCadence =
   | { kind: "once"; at: string }
   | { kind: "daily"; hour: number; minute: number }
@@ -44,28 +40,6 @@ export function normalizeDeepLink(value: string): DeepLinkTarget | null {
   }
 
   return { kind: url.hostname, id };
-}
-
-export function validateRemoteEndpoint(
-  value: string,
-): RemoteEndpointConfig | null {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    return null;
-  }
-
-  if (url.username || url.password || !url.pathname || url.search || url.hash) {
-    return null;
-  }
-  if (url.protocol === "wss:") {
-    return { url: url.toString() };
-  }
-  if (url.protocol === "ws:" && isLoopbackHost(url.hostname)) {
-    return { url: url.toString() };
-  }
-  return null;
 }
 
 export function validateScheduleSpec(value: ScheduleSpec): boolean {
@@ -122,12 +96,6 @@ function decodePathSegment(pathname: string): string | null {
   } catch {
     return null;
   }
-}
-
-function isLoopbackHost(hostname: string): boolean {
-  return (
-    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
-  );
 }
 
 function validTime(hour: number, minute: number): boolean {

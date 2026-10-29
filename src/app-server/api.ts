@@ -7,13 +7,8 @@ import { isMockAppServerRuntime } from "./runtime";
 export type AppServerStatus = {
   socketPath: string;
   appServerVersion: string;
-  endpointKind?: "local" | "websocket";
   mode?: "daemon" | "inprocess";
 };
-
-export type AppServerEndpoint =
-  | { kind: "local" }
-  | { kind: "websocket"; url: string; authToken?: string };
 
 type ResponseFor<Request extends ClientRequest> = Extract<
   ClientResponse,
@@ -42,20 +37,6 @@ export function ensureAppServer(): Promise<AppServerStatus> {
     return Promise.resolve(getMockAppServer().status);
   }
   return invoke<AppServerStatus>("ensure_app_server");
-}
-
-export function connectAppServer(
-  endpoint: AppServerEndpoint,
-): Promise<AppServerStatus> {
-  return invoke<AppServerStatus>("connect_app_server", { endpoint });
-}
-
-export function disconnectAppServer(): Promise<void> {
-  return invoke("disconnect_app_server");
-}
-
-export function appServerConnectionStatus(): Promise<AppServerStatus | null> {
-  return invoke<AppServerStatus | null>("app_server_connection_status");
 }
 
 export function requestAppServer<Request extends ClientRequest>(

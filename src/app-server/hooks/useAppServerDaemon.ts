@@ -25,11 +25,6 @@ export function useAppServerDaemon() {
     }
   }, [appServerStatus.data]);
   const mode = appServerStatus.data?.mode ?? lastMode;
-  const hasLocalConnection = () =>
-    [
-      queryClient.getQueryData<AppServerStatus>(appServerQueryKeys.connection),
-      queryClient.getQueryData<AppServerStatus>(appServerQueryKeys.status),
-    ].some((status) => status?.endpointKind === "local");
 
   const status = useQuery({
     queryKey: appServerQueryKeys.daemonStatus,
@@ -48,10 +43,7 @@ export function useAppServerDaemon() {
     onSuccess: async (output, action) => {
       queryClient.setQueryData(appServerQueryKeys.daemonStatus, output);
       if (action === "stop") {
-        if (hasLocalConnection()) {
-          queryClient.setQueryData(appServerQueryKeys.connection, null);
-          queryClient.setQueryData(appServerQueryKeys.status, null);
-        }
+        queryClient.setQueryData(appServerQueryKeys.status, null);
         return;
       }
       if (
@@ -63,12 +55,10 @@ export function useAppServerDaemon() {
       }
 
       const connectedStatus = await ensureAppServer();
-      queryClient.setQueryData(appServerQueryKeys.connection, connectedStatus);
       queryClient.setQueryData(appServerQueryKeys.status, connectedStatus);
     },
     onError: (_error, action) => {
-      if (action !== "version" && hasLocalConnection()) {
-        queryClient.setQueryData(appServerQueryKeys.connection, null);
+      if (action !== "version") {
         queryClient.setQueryData(appServerQueryKeys.status, null);
       }
     },

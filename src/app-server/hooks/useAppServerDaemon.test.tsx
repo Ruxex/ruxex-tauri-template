@@ -53,7 +53,6 @@ const stoppedDaemon: AppServerDaemonOutput = {
 const connectedStatus: AppServerStatus = {
   socketPath: "/tmp/ruxex.sock",
   appServerVersion: "0.4.10",
-  endpointKind: "local",
 };
 
 const inProcessStatus: AppServerStatus = {
@@ -139,7 +138,7 @@ describe("useAppServerDaemon", () => {
     });
   });
 
-  it("reconnects after start and clears app-server caches after stop", async () => {
+  it("reconnects after start and clears the app-server status after stop", async () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
@@ -147,7 +146,6 @@ describe("useAppServerDaemon", () => {
       .mockResolvedValueOnce(startedDaemon)
       .mockResolvedValueOnce(stoppedDaemon);
     client.setQueryData(appServerQueryKeys.status, connectedStatus);
-    client.setQueryData(appServerQueryKeys.connection, connectedStatus);
 
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
@@ -161,16 +159,12 @@ describe("useAppServerDaemon", () => {
     expect(client.getQueryData(appServerQueryKeys.status)).toEqual(
       connectedStatus,
     );
-    expect(client.getQueryData(appServerQueryKeys.connection)).toEqual(
-      connectedStatus,
-    );
 
     await act(async () =>
       result.current.control.mutateAsync("stop" as AppServerDaemonAction),
     );
     expect(controlAppServerDaemon).toHaveBeenCalledWith("stop");
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
-    expect(client.getQueryData(appServerQueryKeys.connection)).toBeNull();
   });
 
   it("exposes a version query error when the daemon is unavailable", async () => {
@@ -195,7 +189,6 @@ describe("useAppServerDaemon", () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
-    client.setQueryData(appServerQueryKeys.connection, connectedStatus);
     client.setQueryData(appServerQueryKeys.status, connectedStatus);
 
     const { result } = renderHook(() => useAppServerDaemon(), {
@@ -207,33 +200,6 @@ describe("useAppServerDaemon", () => {
         error,
       );
     });
-    expect(client.getQueryData(appServerQueryKeys.connection)).toBeNull();
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
-  });
-
-  it("preserves remote connection caches when stopping the local daemon", async () => {
-    const remoteStatus: AppServerStatus = {
-      ...connectedStatus,
-      socketPath: "wss://example.test/rpc",
-      endpointKind: "websocket",
-    };
-    controlAppServerDaemon.mockResolvedValue(stoppedDaemon);
-    const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-    });
-    client.setQueryData(appServerQueryKeys.connection, remoteStatus);
-    client.setQueryData(appServerQueryKeys.status, remoteStatus);
-
-    const { result } = renderHook(() => useAppServerDaemon(), {
-      wrapper: createWrapper(client),
-    });
-
-    await act(async () =>
-      result.current.control.mutateAsync("stop" as AppServerDaemonAction),
-    );
-    expect(client.getQueryData(appServerQueryKeys.connection)).toEqual(
-      remoteStatus,
-    );
-    expect(client.getQueryData(appServerQueryKeys.status)).toEqual(remoteStatus);
   });
 });

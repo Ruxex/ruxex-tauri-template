@@ -26,7 +26,6 @@ use ruxex_scheduler::{AppServerLogDirection, log_app_server_io};
 
 use crate::desktop::{product_identity, ruxex_home};
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
-use crate::platform;
 
 const DESKTOP_EXPERIMENTAL_API: bool = true;
 const APP_SERVER_MODE_ENV_VAR: &str = "RUXEX_APP_SERVER_MODE";
@@ -67,7 +66,6 @@ impl Default for AppServerState {
 pub(crate) struct AppServerStatus {
     socket_path: String,
     app_server_version: String,
-    endpoint_kind: AppServerEndpointKind,
     #[serde(skip_serializing_if = "Option::is_none")]
     mode: Option<AppServerMode>,
 }
@@ -139,24 +137,6 @@ impl AppServerDaemonAction {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-enum AppServerEndpointKind {
-    Local,
-    Websocket,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(tag = "kind", rename_all = "camelCase")]
-pub(crate) enum AppServerEndpoint {
-    Local,
-    Websocket {
-        url: String,
-        #[serde(rename = "authToken")]
-        auth_token: Option<String>,
-    },
-}
-
 #[derive(Clone, Serialize)]
 #[serde(tag = "type", content = "data", rename_all = "camelCase")]
 enum DesktopAppServerEvent {
@@ -178,31 +158,6 @@ async fn connect_unix_socket(
         channel_capacity: 128,
     })
     .await
-}
-
-async fn connect_remote_socket(
-    url: String,
-    auth_token: Option<String>,
-) -> CommandResult<RemoteAppServerClient> {
-    let websocket_url = platform::validate_remote_endpoint(&url).ok_or_else(|| {
-        command_error(
-            DesktopAppServerErrorKind::Connection,
-            "remote endpoint must be wss:// or loopback ws://",
-        )
-    })?;
-    RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
-        endpoint: RemoteAppServerEndpoint::WebSocket {
-            websocket_url,
-            auth_token,
-        },
-        client_name: product_identity().product_name().to_string(),
-        client_version: env!("CARGO_PKG_VERSION").to_string(),
-        experimental_api: DESKTOP_EXPERIMENTAL_API,
-        opt_out_notification_methods: Vec::new(),
-        channel_capacity: 128,
-    })
-    .await
-    .map_err(|error| command_error(DesktopAppServerErrorKind::Connection, error.to_string()))
 }
 
 async fn install_connection(
@@ -268,14 +223,6 @@ async fn clear_connection_state(state: &AppServerState) {
     }
     *state.request_handle.lock().await = None;
     *state.status.lock().await = None;
-}
-
-fn should_clear_connection_for_daemon_control(
-    action: AppServerDaemonAction,
-    status: Option<&AppServerStatus>,
-) -> bool {
-    action != AppServerDaemonAction::Version
-        && status.is_none_or(|status| status.endpoint_kind == AppServerEndpointKind::Local)
 }
 
 async fn connect_daemon_endpoint(
@@ -401,7 +348,6 @@ async fn connect_daemon_endpoint(
         app_server_version: connected_version
             .or(bootstrapped_version)
             .unwrap_or_else(|| "unknown".to_string()),
-        endpoint_kind: AppServerEndpointKind::Local,
         mode: Some(AppServerMode::Daemon),
     };
     Ok((client, status))
@@ -510,7 +456,6 @@ async fn connect_in_process_endpoint(
     let status = AppServerStatus {
         socket_path: "in-process".to_string(),
         app_server_version,
-        endpoint_kind: AppServerEndpointKind::Local,
         mode: Some(AppServerMode::InProcess),
     };
     Ok((client, status))
@@ -524,37 +469,6 @@ async fn connect_local_endpoint(
         AppServerMode::Daemon => connect_daemon_endpoint(app).await,
         AppServerMode::InProcess => connect_in_process_endpoint(arg0_paths).await,
     }
-}
-
-#[tauri::command]
-pub(crate) async fn connect_app_server(
-    app: AppHandle,
-    state: State<'_, AppServerState>,
-    endpoint: AppServerEndpoint,
-) -> CommandResult<AppServerStatus> {
-    let _initialization = state.initialization.lock().await;
-    let (client, status) = match endpoint {
-        AppServerEndpoint::Local => connect_local_endpoint(&app, state.arg0_paths.clone()).await?,
-        AppServerEndpoint::Websocket { url, auth_token } => {
-            let client = connect_remote_socket(url.clone(), auth_token).await?;
-            let app_server_version = client.server_version().unwrap_or("unknown").to_string();
-            let status = AppServerStatus {
-                socket_path: url,
-                app_server_version,
-                endpoint_kind: AppServerEndpointKind::Websocket,
-                mode: None,
-            };
-            (AppServerClient::Remote(client), status)
-        }
-    };
-    install_connection(&app, &state, client, status).await
-}
-
-#[tauri::command]
-pub(crate) async fn disconnect_app_server(state: State<'_, AppServerState>) -> CommandResult<()> {
-    let _initialization = state.initialization.lock().await;
-    clear_connection_state(&state).await;
-    Ok(())
 }
 
 #[tauri::command]
@@ -574,7 +488,7 @@ pub(crate) async fn app_server_daemon_control(
             "App Server daemon controls are unavailable in InProcess mode",
         ));
     }
-    if should_clear_connection_for_daemon_control(action, status.as_ref()) {
+    if action != AppServerDaemonAction::Version {
         clear_connection_state(&state).await;
     }
 
@@ -607,13 +521,6 @@ pub(crate) async fn app_server_daemon_control(
             format!("AppServer daemon {action:?} failed: {error:#}"),
         )
     })
-}
-
-#[tauri::command]
-pub(crate) async fn app_server_connection_status(
-    state: State<'_, AppServerState>,
-) -> CommandResult<Option<AppServerStatus>> {
-    Ok(state.status.lock().await.clone())
 }
 
 #[tauri::command]
@@ -733,9 +640,8 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        AppServerDaemonAction, AppServerEndpoint, AppServerEndpointKind, AppServerMode,
-        AppServerStatus, DESKTOP_EXPERIMENTAL_API, DesktopAppServerEvent, parse_app_server_mode,
-        resolve_in_process_paths, should_clear_connection_for_daemon_control,
+        AppServerDaemonAction, AppServerMode, AppServerStatus, DESKTOP_EXPERIMENTAL_API,
+        DesktopAppServerEvent, parse_app_server_mode, resolve_in_process_paths,
     };
 
     #[test]
@@ -816,35 +722,6 @@ mod tests {
     }
 
     #[test]
-    fn daemon_control_only_clears_local_connections() {
-        let local = AppServerStatus {
-            socket_path: "/tmp/app-server.sock".to_string(),
-            app_server_version: "local".to_string(),
-            endpoint_kind: AppServerEndpointKind::Local,
-            mode: Some(AppServerMode::Daemon),
-        };
-        let remote = AppServerStatus {
-            socket_path: "wss://example.test/rpc".to_string(),
-            app_server_version: "remote".to_string(),
-            endpoint_kind: AppServerEndpointKind::Websocket,
-            mode: None,
-        };
-
-        assert!(should_clear_connection_for_daemon_control(
-            AppServerDaemonAction::Restart,
-            Some(&local),
-        ));
-        assert!(!should_clear_connection_for_daemon_control(
-            AppServerDaemonAction::Restart,
-            Some(&remote),
-        ));
-        assert!(!should_clear_connection_for_daemon_control(
-            AppServerDaemonAction::Version,
-            Some(&local),
-        ));
-    }
-
-    #[test]
     fn app_server_events_keep_the_tauri_payload_contract() {
         let lagged = DesktopAppServerEvent::Lagged { skipped: 4 };
         let notification = DesktopAppServerEvent::ServerNotification(json!({
@@ -869,26 +746,10 @@ mod tests {
     }
 
     #[test]
-    fn app_server_status_and_remote_endpoints_keep_the_bridge_contract() {
-        let status = AppServerStatus {
-            socket_path: "wss://example.test/rpc".to_string(),
-            app_server_version: "remote".to_string(),
-            endpoint_kind: AppServerEndpointKind::Websocket,
-            mode: None,
-        };
-        assert_eq!(
-            serde_json::to_value(status).unwrap(),
-            json!({
-                "socketPath": "wss://example.test/rpc",
-                "appServerVersion": "remote",
-                "endpointKind": "websocket",
-            })
-        );
-
+    fn app_server_status_keeps_the_local_bridge_contract() {
         let status = AppServerStatus {
             socket_path: "/tmp/app-server.sock".to_string(),
             app_server_version: "local".to_string(),
-            endpoint_kind: AppServerEndpointKind::Local,
             mode: Some(AppServerMode::InProcess),
         };
         assert_eq!(
@@ -896,19 +757,8 @@ mod tests {
             json!({
                 "socketPath": "/tmp/app-server.sock",
                 "appServerVersion": "local",
-                "endpointKind": "local",
                 "mode": "inprocess",
             })
-        );
-
-        let endpoint: AppServerEndpoint = serde_json::from_value(json!({
-            "kind": "websocket",
-            "url": "wss://example.test/rpc",
-            "authToken": "memory-only-token",
-        }))
-        .unwrap();
-        assert!(
-            matches!(endpoint, AppServerEndpoint::Websocket { url, auth_token: Some(token) } if url == "wss://example.test/rpc" && token == "memory-only-token")
         );
     }
 }

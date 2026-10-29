@@ -81,9 +81,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_server::ensure_app_server,
             app_server::app_server_daemon_control,
-            app_server::connect_app_server,
-            app_server::disconnect_app_server,
-            app_server::app_server_connection_status,
             desktop::read_image_file,
             desktop::open_browser_window,
             schedule_commands::schedule_list,

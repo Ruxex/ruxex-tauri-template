@@ -3,7 +3,6 @@ import {
   BellIcon,
   CpuChipIcon,
   GlobeAltIcon,
-  LinkIcon,
   PaintBrushIcon,
   ServerIcon,
   SparklesIcon,
@@ -53,78 +52,42 @@ export function SettingsPanel({
   );
 }
 
-type ConnectionCardProps = {
-  connected: boolean;
-  appServerVersion?: string;
-  resynchronizing: boolean;
-  error?: unknown;
-  isFetching: boolean;
-  onReconnect: () => void;
-};
-
-export function ConnectionCard({
-  connected,
-  appServerVersion,
-  resynchronizing,
-  error,
-  isFetching,
-  onReconnect,
-}: ConnectionCardProps) {
-  return (
-    <SettingsPanel icon={LinkIcon} title="Connection">
-      <dl className="divide-y divide-base-300 text-sm">
-        <SettingRow label="Status">
-          {connected ? "Connected" : "Disconnected"}
-        </SettingRow>
-        <SettingRow label="App-server">
-          {appServerVersion ?? "Unavailable"}
-        </SettingRow>
-        <SettingRow label="Live state">
-          {resynchronizing ? "Resynchronizing" : "Synchronized"}
-        </SettingRow>
-      </dl>
-      {error !== undefined && error !== null && (
-        <p className="px-5 py-3 text-sm text-error">
-          {formatErrorMessage(error)}
-        </p>
-      )}
-      <div className="flex justify-end px-5 py-4">
-        <button
-          className="btn btn-sm"
-          type="button"
-          onClick={onReconnect}
-          disabled={isFetching}
-        >
-          {isFetching ? "Reconnecting…" : "Reconnect"}
-        </button>
-      </div>
-    </SettingsPanel>
-  );
-}
-
 export function AppServerCard({
+  appServerVersion,
+  connected,
+  connectionError,
   daemon,
   daemonError,
   controlError,
   appServerError,
   appServerReady,
   isAvailable,
+  isFetching,
   isPending,
   mode,
   onAction,
+  onReconnect,
+  resynchronizing,
 }: {
   appServerError?: unknown;
   appServerReady: boolean;
+  appServerVersion?: string;
+  connected: boolean;
+  connectionError?: unknown;
   daemon?: AppServerDaemonOutput;
   daemonError?: unknown;
   controlError?: unknown;
   isAvailable: boolean;
+  isFetching: boolean;
   isPending: boolean;
   mode?: "daemon" | "inprocess";
   onAction: (action: Exclude<AppServerDaemonAction, "version">) => void;
+  onReconnect: () => void;
+  resynchronizing: boolean;
 }) {
   const inProcess = mode === "inprocess";
-  const error = appServerError ?? controlError ?? daemonError;
+  const error =
+    connectionError ?? appServerError ?? controlError ?? daemonError;
   const showDaemonControls =
     !inProcess && appServerReady && appServerError == null;
   const modeLabel = inProcess
@@ -147,15 +110,21 @@ export function AppServerCard({
     >
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Mode">{modeLabel}</SettingRow>
+        <SettingRow label="Connection">
+          {connected ? "Connected" : "Disconnected"}
+        </SettingRow>
+        <SettingRow label="Live state">
+          {resynchronizing ? "Resynchronizing" : "Synchronized"}
+        </SettingRow>
+        <SettingRow label="AppServer version">
+          {appServerVersion ?? daemon?.appServerVersion ?? "Unavailable"}
+        </SettingRow>
         {inProcess ? (
           <SettingRow label="Status">Running in this process</SettingRow>
         ) : (
           <>
             <SettingRow label="Status">
               {daemon?.status ?? "Unavailable"}
-            </SettingRow>
-            <SettingRow label="AppServer version">
-              {daemon?.appServerVersion ?? "Unavailable"}
             </SettingRow>
             <SettingRow label="PID">{daemon?.pid ?? "Unavailable"}</SettingRow>
             <SettingRow label="Socket">
@@ -169,6 +138,16 @@ export function AppServerCard({
           {formatErrorMessage(error)}
         </p>
       )}
+      <div className="flex justify-end px-5 py-4">
+        <button
+          className="btn btn-sm"
+          type="button"
+          onClick={onReconnect}
+          disabled={isFetching}
+        >
+          {isFetching ? "Reconnecting…" : "Reconnect"}
+        </button>
+      </div>
       {showDaemonControls && (
         <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
           {(["start", "restart", "stop"] as const).map((action) => (

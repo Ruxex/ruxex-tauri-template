@@ -5,8 +5,8 @@ import { BellIcon } from "@heroicons/react/24/outline";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  AppServerCard,
   CapabilitiesCard,
-  ConnectionCard,
   LanguageCard,
   NotificationsCard,
   RuntimeSummary,
@@ -20,11 +20,16 @@ describe("settings card layout", () => {
 
   it("aligns key-value values to the right of their keys", () => {
     render(
-      <ConnectionCard
+      <AppServerCard
+        appServerReady
         connected
+        isAvailable={false}
         isFetching={false}
+        isPending={false}
         onReconnect={vi.fn()}
         resynchronizing={false}
+        onAction={vi.fn()}
+        mode="inprocess"
       />,
     );
 
@@ -37,16 +42,21 @@ describe("settings card layout", () => {
 
   it("separates rows inside each settings panel", () => {
     render(
-      <ConnectionCard
+      <AppServerCard
+        appServerReady
         connected
+        isAvailable={false}
         isFetching={false}
+        isPending={false}
         onReconnect={vi.fn()}
         resynchronizing={false}
+        onAction={vi.fn()}
+        mode="inprocess"
       />,
     );
 
     const connectionPanel = screen
-      .getByRole("heading", { name: "Connection" })
+      .getByRole("heading", { name: "AppServer" })
       .closest("section");
 
     expect(connectionPanel?.className).toContain("overflow-hidden");

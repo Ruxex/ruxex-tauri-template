@@ -3,7 +3,6 @@ import type { v2 } from "../protocol";
 export const appServerQueryKeys = {
   all: ["app-server"] as const,
   status: ["app-server", "status"] as const,
-  connection: ["app-server", "connection"] as const,
   daemonStatus: ["app-server", "daemon-status"] as const,
   config: (params: object) => ["app-server", "config", params] as const,
   configRequirements: ["app-server", "config-requirements"] as const,

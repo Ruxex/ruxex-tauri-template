@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  appServerConnectionStatus,
-  connectAppServer,
-  disconnectAppServer,
   ensureAppServer,
   rejectServerRequestWithMessage,
   requestAppServerMethod,
@@ -63,53 +60,6 @@ describe("requestAppServerMethod", () => {
         error: { code: -32000, message: "unsupported" },
       },
     ]);
-  });
-
-  it("connects to a remote endpoint without persisting its auth token", async () => {
-    const storage = { setItem: vi.fn() };
-    Object.defineProperty(globalThis, "localStorage", {
-      configurable: true,
-      value: storage,
-    });
-    invoke.mockResolvedValueOnce({
-      socketPath: "wss://example.test/rpc",
-      appServerVersion: "remote",
-      endpointKind: "websocket",
-    });
-
-    await expect(
-      connectAppServer({
-        kind: "websocket",
-        url: "wss://example.test/rpc",
-        authToken: "secret-token",
-      }),
-    ).resolves.toMatchObject({ endpointKind: "websocket" });
-
-    expect(invoke).toHaveBeenCalledWith("connect_app_server", {
-      endpoint: {
-        kind: "websocket",
-        url: "wss://example.test/rpc",
-        authToken: "secret-token",
-      },
-    });
-    expect(storage.setItem).not.toHaveBeenCalled();
-  });
-
-  it("exposes disconnect and active connection status through the bridge", async () => {
-    invoke.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
-      socketPath: "local",
-      appServerVersion: "local",
-      endpointKind: "local",
-    });
-
-    await disconnectAppServer();
-    await expect(appServerConnectionStatus()).resolves.toEqual({
-      socketPath: "local",
-      appServerVersion: "local",
-      endpointKind: "local",
-    });
-    expect(invoke).toHaveBeenNthCalledWith(1, "disconnect_app_server");
-    expect(invoke).toHaveBeenNthCalledWith(2, "app_server_connection_status");
   });
 
   it("propagates transport failures to callers", async () => {

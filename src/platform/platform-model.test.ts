@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   normalizeDeepLink,
-  validateRemoteEndpoint,
   validateScheduleSpec,
   validateWorktreePath,
 } from "./platform-model";
@@ -19,17 +18,6 @@ describe("platform model boundaries", () => {
     });
     expect(normalizeDeepLink("https://thread/thread-1")).toBeNull();
     expect(normalizeDeepLink("ruxex://thread/../etc")).toBeNull();
-  });
-
-  it("requires a secure or loopback websocket endpoint", () => {
-    expect(validateRemoteEndpoint("wss://example.test/rpc")).toEqual({
-      url: "wss://example.test/rpc",
-    });
-    expect(validateRemoteEndpoint("ws://127.0.0.1:8080/rpc")).toEqual({
-      url: "ws://127.0.0.1:8080/rpc",
-    });
-    expect(validateRemoteEndpoint("ws://example.test/rpc")).toBeNull();
-    expect(validateRemoteEndpoint("https://example.test/rpc")).toBeNull();
   });
 
   it("validates one-shot and recurring schedule definitions", () => {

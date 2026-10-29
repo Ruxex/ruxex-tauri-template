@@ -4,13 +4,20 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { AppServerStatus } from "../app-server/api";
 import type { AppServerDaemonOutput } from "../app-server/daemon-api";
 import { SettingsSidebar } from "../components/sidebar/SettingsSidebar";
 import { AppServerPage } from "./AppServerPage";
 
 const useAppServerDaemon = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() => vi.fn());
+const useAppServerStatus = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({ useAppServerDaemon }));
+vi.mock("../app-server/hooks", () => ({
+  useAppServerDaemon,
+  useAppServerEvents,
+  useAppServerStatus,
+}));
 
 const runningDaemon: AppServerDaemonOutput = {
   status: "running",
@@ -20,7 +27,7 @@ const runningDaemon: AppServerDaemonOutput = {
   managedRuxexVersion: "0.4.10",
   socketPath: "/tmp/ruxex.sock",
   cliVersion: "0.4.10",
-  appServerVersion: "0.4.10",
+  appServerVersion: "daemon-version",
 };
 
 function useDaemonResult(
@@ -50,6 +57,19 @@ function createDaemonResult() {
   };
 }
 
+function createStatusResult() {
+  return {
+    data: {
+      socketPath: "/tmp/ruxex.sock",
+      appServerVersion: "0.4.10",
+    } as AppServerStatus,
+    isError: false,
+    error: null,
+    isFetching: false,
+    refetch: vi.fn(),
+  };
+}
+
 describe("AppServerPage", () => {
   afterEach(() => {
     cleanup();
@@ -57,11 +77,18 @@ describe("AppServerPage", () => {
 
   beforeEach(() => {
     useAppServerDaemon.mockReset().mockReturnValue(useDaemonResult());
+    useAppServerEvents.mockReset().mockReturnValue({
+      connected: true,
+      resynchronizing: false,
+    });
+    useAppServerStatus.mockReset().mockReturnValue(createStatusResult());
   });
 
-  it("renders daemon details and delegates lifecycle actions", () => {
+  it("renders local connection and daemon details in one panel", () => {
     const daemon = useDaemonResult();
+    const status = createStatusResult();
     useAppServerDaemon.mockReturnValue(daemon);
+    useAppServerStatus.mockReturnValue(status);
 
     render(<AppServerPage />);
 
@@ -72,9 +99,14 @@ describe("AppServerPage", () => {
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
     expect(screen.getByText("/tmp/ruxex.sock")).toBeTruthy();
+    expect(screen.getByText("Connected")).toBeTruthy();
+    expect(screen.getByText("Synchronized")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Restart" }));
     expect(daemon.control.mutate).toHaveBeenCalledWith("restart");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
+    expect(status.refetch).toHaveBeenCalledOnce();
   });
 
   it("disables lifecycle controls while an action is pending", () => {
@@ -137,6 +169,7 @@ describe("AppServerPage", () => {
     render(<AppServerPage />);
 
     expect(screen.getByText("InProcess mode")).toBeTruthy();
+    expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.queryByText("PID")).toBeNull();
     expect(screen.queryByText("Socket")).toBeNull();
     for (const name of ["Start", "Restart", "Stop"]) {

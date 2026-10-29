@@ -1,24 +1,6 @@
 use std::path::{Component, Path};
 use url::Url;
 
-pub fn validate_remote_endpoint(value: &str) -> Option<String> {
-    let url = Url::parse(value).ok()?;
-    if url.username() != ""
-        || url.password().is_some()
-        || url.path().is_empty()
-        || url.query().is_some()
-        || url.fragment().is_some()
-    {
-        return None;
-    }
-    let allowed = match url.scheme() {
-        "wss" => true,
-        "ws" => matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]")),
-        _ => false,
-    };
-    allowed.then(|| url.to_string())
-}
-
 pub fn validate_browser_url(value: &str) -> Option<String> {
     let url = Url::parse(value).ok()?;
     if url.host_str().is_none() || url.username() != "" || url.password().is_some() {
@@ -64,24 +46,9 @@ fn is_parent(component: Component<'_>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        image_mime_type, is_path_under_any_root, validate_browser_url, validate_remote_endpoint,
-        validate_worktree_path,
+        image_mime_type, is_path_under_any_root, validate_browser_url, validate_worktree_path,
     };
     use std::path::Path;
-
-    #[test]
-    fn validates_remote_websocket_endpoints() {
-        assert_eq!(
-            validate_remote_endpoint("wss://example.test/rpc"),
-            Some("wss://example.test/rpc".to_string())
-        );
-        assert_eq!(
-            validate_remote_endpoint("ws://127.0.0.1:8080/rpc"),
-            Some("ws://127.0.0.1:8080/rpc".to_string())
-        );
-        assert_eq!(validate_remote_endpoint("ws://example.test/rpc"), None);
-        assert_eq!(validate_remote_endpoint("https://example.test/rpc"), None);
-    }
 
     #[test]
     fn validates_browser_urls_and_image_types() {
