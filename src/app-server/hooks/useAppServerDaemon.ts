@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { type AppServerStatus } from "../api";
+import type { AppServerStatus } from "../api";
 import { ensureAppServerRuntime } from "../app-server-runtime";
 import {
   controlAppServerDaemon,
