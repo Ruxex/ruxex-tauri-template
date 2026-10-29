@@ -38,7 +38,7 @@ export function ChatListItem({
 
   return (
     <Link
-      className={`block min-w-0 rounded-box border border-transparent px-3 py-2 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "bg-base-200" : ""}`}
+      className={`block min-w-0 rounded-box border border-transparent px-1.5 py-1 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "bg-base-200" : ""}`}
       to={`/chat/${thread.id}`}
       onClick={onClick}
     >

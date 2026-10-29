@@ -27,8 +27,8 @@ describe("ChatListItem", () => {
 
     const chatLink = screen.getByRole("link", { name: /Build the sidebar/ });
     expect(chatLink.getAttribute("href")).toBe("/chat/thread-1");
-    expect(chatLink.className).toContain("px-3");
-    expect(chatLink.className).toContain("py-2");
+    expect(chatLink.className).toContain("px-1.5");
+    expect(chatLink.className).toContain("py-1");
     expect(chatLink.className).not.toContain("p-3");
     expect(screen.getByText("Running")).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();

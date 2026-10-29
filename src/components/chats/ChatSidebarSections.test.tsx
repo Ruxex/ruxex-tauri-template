@@ -78,6 +78,9 @@ describe("ChatSidebarSections", () => {
     );
     expect(recentChats.closest("details")?.open).toBe(true);
     expect(projects.closest("details")?.open).toBe(true);
+    const recentChatList = recentChats.closest("details")?.querySelector("ul");
+    expect(recentChatList?.className).toContain("gap-0");
+    expect(recentChatList?.className).not.toContain("gap-1");
 
     onClose.mockClear();
     fireEvent.click(links[1]);

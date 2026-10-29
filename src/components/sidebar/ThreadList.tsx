@@ -37,7 +37,7 @@ export function ThreadList({
   }
 
   return (
-    <ul className="menu w-full gap-1 p-0">
+    <ul className="menu w-full gap-0 p-0">
       {threads.data.data.map((thread) => (
         <li key={thread.id}>
           <ChatListItem
