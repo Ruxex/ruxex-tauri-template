@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { v2 } from "../../protocol";
+import { appServerQueryKeys } from "../query-keys";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => ({
@@ -121,6 +122,59 @@ describe("thread query hooks", () => {
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/items/list", {
       threadId: "thread-1",
     });
+  });
+
+  it("refreshes conversation metadata independently from turns and items", async () => {
+    let threadReadCount = 0;
+    requestAppServerMethod.mockImplementation(async (method: string) => {
+      if (method === "thread/read") {
+        threadReadCount += 1;
+        return {
+          response: {
+            thread: { id: "thread-1", model: `model-${threadReadCount}` },
+          },
+        };
+      }
+      if (method === "thread/turns/list") {
+        return { response: { data: [], nextCursor: null } };
+      }
+      if (method === "thread/items/list") {
+        return { response: { data: [], nextCursor: null } };
+      }
+      return { response: {} };
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const testWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { useThreadConversation } = await import("./useThreadQueries");
+    const { result } = renderHook(() => useThreadConversation("thread-1"), {
+      wrapper: testWrapper,
+    });
+
+    await waitFor(() => {
+      expect(result.current.data?.thread.model).toBe("model-1");
+    });
+    const conversationRequestCount = requestAppServerMethod.mock.calls.filter(
+      ([method]) =>
+        method === "thread/turns/list" || method === "thread/items/list",
+    ).length;
+
+    await queryClient.invalidateQueries({
+      queryKey: appServerQueryKeys.threadMetadata("thread-1"),
+    });
+
+    await waitFor(() => {
+      expect(result.current.data?.thread.model).toBe("model-2");
+    });
+    expect(
+      requestAppServerMethod.mock.calls.filter(
+        ([method]) =>
+          method === "thread/turns/list" || method === "thread/items/list",
+      ),
+    ).toHaveLength(conversationRequestCount);
   });
 
   it("passes thread-specific parameters to goal, attachment, and queue queries", async () => {

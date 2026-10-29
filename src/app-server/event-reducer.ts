@@ -247,8 +247,9 @@ function reduceNotification(
     case "item/reasoning/textDelta":
       return addDelta(state, notification.params, "reasoning", activityAt);
     case "item/started":
-    case "item/completed":
       return upsertStructuredItem(state, notification.params, activityAt);
+    case "item/completed":
+      return upsertStructuredItem(state, notification.params, activityAt, true);
     case "item/commandExecution/outputDelta":
       return addDelta(
         state,
@@ -288,6 +289,7 @@ function upsertStructuredItem(
   state: EventState,
   params: { threadId: string; turnId: string; item: v2.ThreadItem },
   activityAt: number,
+  completed = false,
 ): EventState {
   return updateThread(
     state,
@@ -297,10 +299,13 @@ function upsertStructuredItem(
         (item) => item.id === params.item.id,
       );
       if (index === -1) {
+        const completedWithoutActiveTurn = completed && !thread.activeTurnId;
         return {
           ...thread,
-          activeTurnId: thread.activeTurnId ?? params.turnId,
-          status: "running",
+          activeTurnId: completedWithoutActiveTurn
+            ? null
+            : (thread.activeTurnId ?? params.turnId),
+          status: completedWithoutActiveTurn ? "completed" : "running",
           items: [
             ...thread.items,
             {

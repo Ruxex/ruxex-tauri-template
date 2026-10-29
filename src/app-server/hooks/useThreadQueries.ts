@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
@@ -186,22 +187,72 @@ export function useThreadConversation(
   const status = useAppServerStatus();
   const turns = options.turns ?? {};
   const items = options.items ?? {};
-
-  return useQuery<ThreadConversation>({
-    queryKey: appServerQueryKeys.threadConversation(threadId, { turns, items }),
+  const enabled = Boolean(status.data && threadId);
+  const threadQuery = useQuery({
+    queryKey: [
+      ...appServerQueryKeys.threadMetadata(threadId),
+      { includeTurns: false },
+    ],
     queryFn: async () => {
       await ensureThreadResumed(threadId);
-      const [thread, turnsResponse, itemsResponse] = await Promise.all([
-        requestAppServerMethod("thread/read", { threadId }),
-        requestAppServerMethod("thread/turns/list", { ...turns, threadId }),
-        requestAppServerMethod("thread/items/list", { ...items, threadId }),
-      ]);
-      return {
-        thread: thread.response.thread,
-        turns: turnsResponse.response,
-        items: itemsResponse.response,
-      };
+      const response = await requestAppServerMethod("thread/read", {
+        threadId,
+      });
+      return response.response;
     },
-    enabled: Boolean(status.data && threadId),
+    enabled,
   });
+  const turnsQuery = useQuery({
+    queryKey: appServerQueryKeys.threadTurns(threadId, turns),
+    queryFn: async () => {
+      await ensureThreadResumed(threadId);
+      const response = await requestAppServerMethod("thread/turns/list", {
+        ...turns,
+        threadId,
+      });
+      return response.response;
+    },
+    enabled,
+  });
+  const itemsQuery = useQuery({
+    queryKey: appServerQueryKeys.threadItems(threadId, items),
+    queryFn: async () => {
+      await ensureThreadResumed(threadId);
+      const response = await requestAppServerMethod("thread/items/list", {
+        ...items,
+        threadId,
+      });
+      return response.response;
+    },
+    enabled,
+  });
+  const refetch = useCallback(async () => {
+    await Promise.all([
+      threadQuery.refetch(),
+      turnsQuery.refetch(),
+      itemsQuery.refetch(),
+    ]);
+  }, [threadQuery.refetch, turnsQuery.refetch, itemsQuery.refetch]);
+
+  const data: ThreadConversation | undefined =
+    threadQuery.data && turnsQuery.data && itemsQuery.data
+      ? {
+          thread: threadQuery.data.thread,
+          turns: turnsQuery.data,
+          items: itemsQuery.data,
+        }
+      : undefined;
+
+  return {
+    data,
+    error: threadQuery.error ?? turnsQuery.error ?? itemsQuery.error,
+    isError: threadQuery.isError || turnsQuery.isError || itemsQuery.isError,
+    isFetching:
+      threadQuery.isFetching || turnsQuery.isFetching || itemsQuery.isFetching,
+    isLoading:
+      threadQuery.isLoading || turnsQuery.isLoading || itemsQuery.isLoading,
+    isSuccess:
+      threadQuery.isSuccess && turnsQuery.isSuccess && itemsQuery.isSuccess,
+    refetch,
+  };
 }

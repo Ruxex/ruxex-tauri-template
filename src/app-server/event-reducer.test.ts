@@ -732,4 +732,54 @@ describe("reduceAppServerEvent", () => {
       activeTurnId: "turn-2",
     });
   });
+
+  it("keeps a late completed item evictable after its thread state was pruned", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "turn/completed",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "completed", items: [] },
+        },
+      }),
+      0,
+    );
+    state = pruneIdleThreadStates(state, {
+      now: 100,
+      idleTtlMs: 1,
+      maxIdleStates: 10,
+      retainedThreadIds: new Set(),
+    });
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/completed",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "late",
+          },
+        },
+      }),
+      200,
+    );
+
+    expect(state.threads["thread-1"]).toMatchObject({
+      status: "completed",
+      activeTurnId: null,
+    });
+    state = pruneIdleThreadStates(state, {
+      now: 300,
+      idleTtlMs: 1,
+      maxIdleStates: 10,
+      retainedThreadIds: new Set(),
+    });
+
+    expect(state.threads).not.toHaveProperty("thread-1");
+  });
 });
