@@ -8,6 +8,10 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: v2.TurnStartParams) => {
+      await requestAppServerMethod("thread/resume", {
+        threadId: params.threadId,
+        excludeTurns: true,
+      });
       const response = await requestAppServerMethod("turn/start", params);
       return response.response;
     },

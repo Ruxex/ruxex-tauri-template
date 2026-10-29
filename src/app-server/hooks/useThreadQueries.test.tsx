@@ -100,6 +100,18 @@ describe("thread query hooks", () => {
       turns: { data: [], nextCursor: null },
       items: { data: [], nextCursor: null },
     });
+    expect(requestAppServerMethod.mock.calls.map(([method]) => method)).toEqual(
+      [
+        "thread/resume",
+        "thread/read",
+        "thread/turns/list",
+        "thread/items/list",
+      ],
+    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/resume", {
+      threadId: "thread-1",
+      excludeTurns: true,
+    });
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/read", {
       threadId: "thread-1",
     });

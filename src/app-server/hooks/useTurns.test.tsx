@@ -41,7 +41,11 @@ describe("turn mutation hooks", () => {
 
     await act(async () => result.current.mutateAsync(params));
 
-    expect(requestAppServerMethod).toHaveBeenCalledWith("turn/start", params);
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "thread/resume", {
+      threadId: "thread-1",
+      excludeTurns: true,
+    });
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "turn/start", params);
   });
 
   it("interrupts and steers the selected active turn", async () => {

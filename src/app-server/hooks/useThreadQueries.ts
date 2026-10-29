@@ -184,6 +184,10 @@ export function useThreadConversation(
   return useQuery<ThreadConversation>({
     queryKey: appServerQueryKeys.threadConversation(threadId, { turns, items }),
     queryFn: async () => {
+      await requestAppServerMethod("thread/resume", {
+        threadId,
+        excludeTurns: true,
+      });
       const [thread, turnsResponse, itemsResponse] = await Promise.all([
         requestAppServerMethod("thread/read", { threadId }),
         requestAppServerMethod("thread/turns/list", { ...turns, threadId }),

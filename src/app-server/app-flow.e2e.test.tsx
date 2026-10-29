@@ -38,6 +38,9 @@ describe("desktop app-server flow", () => {
     server.respond("thread/start", {
       thread: { id: "thread-created" },
     } as never);
+    server.respond("thread/resume", {
+      thread: { id: "thread-created" },
+    } as never);
     server.respond("turn/start", { turn: { id: "turn-created" } } as never);
   });
 
@@ -68,6 +71,7 @@ describe("desktop app-server flow", () => {
 
     expect(server.requests.map((request) => request.method)).toEqual([
       "thread/start",
+      "thread/resume",
       "turn/start",
     ]);
     expect(server.requests[0]).toMatchObject({
@@ -78,6 +82,10 @@ describe("desktop app-server flow", () => {
       },
     });
     expect(server.requests[1]).toMatchObject({
+      method: "thread/resume",
+      params: { threadId: "thread-created", excludeTurns: true },
+    });
+    expect(server.requests[2]).toMatchObject({
       method: "turn/start",
       params: {
         threadId: "thread-created",
