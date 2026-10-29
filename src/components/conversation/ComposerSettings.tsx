@@ -46,7 +46,7 @@ export function ComposerSettings({
         value={effort}
       >
         <option value="">Default effort</option>
-        {selectedModel?.supportedReasoningEfforts.map((option) => (
+        {(selectedModel?.supportedReasoningEfforts ?? []).map((option) => (
           <option key={option.reasoningEffort} value={option.reasoningEffort}>
             {option.reasoningEffort}
           </option>

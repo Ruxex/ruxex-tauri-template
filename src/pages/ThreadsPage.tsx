@@ -40,7 +40,7 @@ export function ThreadsPage() {
           </p>
           <h1 className="text-3xl font-semibold">Threads</h1>
         </div>
-        <Link className="btn btn-primary" to="/chat/new">
+        <Link className="btn btn-primary" to="/">
           New chat
         </Link>
       </div>
@@ -67,7 +67,7 @@ export function ThreadsPage() {
           <div className="card border border-dashed border-base-300 bg-base-100">
             <div className="card-body items-center text-center">
               <p>No threads yet.</p>
-              <Link className="btn btn-sm btn-primary" to="/chat/new">
+              <Link className="btn btn-sm btn-primary" to="/">
                 Start a chat
               </Link>
             </div>

@@ -40,7 +40,7 @@ export function ProjectHomePage() {
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             className="btn btn-primary"
-            to={`/projects/${projectId}/chat/new`}
+            to={`/?projectId=${encodeURIComponent(projectId)}`}
           >
             New task
           </Link>

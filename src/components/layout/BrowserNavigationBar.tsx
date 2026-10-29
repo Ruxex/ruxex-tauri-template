@@ -32,18 +32,11 @@ function breadcrumbsForPath(
     ];
   }
 
-  if (pathname === "/chat/new") {
-    return [{ label: "New chat" }];
-  }
-
   if (pathname.startsWith("/chat/")) {
     return [{ label: chatTitle }];
   }
 
   if (pathname.startsWith("/projects/")) {
-    if (pathname.endsWith("/chat/new")) {
-      return [{ label: "Project" }, { label: "New chat" }];
-    }
     return [{ label: "Project" }];
   }
 

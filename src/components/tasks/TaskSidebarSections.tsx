@@ -27,11 +27,7 @@ export function TaskSidebarSections({
 
   return (
     <nav aria-label="Task navigation" className="flex min-h-0 flex-1 flex-col">
-      <Link
-        className="btn btn-primary mb-5 w-full"
-        to="/chat/new"
-        onClick={onClose}
-      >
+      <Link className="btn btn-primary mb-5 w-full" to="/" onClick={onClose}>
         <PlusIcon aria-hidden="true" className="size-4" />
         New task
       </Link>

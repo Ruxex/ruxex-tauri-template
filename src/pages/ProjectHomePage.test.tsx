@@ -61,11 +61,11 @@ describe("ProjectHomePage", () => {
     expect(screen.getByRole("heading", { name: "Tasks" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "New task" }).getAttribute("href"),
-    ).toBe("/projects/project-1/chat/new");
+    ).toBe("/?projectId=project-1");
     expect(screen.getByText("Project menu")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Settings" }).getAttribute("href")).toBe(
-      "/settings",
-    );
+    expect(
+      screen.getByRole("link", { name: "Settings" }).getAttribute("href"),
+    ).toBe("/settings");
     expect(screen.queryByTestId("worktree-card")).toBeNull();
   });
 

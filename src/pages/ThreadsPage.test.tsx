@@ -60,7 +60,7 @@ describe("ThreadsPage", () => {
       screen
         .getAllByRole("link", { name: /new chat/i })[0]
         ?.getAttribute("href"),
-    ).toBe("/chat/new");
+    ).toBe("/");
   });
 
   it("switches from the history list to server search results", async () => {
@@ -99,7 +99,7 @@ describe("ThreadsPage", () => {
     expect(screen.getByText("No threads yet.")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Start a chat" }).getAttribute("href"),
-    ).toBe("/chat/new");
+    ).toBe("/");
   });
 
   it("shows search errors instead of an empty-state message", async () => {

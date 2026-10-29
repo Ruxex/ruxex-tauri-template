@@ -57,7 +57,7 @@ describe("TaskSidebarSections", () => {
     expect(links[1].textContent).toContain("Build the sidebar");
     expect(links[2].textContent?.trim()).toContain("Project Alpha");
     expect(links[3].textContent?.trim()).toBe("Settings");
-    expect(links[0].getAttribute("href")).toBe("/chat/new");
+    expect(links[0].getAttribute("href")).toBe("/");
     expect(links[1].getAttribute("href")).toBe("/chat/thread-1");
     expect(links[2].getAttribute("href")).toBe("/projects/project-1");
     expect(links[3].getAttribute("href")).toBe("/settings");

@@ -92,7 +92,7 @@ describe("ProjectSidebar", () => {
       name: "Home sidebar",
     });
 
-    expect(panel.querySelector('a[href="/chat/new"]')).toBeTruthy();
+    expect(panel.querySelector('a[href="/"]')).toBeTruthy();
     expect(within(panel).getByText("Recent tasks")).toBeTruthy();
     expect(within(panel).getByText("Projects")).toBeTruthy();
     expect(
