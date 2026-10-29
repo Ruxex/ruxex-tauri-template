@@ -63,10 +63,7 @@ export function ChatSidebarSections({
             <span>Recent chats</span>
           </summary>
           <div className="pl-1" id="recent-chats-list">
-            <ThreadList
-              onSelect={onClose}
-              selectedThreadId={selectedThreadId}
-            />
+            <ThreadList selectedThreadId={selectedThreadId} />
           </div>
         </details>
 

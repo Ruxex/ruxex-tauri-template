@@ -79,6 +79,10 @@ describe("ChatSidebarSections", () => {
     expect(recentChats.closest("details")?.open).toBe(true);
     expect(projects.closest("details")?.open).toBe(true);
 
+    onClose.mockClear();
+    fireEvent.click(links[1]);
+    expect(onClose).not.toHaveBeenCalled();
+
     fireEvent.click(recentChats);
     expect(recentChats.closest("details")?.open).toBe(false);
 
