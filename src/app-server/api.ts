@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import type { ClientRequest, ClientResponse, RequestId } from "../protocol";
-import { startAppServerEventStore } from "./event-store";
 import { getMockAppServer } from "./mock-runtime";
 import { isMockAppServerRuntime } from "./runtime";
 
@@ -33,11 +32,10 @@ function nextRequestId(): number {
   return requestId;
 }
 
-export async function ensureAppServer(): Promise<AppServerStatus> {
+export function ensureAppServer(): Promise<AppServerStatus> {
   if (isMockAppServerRuntime) {
-    return getMockAppServer().status;
+    return Promise.resolve(getMockAppServer().status);
   }
-  await startAppServerEventStore();
   return invoke<AppServerStatus>("ensure_app_server");
 }
 

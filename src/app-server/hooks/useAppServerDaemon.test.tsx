@@ -14,10 +14,16 @@ import { appServerQueryKeys } from "../query-keys";
 
 const controlAppServerDaemon = vi.hoisted(() => vi.fn());
 const ensureAppServer = vi.hoisted(() => vi.fn());
+const startAppServerEventStore = vi.hoisted(() => vi.fn());
 
 vi.mock("../daemon-api", () => ({ controlAppServerDaemon }));
 vi.mock("../api", () => ({ ensureAppServer }));
-vi.mock("../runtime", () => ({ isNativeDesktopRuntime: true }));
+vi.mock("../event-store", () => ({ startAppServerEventStore }));
+vi.mock("../runtime", () => ({
+  isDesktopRuntime: true,
+  isMockAppServerRuntime: false,
+  isNativeDesktopRuntime: true,
+}));
 
 function createWrapper(client: QueryClient) {
   return function TestWrapper({ children }: { children: ReactNode }) {

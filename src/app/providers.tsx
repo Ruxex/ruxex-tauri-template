@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 
 import {
-  startAppServerEventStore,
   stopAppServerEventStore,
 } from "../app-server/event-store";
 import { useAppServerNotifications } from "../app-server/hooks";
@@ -30,7 +29,6 @@ function AppRuntime({ router }: AppProvidersProps) {
   useAppServerNotifications();
 
   useEffect(() => {
-    void startAppServerEventStore();
     return stopAppServerEventStore;
   }, []);
 

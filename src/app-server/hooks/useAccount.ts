@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
-import { ensureAppServer, requestAppServerMethod } from "../api";
+import { requestAppServerMethod } from "../api";
+import { ensureAppServerRuntime } from "../app-server-runtime";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
 
@@ -24,7 +25,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (params: v2.LoginAccountParams) => {
-      await ensureAppServer();
+      await ensureAppServerRuntime();
       const response = await requestAppServerMethod(
         "account/login/start",
         params,

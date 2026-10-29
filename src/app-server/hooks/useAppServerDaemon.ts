@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { ensureAppServer, type AppServerStatus } from "../api";
+import { type AppServerStatus } from "../api";
+import { ensureAppServerRuntime } from "../app-server-runtime";
 import {
   controlAppServerDaemon,
   type AppServerDaemonAction,
@@ -14,7 +15,7 @@ export function useAppServerDaemon() {
   const [lastMode, setLastMode] = useState<AppServerStatus["mode"]>();
   const appServerStatus = useQuery({
     queryKey: appServerQueryKeys.status,
-    queryFn: ensureAppServer,
+    queryFn: ensureAppServerRuntime,
     enabled: isNativeDesktopRuntime,
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
@@ -54,7 +55,7 @@ export function useAppServerDaemon() {
         return;
       }
 
-      const connectedStatus = await ensureAppServer();
+      const connectedStatus = await ensureAppServerRuntime();
       queryClient.setQueryData(appServerQueryKeys.status, connectedStatus);
     },
     onError: (_error, action) => {

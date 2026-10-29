@@ -28,12 +28,13 @@ describe("ensureAppServer startup ordering", () => {
     });
   });
 
-  it("starts the event listener before opening the app-server connection", async () => {
+  it("keeps the transport wrapper free of runtime startup", async () => {
     await expect(ensureAppServer()).resolves.toEqual({
       socketPath: "/tmp/ruxex-test.sock",
       appServerVersion: "test-app-server",
     });
 
-    expect(callOrder).toEqual(["events", "ensure"]);
+    expect(callOrder).toEqual(["ensure"]);
+    expect(startAppServerEventStore).not.toHaveBeenCalled();
   });
 });
