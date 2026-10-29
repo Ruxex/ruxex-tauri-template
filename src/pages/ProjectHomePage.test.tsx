@@ -114,10 +114,14 @@ describe("ProjectHomePage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Project name" }), {
       target: { value: "  Updated Ruxex  " },
     });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Code" }));
-    fireEvent.change(screen.getByRole("combobox", { name: "Project color" }), {
-      target: { value: "violet" },
-    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Violet" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
         name: "Selected workspace folder: /workspace",

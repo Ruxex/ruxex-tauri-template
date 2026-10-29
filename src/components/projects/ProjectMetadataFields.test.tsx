@@ -11,7 +11,7 @@ describe("ProjectMetadataFields", () => {
     cleanup();
   });
 
-  it("renders icon choices as a compact grid of actual icon buttons", () => {
+  it("starts with compact icon and color controls", () => {
     render(
       <ProjectMetadataFields
         value={DEFAULT_PROJECT_METADATA}
@@ -19,17 +19,47 @@ describe("ProjectMetadataFields", () => {
       />,
     );
 
-    expect(screen.queryByRole("combobox", { name: "Project icon" })).toBeNull();
-    const iconGroup = screen.getByRole("group", { name: "Project icon" });
-    expect(iconGroup.className.split(/\s+/)).toContain("grid-cols-4");
-
-    const folderButton = screen.getByRole("button", { name: "Folder" });
-    expect(folderButton.textContent?.trim()).toBe("");
-    expect(folderButton.querySelector("svg")).toBeTruthy();
-    expect(folderButton.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("group", { name: "Project icon options" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "Project color options" }),
+    ).toBeNull();
   });
 
-  it("updates the selected icon without rendering option text", () => {
+  it("opens one selector at a time", () => {
+    render(
+      <ProjectMetadataFields
+        value={DEFAULT_PROJECT_METADATA}
+        onChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+    );
+    expect(
+      screen.getByRole("group", { name: "Project icon options" }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    );
+    expect(
+      screen.queryByRole("group", { name: "Project icon options" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Project color options" }),
+    ).toBeTruthy();
+  });
+
+  it("updates the selected icon and closes its options", () => {
     const onChange = vi.fn();
     render(
       <ProjectMetadataFields
@@ -38,10 +68,76 @@ describe("ProjectMetadataFields", () => {
       />,
     );
 
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Code" }));
 
     expect(onChange).toHaveBeenCalledWith({ icon: "code", color: "blue" });
-    expect(screen.queryByText("Folder")).toBeNull();
-    expect(screen.queryByText("Code")).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "Project icon options" }),
+    ).toBeNull();
+  });
+
+  it("updates the selected color and closes its options", () => {
+    const onChange = vi.fn();
+    render(
+      <ProjectMetadataFields
+        value={DEFAULT_PROJECT_METADATA}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Violet" }));
+
+    expect(onChange).toHaveBeenCalledWith({ icon: "folder", color: "violet" });
+    expect(
+      screen.queryByRole("group", { name: "Project color options" }),
+    ).toBeNull();
+  });
+
+  it("closes the active options on outside pointer or Escape", () => {
+    render(
+      <ProjectMetadataFields
+        value={DEFAULT_PROJECT_METADATA}
+        onChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+    );
+    fireEvent.pointerDown(document.body);
+    expect(
+      screen.queryByRole("group", { name: "Project icon options" }),
+    ).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(
+      screen.queryByRole("group", { name: "Project color options" }),
+    ).toBeNull();
+  });
+
+  it("returns focus to the trigger after closing with Escape", () => {
+    render(
+      <ProjectMetadataFields
+        value={DEFAULT_PROJECT_METADATA}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const colorTrigger = screen.getByRole("button", {
+      name: "Project color: Blue",
+    });
+    fireEvent.click(colorTrigger);
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(document.activeElement).toBe(colorTrigger);
   });
 });
