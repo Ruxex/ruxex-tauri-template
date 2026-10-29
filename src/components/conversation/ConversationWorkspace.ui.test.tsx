@@ -32,7 +32,14 @@ describe("ConversationWorkspace", () => {
           status: { type: "idle" },
         },
         turns: { data: [] },
-        items: { data: [] },
+        items: {
+          data: [
+            {
+              turnId: "turn-1",
+              item: { type: "agentMessage", id: "item-1", text: "Assistant reply" },
+            },
+          ] as never,
+        },
       },
     });
     useAppServerEvents.mockReturnValue({
@@ -68,6 +75,10 @@ describe("ConversationWorkspace", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Authentication required",
     );
+    const content = screen.getByText("Assistant reply").closest(
+      "[data-chat-content]",
+    );
+    expect(content?.className.split(/\s+/)).toContain("selectable-content");
     expect(screen.queryByRole("heading", { name: "Test chat" })).toBeNull();
     const composer = screen.getByTestId("composer");
     const root = composer.closest("div.flex");

@@ -1,11 +1,26 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { MarkdownContent } from "./MarkdownContent";
 
 describe("MarkdownContent", () => {
+  it("defines the desktop selection policy and content exception", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/styles/index.css"),
+      "utf8",
+    );
+
+    expect(styles).toContain("user-select: none");
+    expect(styles).toContain(".selectable-content");
+    expect(styles).toMatch(/input[^}]*user-select: text/s);
+    expect(styles).toMatch(/textarea[^}]*user-select: text/s);
+  });
+
   it("renders headings, emphasis, inline code, and links as structured content", () => {
     render(
       <MarkdownContent
@@ -18,11 +33,11 @@ describe("MarkdownContent", () => {
     expect(
       screen.getByRole("heading", { name: "Result", level: 1 }),
     ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("heading", { name: "Result", level: 1 })
-        .closest("[data-chat-content]"),
-    ).toBeTruthy();
+    const content = screen
+      .getByRole("heading", { name: "Result", level: 1 })
+      .closest("[data-chat-content]");
+    expect(content).toBeTruthy();
+    expect(content?.className.split(/\s+/)).toContain("selectable-content");
     expect(screen.getByText("Ready").tagName).toBe("STRONG");
     expect(screen.getByText("pnpm test").tagName).toBe("CODE");
     expect(
