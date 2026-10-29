@@ -236,29 +236,52 @@ export function ProjectsPage() {
               </button>
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {projects.data?.data.map((project) => (
-              <Link
-                className="group flex min-h-36 flex-col justify-between rounded-xl border border-base-300 bg-base-100 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                key={project.id}
-                to={`/projects/${project.id}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content">
-                    <FolderIcon aria-hidden="true" className="size-5" />
-                  </div>
-                  <span className="text-xs font-medium text-base-content/40 transition-colors group-hover:text-primary">
-                    Open
-                  </span>
-                </div>
-                <div className="mt-6 min-w-0">
-                  <h3 className="truncate font-semibold">{project.name}</h3>
-                  <p className="mt-1 truncate font-mono text-xs text-base-content/55">
-                    {project.roots[0]?.path ?? "No workspace root configured"}
-                  </p>
-                </div>
-              </Link>
-            ))}
+          <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
+            <table aria-label="Projects" className="table">
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Workspace</th>
+                  <th>Roots</th>
+                  <th>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.data?.data.map((project) => (
+                  <tr className="hover" key={project.id}>
+                    <td>
+                      <Link
+                        className="flex min-w-40 items-center gap-3 font-semibold hover:text-primary"
+                        to={`/projects/${project.id}`}
+                      >
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <FolderIcon aria-hidden="true" className="size-4" />
+                        </span>
+                        <span className="truncate">{project.name}</span>
+                      </Link>
+                    </td>
+                    <td className="max-w-80">
+                      <span className="block truncate font-mono text-xs text-base-content/65">
+                        {project.roots[0]?.path ?? "No workspace root configured"}
+                      </span>
+                    </td>
+                    <td className="text-sm text-base-content/70">
+                      {project.roots.length}
+                    </td>
+                    <td className="text-right">
+                      <Link
+                        className="btn btn-ghost btn-sm"
+                        to={`/projects/${project.id}`}
+                      >
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>

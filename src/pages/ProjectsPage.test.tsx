@@ -43,7 +43,7 @@ describe("ProjectsPage", () => {
     open.mockResolvedValue("/workspace/selected");
   });
 
-  it("renders the project list and compact creation action in the main page", async () => {
+  it("renders projects in a table and keeps the compact creation action", async () => {
     const { ProjectsPage } = await import("./ProjectsPage");
 
     render(
@@ -53,7 +53,14 @@ describe("ProjectsPage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
+    expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Project" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Workspace" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Roots" })).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /Project Alpha/ }).getAttribute("href"),
+    ).toBe("/projects/project-1");
     expect(screen.getByRole("button", { name: "New project" })).toBeTruthy();
     expect(screen.queryByLabelText("Project name")).toBeNull();
   });
