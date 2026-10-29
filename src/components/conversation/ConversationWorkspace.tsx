@@ -1,23 +1,25 @@
-import {
-  useAppServerEvents,
-  useRevertThread,
-  useThreadConversation,
-} from "../../app-server/hooks";
 import { useEffect, useState } from "react";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
 } from "../../app-server/api";
+import {
+  useAppServerEvents,
+  useRetainThreadState,
+  useRevertThread,
+  useThreadConversation,
+} from "../../app-server/hooks";
+import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { Composer } from "./Composer";
 import {
-  mergeConversationItems,
   type ConversationViewItem,
+  mergeConversationItems,
 } from "./conversation-model";
-import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
+  useRetainThreadState(threadId);
   const revertThread = useRevertThread();
   const [composerDraft, setComposerDraft] = useState<string | undefined>();
   const liveThread = events.threads[threadId];

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-
+import {
+  createInitialEventState,
+  pruneIdleThreadStates,
+  reduceAppServerEvent,
+} from "./event-reducer";
 import type { AppServerEvent } from "./events";
-import { createInitialEventState, reduceAppServerEvent } from "./event-reducer";
 
 const notification = (data: unknown): AppServerEvent => ({
   type: "serverNotification",
@@ -582,5 +585,151 @@ describe("reduceAppServerEvent", () => {
     expect(state.pendingServerRequests["9"]?.request).toBe(
       (first as Extract<AppServerEvent, { type: "serverRequest" }>).data,
     );
+  });
+
+  it("prunes stale idle threads but keeps active and retained state", () => {
+    let state = createInitialEventState();
+    for (const threadId of [
+      "idle",
+      "running",
+      "resync",
+      "pending",
+      "retained",
+    ]) {
+      state = reduceAppServerEvent(
+        state,
+        notification({
+          method: "turn/completed",
+          params: {
+            threadId,
+            turn: { id: `${threadId}-turn`, status: "completed", items: [] },
+          },
+        }),
+        0,
+      );
+    }
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "running",
+          turn: { id: "running-turn-2", status: "inProgress" },
+        },
+      }),
+      10,
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "resync",
+          turn: { id: "resync-turn-2", status: "inProgress" },
+        },
+      }),
+      15,
+    );
+    state = reduceAppServerEvent(
+      state,
+      {
+        type: "disconnected",
+        data: { message: "socket closed" },
+      },
+      20,
+    );
+    state = reduceAppServerEvent(
+      state,
+      serverRequest({
+        method: "currentTime/read",
+        id: 1,
+        params: { threadId: "pending" },
+      }),
+      30,
+    );
+
+    state = pruneIdleThreadStates(state, {
+      now: 100,
+      idleTtlMs: 50,
+      maxIdleStates: 10,
+      retainedThreadIds: new Set(["retained"]),
+    });
+
+    expect(state.threads).not.toHaveProperty("idle");
+    expect(state.threads).toHaveProperty("running");
+    expect(state.threads).toHaveProperty("resync");
+    expect(state.threads).toHaveProperty("pending");
+    expect(state.threads).toHaveProperty("retained");
+    expect(state.pendingServerRequests["1"]).toBeDefined();
+  });
+
+  it("evicts the oldest idle states when the idle-state limit is exceeded", () => {
+    let state = createInitialEventState();
+    for (const [threadId, now] of [
+      ["oldest", 1],
+      ["middle", 2],
+      ["newest", 3],
+    ] as const) {
+      state = reduceAppServerEvent(
+        state,
+        notification({
+          method: "turn/completed",
+          params: {
+            threadId,
+            turn: { id: `${threadId}-turn`, status: "completed", items: [] },
+          },
+        }),
+        now,
+      );
+    }
+
+    state = pruneIdleThreadStates(state, {
+      now: 4,
+      idleTtlMs: 10_000,
+      maxIdleStates: 2,
+      retainedThreadIds: new Set(),
+    });
+
+    expect(state.threads).not.toHaveProperty("oldest");
+    expect(state.threads).toHaveProperty("middle");
+    expect(state.threads).toHaveProperty("newest");
+  });
+
+  it("recreates an evicted thread state when a later event arrives", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "turn/completed",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "completed", items: [] },
+        },
+      }),
+      0,
+    );
+    state = pruneIdleThreadStates(state, {
+      now: 100,
+      idleTtlMs: 1,
+      maxIdleStates: 10,
+      retainedThreadIds: new Set(),
+    });
+    expect(state.threads).not.toHaveProperty("thread-1");
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-2", status: "inProgress" },
+        },
+      }),
+      200,
+    );
+
+    expect(state.threads["thread-1"]).toMatchObject({
+      status: "running",
+      activeTurnId: "turn-2",
+    });
   });
 });

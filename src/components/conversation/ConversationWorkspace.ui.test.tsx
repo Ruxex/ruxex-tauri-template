@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
+const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
 const refetch = vi.hoisted(() => vi.fn());
@@ -17,6 +18,7 @@ const revertMutation = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
+  useRetainThreadState,
   useThreadConversation,
   useRevertThread,
 }));
@@ -58,7 +60,11 @@ describe("ConversationWorkspace", () => {
             },
             {
               turnId: "turn-2",
-              item: { type: "agentMessage", id: "item-1", text: "Assistant reply" },
+              item: {
+                type: "agentMessage",
+                id: "item-1",
+                text: "Assistant reply",
+              },
             },
           ] as never,
         },
@@ -101,12 +107,14 @@ describe("ConversationWorkspace", () => {
 
     render(<ConversationWorkspace threadId="thread-1" />);
 
+    expect(useRetainThreadState).toHaveBeenCalledWith("thread-1");
+
     expect(screen.getByRole("alert").textContent).toContain(
       "Authentication required",
     );
-    const content = screen.getByText("Assistant reply").closest(
-      "[data-chat-content]",
-    );
+    const content = screen
+      .getByText("Assistant reply")
+      .closest("[data-chat-content]");
     expect(content?.className.split(/\s+/)).toContain("selectable-content");
     expect(screen.queryByRole("heading", { name: "Test chat" })).toBeNull();
     const composer = screen.getByTestId("composer");

@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 
 import { useUiPreferences } from "../../app/ui-preferences";
-import { useAppServerEventStore } from "../event-store";
-import { isDesktopRuntime } from "../runtime";
 import {
   createNotificationDispatcher,
   sendDesktopNotification,
 } from "../../platform/notifications";
+import { retainThreadState, useAppServerEventStore } from "../event-store";
+import { isDesktopRuntime } from "../runtime";
 
 export function useAppServerEvents() {
   return useAppServerEventStore();
@@ -14,6 +14,10 @@ export function useAppServerEvents() {
 
 export function useServerRequests() {
   return Object.values(useAppServerEventStore().pendingServerRequests);
+}
+
+export function useRetainThreadState(threadId: string): void {
+  useEffect(() => retainThreadState(threadId), [threadId]);
 }
 
 export function useAppServerNotifications() {

@@ -127,4 +127,61 @@ describe("app-server event store", () => {
     await expect(store.startAppServerEventStore()).resolves.toBeUndefined();
     expect(store.getAppServerEventSnapshot().connected).toBe(true);
   });
+
+  it("retains the visible thread while pruning idle renderer state", async () => {
+    vi.useFakeTimers();
+    try {
+      let handler: ((event: AppServerEvent) => void) | undefined;
+      listenToAppServerEvents.mockImplementation(
+        async (next: (event: AppServerEvent) => void) => {
+          handler = next;
+          return vi.fn();
+        },
+      );
+
+      const store = await import("./event-store");
+      await store.startAppServerEventStore();
+      const release = store.retainThreadState("visible");
+      handler?.({
+        type: "serverNotification",
+        data: {
+          method: "turn/completed",
+          params: {
+            threadId: "idle",
+            turn: {
+              id: "idle-turn",
+              status: "completed",
+              items: [],
+            } as never,
+          },
+        },
+      });
+      handler?.({
+        type: "serverNotification",
+        data: {
+          method: "turn/completed",
+          params: {
+            threadId: "visible",
+            turn: {
+              id: "visible-turn",
+              status: "completed",
+              items: [],
+            } as never,
+          },
+        },
+      });
+
+      vi.advanceTimersByTime(10 * 60_000 + 1);
+
+      expect(store.getAppServerEventSnapshot().threads).not.toHaveProperty(
+        "idle",
+      );
+      expect(store.getAppServerEventSnapshot().threads).toHaveProperty(
+        "visible",
+      );
+      release();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
