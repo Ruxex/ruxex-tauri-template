@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
-import { useAccount } from "../app-server/hooks";
+import { useAccount, useLogout } from "../app-server/hooks";
 import {
   SettingRow,
   SettingsPanel,
@@ -9,6 +9,7 @@ import {
 
 export function AccountPage() {
   const account = useAccount();
+  const logout = useLogout();
 
   if (account.isLoading) {
     return <span className="loading loading-spinner loading-lg" />;
@@ -40,12 +41,28 @@ export function AccountPage() {
             {data?.account?.type ?? "Not signed in"}
           </SettingRow>
         </dl>
-        {data?.authStatus !== "authenticated" && (
+        {data?.authStatus === "authenticated" ? (
+          <div className="flex justify-end px-5 py-4">
+            <button
+              className="btn btn-outline"
+              disabled={logout.isPending}
+              type="button"
+              onClick={() => logout.mutate()}
+            >
+              {logout.isPending ? "Logging out…" : "Log out"}
+            </button>
+          </div>
+        ) : (
           <div className="flex justify-end px-5 py-4">
             <Link className="btn btn-primary" to="/login">
               Log in
             </Link>
           </div>
+        )}
+        {logout.isError && (
+          <p className="px-5 pb-4 text-sm text-error" role="alert">
+            Unable to log out: {formatErrorMessage(logout.error)}
+          </p>
         )}
       </SettingsPanel>
     </div>
