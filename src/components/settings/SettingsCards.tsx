@@ -88,8 +88,7 @@ export function AppServerCard({
   const inProcess = mode === "inprocess";
   const error =
     connectionError ?? appServerError ?? controlError ?? daemonError;
-  const showDaemonControls =
-    !inProcess && appServerReady && appServerError == null;
+  const showDaemonControls = !inProcess && isAvailable;
   const modeLabel = inProcess
     ? "InProcess mode"
     : appServerReady && appServerError == null
@@ -105,7 +104,7 @@ export function AppServerCard({
           ? "The Ruxex AppServer is running in this process."
           : appServerReady && appServerError == null
             ? "Control the managed Ruxex AppServer daemon."
-            : "The Ruxex AppServer is unavailable."
+            : "The Ruxex AppServer is unavailable. Retry daemon startup below."
       }
     >
       <dl className="divide-y divide-base-300 text-sm">
@@ -153,7 +152,7 @@ export function AppServerCard({
           {(["start", "restart", "stop"] as const).map((action) => (
             <button
               className="btn btn-sm"
-              disabled={!isAvailable || isPending}
+              disabled={isPending}
               key={action}
               onClick={() => onAction(action)}
               type="button"

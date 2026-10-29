@@ -148,16 +148,13 @@ describe("AppServerPage", () => {
     expect(screen.getByText("Error: daemon unavailable")).toBeTruthy();
   });
 
-  it("disables lifecycle controls outside the native runtime", () => {
+  it("hides lifecycle controls outside the native runtime", () => {
     useAppServerDaemon.mockReturnValue(useDaemonResult({ isAvailable: false }));
 
     render(<AppServerPage />);
 
     for (const name of ["Start", "Restart", "Stop"]) {
-      expect(screen.getByRole("button", { name })).toHaveProperty(
-        "disabled",
-        true,
-      );
+      expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
 
@@ -177,12 +174,12 @@ describe("AppServerPage", () => {
     }
   });
 
-  it("shows App Server initialization errors without daemon controls", () => {
+  it("shows App Server initialization errors with daemon recovery controls", () => {
     useAppServerDaemon.mockReturnValue(
       useDaemonResult({
         appServerError: new Error("in-process initialization failed"),
         appServerReady: false,
-        isAvailable: false,
+        isAvailable: true,
         mode: undefined,
       }),
     );
@@ -193,7 +190,12 @@ describe("AppServerPage", () => {
     expect(
       screen.getByText("Error: in-process initialization failed"),
     ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+    for (const name of ["Start", "Restart", "Stop"]) {
+      expect(screen.getByRole("button", { name })).toHaveProperty(
+        "disabled",
+        false,
+      );
+    }
   });
 });
 

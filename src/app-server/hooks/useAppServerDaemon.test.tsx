@@ -101,7 +101,7 @@ describe("useAppServerDaemon", () => {
     expect(controlAppServerDaemon).not.toHaveBeenCalled();
   });
 
-  it("surfaces App Server initialization errors and disables daemon controls", async () => {
+  it("surfaces initialization errors while keeping daemon recovery available", async () => {
     const error = new Error("in-process initialization failed");
     ensureAppServer.mockRejectedValue(error);
     const client = new QueryClient({
@@ -113,7 +113,7 @@ describe("useAppServerDaemon", () => {
 
     await waitFor(() => {
       expect(result.current.appServerError).toBe(error);
-      expect(result.current.isAvailable).toBe(false);
+      expect(result.current.isAvailable).toBe(true);
     });
     expect(controlAppServerDaemon).not.toHaveBeenCalled();
   });

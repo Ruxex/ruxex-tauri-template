@@ -67,11 +67,7 @@ export function useAppServerDaemon() {
   return {
     status,
     control,
-    isAvailable:
-      isNativeDesktopRuntime &&
-      appServerStatus.isSuccess &&
-      appServerStatus.error == null &&
-      mode !== "inprocess",
+    isAvailable: isNativeDesktopRuntime && mode !== "inprocess",
     mode,
     appServerError: appServerStatus.error,
     appServerReady: !isNativeDesktopRuntime || appServerStatus.isSuccess,
