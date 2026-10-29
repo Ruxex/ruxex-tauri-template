@@ -47,9 +47,14 @@ export function AppLayout() {
   }
 
   return (
-    <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
+    <main
+      className={`workbench flex flex-col bg-base-200 text-base-content ${isChatRoute ? "min-h-dvh overflow-y-auto" : "h-dvh overflow-hidden"}`}
+      data-conversation-scroll={isChatRoute ? "true" : undefined}
+    >
       <BrowserNavigationBar chatTitle={chatTitle} />
-      <div className="flex min-h-0 flex-1">
+      <div
+        className={`flex flex-1 ${isChatRoute ? "min-h-[calc(100dvh-2rem)]" : "min-h-0"}`}
+      >
         {!preferences.sidebarCollapsed && activePanel !== "projects" && (
           <button
             aria-label="Close sidebar overlay"
@@ -69,10 +74,9 @@ export function AppLayout() {
         />
         <div className="flex min-w-0 min-h-0 flex-1 flex-col">
           <section
-            className={`workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 ${
-              isChatRoute ? "overflow-y-auto p-0" : "overflow-y-auto p-4 sm:p-6"
+            className={`workbench-main mx-auto w-full max-w-[1440px] flex-1 ${
+              isChatRoute ? "p-0" : "min-h-0 overflow-y-auto p-4 sm:p-6"
             }`}
-            data-conversation-scroll={isChatRoute ? "true" : undefined}
           >
             <Outlet />
           </section>

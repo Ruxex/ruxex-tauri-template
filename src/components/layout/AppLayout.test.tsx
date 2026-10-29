@@ -130,7 +130,7 @@ describe("AppLayout", () => {
     expect(screen.getByText("Command demo")).toBeTruthy();
   });
 
-  it("lets the chat route scroll at the content-section level", () => {
+  it("lets the chat route scroll at the window-level shell", () => {
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
       update: vi.fn(),
@@ -142,10 +142,13 @@ describe("AppLayout", () => {
       </MemoryRouter>,
     );
 
-    const section = screen.getByRole("main").querySelector("section");
-    expect(section?.className).toContain("overflow-y-auto");
-    expect(section?.className).not.toContain("overflow-hidden");
+    const main = screen.getByRole("main");
+    const section = main.querySelector("section");
+    expect(main.className).toContain("overflow-y-auto");
+    expect(main.className).not.toContain("overflow-hidden");
+    expect(section?.className).not.toContain("overflow-y-auto");
     expect(section?.className).toContain("p-0");
-    expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
+    expect(main.getAttribute("data-conversation-scroll")).toBe("true");
+    expect(section?.getAttribute("data-conversation-scroll")).toBeNull();
   });
 });
