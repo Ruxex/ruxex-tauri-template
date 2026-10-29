@@ -300,6 +300,11 @@ describe("Composer", () => {
     fireEvent.click(screen.getByLabelText("Model and effort"));
     expect(screen.queryByRole("option", { name: "Default model" })).toBeNull();
     expect(screen.queryByRole("option", { name: "Default effort" })).toBeNull();
+    fireEvent.pointerDown(document.body);
+    expect(
+      screen.getByLabelText("Model and effort").closest("details")?.open,
+    ).toBe(false);
+    fireEvent.click(screen.getByLabelText("Model and effort"));
     fireEvent.change(screen.getByLabelText("Model"), {
       target: { value: "ruxex" },
     });

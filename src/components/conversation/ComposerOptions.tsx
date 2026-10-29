@@ -11,6 +11,7 @@ import {
   availableSubmissionModes,
   type SubmissionMode,
 } from "./composer-model";
+import { useCloseDropdownOnOutsidePointerDown } from "./useCloseDropdown";
 
 function closeDropdown(event: SyntheticEvent<HTMLElement>) {
   event.currentTarget.closest("details")?.removeAttribute("open");
@@ -35,8 +36,10 @@ export function ComposerOptions({
   onPlanModeChange,
   planMode,
 }: ComposerOptionsProps) {
+  const detailsRef = useCloseDropdownOnOutsidePointerDown();
+
   return (
-    <details className="dropdown dropdown-top">
+    <details className="dropdown dropdown-top" ref={detailsRef}>
       <summary
         aria-label="Composer options"
         className="btn btn-ghost btn-sm btn-circle"
@@ -119,8 +122,10 @@ export function PermissionMenu({
   mode,
   onModeChange,
 }: PermissionMenuProps) {
+  const detailsRef = useCloseDropdownOnOutsidePointerDown();
+
   return (
-    <details className="dropdown dropdown-top">
+    <details className="dropdown dropdown-top" ref={detailsRef}>
       <summary
         aria-label="Permission mode"
         className="btn btn-ghost btn-sm gap-1"
@@ -165,9 +170,10 @@ export function SubmissionModeMenu({
 }: SubmissionModeMenuProps) {
   const modes = availableSubmissionModes(activeTurnId);
   const options: SubmissionMode[] = ["send", "steer", "queue"];
+  const detailsRef = useCloseDropdownOnOutsidePointerDown();
 
   return (
-    <details className="dropdown dropdown-top dropdown-end">
+    <details className="dropdown dropdown-top dropdown-end" ref={detailsRef}>
       <summary
         className="btn btn-primary btn-sm join-item px-2"
         aria-label="Submission mode menu"

@@ -81,6 +81,24 @@ describe("ComposerOptions", () => {
     ).toBe(false);
   });
 
+  it("closes an open menu when clicking outside it", () => {
+    render(
+      <PermissionMenu
+        disabled={false}
+        mode="ask"
+        onModeChange={vi.fn()}
+      />,
+    );
+
+    const summary = screen.getByLabelText("Permission mode");
+    fireEvent.click(summary);
+    expect(summary.closest("details")?.open).toBe(true);
+
+    fireEvent.pointerDown(document.body);
+
+    expect(summary.closest("details")?.open).toBe(false);
+  });
+
   it("offers send, steer, and queue from the submission mode menu", () => {
     const onModeChange = vi.fn();
     render(

@@ -1,6 +1,7 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 
 import type { v2 } from "../../protocol";
+import { useCloseDropdownOnOutsidePointerDown } from "./useCloseDropdown";
 
 type ComposerSettingsProps = {
   disabled: boolean;
@@ -26,9 +27,10 @@ export function ComposerSettings({
   const modelLabel = selectedModel?.displayName ?? "No model available";
   const effortLabel = effort || "medium";
   const availableEfforts = selectedModel?.supportedReasoningEfforts ?? [];
+  const detailsRef = useCloseDropdownOnOutsidePointerDown();
 
   return (
-    <details className="dropdown dropdown-top dropdown-end">
+    <details className="dropdown dropdown-top dropdown-end" ref={detailsRef}>
       <summary
         aria-label="Model and effort"
         className="btn btn-ghost btn-sm max-w-64 gap-1"
