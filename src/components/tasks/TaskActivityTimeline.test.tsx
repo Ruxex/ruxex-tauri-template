@@ -305,6 +305,41 @@ describe("TaskActivityTimeline", () => {
     });
   });
 
+  it("scrolls the outer conversation container instead of the timeline", () => {
+    const initialItems = [
+      viewItem("message-1", "userMessage", "New request", "message"),
+    ];
+    const { rerender } = render(
+      <div data-conversation-scroll data-testid="conversation-scroll">
+        <TaskActivityTimeline {...timelineProps(initialItems)} />
+      </div>,
+    );
+    const container = screen.getByTestId("conversation-scroll");
+    const timeline = screen.getByRole("region", { name: "Task activity" });
+    setScrollMetrics(container, {
+      clientHeight: 400,
+      scrollHeight: 1000,
+      scrollTop: 580,
+    });
+
+    rerender(
+      <div data-conversation-scroll data-testid="conversation-scroll">
+        <TaskActivityTimeline
+          {...timelineProps([
+            ...initialItems,
+            viewItem("message-2", "agentMessage", "Reply", "message"),
+          ])}
+        />
+      </div>,
+    );
+
+    expect(container.scrollTo).toHaveBeenCalledWith({
+      behavior: "smooth",
+      top: 1000,
+    });
+    expect(timeline.scrollTo).toBeUndefined();
+  });
+
   it("reconciles activities by turn and item identity", () => {
     const baseItem: ConversationViewItem = {
       id: "command-1",

@@ -130,7 +130,7 @@ describe("AppLayout", () => {
     expect(screen.getByText("Command demo")).toBeTruthy();
   });
 
-  it("gives the chat route a full-height layout for a bottom composer", () => {
+  it("lets the chat route scroll at the content-section level", () => {
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
       update: vi.fn(),
@@ -143,7 +143,9 @@ describe("AppLayout", () => {
     );
 
     const section = screen.getByRole("main").querySelector("section");
-    expect(section?.className).toContain("overflow-hidden");
+    expect(section?.className).toContain("overflow-y-auto");
+    expect(section?.className).not.toContain("overflow-hidden");
     expect(section?.className).toContain("p-0");
+    expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
   });
 });

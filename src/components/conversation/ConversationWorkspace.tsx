@@ -45,7 +45,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[980px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
+    <div className="mx-auto flex min-h-full w-full max-w-[980px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
       {turnError && (
         <p className="alert alert-error" role="alert">
           <span>Turn failed: {turnError.message}</span>
@@ -63,7 +63,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
       />
-      <div className="shrink-0 bg-base-200 pt-3">
+      <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3">
         <Composer
           threadId={threadId}
           activeTurnId={liveThread?.activeTurnId ?? null}

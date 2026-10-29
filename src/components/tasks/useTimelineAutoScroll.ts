@@ -5,6 +5,12 @@ import type { ConversationViewItem } from "../conversation/conversation-model";
 
 const BOTTOM_TOLERANCE_PX = 24;
 
+function scrollContainerFor(timeline: HTMLElement): HTMLElement {
+  return (
+    timeline.closest<HTMLElement>("[data-conversation-scroll]") ?? timeline
+  );
+}
+
 type UseTimelineAutoScrollOptions = {
   items: ConversationViewItem[];
   pendingRequests: PendingServerRequest[];
@@ -31,16 +37,20 @@ export function useTimelineAutoScroll({
     if (!timeline) {
       return;
     }
+    const scrollContainer = scrollContainerFor(timeline);
 
     const updateBottomState = () => {
       wasAtBottomRef.current =
-        timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight <=
+        scrollContainer.scrollHeight -
+          scrollContainer.scrollTop -
+          scrollContainer.clientHeight <=
         BOTTOM_TOLERANCE_PX;
     };
 
     updateBottomState();
-    timeline.addEventListener("scroll", updateBottomState);
-    return () => timeline.removeEventListener("scroll", updateBottomState);
+    scrollContainer.addEventListener("scroll", updateBottomState);
+    return () =>
+      scrollContainer.removeEventListener("scroll", updateBottomState);
   }, []);
 
   useLayoutEffect(() => {
@@ -69,10 +79,14 @@ export function useTimelineAutoScroll({
     if (!timeline) {
       return;
     }
-    if (typeof timeline.scrollTo === "function") {
-      timeline.scrollTo({ behavior: "smooth", top: timeline.scrollHeight });
+    const scrollContainer = scrollContainerFor(timeline);
+    if (typeof scrollContainer.scrollTo === "function") {
+      scrollContainer.scrollTo({
+        behavior: "smooth",
+        top: scrollContainer.scrollHeight,
+      });
     } else {
-      timeline.scrollTop = timeline.scrollHeight;
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
     wasAtBottomRef.current = true;
   }, [contentSignature, itemKeys, items]);

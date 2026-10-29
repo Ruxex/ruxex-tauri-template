@@ -70,20 +70,18 @@ describe("ConversationWorkspace", () => {
     expect(root).not.toBeNull();
     expect(root?.className.split(/\s+/)).toEqual(
       expect.arrayContaining([
-        "h-full",
-        "min-h-0",
+        "min-h-full",
         "w-full",
         "max-w-[980px]",
         "mx-auto",
       ]),
     );
-    expect(composer.parentElement?.className.split(/\s+/)).toContain(
-      "shrink-0",
-    );
+    expect(root?.className.split(/\s+/)).not.toContain("h-full");
+    expect(composer.parentElement?.className.split(/\s+/)).toContain("sticky");
     expect(
       screen
         .getByRole("region", { name: "Task activity" })
         .className.split(/\s+/),
-    ).toEqual(expect.arrayContaining(["flex-1", "min-h-0", "overflow-y-auto"]));
+    ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
   });
 });
