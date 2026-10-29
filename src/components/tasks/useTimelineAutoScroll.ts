@@ -1,0 +1,81 @@
+import { useLayoutEffect, useRef } from "react";
+
+import type { PendingServerRequest } from "../../app-server/event-reducer";
+import type { ConversationViewItem } from "../conversation/conversation-model";
+
+const BOTTOM_TOLERANCE_PX = 24;
+
+type UseTimelineAutoScrollOptions = {
+  items: ConversationViewItem[];
+  pendingRequests: PendingServerRequest[];
+};
+
+export function useTimelineAutoScroll({
+  items,
+  pendingRequests,
+}: UseTimelineAutoScrollOptions) {
+  const timelineRef = useRef<HTMLElement | null>(null);
+  const wasAtBottomRef = useRef(true);
+  const previousItemKeysRef = useRef<Set<string> | null>(null);
+  const previousContentSignatureRef = useRef<string | null>(null);
+  const itemKeys = items.map((item) => `${item.turnId}:${item.id}`);
+  const contentSignature = [
+    ...items.map(
+      (item) => `${item.turnId}:${item.id}:${item.type}:${item.text}`,
+    ),
+    ...pendingRequests.map((request) => `request:${String(request.requestId)}`),
+  ].join("\u0000");
+
+  useLayoutEffect(() => {
+    const timeline = timelineRef.current;
+    if (!timeline) {
+      return;
+    }
+
+    const updateBottomState = () => {
+      wasAtBottomRef.current =
+        timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight <=
+        BOTTOM_TOLERANCE_PX;
+    };
+
+    updateBottomState();
+    timeline.addEventListener("scroll", updateBottomState);
+    return () => timeline.removeEventListener("scroll", updateBottomState);
+  }, []);
+
+  useLayoutEffect(() => {
+    const previousItemKeys = previousItemKeysRef.current;
+    const previousContentSignature = previousContentSignatureRef.current;
+    previousItemKeysRef.current = new Set(itemKeys);
+    previousContentSignatureRef.current = contentSignature;
+
+    if (
+      previousItemKeys === null ||
+      previousContentSignature === contentSignature
+    ) {
+      return;
+    }
+
+    const addedUserMessage = items.some(
+      (item) =>
+        item.type === "userMessage" &&
+        !previousItemKeys.has(`${item.turnId}:${item.id}`),
+    );
+    if (!addedUserMessage && !wasAtBottomRef.current) {
+      return;
+    }
+
+    const timeline = timelineRef.current;
+    if (!timeline) {
+      return;
+    }
+    if (typeof timeline.scrollTo === "function") {
+      timeline.scrollTo({ behavior: "smooth", top: timeline.scrollHeight });
+    } else {
+      timeline.scrollTop = timeline.scrollHeight;
+    }
+    wasAtBottomRef.current = true;
+  }, [contentSignature, itemKeys, items]);
+
+  return timelineRef;
+}

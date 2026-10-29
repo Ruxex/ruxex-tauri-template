@@ -1,10 +1,4 @@
-import {
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-  type KeyboardEvent,
-} from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import {
   ArrowPathIcon,
   ArrowUturnRightIcon,
@@ -15,12 +9,10 @@ import {
 
 import { buildImageUserInput } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
-import {
-  ComposerOptions,
-  SubmissionModeMenu,
-} from "./ComposerOptions";
+import { ComposerOptions, SubmissionModeMenu } from "./ComposerOptions";
 import type { SubmissionMode } from "./composer-model";
 import { formatErrorMessage } from "../../app/error-message";
+import { useImageAttachment } from "../common/useImageAttachment";
 import {
   useInterruptTurn,
   useQueueMessage,
@@ -37,9 +29,14 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [planMode, setPlanMode] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [attachmentError, setAttachmentError] = useState<string | null>(null);
-  const attachmentInput = useRef<HTMLInputElement>(null);
+  const {
+    attachmentError,
+    attachmentInput,
+    handleAttachmentChange,
+    imageFile,
+    readImage,
+    resetAttachment,
+  } = useImageAttachment();
   const send = useSendMessage();
   const steer = useSteerTurn();
   const queue = useQueueMessage();
@@ -53,35 +50,6 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
       : mode === "steer"
         ? ArrowUturnRightIcon
         : PaperAirplaneIcon;
-
-  function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
-    if (file && !file.type.startsWith("image/")) {
-      setImageFile(null);
-      setAttachmentError("Only image attachments are supported.");
-      event.target.value = "";
-      return;
-    }
-    setImageFile(file);
-    setAttachmentError(null);
-  }
-
-  function readImage(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("Unable to read image attachment."));
-        }
-      });
-      reader.addEventListener("error", () =>
-        reject(reader.error ?? new Error("Unable to read image attachment.")),
-      );
-      reader.readAsDataURL(file);
-    });
-  }
 
   function handleMessageKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (
@@ -125,11 +93,7 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
         });
       }
       setMessage("");
-      setImageFile(null);
-      setAttachmentError(null);
-      if (attachmentInput.current) {
-        attachmentInput.current.value = "";
-      }
+      resetAttachment();
     } catch {
       // Mutation state renders the error below the composer.
     }

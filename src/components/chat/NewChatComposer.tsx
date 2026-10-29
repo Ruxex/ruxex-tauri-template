@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MicrophoneIcon,
@@ -23,6 +17,7 @@ import {
 } from "../../app-server/hooks";
 import { formatErrorMessage } from "../../app/error-message";
 import type { v2 } from "../../protocol";
+import { useImageAttachment } from "../common/useImageAttachment";
 import { ProjectSelector } from "../tasks/ProjectSelector";
 
 type NewChatComposerProps = {
@@ -52,9 +47,16 @@ export function NewChatComposer({
   const [message, setMessage] = useState("");
   const [permissionMode, setPermissionMode] =
     useState<PermissionMode>("workspace");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [attachmentError, setAttachmentError] = useState<string | null>(null);
-  const attachmentInput = useRef<HTMLInputElement>(null);
+  const {
+    attachmentError,
+    attachmentInput,
+    clearAttachment,
+    handleAttachmentChange,
+    imageFile,
+    readImage,
+    resetAttachment,
+    setAttachmentError,
+  } = useImageAttachment();
 
   useEffect(() => {
     setSelectedProjectId(projectId ?? "");
@@ -106,47 +108,17 @@ export function NewChatComposer({
         input,
       });
       setMessage("");
-      setImageFile(null);
-      setAttachmentError(null);
-      if (attachmentInput.current) {
-        attachmentInput.current.value = "";
-      }
+      resetAttachment();
       navigate(`/chat/${thread.thread.id}`);
     } catch (submitError) {
       // The mutation state renders the error below the form.
-      if (submitError instanceof Error && submitError.message.includes("image")) {
+      if (
+        submitError instanceof Error &&
+        submitError.message.includes("image")
+      ) {
         setAttachmentError(submitError.message);
       }
     }
-  }
-
-  function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
-    if (file && !file.type.startsWith("image/")) {
-      setImageFile(null);
-      setAttachmentError("Only image attachments are supported.");
-      event.target.value = "";
-      return;
-    }
-    setImageFile(file);
-    setAttachmentError(null);
-  }
-
-  function readImage(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("Unable to read image attachment."));
-        }
-      });
-      reader.addEventListener("error", () =>
-        reject(reader.error ?? new Error("Unable to read image attachment.")),
-      );
-      reader.readAsDataURL(file);
-    });
   }
 
   const isPending = createThread.isPending || sendMessage.isPending;
@@ -187,12 +159,7 @@ export function NewChatComposer({
               <button
                 className="btn btn-ghost btn-xs btn-circle text-error"
                 type="button"
-                onClick={() => {
-                  setImageFile(null);
-                  if (attachmentInput.current) {
-                    attachmentInput.current.value = "";
-                  }
-                }}
+                onClick={clearAttachment}
                 aria-label="Remove image attachment"
                 title="Remove image attachment"
               >
@@ -278,9 +245,7 @@ export function NewChatComposer({
             <button
               className="btn btn-primary btn-circle size-10"
               disabled={
-                isPending ||
-                isProjectLoading ||
-                (!message.trim() && !imageFile)
+                isPending || isProjectLoading || (!message.trim() && !imageFile)
               }
               type="submit"
               aria-label="Send message"

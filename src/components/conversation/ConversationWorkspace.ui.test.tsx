@@ -4,25 +4,15 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
-const useInterruptTurn = vi.hoisted(() => vi.fn());
-const useProject = vi.hoisted(() => vi.fn());
-const useResumeThread = vi.hoisted(() => vi.fn());
-const useStartReview = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
-  useInterruptTurn,
-  useProject,
-  useResumeThread,
-  useStartReview,
   useThreadConversation,
 }));
 vi.mock("./Composer", () => ({
   Composer: () => <div data-testid="composer" />,
 }));
-vi.mock("./ReviewControls", () => ({ ReviewControls: () => null }));
-
 describe("ConversationWorkspace", () => {
   afterEach(cleanup);
 
@@ -42,18 +32,6 @@ describe("ConversationWorkspace", () => {
         turns: { data: [] },
         items: { data: [] },
       },
-    });
-    useInterruptTurn.mockReturnValue({
-      isPending: false,
-      mutateAsync: vi.fn(),
-    });
-    useProject.mockReturnValue({ data: undefined });
-    useResumeThread.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useStartReview.mockReturnValue({
-      error: null,
-      isError: false,
-      isPending: false,
-      mutateAsync: vi.fn(),
     });
     useAppServerEvents.mockReturnValue({
       connected: true,
