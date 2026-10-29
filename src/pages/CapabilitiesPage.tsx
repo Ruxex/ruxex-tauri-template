@@ -5,10 +5,12 @@ import {
   useCollaborationModes,
   useConfig,
   useConfigRequirements,
+  useInstallPlugin,
   useMcpServerStatus,
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
+  useUpgradeMarketplace,
 } from "../app-server/hooks";
 import { BrowserComputerUseCard } from "../components/capabilities/BrowserComputerUseCard";
 
@@ -25,6 +27,8 @@ export function CapabilitiesPage() {
   const config = useConfig();
   const configRequirements = useConfigRequirements();
   const reloadMcp = useReloadMcpServers();
+  const installPlugin = useInstallPlugin();
+  const upgradeMarketplace = useUpgradeMarketplace();
 
   return (
     <div className="space-y-5">
@@ -134,26 +138,139 @@ export function CapabilitiesPage() {
           >
             <div className="card-body">
               <h2 className="card-title">Plugins</h2>
-              {plugins.isLoading && <span className="loading loading-spinner" />}
+              {plugins.isLoading && (
+                <span className="loading loading-spinner" />
+              )}
               {plugins.isError && (
                 <p className="text-error">
                   Unable to load Plugins: {formatErrorMessage(plugins.error)}
                 </p>
               )}
+              {!plugins.isLoading &&
+                !plugins.isError &&
+                !plugins.data?.marketplaces.length && (
+                  <p className="text-sm text-base-content/60">
+                    No plugin marketplaces available.
+                  </p>
+                )}
               <ul className="space-y-3">
                 {plugins.data?.marketplaces.map((marketplace) => (
-                  <li key={marketplace.name}>
-                    <p className="font-medium">{marketplace.name}</p>
-                    <p className="text-sm text-base-content/60">
-                      {marketplace.plugins.length} plugins
-                    </p>
+                  <li
+                    className="rounded-box bg-base-200 p-3"
+                    key={marketplace.name}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">
+                          {marketplace.interface?.displayName ??
+                            marketplace.name}
+                        </p>
+                        <p className="text-xs text-base-content/60">
+                          {marketplace.name} · {marketplace.plugins.length}{" "}
+                          plugins
+                        </p>
+                      </div>
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        type="button"
+                        disabled={upgradeMarketplace.isPending}
+                        onClick={() =>
+                          void upgradeMarketplace.mutateAsync({
+                            marketplaceName: marketplace.name,
+                          })
+                        }
+                      >
+                        {upgradeMarketplace.isPending
+                          ? "Refreshing…"
+                          : `Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                      </button>
+                    </div>
+                    <ul className="mt-3 space-y-2">
+                      {marketplace.plugins.map((plugin) => {
+                        const displayName =
+                          plugin.interface?.displayName ?? plugin.name;
+                        const isInstallable = marketplace.path !== null;
+                        const isInstalling = installPlugin.isPending;
+
+                        return (
+                          <li
+                            className="rounded-box border border-base-300 bg-base-100 p-3"
+                            key={plugin.id}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="font-medium">{displayName}</p>
+                                {plugin.interface?.shortDescription && (
+                                  <p className="text-sm text-base-content/70">
+                                    {plugin.interface.shortDescription}
+                                  </p>
+                                )}
+                                <p className="mt-1 text-xs text-base-content/60">
+                                  {plugin.interface?.category ??
+                                    "Uncategorized"}{" "}
+                                  ·{" "}
+                                  {plugin.enabled
+                                    ? "enabled"
+                                    : plugin.installed
+                                      ? "installed"
+                                      : "available"}
+                                </p>
+                              </div>
+                              {!plugin.installed && isInstallable && (
+                                <button
+                                  className="btn btn-primary btn-xs"
+                                  type="button"
+                                  disabled={isInstalling}
+                                  onClick={() =>
+                                    void installPlugin.mutateAsync({
+                                      marketplacePath: marketplace.path,
+                                      pluginName: plugin.id,
+                                    })
+                                  }
+                                >
+                                  {isInstalling
+                                    ? "Installing…"
+                                    : `Install ${displayName}`}
+                                </button>
+                              )}
+                            </div>
+                            {!isInstallable && !plugin.installed && (
+                              <p className="mt-2 text-xs text-base-content/60">
+                                Remote marketplace plugins cannot be installed
+                                here.
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </li>
                 ))}
               </ul>
-              {plugins.data?.marketplaceLoadErrors.length ? (
+              {installPlugin.isError && (
                 <p className="mt-2 text-sm text-error">
-                  {plugins.data.marketplaceLoadErrors.length} marketplace errors
+                  Unable to install plugin:{" "}
+                  {formatErrorMessage(installPlugin.error)}
                 </p>
+              )}
+              {upgradeMarketplace.isError && (
+                <p className="mt-2 text-sm text-error">
+                  Unable to refresh marketplace:{" "}
+                  {formatErrorMessage(upgradeMarketplace.error)}
+                </p>
+              )}
+              {plugins.data?.marketplaceLoadErrors.length ? (
+                <div className="mt-2 space-y-1 text-sm text-error">
+                  <p>
+                    {plugins.data.marketplaceLoadErrors.length} marketplace
+                    errors
+                  </p>
+                  {plugins.data.marketplaceLoadErrors.map((loadError) => (
+                    <p key={loadError.marketplacePath} className="text-xs">
+                      {loadError.marketplacePath}: {loadError.message}
+                    </p>
+                  ))}
+                </div>
               ) : null}
             </div>
           </article>
@@ -168,7 +285,7 @@ export function CapabilitiesPage() {
             )}
             {collaborationModes.isError && (
               <p className="text-error">
-                Unable to load collaboration modes: {" "}
+                Unable to load collaboration modes:{" "}
                 {formatErrorMessage(collaborationModes.error)}
               </p>
             )}

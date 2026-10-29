@@ -215,4 +215,18 @@ describe("SettingsSidebar AppServer navigation", () => {
       screen.getByRole("link", { name: "Runtime" }).getAttribute("href"),
     ).toBe("/settings/app-server");
   });
+
+  it("links to the plugin marketplace settings section", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <SettingsSidebar onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen
+        .getByRole("link", { name: "Plugin marketplaces" })
+        .getAttribute("href"),
+    ).toBe("/settings/marketplaces");
+  });
 });

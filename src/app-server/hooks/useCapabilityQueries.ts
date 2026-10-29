@@ -47,6 +47,63 @@ export function usePluginList(params: v2.PluginListParams = {}) {
   });
 }
 
+type PluginMutationParams =
+  | v2.MarketplaceAddParams
+  | v2.MarketplaceRemoveParams
+  | v2.MarketplaceUpgradeParams
+  | v2.PluginInstallParams;
+
+function usePluginMutation<TParams extends PluginMutationParams, TResponse>(
+  method:
+    | "marketplace/add"
+    | "marketplace/remove"
+    | "marketplace/upgrade"
+    | "plugin/install",
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: TParams) => {
+      const response = await requestAppServerMethod(
+        method,
+        params as PluginMutationParams,
+      );
+      return response.response as TResponse;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.plugins,
+      });
+    },
+  });
+}
+
+export function useAddMarketplace() {
+  return usePluginMutation<v2.MarketplaceAddParams, v2.MarketplaceAddResponse>(
+    "marketplace/add",
+  );
+}
+
+export function useUpgradeMarketplace() {
+  return usePluginMutation<
+    v2.MarketplaceUpgradeParams,
+    v2.MarketplaceUpgradeResponse
+  >("marketplace/upgrade");
+}
+
+export function useRemoveMarketplace() {
+  return usePluginMutation<
+    v2.MarketplaceRemoveParams,
+    v2.MarketplaceRemoveResponse
+  >("marketplace/remove");
+}
+
+export function useInstallPlugin() {
+  return usePluginMutation<v2.PluginInstallParams, v2.PluginInstallResponse>(
+    "plugin/install",
+  );
+}
+
 export function useCollaborationModes() {
   const status = useAppServerStatus();
 

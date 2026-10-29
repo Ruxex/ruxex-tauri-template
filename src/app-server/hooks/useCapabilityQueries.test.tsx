@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -55,6 +55,30 @@ describe("capability query and mutation hooks", () => {
       "mcpServer/tool/call",
       { threadId: "thread-1", server: "docs", tool: "search", arguments: {} },
     ],
+    [
+      "useAddMarketplace",
+      "marketplace/add",
+      {
+        source: "https://example.com/marketplace.git",
+        refName: "main",
+        sparsePaths: ["plugins/example"],
+      },
+    ],
+    [
+      "useUpgradeMarketplace",
+      "marketplace/upgrade",
+      { marketplaceName: "community" },
+    ],
+    [
+      "useRemoveMarketplace",
+      "marketplace/remove",
+      { marketplaceName: "community" },
+    ],
+    [
+      "useInstallPlugin",
+      "plugin/install",
+      { marketplacePath: "/tmp/community", pluginName: "example" },
+    ],
     ["useStartReview", "review/start", { threadId: "thread-1", target: {} }],
     [
       "useUpdateTurnSettings",
@@ -96,6 +120,43 @@ describe("capability query and mutation hooks", () => {
 
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "mcp-servers"],
+    });
+  });
+
+  it.each([
+    "useAddMarketplace",
+    "useUpgradeMarketplace",
+    "useRemoveMarketplace",
+    "useInstallPlugin",
+  ] as const)("invalidates plugins after %s succeeds", async (hookName) => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const hooks = await import("./useCapabilityQueries");
+    const hook = hooks[hookName] as () => {
+      mutateAsync: (value: never) => Promise<unknown>;
+    };
+    const params = {
+      useAddMarketplace: { source: "https://example.com/marketplace.git" },
+      useUpgradeMarketplace: { marketplaceName: "community" },
+      useRemoveMarketplace: { marketplaceName: "community" },
+      useInstallPlugin: {
+        marketplacePath: "/tmp/community",
+        pluginName: "example",
+      },
+    }[hookName];
+
+    const { result } = renderHook(() => hook(), {
+      wrapper: createWrapper(client),
+    });
+    await act(async () => result.current.mutateAsync(params as never));
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "plugins"],
     });
   });
 

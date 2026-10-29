@@ -8,10 +8,24 @@ const useCollaborationModes = vi.hoisted(() => vi.fn());
 const useConfig = vi.hoisted(() => vi.fn());
 const useConfigRequirements = vi.hoisted(() => vi.fn());
 const useMcpServerStatus = vi.hoisted(() => vi.fn());
+const useInstallPlugin = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
+const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
 const reloadMcp = vi.hoisted(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+}));
+const installPlugin = vi.hoisted(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+}));
+const upgradeMarketplace = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
   isError: false,
@@ -23,9 +37,11 @@ vi.mock("../app-server/hooks", () => ({
   useConfig,
   useConfigRequirements,
   useMcpServerStatus,
+  useInstallPlugin,
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
+  useUpgradeMarketplace,
 }));
 
 describe("CapabilitiesPage", () => {
@@ -35,6 +51,12 @@ describe("CapabilitiesPage", () => {
     reloadMcp.mutateAsync.mockReset();
     reloadMcp.mutateAsync.mockResolvedValue({});
     useReloadMcpServers.mockReturnValue(reloadMcp);
+    installPlugin.mutateAsync.mockReset();
+    installPlugin.mutateAsync.mockResolvedValue({});
+    useInstallPlugin.mockReturnValue(installPlugin);
+    upgradeMarketplace.mutateAsync.mockReset();
+    upgradeMarketplace.mutateAsync.mockResolvedValue({});
+    useUpgradeMarketplace.mockReturnValue(upgradeMarketplace);
     useConfig.mockReturnValue({ data: { config: null } });
     useConfigRequirements.mockReturnValue({ data: { requirements: null } });
     useMcpServerStatus.mockReturnValue({
@@ -61,7 +83,40 @@ describe("CapabilitiesPage", () => {
     });
     usePluginList.mockReturnValue({
       data: {
-        marketplaces: [{ name: "official", plugins: [{ id: "lint" }] }],
+        marketplaces: [
+          {
+            name: "official",
+            path: "/tmp/official",
+            interface: { displayName: "Official Plugins" },
+            plugins: [
+              {
+                id: "lint",
+                name: "Lint Plugin",
+                interface: {
+                  displayName: "Lint Plugin",
+                  shortDescription: "Checks project files",
+                  category: "developer-tools",
+                },
+                installed: false,
+                enabled: false,
+              },
+            ],
+          },
+          {
+            name: "remote",
+            path: null,
+            interface: { displayName: "Remote Catalog" },
+            plugins: [
+              {
+                id: "remote-tool",
+                name: "Remote Tool",
+                interface: null,
+                installed: false,
+                enabled: false,
+              },
+            ],
+          },
+        ],
         marketplaceLoadErrors: [],
       },
       isLoading: false,
@@ -88,8 +143,57 @@ describe("CapabilitiesPage", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("tablist")).toBeNull();
     expect(screen.getByText("docs")).toBeTruthy();
-    expect(screen.getByText("official")).toBeTruthy();
+    expect(screen.getByText(/official ·/)).toBeTruthy();
+    expect(screen.getByText("Official Plugins")).toBeTruthy();
+    expect(screen.getByText("Checks project files")).toBeTruthy();
+    expect(screen.getByText(/developer-tools/)).toBeTruthy();
+    expect(screen.getByText("Remote Catalog")).toBeTruthy();
+    expect(
+      screen.getByText("Remote marketplace plugins cannot be installed here."),
+    ).toBeTruthy();
     expect(screen.getByText("reviewer")).toBeTruthy();
+  });
+
+  it("installs a local marketplace plugin and refreshes its marketplace", async () => {
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Install Lint Plugin" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Refresh Official Plugins" }),
+    );
+
+    expect(installPlugin.mutateAsync).toHaveBeenCalledWith({
+      marketplacePath: "/tmp/official",
+      pluginName: "lint",
+    });
+    expect(upgradeMarketplace.mutateAsync).toHaveBeenCalledWith({
+      marketplaceName: "official",
+    });
+  });
+
+  it("shows an empty state when the server returns no marketplaces", async () => {
+    usePluginList.mockReturnValue({
+      data: { marketplaces: [], marketplaceLoadErrors: [] },
+      isLoading: false,
+      isError: false,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("No plugin marketplaces available.")).toBeTruthy();
   });
 
   it("switches the main content when the skills sidebar route is selected", async () => {

@@ -1,6 +1,7 @@
 import {
   DocumentTextIcon,
   InformationCircleIcon,
+  PuzzlePieceIcon,
   ServerIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
@@ -38,6 +39,12 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
           <NavLink to="/settings/app-server">
             <ServerIcon aria-hidden="true" className="size-4" />
             Runtime
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/settings/marketplaces">
+            <PuzzlePieceIcon aria-hidden="true" className="size-4" />
+            Plugin marketplaces
           </NavLink>
         </li>
       </nav>
