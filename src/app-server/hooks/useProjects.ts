@@ -2,6 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
+import {
+  invalidateProjectList,
+  invalidateProjectQueries,
+} from "../query-invalidation";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
 import { useThreadList } from "./useThreadQueries";
@@ -56,9 +60,7 @@ export function useCreateProject() {
       const response = await requestAppServerMethod("project/create", params);
       return response.response;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.projects });
-    },
+    onSuccess: () => invalidateProjectList(queryClient),
   });
 }
 
@@ -70,14 +72,8 @@ export function useUpdateProject() {
       const response = await requestAppServerMethod("project/update", params);
       return response.response;
     },
-    onSuccess: (_data, params) => {
-      void queryClient.invalidateQueries({
-        queryKey: appServerQueryKeys.project(params.projectId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: appServerQueryKeys.projects,
-      });
-    },
+    onSuccess: (_data, params) =>
+      invalidateProjectQueries(queryClient, params.projectId),
   });
 }
 
@@ -89,10 +85,6 @@ export function useDeleteProject() {
       const response = await requestAppServerMethod("project/delete", params);
       return response.response;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: appServerQueryKeys.projects,
-      });
-    },
+    onSuccess: () => invalidateProjectList(queryClient),
   });
 }

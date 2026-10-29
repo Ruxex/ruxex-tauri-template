@@ -2,12 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
-import { appServerQueryKeys } from "../query-keys";
-
-function invalidateThreadQueries(queryClient: ReturnType<typeof useQueryClient>, threadId: string) {
-  void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.thread(threadId) });
-  void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
-}
+import { invalidateThreadQueries } from "../query-invalidation";
 
 export function useSendMessage() {
   const queryClient = useQueryClient();
