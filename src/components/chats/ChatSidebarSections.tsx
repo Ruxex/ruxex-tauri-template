@@ -27,7 +27,7 @@ export function ChatSidebarSections({
 
   return (
     <nav aria-label="Chat navigation" className="flex min-h-0 flex-1 flex-col">
-      <Link className="btn btn-primary mb-5 w-full" to="/" onClick={onClose}>
+      <Link className="btn btn-primary mb-5 w-full" to="/">
         <PlusIcon aria-hidden="true" className="size-4" />
         New chat
       </Link>

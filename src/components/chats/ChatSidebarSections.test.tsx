@@ -89,7 +89,8 @@ describe("ChatSidebarSections", () => {
     fireEvent.click(projects);
     expect(projects.closest("details")?.open).toBe(false);
 
-    links[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect(onClose).toHaveBeenCalled();
+    onClose.mockClear();
+    fireEvent.click(links[0]);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
