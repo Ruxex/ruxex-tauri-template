@@ -18,6 +18,11 @@ describe("MarkdownContent", () => {
     expect(
       screen.getByRole("heading", { name: "Result", level: 1 }),
     ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("heading", { name: "Result", level: 1 })
+        .closest("[data-chat-content]"),
+    ).toBeTruthy();
     expect(screen.getByText("Ready").tagName).toBe("STRONG");
     expect(screen.getByText("pnpm test").tagName).toBe("CODE");
     expect(

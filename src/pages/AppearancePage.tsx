@@ -1,5 +1,8 @@
 import { useUiPreferences } from "../app/ui-preferences";
-import { UiPreferencesCard } from "../components/settings/SettingsCards";
+import {
+  TypographyCard,
+  UiPreferencesCard,
+} from "../components/settings/SettingsCards";
 
 export function AppearancePage() {
   const { preferences, update } = useUiPreferences();
@@ -8,15 +11,17 @@ export function AppearancePage() {
     <div className="space-y-5">
       <h2 className="text-2xl font-semibold">Appearance</h2>
       <UiPreferencesCard
-        chatFontSize={preferences.chatFontSize}
         colorScheme={preferences.colorScheme}
         onAccentColorChange={(accentColor) =>
           update({ theme: { ...preferences.theme, accentColor } })
         }
-        onChatFontSizeChange={(chatFontSize) => update({ chatFontSize })}
         onColorSchemeChange={(colorScheme) => update({ colorScheme })}
-        onUiFontSizeChange={(uiFontSize) => update({ uiFontSize })}
         theme={preferences.theme}
+      />
+      <TypographyCard
+        chatFontSize={preferences.chatFontSize}
+        onChatFontSizeChange={(chatFontSize) => update({ chatFontSize })}
+        onUiFontSizeChange={(uiFontSize) => update({ uiFontSize })}
         uiFontSize={preferences.uiFontSize}
       />
     </div>

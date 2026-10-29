@@ -221,9 +221,6 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
       preferences.colorScheme,
     );
     document.documentElement.dataset.accent = preferences.theme.accentColor;
-    document.documentElement.dataset.chatFontSize = String(
-      preferences.chatFontSize,
-    );
     document.documentElement.dataset.uiFontSize = String(
       preferences.uiFontSize,
     );

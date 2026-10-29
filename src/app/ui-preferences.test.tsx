@@ -37,8 +37,8 @@ describe("UI preference persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.dataset.theme = "";
-    document.documentElement.dataset.chatFontSize = "";
-    document.documentElement.dataset.uiFontSize = "";
+    document.documentElement.removeAttribute("data-chat-font-size");
+    document.documentElement.removeAttribute("data-ui-font-size");
   });
 
   it("uses defaults for missing, malformed, and versioned data", () => {
@@ -128,7 +128,7 @@ describe("UI preference persistence", () => {
       chatFontSize: 24,
       uiFontSize: 12,
     });
-    expect(document.documentElement.dataset.chatFontSize).toBe("24");
+    expect(document.documentElement.dataset.chatFontSize).toBeUndefined();
     expect(document.documentElement.dataset.uiFontSize).toBe("12");
   });
 

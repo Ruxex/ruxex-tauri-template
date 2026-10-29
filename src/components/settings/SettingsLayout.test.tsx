@@ -11,6 +11,7 @@ import {
   NotificationsCard,
   RuntimeSummary,
   SettingsPanel,
+  TypographyCard,
   UiPreferencesCard,
 } from "./SettingsCards";
 import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
@@ -99,13 +100,15 @@ describe("settings card layout", () => {
         <CapabilitiesCard capabilities={{ browser: true, shell: false }} />
         <UiPreferencesCard
           onAccentColorChange={vi.fn()}
-          onChatFontSizeChange={vi.fn()}
           onColorSchemeChange={vi.fn()}
-          onUiFontSizeChange={vi.fn()}
           colorScheme="system"
+          theme={{ accentColor: "blue" }}
+        />
+        <TypographyCard
+          onChatFontSizeChange={vi.fn()}
+          onUiFontSizeChange={vi.fn()}
           chatFontSize={16}
           uiFontSize={16}
-          theme={{ accentColor: "blue" }}
         />
       </>,
     );
@@ -119,6 +122,10 @@ describe("settings card layout", () => {
     expect(screen.getByText("Color mode").closest("div")?.className).toContain(
       "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
     );
+    expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
+    expect(screen.getByLabelText("Chat font size")).toBeTruthy();
+    expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
   });

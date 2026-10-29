@@ -3,7 +3,6 @@ import {
   useThreadConversation,
 } from "../../app-server/hooks";
 import { useEffect } from "react";
-import { useUiPreferences } from "../../app/ui-preferences";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
@@ -15,7 +14,6 @@ import { TaskActivityTimeline } from "../tasks/TaskActivityTimeline";
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
-  const { preferences } = useUiPreferences();
   const liveThread = events.threads[threadId];
   const completedTurnId = liveThread?.completedTurn?.id;
 
@@ -66,7 +64,6 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         </p>
       )}
       <TaskActivityTimeline
-        chatFontSize={preferences.chatFontSize}
         connected={events.connected ?? true}
         items={items}
         liveItems={liveThread?.items ?? []}

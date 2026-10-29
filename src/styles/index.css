@@ -59,8 +59,7 @@ body {
   --text-9xl: calc(var(--ruxex-ui-font-size) * 8);
 }
 
-[data-chat-font-size] {
-  --ruxex-font-size-base: var(--ruxex-chat-font-size);
+[data-chat-content] {
   --text-xs: calc(var(--ruxex-chat-font-size) * 0.75);
   --text-sm: calc(var(--ruxex-chat-font-size) * 0.875);
   --text-base: var(--ruxex-chat-font-size);
@@ -74,7 +73,7 @@ body {
   --text-7xl: calc(var(--ruxex-chat-font-size) * 4.5);
   --text-8xl: calc(var(--ruxex-chat-font-size) * 6);
   --text-9xl: calc(var(--ruxex-chat-font-size) * 8);
-  font-size: var(--ruxex-font-size-base);
+  font-size: var(--ruxex-chat-font-size);
 }
 
 .workbench-sidebar {

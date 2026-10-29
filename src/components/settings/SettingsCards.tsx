@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import {
   BellIcon,
+  Bars3BottomLeftIcon,
   CpuChipIcon,
   GlobeAltIcon,
   PaintBrushIcon,
@@ -323,23 +324,15 @@ export function NotificationsCard({
 type UiPreferencesCardProps = {
   colorScheme: UiColorScheme;
   theme: UiTheme;
-  chatFontSize: UiFontSize;
-  uiFontSize: UiFontSize;
   onColorSchemeChange: (colorScheme: UiColorScheme) => void;
   onAccentColorChange: (accentColor: UiAccentColor) => void;
-  onChatFontSizeChange: (fontSize: UiFontSize) => void;
-  onUiFontSizeChange: (fontSize: UiFontSize) => void;
 };
 
 export function UiPreferencesCard({
   colorScheme,
   theme,
-  chatFontSize,
-  uiFontSize,
   onColorSchemeChange,
   onAccentColorChange,
-  onChatFontSizeChange,
-  onUiFontSizeChange,
 }: UiPreferencesCardProps) {
   return (
     <SettingsPanel
@@ -378,6 +371,29 @@ export function UiPreferencesCard({
             <option value="rose">Rose</option>
           </select>
         </SettingControlRow>
+      </div>
+    </SettingsPanel>
+  );
+}
+
+export function TypographyCard({
+  chatFontSize,
+  uiFontSize,
+  onChatFontSizeChange,
+  onUiFontSizeChange,
+}: {
+  chatFontSize: UiFontSize;
+  uiFontSize: UiFontSize;
+  onChatFontSizeChange: (fontSize: UiFontSize) => void;
+  onUiFontSizeChange: (fontSize: UiFontSize) => void;
+}) {
+  return (
+    <SettingsPanel
+      icon={Bars3BottomLeftIcon}
+      title="Typography"
+      description="Adjust chat content and interface text sizes."
+    >
+      <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow
           controlId="settings-chat-font-size"
           label="Chat font size"

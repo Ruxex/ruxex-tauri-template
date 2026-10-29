@@ -10,7 +10,6 @@ import type { ConversationViewItem } from "../conversation/conversation-model";
 import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 
 type TaskActivityTimelineProps = {
-  chatFontSize?: number;
   connected: boolean;
   items: ConversationViewItem[];
   liveItems: LiveConversationItem[];
@@ -27,7 +26,6 @@ type TaskActivityTimelineProps = {
 };
 
 export function TaskActivityTimeline({
-  chatFontSize,
   connected,
   items,
   liveItems,
@@ -46,9 +44,6 @@ export function TaskActivityTimeline({
       aria-busy={isBusy}
       aria-label="Task activity"
       className="space-y-4 bg-base-200 p-4"
-      data-chat-font-size={
-        chatFontSize === undefined ? undefined : String(chatFontSize)
-      }
       ref={timelineRef}
     >
       {pendingRequests.map((pending) => (

@@ -172,7 +172,7 @@ export function MarkdownContent({ text }: MarkdownContentProps) {
   flushParagraph();
 
   return (
-    <div className="space-y-3 leading-7">
+    <div className="space-y-3 leading-7" data-chat-content="true">
       {blocks.map((block) => {
         const blockKey =
           block.type === "code"

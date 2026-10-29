@@ -36,6 +36,7 @@ describe("AppearancePage", () => {
 
     expect(screen.getByRole("heading", { name: "Appearance" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     expect(screen.getByLabelText("Theme")).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
