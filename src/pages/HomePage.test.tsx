@@ -40,7 +40,21 @@ describe("HomePage", () => {
       isPending: false,
       mutateAsync: vi.fn().mockResolvedValue({ thread: { id: "thread-new" } }),
     });
-    useModelList.mockReturnValue({ data: { data: [] } });
+    useModelList.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: "model-1",
+            model: "ruxex",
+            displayName: "Ruxex",
+            hidden: false,
+            supportedReasoningEfforts: [
+              { reasoningEffort: "medium", description: "Balanced" },
+            ],
+          },
+        ],
+      },
+    });
     useProject.mockReturnValue({ data: undefined });
     useSetThreadGoal.mockReturnValue({
       error: null,
@@ -66,8 +80,12 @@ describe("HomePage", () => {
     expect(
       screen.getByRole("heading", { name: "Let's get started" }),
     ).toBeTruthy();
-    expect(screen.getByLabelText("Model")).toBeTruthy();
-    expect(screen.getByLabelText("Effort")).toBeTruthy();
+    const settings = screen
+      .getByLabelText("Model and effort")
+      .closest("details");
+    expect(settings).not.toBeNull();
+    expect(settings?.open).toBe(false);
+    expect(settings?.querySelectorAll("select")).toHaveLength(2);
     expect(screen.getByLabelText("Permission mode")).toBeTruthy();
     expect(screen.getByLabelText("Composer options")).toBeTruthy();
     expect(screen.getByLabelText("Message")).toBeTruthy();
@@ -93,6 +111,12 @@ describe("HomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => expect(createThread).toHaveBeenCalled());
+    expect(createThread).toHaveBeenCalledWith({
+      model: "ruxex",
+      approvalPolicy: "on-request",
+      sandbox: "workspace-write",
+      config: { model_reasoning_effort: "medium" },
+    });
     expect(sendMessage).toHaveBeenCalledWith({
       threadId: "thread-new",
       input: [{ type: "text", text: "Start from home", text_elements: [] }],

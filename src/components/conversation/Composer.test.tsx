@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { COMPOSER_SELECTION_KEY } from "./useComposerSelection";
+
 const sendMutation = vi.hoisted(() => vi.fn());
 const steerMutation = vi.hoisted(() => vi.fn());
 const queueMutation = vi.hoisted(() => vi.fn());
@@ -70,6 +72,7 @@ describe("Composer", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    localStorage.removeItem(COMPOSER_SELECTION_KEY);
     sendMutation.mockReset();
     steerMutation.mockReset();
     queueMutation.mockReset();
@@ -108,6 +111,8 @@ describe("Composer", () => {
         },
         { type: "text", text: "Explain this", text_elements: [] },
       ],
+      model: "ruxex",
+      effort: "medium",
       turnTrigger: null,
     });
     expect(screen.queryByTestId("selected-image")).toBeNull();
@@ -164,6 +169,8 @@ describe("Composer", () => {
     expect(sendMutation).toHaveBeenCalledWith({
       threadId: "thread-1",
       input: [{ type: "text", text: "Do the work", text_elements: [] }],
+      model: "ruxex",
+      effort: "medium",
       turnTrigger: null,
     });
   });
@@ -236,6 +243,8 @@ describe("Composer", () => {
           url: expect.stringMatching(/^data:image\/png;base64,/),
         },
       ],
+      model: "ruxex",
+      effort: "medium",
       turnTrigger: null,
     });
   });
@@ -260,16 +269,50 @@ describe("Composer", () => {
     expect(sendMutation).not.toHaveBeenCalled();
   });
 
+  it("uses the first model and medium effort when no selection was saved", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+
+    const control = screen.getByLabelText("Model and effort");
+    expect(control.textContent).toContain("Ruxex");
+    expect(control.textContent).toContain("medium");
+  });
+
+  it("uses the previous model and effort as the next starting selection", async () => {
+    localStorage.setItem(
+      COMPOSER_SELECTION_KEY,
+      JSON.stringify({ model: "ruxex", effort: "high" }),
+    );
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+
+    const control = screen.getByLabelText("Model and effort");
+    expect(control.textContent).toContain("Ruxex");
+    expect(control.textContent).toContain("high");
+  });
+
   it("updates model, effort, and permission settings from the controls", async () => {
     const { Composer } = await import("./Composer");
 
     render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.click(screen.getByLabelText("Model and effort"));
+    expect(screen.queryByRole("option", { name: "Default model" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "Default effort" })).toBeNull();
     fireEvent.change(screen.getByLabelText("Model"), {
       target: { value: "ruxex" },
     });
+    expect(
+      screen.getByLabelText("Model and effort").closest("details")?.open,
+    ).toBe(false);
+    fireEvent.click(screen.getByLabelText("Model and effort"));
     fireEvent.change(screen.getByLabelText("Effort"), {
       target: { value: "high" },
     });
+    expect(
+      screen.getByLabelText("Model and effort").closest("details")?.open,
+    ).toBe(false);
     fireEvent.click(screen.getByLabelText("Permission mode"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Full access" }));
 
@@ -286,6 +329,12 @@ describe("Composer", () => {
       threadId: "thread-1",
       approvalPolicy: "never",
       sandboxPolicy: { type: "dangerFullAccess" },
+    });
+    expect(
+      JSON.parse(localStorage.getItem(COMPOSER_SELECTION_KEY) ?? "{}"),
+    ).toEqual({
+      model: "ruxex",
+      effort: "high",
     });
   });
 });

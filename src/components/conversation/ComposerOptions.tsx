@@ -5,11 +5,16 @@ import {
   PlusIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
+import type { SyntheticEvent } from "react";
 
 import {
   availableSubmissionModes,
   type SubmissionMode,
 } from "./composer-model";
+
+function closeDropdown(event: SyntheticEvent<HTMLElement>) {
+  event.currentTarget.closest("details")?.removeAttribute("open");
+}
 
 export type PermissionMode = "ask" | "read-only" | "full-access";
 
@@ -42,7 +47,10 @@ export function ComposerOptions({
         <li>
           <button
             disabled={disabled}
-            onClick={onAttach}
+            onClick={(event) => {
+              onAttach();
+              closeDropdown(event);
+            }}
             role="menuitem"
             type="button"
           >
@@ -55,7 +63,10 @@ export function ComposerOptions({
             aria-current={goalMode ? "true" : undefined}
             className={goalMode ? "active" : undefined}
             disabled={disabled}
-            onClick={onGoalModeChange}
+            onClick={(event) => {
+              onGoalModeChange();
+              closeDropdown(event);
+            }}
             role="menuitem"
             type="button"
           >
@@ -68,7 +79,10 @@ export function ComposerOptions({
             aria-current={planMode ? "true" : undefined}
             className={planMode ? "active" : undefined}
             disabled={disabled}
-            onClick={onPlanModeChange}
+            onClick={(event) => {
+              onPlanModeChange();
+              closeDropdown(event);
+            }}
             role="menuitem"
             type="button"
           >
@@ -120,7 +134,10 @@ export function PermissionMenu({
             <button
               aria-current={mode === option.mode ? "true" : undefined}
               disabled={disabled}
-              onClick={() => onModeChange(option.mode)}
+              onClick={(event) => {
+                onModeChange(option.mode);
+                closeDropdown(event);
+              }}
               role="menuitem"
               type="button"
             >
@@ -165,7 +182,10 @@ export function SubmissionModeMenu({
               role="menuitem"
               disabled={disabled || !modes.includes(option)}
               aria-current={mode === option ? "true" : undefined}
-              onClick={() => onModeChange(option)}
+              onClick={(event) => {
+                onModeChange(option);
+                closeDropdown(event);
+              }}
             >
               {option === "send"
                 ? "Send"

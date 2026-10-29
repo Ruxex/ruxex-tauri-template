@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import {
   ArrowPathIcon,
   ArrowUturnRightIcon,
@@ -17,6 +17,7 @@ import {
 } from "./ComposerOptions";
 import { ComposerSettings } from "./ComposerSettings";
 import type { SubmissionMode } from "./composer-model";
+import { useComposerSelection } from "./useComposerSelection";
 import { formatErrorMessage } from "../../app/error-message";
 import { useImageAttachment } from "../common/useImageAttachment";
 import {
@@ -46,8 +47,6 @@ export function Composer({
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
-  const [model, setModel] = useState(initialModel ?? "");
-  const [effort, setEffort] = useState(initialEffort ?? "");
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
   const {
     attachmentError,
@@ -58,6 +57,11 @@ export function Composer({
     resetAttachment,
   } = useImageAttachment();
   const models = useModelList();
+  const { effort, model, setEffort, setModel } = useComposerSelection(
+    models.data?.data ?? [],
+    initialModel,
+    initialEffort,
+  );
   const send = useSendMessage();
   const steer = useSteerTurn();
   const queue = useQueueMessage();
@@ -78,14 +82,6 @@ export function Composer({
       : mode === "steer"
         ? ArrowUturnRightIcon
         : PaperAirplaneIcon;
-
-  useEffect(() => {
-    setModel(initialModel ?? "");
-  }, [initialModel]);
-
-  useEffect(() => {
-    setEffort(initialEffort ?? "");
-  }, [initialEffort]);
 
   function handleModelChange(value: string) {
     setModel(value);
@@ -170,6 +166,8 @@ export function Composer({
         await send.mutateAsync({
           threadId,
           input,
+          model: model || null,
+          effort: effort || null,
           turnTrigger: planMode ? "plan" : null,
         });
       }

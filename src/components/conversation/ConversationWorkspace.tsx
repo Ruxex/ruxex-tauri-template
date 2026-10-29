@@ -45,7 +45,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[720px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-[980px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
       {turnError && (
         <p className="alert alert-error" role="alert">
           <span>Turn failed: {turnError.message}</span>

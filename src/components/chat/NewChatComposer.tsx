@@ -17,6 +17,7 @@ import {
   type PermissionMode,
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
+import { useComposerSelection } from "../conversation/useComposerSelection";
 import { useImageAttachment } from "../common/useImageAttachment";
 
 type NewChatComposerProps = {
@@ -30,8 +31,9 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
   const setGoal = useSetThreadGoal();
-  const [model, setModel] = useState("");
-  const [effort, setEffort] = useState("");
+  const { effort, model, setEffort, setModel } = useComposerSelection(
+    models.data?.data ?? [],
+  );
   const [message, setMessage] = useState("");
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);

@@ -76,6 +76,9 @@ describe("ComposerOptions", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Full access" }));
 
     expect(onModeChange).toHaveBeenCalledWith("full-access");
+    expect(
+      screen.getByLabelText("Permission mode").closest("details")?.open,
+    ).toBe(false);
   });
 
   it("offers send, steer, and queue from the submission mode menu", () => {
@@ -111,6 +114,9 @@ describe("ComposerOptions", () => {
 
     fireEvent.click(screen.getByRole("menuitem", { name: /Queue/ }));
     expect(onModeChange).toHaveBeenCalledWith("queue");
+    expect(
+      screen.getByLabelText("Submission mode menu").closest("details")?.open,
+    ).toBe(false);
   });
 
   it("disables steer and queue without an active turn", () => {
