@@ -70,4 +70,17 @@ describe("BrowserNavigationBar", () => {
     expect(screen.getByText("Command demo")).toBeTruthy();
     expect(screen.queryByText("Conversation")).toBeNull();
   });
+
+  it("renders the project list and project name in the project breadcrumb", () => {
+    render(
+      <MemoryRouter initialEntries={["/projects/project-1"]}>
+        <BrowserNavigationBar projectTitle="Ruxex" />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Projects" }).getAttribute("href"),
+    ).toBe("/projects");
+    expect(screen.getByText("Ruxex")).toBeTruthy();
+  });
 });

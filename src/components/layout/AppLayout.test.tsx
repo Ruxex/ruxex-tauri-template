@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useUiPreferences = vi.hoisted(() => vi.fn());
 const useThread = vi.hoisted(() => vi.fn());
+const useProject = vi.hoisted(() => vi.fn());
 const projectSidebarProps = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app/ui-preferences", () => ({ useUiPreferences }));
-vi.mock("../../app-server/hooks", () => ({ useThread }));
+vi.mock("../../app-server/hooks", () => ({ useProject, useThread }));
 vi.mock("../sidebar/ProjectSidebar", () => ({
   ProjectSidebar: (props: Record<string, unknown>) => {
     projectSidebarProps(props);
@@ -24,6 +25,7 @@ describe("AppLayout", () => {
 
   beforeEach(() => {
     useThread.mockReturnValue({ data: undefined });
+    useProject.mockReturnValue({ data: undefined });
   });
 
   it("does not render the removed context drawer", () => {
@@ -128,6 +130,27 @@ describe("AppLayout", () => {
     );
 
     expect(screen.getByText("Command demo")).toBeTruthy();
+  });
+
+  it("uses the selected project name in the shared navigation bar", () => {
+    useProject.mockReturnValue({
+      data: { project: { name: "Ruxex" } },
+    });
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/projects/project-1"]}>
+        <Routes>
+          <Route path="/projects/:projectId" element={<AppLayout />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(useProject).toHaveBeenCalledWith("project-1");
+    expect(screen.getByText("Ruxex")).toBeTruthy();
   });
 
   it("keeps the chat chrome fixed while the content section scrolls", () => {

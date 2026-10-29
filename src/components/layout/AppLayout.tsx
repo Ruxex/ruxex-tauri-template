@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { useUiPreferences } from "../../app/ui-preferences";
-import { useThread } from "../../app-server/hooks";
+import { useProject, useThread } from "../../app-server/hooks";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
 export function AppLayout() {
   const location = useLocation();
-  const { threadId } = useParams<{
+  const { projectId, threadId } = useParams<{
+    projectId?: string;
     threadId?: string;
   }>();
   const thread = useThread(threadId ?? "");
+  const project = useProject(projectId ?? "");
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
   const isChatRoute = location.pathname.startsWith("/chat/");
@@ -48,7 +50,10 @@ export function AppLayout() {
 
   return (
     <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
-      <BrowserNavigationBar chatTitle={chatTitle} />
+      <BrowserNavigationBar
+        chatTitle={chatTitle}
+        projectTitle={project.data?.project.name}
+      />
       <div className="flex min-h-0 flex-1">
         {!preferences.sidebarCollapsed && activePanel !== "projects" && (
           <button
