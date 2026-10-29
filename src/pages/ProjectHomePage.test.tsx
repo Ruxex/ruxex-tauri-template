@@ -88,12 +88,14 @@ describe("ProjectHomePage", () => {
     expect(
       screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
     ).toBe("/?projectId=project-1");
-    expect(screen.getByRole("button", { name: "Edit project" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Delete project" })).toBeTruthy();
-    expect(screen.getByText("Project menu")).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Settings" }).getAttribute("href"),
-    ).toBe("/settings");
+    const editButton = screen.getByRole("button", { name: "Edit project" });
+    const deleteButton = screen.getByRole("button", { name: "Delete project" });
+    expect(editButton.textContent?.trim()).toBe("");
+    expect(deleteButton.textContent?.trim()).toBe("");
+    expect(editButton.getAttribute("title")).toBe("Edit project");
+    expect(deleteButton.getAttribute("title")).toBe("Delete project");
+    expect(screen.queryByText("Project menu")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
     expect(screen.queryByTestId("worktree-card")).toBeNull();
   });
 
@@ -114,9 +116,6 @@ describe("ProjectHomePage", () => {
     });
     fireEvent.change(screen.getByRole("combobox", { name: "Project icon" }), {
       target: { value: "code" },
-    });
-    fireEvent.change(screen.getByRole("combobox", { name: "Project type" }), {
-      target: { value: "library" },
     });
     fireEvent.change(screen.getByRole("combobox", { name: "Project color" }), {
       target: { value: "violet" },
@@ -140,7 +139,7 @@ describe("ProjectHomePage", () => {
         projectId: "project-1",
         name: "Updated Ruxex",
         roots: [{ path: "/workspace/selected" }],
-        metadata: { icon: "code", type: "library", color: "violet" },
+        metadata: { icon: "code", color: "violet" },
       },
       expect.objectContaining({
         onError: expect.any(Function),
@@ -202,7 +201,7 @@ describe("ProjectHomePage", () => {
         projectId: "project-1",
         name: "Updated Ruxex",
         roots: [{ path: "/workspace" }, { path: "/workspace/extra" }],
-        metadata: { icon: "folder", type: "other", color: "blue" },
+        metadata: { icon: "folder", color: "blue" },
       },
       expect.anything(),
     );

@@ -6,14 +6,6 @@ export const PROJECT_ICON_OPTIONS = [
   { value: "cube", label: "Package" },
 ] as const;
 
-export const PROJECT_TYPE_OPTIONS = [
-  { value: "application", label: "Application" },
-  { value: "library", label: "Library" },
-  { value: "website", label: "Website" },
-  { value: "documentation", label: "Documentation" },
-  { value: "other", label: "Other" },
-] as const;
-
 export const PROJECT_COLOR_OPTIONS = [
   { value: "blue", label: "Blue" },
   { value: "violet", label: "Violet" },
@@ -24,18 +16,15 @@ export const PROJECT_COLOR_OPTIONS = [
 ] as const;
 
 export type ProjectIcon = (typeof PROJECT_ICON_OPTIONS)[number]["value"];
-export type ProjectType = (typeof PROJECT_TYPE_OPTIONS)[number]["value"];
 export type ProjectColor = (typeof PROJECT_COLOR_OPTIONS)[number]["value"];
 
 export type ProjectMetadata = {
   icon: ProjectIcon;
-  type: ProjectType;
   color: ProjectColor;
 };
 
 export const DEFAULT_PROJECT_METADATA: ProjectMetadata = {
   icon: "folder",
-  type: "other",
   color: "blue",
 };
 
@@ -58,9 +47,6 @@ export function parseProjectMetadata(metadata: unknown): ProjectMetadata {
     icon: isAllowedValue(source.icon, PROJECT_ICON_OPTIONS)
       ? source.icon
       : DEFAULT_PROJECT_METADATA.icon,
-    type: isAllowedValue(source.type, PROJECT_TYPE_OPTIONS)
-      ? source.type
-      : DEFAULT_PROJECT_METADATA.type,
     color: isAllowedValue(source.color, PROJECT_COLOR_OPTIONS)
       ? source.color
       : DEFAULT_PROJECT_METADATA.color,
@@ -78,21 +64,10 @@ export function projectMetadataToRecord(
     }
   }
 
+  delete result.type;
   result.icon = metadata.icon;
-  result.type = metadata.type;
   result.color = metadata.color;
   return result;
-}
-
-export function projectTypeLabel(type: ProjectType): string {
-  const fallback = PROJECT_TYPE_OPTIONS.find(
-    (option) => option.value === DEFAULT_PROJECT_METADATA.type,
-  );
-  return (
-    PROJECT_TYPE_OPTIONS.find((option) => option.value === type)?.label ??
-    fallback?.label ??
-    "Other"
-  );
 }
 
 export function projectColorClassName(color: ProjectColor): string {

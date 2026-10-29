@@ -55,6 +55,7 @@ describe("ProjectsPage", () => {
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
     expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Project" })).toBeTruthy();
+    expect(screen.queryByRole("columnheader", { name: "Type" })).toBeNull();
     expect(screen.getByRole("columnheader", { name: "Workspace" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Roots" })).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();
@@ -80,9 +81,6 @@ describe("ProjectsPage", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "Project icon" }), {
       target: { value: "code" },
     });
-    fireEvent.change(screen.getByRole("combobox", { name: "Project type" }), {
-      target: { value: "library" },
-    });
     fireEvent.change(screen.getByRole("combobox", { name: "Project color" }), {
       target: { value: "violet" },
     });
@@ -99,7 +97,7 @@ describe("ProjectsPage", () => {
       expect.objectContaining({
         name: "New project",
         roots: [{ path: "/workspace/selected" }],
-        metadata: { icon: "code", type: "library", color: "violet" },
+        metadata: { icon: "code", color: "violet" },
         idempotencyKey: expect.any(String),
       }),
       expect.objectContaining({ onSuccess: expect.any(Function) }),

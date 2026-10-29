@@ -20,7 +20,6 @@ import {
   parseProjectMetadata,
   projectColorClassName,
   projectMetadataToRecord,
-  projectTypeLabel,
   type ProjectMetadata,
 } from "../components/projects/project-metadata";
 
@@ -257,7 +256,6 @@ export function ProjectsPage() {
               <thead>
                 <tr>
                   <th>Project</th>
-                  <th>Type</th>
                   <th>Workspace</th>
                   <th>Roots</th>
                   <th>
@@ -286,9 +284,6 @@ export function ProjectsPage() {
                         </span>
                         <span className="truncate">{project.name}</span>
                       </Link>
-                    </td>
-                    <td className="whitespace-nowrap text-sm text-base-content/70">
-                      {projectTypeLabel(projectMetadata.type)}
                     </td>
                     <td className="max-w-80">
                       <span className="block truncate font-mono text-xs text-base-content/65">

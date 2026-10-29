@@ -1,9 +1,5 @@
 import type { ProjectMetadata } from "./project-metadata";
-import {
-  PROJECT_COLOR_OPTIONS,
-  PROJECT_ICON_OPTIONS,
-  PROJECT_TYPE_OPTIONS,
-} from "./project-metadata";
+import { PROJECT_COLOR_OPTIONS, PROJECT_ICON_OPTIONS } from "./project-metadata";
 
 type ProjectMetadataFieldsProps = {
   value: ProjectMetadata;
@@ -15,7 +11,7 @@ export function ProjectMetadataFields({
   onChange,
 }: ProjectMetadataFieldsProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2">
       <label className="form-control w-full">
         <span className="label-text text-sm font-medium">Icon</span>
         <select
@@ -27,23 +23,6 @@ export function ProjectMetadataFields({
           }
         >
           {PROJECT_ICON_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="form-control w-full">
-        <span className="label-text text-sm font-medium">Type</span>
-        <select
-          aria-label="Project type"
-          className="select select-bordered min-h-11 w-full"
-          value={value.type}
-          onChange={(event) =>
-            onChange({ ...value, type: event.target.value as ProjectMetadata["type"] })
-          }
-        >
-          {PROJECT_TYPE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

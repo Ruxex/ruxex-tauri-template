@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import {
+  Cog6ToothIcon,
   FolderIcon,
-  PencilIcon,
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -27,7 +27,6 @@ import {
   parseProjectMetadata,
   projectColorClassName,
   projectMetadataToRecord,
-  projectTypeLabel,
   type ProjectMetadata,
 } from "../components/projects/project-metadata";
 import { ThreadCard } from "../components/common/ThreadCard";
@@ -155,12 +154,7 @@ export function ProjectHomePage() {
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
               Project
             </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-3xl font-semibold">{details.name}</h1>
-              <span className="badge badge-ghost">
-                {projectTypeLabel(projectMetadata.type)}
-              </span>
-            </div>
+            <h1 className="text-3xl font-semibold">{details.name}</h1>
             <p className="mt-2 text-sm text-base-content/70">
               {details.roots.length} workspace root
               {details.roots.length === 1 ? "" : "s"}
@@ -178,29 +172,23 @@ export function ProjectHomePage() {
             New chat
           </Link>
           <button
-            className="btn btn-outline"
+            aria-label="Edit project"
+            className="btn btn-outline btn-square"
+            title="Edit project"
             type="button"
             onClick={handleOpenEditDialog}
           >
-            <PencilIcon aria-hidden="true" className="size-4" />
-            Edit project
+            <Cog6ToothIcon aria-hidden="true" className="size-4" />
           </button>
           <button
-            className="btn btn-outline btn-error"
+            aria-label="Delete project"
+            className="btn btn-outline btn-error btn-square"
+            title="Delete project"
             type="button"
             onClick={handleOpenDeleteDialog}
           >
             <TrashIcon aria-hidden="true" className="size-4" />
-            Delete project
           </button>
-          <details className="dropdown dropdown-end">
-            <summary className="btn btn-ghost">Project menu</summary>
-            <ul className="menu dropdown-content z-10 mt-2 w-44 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
-              <li>
-                <Link to="/settings">Settings</Link>
-              </li>
-            </ul>
-          </details>
         </div>
       </div>
       {isEditDialogOpen && (
@@ -217,7 +205,7 @@ export function ProjectHomePage() {
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <PencilIcon aria-hidden="true" className="size-5" />
+                  <Cog6ToothIcon aria-hidden="true" className="size-5" />
                 </div>
                 <h2 className="font-semibold" id="edit-project-title">
                   Edit project

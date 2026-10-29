@@ -14,7 +14,7 @@ describe("project metadata", () => {
         type: "library",
         color: "violet",
       }),
-    ).toEqual({ icon: "code", type: "library", color: "violet" });
+    ).toEqual({ icon: "code", color: "violet" });
   });
 
   it("falls back independently when metadata values are invalid", () => {
@@ -30,14 +30,17 @@ describe("project metadata", () => {
   it("preserves unrelated metadata when serializing GUI fields", () => {
     expect(
       projectMetadataToRecord(
-        { icon: "globe", type: "website", color: "green" },
-        { owner: "frontend", icon: "folder" },
+        { icon: "globe", color: "green" },
+        { owner: "frontend", icon: "folder", type: "website" },
       ),
     ).toEqual({
       owner: "frontend",
       icon: "globe",
-      type: "website",
       color: "green",
     });
+  });
+
+  it("does not expose a project type in the GUI contract", () => {
+    expect(DEFAULT_PROJECT_METADATA).toEqual({ icon: "folder", color: "blue" });
   });
 });
