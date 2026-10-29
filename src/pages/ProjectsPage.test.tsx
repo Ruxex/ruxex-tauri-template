@@ -78,9 +78,7 @@ describe("ProjectsPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Project name" }), {
       target: { value: "New project" },
     });
-    fireEvent.change(screen.getByRole("combobox", { name: "Project icon" }), {
-      target: { value: "code" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Code" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Project color" }), {
       target: { value: "violet" },
     });
