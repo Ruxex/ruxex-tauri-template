@@ -119,6 +119,30 @@ describe("ProjectSidebar", () => {
     });
   });
 
+  it("keeps a heading-free close button for the shared chat panel", async () => {
+    const onToggle = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={onToggle}
+        />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", { name: "Chat sidebar" });
+    fireEvent.click(
+      within(panel).getByRole("button", { name: "Close sidebar panel" }),
+    );
+
+    expect(within(panel).queryByText("Home")).toBeNull();
+    expect(onToggle).toHaveBeenCalledOnce();
+  });
+
   it.each(["account", "projects"] as const)(
     "renders the shared chat panel for %s",
     async (activePanel) => {
@@ -138,6 +162,11 @@ describe("ProjectSidebar", () => {
       const panel = screen.getByRole("complementary", {
         name: "Chat sidebar",
       });
+      expect(
+        screen
+          .getByRole("complementary", { name: "Workspace sidebar" })
+          .className,
+      ).not.toContain("workbench-sidebar-collapsed");
       expect(within(panel).getByText("Recent chats")).toBeTruthy();
       expect(within(panel).getByText("Projects")).toBeTruthy();
       expect(
