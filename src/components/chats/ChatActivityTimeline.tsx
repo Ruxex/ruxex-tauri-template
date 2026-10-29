@@ -9,7 +9,7 @@ import { ConversationItem } from "../conversation/ConversationItem";
 import type { ConversationViewItem } from "../conversation/conversation-model";
 import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 
-type TaskActivityTimelineProps = {
+type ChatActivityTimelineProps = {
   connected: boolean;
   items: ConversationViewItem[];
   liveItems: LiveConversationItem[];
@@ -25,7 +25,7 @@ type TaskActivityTimelineProps = {
   pendingRequests: PendingServerRequest[];
 };
 
-export function TaskActivityTimeline({
+export function ChatActivityTimeline({
   connected,
   items,
   liveItems,
@@ -33,7 +33,7 @@ export function TaskActivityTimeline({
   onReject,
   onResolve,
   pendingRequests,
-}: TaskActivityTimelineProps) {
+}: ChatActivityTimelineProps) {
   const timelineRef = useTimelineAutoScroll({ items, pendingRequests });
   const isBusy =
     liveItems.length > 0 &&
@@ -42,7 +42,7 @@ export function TaskActivityTimeline({
   return (
     <section
       aria-busy={isBusy}
-      aria-label="Task activity"
+      aria-label="Chat activity"
       className="space-y-4 bg-base-200 p-4"
       ref={timelineRef}
     >

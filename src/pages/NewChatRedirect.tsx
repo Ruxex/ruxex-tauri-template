@@ -1,6 +1,6 @@
 import { Navigate, useParams } from "react-router-dom";
 
-export function NewTaskRedirect() {
+export function NewChatRedirect() {
   const { projectId } = useParams<{ projectId?: string }>();
   const target = projectId
     ? `/?projectId=${encodeURIComponent(projectId)}`

@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { NewTaskRedirect } from "./NewTaskRedirect";
+import { NewChatRedirect } from "./NewChatRedirect";
 
 function LocationProbe() {
   const location = useLocation();
@@ -20,13 +20,13 @@ function LocationProbe() {
   );
 }
 
-describe("NewTaskRedirect", () => {
+describe("NewChatRedirect", () => {
   afterEach(cleanup);
 
   it("redirects an unscoped legacy route to the start screen", async () => {
     const router = createMemoryRouter(
       [
-        { path: "/chat/new", element: <NewTaskRedirect /> },
+        { path: "/chat/new", element: <NewChatRedirect /> },
         { path: "/", element: <LocationProbe /> },
       ],
       { initialEntries: ["/chat/new"] },
@@ -44,7 +44,7 @@ describe("NewTaskRedirect", () => {
       [
         {
           path: "/projects/:projectId/chat/new",
-          element: <NewTaskRedirect />,
+          element: <NewChatRedirect />,
         },
         { path: "/", element: <LocationProbe /> },
       ],

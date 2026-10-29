@@ -4,13 +4,13 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { TaskListItem } from "./TaskListItem";
+import { ChatListItem } from "./ChatListItem";
 
-describe("TaskListItem", () => {
-  it("renders task context without exposing model or provider details", () => {
+describe("ChatListItem", () => {
+  it("renders chat context without exposing model or provider details", () => {
     render(
       <MemoryRouter>
-        <TaskListItem
+        <ChatListItem
           status="running"
           projectName="Project Alpha"
           worktreeLabel="feature/sidebar"
@@ -40,7 +40,7 @@ describe("TaskListItem", () => {
   it("falls back to the preview or an untitled label", () => {
     const { rerender } = render(
       <MemoryRouter>
-        <TaskListItem
+        <ChatListItem
           thread={{
             id: "thread-1",
             name: null,
@@ -55,7 +55,7 @@ describe("TaskListItem", () => {
 
     rerender(
       <MemoryRouter>
-        <TaskListItem
+        <ChatListItem
           thread={{
             id: "thread-2",
             name: null,
@@ -66,6 +66,6 @@ describe("TaskListItem", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Untitled task")).toBeTruthy();
+    expect(screen.getByText("Untitled chat")).toBeTruthy();
   });
 });

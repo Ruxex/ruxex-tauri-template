@@ -1,7 +1,7 @@
 import { useAppServerEvents, useThreadList } from "../../app-server/hooks";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
-import { TaskListItem } from "../tasks/TaskListItem";
-import { taskStatusFromThreadStatus } from "../tasks/task-status";
+import { ChatListItem } from "../chats/ChatListItem";
+import { chatStatusFromThreadStatus } from "../chats/chat-status";
 
 type ThreadListProps = {
   projectId?: string;
@@ -40,9 +40,9 @@ export function ThreadList({
     <ul className="menu w-full gap-1 p-0">
       {threads.data.data.map((thread) => (
         <li key={thread.id}>
-          <TaskListItem
+          <ChatListItem
             selected={selectedThreadId === thread.id}
-            status={taskStatusFromThreadStatus(
+            status={chatStatusFromThreadStatus(
               thread.status,
               events.threads[thread.id]?.status,
               Object.values(events.pendingServerRequests).some(

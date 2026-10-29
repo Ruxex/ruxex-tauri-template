@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { ConversationViewItem } from "../conversation/conversation-model";
-import { TaskActivityTimeline } from "./TaskActivityTimeline";
+import { ChatActivityTimeline } from "./ChatActivityTimeline";
 
 const activity = vi.hoisted(() => vi.fn());
 const conversation = vi.hoisted(() => vi.fn());
@@ -107,7 +107,7 @@ function timelineProps(items: ConversationViewItem[]) {
   };
 }
 
-describe("TaskActivityTimeline", () => {
+describe("ChatActivityTimeline", () => {
   afterEach(cleanup);
 
   it("renders messages, activities, and actionable pending requests", async () => {
@@ -133,7 +133,7 @@ describe("TaskActivityTimeline", () => {
     ];
 
     render(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         connected
         items={items}
         liveItems={[]}
@@ -146,7 +146,7 @@ describe("TaskActivityTimeline", () => {
     expect(screen.getByText("Message: Implemented the change")).toBeTruthy();
     expect(screen.getByText("Activity: Command")).toBeTruthy();
     expect(screen.getByText("Pending request: 42")).toBeTruthy();
-    const timeline = screen.getByRole("region", { name: "Task activity" });
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
     expect(timeline.className).not.toContain("border");
     expect(timeline.className).not.toContain("rounded-box");
     fireEvent.click(screen.getByRole("button", { name: "Resolve request" }));
@@ -161,7 +161,7 @@ describe("TaskActivityTimeline", () => {
 
   it("does not render a separate empty state when the timeline has no items", () => {
     render(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         connected
         items={[]}
         liveItems={[]}
@@ -176,7 +176,7 @@ describe("TaskActivityTimeline", () => {
 
   it("does not keep completed activity marked busy", () => {
     render(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         connected
         items={[]}
         liveItems={[
@@ -196,20 +196,20 @@ describe("TaskActivityTimeline", () => {
     );
 
     expect(
-      screen.getByLabelText("Task activity").getAttribute("aria-busy"),
+      screen.getByLabelText("Chat activity").getAttribute("aria-busy"),
     ).toBe("false");
   });
 
   it("does not scroll existing history on initial render", () => {
     render(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         {...timelineProps([
           viewItem("message-1", "agentMessage", "Older reply", "message"),
         ])}
       />,
     );
 
-    const timeline = screen.getByRole("region", { name: "Task activity" });
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
     setScrollMetrics(timeline, {
       clientHeight: 400,
       scrollHeight: 1000,
@@ -224,9 +224,9 @@ describe("TaskActivityTimeline", () => {
       viewItem("message-1", "agentMessage", "Older reply", "message"),
     ];
     const { rerender } = render(
-      <TaskActivityTimeline {...timelineProps(initialItems)} />,
+      <ChatActivityTimeline {...timelineProps(initialItems)} />,
     );
-    const timeline = screen.getByRole("region", { name: "Task activity" });
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
     setScrollMetrics(timeline, {
       clientHeight: 400,
       scrollHeight: 1000,
@@ -234,7 +234,7 @@ describe("TaskActivityTimeline", () => {
     });
 
     rerender(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         {...timelineProps([
           ...initialItems,
           viewItem("message-2", "userMessage", "New request", "message"),
@@ -253,9 +253,9 @@ describe("TaskActivityTimeline", () => {
       viewItem("message-1", "agentMessage", "Older reply", "message"),
     ];
     const { rerender } = render(
-      <TaskActivityTimeline {...timelineProps(initialItems)} />,
+      <ChatActivityTimeline {...timelineProps(initialItems)} />,
     );
-    const timeline = screen.getByRole("region", { name: "Task activity" });
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
     setScrollMetrics(timeline, {
       clientHeight: 400,
       scrollHeight: 1000,
@@ -263,7 +263,7 @@ describe("TaskActivityTimeline", () => {
     });
 
     rerender(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         {...timelineProps([
           ...initialItems,
           viewItem("message-2", "agentMessage", "New reply", "message"),
@@ -279,9 +279,9 @@ describe("TaskActivityTimeline", () => {
       viewItem("message-1", "userMessage", "New request", "message"),
     ];
     const { rerender } = render(
-      <TaskActivityTimeline {...timelineProps(initialItems)} />,
+      <ChatActivityTimeline {...timelineProps(initialItems)} />,
     );
-    const timeline = screen.getByRole("region", { name: "Task activity" });
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
     setScrollMetrics(timeline, {
       clientHeight: 400,
       scrollHeight: 1000,
@@ -290,10 +290,10 @@ describe("TaskActivityTimeline", () => {
 
     const reply = viewItem("message-2", "agentMessage", "Reply", "message");
     rerender(
-      <TaskActivityTimeline {...timelineProps([...initialItems, reply])} />,
+      <ChatActivityTimeline {...timelineProps([...initialItems, reply])} />,
     );
     rerender(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         {...timelineProps([
           ...initialItems,
           { ...reply, text: "Reply with more detail" },
@@ -314,11 +314,11 @@ describe("TaskActivityTimeline", () => {
     ];
     const { rerender } = render(
       <div data-conversation-scroll data-testid="conversation-scroll">
-        <TaskActivityTimeline {...timelineProps(initialItems)} />
+        <ChatActivityTimeline {...timelineProps(initialItems)} />
       </div>,
     );
     const container = screen.getByTestId("conversation-scroll");
-    const timeline = screen.getByRole("region", { name: "Task activity" });
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
     setScrollMetrics(container, {
       clientHeight: 400,
       scrollHeight: 1000,
@@ -327,7 +327,7 @@ describe("TaskActivityTimeline", () => {
 
     rerender(
       <div data-conversation-scroll data-testid="conversation-scroll">
-        <TaskActivityTimeline
+        <ChatActivityTimeline
           {...timelineProps([
             ...initialItems,
             viewItem("message-2", "agentMessage", "Reply", "message"),
@@ -360,13 +360,13 @@ describe("TaskActivityTimeline", () => {
       onResolve: vi.fn(),
       pendingRequests: [],
     };
-    const { rerender } = render(<TaskActivityTimeline {...props} />);
+    const { rerender } = render(<ChatActivityTimeline {...props} />);
     const firstInstance = screen
       .getByTestId("activity-item")
       .getAttribute("data-instance");
 
     rerender(
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         {...props}
         items={[{ ...baseItem, turnId: "turn-2", text: "second" }]}
       />,

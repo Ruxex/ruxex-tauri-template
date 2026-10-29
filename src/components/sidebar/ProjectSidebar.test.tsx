@@ -93,7 +93,7 @@ describe("ProjectSidebar", () => {
     });
 
     expect(panel.querySelector('a[href="/"]')).toBeTruthy();
-    expect(within(panel).getByText("Recent tasks")).toBeTruthy();
+    expect(within(panel).getByText("Recent chats")).toBeTruthy();
     expect(within(panel).getByText("Projects")).toBeTruthy();
     expect(
       within(panel)
@@ -109,7 +109,7 @@ describe("ProjectSidebar", () => {
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
     ).toBeTruthy();
     expect(
-      within(panel).getByRole("status", { name: "Task status: Waiting" }),
+      within(panel).getByRole("status", { name: "Chat status: Waiting" }),
     ).toBeTruthy();
     expect(within(panel).queryByText("gpt-5")).toBeNull();
     expect(useThreadList).toHaveBeenCalledWith({

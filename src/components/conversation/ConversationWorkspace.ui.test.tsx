@@ -86,7 +86,7 @@ describe("ConversationWorkspace", () => {
     );
     expect(
       screen
-        .getByRole("region", { name: "Task activity" })
+        .getByRole("region", { name: "Chat activity" })
         .className.split(/\s+/),
     ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
   });

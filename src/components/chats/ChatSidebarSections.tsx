@@ -9,9 +9,9 @@ import { useState } from "react";
 
 import { useProjectList } from "../../app-server/hooks";
 import { ThreadList } from "../sidebar/ThreadList";
-import { TaskSearchDialog } from "./TaskSearchDialog";
+import { ChatSearchDialog } from "./ChatSearchDialog";
 
-export function TaskSidebarSections({
+export function ChatSidebarSections({
   onClose,
   selectedThreadId,
 }: {
@@ -26,10 +26,10 @@ export function TaskSidebarSections({
   });
 
   return (
-    <nav aria-label="Task navigation" className="flex min-h-0 flex-1 flex-col">
+    <nav aria-label="Chat navigation" className="flex min-h-0 flex-1 flex-col">
       <Link className="btn btn-primary mb-5 w-full" to="/" onClick={onClose}>
         <PlusIcon aria-hidden="true" className="size-4" />
-        New task
+        New chat
       </Link>
       <button
         className="btn btn-ghost mb-4 w-full justify-start"
@@ -37,10 +37,10 @@ export function TaskSidebarSections({
         onClick={() => setSearchOpen(true)}
       >
         <MagnifyingGlassIcon aria-hidden="true" className="size-4" />
-        Search tasks
+        Search chats
       </button>
       {searchOpen && (
-        <TaskSearchDialog
+        <ChatSearchDialog
           onClose={() => setSearchOpen(false)}
           onSelect={() => {
             setSearchOpen(false);
@@ -50,12 +50,12 @@ export function TaskSidebarSections({
       )}
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-        <section aria-labelledby="recent-tasks-heading">
+        <section aria-labelledby="recent-chats-heading">
           <h3
             className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60"
-            id="recent-tasks-heading"
+            id="recent-chats-heading"
           >
-            Recent tasks
+            Recent chats
           </h3>
           <div className="pl-1">
             <ThreadList

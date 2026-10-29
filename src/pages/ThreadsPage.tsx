@@ -9,7 +9,7 @@ import {
   useThreadSearch,
 } from "../app-server/hooks";
 import { ThreadCard } from "../components/common/ThreadCard";
-import { organizeTasks } from "../components/tasks/task-organizer";
+import { organizeChats } from "../components/chats/chat-organizer";
 
 export function ThreadsPage() {
   const [search, setSearch] = useState("");
@@ -19,7 +19,7 @@ export function ThreadsPage() {
   const rows = search.trim()
     ? (searchResults.data?.data.map((result) => result.thread) ?? [])
     : (threads.data?.data ?? []);
-  const groups = organizeTasks(
+  const groups = organizeChats(
     rows.map((thread) => ({
       ...thread,
       liveStatus: events.threads[thread.id]?.status,
@@ -83,14 +83,14 @@ export function ThreadsPage() {
         ).map(([label, group]) =>
           group.length > 0 ? (
             <section
-              aria-labelledby={`${label.toLowerCase()}-tasks-heading`}
+              aria-labelledby={`${label.toLowerCase()}-chats-heading`}
               key={label}
             >
               <h2
                 className="mb-2 text-sm font-semibold uppercase tracking-wide text-base-content/60"
-                id={`${label.toLowerCase()}-tasks-heading`}
+                id={`${label.toLowerCase()}-chats-heading`}
               >
-                {label} tasks
+                {label} chats
               </h2>
               <div className="grid gap-3">
                 {group.map((thread) => (

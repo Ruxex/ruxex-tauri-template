@@ -1,4 +1,4 @@
-import { TaskSidebarSections } from "../tasks/TaskSidebarSections";
+import { ChatSidebarSections } from "../chats/ChatSidebarSections";
 import { SidebarHeader } from "./SidebarHeader";
 
 export function HomeSidebar({
@@ -14,7 +14,7 @@ export function HomeSidebar({
       className="flex h-full min-h-0 w-72 flex-col bg-base-100 p-4"
     >
       <SidebarHeader label="Home" onClose={onClose} />
-      <TaskSidebarSections
+      <ChatSidebarSections
         onClose={onClose}
         selectedThreadId={selectedThreadId}
       />

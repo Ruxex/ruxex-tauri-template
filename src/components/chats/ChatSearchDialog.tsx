@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useThreadSearch } from "../../app-server/hooks";
 import { formatErrorMessage } from "../../app/error-message";
-import { TaskListItem } from "./TaskListItem";
+import { ChatListItem } from "./ChatListItem";
 
-type TaskSearchDialogProps = {
+type ChatSearchDialogProps = {
   onClose: () => void;
   onSelect: (threadId: string) => void;
 };
 
-export function TaskSearchDialog({ onClose, onSelect }: TaskSearchDialogProps) {
+export function ChatSearchDialog({ onClose, onSelect }: ChatSearchDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useThreadSearch(searchTerm);
@@ -26,12 +26,12 @@ export function TaskSearchDialog({ onClose, onSelect }: TaskSearchDialogProps) {
 
   return (
     <section
-      aria-label="Task search"
+      aria-label="Chat search"
       className="mb-4 rounded-box border border-base-300 bg-base-200 p-3"
       role="dialog"
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">Search tasks</h3>
+        <h3 className="font-semibold">Search chats</h3>
         <button
           className="btn btn-ghost btn-xs"
           type="button"
@@ -42,16 +42,16 @@ export function TaskSearchDialog({ onClose, onSelect }: TaskSearchDialogProps) {
       </div>
       <input
         ref={inputRef}
-        aria-label="Search tasks"
+        aria-label="Search chats"
         className="input input-bordered input-sm mt-2 w-full"
-        placeholder="Search task titles and messages"
+        placeholder="Search chat titles and messages"
         type="search"
         value={searchTerm}
         onChange={(event) => setSearchTerm(event.target.value)}
       />
       <div className="mt-3">
         {!searchTerm.trim() && (
-          <p className="text-xs text-base-content/60">Type to search tasks.</p>
+          <p className="text-xs text-base-content/60">Type to search chats.</p>
         )}
         {results.isLoading && (
           <span className="loading loading-spinner loading-sm" />
@@ -65,13 +65,13 @@ export function TaskSearchDialog({ onClose, onSelect }: TaskSearchDialogProps) {
           !results.isLoading &&
           !results.isError &&
           !rows.length && (
-            <p className="text-xs text-base-content/60">No matching tasks.</p>
+            <p className="text-xs text-base-content/60">No matching chats.</p>
           )}
         {rows.length > 0 && (
           <ul className="menu w-full gap-1 p-0">
             {rows.map(({ thread }) => (
               <li key={thread.id}>
-                <TaskListItem
+                <ChatListItem
                   showPreview
                   thread={thread}
                   onClick={() => onSelect(thread.id)}

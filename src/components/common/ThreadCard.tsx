@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { useAppServerEvents } from "../../app-server/hooks";
-import { TaskListItem } from "../tasks/TaskListItem";
-import { taskStatusFromThreadStatus } from "../tasks/task-status";
+import { ChatListItem } from "../chats/ChatListItem";
+import { chatStatusFromThreadStatus } from "../chats/chat-status";
 import type { v2 } from "../../protocol";
 
 type ThreadSummary = {
@@ -22,7 +22,7 @@ type ThreadCardProps = {
 
 export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps) {
   const events = useAppServerEvents();
-  const taskStatus = taskStatusFromThreadStatus(
+  const chatStatus = chatStatusFromThreadStatus(
     thread.status,
     events.threads[thread.id]?.status,
     Object.values(events.pendingServerRequests).some(
@@ -32,9 +32,9 @@ export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps
 
   if (compact) {
     return (
-      <TaskListItem
+      <ChatListItem
         showPreview
-        status={taskStatus}
+        status={chatStatus}
         thread={thread}
       />
     );
@@ -43,9 +43,9 @@ export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps
   return (
     <article className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary">
       <div className="card-body gap-2 p-5">
-        <TaskListItem
+        <ChatListItem
           showPreview
-          status={taskStatus}
+          status={chatStatus}
           thread={thread}
         />
         {actions && <div className="card-actions justify-end">{actions}</div>}

@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 
 import {
-  taskStatusClassName,
-  taskStatusLabel,
-  type TaskStatus,
-} from "./task-status";
+  chatStatusClassName,
+  chatStatusLabel,
+  type ChatStatus,
+} from "./chat-status";
 
-type TaskListThread = {
+type ChatListThread = {
   id: string;
   name?: string | null;
   preview?: string | null;
@@ -14,9 +14,9 @@ type TaskListThread = {
   updatedAt: number;
 };
 
-type TaskListItemProps = {
-  thread: TaskListThread;
-  status?: TaskStatus;
+type ChatListItemProps = {
+  thread: ChatListThread;
+  status?: ChatStatus;
   projectName?: string;
   worktreeLabel?: string;
   selected?: boolean;
@@ -24,7 +24,7 @@ type TaskListItemProps = {
   onClick?: () => void;
 };
 
-export function TaskListItem({
+export function ChatListItem({
   thread,
   status,
   projectName,
@@ -32,9 +32,9 @@ export function TaskListItem({
   selected = false,
   showPreview = false,
   onClick,
-}: TaskListItemProps) {
-  const title = thread.name || thread.preview || "Untitled task";
-  const statusLabel = status ? taskStatusLabel(status) : null;
+}: ChatListItemProps) {
+  const title = thread.name || thread.preview || "Untitled chat";
+  const statusLabel = status ? chatStatusLabel(status) : null;
 
   return (
     <Link
@@ -51,8 +51,8 @@ export function TaskListItem({
       <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
         {status && (
           <span
-            aria-label={`Task status: ${statusLabel}`}
-            className={`badge badge-sm ${taskStatusClassName(status)}`}
+            aria-label={`Chat status: ${statusLabel}`}
+            className={`badge badge-sm ${chatStatusClassName(status)}`}
             role="status"
           >
             {statusLabel}

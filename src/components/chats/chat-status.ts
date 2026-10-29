@@ -1,7 +1,7 @@
 import type { v2 } from "../../protocol";
 import type { ThreadExecutionState } from "../../app-server/event-reducer";
 
-export const TASK_STATUSES = [
+export const CHAT_STATUSES = [
   "running",
   "waiting",
   "completed",
@@ -9,9 +9,9 @@ export const TASK_STATUSES = [
   "stopped",
 ] as const;
 
-export type TaskStatus = (typeof TASK_STATUSES)[number];
+export type ChatStatus = (typeof CHAT_STATUSES)[number];
 
-const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+const CHAT_STATUS_LABELS: Record<ChatStatus, string> = {
   running: "Running",
   waiting: "Waiting",
   completed: "Completed",
@@ -19,11 +19,11 @@ const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   stopped: "Stopped",
 };
 
-export function taskStatusLabel(status: TaskStatus): string {
-  return TASK_STATUS_LABELS[status];
+export function chatStatusLabel(status: ChatStatus): string {
+  return CHAT_STATUS_LABELS[status];
 }
 
-export function taskStatusClassName(status: TaskStatus): string {
+export function chatStatusClassName(status: ChatStatus): string {
   switch (status) {
     case "running":
       return "badge-info";
@@ -38,11 +38,11 @@ export function taskStatusClassName(status: TaskStatus): string {
   }
 }
 
-export function taskStatusFromThreadStatus(
+export function chatStatusFromThreadStatus(
   status: v2.ThreadStatus | undefined,
   liveStatus?: ThreadExecutionState["status"],
   waitingForRequest = false,
-): TaskStatus | undefined {
+): ChatStatus | undefined {
   if (waitingForRequest) return "waiting";
   if (liveStatus === "running") return "running";
   if (liveStatus === "completed") return "completed";

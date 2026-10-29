@@ -10,7 +10,7 @@ import { ApprovalCenter } from "../components/approvals/ApprovalCenter";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
 import { ModelPage } from "../pages/ModelPage";
-import { NewTaskRedirect } from "../pages/NewTaskRedirect";
+import { NewChatRedirect } from "../pages/NewChatRedirect";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { ProjectsPage } from "../pages/ProjectsPage";
 import { SettingsPage } from "../pages/SettingsPage";
@@ -46,13 +46,13 @@ export const router = createHashRouter([
       { path: "capabilities", element: <CapabilitiesPage /> },
       { path: "archive", element: <ArchivePage /> },
       { path: "threads", element: <ThreadsPage /> },
-      { path: "chat/new", element: <NewTaskRedirect /> },
+      { path: "chat/new", element: <NewChatRedirect /> },
       { path: "chat/:threadId", element: <ThreadPage /> },
       { path: "projects", element: <ProjectsPage /> },
       { path: "projects/:projectId", element: <ProjectHomePage /> },
       {
         path: "projects/:projectId/chat/new",
-        element: <NewTaskRedirect />,
+        element: <NewChatRedirect />,
       },
     ],
   },

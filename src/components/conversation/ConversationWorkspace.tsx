@@ -9,7 +9,7 @@ import {
 } from "../../app-server/api";
 import { Composer } from "./Composer";
 import { mergeConversationItems } from "./conversation-model";
-import { TaskActivityTimeline } from "../tasks/TaskActivityTimeline";
+import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
@@ -63,7 +63,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           )}
         </p>
       )}
-      <TaskActivityTimeline
+      <ChatActivityTimeline
         connected={events.connected ?? true}
         items={items}
         liveItems={liveThread?.items ?? []}

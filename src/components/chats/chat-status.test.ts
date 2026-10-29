@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { v2 } from "../../protocol";
 
 import {
-  TASK_STATUSES,
-  taskStatusFromThreadStatus,
-  taskStatusLabel,
-} from "./task-status";
+  CHAT_STATUSES,
+  chatStatusFromThreadStatus,
+  chatStatusLabel,
+} from "./chat-status";
 
-describe("task status", () => {
+describe("chat status", () => {
   it.each([
     ["running", "Running"],
     ["waiting", "Waiting"],
@@ -15,11 +15,11 @@ describe("task status", () => {
     ["failed", "Failed"],
     ["stopped", "Stopped"],
   ] as const)("labels %s as %s", (status, label) => {
-    expect(taskStatusLabel(status)).toBe(label);
+    expect(chatStatusLabel(status)).toBe(label);
   });
 
-  it("exposes only statuses supported by the initial task UI", () => {
-    expect(TASK_STATUSES).toEqual([
+  it("exposes only statuses supported by the initial chat UI", () => {
+    expect(CHAT_STATUSES).toEqual([
       "running",
       "waiting",
       "completed",
@@ -35,6 +35,6 @@ describe("task status", () => {
     [{ type: "systemError" }, "failed"],
     [{ type: "idle" }, undefined],
   ] as const)("maps thread status %o to %s", (status, expected) => {
-    expect(taskStatusFromThreadStatus(status as v2.ThreadStatus)).toBe(expected);
+    expect(chatStatusFromThreadStatus(status as v2.ThreadStatus)).toBe(expected);
   });
 });

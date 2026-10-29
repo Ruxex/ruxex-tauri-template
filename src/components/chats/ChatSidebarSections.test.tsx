@@ -14,8 +14,8 @@ vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
 }));
 
-describe("TaskSidebarSections", () => {
-  it("orders task navigation and keeps Settings at the bottom", async () => {
+describe("ChatSidebarSections", () => {
+  it("orders chat navigation and keeps Settings at the bottom", async () => {
     useProjectList.mockReturnValue({
       data: { data: [{ id: "project-1", name: "Project Alpha" }] },
       isError: false,
@@ -27,7 +27,7 @@ describe("TaskSidebarSections", () => {
           {
             id: "thread-1",
             name: "Build the sidebar",
-            preview: "Implement the task sidebar",
+            preview: "Implement the chat sidebar",
             updatedAt: 0,
           },
         ],
@@ -40,20 +40,20 @@ describe("TaskSidebarSections", () => {
       threads: {},
     });
     const onClose = vi.fn();
-    const { TaskSidebarSections } = await import("./TaskSidebarSections");
+    const { ChatSidebarSections } = await import("./ChatSidebarSections");
 
     render(
       <MemoryRouter>
-        <TaskSidebarSections onClose={onClose} selectedThreadId="thread-1" />
+        <ChatSidebarSections onClose={onClose} selectedThreadId="thread-1" />
       </MemoryRouter>,
     );
 
     const navigation = screen.getByRole("navigation", {
-      name: "Task navigation",
+      name: "Chat navigation",
     });
     const links = within(navigation).getAllByRole("link");
 
-    expect(links[0].textContent?.trim()).toBe("New task");
+    expect(links[0].textContent?.trim()).toBe("New chat");
     expect(links[1].textContent).toContain("Build the sidebar");
     expect(links[2].textContent?.trim()).toContain("Project Alpha");
     expect(links[3].textContent?.trim()).toBe("Settings");

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { organizeTasks } from "./task-organizer";
+import { organizeChats } from "./chat-organizer";
 
-function task(
+function chat(
   id: string,
-  overrides: Partial<Parameters<typeof organizeTasks>[0][number]> = {},
+  overrides: Partial<Parameters<typeof organizeChats>[0][number]> = {},
 ) {
   return {
     id,
@@ -16,16 +16,16 @@ function task(
   };
 }
 
-describe("organizeTasks", () => {
-  it("groups pinned, active, recent, and archived tasks without provider data", () => {
-    const result = organizeTasks([
-      task("pinned", { pinned: true }),
-      task("running", {
+describe("organizeChats", () => {
+  it("groups pinned, active, recent, and archived chats without provider data", () => {
+    const result = organizeChats([
+      chat("pinned", { pinned: true }),
+      chat("running", {
         liveStatus: "running",
         updatedAt: 20,
       }),
-      task("recent", { updatedAt: 15 }),
-      task("archived", { archived: true }),
+      chat("recent", { updatedAt: 15 }),
+      chat("archived", { archived: true }),
     ]);
 
     expect(result.pinned.map((item) => item.id)).toEqual(["pinned"]);
@@ -35,9 +35,9 @@ describe("organizeTasks", () => {
     expect(JSON.stringify(result)).not.toContain("model");
   });
 
-  it("uses the task status selector for approval and user-input waiting", () => {
-    const result = organizeTasks([
-      task("waiting", {
+  it("uses the chat status selector for approval and user-input waiting", () => {
+    const result = organizeChats([
+      chat("waiting", {
         status: { type: "active", activeFlags: ["waitingOnApproval"] },
       }),
     ]);

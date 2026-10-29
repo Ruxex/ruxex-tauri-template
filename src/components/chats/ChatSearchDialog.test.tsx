@@ -8,7 +8,7 @@ const useThreadSearch = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({ useThreadSearch }));
 
-describe("TaskSearchDialog", () => {
+describe("ChatSearchDialog", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe("TaskSearchDialog", () => {
     });
   });
 
-  it("searches task titles and selects a result", async () => {
+  it("searches chat titles and selects a result", async () => {
     useThreadSearch.mockImplementation((term: string) => ({
       data: term
         ? {
@@ -41,14 +41,14 @@ describe("TaskSearchDialog", () => {
       isLoading: false,
     }));
     const onSelect = vi.fn();
-    const { TaskSearchDialog } = await import("./TaskSearchDialog");
+    const { ChatSearchDialog } = await import("./ChatSearchDialog");
 
     render(
       <MemoryRouter>
-        <TaskSearchDialog onClose={vi.fn()} onSelect={onSelect} />
+        <ChatSearchDialog onClose={vi.fn()} onSelect={onSelect} />
       </MemoryRouter>,
     );
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search tasks" }), {
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search chats" }), {
       target: { value: "compiler" },
     });
 
@@ -59,21 +59,21 @@ describe("TaskSearchDialog", () => {
 
   it("shows blank, loading, error, and empty states and closes on Escape", async () => {
     const onClose = vi.fn();
-    const { TaskSearchDialog } = await import("./TaskSearchDialog");
+    const { ChatSearchDialog } = await import("./ChatSearchDialog");
     render(
       <MemoryRouter>
-        <TaskSearchDialog onClose={onClose} onSelect={vi.fn()} />
+        <ChatSearchDialog onClose={onClose} onSelect={vi.fn()} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Type to search tasks.")).toBeTruthy();
+    expect(screen.getByText("Type to search chats.")).toBeTruthy();
     useThreadSearch.mockReturnValue({
       data: undefined,
       isError: true,
       isLoading: false,
       error: new Error("Search unavailable"),
     });
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search tasks" }), {
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search chats" }), {
       target: { value: "compiler" },
     });
     expect(screen.getByRole("dialog").textContent).toContain(
