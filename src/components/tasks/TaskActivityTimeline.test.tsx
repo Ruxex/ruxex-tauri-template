@@ -67,6 +67,46 @@ function pendingRequest(threadId: string): PendingServerRequest {
   };
 }
 
+function viewItem(
+  id: string,
+  type: ConversationViewItem["type"],
+  text: string,
+  category: ConversationViewItem["category"],
+): ConversationViewItem {
+  return {
+    id,
+    turnId: "turn-1",
+    type,
+    category,
+    title: category === "message" ? "Ruxex" : "Command",
+    text,
+  };
+}
+
+function setScrollMetrics(
+  element: HTMLElement,
+  metrics: { clientHeight: number; scrollHeight: number; scrollTop: number },
+) {
+  Object.defineProperties(element, {
+    clientHeight: { configurable: true, value: metrics.clientHeight },
+    scrollHeight: { configurable: true, value: metrics.scrollHeight },
+    scrollTop: { configurable: true, value: metrics.scrollTop, writable: true },
+    scrollTo: { configurable: true, value: vi.fn() },
+  });
+  fireEvent.scroll(element);
+}
+
+function timelineProps(items: ConversationViewItem[]) {
+  return {
+    connected: true,
+    items,
+    liveItems: [],
+    onReject: vi.fn(),
+    onResolve: vi.fn(),
+    pendingRequests: [],
+  };
+}
+
 describe("TaskActivityTimeline", () => {
   afterEach(cleanup);
 
@@ -155,6 +195,114 @@ describe("TaskActivityTimeline", () => {
     expect(
       screen.getByLabelText("Task activity").getAttribute("aria-busy"),
     ).toBe("false");
+  });
+
+  it("does not scroll existing history on initial render", () => {
+    render(
+      <TaskActivityTimeline
+        {...timelineProps([
+          viewItem("message-1", "agentMessage", "Older reply", "message"),
+        ])}
+      />,
+    );
+
+    const timeline = screen.getByRole("region", { name: "Task activity" });
+    setScrollMetrics(timeline, {
+      clientHeight: 400,
+      scrollHeight: 1000,
+      scrollTop: 0,
+    });
+
+    expect(timeline.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("scrolls to the bottom when a new user message is added", () => {
+    const initialItems = [
+      viewItem("message-1", "agentMessage", "Older reply", "message"),
+    ];
+    const { rerender } = render(
+      <TaskActivityTimeline {...timelineProps(initialItems)} />,
+    );
+    const timeline = screen.getByRole("region", { name: "Task activity" });
+    setScrollMetrics(timeline, {
+      clientHeight: 400,
+      scrollHeight: 1000,
+      scrollTop: 0,
+    });
+
+    rerender(
+      <TaskActivityTimeline
+        {...timelineProps([
+          ...initialItems,
+          viewItem("message-2", "userMessage", "New request", "message"),
+        ])}
+      />,
+    );
+
+    expect(timeline.scrollTo).toHaveBeenCalledWith({
+      behavior: "smooth",
+      top: 1000,
+    });
+  });
+
+  it("does not scroll to a new reply while the user is reading history", () => {
+    const initialItems = [
+      viewItem("message-1", "agentMessage", "Older reply", "message"),
+    ];
+    const { rerender } = render(
+      <TaskActivityTimeline {...timelineProps(initialItems)} />,
+    );
+    const timeline = screen.getByRole("region", { name: "Task activity" });
+    setScrollMetrics(timeline, {
+      clientHeight: 400,
+      scrollHeight: 1000,
+      scrollTop: 0,
+    });
+
+    rerender(
+      <TaskActivityTimeline
+        {...timelineProps([
+          ...initialItems,
+          viewItem("message-2", "agentMessage", "New reply", "message"),
+        ])}
+      />,
+    );
+
+    expect(timeline.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("follows new and streaming replies when the user is at the bottom", () => {
+    const initialItems = [
+      viewItem("message-1", "userMessage", "New request", "message"),
+    ];
+    const { rerender } = render(
+      <TaskActivityTimeline {...timelineProps(initialItems)} />,
+    );
+    const timeline = screen.getByRole("region", { name: "Task activity" });
+    setScrollMetrics(timeline, {
+      clientHeight: 400,
+      scrollHeight: 1000,
+      scrollTop: 580,
+    });
+
+    const reply = viewItem("message-2", "agentMessage", "Reply", "message");
+    rerender(
+      <TaskActivityTimeline {...timelineProps([...initialItems, reply])} />,
+    );
+    rerender(
+      <TaskActivityTimeline
+        {...timelineProps([
+          ...initialItems,
+          { ...reply, text: "Reply with more detail" },
+        ])}
+      />,
+    );
+
+    expect(timeline.scrollTo).toHaveBeenCalledTimes(2);
+    expect(timeline.scrollTo).toHaveBeenLastCalledWith({
+      behavior: "smooth",
+      top: 1000,
+    });
   });
 
   it("reconciles activities by turn and item identity", () => {
