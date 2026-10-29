@@ -3,36 +3,42 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ComposerOptions, SubmissionModeMenu } from "./ComposerOptions";
+import {
+  ComposerOptions,
+  PermissionMenu,
+  SubmissionModeMenu,
+} from "./ComposerOptions";
 
 describe("ComposerOptions", () => {
   afterEach(cleanup);
 
-  it("renders only composer options without a mode select", () => {
+  it("groups attachment, goal mode, and plan mode under the plus button", () => {
     const onAttach = vi.fn();
+    const onGoalModeChange = vi.fn();
     render(
       <ComposerOptions
         disabled={false}
         onPlanModeChange={vi.fn()}
         onAttach={onAttach}
+        onGoalModeChange={onGoalModeChange}
         planMode={false}
+        goalMode={false}
       />,
     );
 
     expect(screen.queryByRole("combobox")).toBeNull();
-    expect(screen.getByRole("button", { name: "Attach image" })).toHaveProperty(
-      "disabled",
-      false,
-    );
+    fireEvent.click(screen.getByLabelText("Composer options"));
     expect(
-      screen.getByRole("button", { name: "Attach image" }).querySelector("svg"),
-    ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Attach image" }));
+      screen.getByRole("menuitem", { name: "Attach file" }),
+    ).toHaveProperty("disabled", false);
+    expect(screen.getByRole("menuitem", { name: "Goal mode" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Plan mode" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Attach file" }));
     expect(onAttach).toHaveBeenCalledTimes(1);
   });
 
-  it("reports plan toggles for an active turn", () => {
-    const onModeChange = vi.fn();
+  it("reports goal mode toggles", () => {
+    const onGoalModeChange = vi.fn();
     const onPlanModeChange = vi.fn();
     render(
       <ComposerOptions
@@ -40,16 +46,36 @@ describe("ComposerOptions", () => {
         onPlanModeChange={onPlanModeChange}
         onAttach={vi.fn()}
         planMode={false}
+        goalMode={false}
+        onGoalModeChange={onGoalModeChange}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Plan mode" }));
+    fireEvent.click(screen.getByLabelText("Composer options"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
 
-    expect(onModeChange).not.toHaveBeenCalled();
-    expect(onPlanModeChange).toHaveBeenCalledTimes(1);
+    expect(onGoalModeChange).toHaveBeenCalledTimes(1);
+    expect(onPlanModeChange).not.toHaveBeenCalled();
+  });
+
+  it("offers approval, read-only, and full access permission choices", () => {
+    const onModeChange = vi.fn();
+    render(
+      <PermissionMenu
+        disabled={false}
+        mode="ask"
+        onModeChange={onModeChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("Permission mode"));
     expect(
-      screen.getByRole("button", { name: "Plan mode" }).querySelector("svg"),
+      screen.getByRole("menuitem", { name: "Ask for approval" }),
     ).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Read-only" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Full access" }));
+
+    expect(onModeChange).toHaveBeenCalledWith("full-access");
   });
 
   it("offers send, steer, and queue from the submission mode menu", () => {
@@ -65,13 +91,11 @@ describe("ComposerOptions", () => {
 
     expect(screen.queryByRole("combobox")).toBeNull();
     expect(
-      screen.getByLabelText("Submission mode menu").parentElement?.className.split(
-        /\s+/,
-      ),
+      screen
+        .getByLabelText("Submission mode menu")
+        .parentElement?.className.split(/\s+/),
     ).toContain("dropdown-top");
-    fireEvent.click(
-      screen.getByLabelText("Submission mode menu"),
-    );
+    fireEvent.click(screen.getByLabelText("Submission mode menu"));
     expect(screen.getByRole("menuitem", { name: "Send" })).toHaveProperty(
       "disabled",
       false,
@@ -99,9 +123,7 @@ describe("ComposerOptions", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByLabelText("Submission mode menu"),
-    );
+    fireEvent.click(screen.getByLabelText("Submission mode menu"));
     expect(screen.getByRole("menuitem", { name: /Steer/ })).toHaveProperty(
       "disabled",
       true,

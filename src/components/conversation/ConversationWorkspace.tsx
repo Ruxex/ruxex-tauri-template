@@ -67,6 +67,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         <Composer
           threadId={threadId}
           activeTurnId={liveThread?.activeTurnId ?? null}
+          model={conversation.data.thread.model}
+          reasoningEffort={conversation.data.thread.reasoningEffort}
         />
       </div>
     </div>
