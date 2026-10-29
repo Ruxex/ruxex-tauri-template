@@ -71,6 +71,23 @@ export function useResumeThread() {
   });
 }
 
+export function useRevertThread() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ThreadRevertParams) => {
+      await requestAppServerMethod("thread/resume", {
+        threadId: params.threadId,
+        excludeTurns: true,
+      });
+      const response = await requestAppServerMethod("thread/revert", params);
+      return response.response;
+    },
+    onSuccess: (_response, params) =>
+      invalidateThreadQueries(queryClient, params.threadId),
+  });
+}
+
 export function useForkThread() {
   const queryClient = useQueryClient();
 

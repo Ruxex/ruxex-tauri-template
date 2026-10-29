@@ -38,6 +38,11 @@ describe("thread mutation hooks", () => {
     ],
     ["thread/resume", "useResumeThread", { threadId: "thread-1" }],
     [
+      "thread/revert",
+      "useRevertThread",
+      { threadId: "thread-1", beforeTurnId: "turn-1" },
+    ],
+    [
       "thread/fork",
       "useForkThread",
       { threadId: "thread-1", excludeTurns: true },
@@ -128,6 +133,29 @@ describe("thread mutation hooks", () => {
     await expect(
       act(async () => result.current.mutateAsync({})),
     ).resolves.toEqual(response);
+  });
+
+  it("resumes a thread before reverting its history", async () => {
+    const { useRevertThread } = await import("./useThreadMutations");
+    const { result } = renderHook(() => useRevertThread(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () =>
+      result.current.mutateAsync({
+        threadId: "thread-1",
+        beforeTurnId: "turn-1",
+      }),
+    );
+
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "thread/resume", {
+      threadId: "thread-1",
+      excludeTurns: true,
+    });
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "thread/revert", {
+      threadId: "thread-1",
+      beforeTurnId: "turn-1",
+    });
   });
 
   it("invalidates the thread list after archiving", async () => {

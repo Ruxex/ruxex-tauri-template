@@ -1,4 +1,9 @@
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import {
   ArrowPathIcon,
   ArrowUturnRightIcon,
@@ -35,6 +40,8 @@ type ComposerProps = {
   activeTurnId: string | null;
   model?: string | null;
   reasoningEffort?: string | null;
+  initialMessage?: string;
+  onMessageSent?: () => void;
 };
 
 export function Composer({
@@ -42,6 +49,8 @@ export function Composer({
   activeTurnId,
   model: initialModel = null,
   reasoningEffort: initialEffort = null,
+  initialMessage,
+  onMessageSent,
 }: ComposerProps) {
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
@@ -75,6 +84,12 @@ export function Composer({
     interrupt.isPending ||
     setGoal.isPending ||
     updateSettings.isPending;
+
+  useEffect(() => {
+    if (initialMessage !== undefined) {
+      setMessage(initialMessage);
+    }
+  }, [initialMessage]);
   const SubmitIcon = isPending
     ? ArrowPathIcon
     : mode === "queue"
@@ -173,6 +188,7 @@ export function Composer({
       }
       setMessage("");
       resetAttachment();
+      onMessageSent?.();
     } catch {
       // Mutation state renders the error below the composer.
     }

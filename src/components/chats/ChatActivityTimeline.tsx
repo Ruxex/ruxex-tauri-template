@@ -14,6 +14,7 @@ type ChatActivityTimelineProps = {
   items: ConversationViewItem[];
   liveItems: LiveConversationItem[];
   liveStatus?: ThreadExecutionState["status"];
+  onEdit?: (item: ConversationViewItem) => void;
   onReject: (
     requestId: PendingServerRequest["requestId"],
     message: string,
@@ -30,6 +31,7 @@ export function ChatActivityTimeline({
   items,
   liveItems,
   liveStatus,
+  onEdit,
   onReject,
   onResolve,
   pendingRequests,
@@ -60,6 +62,7 @@ export function ChatActivityTimeline({
           <ConversationItem
             item={item}
             key={`item:${item.turnId}:${item.id}`}
+            onEdit={onEdit}
           />
         ) : (
           <ActivityItem item={item} key={`item:${item.turnId}:${item.id}`} />

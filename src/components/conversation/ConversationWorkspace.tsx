@@ -1,21 +1,42 @@
 import {
   useAppServerEvents,
+  useRevertThread,
   useThreadConversation,
 } from "../../app-server/hooks";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
 } from "../../app-server/api";
 import { Composer } from "./Composer";
-import { mergeConversationItems } from "./conversation-model";
+import {
+  mergeConversationItems,
+  type ConversationViewItem,
+} from "./conversation-model";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
+  const revertThread = useRevertThread();
+  const [composerDraft, setComposerDraft] = useState<string | undefined>();
   const liveThread = events.threads[threadId];
   const completedTurnId = liveThread?.completedTurn?.id;
+
+  async function handleEdit(item: ConversationViewItem) {
+    if (item.type !== "userMessage" || !item.text.trim()) {
+      return;
+    }
+    try {
+      await revertThread.mutateAsync({
+        threadId,
+        beforeTurnId: item.turnId,
+      });
+      setComposerDraft(item.text);
+    } catch {
+      // Mutation state renders the error above the conversation.
+    }
+  }
 
   useEffect(() => {
     if (!completedTurnId) {
@@ -45,6 +66,11 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const turnError =
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
+  const editError = revertThread.error;
+  const canEdit =
+    liveThread?.status !== "running" &&
+    liveThread?.status !== "resynchronizing" &&
+    !revertThread.isPending;
   async function handleResolve(requestId: string | number, result: unknown) {
     await resolveServerRequest(requestId, result);
   }
@@ -63,11 +89,17 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           )}
         </p>
       )}
+      {editError && (
+        <p className="alert alert-error" role="alert">
+          Unable to edit this message: {editError.message}
+        </p>
+      )}
       <ChatActivityTimeline
         connected={events.connected ?? true}
         items={items}
         liveItems={liveThread?.items ?? []}
         liveStatus={liveThread?.status}
+        onEdit={canEdit ? handleEdit : undefined}
         onReject={handleReject}
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
@@ -78,6 +110,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           activeTurnId={liveThread?.activeTurnId ?? null}
           model={conversation.data.thread.model}
           reasoningEffort={conversation.data.thread.reasoningEffort}
+          initialMessage={composerDraft}
+          onMessageSent={() => setComposerDraft(undefined)}
         />
       </div>
     </div>

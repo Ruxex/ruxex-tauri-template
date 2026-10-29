@@ -15,6 +15,7 @@ export type ConversationViewItem = {
   imagePath?: string;
   imageUrls?: string[];
   browserUrl?: string;
+  editable?: boolean;
 };
 
 export function mergeConversationItems(
@@ -49,18 +50,24 @@ export function normalizeThreadItem(
   item: v2.ThreadItem,
 ): ConversationViewItem {
   switch (item.type) {
-    case "userMessage":
+    case "userMessage": {
+      const text = item.content
+        .filter((content) => content.type === "text")
+        .map((content) => content.text)
+        .join("\n");
       return {
         id: item.id,
         turnId,
         type: item.type,
         category: "message",
         title: "You",
-        text: item.content
-          .filter((content) => content.type === "text")
-          .map((content) => content.text)
-          .join("\n"),
+        text,
+        editable:
+          item.content.length > 0 &&
+          item.content.every((content) => content.type === "text") &&
+          text.trim().length > 0,
       };
+    }
     case "agentMessage":
       return {
         id: item.id,

@@ -24,10 +24,20 @@ vi.mock("../conversation/ActivityItem", () => ({
   },
 }));
 vi.mock("../conversation/ConversationItem", () => ({
-  ConversationItem: (props: { item: ConversationViewItem }) => {
+  ConversationItem: (props: {
+    item: ConversationViewItem;
+    onEdit?: (item: ConversationViewItem) => void;
+  }) => {
     conversation(props);
     return (
-      <div data-testid="conversation-item">Message: {props.item.text}</div>
+      <div data-testid="conversation-item">
+        Message: {props.item.text}
+        {props.onEdit && props.item.type === "userMessage" && (
+          <button type="button" onClick={() => props.onEdit?.(props.item)}>
+            Edit message
+          </button>
+        )}
+      </div>
     );
   },
 }));
@@ -103,6 +113,7 @@ function timelineProps(items: ConversationViewItem[]) {
     liveItems: [],
     onReject: vi.fn(),
     onResolve: vi.fn(),
+    onEdit: vi.fn(),
     pendingRequests: [],
   };
 }
@@ -172,6 +183,21 @@ describe("ChatActivityTimeline", () => {
     );
 
     expect(screen.getByText("No activity yet.")).toBeTruthy();
+  });
+
+  it("forwards user-message edits to the conversation item", () => {
+    const onEdit = vi.fn();
+    const item = viewItem("message-1", "userMessage", "Original prompt", "message");
+
+    render(
+      <ChatActivityTimeline
+        {...timelineProps([item])}
+        onEdit={onEdit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
+    expect(onEdit).toHaveBeenCalledWith(item);
   });
 
   it("does not keep completed activity marked busy", () => {

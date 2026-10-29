@@ -293,6 +293,22 @@ describe("Composer", () => {
     expect(control.textContent).toContain("high");
   });
 
+  it("prefills the message field with an edited prompt", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(
+      <Composer
+        threadId="thread-1"
+        activeTurnId={null}
+        initialMessage="Original prompt"
+      />,
+    );
+
+    expect((screen.getByLabelText("Message") as HTMLTextAreaElement).value).toBe(
+      "Original prompt",
+    );
+  });
+
   it("updates model, effort, and permission settings from the controls", async () => {
     const { Composer } = await import("./Composer");
 

@@ -1,18 +1,29 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
+const useRevertThread = vi.hoisted(() => vi.fn());
 const refetch = vi.hoisted(() => vi.fn());
+const revertMutation = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
   useThreadConversation,
+  useRevertThread,
 }));
 vi.mock("./Composer", () => ({
-  Composer: () => <div data-testid="composer" />,
+  Composer: (props: { initialMessage?: string }) => (
+    <div data-testid="composer" data-draft={props.initialMessage ?? ""} />
+  ),
 }));
 describe("ConversationWorkspace", () => {
   afterEach(cleanup);
@@ -36,11 +47,29 @@ describe("ConversationWorkspace", () => {
           data: [
             {
               turnId: "turn-1",
+              item: {
+                type: "userMessage",
+                id: "user-1",
+                clientId: null,
+                content: [
+                  { type: "text", text: "Original prompt", text_elements: [] },
+                ],
+              },
+            },
+            {
+              turnId: "turn-2",
               item: { type: "agentMessage", id: "item-1", text: "Assistant reply" },
             },
           ] as never,
         },
       },
+    });
+    revertMutation.mockReset();
+    revertMutation.mockResolvedValue({});
+    useRevertThread.mockReturnValue({
+      mutateAsync: revertMutation,
+      isPending: false,
+      error: null,
     });
     useAppServerEvents.mockReturnValue({
       connected: true,
@@ -108,5 +137,23 @@ describe("ConversationWorkspace", () => {
     render(<ConversationWorkspace threadId="thread-1" />);
 
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+  });
+
+  it("reverts an edited user message and restores its text to the composer", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
+
+    await waitFor(() =>
+      expect(revertMutation).toHaveBeenCalledWith({
+        threadId: "thread-1",
+        beforeTurnId: "turn-1",
+      }),
+    );
+    expect(screen.getByTestId("composer").getAttribute("data-draft")).toBe(
+      "Original prompt",
+    );
   });
 });
