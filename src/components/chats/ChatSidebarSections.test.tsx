@@ -62,18 +62,28 @@ describe("ChatSidebarSections", () => {
     expect(links[2].getAttribute("href")).toBe("/projects/project-1");
     expect(links[1].className).toContain("bg-base-200");
 
-    const recentChats = screen.getByRole("button", { name: "Recent chats" });
-    const projects = screen.getByRole("button", { name: "Projects" });
-    expect(recentChats.getAttribute("aria-expanded")).toBe("true");
-    expect(projects.getAttribute("aria-expanded")).toBe("true");
+    const recentChats = screen
+      .getByText("Recent chats")
+      .closest("summary") as HTMLElement;
+    const projects = screen
+      .getByText("Projects")
+      .closest("summary") as HTMLElement;
+    expect(recentChats.querySelector("svg")).toBeTruthy();
+    expect(recentChats.querySelector("svg")?.getAttribute("class")).toContain(
+      "group-open:rotate-90",
+    );
+    expect(projects.querySelector("svg")).toBeTruthy();
+    expect(projects.querySelector("svg")?.getAttribute("class")).toContain(
+      "group-open:rotate-90",
+    );
+    expect(recentChats.closest("details")?.open).toBe(true);
+    expect(projects.closest("details")?.open).toBe(true);
 
     fireEvent.click(recentChats);
-    expect(recentChats.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Build the sidebar")).toBeNull();
+    expect(recentChats.closest("details")?.open).toBe(false);
 
     fireEvent.click(projects);
-    expect(projects.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Project Alpha")).toBeNull();
+    expect(projects.closest("details")?.open).toBe(false);
 
     links[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onClose).toHaveBeenCalled();
