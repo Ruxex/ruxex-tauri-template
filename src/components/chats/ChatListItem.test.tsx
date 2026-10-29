@@ -26,14 +26,14 @@ describe("ChatListItem", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /Build the sidebar/ }).getAttribute(
-        "href",
-      ),
+      screen
+        .getByRole("link", { name: /Build the sidebar/ })
+        .getAttribute("href"),
     ).toBe("/chat/thread-1");
     expect(screen.getByText("Running")).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();
     expect(screen.getByText("feature/sidebar")).toBeTruthy();
-    expect(screen.getByText(/Updated/)).toBeTruthy();
+    expect(screen.queryByText(/Updated/)).toBeNull();
     expect(screen.queryByText("gpt-5")).toBeNull();
   });
 

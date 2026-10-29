@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
@@ -15,7 +15,7 @@ vi.mock("../../app-server/hooks", () => ({
 }));
 
 describe("ChatSidebarSections", () => {
-  it("orders chat navigation and keeps Settings at the bottom", async () => {
+  it("orders chat navigation without a Settings link", async () => {
     useProjectList.mockReturnValue({
       data: { data: [{ id: "project-1", name: "Project Alpha" }] },
       isError: false,
@@ -56,12 +56,24 @@ describe("ChatSidebarSections", () => {
     expect(links[0].textContent?.trim()).toBe("New chat");
     expect(links[1].textContent).toContain("Build the sidebar");
     expect(links[2].textContent?.trim()).toContain("Project Alpha");
-    expect(links[3].textContent?.trim()).toBe("Settings");
+    expect(links).toHaveLength(3);
     expect(links[0].getAttribute("href")).toBe("/");
     expect(links[1].getAttribute("href")).toBe("/chat/thread-1");
     expect(links[2].getAttribute("href")).toBe("/projects/project-1");
-    expect(links[3].getAttribute("href")).toBe("/settings");
     expect(links[1].className).toContain("bg-base-200");
+
+    const recentChats = screen.getByRole("button", { name: "Recent chats" });
+    const projects = screen.getByRole("button", { name: "Projects" });
+    expect(recentChats.getAttribute("aria-expanded")).toBe("true");
+    expect(projects.getAttribute("aria-expanded")).toBe("true");
+
+    fireEvent.click(recentChats);
+    expect(recentChats.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Build the sidebar")).toBeNull();
+
+    fireEvent.click(projects);
+    expect(projects.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Project Alpha")).toBeNull();
 
     links[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onClose).toHaveBeenCalled();

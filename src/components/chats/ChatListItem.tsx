@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 
 import {
+  type ChatStatus,
   chatStatusClassName,
   chatStatusLabel,
-  type ChatStatus,
 } from "./chat-status";
 
 type ChatListThread = {
@@ -48,22 +48,21 @@ export function ChatListItem({
           {thread.preview}
         </span>
       )}
-      <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
-        {status && (
-          <span
-            aria-label={`Chat status: ${statusLabel}`}
-            className={`badge badge-sm ${chatStatusClassName(status)}`}
-            role="status"
-          >
-            {statusLabel}
-          </span>
-        )}
-        {projectName && <span className="truncate">{projectName}</span>}
-        {worktreeLabel && <span className="truncate">{worktreeLabel}</span>}
-        <span className="truncate">
-          Updated {new Date(thread.updatedAt * 1000).toLocaleString()}
+      {(status || projectName || worktreeLabel) && (
+        <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
+          {status && (
+            <span
+              aria-label={`Chat status: ${statusLabel}`}
+              className={`badge badge-sm ${chatStatusClassName(status)}`}
+              role="status"
+            >
+              {statusLabel}
+            </span>
+          )}
+          {projectName && <span className="truncate">{projectName}</span>}
+          {worktreeLabel && <span className="truncate">{worktreeLabel}</span>}
         </span>
-      </span>
+      )}
     </Link>
   );
 }

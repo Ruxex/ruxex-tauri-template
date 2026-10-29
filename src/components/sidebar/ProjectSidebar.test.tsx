@@ -99,11 +99,7 @@ describe("ProjectSidebar", () => {
         .getByRole("link", { name: /Project Alpha/ })
         .getAttribute("href"),
     ).toBe("/projects/project-1");
-    expect(
-      within(panel)
-        .getByRole("link", { name: "Settings" })
-        .getAttribute("href"),
-    ).toBe("/settings");
+    expect(within(panel).queryByRole("link", { name: "Settings" })).toBeNull();
     expect(
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
     ).toBeTruthy();
@@ -163,8 +159,7 @@ describe("ProjectSidebar", () => {
         name: "Chat sidebar",
       });
       expect(
-        screen
-          .getByRole("complementary", { name: "Workspace sidebar" })
+        screen.getByRole("complementary", { name: "Workspace sidebar" })
           .className,
       ).not.toContain("workbench-sidebar-collapsed");
       expect(within(panel).getByText("Recent chats")).toBeTruthy();
@@ -193,10 +188,11 @@ describe("ProjectSidebar", () => {
     );
 
     const panel = screen.getByRole("complementary", {
-      name: "Plugins sidebar",
+      name: "Capabilities sidebar",
     });
     expect(within(panel).getByRole("button", { name: "Plugins" })).toBeTruthy();
     expect(within(panel).getByRole("button", { name: "Skills" })).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "MCP" })).toBeTruthy();
 
     const installed = within(panel).getByText("Installed").closest("details");
     expect(installed?.open).toBe(false);

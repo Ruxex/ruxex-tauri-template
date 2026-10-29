@@ -1,6 +1,7 @@
 import {
   ChevronRightIcon,
   PuzzlePieceIcon,
+  ServerIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
@@ -16,19 +17,22 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
       .flatMap((marketplace) => marketplace.plugins)
       .filter((plugin) => plugin.installed) ?? [];
 
-  function selectTab(tab: "plugins" | "skills") {
-    void navigate(
-      tab === "plugins" ? "/capabilities" : "/capabilities?tab=skills",
-    );
+  function selectTab(tab: "plugins" | "skills" | "mcp") {
+    const paths = {
+      plugins: "/capabilities",
+      skills: "/capabilities?tab=skills",
+      mcp: "/capabilities?tab=mcp",
+    } as const;
+    void navigate(paths[tab]);
   }
 
   return (
     <aside
-      aria-label="Plugins sidebar"
+      aria-label="Capabilities sidebar"
       className="h-full min-h-0 w-72 overflow-y-auto bg-base-100 p-4"
     >
-      <SidebarHeader label="Plugins" onClose={onClose} />
-      <nav aria-label="Plugin sections" className="menu w-full gap-1 p-0">
+      <SidebarHeader label="Capabilities" onClose={onClose} />
+      <nav aria-label="Capability sections" className="menu w-full gap-1 p-0">
         <li>
           <button type="button" onClick={() => selectTab("plugins")}>
             <PuzzlePieceIcon aria-hidden="true" className="size-4" />
@@ -39,6 +43,12 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
           <button type="button" onClick={() => selectTab("skills")}>
             <SparklesIcon aria-hidden="true" className="size-4" />
             Skills
+          </button>
+        </li>
+        <li>
+          <button type="button" onClick={() => selectTab("mcp")}>
+            <ServerIcon aria-hidden="true" className="size-4" />
+            MCP
           </button>
         </li>
       </nav>

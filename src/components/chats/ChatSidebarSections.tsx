@@ -1,11 +1,10 @@
 import {
-  Cog6ToothIcon,
   FolderIcon,
   MagnifyingGlassIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { Link } from "react-router-dom";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { useProjectList } from "../../app-server/hooks";
 import { ThreadList } from "../sidebar/ThreadList";
@@ -19,6 +18,8 @@ export function ChatSidebarSections({
   selectedThreadId?: string;
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [recentChatsOpen, setRecentChatsOpen] = useState(true);
+  const [projectsOpen, setProjectsOpen] = useState(true);
   const projects = useProjectList({
     limit: 100,
     sortKey: "position",
@@ -51,66 +52,67 @@ export function ChatSidebarSections({
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
         <section aria-labelledby="recent-chats-heading">
-          <h3
+          <button
+            aria-controls="recent-chats-list"
+            aria-expanded={recentChatsOpen}
             className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60"
             id="recent-chats-heading"
+            onClick={() => setRecentChatsOpen((open) => !open)}
+            type="button"
           >
             Recent chats
-          </h3>
-          <div className="pl-1">
-            <ThreadList
-              onSelect={onClose}
-              selectedThreadId={selectedThreadId}
-            />
+          </button>
+          <div className="pl-1" id="recent-chats-list">
+            {recentChatsOpen && (
+              <ThreadList
+                onSelect={onClose}
+                selectedThreadId={selectedThreadId}
+              />
+            )}
           </div>
         </section>
 
         <section aria-labelledby="projects-heading">
-          <h3
+          <button
+            aria-controls="projects-list"
+            aria-expanded={projectsOpen}
             className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60"
             id="projects-heading"
+            onClick={() => setProjectsOpen((open) => !open)}
+            type="button"
           >
             Projects
-          </h3>
-          <div className="menu w-full gap-1 p-0">
-            {projects.isLoading && (
-              <span className="loading loading-spinner loading-sm mx-3" />
-            )}
-            {projects.isError && (
-              <p className="px-3 text-xs text-error">
-                Unable to load projects.
-              </p>
-            )}
-            {projects.data?.data.map((project) => (
-              <li key={project.id}>
-                <Link
-                  className="truncate"
-                  to={`/projects/${project.id}`}
-                  onClick={onClose}
-                >
-                  <FolderIcon aria-hidden="true" className="size-4" />
-                  {project.name}
-                </Link>
-              </li>
-            ))}
-            {!projects.isLoading && !projects.data?.data.length && (
-              <p className="px-3 text-xs text-base-content/60">
-                No projects yet.
-              </p>
-            )}
-          </div>
+          </button>
+          {projectsOpen && (
+            <div className="menu w-full gap-1 p-0" id="projects-list">
+              {projects.isLoading && (
+                <span className="loading loading-spinner loading-sm mx-3" />
+              )}
+              {projects.isError && (
+                <p className="px-3 text-xs text-error">
+                  Unable to load projects.
+                </p>
+              )}
+              {projects.data?.data.map((project) => (
+                <li key={project.id}>
+                  <Link
+                    className="truncate"
+                    to={`/projects/${project.id}`}
+                    onClick={onClose}
+                  >
+                    <FolderIcon aria-hidden="true" className="size-4" />
+                    {project.name}
+                  </Link>
+                </li>
+              ))}
+              {!projects.isLoading && !projects.data?.data.length && (
+                <p className="px-3 text-xs text-base-content/60">
+                  No projects yet.
+                </p>
+              )}
+            </div>
+          )}
         </section>
-      </div>
-
-      <div className="mt-4 border-t border-base-300 pt-3">
-        <Link
-          className="btn btn-ghost w-full justify-start"
-          to="/settings"
-          onClick={onClose}
-        >
-          <Cog6ToothIcon aria-hidden="true" className="size-4" />
-          Settings
-        </Link>
       </div>
     </nav>
   );

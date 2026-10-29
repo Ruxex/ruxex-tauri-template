@@ -14,12 +14,15 @@ import {
 } from "../app-server/hooks";
 import { BrowserComputerUseCard } from "../components/capabilities/BrowserComputerUseCard";
 
-type CapabilityTab = "plugins" | "skills";
+type CapabilityTab = "plugins" | "skills" | "mcp";
 
 export function CapabilitiesPage() {
   const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
   const activeTab: CapabilityTab =
-    searchParams.get("tab") === "skills" ? "skills" : "plugins";
+    requestedTab === "skills" || requestedTab === "mcp"
+      ? requestedTab
+      : "plugins";
   const mcp = useMcpServerStatus({ detail: "full" });
   const skills = useSkillsList();
   const plugins = usePluginList();
@@ -35,19 +38,25 @@ export function CapabilitiesPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">
-            {activeTab === "plugins" ? "Plugins" : "Skills"}
+            {activeTab === "plugins"
+              ? "Plugins"
+              : activeTab === "skills"
+                ? "Skills"
+                : "MCP"}
           </h1>
         </div>
-        <button
-          className="btn btn-primary"
-          type="button"
-          disabled={reloadMcp.isPending}
-          onClick={() => void reloadMcp.mutateAsync({})}
-        >
-          {reloadMcp.isPending ? "Reloading…" : "Reload MCP"}
-        </button>
+        {activeTab === "mcp" && (
+          <button
+            className="btn btn-primary"
+            type="button"
+            disabled={reloadMcp.isPending}
+            onClick={() => void reloadMcp.mutateAsync({})}
+          >
+            {reloadMcp.isPending ? "Reloading…" : "Reload MCP"}
+          </button>
+        )}
       </div>
-      {reloadMcp.isError && (
+      {activeTab === "mcp" && reloadMcp.isError && (
         <p className="alert alert-error">
           {formatErrorMessage(reloadMcp.error)}
         </p>
@@ -56,45 +65,48 @@ export function CapabilitiesPage() {
         config={config.data?.config ?? null}
         requirements={configRequirements.data?.requirements ?? null}
       />
-      <section className="grid gap-4 lg:grid-cols-2">
-        <article className="card border border-base-300 bg-base-100 shadow-sm">
-          <div className="card-body">
-            <h2 className="card-title">MCP servers</h2>
-            {mcp.isLoading && <span className="loading loading-spinner" />}
-            {mcp.isError && (
-              <p className="text-error">
-                Unable to load MCP servers: {formatErrorMessage(mcp.error)}
-              </p>
-            )}
-            {!mcp.isLoading && !mcp.data?.data.length && (
-              <p className="text-sm text-base-content/60">
-                No MCP servers configured.
-              </p>
-            )}
-            <ul className="space-y-2">
-              {mcp.data?.data.map((server) => (
-                <li className="rounded-box bg-base-200 p-3" key={server.name}>
-                  <div className="flex justify-between gap-3">
-                    <span className="font-medium">{server.name}</span>
-                    <span className="badge badge-ghost">
-                      {server.runtimeStatus ?? "unavailable"}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-base-content/60">
-                    {Object.keys(server.tools).length} tools · auth{" "}
-                    {server.authStatus}
-                  </p>
-                  {server.toolsError && (
-                    <p className="mt-1 text-xs text-error">
-                      {server.toolsError}
+      {activeTab === "mcp" ? (
+        <section className="grid gap-4 lg:grid-cols-2">
+          <article className="card border border-base-300 bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title">MCP servers</h2>
+              {mcp.isLoading && <span className="loading loading-spinner" />}
+              {mcp.isError && (
+                <p className="text-error">
+                  Unable to load MCP servers: {formatErrorMessage(mcp.error)}
+                </p>
+              )}
+              {!mcp.isLoading && !mcp.data?.data.length && (
+                <p className="text-sm text-base-content/60">
+                  No MCP servers configured.
+                </p>
+              )}
+              <ul className="space-y-2">
+                {mcp.data?.data.map((server) => (
+                  <li className="rounded-box bg-base-200 p-3" key={server.name}>
+                    <div className="flex justify-between gap-3">
+                      <span className="font-medium">{server.name}</span>
+                      <span className="badge badge-ghost">
+                        {server.runtimeStatus ?? "unavailable"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-base-content/60">
+                      {Object.keys(server.tools).length} tools · auth{" "}
+                      {server.authStatus}
                     </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-        {activeTab === "skills" ? (
+                    {server.toolsError && (
+                      <p className="mt-1 text-xs text-error">
+                        {server.toolsError}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        </section>
+      ) : activeTab === "skills" ? (
+        <section className="grid gap-4 lg:grid-cols-2">
           <article
             className="card border border-base-300 bg-base-100 shadow-sm"
             id="skills"
@@ -131,7 +143,9 @@ export function CapabilitiesPage() {
               </ul>
             </div>
           </article>
-        ) : (
+        </section>
+      ) : (
+        <section className="grid gap-4 lg:grid-cols-2">
           <article
             className="card border border-base-300 bg-base-100 shadow-sm"
             id="plugins"
@@ -274,8 +288,8 @@ export function CapabilitiesPage() {
               ) : null}
             </div>
           </article>
-        )}
-      </section>
+        </section>
+      )}
       <section className="grid gap-4 lg:grid-cols-2">
         <article className="card border border-base-300 bg-base-100 shadow-sm">
           <div className="card-body">

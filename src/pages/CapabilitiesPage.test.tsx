@@ -142,7 +142,7 @@ describe("CapabilitiesPage", () => {
       screen.getByRole("heading", { name: "Plugins", level: 1 }),
     ).toBeTruthy();
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.getByText("docs")).toBeTruthy();
+    expect(screen.queryByText("docs")).toBeNull();
     expect(screen.getByText(/official ·/)).toBeTruthy();
     expect(screen.getByText("Official Plugins")).toBeTruthy();
     expect(screen.getByText("Checks project files")).toBeTruthy();
@@ -210,13 +210,28 @@ describe("CapabilitiesPage", () => {
     ).toBeTruthy();
     expect(screen.getByText("review")).toBeTruthy();
     expect(screen.queryByText("official")).toBeNull();
+    expect(screen.queryByText("docs")).toBeNull();
+  });
+
+  it("shows MCP servers only when the MCP sidebar route is selected", async () => {
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
+    expect(screen.getByText("docs")).toBeTruthy();
+    expect(screen.queryByText("Official Plugins")).toBeNull();
   });
 
   it("reloads MCP configuration through the mutation hook", async () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
