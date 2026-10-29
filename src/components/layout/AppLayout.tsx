@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { useUiPreferences } from "../../app/ui-preferences";
+import { useThread } from "../../app-server/hooks";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
@@ -11,8 +12,12 @@ export function AppLayout() {
   const { threadId } = useParams<{
     threadId?: string;
   }>();
+  const thread = useThread(threadId ?? "");
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
+  const isChatRoute = location.pathname.startsWith("/chat/");
+  const chatTitle =
+    thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
 
   useEffect(() => {
@@ -43,7 +48,7 @@ export function AppLayout() {
 
   return (
     <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
-      <BrowserNavigationBar />
+      <BrowserNavigationBar chatTitle={chatTitle} />
       <div className="flex min-h-0 flex-1">
         {!preferences.sidebarCollapsed && activePanel !== "projects" && (
           <button
@@ -63,7 +68,11 @@ export function AppLayout() {
           }
         />
         <div className="flex min-w-0 min-h-0 flex-1 flex-col">
-          <section className="workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 overflow-y-auto p-4 sm:p-6">
+          <section
+            className={`workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 ${
+              isChatRoute ? "overflow-hidden p-0" : "overflow-y-auto p-4 sm:p-6"
+            }`}
+          >
             <Outlet />
           </section>
         </div>

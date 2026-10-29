@@ -59,4 +59,15 @@ describe("BrowserNavigationBar", () => {
     expect(screen.getByRole("link", { name: "Settings" })).toBeTruthy();
     expect(screen.getByText("Appearance")).toBeTruthy();
   });
+
+  it("renders the chat title in the shared breadcrumb", () => {
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <BrowserNavigationBar chatTitle="Command demo" />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Command demo")).toBeTruthy();
+    expect(screen.queryByText("Conversation")).toBeNull();
+  });
 });

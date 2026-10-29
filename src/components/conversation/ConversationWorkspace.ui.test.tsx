@@ -86,16 +86,12 @@ describe("ConversationWorkspace", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Authentication required",
     );
-    expect(screen.getByRole("heading", { name: "Test chat" })).toBeTruthy();
-    expect(
-      screen.getByRole("status", { name: "Task status: Failed" }),
-    ).toBeTruthy();
-
+    expect(screen.queryByRole("heading", { name: "Test chat" })).toBeNull();
     const composer = screen.getByTestId("composer");
     const root = composer.closest("div.flex");
     expect(root).not.toBeNull();
     expect(root?.className.split(/\s+/)).toEqual(
-      expect.arrayContaining(["h-[calc(100dvh-9rem)]", "min-h-0"]),
+      expect.arrayContaining(["h-full", "min-h-0"]),
     );
     expect(composer.parentElement?.className.split(/\s+/)).toContain(
       "shrink-0",
@@ -104,8 +100,6 @@ describe("ConversationWorkspace", () => {
       screen
         .getByRole("region", { name: "Task activity" })
         .className.split(/\s+/),
-    ).toEqual(
-      expect.arrayContaining(["flex-1", "min-h-0", "overflow-y-auto"]),
-    );
+    ).toEqual(expect.arrayContaining(["flex-1", "min-h-0", "overflow-y-auto"]));
   });
 });

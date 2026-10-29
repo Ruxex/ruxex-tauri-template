@@ -1,37 +1,19 @@
 import {
   useAppServerEvents,
-  useInterruptTurn,
-  useProject,
-  useResumeThread,
-  useStartReview,
   useThreadConversation,
 } from "../../app-server/hooks";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
 } from "../../app-server/api";
-import { formatErrorMessage } from "../../app/error-message";
-import { useState } from "react";
 import { Composer } from "./Composer";
 import { mergeConversationItems } from "./conversation-model";
 import { TaskActivityTimeline } from "../tasks/TaskActivityTimeline";
-import {
-  TaskContextPanel,
-  type TaskContextTab,
-} from "../tasks/TaskContextPanel";
-import { TaskHeader } from "../tasks/TaskHeader";
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
   const liveThread = events.threads[threadId];
-  const thread = conversation.data?.thread;
-  const project = useProject(thread?.projectId ?? "");
-  const interruptTurn = useInterruptTurn();
-  const resumeThread = useResumeThread();
-  const startReview = useStartReview();
-  const [activeContextTab, setActiveContextTab] =
-    useState<TaskContextTab | null>(null);
 
   if (conversation.isLoading) {
     return <span className="loading loading-spinner loading-lg" />;
@@ -54,41 +36,6 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const turnError =
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
-  const actionError =
-    interruptTurn.error ?? resumeThread.error ?? startReview.error;
-
-  function handleStop() {
-    const turnId = liveThread?.activeTurnId;
-    if (turnId) {
-      void interruptTurn
-        .mutateAsync({ threadId, turnId })
-        .catch(() => undefined);
-    }
-  }
-
-  function handleResume() {
-    void resumeThread.mutateAsync({ threadId }).catch(() => undefined);
-  }
-
-  function handleStartReview() {
-    setActiveContextTab("review");
-    void startReview
-      .mutateAsync({
-        threadId,
-        target: { type: "uncommittedChanges" },
-        delivery: "inline",
-      })
-      .catch(() => undefined);
-  }
-
-  const changedFiles = items
-    .filter((item) => item.type === "fileChange")
-    .map((item) => ({
-      id: item.id,
-      metadata: item.metadata,
-      text: item.text,
-    }));
-
   async function handleResolve(requestId: string | number, result: unknown) {
     await resolveServerRequest(requestId, result);
   }
@@ -98,40 +45,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col gap-4">
-      <TaskHeader
-        latestTurn={latestTurn}
-        liveThread={liveThread}
-        onOpenContext={setActiveContextTab}
-        onResume={handleResume}
-        onStartReview={handleStartReview}
-        onStop={handleStop}
-        pendingRequestCount={pendingRequests.length}
-        projectName={project.data?.project.name}
-        projectRoots={project.data?.project.roots.map((root) => root.path)}
-        reconnecting={Boolean(
-          events.resynchronizing || liveThread?.status === "resynchronizing",
-        )}
-        thread={conversation.data.thread}
-      />
-      {activeContextTab && (
-        <TaskContextPanel
-          activeTab={activeContextTab}
-          branch={conversation.data.thread.gitInfo?.branch}
-          changedFiles={changedFiles}
-          onClose={() => setActiveContextTab(null)}
-          onOpenContext={setActiveContextTab}
-          onStartReview={handleStartReview}
-          review={startReview}
-          threadId={threadId}
-          workspacePath={conversation.data.thread.cwd}
-        />
-      )}
-      {actionError && (
-        <p className="alert alert-error" role="alert">
-          {formatErrorMessage(actionError)}
-        </p>
-      )}
+    <div className="flex h-full min-h-0 flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
       {turnError && (
         <p className="alert alert-error" role="alert">
           <span>Turn failed: {turnError.message}</span>
@@ -149,7 +63,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
       />
-      <div className="shrink-0">
+      <div className="shrink-0 bg-base-200 pt-3">
         <Composer
           threadId={threadId}
           activeTurnId={liveThread?.activeTurnId ?? null}

@@ -6,16 +6,16 @@ type Breadcrumb = {
   to?: string;
 };
 
-function breadcrumbsForPath(pathname: string): Breadcrumb[] {
+function breadcrumbsForPath(
+  pathname: string,
+  chatTitle = "Conversation",
+): Breadcrumb[] {
   if (pathname === "/") {
     return [{ label: "Home" }];
   }
 
   if (pathname === "/settings") {
-    return [
-      { label: "Settings", to: "/settings" },
-      { label: "General" },
-    ];
+    return [{ label: "Settings", to: "/settings" }, { label: "General" }];
   }
 
   if (pathname.startsWith("/settings/")) {
@@ -37,7 +37,7 @@ function breadcrumbsForPath(pathname: string): Breadcrumb[] {
   }
 
   if (pathname.startsWith("/chat/")) {
-    return [{ label: "Conversation" }];
+    return [{ label: chatTitle }];
   }
 
   if (pathname.startsWith("/projects/")) {
@@ -63,13 +63,13 @@ function breadcrumbsForPath(pathname: string): Breadcrumb[] {
   return [{ label: pageLabels[pathname] ?? "Page" }];
 }
 
-export function BrowserNavigationBar() {
+export function BrowserNavigationBar({ chatTitle }: { chatTitle?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
   const historyIndex =
     typeof window === "undefined" ? undefined : window.history.state?.idx;
   const canGoBack = historyIndex === undefined || historyIndex > 0;
-  const breadcrumbs = breadcrumbsForPath(location.pathname);
+  const breadcrumbs = breadcrumbsForPath(location.pathname, chatTitle);
 
   return (
     <nav

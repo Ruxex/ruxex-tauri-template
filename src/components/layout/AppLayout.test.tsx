@@ -2,12 +2,14 @@
 
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useUiPreferences = vi.hoisted(() => vi.fn());
+const useThread = vi.hoisted(() => vi.fn());
 const projectSidebarProps = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app/ui-preferences", () => ({ useUiPreferences }));
+vi.mock("../../app-server/hooks", () => ({ useThread }));
 vi.mock("../sidebar/ProjectSidebar", () => ({
   ProjectSidebar: (props: Record<string, unknown>) => {
     projectSidebarProps(props);
@@ -19,6 +21,10 @@ import { AppLayout } from "./AppLayout";
 
 describe("AppLayout", () => {
   afterEach(cleanup);
+
+  beforeEach(() => {
+    useThread.mockReturnValue({ data: undefined });
+  });
 
   it("does not render the removed context drawer", () => {
     useUiPreferences.mockReturnValue({
@@ -99,6 +105,45 @@ describe("AppLayout", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole("button", { name: "Close sidebar overlay" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Close sidebar overlay" }),
+    ).toBeNull();
+  });
+
+  it("uses the selected thread title in the shared navigation bar", () => {
+    useThread.mockReturnValue({
+      data: {
+        thread: { name: "Command demo", preview: "fallback" },
+      },
+    });
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Command demo")).toBeTruthy();
+  });
+
+  it("gives the chat route a full-height layout for a bottom composer", () => {
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    const section = screen.getByRole("main").querySelector("section");
+    expect(section?.className).toContain("overflow-hidden");
+    expect(section?.className).toContain("p-0");
   });
 });
