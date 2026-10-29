@@ -41,18 +41,17 @@
 - Produces `ensureAppServerRuntime(): Promise<AppServerStatus>` for all frontend connection entry points.
 - Keeps `ensureAppServer(): Promise<AppServerStatus>` as a transport-only wrapper around `ensure_app_server`.
 
-- [ ] Write a failing test that asserts event-store startup precedes native `ensure_app_server` and that the mock runtime does not start the event store.
-- [ ] Run the focused runtime test and confirm the pre-refactor ordering failure.
-- [ ] Implement the runtime bootstrap and route status queries, login, and reconnect through it; leave provider cleanup as the single lifecycle stop point.
-- [ ] Run the focused runtime, API, and provider tests and confirm they pass.
-- [ ] Commit the bootstrap refactor.
+- [x] Write a failing test that asserts event-store startup precedes native `ensure_app_server` and that the mock runtime does not start the event store.
+- [x] Run the focused runtime test and confirm the pre-refactor ordering failure.
+- [x] Implement the runtime bootstrap and route status queries, login, and reconnect through it; leave provider cleanup as the single lifecycle stop point.
+- [x] Run the focused runtime, API, and provider tests and confirm they pass.
+- [x] Commit the bootstrap refactor.
 
 ### Task 2: Query invalidation boundary
 
 **Files:**
 - Create: `src/app-server/query-invalidation.ts`
 - Test: `src/app-server/query-invalidation.test.ts`
-- Modify: `src/app-server/query-keys.ts`
 - Modify: `src/app-server/hooks/useThreadMutations.ts`
 - Modify: `src/app-server/hooks/useTurns.ts`
 - Modify: `src/app-server/hooks/useProjects.ts`
@@ -62,13 +61,13 @@
 
 **Interfaces:**
 - Produces `invalidateThreadQueries(queryClient, threadId)`, `invalidateThreadList(queryClient)`, and `invalidateProjectQueries(queryClient, projectId)`.
-- Adds a named conversation-root query key so conversation refresh does not rely on an undocumented parent-key side effect.
+- Uses the existing thread-root query key as the explicit invalidation boundary for conversation-scoped data.
 
-- [ ] Write failing helper tests for thread detail plus conversation, thread list, project detail plus project lists, and no-op failure paths.
-- [ ] Run the focused helper tests and confirm the missing helper/key failure.
-- [ ] Implement the helpers and replace duplicated mutation invalidation code.
-- [ ] Run all hook tests and confirm success/failure invalidation behavior remains unchanged.
-- [ ] Commit the query invalidation refactor.
+- [x] Write failing helper tests for thread detail plus conversation, thread list, project detail plus project lists, and failed mutations.
+- [x] Run the focused helper tests and confirm the missing helper/key failure.
+- [x] Implement the helpers and replace duplicated mutation invalidation code.
+- [x] Run all hook tests and confirm success/failure invalidation behavior remains unchanged.
+- [x] Commit the query invalidation refactor.
 
 ### Task 3: Chat terminology normalization
 
@@ -87,14 +86,14 @@
 - Replace frontend names and visible labels such as `New task`, `Search tasks`, `Recent tasks`, `Task status`, and `Task activity` with chat terminology.
 - Leave scheduled-task protocol types and scheduler pages unchanged.
 
-- [ ] Add or update failing UI assertions for representative chat navigation, search, status, and activity labels.
-- [ ] Run the focused terminology tests and confirm the old labels fail the new expectations.
-- [ ] Rename frontend modules and update imports, labels, ARIA names, and test descriptions.
-- [ ] Run the full frontend test suite and static checks.
-- [ ] Commit the terminology normalization.
+- [x] Add or update failing UI assertions for representative chat navigation, search, status, and activity labels.
+- [x] Run the focused terminology tests and confirm the old labels fail the new expectations.
+- [x] Rename frontend modules and update imports, labels, ARIA names, and test descriptions.
+- [x] Run the full frontend test suite and static checks.
+- [x] Commit the terminology normalization.
 
 ### Final verification
 
-- [ ] Run full Vitest, TypeScript, Biome, ESLint, Vite build, and `git diff --check`.
-- [ ] Review the final diff for accidental protocol or route renames.
-- [ ] Push only after the user explicitly requests or confirms the push for this refactor batch.
+- [x] Run full Vitest, TypeScript, Biome, ESLint, Vite build, and `git diff --check`.
+- [x] Review the final diff for accidental protocol or route renames.
+- [x] Push only after the user explicitly requests or confirms the push for this refactor batch.
