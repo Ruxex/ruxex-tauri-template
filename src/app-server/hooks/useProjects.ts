@@ -61,3 +61,38 @@ export function useCreateProject() {
     },
   });
 }
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ProjectUpdateParams) => {
+      const response = await requestAppServerMethod("project/update", params);
+      return response.response;
+    },
+    onSuccess: (_data, params) => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.project(params.projectId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.projects,
+      });
+    },
+  });
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ProjectDeleteParams) => {
+      const response = await requestAppServerMethod("project/delete", params);
+      return response.response;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.projects,
+      });
+    },
+  });
+}

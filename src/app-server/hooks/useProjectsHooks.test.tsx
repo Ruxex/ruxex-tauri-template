@@ -111,6 +111,63 @@ describe("project hooks", () => {
     });
   });
 
+  it("updates a project and invalidates its detail and collection queries", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { useUpdateProject } = await import("./useProjects");
+    const params: v2.ProjectUpdateParams = {
+      projectId: "project-1",
+      name: "Updated project",
+      roots: [{ path: "/workspace/updated" }],
+    };
+    const { result } = renderHook(() => useUpdateProject(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () => result.current.mutateAsync(params));
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith(
+      "project/update",
+      params,
+    );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "project", "project-1"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "projects"],
+    });
+  });
+
+  it("deletes a project and invalidates the project collection", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { useDeleteProject } = await import("./useProjects");
+    const params: v2.ProjectDeleteParams = { projectId: "project-1" };
+    const { result } = renderHook(() => useDeleteProject(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () => result.current.mutateAsync(params));
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith(
+      "project/delete",
+      params,
+    );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "projects"],
+    });
+  });
+
   it("surfaces project read failures", async () => {
     requestAppServerMethod.mockRejectedValueOnce(
       new Error("project unavailable"),
