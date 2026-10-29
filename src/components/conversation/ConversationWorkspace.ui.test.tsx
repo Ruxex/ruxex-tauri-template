@@ -69,7 +69,13 @@ describe("ConversationWorkspace", () => {
     const root = composer.closest("div.flex");
     expect(root).not.toBeNull();
     expect(root?.className.split(/\s+/)).toEqual(
-      expect.arrayContaining(["h-full", "min-h-0"]),
+      expect.arrayContaining([
+        "h-full",
+        "min-h-0",
+        "w-full",
+        "max-w-[720px]",
+        "mx-auto",
+      ]),
     );
     expect(composer.parentElement?.className.split(/\s+/)).toContain(
       "shrink-0",
