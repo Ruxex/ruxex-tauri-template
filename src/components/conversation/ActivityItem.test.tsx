@@ -73,6 +73,34 @@ describe("ActivityItem", () => {
     expect(screen.getByText("done")).toBeTruthy();
   });
 
+  it("stacks command and result without visible labels", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "command-2",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Command",
+          text: "done",
+          metadata: { command: "pnpm test", exitCode: "0" },
+        }}
+      />,
+    );
+
+    const commandContent = screen.getByTestId("command-execution-content");
+    const command = screen.getByTestId("command-execution-command");
+    const result = screen.getByTestId("command-execution-result");
+
+    expect(commandContent.contains(command)).toBe(true);
+    expect(commandContent.contains(result)).toBe(true);
+    expect(command.textContent).toBe("pnpm test");
+    expect(result.textContent).toContain("done");
+    expect(result.className).toContain("border-t");
+    expect(screen.queryByText("command", { exact: true })).toBeNull();
+    expect(screen.queryByText("result", { exact: true })).toBeNull();
+  });
+
   it("renders diff activity using the shared Markdown renderer", () => {
     render(
       <ActivityItem

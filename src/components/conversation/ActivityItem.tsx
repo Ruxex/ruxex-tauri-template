@@ -46,6 +46,11 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
   const isInProgress =
     item.metadata?.status === "inProgress" ||
     item.metadata?.status === "running";
+  const isCommandExecution = item.type === "commandExecution";
+  const command = isCommandExecution ? item.metadata?.command : undefined;
+  const metadataEntries = Object.entries(item.metadata ?? {}).filter(
+    ([key]) => key !== "command" || !command,
+  );
   const Icon = presentation.icon;
 
   return (
@@ -87,9 +92,25 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
             Open in browser
           </button>
         )}
-        {item.metadata && (
+        {isCommandExecution && command && (
+          <div
+            className="mb-3 overflow-hidden rounded-box border border-base-300 bg-base-200"
+            data-testid="command-execution-content"
+          >
+            <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-neutral p-3 font-mono text-sm text-neutral-content">
+              <code data-testid="command-execution-command">{command}</code>
+            </pre>
+            <div
+              className="border-t border-base-300 bg-base-100 p-3"
+              data-testid="command-execution-result"
+            >
+              <MarkdownContent text={item.text || "…"} />
+            </div>
+          </div>
+        )}
+        {metadataEntries.length > 0 && (
           <dl className="mb-3 grid gap-x-4 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
-            {Object.entries(item.metadata).map(([key, value]) => (
+            {metadataEntries.map(([key, value]) => (
               <div className="flex min-w-0 gap-2" key={key}>
                 <dt className="shrink-0 font-medium">{key}</dt>
                 <dd className="truncate" title={value}>
@@ -99,7 +120,9 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
             ))}
           </dl>
         )}
-        <MarkdownContent text={item.text || "…"} />
+        {!(isCommandExecution && command) && (
+          <MarkdownContent text={item.text || "…"} />
+        )}
       </div>
     </details>
   );
