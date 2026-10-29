@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useUiPreferences = vi.hoisted(() => vi.fn());
+const refetch = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
@@ -25,6 +26,7 @@ describe("ConversationWorkspace", () => {
     useThreadConversation.mockReturnValue({
       isLoading: false,
       isError: false,
+      refetch,
       data: {
         thread: {
           id: "thread-1",
@@ -59,6 +61,8 @@ describe("ConversationWorkspace", () => {
         },
       },
     });
+    refetch.mockReset();
+    refetch.mockResolvedValue(undefined);
   });
 
   it("shows an error when the completed turn fails asynchronously", async () => {
@@ -95,5 +99,13 @@ describe("ConversationWorkspace", () => {
         .getByRole("region", { name: "Task activity" })
         .getAttribute("data-chat-font-size"),
     ).toBe("18");
+  });
+
+  it("refreshes the authoritative conversation when a turn completes", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
   });
 });

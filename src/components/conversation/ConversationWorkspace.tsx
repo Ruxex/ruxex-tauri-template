@@ -2,6 +2,7 @@ import {
   useAppServerEvents,
   useThreadConversation,
 } from "../../app-server/hooks";
+import { useEffect } from "react";
 import { useUiPreferences } from "../../app/ui-preferences";
 import {
   rejectServerRequestWithMessage,
@@ -16,6 +17,14 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const events = useAppServerEvents();
   const { preferences } = useUiPreferences();
   const liveThread = events.threads[threadId];
+  const completedTurnId = liveThread?.completedTurn?.id;
+
+  useEffect(() => {
+    if (!completedTurnId) {
+      return;
+    }
+    void conversation.refetch();
+  }, [completedTurnId, conversation.refetch]);
 
   if (conversation.isLoading) {
     return <span className="loading loading-spinner loading-lg" />;
