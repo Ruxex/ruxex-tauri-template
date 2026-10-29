@@ -130,7 +130,7 @@ describe("AppLayout", () => {
     expect(screen.getByText("Command demo")).toBeTruthy();
   });
 
-  it("lets the chat route scroll at the window-level shell", () => {
+  it("keeps the chat chrome fixed while the content section scrolls", () => {
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
       update: vi.fn(),
@@ -144,11 +144,16 @@ describe("AppLayout", () => {
 
     const main = screen.getByRole("main");
     const section = main.querySelector("section");
-    expect(main.className).toContain("overflow-y-auto");
-    expect(main.className).not.toContain("overflow-hidden");
-    expect(section?.className).not.toContain("overflow-y-auto");
+    const contentRow = main.children[1];
+
+    expect(main.className).toContain("h-dvh");
+    expect(main.className).toContain("overflow-hidden");
+    expect(main.className).not.toContain("overflow-y-auto");
+    expect(contentRow?.className).toContain("min-h-0");
+    expect(section?.className).toContain("min-h-0");
+    expect(section?.className).toContain("overflow-y-auto");
     expect(section?.className).toContain("p-0");
-    expect(main.getAttribute("data-conversation-scroll")).toBe("true");
-    expect(section?.getAttribute("data-conversation-scroll")).toBeNull();
+    expect(main.getAttribute("data-conversation-scroll")).toBeNull();
+    expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
   });
 });
