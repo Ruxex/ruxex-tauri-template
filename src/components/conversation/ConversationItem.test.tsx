@@ -26,6 +26,11 @@ describe("ConversationItem", () => {
     expect(screen.getByText("Inspect").tagName).toBe("STRONG");
     expect(screen.getByText("src").tagName).toBe("CODE");
     expect(screen.getByRole("article").className).toContain("chat-end");
+
+    const messageSurface = screen.getByText("Inspect").closest("p")
+      ?.parentElement?.parentElement;
+    expect(messageSurface?.className).toContain("rounded-box");
+    expect(messageSurface?.className).not.toContain("chat-bubble");
   });
 
   it("renders an empty streaming item with an explicit placeholder", () => {

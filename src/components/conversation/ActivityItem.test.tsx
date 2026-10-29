@@ -62,7 +62,12 @@ describe("ActivityItem", () => {
           category: "activity",
           title: "Command",
           text: "done",
-          metadata: { command: "pnpm test", exitCode: "0" },
+          metadata: {
+            command: "pnpm test",
+            cwd: "/workspace",
+            status: "completed",
+            exitCode: "0",
+          },
         }}
       />,
     );
@@ -83,7 +88,12 @@ describe("ActivityItem", () => {
           category: "activity",
           title: "Command",
           text: "done",
-          metadata: { command: "pnpm test", exitCode: "0" },
+          metadata: {
+            command: "pnpm test",
+            cwd: "/workspace",
+            status: "completed",
+            exitCode: "0",
+          },
         }}
       />,
     );
@@ -97,6 +107,14 @@ describe("ActivityItem", () => {
     expect(command.textContent).toBe("pnpm test");
     expect(result.textContent).toContain("done");
     expect(result.className).toContain("border-t");
+    expect(command.className).not.toContain("bg-neutral");
+    expect(screen.queryByText("/workspace")).toBeNull();
+    expect(screen.getByText("status")).toBeTruthy();
+    expect(screen.getByText("exit code")).toBeTruthy();
+    const diagnostics = screen.getByTestId("command-execution-diagnostics");
+    expect(diagnostics.contains(screen.getByText("status"))).toBe(true);
+    expect(diagnostics.contains(screen.getByText("exit code"))).toBe(true);
+    expect(diagnostics.className).toContain("flex");
     expect(screen.queryByText("command", { exact: true })).toBeNull();
     expect(screen.queryByText("result", { exact: true })).toBeNull();
   });

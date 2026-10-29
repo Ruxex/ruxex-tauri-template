@@ -14,6 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import type { ConversationViewItem } from "./conversation-model";
+import { CommandExecutionView } from "./CommandExecutionView";
 import { ImageView } from "./ImageView";
 import { MarkdownContent } from "./MarkdownContent";
 import { openBrowserWindow } from "../../platform/native";
@@ -49,7 +50,9 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
   const isCommandExecution = item.type === "commandExecution";
   const command = isCommandExecution ? item.metadata?.command : undefined;
   const metadataEntries = Object.entries(item.metadata ?? {}).filter(
-    ([key]) => key !== "command" || !command,
+    ([key]) =>
+      !isCommandExecution ||
+      !["command", "cwd", "status", "exitCode"].includes(key),
   );
   const Icon = presentation.icon;
 
@@ -93,20 +96,12 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
           </button>
         )}
         {isCommandExecution && command && (
-          <div
-            className="mb-3 overflow-hidden rounded-box border border-base-300 bg-base-200"
-            data-testid="command-execution-content"
-          >
-            <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-neutral p-3 font-mono text-sm text-neutral-content">
-              <code data-testid="command-execution-command">{command}</code>
-            </pre>
-            <div
-              className="border-t border-base-300 bg-base-100 p-3"
-              data-testid="command-execution-result"
-            >
-              <MarkdownContent text={item.text || "…"} />
-            </div>
-          </div>
+          <CommandExecutionView
+            command={command}
+            exitCode={item.metadata?.exitCode}
+            result={item.text}
+            status={item.metadata?.status}
+          />
         )}
         {metadataEntries.length > 0 && (
           <dl className="mb-3 grid gap-x-4 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
