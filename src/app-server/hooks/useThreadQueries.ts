@@ -4,6 +4,7 @@ import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
+import { ensureThreadResumed } from "../thread-session";
 
 export type ThreadListOptions = {
   enabled?: boolean;
@@ -184,10 +185,7 @@ export function useThreadConversation(
   return useQuery<ThreadConversation>({
     queryKey: appServerQueryKeys.threadConversation(threadId, { turns, items }),
     queryFn: async () => {
-      await requestAppServerMethod("thread/resume", {
-        threadId,
-        excludeTurns: true,
-      });
+      await ensureThreadResumed(threadId);
       const [thread, turnsResponse, itemsResponse] = await Promise.all([
         requestAppServerMethod("thread/read", { threadId }),
         requestAppServerMethod("thread/turns/list", { ...turns, threadId }),

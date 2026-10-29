@@ -3,15 +3,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
 import { invalidateThreadQueries } from "../query-invalidation";
+import { ensureThreadResumed } from "../thread-session";
 
 export function useSendMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: v2.TurnStartParams) => {
-      await requestAppServerMethod("thread/resume", {
-        threadId: params.threadId,
-        excludeTurns: true,
-      });
+      await ensureThreadResumed(params.threadId);
       const response = await requestAppServerMethod("turn/start", params);
       return response.response;
     },

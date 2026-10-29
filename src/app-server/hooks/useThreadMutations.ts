@@ -6,6 +6,7 @@ import {
   invalidateThreadList,
   invalidateThreadQueries,
 } from "../query-invalidation";
+import { ensureThreadResumed } from "../thread-session";
 
 export function useCreateThread() {
   const queryClient = useQueryClient();
@@ -76,10 +77,7 @@ export function useRevertThread() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadRevertParams) => {
-      await requestAppServerMethod("thread/resume", {
-        threadId: params.threadId,
-        excludeTurns: true,
-      });
+      await ensureThreadResumed(params.threadId);
       const response = await requestAppServerMethod("thread/revert", params);
       return response.response;
     },
