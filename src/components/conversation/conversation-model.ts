@@ -1,8 +1,8 @@
-import type { v2 } from "../../protocol";
 import type {
   LiveConversationItem,
   ThreadExecutionState,
 } from "../../app-server/event-reducer";
+import type { v2 } from "../../protocol";
 
 export type ConversationViewItem = {
   id: string;
@@ -16,13 +16,18 @@ export type ConversationViewItem = {
   imageUrls?: string[];
   browserUrl?: string;
   editable?: boolean;
+  timestamp?: number | null;
 };
 
 export function mergeConversationItems(
   authoritative: v2.ThreadItemsListResponse["data"],
   live: LiveConversationItem[],
   liveStatus?: ThreadExecutionState["status"],
+  turns: v2.Turn[] = [],
 ): ConversationViewItem[] {
+  const turnTimestamps = new Map(
+    turns.map((turn) => [turn.id, turn.startedAt]),
+  );
   const liveById = new Map(
     live.map((item) => [conversationItemKey(item.turnId, item.id), item]),
   );
@@ -31,15 +36,21 @@ export function mergeConversationItems(
     const key = conversationItemKey(turnId, item.id);
     seen.add(key);
     const liveItem = liveById.get(key);
-    return liveItem
+    const viewItem = liveItem
       ? liveItemToViewItem(liveItem, liveStatus)
       : normalizeThreadItem(turnId, item);
+    const timestamp = turnTimestamps.get(turnId);
+    return timestamp === undefined ? viewItem : { ...viewItem, timestamp };
   });
 
   for (const item of live) {
     const key = conversationItemKey(item.turnId, item.id);
     if (!seen.has(key)) {
-      merged.push(liveItemToViewItem(item, liveStatus));
+      const viewItem = liveItemToViewItem(item, liveStatus);
+      const timestamp = turnTimestamps.get(item.turnId);
+      merged.push(
+        timestamp === undefined ? viewItem : { ...viewItem, timestamp },
+      );
     }
   }
   return merged;

@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ConversationItem } from "./ConversationItem";
@@ -18,9 +24,7 @@ describe("ConversationItem", () => {
       title: "You",
       text: "**Inspect** `src`",
     };
-    render(
-      <ConversationItem item={item} onEdit={onEdit} />,
-    );
+    render(<ConversationItem item={item} onEdit={onEdit} />);
 
     expect(screen.queryByText("You")).toBeNull();
     expect(screen.getByText("Inspect").tagName).toBe("STRONG");
@@ -31,8 +35,83 @@ describe("ConversationItem", () => {
       ?.parentElement?.parentElement;
     expect(messageSurface?.className).toContain("rounded-box");
     expect(messageSurface?.className).not.toContain("chat-bubble");
+    expect(messageSurface?.className).toContain("px-3");
+    expect(messageSurface?.className).toContain("py-2");
+    expect(screen.getByRole("group", { name: "Message actions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy message" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
-    expect(onEdit).toHaveBeenCalledWith(item);
+    expect(
+      (
+        screen.getByRole("textbox", {
+          name: "Edit message",
+        }) as HTMLTextAreaElement
+      ).value,
+    ).toBe(item.text);
+  });
+
+  it("copies a user message from the action row", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    const item = {
+      id: "user-1",
+      turnId: "turn-1",
+      type: "userMessage" as const,
+      category: "message" as const,
+      title: "You",
+      text: "Copy this",
+    };
+    render(<ConversationItem item={item} onEdit={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy message" }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("Copy this"));
+  });
+
+  it("cancels inline editing without invoking the edit callback", () => {
+    const onEdit = vi.fn();
+    const item = {
+      id: "user-1",
+      turnId: "turn-1",
+      type: "userMessage" as const,
+      category: "message" as const,
+      title: "You",
+      text: "Original",
+    };
+    render(<ConversationItem item={item} onEdit={onEdit} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Edit message" }), {
+      target: { value: "Changed" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("textbox", { name: "Edit message" })).toBeNull();
+    expect(screen.getByText("Original")).toBeTruthy();
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  it("submits the edited text from the inline form", async () => {
+    const onEdit = vi.fn().mockResolvedValue(undefined);
+    const item = {
+      id: "user-1",
+      turnId: "turn-1",
+      type: "userMessage" as const,
+      category: "message" as const,
+      title: "You",
+      text: "Original",
+    };
+    render(<ConversationItem item={item} onEdit={onEdit} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Edit message" }), {
+      target: { value: "Edited" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() => expect(onEdit).toHaveBeenCalledWith(item, "Edited"));
   });
 
   it("renders an empty streaming item with an explicit placeholder", () => {

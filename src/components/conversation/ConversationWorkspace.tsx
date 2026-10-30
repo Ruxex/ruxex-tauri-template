@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
@@ -7,11 +7,13 @@ import {
   useAppServerEvents,
   useRetainThreadState,
   useRevertThread,
+  useSendMessage,
   useThreadConversation,
 } from "../../app-server/hooks";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { Composer } from "./Composer";
 import {
+  buildUserTextInput,
   type ConversationViewItem,
   mergeConversationItems,
 } from "./conversation-model";
@@ -21,23 +23,28 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const events = useAppServerEvents();
   useRetainThreadState(threadId);
   const revertThread = useRevertThread();
-  const [composerDraft, setComposerDraft] = useState<string | undefined>();
+  const sendMessage = useSendMessage();
   const liveThread = events.threads[threadId];
   const completedTurnId = liveThread?.completedTurn?.id;
 
-  async function handleEdit(item: ConversationViewItem) {
-    if (item.type !== "userMessage" || !item.text.trim()) {
+  async function handleEdit(
+    item: ConversationViewItem,
+    editedText: string,
+  ): Promise<void> {
+    if (item.type !== "userMessage" || !editedText.trim()) {
       return;
     }
-    try {
-      await revertThread.mutateAsync({
-        threadId,
-        beforeTurnId: item.turnId,
-      });
-      setComposerDraft(item.text);
-    } catch {
-      // Mutation state renders the error above the conversation.
-    }
+    await revertThread.mutateAsync({
+      threadId,
+      beforeTurnId: item.turnId,
+    });
+    await sendMessage.mutateAsync({
+      threadId,
+      input: [buildUserTextInput(editedText)],
+      model: conversation.data?.thread.model ?? null,
+      effort: conversation.data?.thread.reasoningEffort ?? null,
+      turnTrigger: null,
+    });
   }
 
   useEffect(() => {
@@ -60,6 +67,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     conversation.data.items.data,
     liveThread?.items ?? [],
     liveThread?.status,
+    conversation.data.turns.data,
   );
   const latestTurn = conversation.data.turns.data.at(-1);
   const pendingRequests = Object.values(
@@ -68,11 +76,12 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const turnError =
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
-  const editError = revertThread.error;
+  const editError = revertThread.error ?? sendMessage.error;
   const canEdit =
     liveThread?.status !== "running" &&
     liveThread?.status !== "resynchronizing" &&
-    !revertThread.isPending;
+    !revertThread.isPending &&
+    !sendMessage.isPending;
   async function handleResolve(requestId: string | number, result: unknown) {
     await resolveServerRequest(requestId, result);
   }
@@ -112,8 +121,6 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           activeTurnId={liveThread?.activeTurnId ?? null}
           model={conversation.data.thread.model}
           reasoningEffort={conversation.data.thread.reasoningEffort}
-          initialMessage={composerDraft}
-          onMessageSent={() => setComposerDraft(undefined)}
         />
       </div>
     </div>

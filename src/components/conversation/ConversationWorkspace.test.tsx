@@ -89,6 +89,27 @@ describe("conversation workspace selectors", () => {
     });
   });
 
+  it("associates a conversation item with its containing turn timestamp", () => {
+    const items = mergeConversationItems(
+      [
+        {
+          turnId: "turn-1",
+          item: {
+            type: "userMessage",
+            id: "user-1",
+            clientId: null,
+            content: [{ type: "text", text: "Hello", text_elements: [] }],
+          },
+        },
+      ] as never,
+      [],
+      undefined,
+      [{ id: "turn-1", startedAt: 1_735_689_600 }] as never,
+    );
+
+    expect(items[0]).toMatchObject({ timestamp: 1_735_689_600 });
+  });
+
   it("normalizes execution activity without losing diagnostic metadata", () => {
     const item = normalizeThreadItem("turn-2", {
       type: "commandExecution",

@@ -1,8 +1,8 @@
 import type {
-  PendingServerRequest,
   LiveConversationItem,
+  PendingServerRequest,
+  ThreadExecutionState,
 } from "../../app-server/event-reducer";
-import type { ThreadExecutionState } from "../../app-server/event-reducer";
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
 import { ActivityItem } from "../conversation/ActivityItem";
 import { ConversationItem } from "../conversation/ConversationItem";
@@ -14,7 +14,10 @@ type ChatActivityTimelineProps = {
   items: ConversationViewItem[];
   liveItems: LiveConversationItem[];
   liveStatus?: ThreadExecutionState["status"];
-  onEdit?: (item: ConversationViewItem) => void;
+  onEdit?: (
+    item: ConversationViewItem,
+    editedText: string,
+  ) => void | Promise<void>;
   onReject: (
     requestId: PendingServerRequest["requestId"],
     message: string,

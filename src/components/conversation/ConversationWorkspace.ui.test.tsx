@@ -13,14 +13,17 @@ const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
+const useSendMessage = vi.hoisted(() => vi.fn());
 const refetch = vi.hoisted(() => vi.fn());
 const revertMutation = vi.hoisted(() => vi.fn());
+const sendMutation = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
   useRetainThreadState,
   useThreadConversation,
   useRevertThread,
+  useSendMessage,
 }));
 vi.mock("./Composer", () => ({
   Composer: (props: { initialMessage?: string }) => (
@@ -72,8 +75,15 @@ describe("ConversationWorkspace", () => {
     });
     revertMutation.mockReset();
     revertMutation.mockResolvedValue({});
+    sendMutation.mockReset();
+    sendMutation.mockResolvedValue({});
     useRevertThread.mockReturnValue({
       mutateAsync: revertMutation,
+      isPending: false,
+      error: null,
+    });
+    useSendMessage.mockReturnValue({
+      mutateAsync: sendMutation,
       isPending: false,
       error: null,
     });
@@ -147,12 +157,16 @@ describe("ConversationWorkspace", () => {
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
   });
 
-  it("reverts an edited user message and restores its text to the composer", async () => {
+  it("reverts an edited user message and starts the edited text", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
     render(<ConversationWorkspace threadId="thread-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Edit message" }), {
+      target: { value: "Corrected prompt" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() =>
       expect(revertMutation).toHaveBeenCalledWith({
@@ -160,8 +174,17 @@ describe("ConversationWorkspace", () => {
         beforeTurnId: "turn-1",
       }),
     );
-    expect(screen.getByTestId("composer").getAttribute("data-draft")).toBe(
-      "Original prompt",
+    await waitFor(() =>
+      expect(sendMutation).toHaveBeenCalledWith({
+        threadId: "thread-1",
+        input: [{ type: "text", text: "Corrected prompt", text_elements: [] }],
+        model: null,
+        effort: null,
+        turnTrigger: null,
+      }),
+    );
+    expect(revertMutation.mock.invocationCallOrder[0]).toBeLessThan(
+      sendMutation.mock.invocationCallOrder[0],
     );
   });
 });
