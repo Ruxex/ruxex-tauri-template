@@ -104,7 +104,7 @@ export const ConversationItem = memo(function ConversationItem({
       {isUser && (
         <fieldset
           aria-label="Message actions"
-          className="chat-footer m-0 mt-1 flex min-h-7 items-center justify-end gap-1 border-0 p-0 text-xs text-base-content/60 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          className="chat-footer m-0 mt-1 flex min-h-7 items-center justify-end gap-1 border-0 p-0 text-xs text-base-content/60 opacity-0 transition-opacity group-hover:opacity-100"
         >
           {!isEditing && (
             <>

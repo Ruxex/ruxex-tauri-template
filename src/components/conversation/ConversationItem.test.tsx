@@ -51,6 +51,26 @@ describe("ConversationItem", () => {
     ).toBe(item.text);
   });
 
+  it("keeps message actions visible only while the user message is hovered", () => {
+    render(
+      <ConversationItem
+        item={{
+          id: "user-1",
+          turnId: "turn-1",
+          type: "userMessage",
+          category: "message",
+          title: "You",
+          text: "Hover me",
+        }}
+        onEdit={vi.fn()}
+      />,
+    );
+
+    const actions = screen.getByRole("group", { name: "Message actions" });
+    expect(actions.className).toContain("group-hover:opacity-100");
+    expect(actions.className).not.toContain("group-focus-within:opacity-100");
+  });
+
   it("copies a user message from the action row", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
