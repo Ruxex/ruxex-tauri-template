@@ -10,7 +10,7 @@ import {
   invalidateThreadMetadata,
   invalidateThreadQueue,
 } from "../query-invalidation";
-import { ensureThreadResumed } from "../thread-session";
+import { ensureThreadResumed, markThreadStarted } from "../thread-session";
 
 export function useCreateThread() {
   const queryClient = useQueryClient();
@@ -20,7 +20,13 @@ export function useCreateThread() {
       const response = await requestAppServerMethod("thread/start", params);
       return response.response;
     },
-    onSuccess: () => invalidateThreadList(queryClient),
+    onSuccess: (response) => {
+      const threadId = response.thread?.id;
+      if (threadId) {
+        markThreadStarted(threadId);
+      }
+      invalidateThreadList(queryClient);
+    },
   });
 }
 

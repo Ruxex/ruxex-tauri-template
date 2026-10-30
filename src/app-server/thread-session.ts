@@ -1,8 +1,17 @@
 import { requestAppServerMethod } from "./api";
 
 const inFlightResumes = new Map<string, Promise<void>>();
+const startedThreadIds = new Set<string>();
+
+export function markThreadStarted(threadId: string): void {
+  startedThreadIds.add(threadId);
+}
 
 export function ensureThreadResumed(threadId: string): Promise<void> {
+  if (startedThreadIds.has(threadId)) {
+    return Promise.resolve();
+  }
+
   const existing = inFlightResumes.get(threadId);
   if (existing) {
     return existing;
@@ -24,6 +33,7 @@ export function ensureThreadResumed(threadId: string): Promise<void> {
 
 export function resetThreadSessionState(): void {
   inFlightResumes.clear();
+  startedThreadIds.clear();
 }
 
 function clearInFlightResume(threadId: string, resume: Promise<void>): void {

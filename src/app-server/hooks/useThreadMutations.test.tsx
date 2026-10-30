@@ -5,6 +5,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resetThreadSessionState } from "../thread-session";
+
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 
 vi.mock("../api", () => ({ requestAppServerMethod }));
@@ -23,6 +25,7 @@ function createWrapper(
 
 describe("thread mutation hooks", () => {
   beforeEach(() => {
+    resetThreadSessionState();
     requestAppServerMethod.mockReset();
     requestAppServerMethod.mockResolvedValue({ response: { ok: true } });
   });
@@ -133,6 +136,24 @@ describe("thread mutation hooks", () => {
     await expect(
       act(async () => result.current.mutateAsync({})),
     ).resolves.toEqual(response);
+  });
+
+  it("does not resume a newly created thread before its first turn", async () => {
+    requestAppServerMethod.mockResolvedValueOnce({
+      response: { thread: { id: "thread-new" } },
+    });
+    const { useCreateThread } = await import("./useThreadMutations");
+    const { result } = renderHook(() => useCreateThread(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => result.current.mutateAsync({}));
+
+    const { ensureThreadResumed } = await import("../thread-session");
+    await ensureThreadResumed("thread-new");
+
+    expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/start", {});
   });
 
   it("resumes a thread before reverting its history", async () => {

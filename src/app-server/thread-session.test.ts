@@ -6,6 +6,7 @@ vi.mock("./api", () => ({ requestAppServerMethod }));
 
 import {
   ensureThreadResumed,
+  markThreadStarted,
   resetThreadSessionState,
 } from "./thread-session";
 
@@ -50,5 +51,13 @@ describe("thread session coordinator", () => {
     await expect(ensureThreadResumed("thread-1")).resolves.toBeUndefined();
 
     expect(requestAppServerMethod).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not resume a thread that was just started", async () => {
+    markThreadStarted("thread-new");
+
+    await expect(ensureThreadResumed("thread-new")).resolves.toBeUndefined();
+
+    expect(requestAppServerMethod).not.toHaveBeenCalled();
   });
 });
