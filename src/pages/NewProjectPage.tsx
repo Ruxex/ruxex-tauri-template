@@ -70,7 +70,7 @@ export function NewProjectPage() {
   }
 
   return (
-    <div className="w-full max-w-3xl space-y-8">
+    <div className="mx-auto w-full max-w-3xl space-y-8">
       <header className="border-b border-base-300 pb-6">
         <Link className="btn btn-ghost btn-sm -ml-3 mb-5 gap-2" to="/projects">
           <ArrowLeftIcon aria-hidden="true" className="size-4" />

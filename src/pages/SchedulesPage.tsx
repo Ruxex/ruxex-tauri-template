@@ -98,7 +98,7 @@ export function SchedulesPage() {
       : null);
 
   return (
-    <div className="w-full space-y-8">
+    <div className="mx-auto w-full max-w-5xl space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-base-300 pb-6">
         <h1 className="text-3xl font-semibold tracking-tight">Automation</h1>
         <button

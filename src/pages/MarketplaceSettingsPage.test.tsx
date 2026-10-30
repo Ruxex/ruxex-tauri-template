@@ -73,12 +73,14 @@ describe("MarketplaceSettingsPage", () => {
       "./MarketplaceSettingsPage"
     );
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <MarketplaceSettingsPage />
       </MemoryRouter>,
     );
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("max-w-3xl");
     fireEvent.click(screen.getByRole("button", { name: "Add marketplace" }));
 
     expect(screen.getByText("Marketplace source is required.")).toBeTruthy();

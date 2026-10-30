@@ -30,12 +30,14 @@ describe("ProjectsPage", () => {
   it("renders projects in a table and keeps the compact creation action", async () => {
     const { ProjectsPage } = await import("./ProjectsPage");
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <ProjectsPage />
       </MemoryRouter>,
     );
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("max-w-6xl");
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Your projects" })).toBeNull();
     expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();

@@ -36,12 +36,14 @@ describe("NewProjectPage", () => {
 
   it("renders a page form with a link back to projects", async () => {
     const { NewProjectPage } = await import("./NewProjectPage");
-    render(
+    const { container } = render(
       <MemoryRouter>
         <NewProjectPage />
       </MemoryRouter>,
     );
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("max-w-3xl");
     expect(
       screen.getByRole("heading", { name: "Create a project" }),
     ).toBeTruthy();

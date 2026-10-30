@@ -51,8 +51,10 @@ describe("SchedulesPage", () => {
 
   it("shows persisted schedules and confirms run-now/delete actions", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
-    render(<SchedulesPage />);
+    const { container } = render(<SchedulesPage />);
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("max-w-5xl");
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     expect(screen.getByText("Last run failed: offline")).toBeTruthy();
     fireEvent.click(

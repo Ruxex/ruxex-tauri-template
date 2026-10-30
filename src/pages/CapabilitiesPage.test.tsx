@@ -126,12 +126,14 @@ describe("CapabilitiesPage", () => {
   it("surfaces server-backed extensions and collaboration modes", async () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("max-w-5xl");
     expect(
       screen.getByRole("heading", { name: "Plugins", level: 1 }),
     ).toBeTruthy();
@@ -142,7 +144,7 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
     expect(screen.getAllByText("available")[0].className).toContain(
-      "badge-ghost",
+      "badge-neutral",
     );
     expect(screen.getByText("Remote Catalog")).toBeTruthy();
     expect(

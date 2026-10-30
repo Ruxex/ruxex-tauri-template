@@ -75,12 +75,14 @@ describe("ProjectHomePage", () => {
   it("renders the project workspace and chat list with project actions", async () => {
     const { ProjectHomePage } = await import("./ProjectHomePage");
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <ProjectHomePage />
       </MemoryRouter>,
     );
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("max-w-5xl");
     expect(screen.getByRole("heading", { name: "Ruxex" })).toBeTruthy();
     expect(screen.getByText("/workspace")).toBeTruthy();
     expect(screen.getByText("Project chat")).toBeTruthy();

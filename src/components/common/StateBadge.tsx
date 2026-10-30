@@ -8,11 +8,11 @@ export type StateBadgeTone =
   | "neutral";
 
 const toneClasses: Record<StateBadgeTone, string> = {
-  success: "badge-success",
-  warning: "badge-warning",
-  error: "badge-error",
-  info: "badge-info",
-  neutral: "badge-ghost",
+  success: "badge-outline badge-success",
+  warning: "badge-outline badge-warning",
+  error: "badge-outline badge-error",
+  info: "badge-outline badge-info",
+  neutral: "badge-outline badge-neutral",
 };
 
 export function StateBadge({
