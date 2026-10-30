@@ -4,8 +4,8 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::sync::atomic::{AtomicI64, Ordering};
 
-use ruxex_app_server_client::AppServerRequestHandle;
-use ruxex_app_server_protocol::ClientRequest;
+use ruxex::desktop::client::AppServerRequestHandle;
+use ruxex::desktop::protocol::ClientRequest;
 use serde::Serialize;
 use serde_json::{Value, json};
 

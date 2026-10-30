@@ -3215,8 +3215,8 @@ dependencies = [
  "libc",
  "log",
  "rustversion",
- "windows-link 0.1.3",
- "windows-result 0.3.4",
+ "windows-link 0.2.1",
+ "windows-result 0.4.1",
 ]
 
 [[package]]
@@ -4842,7 +4842,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.61.2",
+ "windows-core 0.62.2",
 ]
 
 [[package]]
@@ -7044,7 +7044,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
 dependencies = [
  "libc",
- "windows-sys 0.45.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7885,7 +7885,7 @@ version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03da047801ff44bb6a4d407d4860c05fd70bb81714e6b2f3812603d5b145b042"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -9192,13 +9192,18 @@ dependencies = [
 
 [[package]]
 name = "ruxex"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-api",
  "ruxex-app-server",
+ "ruxex-app-server-client",
+ "ruxex-app-server-daemon",
+ "ruxex-app-server-protocol",
  "ruxex-arg0",
  "ruxex-cli",
+ "ruxex-config",
+ "ruxex-core",
  "ruxex-home",
  "ruxex-http-client",
  "ruxex-login",
@@ -9207,14 +9212,17 @@ dependencies = [
  "ruxex-models-manager",
  "ruxex-protocol",
  "ruxex-provider-auth",
+ "ruxex-providers",
  "ruxex-tui",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cli",
  "ruxex-utils-home-dir",
 ]
 
 [[package]]
 name = "ruxex-agent-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-core",
  "ruxex-protocol",
@@ -9222,8 +9230,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-graph-store"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-protocol",
  "ruxex-state",
@@ -9233,8 +9241,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-roles"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-config",
  "ruxex-file-system",
@@ -9247,8 +9255,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-ansi-escape"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ansi-to-tui",
  "ratatui-core",
@@ -9258,8 +9266,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-api"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -9288,8 +9296,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "axum",
@@ -9365,8 +9373,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-client"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "futures",
  "ruxex-app-server",
@@ -9391,8 +9399,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-daemon"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "blake3",
@@ -9414,8 +9422,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "inventory",
@@ -9443,13 +9451,13 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol-noop-macros"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-app-server-test-client"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "clap",
@@ -9470,8 +9478,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-transport"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "axum",
@@ -9511,8 +9519,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-apply-patch"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "ruxex-exec-server",
@@ -9527,8 +9535,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-arg0"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "dotenvy",
@@ -9546,8 +9554,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-async-utils"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "rand 0.9.5",
  "tokio",
@@ -9556,8 +9564,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-attachment-store"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "serde",
  "tracing",
@@ -9565,8 +9573,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-build-info"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-install-context",
  "semver",
@@ -9576,8 +9584,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-cli"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9652,8 +9660,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-client"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "futures",
  "http",
@@ -9665,8 +9673,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "futures",
  "http-body-util",
@@ -9688,8 +9696,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode-protocol"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "glob",
  "prost",
@@ -9706,13 +9714,13 @@ dependencies = [
 
 [[package]]
 name = "ruxex-collaboration-mode-templates"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-config"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9750,8 +9758,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-context-fragments"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-protocol",
  "ruxex-utils-string",
@@ -9759,8 +9767,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -9861,8 +9869,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core-plugins"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9906,8 +9914,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-credential-broker"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-crossterm"
@@ -9936,17 +9944,8 @@ dependencies = [
  "dirs 6.0.0",
  "futures",
  "ruxex",
- "ruxex-app-server-client",
- "ruxex-app-server-daemon",
- "ruxex-app-server-protocol",
- "ruxex-arg0",
- "ruxex-config",
- "ruxex-core",
- "ruxex-protocol",
  "ruxex-provider-host-example",
- "ruxex-providers",
  "ruxex-scheduler",
- "ruxex-utils-absolute-path",
  "serde",
  "serde_json",
  "tauri",
@@ -9963,16 +9962,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-diagnostics"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "ruxex-exec"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "clap",
@@ -10010,8 +10009,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "arc-swap",
  "base64 0.22.1",
@@ -10050,8 +10049,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server-protocol"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "ruxex-file-system",
@@ -10065,8 +10064,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-execpolicy"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "clap",
@@ -10083,8 +10082,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-experimental-api-macros"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10093,8 +10092,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-extension-api"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-config",
  "ruxex-context-fragments",
@@ -10110,8 +10109,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-extension-items"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-utils-absolute-path",
  "schemars 0.8.22",
@@ -10122,8 +10121,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-features"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-network-proxy",
  "ruxex-otel",
@@ -10136,8 +10135,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-search"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "clap",
@@ -10151,8 +10150,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-system"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "bytes",
  "futures",
@@ -10164,8 +10163,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-watcher"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "notify",
  "tokio",
@@ -10174,8 +10173,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-git-utils"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "chrono",
@@ -10200,8 +10199,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-goal-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-core",
  "ruxex-extension-api",
@@ -10220,8 +10219,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-history"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-protocol",
  "schemars 0.8.22",
@@ -10231,8 +10230,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-history-notes-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "http",
  "ruxex-core",
@@ -10247,8 +10246,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-home"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-extension-api",
  "ruxex-utils-absolute-path",
@@ -10258,8 +10257,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-hooks"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -10283,8 +10282,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-http-client"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "bytes",
  "futures",
@@ -10310,8 +10309,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-install-context"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-utils-absolute-path",
  "ruxex-utils-home-dir",
@@ -10322,8 +10321,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-keyring-store"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "keyring",
  "tracing",
@@ -10331,8 +10330,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-linux-sandbox"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "clap",
  "globset",
@@ -10355,8 +10354,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-login"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -10384,8 +10383,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mcp"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -10415,8 +10414,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mcp-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "ruxex-config",
@@ -10438,16 +10437,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mermaid"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "unicode-width 0.2.2",
 ]
 
 [[package]]
 name = "ruxex-message-history"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "memchr",
  "ruxex-config",
@@ -10459,8 +10458,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "chrono",
  "futures",
@@ -10486,8 +10485,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider-info"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "http",
  "ruxex-api",
@@ -10499,8 +10498,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-models-manager"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "chrono",
  "ruxex-http-client",
@@ -10516,8 +10515,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-network-proxy"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -10560,8 +10559,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-otel"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "chrono",
  "eventsource-stream",
@@ -10590,8 +10589,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-plugin"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-config",
  "ruxex-protocol",
@@ -10604,16 +10603,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-process-hardening"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "ruxex-prompts"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "ruxex-collaboration-mode-templates",
@@ -10628,8 +10627,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-protocol"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "chardetng",
  "chrono",
@@ -10671,16 +10670,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-provider-auth"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-model-provider",
 ]
 
 [[package]]
 name = "ruxex-provider-host-example"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "futures",
@@ -10702,8 +10701,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-providers"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "futures",
  "http",
@@ -10729,8 +10728,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-queue-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-core",
  "ruxex-extension-api",
@@ -10847,8 +10846,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-response-debug-context"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "http",
  "ruxex-api",
@@ -10856,8 +10855,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rmcp-client"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "axum",
@@ -10897,8 +10896,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rollout"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "chrono",
@@ -10924,8 +10923,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rollout-trace"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "http",
@@ -10939,8 +10938,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-sandboxing"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "dunce",
@@ -10965,8 +10964,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "chrono-tz",
- "ruxex-app-server-client",
- "ruxex-app-server-protocol",
+ "ruxex",
  "serde",
  "serde_json",
  "tokio",
@@ -10974,8 +10972,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-secrets"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "age",
  "anyhow",
@@ -10993,8 +10991,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-shell-command"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "libc",
@@ -11013,8 +11011,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-skills"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "include_dir",
  "ruxex-protocol",
@@ -11030,8 +11028,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-skills-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "dirs 6.0.0",
  "futures",
@@ -11058,8 +11056,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-state"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "chrono",
@@ -11082,8 +11080,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-stdio-to-uds"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "ruxex-uds",
@@ -11092,8 +11090,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tcp-tunnel"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "bytes",
@@ -11112,16 +11110,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-terminal-detection"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "tracing",
 ]
 
 [[package]]
 name = "ruxex-thread-store"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "chrono",
  "futures",
@@ -11163,8 +11161,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tools"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "bitflags 2.13.2",
  "jsonptr",
@@ -11185,8 +11183,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tui"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "arboard",
@@ -11309,8 +11307,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-uds"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "libc",
  "tokio",
@@ -11318,8 +11316,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-user-verification"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "core-foundation 0.10.1",
@@ -11337,8 +11335,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-absolute-path"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "dirs 6.0.0",
  "dunce",
@@ -11349,16 +11347,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-approval-presets"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-protocol",
 ]
 
 [[package]]
 name = "ruxex-utils-audio"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "ruxex-protocol",
@@ -11371,8 +11369,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cache"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "lru",
  "sha1 0.10.7",
@@ -11381,8 +11379,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cli"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "clap",
  "ruxex-protocol",
@@ -11393,18 +11391,18 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-elapsed"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-utils-fuzzy-match"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-utils-git-discovery"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "futures",
  "ruxex-git-utils",
@@ -11415,8 +11413,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-home-dir"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "dirs 6.0.0",
  "ruxex-utils-absolute-path",
@@ -11424,8 +11422,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-image"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "image",
@@ -11437,8 +11435,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-json-to-toml"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "serde_json",
  "toml 0.9.12+spec-1.1.0",
@@ -11446,8 +11444,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-output-truncation"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-protocol",
  "ruxex-utils-string",
@@ -11455,8 +11453,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-path"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "dunce",
  "ruxex-utils-absolute-path",
@@ -11465,8 +11463,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-path-uri"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "base64 0.22.1",
  "ruxex-utils-absolute-path",
@@ -11480,8 +11478,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-plugins"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-exec-server",
  "ruxex-exec-server-protocol",
@@ -11493,8 +11491,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-pty"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "libc",
@@ -11504,8 +11502,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-redacted-string"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "schemars 0.8.22",
  "serde",
@@ -11513,16 +11511,16 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-rustls-provider"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "rustls",
 ]
 
 [[package]]
 name = "ruxex-utils-sandbox-summary"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "ruxex-protocol",
  "ruxex-utils-path-uri",
@@ -11530,8 +11528,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-sleep-inhibitor"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "core-foundation 0.9.4",
  "libc",
@@ -11540,13 +11538,13 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-stream-parser"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-utils-string"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "regex-lite",
  "serde",
@@ -11555,13 +11553,13 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-template"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 
 [[package]]
 name = "ruxex-web-search-extension"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "http",
  "ruxex-api",
@@ -11581,8 +11579,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-websocket-client"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "futures",
  "rustls",
@@ -11595,8 +11593,8 @@ dependencies = [
 
 [[package]]
 name = "ruxex-worktree"
-version = "0.4.10"
-source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.4.10#346213cd334aa1a903213336addfb6d2e28e27b5"
+version = "0.5.0"
+source = "git+https://github.com/Ruxex/ruxex.git?tag=v0.5.0#600bfa2d9664ea0fe20ca6e7b72e7b73adeff33e"
 dependencies = [
  "anyhow",
  "dunce",

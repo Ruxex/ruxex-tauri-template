@@ -2,8 +2,7 @@
 
 fn main() {
     #[cfg(feature = "example")]
-    if std::env::args_os()
-        .any(|arg| arg == ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG)
+    if std::env::args_os().any(|arg| arg == ruxex::desktop::daemon::HOST_APP_SERVER_DAEMON_MODE_ARG)
     {
         if let Err(error) = ruxex_desktop_lib::run_dummy_provider_host() {
             eprintln!("dummy provider host failed: {error:#}");

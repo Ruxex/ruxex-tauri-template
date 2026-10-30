@@ -22,17 +22,18 @@ mod tests {
 
 #[cfg(feature = "example")]
 pub fn run_dummy_provider_host() -> anyhow::Result<()> {
-    ruxex_arg0::arg0_dispatch_or_else(|arg0_paths| async move {
-        let exit = ruxex::cli::run_host_app_server_daemon_with_provider_factory_and_identity(
-            arg0_paths,
-            Default::default(),
-            Default::default(),
-            false,
-            dummy_provider::provider_factory(),
-            desktop::product_identity(),
-        )
-        .await?;
-        if exit == ruxex::app_server::AppServerExit::Forced {
+    ruxex::arg0::arg0_dispatch_or_else(|arg0_paths| async move {
+        let exit =
+            ruxex::desktop::host::run_host_app_server_daemon_with_provider_factory_and_identity(
+                arg0_paths,
+                Default::default(),
+                Default::default(),
+                false,
+                dummy_provider::provider_factory(),
+                desktop::product_identity(),
+            )
+            .await?;
+        if exit == ruxex::desktop::AppServerExit::Forced {
             std::process::exit(0);
         }
         Ok(())
@@ -40,7 +41,7 @@ pub fn run_dummy_provider_host() -> anyhow::Result<()> {
 }
 
 pub fn run() {
-    let arg0_path_guard = ruxex_arg0::arg0_dispatch();
+    let arg0_path_guard = ruxex::arg0::arg0_dispatch();
     let arg0_paths = arg0_path_guard
         .as_ref()
         .map(|guard| guard.paths().clone())

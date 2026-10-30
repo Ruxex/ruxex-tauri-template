@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { useState } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { ConversationViewItem } from "../conversation/conversation-model";
@@ -119,7 +125,10 @@ function timelineProps(items: ConversationViewItem[]) {
 }
 
 describe("ChatActivityTimeline", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it("renders messages, activities, and actionable pending requests", async () => {
     const onResolve = vi.fn().mockResolvedValue(undefined);
@@ -170,6 +179,118 @@ describe("ChatActivityTimeline", () => {
     expect(serverRequest).toHaveBeenCalledOnce();
   });
 
+  it("renders pending requests after conversation items", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        liveItems={[]}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[pendingRequest("thread-1")]}
+      />,
+    );
+
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(
+      Array.from(timeline.children).map((child) =>
+        child.getAttribute("data-testid"),
+      ),
+    ).toEqual(["conversation-item", "pending-request"]);
+  });
+
+  it("renders a Codex-style working duration before pending requests", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(43_000));
+
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[
+          {
+            ...viewItem("history-1", "agentMessage", "Earlier", "message"),
+            turnId: "turn-0",
+          },
+          viewItem("message-1", "agentMessage", "Reply", "message"),
+        ]}
+        liveItems={[
+          {
+            id: "live-1",
+            threadId: "thread-1",
+            turnId: "turn-1",
+            type: "agentMessage",
+            text: "Streaming",
+          },
+        ]}
+        liveStatus="running"
+        workingTurnId="turn-1"
+        workingStartedAt={1}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[pendingRequest("thread-1")]}
+      />,
+    );
+
+    const working = screen.getByRole("status", { name: "Working for 42s" });
+    expect(working.textContent).toBe("Working for 42s");
+    expect(working.querySelector(".loading-spinner")).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(3_000);
+    });
+    expect(
+      screen.getByRole("status", { name: "Working for 45s" }),
+    ).toBeTruthy();
+
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(timeline.children[0]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+    expect(timeline.children[1]).toBe(working);
+    expect(timeline.children[2]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+    expect(timeline.lastElementChild).toBe(
+      screen.getByTestId("pending-request"),
+    );
+  });
+
+  it("falls back to Working when the start timestamp is invalid", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[]}
+        liveItems={[]}
+        liveStatus="running"
+        workingStartedAt={Number.NaN}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Working" }).textContent).toBe(
+      "Working",
+    );
+  });
+
+  it("removes the working indicator when the turn is no longer running", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[]}
+        liveItems={[]}
+        liveStatus="completed"
+        workingStartedAt={1}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(screen.queryByRole("status", { name: /Working/ })).toBeNull();
+  });
+
   it("does not render a separate empty state when the timeline has no items", () => {
     render(
       <ChatActivityTimeline
@@ -187,14 +308,14 @@ describe("ChatActivityTimeline", () => {
 
   it("forwards user-message edits to the conversation item", () => {
     const onEdit = vi.fn();
-    const item = viewItem("message-1", "userMessage", "Original prompt", "message");
-
-    render(
-      <ChatActivityTimeline
-        {...timelineProps([item])}
-        onEdit={onEdit}
-      />,
+    const item = viewItem(
+      "message-1",
+      "userMessage",
+      "Original prompt",
+      "message",
     );
+
+    render(<ChatActivityTimeline {...timelineProps([item])} onEdit={onEdit} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
     expect(onEdit).toHaveBeenCalledWith(item);
@@ -404,7 +525,12 @@ describe("ChatActivityTimeline", () => {
   });
 
   it("does not rerender the timeline items when only equivalent props are recreated", () => {
-    const item = viewItem("message-1", "agentMessage", "Stable reply", "message");
+    const item = viewItem(
+      "message-1",
+      "agentMessage",
+      "Stable reply",
+      "message",
+    );
     const onEdit = vi.fn();
     const onReject = vi.fn();
     const onResolve = vi.fn();
@@ -421,9 +547,7 @@ describe("ChatActivityTimeline", () => {
     );
     conversation.mockClear();
 
-    rerender(
-      <ChatActivityTimeline {...props} items={[{ ...item }]} />,
-    );
+    rerender(<ChatActivityTimeline {...props} items={[{ ...item }]} />);
 
     expect(conversation).not.toHaveBeenCalled();
   });

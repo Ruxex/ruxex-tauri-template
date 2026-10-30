@@ -3,21 +3,37 @@ use std::sync::Arc;
 
 #[cfg(not(feature = "example"))]
 use ruxex::ModelProviderFactory;
-use ruxex::app_server::app_server_control_socket_path;
-use ruxex_app_server_client::{
-    AppServerClient, AppServerEvent, AppServerRequestHandle, InProcessAppServerClient,
-    InProcessClientStartArgs, RemoteAppServerClient, RemoteAppServerConnectArgs,
-    RemoteAppServerEndpoint,
+use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard};
+#[cfg(not(feature = "example"))]
+use ruxex::desktop::client::AppServerRuntimeBuilder;
+use ruxex::desktop::config::LoaderOverrides;
+use ruxex::desktop::core::{
+    self,
+    config::{Config, ConfigOverrides},
 };
-use ruxex_app_server_protocol::{
-    ClientRequest, ClientResponse, ConfigWarningNotification, JSONRPCErrorError, RequestId,
-    Result as JsonRpcResult,
+#[cfg(feature = "example")]
+use ruxex::desktop::daemon::run_with_host_executable;
+#[cfg(not(feature = "example"))]
+use ruxex::desktop::daemon::{bootstrap_from_package_with_host_args, run};
+#[cfg(not(feature = "example"))]
+use ruxex::desktop::providers::ResponsesModelProvider;
+use ruxex::desktop::utils::absolute_path::AbsolutePathBuf;
+use ruxex::desktop::{
+    app_server_control_socket_path,
+    client::{
+        AppServerClient, AppServerEvent, AppServerRequestHandle,
+        DEFAULT_IN_PROCESS_CHANNEL_CAPACITY, EnvironmentManager, ExecServerRuntimePaths,
+        InProcessAppServerClient, InProcessClientStartArgs, RemoteAppServerClient,
+        RemoteAppServerConnectArgs, RemoteAppServerEndpoint,
+        provider_init_from_config_with_descriptor,
+    },
+    daemon::{HOST_APP_SERVER_DAEMON_MODE_ARG, LifecycleCommand, LifecycleOutput},
+    protocol::{
+        ClientRequest, ClientResponse, ConfigWarningNotification, JSONRPCErrorError, RequestId,
+        Result as JsonRpcResult,
+    },
 };
-use ruxex_arg0::Arg0DispatchPaths;
-use ruxex_config::LoaderOverrides;
-use ruxex_core::config::{Config, ConfigOverrides};
-use ruxex_protocol::protocol::SessionSource;
-use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex::protocol::protocol::SessionSource;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, State};
@@ -36,13 +52,13 @@ pub(crate) struct AppServerState {
     status: tauri::async_runtime::Mutex<Option<AppServerStatus>>,
     shutdown: tauri::async_runtime::Mutex<Option<tauri::async_runtime::Sender<()>>>,
     arg0_paths: Arg0DispatchPaths,
-    _arg0_path_guard: Option<ruxex_arg0::Arg0PathEntryGuard>,
+    _arg0_path_guard: Option<Arg0PathEntryGuard>,
 }
 
 impl AppServerState {
     pub(crate) fn with_arg0_paths(
         arg0_paths: Arg0DispatchPaths,
-        arg0_path_guard: Option<ruxex_arg0::Arg0PathEntryGuard>,
+        arg0_path_guard: Option<Arg0PathEntryGuard>,
     ) -> Self {
         Self {
             initialization: tauri::async_runtime::Mutex::new(()),
@@ -94,17 +110,14 @@ fn configured_app_server_mode() -> CommandResult<AppServerMode> {
 
 fn resolve_in_process_paths(
     arg0_paths: &Arg0DispatchPaths,
-) -> CommandResult<(
-    std::path::PathBuf,
-    ruxex_app_server_client::ExecServerRuntimePaths,
-)> {
+) -> CommandResult<(std::path::PathBuf, ExecServerRuntimePaths)> {
     let executable = arg0_paths.ruxex_self_exe.clone().ok_or_else(|| {
         command_error(
             DesktopAppServerErrorKind::Initialization,
             "failed to resolve the desktop executable for in-process App Server helpers",
         )
     })?;
-    let runtime_paths = ruxex_app_server_client::ExecServerRuntimePaths::new(
+    let runtime_paths = ExecServerRuntimePaths::new(
         executable.clone(),
         arg0_paths.ruxex_linux_sandbox_exe.clone(),
     )
@@ -127,12 +140,12 @@ pub(crate) enum AppServerDaemonAction {
 }
 
 impl AppServerDaemonAction {
-    fn to_lifecycle_command(self) -> ruxex_app_server_daemon::LifecycleCommand {
+    fn to_lifecycle_command(self) -> LifecycleCommand {
         match self {
-            Self::Start => ruxex_app_server_daemon::LifecycleCommand::Start,
-            Self::Restart => ruxex_app_server_daemon::LifecycleCommand::Restart,
-            Self::Stop => ruxex_app_server_daemon::LifecycleCommand::Stop,
-            Self::Version => ruxex_app_server_daemon::LifecycleCommand::Version,
+            Self::Start => LifecycleCommand::Start,
+            Self::Restart => LifecycleCommand::Restart,
+            Self::Stop => LifecycleCommand::Stop,
+            Self::Version => LifecycleCommand::Version,
         }
     }
 }
@@ -256,13 +269,11 @@ async fn connect_daemon_endpoint(
                             format!("failed to resolve the desktop executable: {error}"),
                         )
                     })?;
-                    let lifecycle = ruxex_app_server_daemon::run_with_host_executable(
-                        ruxex_app_server_daemon::LifecycleCommand::Start,
+                    let lifecycle = run_with_host_executable(
+                        LifecycleCommand::Start,
                         &executable,
                         &[
-                            OsString::from(
-                                ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG,
-                            ),
+                            OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
                             OsString::from("--managed-daemon"),
                         ],
                     )
@@ -305,12 +316,10 @@ async fn connect_daemon_endpoint(
                         crate::desktop::runtime_package_source(app).map_err(|error| {
                             command_error(DesktopAppServerErrorKind::Lifecycle, error)
                         })?;
-                    let bootstrap = ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
+                    let bootstrap = bootstrap_from_package_with_host_args(
                         &package_source,
                         &[
-                            OsString::from(
-                                ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG,
-                            ),
+                            OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
                             OsString::from("--managed-daemon"),
                         ],
                     )
@@ -378,26 +387,21 @@ async fn connect_in_process_endpoint(
     let provider_factory = crate::dummy_provider::provider_factory();
     #[cfg(not(feature = "example"))]
     let provider_factory = (
-        ruxex_app_server_client::AppServerRuntimeBuilder::build_from_provider_factory::<
-            ruxex_providers::ResponsesModelProvider,
-        >,
-        ruxex_providers::ResponsesModelProvider::provider_descriptor(),
+        AppServerRuntimeBuilder::build_from_provider_factory::<ResponsesModelProvider>,
+        ResponsesModelProvider::provider_descriptor(),
     );
-    let provider_init = ruxex_app_server_client::provider_init_from_config_with_descriptor(
-        &config,
-        true,
-        &provider_factory.1,
-    )
-    .await
-    .map_err(|error| {
-        command_error(
-            DesktopAppServerErrorKind::Initialization,
-            format!("failed to initialize the in-process provider: {error}"),
-        )
-    })?;
+    let provider_init =
+        provider_init_from_config_with_descriptor(&config, true, &provider_factory.1)
+            .await
+            .map_err(|error| {
+                command_error(
+                    DesktopAppServerErrorKind::Initialization,
+                    format!("failed to initialize the in-process provider: {error}"),
+                )
+            })?;
     let runtime = (provider_factory.0)(provider_init);
-    let state_db = ruxex_core::init_state_db(&config).await;
-    let environment_manager = ruxex_app_server_client::EnvironmentManager::from_ruxex_home(
+    let state_db = core::init_state_db(&config).await;
+    let environment_manager = EnvironmentManager::from_ruxex_home(
         &config.ruxex_home,
         Some(runtime_paths),
         config.http_client_factory(),
@@ -438,7 +442,7 @@ async fn connect_in_process_endpoint(
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: DESKTOP_EXPERIMENTAL_API,
         opt_out_notification_methods: Vec::new(),
-        channel_capacity: ruxex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY,
+        channel_capacity: DEFAULT_IN_PROCESS_CHANNEL_CAPACITY,
         product_identity,
     })
     .await
@@ -475,7 +479,7 @@ async fn connect_local_endpoint(
 pub(crate) async fn app_server_daemon_control(
     state: State<'_, AppServerState>,
     action: AppServerDaemonAction,
-) -> CommandResult<ruxex_app_server_daemon::LifecycleOutput> {
+) -> CommandResult<LifecycleOutput> {
     let _initialization = state.initialization.lock().await;
     let status = state.status.lock().await.clone();
     if status
@@ -503,15 +507,14 @@ pub(crate) async fn app_server_daemon_control(
                 )
             })?;
             let command_args = [
-                OsString::from(ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
+                OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
                 OsString::from("--managed-daemon"),
             ];
-            ruxex_app_server_daemon::run_with_host_executable(command, &executable, &command_args)
-                .await
+            run_with_host_executable(command, &executable, &command_args).await
         }
         #[cfg(not(feature = "example"))]
         {
-            ruxex_app_server_daemon::run(command).await
+            run(command).await
         }
     };
 
@@ -636,7 +639,7 @@ pub(crate) async fn request_handle(
 
 #[cfg(test)]
 mod tests {
-    use ruxex_arg0::Arg0DispatchPaths;
+    use ruxex::arg0::Arg0DispatchPaths;
     use serde_json::json;
 
     use super::{
@@ -692,19 +695,19 @@ mod tests {
     fn daemon_actions_map_to_lifecycle_commands() {
         assert_eq!(
             AppServerDaemonAction::Start.to_lifecycle_command(),
-            ruxex_app_server_daemon::LifecycleCommand::Start
+            ruxex::desktop::daemon::LifecycleCommand::Start
         );
         assert_eq!(
             AppServerDaemonAction::Restart.to_lifecycle_command(),
-            ruxex_app_server_daemon::LifecycleCommand::Restart
+            ruxex::desktop::daemon::LifecycleCommand::Restart
         );
         assert_eq!(
             AppServerDaemonAction::Stop.to_lifecycle_command(),
-            ruxex_app_server_daemon::LifecycleCommand::Stop
+            ruxex::desktop::daemon::LifecycleCommand::Stop
         );
         assert_eq!(
             AppServerDaemonAction::Version.to_lifecycle_command(),
-            ruxex_app_server_daemon::LifecycleCommand::Version
+            ruxex::desktop::daemon::LifecycleCommand::Version
         );
     }
 

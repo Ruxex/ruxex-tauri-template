@@ -282,7 +282,7 @@ mod tests {
             serde_json::json!({
                 "formatVersion": 2,
                 "providerKind": "example",
-                "providerProtocolVersion": ruxex::model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION,
+                "providerProtocolVersion": ruxex::provider::contract::CURRENT_PROVIDER_PROTOCOL_VERSION,
                 "serverSignature": "legacy-example-signature"
             })
             .to_string(),

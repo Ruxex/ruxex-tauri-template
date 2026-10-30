@@ -40,6 +40,11 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const liveStatus = liveThread?.status;
   const authoritativeItems = conversation.data?.items.data;
   const turns = conversation.data?.turns.data;
+  const workingTurnId = liveThread?.activeTurnId ?? null;
+  const workingStartedAt = liveThread?.activeTurnId
+    ? (turns?.find((turn) => turn.id === liveThread.activeTurnId)?.startedAt ??
+      null)
+    : null;
   const items = useMemo(
     () =>
       authoritativeItems && turns
@@ -184,6 +189,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         onReject={handleReject}
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
+        workingTurnId={workingTurnId}
+        workingStartedAt={workingStartedAt}
       />
       <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3 pb-2">
         <QueuedMessages threadId={threadId} />
