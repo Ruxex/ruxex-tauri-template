@@ -6,8 +6,10 @@ import { synchronizeAppServerQueries } from "./event-query-sync";
 
 function createQueryClient() {
   return {
+    getQueriesData: vi.fn(() => []),
     invalidateQueries: vi.fn(),
     removeQueries: vi.fn(),
+    setQueryData: vi.fn(),
     setQueriesData: vi.fn(),
   };
 }
@@ -74,7 +76,7 @@ describe("app-server event query synchronization", () => {
       } as AppServerEvent,
     );
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledOnce();
     expect(queryClient.removeQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "thread", "thread-1", "metadata"],
     });

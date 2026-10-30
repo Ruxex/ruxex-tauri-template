@@ -54,25 +54,6 @@ describe("AppLayout", () => {
     expect(screen.queryByTestId("context-drawer")).toBeNull();
   });
 
-  it("does not pass a context-panel visibility flag on project pages", () => {
-    useUiPreferences.mockReturnValue({
-      preferences: {
-        sidebarCollapsed: false,
-      },
-      update: vi.fn(),
-    });
-
-    render(
-      <MemoryRouter initialEntries={["/projects"]}>
-        <AppLayout />
-      </MemoryRouter>,
-    );
-
-    expect(projectSidebarProps.mock.calls[0]?.[0]).not.toHaveProperty(
-      "contextPanelHidden",
-    );
-  });
-
   it("closes the expanded sidebar with Escape", () => {
     const update = vi.fn();
     useUiPreferences.mockReturnValue({
@@ -93,7 +74,7 @@ describe("AppLayout", () => {
     expect(update).toHaveBeenCalledWith({ sidebarCollapsed: true });
   });
 
-  it("shows the sidebar overlay on the project page", () => {
+  it("does not show the sidebar overlay on the project page", () => {
     useUiPreferences.mockReturnValue({
       preferences: {
         sidebarCollapsed: false,
@@ -108,9 +89,31 @@ describe("AppLayout", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Close sidebar overlay" }),
-    ).toBeTruthy();
+      screen.queryByRole("button", { name: "Close sidebar overlay" }),
+    ).toBeNull();
   });
+
+  it.each(["/projects", "/projects/project-1", "/settings/account"])(
+    "does not render a left sidebar on %s",
+    (pathname) => {
+      useUiPreferences.mockReturnValue({
+        preferences: { sidebarCollapsed: false },
+        update: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={[pathname]}>
+          <AppLayout />
+        </MemoryRouter>,
+      );
+
+      expect(screen.queryByTestId("project-sidebar")).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Close sidebar overlay" }),
+      ).toBeNull();
+      cleanup();
+    },
+  );
 
   it("uses the selected thread title in the shared navigation bar", () => {
     useThread.mockReturnValue({

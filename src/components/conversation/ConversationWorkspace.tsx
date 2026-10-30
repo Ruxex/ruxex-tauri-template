@@ -14,6 +14,7 @@ import {
 } from "../../app-server/hooks";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { Composer } from "./Composer";
+import { QueuedMessages } from "./QueuedMessages";
 import {
   buildUserTextInput,
   type ConversationViewItem,
@@ -185,6 +186,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         pendingRequests={pendingRequests}
       />
       <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3 pb-2">
+        <QueuedMessages threadId={threadId} />
         <Composer
           threadId={threadId}
           activeTurnId={liveThread?.activeTurnId ?? null}

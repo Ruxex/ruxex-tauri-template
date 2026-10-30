@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
+const useThreadQueue = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 const resync = vi.hoisted(() => vi.fn());
@@ -46,6 +47,7 @@ vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
   useRetainThreadState,
   useThreadConversation,
+  useThreadQueue,
   useRevertThread,
   useSendMessage,
 }));
@@ -96,6 +98,20 @@ describe("ConversationWorkspace", () => {
             },
           ] as never,
         },
+      },
+    });
+    useThreadQueue.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: "queued-1",
+            input: [
+              { type: "text", text: "Queued prompt", text_elements: [] },
+            ],
+            clientUserMessageId: "client-queued-1",
+          },
+        ],
+        nextCursor: null,
       },
     });
     revertMutation.mockReset();
@@ -176,6 +192,23 @@ describe("ConversationWorkspace", () => {
         .getByRole("region", { name: "Chat activity" })
         .className.split(/\s+/),
     ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
+  });
+
+  it("shows queued messages above the composer on the right", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    const queue = screen.getByRole("region", { name: "Queued messages" });
+    const composer = screen.getByTestId("composer");
+
+    expect(queue.compareDocumentPosition(composer)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(queue.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["flex", "justify-end"]),
+    );
+    expect(screen.getByText("Queued prompt")).toBeTruthy();
   });
 
   it("does not fetch when a turn completes", async () => {

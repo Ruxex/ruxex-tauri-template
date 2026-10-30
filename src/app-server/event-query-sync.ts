@@ -8,6 +8,7 @@ import {
   invalidateThreadList,
   invalidateThreadMetadata,
   invalidateThreadQueue,
+  upsertThreadInListCaches,
 } from "./query-invalidation";
 
 export function synchronizeAppServerQueries(
@@ -28,7 +29,7 @@ export function synchronizeAppServerQueries(
         },
         { thread: event.data.params.thread },
       );
-      invalidateThreadList(queryClient);
+      upsertThreadInListCaches(queryClient, event.data.params.thread);
       return;
     case "thread/status/changed":
       patchThreadCaches(queryClient, event.data.params.threadId, {

@@ -9,6 +9,7 @@ import {
   invalidateThreadList,
   invalidateThreadMetadata,
   invalidateThreadQueue,
+  upsertThreadInListCaches,
 } from "../query-invalidation";
 import { ensureThreadResumed, markThreadStarted } from "../thread-session";
 
@@ -24,8 +25,8 @@ export function useCreateThread() {
       const threadId = response.thread?.id;
       if (threadId) {
         markThreadStarted(threadId);
+        upsertThreadInListCaches(queryClient, response.thread);
       }
-      invalidateThreadList(queryClient);
     },
   });
 }

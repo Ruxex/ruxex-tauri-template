@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -8,7 +8,9 @@ import {
   invalidateThreadList,
   invalidateThreadMetadata,
   invalidateThreadQueue,
+  upsertThreadInListCaches,
 } from "./query-invalidation";
+import { appServerQueryKeys } from "./query-keys";
 
 function createQueryClient() {
   return {
@@ -17,6 +19,52 @@ function createQueryClient() {
 }
 
 describe("app-server query invalidation", () => {
+  it("adds a newly created thread to matching cached lists", () => {
+    const queryClient = new QueryClient();
+    const activeParams = {
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    } as const;
+    const projectOneParams = { projectId: "project-1", limit: 50 };
+    const projectTwoParams = { projectId: "project-2", limit: 50 };
+    const newThread = {
+      id: "thread-new",
+      projectId: "project-1",
+    } as never;
+    const response = (data: unknown[]) => ({
+      data,
+      nextCursor: null,
+      backwardsCursor: null,
+    });
+
+    queryClient.setQueryData(
+      appServerQueryKeys.threadList(activeParams),
+      response([]),
+    );
+    queryClient.setQueryData(
+      appServerQueryKeys.threadList(projectOneParams),
+      response([]),
+    );
+    queryClient.setQueryData(
+      appServerQueryKeys.threadList(projectTwoParams),
+      response([]),
+    );
+
+    upsertThreadInListCaches(queryClient, newThread);
+
+    expect(
+      queryClient.getQueryData(appServerQueryKeys.threadList(activeParams)),
+    ).toMatchObject({ data: [{ id: "thread-new" }] });
+    expect(
+      queryClient.getQueryData(appServerQueryKeys.threadList(projectOneParams)),
+    ).toMatchObject({ data: [{ id: "thread-new" }] });
+    expect(
+      queryClient.getQueryData(appServerQueryKeys.threadList(projectTwoParams)),
+    ).toMatchObject({ data: [] });
+  });
+
   it("invalidates conversation queries without invalidating metadata", () => {
     const queryClient = createQueryClient();
 
