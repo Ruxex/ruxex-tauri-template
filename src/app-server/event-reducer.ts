@@ -18,6 +18,11 @@ export type LiveConversationItem = {
 
 export type ThreadExecutionState = {
   threadId: string;
+  threadStatus: v2.ThreadStatus | null;
+  threadName: string | null;
+  archived: boolean | null;
+  historyChangedAt: number | null;
+  queueChangedAt: number | null;
   activeTurnId: string | null;
   status:
     | "idle"
@@ -54,6 +59,7 @@ export type EventState = {
   pendingServerRequests: Record<string, PendingServerRequest>;
   threads: Record<string, ThreadExecutionState>;
   seenEventIds: ReadonlySet<string>;
+  eventSequence: number;
 };
 
 const MAX_HISTORY = 200;
@@ -77,6 +83,7 @@ export function createInitialEventState(): EventState {
     pendingServerRequests: {},
     threads: {},
     seenEventIds: new Set(),
+    eventSequence: 0,
   };
 }
 
@@ -85,8 +92,8 @@ export function reduceAppServerEvent(
   event: AppServerEvent,
   activityAt = Date.now(),
 ): EventState {
-  const eventId = eventIdentity(event);
-  if (state.seenEventIds.has(eventId)) {
+  const eventId = eventIdentity(event, state.eventSequence);
+  if (event.type === "serverRequest" && state.seenEventIds.has(eventId)) {
     return state;
   }
 
@@ -100,6 +107,7 @@ export function reduceAppServerEvent(
     connected: event.type !== "disconnected",
     history,
     seenEventIds,
+    eventSequence: state.eventSequence + 1,
   };
 
   if (event.type === "lagged") {
@@ -211,6 +219,65 @@ function reduceNotification(
   activityAt: number,
 ): EventState {
   switch (notification.method) {
+    case "thread/started": {
+      const { thread } = notification.params;
+      return updateThread(
+        state,
+        thread.id,
+        (current) => ({
+          ...current,
+          threadStatus: thread.status,
+          threadName: thread.name,
+          archived: false,
+        }),
+        activityAt,
+      );
+    }
+    case "thread/status/changed":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({ ...thread, threadStatus: notification.params.status }),
+        activityAt,
+      );
+    case "thread/name/updated":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({
+          ...thread,
+          threadName: notification.params.threadName ?? null,
+        }),
+        activityAt,
+      );
+    case "thread/archived":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({ ...thread, archived: true }),
+        activityAt,
+      );
+    case "thread/unarchived":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({ ...thread, archived: false }),
+        activityAt,
+      );
+    case "thread/reverted":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({ ...thread, historyChangedAt: activityAt }),
+        activityAt,
+      );
+    case "thread/queue/changed":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({ ...thread, queueChangedAt: activityAt }),
+        activityAt,
+      );
     case "turn/started": {
       const { threadId, turn } = notification.params;
       return updateThread(
@@ -246,6 +313,8 @@ function reduceNotification(
       return addDelta(state, notification.params, "plan", activityAt);
     case "item/reasoning/textDelta":
       return addDelta(state, notification.params, "reasoning", activityAt);
+    case "item/reasoning/summaryTextDelta":
+      return addDelta(state, notification.params, "reasoning", activityAt);
     case "item/started":
       return upsertStructuredItem(state, notification.params, activityAt);
     case "item/completed":
@@ -259,6 +328,8 @@ function reduceNotification(
       );
     case "item/fileChange/outputDelta":
       return addDelta(state, notification.params, "fileChange", activityAt);
+    case "item/fileChange/patchUpdated":
+      return updateFileChangeItem(state, notification.params, activityAt);
     case "item/mcpToolCall/progress":
       return addDelta(
         state,
@@ -283,6 +354,31 @@ function reduceNotification(
     default:
       return state;
   }
+}
+
+function updateFileChangeItem(
+  state: EventState,
+  params: {
+    threadId: string;
+    turnId: string;
+    itemId: string;
+    changes: v2.FileUpdateChange[];
+  },
+  activityAt: number,
+): EventState {
+  return updateThread(
+    state,
+    params.threadId,
+    (thread) => ({
+      ...thread,
+      items: thread.items.map((item) =>
+        item.id === params.itemId && item.raw?.type === "fileChange"
+          ? { ...item, raw: { ...item.raw, changes: params.changes } }
+          : item,
+      ),
+    }),
+    activityAt,
+  );
 }
 
 function upsertStructuredItem(
@@ -383,6 +479,11 @@ function updateThread(
 ): EventState {
   const current = state.threads[threadId] ?? {
     threadId,
+    threadStatus: null,
+    threadName: null,
+    archived: null,
+    historyChangedAt: null,
+    queueChangedAt: null,
     activeTurnId: null,
     status: "idle" as const,
     items: [],
@@ -399,11 +500,11 @@ function updateThread(
   };
 }
 
-function eventIdentity(event: AppServerEvent): string {
+function eventIdentity(event: AppServerEvent, sequence: number): string {
   if (event.type === "serverRequest") {
     return `serverRequest:${requestKey(event.data.id)}`;
   }
-  return `${event.type}:${stableJson(event.data)}`;
+  return `${event.type}:${sequence}`;
 }
 
 function requestKey(requestId: RequestId): string {
@@ -431,18 +532,4 @@ function serverRequestKind(
 
 function turnStatus(status: v2.Turn["status"]): ThreadExecutionState["status"] {
   return status === "inProgress" ? "running" : status;
-}
-
-function stableJson(value: unknown): string {
-  if (value === null || typeof value !== "object") {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map(stableJson).join(",")}]`;
-  }
-  const record = value as Record<string, unknown>;
-  return `{${Object.keys(record)
-    .sort()
-    .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
-    .join(",")}}`;
 }

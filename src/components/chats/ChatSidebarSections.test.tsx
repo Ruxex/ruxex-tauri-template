@@ -7,15 +7,23 @@ import { describe, expect, it, vi } from "vitest";
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
+const activeThreadListParams = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
   useThreadActivity,
+  activeThreadListParams,
 }));
 
 describe("ChatSidebarSections", () => {
   it("orders chat navigation without a Settings link", async () => {
+    activeThreadListParams.mockReturnValue({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
     useProjectList.mockReturnValue({
       data: { data: [{ id: "project-1", name: "Project Alpha" }] },
       isError: false,

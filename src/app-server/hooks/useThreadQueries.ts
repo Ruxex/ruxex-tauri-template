@@ -59,21 +59,40 @@ export function useArchivedThreadList() {
   return useThreadList(archivedThreadListParams());
 }
 
-export function useThread(threadId: string, includeTurns = false) {
-  const status = useAppServerStatus();
+export function activeThreadListParams(): v2.ThreadListParams {
+  return {
+    archived: false,
+    limit: 50,
+    sortKey: "recency_at",
+    sortDirection: "desc",
+  };
+}
 
-  return useQuery({
+export function threadMetadataQueryOptions(
+  threadId: string,
+  includeTurns = false,
+) {
+  return {
     queryKey: [
       ...appServerQueryKeys.threadMetadata(threadId),
       { includeTurns },
     ],
     queryFn: async () => {
+      await ensureThreadResumed(threadId);
       const response = await requestAppServerMethod("thread/read", {
         threadId,
-        includeTurns,
+        ...(includeTurns ? { includeTurns: true } : {}),
       });
       return response.response;
     },
+  };
+}
+
+export function useThread(threadId: string, includeTurns = false) {
+  const status = useAppServerStatus();
+
+  return useQuery({
+    ...threadMetadataQueryOptions(threadId, includeTurns),
     enabled: Boolean(status.data && threadId),
   });
 }
@@ -86,13 +105,7 @@ export function useThreadTurns(
 
   return useQuery({
     queryKey: appServerQueryKeys.threadTurns(threadId, params),
-    queryFn: async () => {
-      const response = await requestAppServerMethod("thread/turns/list", {
-        ...params,
-        threadId,
-      });
-      return response.response;
-    },
+    queryFn: () => fetchAllThreadTurns(threadId, params),
     enabled: Boolean(status.data && threadId),
   });
 }
@@ -105,13 +118,7 @@ export function useThreadItems(
 
   return useQuery({
     queryKey: appServerQueryKeys.threadItems(threadId, params),
-    queryFn: async () => {
-      const response = await requestAppServerMethod("thread/items/list", {
-        ...params,
-        threadId,
-      });
-      return response.response;
-    },
+    queryFn: () => fetchAllThreadItems(threadId, params),
     enabled: Boolean(status.data && threadId),
   });
 }
@@ -183,6 +190,54 @@ export type ThreadConversationOptions = {
 const EMPTY_TURNS_PARAMS: NonNullable<ThreadConversationOptions["turns"]> = {};
 const EMPTY_ITEMS_PARAMS: NonNullable<ThreadConversationOptions["items"]> = {};
 
+async function fetchAllThreadTurns(
+  threadId: string,
+  params: Omit<v2.ThreadTurnsListParams, "threadId">,
+): Promise<v2.ThreadTurnsListResponse> {
+  await ensureThreadResumed(threadId);
+  const pages: v2.ThreadTurnsListResponse[] = [];
+  let cursor = params.cursor ?? null;
+  do {
+    const response = await requestAppServerMethod("thread/turns/list", {
+      ...params,
+      threadId,
+      ...(cursor === null ? {} : { cursor }),
+    });
+    pages.push(response.response);
+    cursor = response.response.nextCursor;
+  } while (cursor !== null);
+
+  return {
+    data: pages.flatMap((page) => page.data),
+    nextCursor: null,
+    backwardsCursor: pages[0]?.backwardsCursor ?? null,
+  };
+}
+
+async function fetchAllThreadItems(
+  threadId: string,
+  params: Omit<v2.ThreadItemsListParams, "threadId">,
+): Promise<v2.ThreadItemsListResponse> {
+  await ensureThreadResumed(threadId);
+  const pages: v2.ThreadItemsListResponse[] = [];
+  let cursor = params.cursor ?? null;
+  do {
+    const response = await requestAppServerMethod("thread/items/list", {
+      ...params,
+      threadId,
+      ...(cursor === null ? {} : { cursor }),
+    });
+    pages.push(response.response);
+    cursor = response.response.nextCursor;
+  } while (cursor !== null);
+
+  return {
+    data: pages.flatMap((page) => page.data),
+    nextCursor: null,
+    backwardsCursor: pages[0]?.backwardsCursor ?? null,
+  };
+}
+
 export function useThreadConversation(
   threadId: string,
   options: ThreadConversationOptions = {},
@@ -192,41 +247,17 @@ export function useThreadConversation(
   const items = options.items ?? EMPTY_ITEMS_PARAMS;
   const enabled = Boolean(status.data && threadId);
   const threadQuery = useQuery({
-    queryKey: [
-      ...appServerQueryKeys.threadMetadata(threadId),
-      { includeTurns: false },
-    ],
-    queryFn: async () => {
-      await ensureThreadResumed(threadId);
-      const response = await requestAppServerMethod("thread/read", {
-        threadId,
-      });
-      return response.response;
-    },
+    ...threadMetadataQueryOptions(threadId),
     enabled,
   });
   const turnsQuery = useQuery({
     queryKey: appServerQueryKeys.threadTurns(threadId, turns),
-    queryFn: async () => {
-      await ensureThreadResumed(threadId);
-      const response = await requestAppServerMethod("thread/turns/list", {
-        ...turns,
-        threadId,
-      });
-      return response.response;
-    },
+    queryFn: () => fetchAllThreadTurns(threadId, turns),
     enabled,
   });
   const itemsQuery = useQuery({
     queryKey: appServerQueryKeys.threadItems(threadId, items),
-    queryFn: async () => {
-      await ensureThreadResumed(threadId);
-      const response = await requestAppServerMethod("thread/items/list", {
-        ...items,
-        threadId,
-      });
-      return response.response;
-    },
+    queryFn: () => fetchAllThreadItems(threadId, items),
     enabled,
   });
   const data: ThreadConversation | undefined =
@@ -238,11 +269,15 @@ export function useThreadConversation(
         }
       : undefined;
   const resync = useCallback(async () => {
-    await Promise.all([
+    const results = await Promise.all([
       threadQuery.refetch(),
       turnsQuery.refetch(),
       itemsQuery.refetch(),
     ]);
+    const failed = results.find((result) => result.error);
+    if (failed?.error) {
+      throw failed.error;
+    }
   }, [itemsQuery.refetch, threadQuery.refetch, turnsQuery.refetch]);
 
   return {

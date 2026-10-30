@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeThreadItem } from "./conversation-model";
+import {
+  mergeConversationItems,
+  normalizeThreadItem,
+} from "./conversation-model";
 
 describe("conversation model", () => {
   it("normalizes imageView items into screenshot presentation metadata", () => {
@@ -51,5 +54,38 @@ describe("conversation model", () => {
     });
 
     expect(item.browserUrl).toBe("https://example.test/session");
+  });
+
+  it("lets the authoritative snapshot replace a stale live item during recovery", () => {
+    const items = mergeConversationItems(
+      [
+        {
+          turnId: "turn-1",
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "current",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      ],
+      [
+        {
+          id: "item-1",
+          threadId: "thread-1",
+          turnId: "turn-1",
+          type: "agentMessage",
+          text: "stale live text",
+        },
+      ],
+      "running",
+      [],
+      { preferAuthoritative: true },
+    );
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.text).toBe("current");
   });
 });

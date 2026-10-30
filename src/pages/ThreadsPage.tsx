@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formatErrorMessage } from "../app/error-message";
 import {
   useAppServerEvents,
+  activeThreadListParams,
   useThreadList,
   useThreadSearch,
 } from "../app-server/hooks";
@@ -13,7 +14,7 @@ import { organizeChats } from "../components/chats/chat-organizer";
 
 export function ThreadsPage() {
   const [search, setSearch] = useState("");
-  const threads = useThreadList({ limit: 50 });
+  const threads = useThreadList(activeThreadListParams());
   const searchResults = useThreadSearch(search);
   const events = useAppServerEvents();
   const rows = search.trim()

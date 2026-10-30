@@ -1,4 +1,8 @@
-import { useThreadActivity, useThreadList } from "../../app-server/hooks";
+import {
+  activeThreadListParams,
+  useThreadActivity,
+  useThreadList,
+} from "../../app-server/hooks";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
 import type { v2 } from "../../protocol";
 import { ChatListItem } from "../chats/ChatListItem";
@@ -25,14 +29,7 @@ export function ThreadList({
   onSelect,
 }: ThreadListProps) {
   const threads = useThreadList(
-    projectId
-      ? projectThreadListParams(projectId)
-      : {
-          archived: false,
-          limit: 50,
-          sortKey: "recency_at",
-          sortDirection: "desc",
-        },
+    projectId ? projectThreadListParams(projectId) : activeThreadListParams(),
   );
   if (threads.isLoading) {
     return <span className="loading loading-spinner loading-sm" />;

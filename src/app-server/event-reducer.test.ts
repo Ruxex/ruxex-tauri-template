@@ -373,7 +373,7 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
-  it("deduplicates an identical notification without losing ordered history", () => {
+  it("keeps identical notifications distinct because repeated deltas are valid", () => {
     const event = notification({
       method: "item/agentMessage/delta",
       params: {
@@ -386,12 +386,12 @@ describe("reduceAppServerEvent", () => {
     let state = reduceAppServerEvent(createInitialEventState(), event);
     state = reduceAppServerEvent(state, event);
 
-    expect(state.history).toHaveLength(1);
+    expect(state.history).toHaveLength(2);
     expect(state.history[0]).toMatchObject({
       id: expect.any(String),
       event,
     });
-    expect(state.threads["thread-1"]?.items[0]?.text).toBe("once");
+    expect(state.threads["thread-1"]?.items[0]?.text).toBe("onceonce");
   });
 
   it("bounds seen event ids to the history capacity", () => {
@@ -513,6 +513,60 @@ describe("reduceAppServerEvent", () => {
     expect(state.threads["thread-1"]).toMatchObject({
       activeTurnId: "turn-1",
       status: "resynchronizing",
+    });
+  });
+
+  it("keeps server thread status separate from turn execution status", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "inProgress" },
+        },
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "thread/status/changed",
+        params: {
+          threadId: "thread-1",
+          status: { type: "active", activeFlags: [] },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]).toMatchObject({
+      status: "running",
+      threadStatus: { type: "active", activeFlags: [] },
+    });
+  });
+
+  it("records visible structural thread notifications in live state", () => {
+    let state = createInitialEventState();
+    const notifications = [
+      {
+        method: "thread/name/updated",
+        params: { threadId: "thread-1", threadName: "Renamed" },
+      },
+      { method: "thread/archived", params: { threadId: "thread-1" } },
+      { method: "thread/unarchived", params: { threadId: "thread-1" } },
+      { method: "thread/reverted", params: { threadId: "thread-1" } },
+      { method: "thread/queue/changed", params: { threadId: "thread-1" } },
+    ];
+
+    for (const data of notifications) {
+      state = reduceAppServerEvent(state, notification(data));
+    }
+
+    expect(state.threads["thread-1"]).toMatchObject({
+      threadName: "Renamed",
+      archived: false,
+      historyChangedAt: expect.any(Number),
+      queueChangedAt: expect.any(Number),
     });
   });
 

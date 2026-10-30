@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useUiPreferences } from "../../app/ui-preferences";
 import {
@@ -7,9 +8,11 @@ import {
 } from "../../platform/notifications";
 import {
   retainThreadState,
+  subscribeToAppServerEvents,
   useAppServerEventStore,
   useThreadActivity as useThreadActivitySnapshot,
 } from "../event-store";
+import { synchronizeAppServerQueries } from "../event-query-sync";
 import { isDesktopRuntime } from "../runtime";
 
 export function useAppServerEvents() {
@@ -29,7 +32,6 @@ export function useRetainThreadState(threadId: string): void {
 }
 
 export function useAppServerNotifications() {
-  const events = useAppServerEventStore();
   const { preferences } = useUiPreferences();
   const notificationsEnabled = useRef(preferences.notifications.desktop);
   notificationsEnabled.current = preferences.notifications.desktop;
@@ -48,8 +50,20 @@ export function useAppServerNotifications() {
     if (!isDesktopRuntime) {
       return;
     }
-    for (const entry of events.history) {
-      void dispatcher.dispatch(entry.event);
-    }
-  }, [dispatcher, events.history]);
+    return subscribeToAppServerEvents((event) => {
+      void dispatcher.dispatch(event);
+    });
+  }, [dispatcher]);
+}
+
+export function useAppServerQuerySync(): void {
+  const queryClient = useQueryClient();
+
+  useEffect(
+    () =>
+      subscribeToAppServerEvents((event) => {
+        synchronizeAppServerQueries(queryClient, event);
+      }),
+    [queryClient],
+  );
 }

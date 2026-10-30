@@ -35,7 +35,6 @@ describe("app-server query keys", () => {
       appServerQueryKeys.threadGoal(threadId),
       appServerQueryKeys.threadAttachments(threadId, params),
       appServerQueryKeys.threadQueue(threadId, params),
-      appServerQueryKeys.threadConversation(threadId, params),
     ];
 
     expect(new Set(keys.map((key) => JSON.stringify(key))).size).toBe(

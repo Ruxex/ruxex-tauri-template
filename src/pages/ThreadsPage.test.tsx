@@ -7,9 +7,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadSearch = vi.hoisted(() => vi.fn());
 const useAppServerEvents = vi.hoisted(() => vi.fn());
+const activeThreadListParams = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useAppServerEvents,
+  activeThreadListParams,
   useThreadList,
   useThreadSearch,
 }));
@@ -27,6 +29,13 @@ describe("ThreadsPage", () => {
   beforeEach(() => {
     useThreadList.mockReset();
     useThreadSearch.mockReset();
+    activeThreadListParams.mockReset();
+    activeThreadListParams.mockReturnValue({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
     useThreadList.mockReturnValue({
       data: { data: [{ id: "thread-1", name: "First chat" }] },
       isLoading: false,

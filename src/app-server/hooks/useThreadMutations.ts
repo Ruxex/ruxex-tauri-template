@@ -69,16 +69,6 @@ export function useRenameThread() {
   });
 }
 
-export function useResumeThread() {
-  return useMutation({
-    mutationFn: async (params: v2.ThreadResumeParams) => {
-      const response = await requestAppServerMethod("thread/resume", params);
-      return response.response;
-    },
-    onSuccess: () => undefined,
-  });
-}
-
 export function useRevertThread() {
   const queryClient = useQueryClient();
 
@@ -92,18 +82,6 @@ export function useRevertThread() {
       invalidateThreadConversation(queryClient, params.threadId);
       invalidateThreadList(queryClient);
     },
-  });
-}
-
-export function useForkThread() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: v2.ThreadForkParams) => {
-      const response = await requestAppServerMethod("thread/fork", params);
-      return response.response;
-    },
-    onSuccess: () => invalidateThreadList(queryClient),
   });
 }
 

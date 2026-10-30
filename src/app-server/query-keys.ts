@@ -20,6 +20,8 @@ export const appServerQueryKeys = {
   accountRead: (refreshToken: boolean) =>
     ["app-server", "account", { refreshToken }] as const,
   threads: ["app-server", "threads"] as const,
+  threadListRoot: ["app-server", "threads", "list"] as const,
+  threadSearchRoot: ["app-server", "threads", "search"] as const,
   projects: ["app-server", "projects"] as const,
   projectList: (params: v2.ProjectListParams) =>
     ["app-server", "projects", "list", params] as const,
@@ -65,6 +67,4 @@ export const appServerQueryKeys = {
     ["app-server", "thread", threadId, "queue"] as const,
   threadQueue: (threadId: string, params: object) =>
     ["app-server", "thread", threadId, "queue", params] as const,
-  threadConversation: (threadId: string, params: object) =>
-    ["app-server", "thread", threadId, "conversation", params] as const,
 };

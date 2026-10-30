@@ -5,11 +5,12 @@ import {
   DEFAULT_IDLE_THREAD_TTL_MS,
   DEFAULT_MAX_IDLE_THREAD_STATES,
   type EventState,
+  type LiveConversationItem,
   pruneIdleThreadStates,
   reduceAppServerEvent,
   type ThreadExecutionState,
 } from "./event-reducer";
-import { listenToAppServerEvents } from "./events";
+import { listenToAppServerEvents, type AppServerEvent } from "./events";
 import { isDesktopRuntime } from "./runtime";
 
 export type EventSnapshot = EventState;
@@ -22,6 +23,7 @@ let lifecycleGeneration = 0;
 let pruneTimer: ReturnType<typeof setInterval> | undefined;
 const retainedThreadIds = new Set<string>();
 const threadActivitySnapshots = new Map<string, ThreadActivitySnapshot>();
+const eventSubscribers = new Set<(event: AppServerEvent) => void>();
 
 const EVENT_STATE_PRUNE_INTERVAL_MS = 60_000;
 
@@ -45,7 +47,11 @@ export async function startAppServerEventStore(): Promise<void> {
       if (generation !== lifecycleGeneration) {
         return;
       }
-      snapshot = reduceAppServerEvent(snapshot, event);
+      const nextSnapshot = reduceAppServerEvent(snapshot, event);
+      if (nextSnapshot === snapshot) {
+        return;
+      }
+      snapshot = nextSnapshot;
       snapshot = pruneIdleThreadStates(snapshot, {
         now: Date.now(),
         retainedThreadIds,
@@ -53,6 +59,9 @@ export async function startAppServerEventStore(): Promise<void> {
         maxIdleStates: DEFAULT_MAX_IDLE_THREAD_STATES,
       });
       notify();
+      for (const subscriber of eventSubscribers) {
+        subscriber(event);
+      }
     });
     if (generation !== lifecycleGeneration) {
       nextUnlisten();
@@ -97,6 +106,37 @@ export function stopAppServerEventStore(): void {
 export function retainThreadState(threadId: string): () => void {
   retainedThreadIds.add(threadId);
   return () => retainedThreadIds.delete(threadId);
+}
+
+export function clearThreadLiveItems(
+  threadId: string,
+  staleItems?: ReadonlySet<LiveConversationItem>,
+): void {
+  const thread = snapshot.threads[threadId];
+  if (!thread || thread.items.length === 0) {
+    return;
+  }
+  const items = staleItems
+    ? thread.items.filter((item) => !staleItems.has(item))
+    : [];
+  if (items.length === thread.items.length) {
+    return;
+  }
+  snapshot = {
+    ...snapshot,
+    threads: {
+      ...snapshot.threads,
+      [threadId]: { ...thread, items },
+    },
+  };
+  notify();
+}
+
+export function subscribeToAppServerEvents(
+  listener: (event: AppServerEvent) => void,
+): () => void {
+  eventSubscribers.add(listener);
+  return () => eventSubscribers.delete(listener);
 }
 
 export function getAppServerEventSnapshot(): EventSnapshot {

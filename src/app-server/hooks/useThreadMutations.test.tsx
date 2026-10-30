@@ -39,16 +39,10 @@ describe("thread mutation hooks", () => {
       "useRenameThread",
       { threadId: "thread-1", name: "Renamed" },
     ],
-    ["thread/resume", "useResumeThread", { threadId: "thread-1" }],
     [
       "thread/revert",
       "useRevertThread",
       { threadId: "thread-1", beforeTurnId: "turn-1" },
-    ],
-    [
-      "thread/fork",
-      "useForkThread",
-      { threadId: "thread-1", excludeTurns: true },
     ],
     [
       "thread/goal/set",

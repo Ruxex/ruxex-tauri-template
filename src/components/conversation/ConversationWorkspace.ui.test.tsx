@@ -17,6 +17,7 @@ const useSendMessage = vi.hoisted(() => vi.fn());
 const resync = vi.hoisted(() => vi.fn());
 const revertMutation = vi.hoisted(() => vi.fn());
 const sendMutation = vi.hoisted(() => vi.fn());
+const clearThreadLiveItems = vi.hoisted(() => vi.fn());
 
 const createCompletedTurnEvent = (id: string, turnId: string) => ({
   id,
@@ -48,6 +49,7 @@ vi.mock("../../app-server/hooks", () => ({
   useRevertThread,
   useSendMessage,
 }));
+vi.mock("../../app-server/event-store", () => ({ clearThreadLiveItems }));
 vi.mock("./Composer", () => ({
   Composer: (props: { initialMessage?: string }) => (
     <div data-testid="composer" data-draft={props.initialMessage ?? ""} />
@@ -136,6 +138,7 @@ describe("ConversationWorkspace", () => {
     });
     resync.mockReset();
     resync.mockResolvedValue(undefined);
+    clearThreadLiveItems.mockReset();
   });
 
   it("shows an error when the completed turn fails asynchronously", async () => {
@@ -233,6 +236,26 @@ describe("ConversationWorkspace", () => {
     render(<ConversationWorkspace threadId="thread-1" />);
 
     await waitFor(() => expect(resync).toHaveBeenCalledTimes(1));
+    expect(clearThreadLiveItems.mock.calls[0]?.[0]).toBe("thread-1");
+  });
+
+  it("keeps live overlays when recovery fails", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    resync.mockRejectedValueOnce(new Error("recovery failed"));
+    useAppServerEvents.mockReturnValue({
+      connected: true,
+      history: [initialCompletedTurnEvent],
+      pendingServerRequests: {},
+      resynchronizing: true,
+      skippedEvents: 3,
+      lastError: null,
+      threads: {},
+    });
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    await waitFor(() => expect(resync).toHaveBeenCalledTimes(1));
+    expect(clearThreadLiveItems).not.toHaveBeenCalled();
   });
 
   it("reverts an edited user message and starts the edited text", async () => {

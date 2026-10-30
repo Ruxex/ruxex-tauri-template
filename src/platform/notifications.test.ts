@@ -86,6 +86,28 @@ describe("notification adapter", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("suppresses a duplicate while the first notification is still sending", async () => {
+    let resolveSend: (() => void) | undefined;
+    const send = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSend = resolve;
+        }),
+    );
+    const dispatcher = createNotificationDispatcher({
+      isFocused: () => false,
+      send,
+    });
+
+    const first = dispatcher.dispatch(completed());
+    await Promise.resolve();
+    await expect(dispatcher.dispatch(completed())).resolves.toBe(false);
+    resolveSend?.();
+
+    await expect(first).resolves.toBe(true);
+    expect(send).toHaveBeenCalledOnce();
+  });
+
   it("requests permission before sending a native notification", async () => {
     isPermissionGranted.mockResolvedValueOnce(false);
     requestPermission.mockResolvedValueOnce("granted");

@@ -44,6 +44,7 @@ export function mergeConversationItems(
   live: LiveConversationItem[],
   liveStatus?: ThreadExecutionState["status"],
   turns: v2.Turn[] = [],
+  options: { preferAuthoritative?: boolean } = {},
 ): ConversationViewItem[] {
   const turnTimestamps = new Map(
     turns.map((turn) => [turn.id, turn.startedAt]),
@@ -56,9 +57,10 @@ export function mergeConversationItems(
     const key = conversationItemKey(turnId, item.id);
     seen.add(key);
     const liveItem = liveById.get(key);
-    const viewItem = liveItem
-      ? liveItemToViewItem(liveItem, liveStatus)
-      : normalizeThreadItem(turnId, item);
+    const viewItem =
+      liveItem && !options.preferAuthoritative
+        ? liveItemToViewItem(liveItem, liveStatus)
+        : normalizeThreadItem(turnId, item);
     const timestamp = turnTimestamps.get(turnId);
     return timestamp === undefined ? viewItem : { ...viewItem, timestamp };
   });

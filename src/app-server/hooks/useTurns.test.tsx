@@ -124,6 +124,35 @@ describe("turn mutation hooks", () => {
     });
   });
 
+  it("does not refetch thread data after interrupting or steering a turn", async () => {
+    const { useInterruptTurn, useSteerTurn } = await import("./useTurns");
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(
+      () => ({ interrupt: useInterruptTurn(), steer: useSteerTurn() }),
+      { wrapper: createWrapper(client) },
+    );
+
+    await act(async () => {
+      await result.current.interrupt.mutateAsync({
+        threadId: "thread-1",
+        turnId: "turn-1",
+      });
+      await result.current.steer.mutateAsync({
+        threadId: "thread-1",
+        expectedTurnId: "turn-1",
+        input: [{ type: "text", text: "continue", text_elements: [] }],
+      } as v2.TurnSteerParams);
+    });
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
   it("queues a message with a unique client user message id", async () => {
     const { useQueueMessage } = await import("./useTurns");
     const params = {

@@ -59,6 +59,7 @@ export function createNotificationDispatcher({
   send,
 }: NotificationDispatcherOptions) {
   const delivered = new Set<string>();
+  const pending = new Set<string>();
 
   return {
     async dispatch(event: AppServerEvent): Promise<boolean> {
@@ -67,13 +68,19 @@ export function createNotificationDispatcher({
         !candidate ||
         !enabled() ||
         isFocused() ||
-        delivered.has(candidate.id)
+        delivered.has(candidate.id) ||
+        pending.has(candidate.id)
       ) {
         return false;
       }
-      await send(candidate);
-      delivered.add(candidate.id);
-      return true;
+      pending.add(candidate.id);
+      try {
+        await send(candidate);
+        delivered.add(candidate.id);
+        return true;
+      } finally {
+        pending.delete(candidate.id);
+      }
     },
   };
 }

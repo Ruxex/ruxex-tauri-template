@@ -98,8 +98,8 @@ describe("thread query hooks", () => {
 
     expect(result.current.data).toEqual({
       thread: { id: "thread-1" },
-      turns: { data: [], nextCursor: null },
-      items: { data: [], nextCursor: null },
+      turns: { data: [], nextCursor: null, backwardsCursor: null },
+      items: { data: [], nextCursor: null, backwardsCursor: null },
     });
     expect(requestAppServerMethod.mock.calls.map(([method]) => method)).toEqual(
       [
@@ -121,6 +121,48 @@ describe("thread query hooks", () => {
     });
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/items/list", {
       threadId: "thread-1",
+    });
+  });
+
+  it("resumes before shared metadata and conversation queries load together", async () => {
+    const { useThread, useThreadConversation } = await import(
+      "./useThreadQueries"
+    );
+    renderHook(
+      () => ({
+        metadata: useThread("thread-1"),
+        conversation: useThreadConversation("thread-1"),
+      }),
+      { wrapper },
+    );
+
+    await waitFor(() =>
+      expect(
+        requestAppServerMethod.mock.calls.some(
+          ([method]) => method === "thread/items/list",
+        ),
+      ).toBe(true),
+    );
+
+    expect(requestAppServerMethod.mock.calls[0]).toEqual([
+      "thread/resume",
+      { threadId: "thread-1", excludeTurns: true },
+    ]);
+    expect(
+      requestAppServerMethod.mock.calls.filter(
+        ([method]) => method === "thread/read",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("defines one active thread list parameter set for every consumer", async () => {
+    const { activeThreadListParams } = await import("./useThreadQueries");
+
+    expect(activeThreadListParams()).toEqual({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
     });
   });
 
@@ -204,6 +246,79 @@ describe("thread query hooks", () => {
         ),
       ).toHaveLength(count + 1);
     }
+  });
+
+  it("follows every conversation page before reporting success", async () => {
+    requestAppServerMethod.mockImplementation(
+      async (
+        method: string,
+        params: { threadId: string; cursor?: string | null },
+      ) => {
+        if (method === "thread/read") {
+          return { response: { thread: { id: "thread-1" } } };
+        }
+        if (method === "thread/turns/list") {
+          return params.cursor === "turn-2"
+            ? {
+                response: {
+                  data: [{ id: "turn-2" }],
+                  nextCursor: null,
+                  backwardsCursor: "turn-back",
+                },
+              }
+            : {
+                response: {
+                  data: [{ id: "turn-1" }],
+                  nextCursor: "turn-2",
+                  backwardsCursor: "turn-back",
+                },
+              };
+        }
+        if (method === "thread/items/list") {
+          return params.cursor === "item-2"
+            ? {
+                response: {
+                  data: [{ turnId: "turn-2", item: { id: "item-2" } }],
+                  nextCursor: null,
+                  backwardsCursor: "item-back",
+                },
+              }
+            : {
+                response: {
+                  data: [{ turnId: "turn-1", item: { id: "item-1" } }],
+                  nextCursor: "item-2",
+                  backwardsCursor: "item-back",
+                },
+              };
+        }
+        return {
+          response: { data: [], nextCursor: null, backwardsCursor: null },
+        };
+      },
+    );
+    const { useThreadConversation } = await import("./useThreadQueries");
+    const { result } = renderHook(() => useThreadConversation("thread-1"), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.turns.data.map((turn) => turn.id)).toEqual([
+      "turn-1",
+      "turn-2",
+    ]);
+    expect(result.current.data?.items.data.map(({ item }) => item.id)).toEqual([
+      "item-1",
+      "item-2",
+    ]);
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/turns/list", {
+      threadId: "thread-1",
+      cursor: "turn-2",
+    });
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/items/list", {
+      threadId: "thread-1",
+      cursor: "item-2",
+    });
   });
 
   it("passes thread-specific parameters to goal, attachment, and queue queries", async () => {

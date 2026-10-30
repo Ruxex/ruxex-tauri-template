@@ -14,11 +14,13 @@ const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
+const activeThreadListParams = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
   useThreadActivity,
+  activeThreadListParams,
   usePluginList,
 }));
 
@@ -26,6 +28,12 @@ describe("ProjectSidebar", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    activeThreadListParams.mockReturnValue({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
     useProjectList.mockReturnValue({
       data: { data: [{ id: "project-1", name: "Project Alpha" }] },
       isLoading: false,

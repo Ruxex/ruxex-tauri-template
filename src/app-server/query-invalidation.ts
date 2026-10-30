@@ -51,16 +51,6 @@ export function invalidateThreadQueue(
   });
 }
 
-export function invalidateThreadQueries(
-  queryClient: QueryClient,
-  threadId: string,
-): void {
-  void queryClient.invalidateQueries({
-    queryKey: appServerQueryKeys.thread(threadId),
-  });
-  invalidateThreadList(queryClient);
-}
-
 export function invalidateProjectList(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.projects });
 }

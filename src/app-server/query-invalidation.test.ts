@@ -7,7 +7,6 @@ import {
   invalidateThreadConversation,
   invalidateThreadList,
   invalidateThreadMetadata,
-  invalidateThreadQueries,
   invalidateThreadQueue,
 } from "./query-invalidation";
 
@@ -50,19 +49,6 @@ describe("app-server query invalidation", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledOnce();
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "thread", "thread-1", "queue"],
-    });
-  });
-
-  it("invalidates every thread query and the thread list", () => {
-    const queryClient = createQueryClient();
-
-    invalidateThreadQueries(queryClient, "thread-1");
-
-    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: ["app-server", "thread", "thread-1"],
-    });
-    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: ["app-server", "threads"],
     });
   });
 

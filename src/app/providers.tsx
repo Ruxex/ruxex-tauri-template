@@ -6,7 +6,10 @@ import {
   startAppServerEventStore,
   stopAppServerEventStore,
 } from "../app-server/event-store";
-import { useAppServerNotifications } from "../app-server/hooks";
+import {
+  useAppServerNotifications,
+  useAppServerQuerySync,
+} from "../app-server/hooks";
 import { isDesktopRuntime } from "../app-server/runtime";
 import { pathForDeepLink, startDeepLinkListener } from "../platform/deep-links";
 import { queryClient } from "./query-client";
@@ -28,6 +31,7 @@ export function AppProviders({ router }: AppProvidersProps) {
 
 function AppRuntime({ router }: AppProvidersProps) {
   useAppServerNotifications();
+  useAppServerQuerySync();
 
   useEffect(() => {
     void startAppServerEventStore();

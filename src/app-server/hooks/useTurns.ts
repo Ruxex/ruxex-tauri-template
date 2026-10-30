@@ -2,11 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
-import {
-  invalidateThreadConversation,
-  invalidateThreadList,
-  invalidateThreadQueue,
-} from "../query-invalidation";
+import { invalidateThreadQueue } from "../query-invalidation";
 import { ensureThreadResumed } from "../thread-session";
 
 export function useSendMessage() {
@@ -20,29 +16,19 @@ export function useSendMessage() {
 }
 
 export function useInterruptTurn() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: v2.TurnInterruptParams) => {
       const response = await requestAppServerMethod("turn/interrupt", params);
       return response.response;
     },
-    onSuccess: (_response, params) => {
-      invalidateThreadConversation(queryClient, params.threadId);
-      invalidateThreadList(queryClient);
-    },
   });
 }
 
 export function useSteerTurn() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: v2.TurnSteerParams) => {
       const response = await requestAppServerMethod("turn/steer", params);
       return response.response;
-    },
-    onSuccess: (_response, params) => {
-      invalidateThreadConversation(queryClient, params.threadId);
-      invalidateThreadList(queryClient);
     },
   });
 }

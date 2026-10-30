@@ -184,4 +184,96 @@ describe("app-server event store", () => {
       vi.useRealTimers();
     }
   });
+
+  it("clears recovered live items without losing active thread metadata", async () => {
+    let handler: ((event: AppServerEvent) => void) | undefined;
+    listenToAppServerEvents.mockImplementation(
+      async (next: (event: AppServerEvent) => void) => {
+        handler = next;
+        return vi.fn();
+      },
+    );
+
+    const store = await import("./event-store");
+    await store.startAppServerEventStore();
+    handler?.({
+      type: "serverNotification",
+      data: {
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "inProgress" } as never,
+        },
+      },
+    });
+    handler?.({
+      type: "serverNotification",
+      data: {
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "item-1",
+          delta: "stale",
+        },
+      },
+    });
+
+    const staleItem =
+      store.getAppServerEventSnapshot().threads["thread-1"]?.items[0];
+    handler?.({
+      type: "serverNotification",
+      data: {
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "item-1",
+          delta: "fresh",
+        },
+      },
+    });
+    store.clearThreadLiveItems(
+      "thread-1",
+      new Set(staleItem ? [staleItem] : []),
+    );
+
+    expect(store.getAppServerEventSnapshot().threads["thread-1"]).toMatchObject(
+      {
+        activeTurnId: "turn-1",
+        status: "running",
+        items: [{ id: "item-1", text: "stalefresh" }],
+      },
+    );
+  });
+
+  it("notifies event subscribers once for each new event", async () => {
+    let handler: ((event: AppServerEvent) => void) | undefined;
+    listenToAppServerEvents.mockImplementation(
+      async (next: (event: AppServerEvent) => void) => {
+        handler = next;
+        return vi.fn();
+      },
+    );
+    const listener = vi.fn();
+
+    const store = await import("./event-store");
+    const unsubscribe = store.subscribeToAppServerEvents(listener);
+    await store.startAppServerEventStore();
+    const event: AppServerEvent = {
+      type: "lagged",
+      data: { skipped: 1 },
+    };
+    const secondEvent: AppServerEvent = {
+      type: "lagged",
+      data: { skipped: 2 },
+    };
+    handler?.(event);
+    handler?.(secondEvent);
+
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener).toHaveBeenCalledWith(event);
+    expect(listener).toHaveBeenCalledWith(secondEvent);
+    unsubscribe();
+  });
 });

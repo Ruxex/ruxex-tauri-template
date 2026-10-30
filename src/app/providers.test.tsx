@@ -13,6 +13,7 @@ vi.mock("../app-server/event-store", () => ({
 }));
 vi.mock("../app-server/hooks", () => ({
   useAppServerNotifications: vi.fn(),
+  useAppServerQuerySync: vi.fn(),
 }));
 vi.mock("../app-server/runtime", () => ({ isDesktopRuntime: false }));
 vi.mock("../platform/deep-links", () => ({

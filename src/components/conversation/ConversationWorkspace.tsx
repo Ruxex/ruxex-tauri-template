@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
 } from "../../app-server/api";
 import type { LiveConversationItem } from "../../app-server/event-reducer";
+import { clearThreadLiveItems } from "../../app-server/event-store";
 import {
   useAppServerEvents,
   useRetainThreadState,
@@ -24,6 +25,7 @@ const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
+  const [isRecovering, setIsRecovering] = useState(false);
   const wasConnected = useRef(events.connected);
   const laggedEventCount =
     events.resynchronizing && events.connected ? events.skippedEvents : 0;
@@ -32,6 +34,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const sendMessage = useSendMessage();
   const liveThread = events.threads[threadId];
   const liveItems = liveThread?.items ?? EMPTY_LIVE_ITEMS;
+  const liveItemsRef = useRef(liveItems);
+  liveItemsRef.current = liveItems;
   const liveStatus = liveThread?.status;
   const authoritativeItems = conversation.data?.items.data;
   const turns = conversation.data?.turns.data;
@@ -43,9 +47,10 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
             liveItems,
             liveStatus,
             turns,
+            { preferAuthoritative: isRecovering },
           )
         : [],
-    [authoritativeItems, liveItems, liveStatus, turns],
+    [authoritativeItems, isRecovering, liveItems, liveStatus, turns],
   );
   const pendingRequests = useMemo(
     () =>
@@ -63,12 +68,32 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     if (!reconnected && !streamLagged) {
       return;
     }
-    void conversation.resync();
+    let cancelled = false;
+    const staleLiveItems = new Set(liveItemsRef.current);
+    setIsRecovering(true);
+    void conversation
+      .resync()
+      .then(() => {
+        if (cancelled) {
+          return;
+        }
+        clearThreadLiveItems(threadId, staleLiveItems);
+        setIsRecovering(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsRecovering(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [
     conversation.resync,
     events.connected,
     events.lastError,
     laggedEventCount,
+    threadId,
   ]);
 
   const handleEdit = useCallback(
