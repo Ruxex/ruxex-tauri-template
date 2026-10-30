@@ -32,6 +32,7 @@ import {
   clampUiFontSize,
 } from "../../app/ui-preferences";
 import { formatErrorMessage } from "../../app/error-message";
+import { CapabilityStatus } from "../common/CapabilityStatus";
 import {
   StateBadge,
   type StateBadgeTone,
@@ -259,14 +260,12 @@ export function CapabilitiesCard({
         {Object.entries(capabilities).map(([name, enabled]) => (
           <SettingRow label={name} key={name}>
             {typeof enabled === "boolean" ? (
-              <StateBadge
-                icon={enabled ? CheckCircleIcon : XCircleIcon}
-                tone={enabled ? "success" : "error"}
-              >
-                {enabled ? "Enabled" : "Disabled"}
-              </StateBadge>
+              <CapabilityStatus
+                label={enabled ? "Enabled" : "Disabled"}
+                state={enabled ? "enabled" : "disabled"}
+              />
             ) : (
-              <StateBadge tone="info">{String(enabled)}</StateBadge>
+              <CapabilityStatus state="unsupported" label={String(enabled)} />
             )}
           </SettingRow>
         ))}

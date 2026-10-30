@@ -17,8 +17,7 @@ export function useSendMessage() {
       const response = await requestAppServerMethod("turn/start", params);
       return response.response;
     },
-    onSuccess: (_response, params) => {
-      invalidateThreadConversation(queryClient, params.threadId);
+    onSuccess: () => {
       invalidateThreadList(queryClient);
     },
   });

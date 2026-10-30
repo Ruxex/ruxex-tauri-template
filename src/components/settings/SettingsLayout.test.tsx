@@ -142,7 +142,9 @@ describe("settings card layout", () => {
   it("keeps capability rows and preference fields vertically stacked", () => {
     render(
       <>
-        <CapabilitiesCard capabilities={{ browser: true, shell: false }} />
+        <CapabilitiesCard
+          capabilities={{ browser: true, shell: false, native: "Unsupported" }}
+        />
         <UiPreferencesCard
           onAccentColorChange={vi.fn()}
           onColorSchemeChange={vi.fn()}
@@ -171,8 +173,15 @@ describe("settings card layout", () => {
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
-    expect(screen.getByText("Enabled").className).toContain("badge-success");
-    expect(screen.getByText("Disabled").className).toContain("badge-error");
+    expect(screen.getByRole("status", { name: "Enabled" })).toBeTruthy();
+    expect(screen.getByRole("status", { name: "Disabled" })).toBeTruthy();
+    expect(screen.getByRole("status", { name: "Enabled" }).className).not.toContain(
+      "badge",
+    );
+    expect(screen.getByRole("status", { name: "Disabled" }).className).not.toContain(
+      "badge",
+    );
+    expect(screen.getByText("Unsupported").className).not.toContain("badge");
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
   });

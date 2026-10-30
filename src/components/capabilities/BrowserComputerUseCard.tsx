@@ -1,10 +1,4 @@
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  XCircleIcon,
-} from "@heroicons/react/24/outline";
-
-import { StateBadge } from "../common/StateBadge";
+import { CapabilityStatus } from "../common/CapabilityStatus";
 
 type BrowserComputerUseCardProps = {
   config: {
@@ -33,9 +27,7 @@ export function BrowserComputerUseCard({
       <div className="card-body">
         <h2 className="card-title">Browser and Computer Use</h2>
         {disabledByPolicy && (
-          <StateBadge icon={ExclamationTriangleIcon} tone="warning">
-            Disabled by policy
-          </StateBadge>
+          <p className="text-sm text-warning">Disabled by policy</p>
         )}
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
           <StatusRow
@@ -66,18 +58,14 @@ function StatusRow({
     <div className="rounded-box bg-base-200 p-3">
       <dt className="font-medium">{label}</dt>
       <dd className="mt-2 flex flex-wrap gap-1.5">
-        <StateBadge
-          icon={available ? CheckCircleIcon : XCircleIcon}
-          tone={available ? "success" : "error"}
-        >
-          {available ? "Available" : "Unavailable"}
-        </StateBadge>
-        <StateBadge
-          icon={configured ? CheckCircleIcon : ExclamationTriangleIcon}
-          tone={configured ? "success" : "warning"}
-        >
-          {configured ? "Configured" : "Not configured"}
-        </StateBadge>
+        <CapabilityStatus
+          label={available ? "Available" : "Unsupported"}
+          state={available ? "enabled" : "unsupported"}
+        />
+        <CapabilityStatus
+          label={configured ? "Configured" : "Not configured"}
+          state={configured ? "enabled" : "disabled"}
+        />
       </dd>
     </div>
   );

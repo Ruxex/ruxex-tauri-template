@@ -21,7 +21,7 @@ describe("BrowserComputerUseCard", () => {
     );
 
     expect(screen.getByText("Disabled by policy")).toBeTruthy();
-    expect(screen.getAllByText("Unavailable")).toHaveLength(2);
+    expect(screen.getAllByText("Unsupported")).toHaveLength(2);
   });
 
   it("shows configured server-backed Browser and Computer Use", () => {
@@ -36,14 +36,18 @@ describe("BrowserComputerUseCard", () => {
       />,
     );
 
-    expect(screen.getAllByText("Available")).toHaveLength(2);
-    expect(screen.getAllByText("Configured")).toHaveLength(2);
-    expect(screen.getAllByText("Available")[0].className).toContain(
-      "badge-success",
+    expect(screen.getAllByRole("status", { name: "Available" })).toHaveLength(
+      2,
     );
-    expect(screen.getAllByText("Configured")[0].className).toContain(
-      "badge-success",
-    );
+    expect(
+      screen.getAllByRole("status", { name: "Configured" }),
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByRole("status", { name: "Available" })[0].className,
+    ).not.toContain("badge");
+    expect(
+      screen.getAllByRole("status", { name: "Configured" })[0].className,
+    ).not.toContain("badge");
     expect(screen.queryByText(/App Server owns execution/)).toBeNull();
   });
 });
