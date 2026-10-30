@@ -4,6 +4,7 @@ import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { formatErrorMessage } from "../app/error-message";
 import { useSchedules } from "../app-server/hooks";
 import { isDesktopRuntime } from "../app-server/runtime";
+import { PageContainer } from "../components/layout/PageContainer";
 import type { ScheduleRecord } from "../platform/schedules";
 import {
   ScheduleActionDialog,
@@ -98,7 +99,7 @@ export function SchedulesPage() {
       : null);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8">
+    <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-base-300 pb-6">
         <h1 className="text-3xl font-semibold tracking-tight">Automation</h1>
         <button
@@ -205,6 +206,6 @@ export function SchedulesPage() {
           ))}
         </div>
       </section>
-    </div>
+    </PageContainer>
   );
 }

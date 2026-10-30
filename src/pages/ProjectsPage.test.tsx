@@ -37,7 +37,9 @@ describe("ProjectsPage", () => {
     );
 
     expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("max-w-6xl");
+    expect(container.firstElementChild?.className).toContain("w-full");
+    expect(container.firstElementChild?.className).toContain("max-w-5xl");
+    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Your projects" })).toBeNull();
     expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();

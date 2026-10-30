@@ -14,10 +14,13 @@ import {
   StateBadge,
   type StateBadgeTone,
 } from "../components/common/StateBadge";
+import { PageContainer } from "../components/layout/PageContainer";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
 
-function capabilityStatusTone(value: string | null | undefined): StateBadgeTone {
+function capabilityStatusTone(
+  value: string | null | undefined,
+): StateBadgeTone {
   const normalized = value?.toLowerCase().replaceAll("_", "") ?? "";
   if (
     [
@@ -57,7 +60,7 @@ export function CapabilitiesPage() {
   const upgradeMarketplace = useUpgradeMarketplace();
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5">
+    <PageContainer>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">
@@ -113,7 +116,9 @@ export function CapabilitiesPage() {
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
                       <span>{Object.keys(server.tools).length} tools</span>
-                      <StateBadge tone={capabilityStatusTone(server.authStatus)}>
+                      <StateBadge
+                        tone={capabilityStatusTone(server.authStatus)}
+                      >
                         {server.authStatus}
                       </StateBadge>
                     </div>
@@ -353,6 +358,6 @@ export function CapabilitiesPage() {
           </div>
         </article>
       </section>
-    </div>
+    </PageContainer>
   );
 }

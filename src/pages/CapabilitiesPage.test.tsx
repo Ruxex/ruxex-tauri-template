@@ -133,7 +133,9 @@ describe("CapabilitiesPage", () => {
     );
 
     expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("w-full");
     expect(container.firstElementChild?.className).toContain("max-w-5xl");
+    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(
       screen.getByRole("heading", { name: "Plugins", level: 1 }),
     ).toBeTruthy();

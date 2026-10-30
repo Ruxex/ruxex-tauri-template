@@ -54,7 +54,9 @@ describe("SchedulesPage", () => {
     const { container } = render(<SchedulesPage />);
 
     expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("w-full");
     expect(container.firstElementChild?.className).toContain("max-w-5xl");
+    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     expect(screen.getByText("Last run failed: offline")).toBeTruthy();
     fireEvent.click(

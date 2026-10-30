@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
 import { ErrorState, LoadingState } from "../components/common/AsyncState";
+import { PageContainer } from "../components/layout/PageContainer";
 import { ProjectIcon } from "../components/projects/ProjectIcon";
 import {
   parseProjectMetadata,
@@ -16,7 +17,7 @@ export function ProjectsPage() {
     sortDirection: "asc",
   });
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8">
+    <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-base-300 pb-6">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
@@ -114,6 +115,6 @@ export function ProjectsPage() {
           ) : null}
         </div>
       </section>
-    </div>
+    </PageContainer>
   );
 }

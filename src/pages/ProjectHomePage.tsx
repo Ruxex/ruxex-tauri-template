@@ -20,6 +20,8 @@ import {
   ErrorState,
   LoadingState,
 } from "../components/common/AsyncState";
+import { ThreadCard } from "../components/common/ThreadCard";
+import { PageContainer } from "../components/layout/PageContainer";
 import { ProjectIcon } from "../components/projects/ProjectIcon";
 import { ProjectMetadataFields } from "../components/projects/ProjectMetadataFields";
 import {
@@ -29,7 +31,6 @@ import {
   projectMetadataToRecord,
   type ProjectMetadata,
 } from "../components/projects/project-metadata";
-import { ThreadCard } from "../components/common/ThreadCard";
 
 export function ProjectHomePage() {
   const { projectId = "" } = useParams<{ projectId: string }>();
@@ -138,7 +139,7 @@ export function ProjectHomePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5">
+    <PageContainer>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <span
@@ -243,7 +244,10 @@ export function ProjectHomePage() {
                     type="button"
                     onClick={() => void handleSelectRoot()}
                   >
-                    <FolderIcon aria-hidden="true" className="size-4 shrink-0" />
+                    <FolderIcon
+                      aria-hidden="true"
+                      className="size-4 shrink-0"
+                    />
                     <span
                       className={`min-w-0 flex-1 truncate text-left ${editRoot ? "font-mono text-xs" : "text-base-content/65"}`}
                     >
@@ -367,6 +371,6 @@ export function ProjectHomePage() {
           </div>
         </div>
       </section>
-    </div>
+    </PageContainer>
   );
 }
