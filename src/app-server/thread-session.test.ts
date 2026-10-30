@@ -53,11 +53,17 @@ describe("thread session coordinator", () => {
     expect(requestAppServerMethod).toHaveBeenCalledTimes(2);
   });
 
-  it("does not resume a thread that was just started", async () => {
+  it("skips resume once for a thread that was just started", async () => {
     markThreadStarted("thread-new");
+    requestAppServerMethod.mockResolvedValue({ response: {} });
 
     await expect(ensureThreadResumed("thread-new")).resolves.toBeUndefined();
+    await expect(ensureThreadResumed("thread-new")).resolves.toBeUndefined();
 
-    expect(requestAppServerMethod).not.toHaveBeenCalled();
+    expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/resume", {
+      threadId: "thread-new",
+      excludeTurns: true,
+    });
   });
 });

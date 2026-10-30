@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { v2 } from "../../protocol";
+import { markThreadStarted, resetThreadSessionState } from "../thread-session";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 
@@ -25,6 +26,7 @@ function createWrapper(
 
 describe("turn mutation hooks", () => {
   beforeEach(() => {
+    resetThreadSessionState();
     requestAppServerMethod.mockReset();
     requestAppServerMethod.mockResolvedValue({ response: { ok: true } });
   });
@@ -50,6 +52,37 @@ describe("turn mutation hooks", () => {
       "turn/start",
       params,
     );
+  });
+
+  it("resumes a newly created thread again before its second turn", async () => {
+    markThreadStarted("thread-new");
+    const { useSendMessage } = await import("./useTurns");
+    const params = {
+      threadId: "thread-new",
+      input: [{ type: "text", text: "hello", text_elements: [] }],
+    } as v2.TurnStartParams;
+    const { result } = renderHook(() => useSendMessage(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync(params);
+      await result.current.mutateAsync({ ...params, input: [] });
+    });
+
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
+      1,
+      "turn/start",
+      params,
+    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "thread/resume", {
+      threadId: "thread-new",
+      excludeTurns: true,
+    });
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(3, "turn/start", {
+      ...params,
+      input: [],
+    });
   });
 
   it("interrupts and steers the selected active turn", async () => {
