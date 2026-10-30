@@ -9,7 +9,7 @@ export function AppearancePage() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-semibold">Appearance</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">Appearance</h2>
       <UiPreferencesCard
         colorScheme={preferences.colorScheme}
         onAccentColorChange={(accentColor) =>

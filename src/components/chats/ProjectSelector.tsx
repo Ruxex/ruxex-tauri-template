@@ -24,7 +24,7 @@ export function ProjectSelector({
     <div className="flex min-w-0 flex-wrap items-center gap-2">
       <select
         aria-label="Project"
-        className="select select-bordered select-sm h-8 min-h-8 w-auto max-w-full text-xs"
+        className="select select-bordered select-sm h-8 min-h-8 w-48 max-w-full text-xs"
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         value={value}

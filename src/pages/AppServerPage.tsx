@@ -17,7 +17,7 @@ export function AppServerPage() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-semibold">AppServer</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">AppServer</h2>
       <AppServerCard
         appServerVersion={status.data?.appServerVersion}
         appServerError={daemon.appServerError}

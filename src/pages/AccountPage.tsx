@@ -29,12 +29,8 @@ export function AccountPage() {
   const data = account.data;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-primary">
-          Account
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-3xl space-y-5">
+      <h1 className="text-3xl font-semibold tracking-tight">Account</h1>
       <SettingsPanel title="Account information">
         <dl className="divide-y divide-base-300 text-sm">
           <SettingRow label="Status">

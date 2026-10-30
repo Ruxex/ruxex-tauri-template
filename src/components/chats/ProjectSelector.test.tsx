@@ -28,6 +28,7 @@ describe("ProjectSelector", () => {
     expect(screen.queryByText("Project", { selector: "span" })).toBeNull();
     expect(selector.className).toContain("select-sm");
     expect(selector.className).toContain("min-h-8");
+    expect(selector.className).toContain("w-48");
     expect(screen.getByRole("option", { name: "No project" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
 

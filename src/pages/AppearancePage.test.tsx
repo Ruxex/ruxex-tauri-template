@@ -34,7 +34,9 @@ describe("AppearancePage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: "Appearance" })).toBeTruthy();
+    const heading = screen.getByRole("heading", { name: "Appearance" });
+    expect(heading.className).toContain("text-3xl");
+    expect(heading.className).toContain("tracking-tight");
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     expect(screen.getByLabelText("Theme")).toBeTruthy();

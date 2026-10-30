@@ -34,6 +34,9 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
+    const heading = screen.getByRole("heading", { name: "Account" });
+    expect(heading.className).toContain("text-3xl");
+    expect(heading.className).toContain("tracking-tight");
     expect(screen.getByText("Authenticated").className).toContain(
       "badge-success",
     );
