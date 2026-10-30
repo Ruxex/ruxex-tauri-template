@@ -19,6 +19,9 @@ export function ChatSidebarSections({
   selectedThreadId?: string;
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [expandedProjects, setExpandedProjects] = useState<
+    Record<string, boolean>
+  >({});
   const projects = useProjectList({
     limit: 100,
     sortKey: "position",
@@ -89,15 +92,47 @@ export function ChatSidebarSections({
               </p>
             )}
             {projects.data?.data.map((project) => (
-              <li key={project.id}>
-                <Link
-                  className="truncate"
-                  to={`/projects/${project.id}`}
-                  onClick={onClose}
-                >
-                  <FolderIcon aria-hidden="true" className="size-4" />
-                  {project.name}
-                </Link>
+              <li className="min-w-0" key={project.id}>
+                <div className="flex min-w-0 items-center gap-1">
+                  <button
+                    aria-controls={`project-chats-${project.id}`}
+                    aria-expanded={Boolean(expandedProjects[project.id])}
+                    aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
+                    className="btn btn-ghost btn-xs btn-square shrink-0"
+                    type="button"
+                    onClick={() =>
+                      setExpandedProjects((current) => ({
+                        ...current,
+                        [project.id]: !current[project.id],
+                      }))
+                    }
+                  >
+                    <ChevronRightIcon
+                      aria-hidden="true"
+                      className={`size-4 transition-transform ${expandedProjects[project.id] ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                  <Link
+                    className="flex min-w-0 flex-1 items-center gap-2 truncate"
+                    to={`/projects/${project.id}`}
+                    onClick={onClose}
+                  >
+                    <FolderIcon
+                      aria-hidden="true"
+                      className="size-4 shrink-0"
+                    />
+                    <span className="min-w-0 truncate">{project.name}</span>
+                  </Link>
+                </div>
+                {expandedProjects[project.id] && (
+                  <div className="pl-8" id={`project-chats-${project.id}`}>
+                    <ThreadList
+                      onSelect={onClose}
+                      projectId={project.id}
+                      selectedThreadId={selectedThreadId}
+                    />
+                  </div>
+                )}
               </li>
             ))}
             {!projects.isLoading && !projects.data?.data.length && (

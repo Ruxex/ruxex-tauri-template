@@ -129,4 +129,31 @@ describe("ChatListItem", () => {
 
     expect(screen.getByText("Untitled chat")).toBeTruthy();
   });
+
+  it("truncates long chat titles without moving the status icon", () => {
+    const title =
+      "A very long chat title that should stay inside the sidebar width";
+
+    render(
+      <MemoryRouter>
+        <ChatListItem
+          status="completed"
+          thread={{
+            id: "thread-long-title",
+            name: title,
+            preview: null,
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    const titleElement = screen.getByText(title);
+    expect(titleElement.className).toContain("min-w-0");
+    expect(titleElement.className).toContain("flex-1");
+    expect(titleElement.className).toContain("truncate");
+    expect(
+      screen.getByRole("status", { name: "Chat status: Completed" }),
+    ).toBeTruthy();
+  });
 });

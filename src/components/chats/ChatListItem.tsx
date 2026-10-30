@@ -39,7 +39,7 @@ export function ChatListItem({
     >
       <span className="flex min-w-0 items-center gap-2">
         {status && <ChatStatusIcon status={status} />}
-        <span className="min-w-0 truncate font-medium">{title}</span>
+        <span className="min-w-0 flex-1 truncate font-medium">{title}</span>
       </span>
       {showPreview && thread.preview && thread.preview !== title && (
         <span className="mt-1 block line-clamp-2 text-sm text-base-content/70">
