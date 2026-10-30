@@ -1,10 +1,7 @@
 import { Link } from "react-router-dom";
 
-import {
-  type ChatStatus,
-  chatStatusClassName,
-  chatStatusLabel,
-} from "./chat-status";
+import type { ChatStatus } from "./chat-status";
+import { ChatStatusIcon } from "./ChatStatusIcon";
 
 type ChatListThread = {
   id: string;
@@ -34,31 +31,23 @@ export function ChatListItem({
   onClick,
 }: ChatListItemProps) {
   const title = thread.name || thread.preview || "Untitled chat";
-  const statusLabel = status ? chatStatusLabel(status) : null;
-
   return (
     <Link
-      className={`block min-w-0 rounded-box border border-transparent px-1.5 py-1 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "bg-base-200" : ""}`}
+      className={`block min-w-0 rounded-box border border-transparent px-2 py-1 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "bg-base-200" : ""}`}
       to={`/chat/${thread.id}`}
       onClick={onClick}
     >
-      <span className="block min-w-0 truncate font-medium">{title}</span>
+      <span className="flex min-w-0 items-center gap-2">
+        {status && <ChatStatusIcon status={status} />}
+        <span className="min-w-0 truncate font-medium">{title}</span>
+      </span>
       {showPreview && thread.preview && thread.preview !== title && (
         <span className="mt-1 block line-clamp-2 text-sm text-base-content/70">
           {thread.preview}
         </span>
       )}
-      {(status || projectName || worktreeLabel) && (
+      {(projectName || worktreeLabel) && (
         <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
-          {status && (
-            <span
-              aria-label={`Chat status: ${statusLabel}`}
-              className={`badge badge-sm ${chatStatusClassName(status)}`}
-              role="status"
-            >
-              {statusLabel}
-            </span>
-          )}
           {projectName && <span className="truncate">{projectName}</span>}
           {worktreeLabel && <span className="truncate">{worktreeLabel}</span>}
         </span>
