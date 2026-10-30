@@ -6,6 +6,11 @@ import {
   SettingRow,
   SettingsPanel,
 } from "../components/settings/SettingsCards";
+import { StateBadge } from "../components/common/StateBadge";
+import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 
 export function AccountPage() {
   const account = useAccount();
@@ -33,9 +38,20 @@ export function AccountPage() {
       <SettingsPanel title="Account information">
         <dl className="divide-y divide-base-300 text-sm">
           <SettingRow label="Status">
-            {data?.authStatus === "authenticated"
-              ? "Authenticated"
-              : "Authentication required"}
+            <StateBadge
+              icon={
+                data?.authStatus === "authenticated"
+                  ? CheckCircleIcon
+                  : ExclamationTriangleIcon
+              }
+              tone={
+                data?.authStatus === "authenticated" ? "success" : "warning"
+              }
+            >
+              {data?.authStatus === "authenticated"
+                ? "Authenticated"
+                : "Authentication required"}
+            </StateBadge>
           </SettingRow>
           <SettingRow label="Account type">
             {data?.account?.type ?? "Not signed in"}

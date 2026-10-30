@@ -50,9 +50,6 @@ export function ChatSearchDialog({ onClose, onSelect }: ChatSearchDialogProps) {
         onChange={(event) => setSearchTerm(event.target.value)}
       />
       <div className="mt-3">
-        {!searchTerm.trim() && (
-          <p className="text-xs text-base-content/60">Type to search chats.</p>
-        )}
         {results.isLoading && (
           <span className="loading loading-spinner loading-sm" />
         )}

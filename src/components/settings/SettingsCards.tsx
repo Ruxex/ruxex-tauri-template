@@ -2,12 +2,16 @@ import type { ComponentType, ReactNode, SVGProps } from "react";
 import {
   BellIcon,
   Bars3BottomLeftIcon,
+  CheckCircleIcon,
   CpuChipIcon,
+  ExclamationTriangleIcon,
   GlobeAltIcon,
+  InformationCircleIcon,
   PaintBrushIcon,
   ServerIcon,
   SparklesIcon,
   UserCircleIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import type {
   AppServerDaemonAction,
@@ -28,17 +32,30 @@ import {
   clampUiFontSize,
 } from "../../app/ui-preferences";
 import { formatErrorMessage } from "../../app/error-message";
+import {
+  StateBadge,
+  type StateBadgeTone,
+} from "../common/StateBadge";
 
 export type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
+function appServerStatusTone(status: string): StateBadgeTone {
+  const normalized = status.toLowerCase();
+  if (normalized === "running" || normalized === "connected") {
+    return "success";
+  }
+  if (normalized === "unavailable" || normalized === "failed") {
+    return "error";
+  }
+  return "warning";
+}
+
 export function SettingsPanel({
   title,
-  description,
   icon: Icon,
   children,
 }: {
   title: string;
-  description?: string;
   icon?: SettingsPanelIcon;
   children: ReactNode;
 }) {
@@ -49,9 +66,6 @@ export function SettingsPanel({
           {Icon && <Icon aria-hidden="true" className="size-5 text-primary" />}
           {title}
         </h2>
-        {description && (
-          <p className="mt-1 text-sm text-base-content/70">{description}</p>
-        )}
       </div>
       <div className="divide-y divide-base-300">{children}</div>
     </section>
@@ -100,36 +114,62 @@ export function AppServerCard({
     : appServerReady && appServerError == null
       ? "Daemon mode"
       : "Unavailable";
+  const modeTone: StateBadgeTone = inProcess
+    ? "info"
+    : appServerReady && appServerError == null
+      ? "success"
+      : "error";
+  const daemonStatus = daemon?.status ?? "Unavailable";
 
   return (
-    <SettingsPanel
-      icon={ServerIcon}
-      title="AppServer"
-      description={
-        inProcess
-          ? "The Ruxex AppServer is running in this process."
-          : appServerReady && appServerError == null
-            ? "Control the managed Ruxex AppServer daemon."
-            : "The Ruxex AppServer is unavailable. Retry daemon startup below."
-      }
-    >
+    <SettingsPanel icon={ServerIcon} title="AppServer">
       <dl className="divide-y divide-base-300 text-sm">
-        <SettingRow label="Mode">{modeLabel}</SettingRow>
+        <SettingRow label="Mode">
+          <StateBadge
+            icon={modeTone === "error" ? XCircleIcon : InformationCircleIcon}
+            tone={modeTone}
+          >
+            {modeLabel}
+          </StateBadge>
+        </SettingRow>
         <SettingRow label="Connection">
-          {connected ? "Connected" : "Disconnected"}
+          <StateBadge
+            icon={connected ? CheckCircleIcon : XCircleIcon}
+            tone={connected ? "success" : "error"}
+          >
+            {connected ? "Connected" : "Disconnected"}
+          </StateBadge>
         </SettingRow>
         <SettingRow label="Live state">
-          {resynchronizing ? "Resynchronizing" : "Synchronized"}
+          <StateBadge
+            icon={resynchronizing ? ExclamationTriangleIcon : CheckCircleIcon}
+            tone={resynchronizing ? "warning" : "success"}
+          >
+            {resynchronizing ? "Resynchronizing" : "Synchronized"}
+          </StateBadge>
         </SettingRow>
         <SettingRow label="AppServer version">
           {appServerVersion ?? daemon?.appServerVersion ?? "Unavailable"}
         </SettingRow>
         {inProcess ? (
-          <SettingRow label="Status">Running in this process</SettingRow>
+          <SettingRow label="Status">
+            <StateBadge icon={CheckCircleIcon} tone="success">
+              Running in this process
+            </StateBadge>
+          </SettingRow>
         ) : (
           <>
             <SettingRow label="Status">
-              {daemon?.status ?? "Unavailable"}
+              <StateBadge
+                icon={
+                  appServerStatusTone(daemonStatus) === "success"
+                    ? CheckCircleIcon
+                    : ExclamationTriangleIcon
+                }
+                tone={appServerStatusTone(daemonStatus)}
+              >
+                {daemonStatus}
+              </StateBadge>
             </SettingRow>
             <SettingRow label="PID">{daemon?.pid ?? "Unavailable"}</SettingRow>
             <SettingRow label="Socket">
@@ -190,7 +230,18 @@ export function ProviderAccountCard({
     <SettingsPanel icon={UserCircleIcon} title="Provider and account">
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Provider">{provider}</SettingRow>
-        <SettingRow label="Auth">{authStatus}</SettingRow>
+        <SettingRow label="Auth">
+          <StateBadge
+            icon={
+              authStatus === "authenticated"
+                ? CheckCircleIcon
+                : ExclamationTriangleIcon
+            }
+            tone={authStatus === "authenticated" ? "success" : "warning"}
+          >
+            {authStatus}
+          </StateBadge>
+        </SettingRow>
         <SettingRow label="Account">{account}</SettingRow>
       </dl>
     </SettingsPanel>
@@ -207,11 +258,16 @@ export function CapabilitiesCard({
       <dl className="divide-y divide-base-300 text-sm">
         {Object.entries(capabilities).map(([name, enabled]) => (
           <SettingRow label={name} key={name}>
-            <span
-              className={`${enabled ? "text-success" : "text-base-content/50"} text-right`}
-            >
-              {String(enabled)}
-            </span>
+            {typeof enabled === "boolean" ? (
+              <StateBadge
+                icon={enabled ? CheckCircleIcon : XCircleIcon}
+                tone={enabled ? "success" : "error"}
+              >
+                {enabled ? "Enabled" : "Disabled"}
+              </StateBadge>
+            ) : (
+              <StateBadge tone="info">{String(enabled)}</StateBadge>
+            )}
           </SettingRow>
         ))}
       </dl>
@@ -285,7 +341,6 @@ export function NotificationsCard({
     <SettingsPanel
       icon={BellIcon}
       title="Notifications"
-      description="Control desktop notifications when the app is in the background."
     >
       <div className="text-sm">
         <SettingControlRow
@@ -341,7 +396,6 @@ export function UiPreferencesCard({
     <SettingsPanel
       icon={PaintBrushIcon}
       title="Interface"
-      description="These are local presentation preferences only."
     >
       <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow controlId="settings-color-scheme" label="Color mode">
@@ -394,7 +448,6 @@ export function TypographyCard({
     <SettingsPanel
       icon={Bars3BottomLeftIcon}
       title="Typography"
-      description="Adjust chat content and interface text sizes."
     >
       <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow

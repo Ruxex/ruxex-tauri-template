@@ -1,3 +1,11 @@
+import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+
+import { StateBadge } from "../common/StateBadge";
+
 type BrowserComputerUseCardProps = {
   config: {
     browser_use?: unknown;
@@ -24,12 +32,10 @@ export function BrowserComputerUseCard({
     <article className="card border border-base-300 bg-base-100 shadow-sm">
       <div className="card-body">
         <h2 className="card-title">Browser and Computer Use</h2>
-        <p className="text-sm text-base-content/70">
-          App Server owns execution, approvals, and tool results; this client
-          only presents the capability state and screenshots.
-        </p>
         {disabledByPolicy && (
-          <p className="badge badge-warning">Disabled by policy</p>
+          <StateBadge icon={ExclamationTriangleIcon} tone="warning">
+            Disabled by policy
+          </StateBadge>
         )}
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
           <StatusRow
@@ -47,7 +53,6 @@ export function BrowserComputerUseCard({
     </article>
   );
 }
-
 function StatusRow({
   label,
   available,
@@ -60,10 +65,19 @@ function StatusRow({
   return (
     <div className="rounded-box bg-base-200 p-3">
       <dt className="font-medium">{label}</dt>
-      <dd className="mt-1 text-base-content/70">
-        <span>{available ? "Available" : "Unavailable"}</span>
-        <span> · </span>
-        <span>{configured ? "Configured" : "Not configured"}</span>
+      <dd className="mt-2 flex flex-wrap gap-1.5">
+        <StateBadge
+          icon={available ? CheckCircleIcon : XCircleIcon}
+          tone={available ? "success" : "error"}
+        >
+          {available ? "Available" : "Unavailable"}
+        </StateBadge>
+        <StateBadge
+          icon={configured ? CheckCircleIcon : ExclamationTriangleIcon}
+          tone={configured ? "success" : "warning"}
+        >
+          {configured ? "Configured" : "Not configured"}
+        </StateBadge>
       </dd>
     </div>
   );

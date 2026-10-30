@@ -38,6 +38,12 @@ describe("BrowserComputerUseCard", () => {
 
     expect(screen.getAllByText("Available")).toHaveLength(2);
     expect(screen.getAllByText("Configured")).toHaveLength(2);
-    expect(screen.getByText(/App Server owns execution/)).toBeTruthy();
+    expect(screen.getAllByText("Available")[0].className).toContain(
+      "badge-success",
+    );
+    expect(screen.getAllByText("Configured")[0].className).toContain(
+      "badge-success",
+    );
+    expect(screen.queryByText(/App Server owns execution/)).toBeNull();
   });
 });

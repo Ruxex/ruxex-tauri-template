@@ -33,9 +33,6 @@ export function LoginPage() {
               Account
             </p>
             <h1 className="card-title text-3xl">Log in</h1>
-            <p className="mt-2 text-base-content/70">
-              Connect this local desktop app with an API key.
-            </p>
           </div>
           <label className="form-control">
             <span className="label-text">API key</span>

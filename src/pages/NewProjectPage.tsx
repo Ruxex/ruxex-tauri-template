@@ -84,9 +84,6 @@ export function NewProjectPage() {
             <h1 className="text-3xl font-semibold tracking-tight">
               Create a project
             </h1>
-            <p className="mt-1 text-sm text-base-content/65">
-              Keep related chats and workspace files together.
-            </p>
           </div>
         </div>
       </header>

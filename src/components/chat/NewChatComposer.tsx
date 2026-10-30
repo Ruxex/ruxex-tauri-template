@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
-import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 
 import {
   useCreateThread,
@@ -18,6 +18,7 @@ import {
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
 import { useComposerSelection } from "../conversation/useComposerSelection";
+import { AttachmentPreview } from "../common/AttachmentPreview";
 import { useImageAttachment } from "../common/useImageAttachment";
 
 type NewChatComposerProps = {
@@ -155,21 +156,11 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           type="file"
         />
         {imageFile && (
-          <div className="mt-2 flex items-center gap-2 text-sm text-base-content/70">
-            <span className="min-w-0 truncate">
-              Attached image: {imageFile.name}
-            </span>
-            <button
-              aria-label="Remove image attachment"
-              className="btn btn-ghost btn-xs btn-circle text-error"
-              disabled={isPending}
-              onClick={clearAttachment}
-              title="Remove image attachment"
-              type="button"
-            >
-              <XMarkIcon aria-hidden="true" className="size-4" />
-            </button>
-          </div>
+          <AttachmentPreview
+            disabled={isPending}
+            file={imageFile}
+            onRemove={clearAttachment}
+          />
         )}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">

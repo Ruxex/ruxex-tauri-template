@@ -96,6 +96,9 @@ describe("Composer", () => {
         files: [new File(["png"], "diagram.png", { type: "image/png" })],
       },
     });
+    expect(
+      screen.getByRole("img", { name: "Selected image: diagram.png" }),
+    ).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Explain this" },
     });

@@ -24,6 +24,7 @@ import { ComposerSettings } from "./ComposerSettings";
 import type { SubmissionMode } from "./composer-model";
 import { useComposerSelection } from "./useComposerSelection";
 import { formatErrorMessage } from "../../app/error-message";
+import { AttachmentPreview } from "../common/AttachmentPreview";
 import { useImageAttachment } from "../common/useImageAttachment";
 import {
   useInterruptTurn,
@@ -60,6 +61,7 @@ export function Composer({
   const {
     attachmentError,
     attachmentInput,
+    clearAttachment,
     handleAttachmentChange,
     imageFile,
     readImage,
@@ -217,12 +219,11 @@ export function Composer({
         aria-label="Image attachment"
       />
       {imageFile && (
-        <p
-          className="mt-2 text-sm text-base-content/70"
-          data-testid="selected-image"
-        >
-          Attached image: {imageFile.name}
-        </p>
+        <AttachmentPreview
+          disabled={isPending}
+          file={imageFile}
+          onRemove={clearAttachment}
+        />
       )}
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">

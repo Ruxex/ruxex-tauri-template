@@ -17,6 +17,7 @@ import {
   isRequestActionable,
   type ApprovalDecision,
 } from "./approval-model";
+import { StateBadge } from "../common/StateBadge";
 
 type ServerRequestCardProps = {
   pending: PendingServerRequest;
@@ -113,10 +114,9 @@ export function ServerRequestCard({
             </p>
           )}
           {!connected && (
-            <p className="mt-2 text-sm text-warning">
-              Disconnected. This request will remain pending; reconnect before
-              responding.
-            </p>
+            <div className="mt-2">
+              <StateBadge tone="warning">Disconnected</StateBadge>
+            </div>
           )}
         </div>
         <div className="card-actions justify-end">

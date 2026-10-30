@@ -10,8 +10,36 @@ import {
   useSkillsList,
   useUpgradeMarketplace,
 } from "../app-server/hooks";
+import {
+  StateBadge,
+  type StateBadgeTone,
+} from "../components/common/StateBadge";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
+
+function capabilityStatusTone(value: string | null | undefined): StateBadgeTone {
+  const normalized = value?.toLowerCase().replaceAll("_", "") ?? "";
+  if (
+    [
+      "connected",
+      "running",
+      "ready",
+      "enabled",
+      "installed",
+      "authenticated",
+      "loggedin",
+    ].includes(normalized)
+  ) {
+    return "success";
+  }
+  if (["unavailable", "error", "failed", "disconnected"].includes(normalized)) {
+    return "error";
+  }
+  if (["notloggedin", "unauthenticated"].includes(normalized)) {
+    return "warning";
+  }
+  return "neutral";
+}
 
 export function CapabilitiesPage() {
   const [searchParams] = useSearchParams();
@@ -77,14 +105,18 @@ export function CapabilitiesPage() {
                   <li className="rounded-box bg-base-200 p-3" key={server.name}>
                     <div className="flex justify-between gap-3">
                       <span className="font-medium">{server.name}</span>
-                      <span className="badge badge-ghost">
+                      <StateBadge
+                        tone={capabilityStatusTone(server.runtimeStatus)}
+                      >
                         {server.runtimeStatus ?? "unavailable"}
-                      </span>
+                      </StateBadge>
                     </div>
-                    <p className="mt-1 text-xs text-base-content/60">
-                      {Object.keys(server.tools).length} tools · auth{" "}
-                      {server.authStatus}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                      <span>{Object.keys(server.tools).length} tools</span>
+                      <StateBadge tone={capabilityStatusTone(server.authStatus)}>
+                        {server.authStatus}
+                      </StateBadge>
+                    </div>
                     {server.toolsError && (
                       <p className="mt-1 text-xs text-error">
                         {server.toolsError}
@@ -210,16 +242,27 @@ export function CapabilitiesPage() {
                                     {plugin.interface.shortDescription}
                                   </p>
                                 )}
-                                <p className="mt-1 text-xs text-base-content/60">
-                                  {plugin.interface?.category ??
-                                    "Uncategorized"}{" "}
-                                  ·{" "}
-                                  {plugin.enabled
-                                    ? "enabled"
-                                    : plugin.installed
-                                      ? "installed"
-                                      : "available"}
-                                </p>
+                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                                  <span>
+                                    {plugin.interface?.category ??
+                                      "Uncategorized"}
+                                  </span>
+                                  <StateBadge
+                                    tone={capabilityStatusTone(
+                                      plugin.enabled
+                                        ? "enabled"
+                                        : plugin.installed
+                                          ? "installed"
+                                          : "available",
+                                    )}
+                                  >
+                                    {plugin.enabled
+                                      ? "enabled"
+                                      : plugin.installed
+                                        ? "installed"
+                                        : "available"}
+                                  </StateBadge>
+                                </div>
                               </div>
                               {!plugin.installed && isInstallable && (
                                 <button

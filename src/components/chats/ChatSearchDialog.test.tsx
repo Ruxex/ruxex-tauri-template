@@ -66,7 +66,7 @@ describe("ChatSearchDialog", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Type to search chats.")).toBeTruthy();
+    expect(screen.queryByText("Type to search chats.")).toBeNull();
     useThreadSearch.mockReturnValue({
       data: undefined,
       isError: true,

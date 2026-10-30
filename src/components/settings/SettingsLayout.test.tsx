@@ -39,6 +39,13 @@ describe("settings card layout", () => {
       "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
     );
     expect(statusRow?.querySelector("dd")?.className).toContain("text-right");
+    expect(screen.getByText("Connected").className).toContain("badge-success");
+    expect(screen.getByText("Synchronized").className).toContain(
+      "badge-success",
+    );
+    expect(screen.getByText("Running in this process").className).toContain(
+      "badge-success",
+    );
   });
 
   it("separates rows inside each settings panel", () => {
@@ -164,6 +171,8 @@ describe("settings card layout", () => {
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
+    expect(screen.getByText("Enabled").className).toContain("badge-success");
+    expect(screen.getByText("Disabled").className).toContain("badge-error");
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
   });
@@ -189,6 +198,43 @@ describe("settings card layout", () => {
         within(soundSelect).getAllByRole("option", { name: option.label }),
       ).toHaveLength(1);
     }
+  });
+
+  it("does not render redundant explanatory panel descriptions", () => {
+    render(
+      <>
+        <NotificationsCard
+          enabled
+          onEnabledChange={vi.fn()}
+          onSoundChange={vi.fn()}
+          sound="system"
+        />
+        <UiPreferencesCard
+          onAccentColorChange={vi.fn()}
+          onColorSchemeChange={vi.fn()}
+          colorScheme="system"
+          theme={{ accentColor: "blue" }}
+        />
+        <TypographyCard
+          onChatFontSizeChange={vi.fn()}
+          onUiFontSizeChange={vi.fn()}
+          chatFontSize={16}
+          uiFontSize={16}
+        />
+      </>,
+    );
+
+    expect(
+      screen.queryByText(
+        "Control desktop notifications when the app is in the background.",
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText("These are local presentation preferences only."),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Adjust chat content and interface text sizes."),
+    ).toBeNull();
   });
 
   it("keeps an explicitly supplied icon when the panel title changes", () => {

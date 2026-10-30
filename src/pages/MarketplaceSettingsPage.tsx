@@ -49,9 +49,6 @@ export function MarketplaceSettingsPage() {
     <div className="space-y-5">
       <div>
         <h2 className="text-2xl font-semibold">Plugin marketplaces</h2>
-        <p className="mt-1 text-sm text-base-content/70">
-          Add Git or local marketplace sources managed by the App Server.
-        </p>
       </div>
 
       <section className="card border border-base-300 bg-base-100 shadow-sm">

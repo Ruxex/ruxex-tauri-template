@@ -51,7 +51,6 @@ export function RouteSidebar({
     >
       <SidebarHeader label={panel.label} onClose={onClose} />
       <div className="rounded-box bg-base-200 p-4 text-sm text-base-content/70">
-        <p>Open {panel.label.toLowerCase()} in the workspace.</p>
         <NavLink className="btn btn-primary btn-sm mt-4" to={panel.route}>
           Open {panel.label}
         </NavLink>

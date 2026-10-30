@@ -34,7 +34,9 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Authenticated")).toBeTruthy();
+    expect(screen.getByText("Authenticated").className).toContain(
+      "badge-success",
+    );
     expect(screen.getByText("apiKey")).toBeTruthy();
     expect(
       screen
@@ -80,7 +82,9 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Authentication required")).toBeTruthy();
+    expect(screen.getByText("Authentication required").className).toContain(
+      "badge-warning",
+    );
     expect(
       screen.getByRole("link", { name: "Log in" }).getAttribute("href"),
     ).toBe("/login");

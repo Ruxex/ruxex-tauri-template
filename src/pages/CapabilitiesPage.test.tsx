@@ -141,6 +141,9 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("Official Plugins")).toBeTruthy();
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
+    expect(screen.getAllByText("available")[0].className).toContain(
+      "badge-ghost",
+    );
     expect(screen.getByText("Remote Catalog")).toBeTruthy();
     expect(
       screen.getByText("Remote marketplace plugins cannot be installed here."),

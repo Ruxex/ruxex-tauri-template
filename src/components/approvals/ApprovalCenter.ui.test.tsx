@@ -65,9 +65,9 @@ describe("ApprovalCenter", () => {
 
     render(<ApprovalCenter />);
 
-    expect(
-      screen.getByText("Reconnect before responding to a request."),
-    ).toBeTruthy();
+    expect(screen.getAllByText("Disconnected")[0].className).toContain(
+      "badge-warning",
+    );
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
   });
 

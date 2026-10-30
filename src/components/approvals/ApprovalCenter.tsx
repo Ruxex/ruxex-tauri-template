@@ -8,6 +8,7 @@ import {
   resolveServerRequest,
 } from "../../app-server/api";
 import { useAppServerEvents, useServerRequests } from "../../app-server/hooks";
+import { StateBadge } from "../common/StateBadge";
 import { ServerRequestCard } from "./ServerRequestCard";
 
 export function ApprovalCenter() {
@@ -24,14 +25,11 @@ export function ApprovalCenter() {
           <ShieldCheckIcon aria-hidden="true" className="size-7 text-primary" />
           Approval center
         </h1>
-        <p className="mt-2 text-base-content/70">
-          Requests stay pending until the app-server confirms a response.
-        </p>
       </div>
       {!connected && (
         <div className="alert alert-warning">
           <ExclamationTriangleIcon aria-hidden="true" className="size-5" />
-          Reconnect before responding to a request.
+          <StateBadge tone="warning">Disconnected</StateBadge>
         </div>
       )}
       {!pending.length && (
