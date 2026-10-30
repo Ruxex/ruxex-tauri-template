@@ -143,21 +143,25 @@ export function AppServerCard({
           {formatErrorMessage(error)}
         </p>
       )}
-      <div className="flex justify-end px-5 py-4">
+      <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
         <button
-          className="btn btn-sm"
+          className="btn btn-sm btn-outline"
           type="button"
           onClick={onReconnect}
           disabled={isFetching}
         >
           {isFetching ? "Reconnecting…" : "Reconnect"}
         </button>
-      </div>
-      {showDaemonControls && (
-        <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
-          {(["start", "restart", "stop"] as const).map((action) => (
+        {showDaemonControls &&
+          (
+            [
+              ["start", "btn-success"],
+              ["restart", "btn-warning"],
+              ["stop", "btn-error"],
+            ] as const
+          ).map(([action, variant]) => (
             <button
-              className="btn btn-sm"
+              className={`btn btn-sm ${variant}`}
               disabled={isPending}
               key={action}
               onClick={() => onAction(action)}
@@ -166,8 +170,7 @@ export function AppServerCard({
               {action[0].toUpperCase() + action.slice(1)}
             </button>
           ))}
-        </div>
-      )}
+      </div>
     </SettingsPanel>
   );
 }

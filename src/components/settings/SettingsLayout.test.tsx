@@ -66,6 +66,44 @@ describe("settings card layout", () => {
     );
   });
 
+  it("groups app server controls with distinct semantic variants", () => {
+    render(
+      <AppServerCard
+        appServerReady
+        connected
+        daemon={{
+          status: "running",
+          pid: 123,
+          managedRuxexPath: "/tmp/ruxex",
+          socketPath: "/tmp/app.sock",
+        }}
+        isAvailable
+        isFetching={false}
+        isPending={false}
+        mode="daemon"
+        onAction={vi.fn()}
+        onReconnect={vi.fn()}
+        resynchronizing={false}
+      />,
+    );
+
+    const reconnect = screen.getByRole("button", { name: "Reconnect" });
+    const actionRow = reconnect.parentElement;
+
+    expect(actionRow?.className).toContain("flex-wrap");
+    expect(actionRow?.querySelectorAll("button")).toHaveLength(4);
+    expect(reconnect.className).toContain("btn-outline");
+    expect(screen.getByRole("button", { name: "Start" }).className).toContain(
+      "btn-success",
+    );
+    expect(
+      screen.getByRole("button", { name: "Restart" }).className,
+    ).toContain("btn-warning");
+    expect(screen.getByRole("button", { name: "Stop" }).className).toContain(
+      "btn-error",
+    );
+  });
+
   it("groups runtime summaries into a single panel", () => {
     render(
       <RuntimeSummary
