@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useCreateThread = vi.hoisted(() => vi.fn());
 const useModelList = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
+const useProjectList = vi.hoisted(() => vi.fn());
 const useSetThreadGoal = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 
@@ -20,6 +21,7 @@ vi.mock("../app-server/hooks", () => ({
   useCreateThread,
   useModelList,
   useProject,
+  useProjectList,
   useSetThreadGoal,
   useSendMessage,
 }));
@@ -56,6 +58,16 @@ describe("HomePage", () => {
       },
     });
     useProject.mockReturnValue({ data: undefined });
+    useProjectList.mockReturnValue({
+      data: {
+        data: [
+          { id: "project-1", name: "Project Alpha" },
+          { id: "project-2", name: "Project Beta" },
+        ],
+      },
+      isError: false,
+      isLoading: false,
+    });
     useSetThreadGoal.mockReturnValue({
       error: null,
       isPending: false,
@@ -89,6 +101,17 @@ describe("HomePage", () => {
     expect(screen.getByLabelText("Permission mode")).toBeTruthy();
     expect(screen.getByLabelText("Composer options")).toBeTruthy();
     expect(screen.getByLabelText("Message")).toBeTruthy();
+    const projectSelector = screen.getByLabelText("Project");
+    expect(screen.getByRole("option", { name: "No project" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
+    const composerForm = screen.getByLabelText("Message").closest("form");
+    expect(projectSelector.compareDocumentPosition(composerForm as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(
+      projectSelector.closest("label")?.parentElement?.className,
+    ).toContain("rounded-t-box");
+    expect(composerForm?.className).toContain("rounded-b-box");
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "New chat" })).toBeNull();
   });
@@ -121,6 +144,45 @@ describe("HomePage", () => {
       threadId: "thread-new",
       input: [{ type: "text", text: "Start from home", text_elements: [] }],
       turnTrigger: null,
+    });
+  });
+
+  it("starts a thread with the selected project and its root", async () => {
+    useProject.mockImplementation((selectedProjectId: string) =>
+      selectedProjectId
+        ? {
+            data: {
+              project: { roots: [{ path: "/workspace/project-alpha" }] },
+            },
+          }
+        : { data: undefined },
+    );
+    const { HomePage } = await import("./HomePage");
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Project"), {
+      target: { value: "project-1" },
+    });
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Start in a project" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    const createThread = useCreateThread.mock.results.at(-1)?.value
+      .mutateAsync as ReturnType<typeof vi.fn>;
+    await waitFor(() => expect(createThread).toHaveBeenCalled());
+    expect(createThread).toHaveBeenCalledWith({
+      model: "ruxex",
+      projectId: "project-1",
+      cwd: "/workspace/project-alpha",
+      approvalPolicy: "on-request",
+      sandbox: "workspace-write",
+      config: { model_reasoning_effort: "medium" },
     });
   });
 
@@ -187,5 +249,8 @@ describe("HomePage", () => {
     );
 
     expect(useProject).toHaveBeenLastCalledWith("project-1");
+    expect((screen.getByLabelText("Project") as HTMLSelectElement).value).toBe(
+      "project-1",
+    );
   });
 });

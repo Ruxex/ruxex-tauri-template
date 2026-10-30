@@ -6,6 +6,7 @@ import {
   useCreateThread,
   useModelList,
   useProject,
+  useProjectList,
   useSendMessage,
   useSetThreadGoal,
 } from "../../app-server/hooks";
@@ -18,6 +19,7 @@ import {
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
 import { useComposerSelection } from "../conversation/useComposerSelection";
+import { ProjectSelector } from "../chats/ProjectSelector";
 import { AttachmentPreview } from "../common/AttachmentPreview";
 import { useImageAttachment } from "../common/useImageAttachment";
 
@@ -28,7 +30,9 @@ type NewChatComposerProps = {
 export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const navigate = useNavigate();
   const models = useModelList();
-  const project = useProject(projectId ?? "");
+  const projects = useProjectList();
+  const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
+  const project = useProject(selectedProjectId);
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
   const setGoal = useSetThreadGoal();
@@ -81,7 +85,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
       }[permissionMode];
       const thread = await createThread.mutateAsync({
         ...(model ? { model } : {}),
-        ...(projectId ? { projectId } : {}),
+        ...(selectedProjectId ? { projectId: selectedProjectId } : {}),
         ...(root ? { cwd: root } : {}),
         ...permissionSettings,
         ...(effort ? { config: { model_reasoning_effort: effort } } : {}),
@@ -122,7 +126,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
 
   const isPending =
     createThread.isPending || sendMessage.isPending || setGoal.isPending;
-  const isProjectLoading = Boolean(projectId && project.isLoading);
+  const isProjectLoading = Boolean(selectedProjectId && project.isLoading);
   const error =
     attachmentError ?? createThread.error ?? sendMessage.error ?? setGoal.error;
   const canSubmit =
@@ -135,76 +139,88 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           Let&apos;s get started
         </h1>
       </div>
-      <form
-        className="mx-auto w-full max-w-3xl rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
-        onSubmit={(event) => void handleSubmit(event)}
-      >
-        <textarea
-          aria-label="Message"
-          className="textarea textarea-ghost min-h-24 w-full resize-none"
-          disabled={isPending}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="Ask Ruxex to work on something…"
-          value={message}
-        />
-        <input
-          ref={attachmentInput}
-          accept="image/*"
-          aria-label="Image attachment"
-          className="hidden"
-          onChange={handleAttachmentChange}
-          type="file"
-        />
-        {imageFile && (
-          <AttachmentPreview
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="rounded-t-box border border-base-300 border-b-0 bg-base-100 px-3 pt-3">
+          <ProjectSelector
             disabled={isPending}
-            file={imageFile}
-            onRemove={clearAttachment}
+            isError={projects.isError}
+            isLoading={projects.isLoading}
+            onChange={setSelectedProjectId}
+            projects={projects.data?.data ?? []}
+            value={selectedProjectId}
           />
-        )}
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <ComposerOptions
-              disabled={isPending}
-              goalMode={goalMode}
-              onAttach={() => attachmentInput.current?.click()}
-              onGoalModeChange={() => setGoalMode((value) => !value)}
-              onPlanModeChange={() => setPlanMode((value) => !value)}
-              planMode={planMode}
-            />
-            <PermissionMenu
-              disabled={isPending}
-              mode={permissionMode}
-              onModeChange={setPermissionMode}
-            />
-          </div>
-          <div className="ml-auto flex min-w-0 items-center gap-2">
-            <ComposerSettings
-              disabled={isPending}
-              effort={effort}
-              model={model}
-              models={models.data?.data ?? []}
-              onEffortChange={setEffort}
-              onModelChange={setModel}
-            />
-            <button
-              aria-label={goalMode ? "Set goal" : "Send"}
-              className="btn btn-primary btn-sm"
-              disabled={isPending || isProjectLoading || !canSubmit}
-              title={goalMode ? "Set goal" : "Send"}
-              type="submit"
-            >
-              <PaperAirplaneIcon aria-hidden="true" className="size-4" />
-              {goalMode ? "Set goal" : "Send"}
-            </button>
-          </div>
         </div>
-        {error && (
-          <p className="mt-2 text-sm text-error" role="alert">
-            {formatErrorMessage(error)}
-          </p>
-        )}
-      </form>
+        <form
+          className="rounded-b-box border border-base-300 border-t-0 bg-base-100 p-3 shadow-sm"
+          onSubmit={(event) => void handleSubmit(event)}
+        >
+          <textarea
+            aria-label="Message"
+            className="textarea textarea-ghost min-h-24 w-full resize-none"
+            disabled={isPending}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Ask Ruxex to work on something…"
+            value={message}
+          />
+          <input
+            ref={attachmentInput}
+            accept="image/*"
+            aria-label="Image attachment"
+            className="hidden"
+            onChange={handleAttachmentChange}
+            type="file"
+          />
+          {imageFile && (
+            <AttachmentPreview
+              disabled={isPending}
+              file={imageFile}
+              onRemove={clearAttachment}
+            />
+          )}
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <ComposerOptions
+                disabled={isPending}
+                goalMode={goalMode}
+                onAttach={() => attachmentInput.current?.click()}
+                onGoalModeChange={() => setGoalMode((value) => !value)}
+                onPlanModeChange={() => setPlanMode((value) => !value)}
+                planMode={planMode}
+              />
+              <PermissionMenu
+                disabled={isPending}
+                mode={permissionMode}
+                onModeChange={setPermissionMode}
+              />
+            </div>
+            <div className="ml-auto flex min-w-0 items-center gap-2">
+              <ComposerSettings
+                disabled={isPending}
+                effort={effort}
+                model={model}
+                models={models.data?.data ?? []}
+                onEffortChange={setEffort}
+                onModelChange={setModel}
+              />
+              <button
+                aria-label={goalMode ? "Set goal" : "Send"}
+                className="btn btn-primary btn-sm"
+                disabled={isPending || isProjectLoading || !canSubmit}
+                title={goalMode ? "Set goal" : "Send"}
+                type="submit"
+              >
+                <PaperAirplaneIcon aria-hidden="true" className="size-4" />
+                {goalMode ? "Set goal" : "Send"}
+              </button>
+            </div>
+          </div>
+          {error && (
+            <p className="mt-2 text-sm text-error" role="alert">
+              {formatErrorMessage(error)}
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }
