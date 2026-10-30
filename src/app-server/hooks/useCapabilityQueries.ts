@@ -74,6 +74,11 @@ function usePluginMutation<TParams extends PluginMutationParams, TResponse>(
       void queryClient.invalidateQueries({
         queryKey: appServerQueryKeys.plugins,
       });
+      if (method.startsWith("marketplace/")) {
+        void queryClient.invalidateQueries({
+          queryKey: appServerQueryKeys.configRoot,
+        });
+      }
     },
   });
 }

@@ -4,7 +4,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { MARKETPLACE_PREFERENCES_KEY } from "../app/marketplace-preferences";
+
 const useAddMarketplace = vi.hoisted(() => vi.fn());
+const useConfig = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const useRemoveMarketplace = vi.hoisted(() => vi.fn());
 const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
@@ -29,6 +32,7 @@ const upgradeMarketplace = vi.hoisted(() => ({
 
 vi.mock("../app-server/hooks", () => ({
   useAddMarketplace,
+  useConfig,
   usePluginList,
   useRemoveMarketplace,
   useUpgradeMarketplace,
@@ -38,6 +42,7 @@ describe("MarketplaceSettingsPage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    localStorage.removeItem(MARKETPLACE_PREFERENCES_KEY);
     addMarketplace.mutateAsync.mockReset();
     addMarketplace.mutateAsync.mockResolvedValue({});
     removeMarketplace.mutateAsync.mockReset();
@@ -45,6 +50,20 @@ describe("MarketplaceSettingsPage", () => {
     upgradeMarketplace.mutateAsync.mockReset();
     upgradeMarketplace.mutateAsync.mockResolvedValue({});
     useAddMarketplace.mockReturnValue(addMarketplace);
+    useConfig.mockReturnValue({
+      data: {
+        config: {
+          marketplaces: {
+            community: {
+              source: "https://example.com/community.git",
+              ref: "main",
+              sparse_paths: ["plugins/community"],
+            },
+          },
+        },
+      },
+      isLoading: false,
+    });
     useRemoveMarketplace.mockReturnValue(removeMarketplace);
     useUpgradeMarketplace.mockReturnValue(upgradeMarketplace);
     usePluginList.mockReturnValue({
@@ -126,7 +145,23 @@ describe("MarketplaceSettingsPage", () => {
       </MemoryRouter>,
     );
 
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Plugin marketplaces",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Add marketplace" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Configured marketplaces",
+      }),
+    ).toBeTruthy();
     expect(screen.getByText("Community Plugins")).toBeTruthy();
+    expect(screen.getByText(/1 plugins/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Update community" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove community" }));
 
@@ -136,5 +171,107 @@ describe("MarketplaceSettingsPage", () => {
     expect(removeMarketplace.mutateAsync).toHaveBeenCalledWith({
       marketplaceName: "community",
     });
+  });
+
+  it("disables a configured marketplace after preserving its source settings", async () => {
+    const { MarketplaceSettingsPage } = await import(
+      "./MarketplaceSettingsPage"
+    );
+
+    render(
+      <MemoryRouter>
+        <MarketplaceSettingsPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Disable community" }));
+
+    expect(removeMarketplace.mutateAsync).toHaveBeenCalledWith({
+      marketplaceName: "community",
+    });
+    expect(
+      JSON.parse(localStorage.getItem(MARKETPLACE_PREFERENCES_KEY) ?? "{}"),
+    ).toMatchObject({
+      version: 1,
+      disabled: {
+        community: {
+          source: "https://example.com/community.git",
+          refName: "main",
+          sparsePaths: ["plugins/community"],
+        },
+      },
+    });
+  });
+
+  it("re-enables a disabled marketplace with its saved source settings", async () => {
+    localStorage.setItem(
+      MARKETPLACE_PREFERENCES_KEY,
+      JSON.stringify({
+        version: 1,
+        disabled: {
+          community: {
+            source: "https://example.com/community.git",
+            refName: "main",
+            sparsePaths: ["plugins/community"],
+          },
+        },
+      }),
+    );
+    usePluginList.mockReturnValue({
+      data: { marketplaces: [], marketplaceLoadErrors: [] },
+      isLoading: false,
+      isError: false,
+    });
+
+    const { MarketplaceSettingsPage } = await import(
+      "./MarketplaceSettingsPage"
+    );
+    render(
+      <MemoryRouter>
+        <MarketplaceSettingsPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Enable community" }));
+
+    expect(addMarketplace.mutateAsync).toHaveBeenCalledWith({
+      source: "https://example.com/community.git",
+      refName: "main",
+      sparsePaths: ["plugins/community"],
+    });
+  });
+
+  it("forgets a disabled marketplace locally without calling the server", async () => {
+    localStorage.setItem(
+      MARKETPLACE_PREFERENCES_KEY,
+      JSON.stringify({
+        version: 1,
+        disabled: {
+          community: { source: "https://example.com/community.git" },
+        },
+      }),
+    );
+    usePluginList.mockReturnValue({
+      data: { marketplaces: [], marketplaceLoadErrors: [] },
+      isLoading: false,
+      isError: false,
+    });
+
+    const { MarketplaceSettingsPage } = await import(
+      "./MarketplaceSettingsPage"
+    );
+    render(
+      <MemoryRouter>
+        <MarketplaceSettingsPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Forget community" }));
+
+    expect(
+      JSON.parse(localStorage.getItem(MARKETPLACE_PREFERENCES_KEY) ?? "{}"),
+    ).toMatchObject({ version: 1, disabled: {} });
+    expect(addMarketplace.mutateAsync).not.toHaveBeenCalled();
+    expect(removeMarketplace.mutateAsync).not.toHaveBeenCalled();
   });
 });

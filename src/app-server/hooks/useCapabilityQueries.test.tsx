@@ -160,6 +160,30 @@ describe("capability query and mutation hooks", () => {
     });
   });
 
+  it("invalidates config after marketplace mutations succeed", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { useAddMarketplace } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useAddMarketplace(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () =>
+      result.current.mutateAsync({
+        source: "https://example.com/community.git",
+      }),
+    );
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "config"],
+    });
+  });
+
   it("propagates MCP tool errors without inventing a successful result", async () => {
     requestAppServerMethod.mockRejectedValueOnce(new Error("MCP unavailable"));
     const { useCallMcpTool } = await import("./useCapabilityQueries");
