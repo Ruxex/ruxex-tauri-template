@@ -13,12 +13,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
+const useArchiveThread = vi.hoisted(() => vi.fn());
 const activeThreadListParams = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
   useThreadActivity,
+  useArchiveThread,
   activeThreadListParams,
 }));
 
@@ -55,6 +57,11 @@ describe("ChatSidebarSections", () => {
       status: undefined,
       waitingForRequest: false,
     });
+    const archiveThread = vi.fn();
+    useArchiveThread.mockReturnValue({
+      isPending: false,
+      mutateAsync: archiveThread,
+    });
     const onClose = vi.fn();
     const { ChatSidebarSections } = await import("./ChatSidebarSections");
 
@@ -76,7 +83,10 @@ describe("ChatSidebarSections", () => {
     expect(links[0].getAttribute("href")).toBe("/");
     expect(links[1].getAttribute("href")).toBe("/chat/thread-1");
     expect(links[2].getAttribute("href")).toBe("/projects/project-1");
-    expect(links[1].className).toContain("bg-base-200");
+    expect(links[1].parentElement?.className).toContain("bg-base-200");
+    expect(
+      screen.getByRole("button", { name: "Archive Build the sidebar" }),
+    ).toBeTruthy();
 
     const recentChats = screen
       .getByText("Recent chats")
@@ -111,6 +121,10 @@ describe("ChatSidebarSections", () => {
     onClose.mockClear();
     fireEvent.click(links[0]);
     expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Archive Build the sidebar" }),
+    );
+    expect(archiveThread).toHaveBeenCalledWith({ threadId: "thread-1" });
   });
 
   it("expands each project independently with project-scoped recent chats", async () => {
@@ -180,6 +194,11 @@ describe("ChatSidebarSections", () => {
       status: undefined,
       waitingForRequest: false,
     });
+    const archiveThread = vi.fn();
+    useArchiveThread.mockReturnValue({
+      isPending: false,
+      mutateAsync: archiveThread,
+    });
     const { ChatSidebarSections } = await import("./ChatSidebarSections");
 
     render(
@@ -230,5 +249,7 @@ describe("ChatSidebarSections", () => {
     expect(alphaDisclosure.getAttribute("aria-expanded")).toBe("true");
     expect(betaDisclosure.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByRole("link", { name: "Beta chat" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Archive Beta chat" }));
+    expect(archiveThread).toHaveBeenCalledWith({ threadId: "beta-chat" });
   });
 });

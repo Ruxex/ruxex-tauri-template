@@ -21,11 +21,10 @@ export function ProjectSelector({
   onChange,
 }: ProjectSelectorProps) {
   return (
-    <label className="form-control">
-      <span className="label-text font-medium">Project</span>
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       <select
         aria-label="Project"
-        className="select select-bordered mt-2 min-h-11"
+        className="select select-bordered select-sm h-8 min-h-8 w-auto max-w-full text-xs"
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         value={value}
@@ -43,8 +42,10 @@ export function ProjectSelector({
         </span>
       )}
       {isError && (
-        <span className="mt-1 text-xs text-error">Unable to load projects.</span>
+        <span className="mt-1 text-xs text-error">
+          Unable to load projects.
+        </span>
       )}
-    </label>
+    </div>
   );
 }

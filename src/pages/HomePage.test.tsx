@@ -108,10 +108,14 @@ describe("HomePage", () => {
     expect(projectSelector.compareDocumentPosition(composerForm as Node)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
-    expect(
-      projectSelector.closest("label")?.parentElement?.className,
-    ).toContain("rounded-t-box");
-    expect(composerForm?.className).toContain("rounded-b-box");
+    expect(projectSelector.closest("label")).toBeNull();
+    expect(projectSelector.parentElement?.parentElement?.className).toContain(
+      "mb-1",
+    );
+    expect(projectSelector.parentElement?.parentElement?.className).toContain(
+      "rounded-box",
+    );
+    expect(composerForm?.className).toContain("rounded-box");
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "New chat" })).toBeNull();
   });

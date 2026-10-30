@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
+const useArchiveThread = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const activeThreadListParams = vi.hoisted(() => vi.fn());
 
@@ -20,6 +21,7 @@ vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
   useThreadActivity,
+  useArchiveThread,
   activeThreadListParams,
   usePluginList,
 }));
@@ -60,6 +62,10 @@ describe("ProjectSidebar", () => {
     useThreadActivity.mockReturnValue({
       status: undefined,
       waitingForRequest: false,
+    });
+    useArchiveThread.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
     });
     usePluginList.mockReturnValue({
       data: {
@@ -113,6 +119,11 @@ describe("ProjectSidebar", () => {
     ).toBeTruthy();
     expect(
       within(panel).getByRole("status", { name: "Chat status: Waiting" }),
+    ).toBeTruthy();
+    expect(
+      within(panel).getByRole("button", {
+        name: "Archive Build the sidebar",
+      }),
     ).toBeTruthy();
     expect(within(panel).queryByText("gpt-5")).toBeNull();
     expect(useThreadList).toHaveBeenCalledWith({
@@ -252,8 +263,9 @@ describe("ProjectSidebar", () => {
       name: "Workspace sidebar",
     });
 
-    expect(screen.getByRole("navigation", { name: "Workspace navigation" }))
-      .toBeTruthy();
+    expect(
+      screen.getByRole("navigation", { name: "Workspace navigation" }),
+    ).toBeTruthy();
     expect(
       screen.queryByRole("complementary", { name: "Chat sidebar" }),
     ).toBeNull();

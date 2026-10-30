@@ -1,5 +1,6 @@
 import {
   activeThreadListParams,
+  useArchiveThread,
   useThreadActivity,
   useThreadList,
 } from "../../app-server/hooks";
@@ -31,6 +32,7 @@ export function ThreadList({
   const threads = useThreadList(
     projectId ? projectThreadListParams(projectId) : activeThreadListParams(),
   );
+  const archiveThread = useArchiveThread();
   if (threads.isLoading) {
     return <span className="loading loading-spinner loading-sm" />;
   }
@@ -47,6 +49,10 @@ export function ThreadList({
         <ThreadListRow
           key={thread.id}
           onClick={onSelect}
+          onArchive={() =>
+            void archiveThread.mutateAsync({ threadId: thread.id })
+          }
+          isArchiving={archiveThread.isPending}
           selected={selectedThreadId === thread.id}
           thread={thread}
         />
@@ -59,10 +65,14 @@ function ThreadListRow({
   thread,
   selected,
   onClick,
+  onArchive,
+  isArchiving,
 }: {
   thread: ThreadListThread;
   selected: boolean;
   onClick?: () => void;
+  onArchive: () => void;
+  isArchiving: boolean;
 }) {
   const activity = useThreadActivity(thread.id);
 
@@ -77,6 +87,8 @@ function ThreadListRow({
         )}
         thread={thread}
         onClick={onClick}
+        onArchive={onArchive}
+        isArchiving={isArchiving}
       />
     </li>
   );

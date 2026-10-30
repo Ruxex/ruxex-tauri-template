@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProjectSelector } from "./ProjectSelector";
 
 describe("ProjectSelector", () => {
+  afterEach(cleanup);
+
   it("allows no project or one of the available projects", () => {
     const onChange = vi.fn();
 
@@ -23,10 +25,11 @@ describe("ProjectSelector", () => {
     );
 
     const selector = screen.getByLabelText("Project");
+    expect(screen.queryByText("Project", { selector: "span" })).toBeNull();
+    expect(selector.className).toContain("select-sm");
+    expect(selector.className).toContain("min-h-8");
     expect(screen.getByRole("option", { name: "No project" })).toBeTruthy();
-    expect(
-      screen.getByRole("option", { name: "Project Alpha" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
 
     fireEvent.change(selector, { target: { value: "project-2" } });
 
@@ -57,5 +60,20 @@ describe("ProjectSelector", () => {
     );
 
     expect(screen.getByText("Unable to load projects.")).toBeTruthy();
+  });
+
+  it("keeps the selector compact without a label", () => {
+    render(
+      <ProjectSelector
+        isError={false}
+        isLoading={false}
+        onChange={vi.fn()}
+        projects={[]}
+        value=""
+      />,
+    );
+
+    expect(screen.queryByText("Project", { selector: "span" })).toBeNull();
+    expect(screen.getByLabelText("Project").className).toContain("select-sm");
   });
 });

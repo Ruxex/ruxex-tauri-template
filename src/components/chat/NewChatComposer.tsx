@@ -140,7 +140,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         </h1>
       </div>
       <div className="mx-auto w-full max-w-3xl">
-        <div className="rounded-t-box border border-base-300 border-b-0 bg-base-100 px-3 pt-3">
+        <div className="mb-1 rounded-box border border-base-300 bg-base-100 px-2 py-1.5">
           <ProjectSelector
             disabled={isPending}
             isError={projects.isError}
@@ -151,7 +151,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           />
         </div>
         <form
-          className="rounded-b-box border border-base-300 border-t-0 bg-base-100 p-3 shadow-sm"
+          className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
           onSubmit={(event) => void handleSubmit(event)}
         >
           <textarea
