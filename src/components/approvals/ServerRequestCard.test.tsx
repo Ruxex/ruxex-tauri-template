@@ -61,9 +61,12 @@ describe("ServerRequestCard", () => {
       />,
     );
 
-    expect(screen.getByText("Disconnected").className).toContain(
-      "badge-warning",
-    );
+    expect(
+      screen
+        .getByText("Disconnected")
+        .querySelector("svg")
+        ?.getAttribute("class"),
+    ).toContain("text-warning");
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Deny" })).toBeNull();
   });

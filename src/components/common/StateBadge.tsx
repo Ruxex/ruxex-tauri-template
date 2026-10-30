@@ -1,4 +1,10 @@
 import type { ComponentType, ReactNode, SVGProps } from "react";
+import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 
 export type StateBadgeTone =
   | "success"
@@ -7,12 +13,23 @@ export type StateBadgeTone =
   | "info"
   | "neutral";
 
-const toneClasses: Record<StateBadgeTone, string> = {
-  success: "badge-outline badge-success",
-  warning: "badge-outline badge-warning",
-  error: "badge-outline badge-error",
-  info: "badge-outline badge-info",
-  neutral: "badge-outline badge-neutral",
+const iconToneClasses: Record<StateBadgeTone, string> = {
+  success: "text-success",
+  warning: "text-warning",
+  error: "text-error",
+  info: "text-info",
+  neutral: "text-base-content/60",
+};
+
+const defaultIcons: Record<
+  StateBadgeTone,
+  ComponentType<SVGProps<SVGSVGElement>>
+> = {
+  success: CheckCircleIcon,
+  warning: ExclamationTriangleIcon,
+  error: XCircleIcon,
+  info: InformationCircleIcon,
+  neutral: InformationCircleIcon,
 };
 
 export function StateBadge({
@@ -24,9 +41,14 @@ export function StateBadge({
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   tone: StateBadgeTone;
 }) {
+  const BadgeIcon = Icon ?? defaultIcons[tone];
+
   return (
-    <span className={`badge gap-1 ${toneClasses[tone]}`} role="status">
-      {Icon && <Icon aria-hidden="true" className="size-3.5" />}
+    <span className="inline-flex items-center gap-1 text-sm" role="status">
+      <BadgeIcon
+        aria-hidden="true"
+        className={`size-3.5 shrink-0 ${iconToneClasses[tone]}`}
+      />
       {children}
     </span>
   );

@@ -39,13 +39,21 @@ describe("settings card layout", () => {
       "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
     );
     expect(statusRow?.querySelector("dd")?.className).toContain("text-right");
-    expect(screen.getByText("Connected").className).toContain("badge-success");
-    expect(screen.getByText("Synchronized").className).toContain(
-      "badge-success",
-    );
-    expect(screen.getByText("Running in this process").className).toContain(
-      "badge-success",
-    );
+    expect(
+      screen.getByText("Connected").querySelector("svg")?.getAttribute("class"),
+    ).toContain("text-success");
+    expect(
+      screen
+        .getByText("Synchronized")
+        .querySelector("svg")
+        ?.getAttribute("class"),
+    ).toContain("text-success");
+    expect(
+      screen
+        .getByText("Running in this process")
+        .querySelector("svg")
+        ?.getAttribute("class"),
+    ).toContain("text-success");
   });
 
   it("separates rows inside each settings panel", () => {
@@ -103,9 +111,9 @@ describe("settings card layout", () => {
     expect(screen.getByRole("button", { name: "Start" }).className).toContain(
       "btn-success",
     );
-    expect(
-      screen.getByRole("button", { name: "Restart" }).className,
-    ).toContain("btn-warning");
+    expect(screen.getByRole("button", { name: "Restart" }).className).toContain(
+      "btn-warning",
+    );
     expect(screen.getByRole("button", { name: "Stop" }).className).toContain(
       "btn-error",
     );
@@ -175,12 +183,12 @@ describe("settings card layout", () => {
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.getByRole("status", { name: "Enabled" })).toBeTruthy();
     expect(screen.getByRole("status", { name: "Disabled" })).toBeTruthy();
-    expect(screen.getByRole("status", { name: "Enabled" }).className).not.toContain(
-      "badge",
-    );
-    expect(screen.getByRole("status", { name: "Disabled" }).className).not.toContain(
-      "badge",
-    );
+    expect(
+      screen.getByRole("status", { name: "Enabled" }).className,
+    ).not.toContain("badge");
+    expect(
+      screen.getByRole("status", { name: "Disabled" }).className,
+    ).not.toContain("badge");
     expect(screen.getByText("Unsupported").className).not.toContain("badge");
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();

@@ -37,9 +37,12 @@ describe("AccountPage", () => {
     const heading = screen.getByRole("heading", { name: "Account" });
     expect(heading.className).toContain("text-3xl");
     expect(heading.className).toContain("tracking-tight");
-    expect(screen.getByText("Authenticated").className).toContain(
-      "badge-success",
-    );
+    expect(
+      screen
+        .getByText("Authenticated")
+        .querySelector("svg")
+        ?.getAttribute("class"),
+    ).toContain("text-success");
     expect(screen.getByText("apiKey")).toBeTruthy();
     expect(
       screen
@@ -85,9 +88,12 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Authentication required").className).toContain(
-      "badge-warning",
-    );
+    expect(
+      screen
+        .getByText("Authentication required")
+        .querySelector("svg")
+        ?.getAttribute("class"),
+    ).toContain("text-warning");
     expect(
       screen.getByRole("link", { name: "Log in" }).getAttribute("href"),
     ).toBe("/login");

@@ -65,9 +65,12 @@ describe("ApprovalCenter", () => {
 
     render(<ApprovalCenter />);
 
-    expect(screen.getAllByText("Disconnected")[0].className).toContain(
-      "badge-warning",
-    );
+    expect(
+      screen
+        .getAllByText("Disconnected")[0]
+        .querySelector("svg")
+        ?.getAttribute("class"),
+    ).toContain("text-warning");
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
   });
 

@@ -247,6 +247,25 @@ describe("SettingsSidebar AppServer navigation", () => {
     ).toBe("/settings/app-server");
   });
 
+  it("groups settings navigation into personal and system sections", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <SettingsSidebar onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Personal" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "System" })).toBeTruthy();
+    expect(screen.getByRole("separator")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "General" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Appearance" })).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Plugin marketplaces" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Models / Engines" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Runtime" })).toBeTruthy();
+  });
+
   it("links to the plugin marketplace settings section", () => {
     render(
       <MemoryRouter initialEntries={["/settings"]}>
