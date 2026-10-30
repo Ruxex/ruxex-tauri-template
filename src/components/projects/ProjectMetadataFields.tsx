@@ -15,15 +15,22 @@ type ProjectMetadataFieldsProps = {
 
 type OpenSelector = "icon" | "color" | null;
 
-const PROJECT_COLOR_SWATCH_CLASSES: Record<
-  ProjectMetadata["color"],
-  string
-> = {
+const PROJECT_COLOR_SWATCH_CLASSES: Record<ProjectMetadata["color"], string> = {
   blue: "bg-blue-500",
+  indigo: "bg-indigo-500",
   violet: "bg-violet-500",
-  green: "bg-green-500",
-  orange: "bg-orange-500",
+  fuchsia: "bg-fuchsia-500",
+  pink: "bg-pink-500",
+  red: "bg-red-500",
   rose: "bg-rose-500",
+  orange: "bg-orange-500",
+  amber: "bg-amber-500",
+  yellow: "bg-yellow-500",
+  lime: "bg-lime-500",
+  green: "bg-green-500",
+  emerald: "bg-emerald-500",
+  teal: "bg-teal-500",
+  cyan: "bg-cyan-500",
   slate: "bg-slate-500",
 };
 
@@ -73,19 +80,16 @@ export function ProjectMetadataFields({
   return (
     <div ref={rootRef} className="grid gap-3 sm:grid-cols-2">
       <div className="form-control w-full">
-        <span className="label-text text-sm font-medium">Icon</span>
-        <div className="relative mt-1">
+        <div className="relative">
           <button
             aria-expanded={openSelector === "icon"}
             aria-haspopup="menu"
             aria-label={`Project icon: ${selectedIcon.label}`}
-            className="btn btn-outline min-h-11 w-full justify-between gap-2 font-normal"
+            className="btn btn-outline min-h-11 w-full justify-center gap-2 font-normal"
             ref={iconTriggerRef}
             type="button"
             onClick={() =>
-              setOpenSelector((current) =>
-                current === "icon" ? null : "icon",
-              )
+              setOpenSelector((current) => (current === "icon" ? null : "icon"))
             }
           >
             <span className="flex min-w-0 items-center gap-2">
@@ -94,7 +98,6 @@ export function ProjectMetadataFields({
                 className="size-5 shrink-0"
                 icon={selectedIcon.value}
               />
-              <span className="truncate">{selectedIcon.label}</span>
             </span>
             <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
           </button>
@@ -133,13 +136,12 @@ export function ProjectMetadataFields({
       </div>
 
       <div className="form-control w-full">
-        <span className="label-text text-sm font-medium">Color</span>
-        <div className="relative mt-1">
+        <div className="relative">
           <button
             aria-expanded={openSelector === "color"}
             aria-haspopup="menu"
             aria-label={`Project color: ${selectedColor.label}`}
-            className="btn btn-outline min-h-11 w-full justify-between gap-2 font-normal"
+            className="btn btn-outline min-h-11 w-full justify-center gap-2 font-normal"
             ref={colorTriggerRef}
             type="button"
             onClick={() =>
@@ -153,22 +155,23 @@ export function ProjectMetadataFields({
                 aria-hidden="true"
                 className={`size-3 shrink-0 rounded-full ${PROJECT_COLOR_SWATCH_CLASSES[selectedColor.value]}`}
               />
-              <span className="truncate">{selectedColor.label}</span>
             </span>
             <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
           </button>
           {openSelector === "color" && (
             <fieldset
               aria-label="Project color options"
-              className="absolute z-20 mt-2 grid w-full gap-1 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
+              className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
             >
               {PROJECT_COLOR_OPTIONS.map((option) => {
                 const selected = value.color === option.value;
                 return (
                   <button
+                    aria-label={option.label}
                     aria-pressed={selected}
-                    className={`btn btn-ghost min-h-10 justify-start gap-3 font-normal ${selected ? "bg-base-200" : ""}`}
+                    className={`btn btn-square ${selected ? "bg-base-200 ring-2 ring-primary" : "btn-ghost"}`}
                     key={option.value}
+                    title={option.label}
                     type="button"
                     onClick={() => {
                       onChange({ ...value, color: option.value });
@@ -180,7 +183,6 @@ export function ProjectMetadataFields({
                       aria-hidden="true"
                       className={`size-3 shrink-0 rounded-full ${PROJECT_COLOR_SWATCH_CLASSES[option.value]}`}
                     />
-                    <span>{option.label}</span>
                   </button>
                 );
               })}

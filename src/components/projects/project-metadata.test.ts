@@ -2,11 +2,22 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_PROJECT_METADATA,
+  PROJECT_COLOR_OPTIONS,
+  PROJECT_ICON_OPTIONS,
   parseProjectMetadata,
   projectMetadataToRecord,
 } from "./project-metadata";
 
 describe("project metadata", () => {
+  it("offers sixteen icon and color values", () => {
+    expect(PROJECT_ICON_OPTIONS).toHaveLength(16);
+    expect(PROJECT_COLOR_OPTIONS).toHaveLength(16);
+    expect(parseProjectMetadata({ icon: "rocket", color: "cyan" })).toEqual({
+      icon: "rocket",
+      color: "cyan",
+    });
+  });
+
   it("parses the GUI project identity contract", () => {
     expect(
       parseProjectMetadata({

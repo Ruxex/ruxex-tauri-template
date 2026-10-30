@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_PROJECT_METADATA } from "./project-metadata";
@@ -31,6 +37,37 @@ describe("ProjectMetadataFields", () => {
     expect(
       screen.queryByRole("group", { name: "Project color options" }),
     ).toBeNull();
+    expect(screen.queryByText("Icon")).toBeNull();
+    expect(screen.queryByText("Color")).toBeNull();
+  });
+
+  it("renders sixteen icon and color choices in four-column grids", () => {
+    render(
+      <ProjectMetadataFields
+        value={DEFAULT_PROJECT_METADATA}
+        onChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+    );
+    const iconOptions = screen.getByRole("group", {
+      name: "Project icon options",
+    });
+    expect(within(iconOptions).getAllByRole("button")).toHaveLength(16);
+    expect(iconOptions.className).toContain("grid-cols-4");
+    expect(screen.queryByText("Folder")).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    );
+    const colorOptions = screen.getByRole("group", {
+      name: "Project color options",
+    });
+    expect(within(colorOptions).getAllByRole("button")).toHaveLength(16);
+    expect(colorOptions.className).toContain("grid-cols-4");
+    expect(screen.queryByText("Blue")).toBeNull();
   });
 
   it("opens one selector at a time", () => {
