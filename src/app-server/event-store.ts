@@ -7,6 +7,7 @@ import {
   type EventState,
   pruneIdleThreadStates,
   reduceAppServerEvent,
+  type ThreadExecutionState,
 } from "./event-reducer";
 import { listenToAppServerEvents } from "./events";
 import { isDesktopRuntime } from "./runtime";
@@ -20,6 +21,7 @@ let starting: Promise<void> | undefined;
 let lifecycleGeneration = 0;
 let pruneTimer: ReturnType<typeof setInterval> | undefined;
 const retainedThreadIds = new Set<string>();
+const threadActivitySnapshots = new Map<string, ThreadActivitySnapshot>();
 
 const EVENT_STATE_PRUNE_INTERVAL_MS = 60_000;
 
@@ -85,6 +87,7 @@ export function stopAppServerEventStore(): void {
     pruneTimer = undefined;
   }
   retainedThreadIds.clear();
+  threadActivitySnapshots.clear();
   unlisten?.();
   unlisten = undefined;
   snapshot = { ...createInitialEventState(), connected: false };
@@ -109,6 +112,44 @@ export function useAppServerEventStore(): EventSnapshot {
     () => snapshot,
     () => createInitialEventState(),
   );
+}
+
+export type ThreadActivitySnapshot = {
+  status: ThreadExecutionState["status"] | undefined;
+  waitingForRequest: boolean;
+};
+
+const EMPTY_THREAD_ACTIVITY_SNAPSHOT: ThreadActivitySnapshot = {
+  status: undefined,
+  waitingForRequest: false,
+};
+
+export function useThreadActivity(threadId: string): ThreadActivitySnapshot {
+  return useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    () => getThreadActivitySnapshot(threadId),
+    () => EMPTY_THREAD_ACTIVITY_SNAPSHOT,
+  );
+}
+
+function getThreadActivitySnapshot(threadId: string): ThreadActivitySnapshot {
+  const status = snapshot.threads[threadId]?.status;
+  const waitingForRequest = Object.values(snapshot.pendingServerRequests).some(
+    (request) => request.threadId === threadId,
+  );
+  const previous = threadActivitySnapshots.get(threadId);
+  if (
+    previous?.status === status &&
+    previous?.waitingForRequest === waitingForRequest
+  ) {
+    return previous;
+  }
+  const next = { status, waitingForRequest };
+  threadActivitySnapshots.set(threadId, next);
+  return next;
 }
 
 function startPruneTimer(): void {

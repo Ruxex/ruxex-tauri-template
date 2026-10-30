@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import type {
   LiveConversationItem,
   PendingServerRequest,
@@ -6,7 +8,10 @@ import type {
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
 import { ActivityItem } from "../conversation/ActivityItem";
 import { ConversationItem } from "../conversation/ConversationItem";
-import type { ConversationViewItem } from "../conversation/conversation-model";
+import {
+  areConversationViewItemsEqual,
+  type ConversationViewItem,
+} from "../conversation/conversation-model";
 import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 
 type ChatActivityTimelineProps = {
@@ -29,7 +34,7 @@ type ChatActivityTimelineProps = {
   pendingRequests: PendingServerRequest[];
 };
 
-export function ChatActivityTimeline({
+export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   connected,
   items,
   liveItems,
@@ -77,5 +82,80 @@ export function ChatActivityTimeline({
         </p>
       )}
     </section>
+  );
+}, areChatActivityTimelinePropsEqual);
+
+function areChatActivityTimelinePropsEqual(
+  left: ChatActivityTimelineProps,
+  right: ChatActivityTimelineProps,
+): boolean {
+  return (
+    left.connected === right.connected &&
+    left.liveStatus === right.liveStatus &&
+    left.onEdit === right.onEdit &&
+    left.onReject === right.onReject &&
+    left.onResolve === right.onResolve &&
+    areConversationItemsEqual(left.items, right.items) &&
+    areLiveItemsEqual(left.liveItems, right.liveItems) &&
+    arePendingRequestsEqual(left.pendingRequests, right.pendingRequests)
+  );
+}
+
+function areConversationItemsEqual(
+  left: ConversationViewItem[],
+  right: ConversationViewItem[],
+): boolean {
+  return (
+    left === right ||
+    (left.length === right.length &&
+      left.every((item, index) => {
+        const other = right[index];
+        return (
+          other !== undefined && areConversationViewItemsEqual(item, other)
+        );
+      }))
+  );
+}
+
+function areLiveItemsEqual(
+  left: LiveConversationItem[],
+  right: LiveConversationItem[],
+): boolean {
+  return (
+    left === right ||
+    (left.length === right.length &&
+      left.every((item, index) => {
+        const other = right[index];
+        return (
+          other !== undefined &&
+          item.id === other.id &&
+          item.threadId === other.threadId &&
+          item.turnId === other.turnId &&
+          item.type === other.type &&
+          item.text === other.text &&
+          item.raw === other.raw
+        );
+      }))
+  );
+}
+
+function arePendingRequestsEqual(
+  left: PendingServerRequest[],
+  right: PendingServerRequest[],
+): boolean {
+  return (
+    left === right ||
+    (left.length === right.length &&
+      left.every((request, index) => {
+        const other = right[index];
+        return (
+          other !== undefined &&
+          request.requestId === other.requestId &&
+          request.threadId === other.threadId &&
+          request.turnId === other.turnId &&
+          request.itemId === other.itemId &&
+          request.request === other.request
+        );
+      }))
   );
 }

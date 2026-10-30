@@ -19,6 +19,26 @@ export type ConversationViewItem = {
   timestamp?: number | null;
 };
 
+export function areConversationViewItemsEqual(
+  left: ConversationViewItem,
+  right: ConversationViewItem,
+): boolean {
+  return (
+    left.id === right.id &&
+    left.turnId === right.turnId &&
+    left.type === right.type &&
+    left.text === right.text &&
+    left.category === right.category &&
+    left.title === right.title &&
+    left.imagePath === right.imagePath &&
+    left.browserUrl === right.browserUrl &&
+    left.editable === right.editable &&
+    left.timestamp === right.timestamp &&
+    areStringArraysEqual(left.imageUrls, right.imageUrls) &&
+    areStringRecordsEqual(left.metadata, right.metadata)
+  );
+}
+
 export function mergeConversationItems(
   authoritative: v2.ThreadItemsListResponse["data"],
   live: LiveConversationItem[],
@@ -349,4 +369,37 @@ function findHttpUrl(value: unknown): string | undefined {
       .find((url): url is string => Boolean(url));
   }
   return undefined;
+}
+
+function areStringArraysEqual(
+  left: string[] | undefined,
+  right: string[] | undefined,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+  return Boolean(
+    left &&
+      right &&
+      left.length === right.length &&
+      left.every((value, index) => value === right[index]),
+  );
+}
+
+function areStringRecordsEqual(
+  left: Record<string, string> | undefined,
+  right: Record<string, string> | undefined,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (!left || !right) {
+    return false;
+  }
+  const leftEntries = Object.entries(left);
+  const rightEntries = Object.entries(right);
+  return (
+    leftEntries.length === rightEntries.length &&
+    leftEntries.every(([key, value]) => right[key] === value)
+  );
 }

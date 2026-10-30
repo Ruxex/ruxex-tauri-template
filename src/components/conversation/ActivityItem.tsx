@@ -1,4 +1,4 @@
-import type { ComponentType, SVGProps } from "react";
+import { memo, type ComponentType, type SVGProps } from "react";
 
 import {
   ArrowPathIcon,
@@ -13,7 +13,10 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 
-import type { ConversationViewItem } from "./conversation-model";
+import {
+  areConversationViewItemsEqual,
+  type ConversationViewItem,
+} from "./conversation-model";
 import { CommandExecutionView } from "./CommandExecutionView";
 import { ImageView } from "./ImageView";
 import { MarkdownContent } from "./MarkdownContent";
@@ -42,7 +45,11 @@ const fallbackPresentation: ActivityPresentation = {
   label: "Activity",
 };
 
-export function ActivityItem({ item }: { item: ConversationViewItem }) {
+type ActivityItemProps = { item: ConversationViewItem };
+
+export const ActivityItem = memo(function ActivityItem({
+  item,
+}: ActivityItemProps) {
   const presentation = activityPresentations[item.type] ?? fallbackPresentation;
   const isInProgress =
     item.metadata?.status === "inProgress" ||
@@ -121,4 +128,4 @@ export function ActivityItem({ item }: { item: ConversationViewItem }) {
       </div>
     </details>
   );
-}
+}, (left, right) => areConversationViewItemsEqual(left.item, right.item));

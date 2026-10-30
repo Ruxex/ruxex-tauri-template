@@ -180,13 +180,16 @@ export type ThreadConversationOptions = {
   items?: Omit<v2.ThreadItemsListParams, "threadId">;
 };
 
+const EMPTY_TURNS_PARAMS: NonNullable<ThreadConversationOptions["turns"]> = {};
+const EMPTY_ITEMS_PARAMS: NonNullable<ThreadConversationOptions["items"]> = {};
+
 export function useThreadConversation(
   threadId: string,
   options: ThreadConversationOptions = {},
 ) {
   const status = useAppServerStatus();
-  const turns = options.turns ?? {};
-  const items = options.items ?? {};
+  const turns = options.turns ?? EMPTY_TURNS_PARAMS;
+  const items = options.items ?? EMPTY_ITEMS_PARAMS;
   const enabled = Boolean(status.data && threadId);
   const threadQuery = useQuery({
     queryKey: [
@@ -226,14 +229,6 @@ export function useThreadConversation(
     },
     enabled,
   });
-  const refetch = useCallback(async () => {
-    await Promise.all([
-      threadQuery.refetch(),
-      turnsQuery.refetch(),
-      itemsQuery.refetch(),
-    ]);
-  }, [threadQuery.refetch, turnsQuery.refetch, itemsQuery.refetch]);
-
   const data: ThreadConversation | undefined =
     threadQuery.data && turnsQuery.data && itemsQuery.data
       ? {
@@ -242,6 +237,13 @@ export function useThreadConversation(
           items: itemsQuery.data,
         }
       : undefined;
+  const resync = useCallback(async () => {
+    await Promise.all([
+      threadQuery.refetch(),
+      turnsQuery.refetch(),
+      itemsQuery.refetch(),
+    ]);
+  }, [itemsQuery.refetch, threadQuery.refetch, turnsQuery.refetch]);
 
   return {
     data,
@@ -253,6 +255,6 @@ export function useThreadConversation(
       threadQuery.isLoading || turnsQuery.isLoading || itemsQuery.isLoading,
     isSuccess:
       threadQuery.isSuccess && turnsQuery.isSuccess && itemsQuery.isSuccess,
-    refetch,
+    resync,
   };
 }

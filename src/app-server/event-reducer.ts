@@ -220,7 +220,7 @@ function reduceNotification(
           ...thread,
           activeTurnId: turn.id,
           status: "running",
-          items: [],
+          items: thread.items,
           completedTurn: null,
         }),
         activityAt,

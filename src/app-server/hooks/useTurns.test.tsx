@@ -142,7 +142,7 @@ describe("turn mutation hooks", () => {
     });
   });
 
-  it("only invalidates the thread list after a turn is accepted", async () => {
+  it("does not invalidate the thread list after a turn is accepted", async () => {
     const { useSendMessage } = await import("./useTurns");
     const client = new QueryClient({
       defaultOptions: {
@@ -162,12 +162,7 @@ describe("turn mutation hooks", () => {
       } as v2.TurnStartParams),
     );
 
-    expect(invalidateQueries).not.toHaveBeenCalledWith({
-      queryKey: ["app-server", "thread", "thread-1", "conversation"],
-    });
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["app-server", "threads"],
-    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("surfaces an app-server failure without invalidating cached thread data", async () => {

@@ -10,15 +10,11 @@ import {
 import { ensureThreadResumed } from "../thread-session";
 
 export function useSendMessage() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: v2.TurnStartParams) => {
       await ensureThreadResumed(params.threadId);
       const response = await requestAppServerMethod("turn/start", params);
       return response.response;
-    },
-    onSuccess: () => {
-      invalidateThreadList(queryClient);
     },
   });
 }

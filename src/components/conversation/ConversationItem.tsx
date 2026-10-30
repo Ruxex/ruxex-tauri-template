@@ -1,7 +1,10 @@
 import { ClipboardDocumentIcon, PencilIcon } from "@heroicons/react/24/outline";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, memo, useState } from "react";
 
-import type { ConversationViewItem } from "./conversation-model";
+import {
+  areConversationViewItemsEqual,
+  type ConversationViewItem,
+} from "./conversation-model";
 import { MarkdownContent } from "./MarkdownContent";
 
 type ConversationItemProps = {
@@ -12,7 +15,10 @@ type ConversationItemProps = {
   ) => void | Promise<void>;
 };
 
-export function ConversationItem({ item, onEdit }: ConversationItemProps) {
+export const ConversationItem = memo(function ConversationItem({
+  item,
+  onEdit,
+}: ConversationItemProps) {
   const isUser = item.type === "userMessage";
   const canEdit =
     isUser &&
@@ -98,7 +104,7 @@ export function ConversationItem({ item, onEdit }: ConversationItemProps) {
       {isUser && (
         <fieldset
           aria-label="Message actions"
-          className="m-0 mt-1 flex min-h-7 items-center justify-end gap-1 border-0 p-0 text-xs text-base-content/60 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          className="chat-footer m-0 mt-1 flex min-h-7 items-center justify-end gap-1 border-0 p-0 text-xs text-base-content/60 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
         >
           {!isEditing && (
             <>
@@ -135,6 +141,16 @@ export function ConversationItem({ item, onEdit }: ConversationItemProps) {
         </fieldset>
       )}
     </article>
+  );
+}, areConversationItemPropsEqual);
+
+function areConversationItemPropsEqual(
+  left: ConversationItemProps,
+  right: ConversationItemProps,
+): boolean {
+  return (
+    left.onEdit === right.onEdit &&
+    areConversationViewItemsEqual(left.item, right.item)
   );
 }
 

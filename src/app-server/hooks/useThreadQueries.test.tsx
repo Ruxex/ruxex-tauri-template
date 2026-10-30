@@ -177,6 +177,35 @@ describe("thread query hooks", () => {
     ).toHaveLength(conversationRequestCount);
   });
 
+  it("resynchronizes all conversation queries on demand", async () => {
+    const { useThreadConversation } = await import("./useThreadQueries");
+    const { result } = renderHook(() => useThreadConversation("thread-1"), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const initialCounts = new Map(
+      ["thread/read", "thread/turns/list", "thread/items/list"].map(
+        (method) => [
+          method,
+          requestAppServerMethod.mock.calls.filter(
+            ([calledMethod]) => calledMethod === method,
+          ).length,
+        ],
+      ),
+    );
+
+    await result.current.resync();
+
+    for (const [method, count] of initialCounts) {
+      expect(
+        requestAppServerMethod.mock.calls.filter(
+          ([calledMethod]) => calledMethod === method,
+        ),
+      ).toHaveLength(count + 1);
+    }
+  });
+
   it("passes thread-specific parameters to goal, attachment, and queue queries", async () => {
     const { useThreadAttachments, useThreadGoal, useThreadQueue } =
       await import("./useThreadQueries");

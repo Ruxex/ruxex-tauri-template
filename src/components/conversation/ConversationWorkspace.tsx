@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
 } from "../../app-server/api";
+import type { LiveConversationItem } from "../../app-server/event-reducer";
 import {
   useAppServerEvents,
   useRetainThreadState,
@@ -18,41 +19,100 @@ import {
   mergeConversationItems,
 } from "./conversation-model";
 
+const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
+
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
+  const wasConnected = useRef(events.connected);
+  const laggedEventCount =
+    events.resynchronizing && events.connected ? events.skippedEvents : 0;
   useRetainThreadState(threadId);
   const revertThread = useRevertThread();
   const sendMessage = useSendMessage();
   const liveThread = events.threads[threadId];
-  const completedTurnId = liveThread?.completedTurn?.id;
-
-  async function handleEdit(
-    item: ConversationViewItem,
-    editedText: string,
-  ): Promise<void> {
-    if (item.type !== "userMessage" || !editedText.trim()) {
-      return;
-    }
-    await revertThread.mutateAsync({
-      threadId,
-      beforeTurnId: item.turnId,
-    });
-    await sendMessage.mutateAsync({
-      threadId,
-      input: [buildUserTextInput(editedText)],
-      model: conversation.data?.thread.model ?? null,
-      effort: conversation.data?.thread.reasoningEffort ?? null,
-      turnTrigger: null,
-    });
-  }
+  const liveItems = liveThread?.items ?? EMPTY_LIVE_ITEMS;
+  const liveStatus = liveThread?.status;
+  const authoritativeItems = conversation.data?.items.data;
+  const turns = conversation.data?.turns.data;
+  const items = useMemo(
+    () =>
+      authoritativeItems && turns
+        ? mergeConversationItems(
+            authoritativeItems,
+            liveItems,
+            liveStatus,
+            turns,
+          )
+        : [],
+    [authoritativeItems, liveItems, liveStatus, turns],
+  );
+  const pendingRequests = useMemo(
+    () =>
+      Object.values(events.pendingServerRequests ?? {}).filter(
+        (request) => request.threadId === threadId,
+      ),
+    [events.pendingServerRequests, threadId],
+  );
 
   useEffect(() => {
-    if (!completedTurnId) {
+    const reconnected =
+      !wasConnected.current && events.connected && events.lastError !== null;
+    const streamLagged = laggedEventCount > 0;
+    wasConnected.current = events.connected;
+    if (!reconnected && !streamLagged) {
       return;
     }
-    void conversation.refetch();
-  }, [completedTurnId, conversation.refetch]);
+    void conversation.resync();
+  }, [
+    conversation.resync,
+    events.connected,
+    events.lastError,
+    laggedEventCount,
+  ]);
+
+  const handleEdit = useCallback(
+    async function handleEdit(
+      item: ConversationViewItem,
+      editedText: string,
+    ): Promise<void> {
+      if (item.type !== "userMessage" || !editedText.trim()) {
+        return;
+      }
+      await revertThread.mutateAsync({
+        threadId,
+        beforeTurnId: item.turnId,
+      });
+      await sendMessage.mutateAsync({
+        threadId,
+        input: [buildUserTextInput(editedText)],
+        model: conversation.data?.thread.model ?? null,
+        effort: conversation.data?.thread.reasoningEffort ?? null,
+        turnTrigger: null,
+      });
+    },
+    [
+      conversation.data?.thread.model,
+      conversation.data?.thread.reasoningEffort,
+      revertThread.mutateAsync,
+      sendMessage.mutateAsync,
+      threadId,
+    ],
+  );
+
+  const handleResolve = useCallback(
+    async (requestId: string | number, result: unknown) => {
+      await resolveServerRequest(requestId, result);
+    },
+    [],
+  );
+
+  const handleReject = useCallback(
+    async (requestId: string | number, message: string) => {
+      await rejectServerRequestWithMessage(requestId, message);
+    },
+    [],
+  );
 
   if (conversation.isLoading) {
     return <span className="loading loading-spinner loading-lg" />;
@@ -63,16 +123,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     );
   }
 
-  const items = mergeConversationItems(
-    conversation.data.items.data,
-    liveThread?.items ?? [],
-    liveThread?.status,
-    conversation.data.turns.data,
-  );
   const latestTurn = conversation.data.turns.data.at(-1);
-  const pendingRequests = Object.values(
-    events.pendingServerRequests ?? {},
-  ).filter((request) => request.threadId === threadId);
   const turnError =
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
@@ -82,13 +133,6 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     liveThread?.status !== "resynchronizing" &&
     !revertThread.isPending &&
     !sendMessage.isPending;
-  async function handleResolve(requestId: string | number, result: unknown) {
-    await resolveServerRequest(requestId, result);
-  }
-
-  async function handleReject(requestId: string | number, message: string) {
-    await rejectServerRequestWithMessage(requestId, message);
-  }
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-[980px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
@@ -108,8 +152,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
       <ChatActivityTimeline
         connected={events.connected ?? true}
         items={items}
-        liveItems={liveThread?.items ?? []}
-        liveStatus={liveThread?.status}
+        liveItems={liveItems}
+        liveStatus={liveStatus}
         onEdit={canEdit ? handleEdit : undefined}
         onReject={handleReject}
         onResolve={handleResolve}

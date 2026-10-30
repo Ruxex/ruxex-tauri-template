@@ -5,11 +5,19 @@ import {
   createNotificationDispatcher,
   sendDesktopNotification,
 } from "../../platform/notifications";
-import { retainThreadState, useAppServerEventStore } from "../event-store";
+import {
+  retainThreadState,
+  useAppServerEventStore,
+  useThreadActivity as useThreadActivitySnapshot,
+} from "../event-store";
 import { isDesktopRuntime } from "../runtime";
 
 export function useAppServerEvents() {
   return useAppServerEventStore();
+}
+
+export function useThreadActivity(threadId: string) {
+  return useThreadActivitySnapshot(threadId);
 }
 
 export function useServerRequests() {

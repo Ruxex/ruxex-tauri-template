@@ -54,4 +54,33 @@ describe("React subscription to the app-server event store", () => {
       skippedEvents: 0,
     });
   });
+
+  it("keeps a thread activity snapshot stable for unrelated events", async () => {
+    let handler: ((event: AppServerEvent) => void) | undefined;
+    listenToAppServerEvents.mockImplementation(
+      async (next: (event: AppServerEvent) => void) => {
+        handler = next;
+        return vi.fn();
+      },
+    );
+    const store = await import("./event-store");
+    const { result } = renderHook(() => store.useThreadActivity("thread-1"));
+
+    await store.startAppServerEventStore();
+    const initial = result.current;
+    act(() =>
+      handler?.({
+        type: "serverNotification",
+        data: {
+          method: "turn/started",
+          params: {
+            threadId: "thread-2",
+            turn: { id: "turn-2", status: "inProgress" } as never,
+          },
+        },
+      }),
+    );
+
+    expect(result.current).toBe(initial);
+  });
 });

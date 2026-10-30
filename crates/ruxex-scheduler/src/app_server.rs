@@ -1,4 +1,7 @@
+use std::fs::{self, OpenOptions};
 use std::future::Future;
+use std::io::{self, Write};
+use std::path::Path;
 use std::sync::atomic::{AtomicI64, Ordering};
 
 use ruxex_app_server_client::AppServerRequestHandle;
@@ -17,6 +20,14 @@ pub enum AppServerLogDirection {
 }
 
 pub fn format_app_server_log(direction: AppServerLogDirection, payload: &Value) -> String {
+    format_app_server_log_line(direction, payload, true)
+}
+
+fn format_app_server_log_line(
+    direction: AppServerLogDirection,
+    payload: &Value,
+    colorize: bool,
+) -> String {
     let (color, header) = match direction {
         AppServerLogDirection::ToAppServer => (36, "[tauri→]"),
         AppServerLogDirection::FromAppServer => (32, "[←app]"),
@@ -27,7 +38,29 @@ pub fn format_app_server_log(direction: AppServerLogDirection, payload: &Value) 
             error
         )
     });
-    format!("\x1b[{color}m{header}\x1b[0m {payload}")
+    if colorize {
+        format!("\x1b[{color}m{header}\x1b[0m {payload}")
+    } else {
+        format!("{header} {payload}")
+    }
+}
+
+fn write_app_server_log<T: Serialize>(
+    path: &Path,
+    direction: AppServerLogDirection,
+    payload: &T,
+) -> io::Result<()> {
+    let payload = serde_json::to_value(payload).unwrap_or_else(|error| {
+        serde_json::json!({
+            "loggingError": format!("failed to serialize log payload: {error}"),
+        })
+    });
+    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
+    writeln!(
+        file,
+        "{}",
+        format_app_server_log_line(direction, &payload, false)
+    )
 }
 
 pub fn log_app_server_io<T: Serialize>(direction: AppServerLogDirection, payload: &T) {
@@ -39,6 +72,11 @@ pub fn log_app_server_io<T: Serialize>(direction: AppServerLogDirection, payload
             })
         });
         println!("{}", format_app_server_log(direction, &payload));
+        let log_directory = Path::new("logs");
+        if fs::create_dir_all(log_directory).is_ok() {
+            let path = log_directory.join("app-server-jrpc.log");
+            let _ = write_app_server_log(&path, direction, &payload);
+        }
     }
 
     #[cfg(not(debug_assertions))]
@@ -173,7 +211,7 @@ async fn send_request(
 mod tests {
     use std::sync::{Arc, Mutex};
 
-    use super::{AppServerLogDirection, format_app_server_log};
+    use super::{AppServerLogDirection, format_app_server_log, write_app_server_log};
     use crate::{
         ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, ScheduleRecord,
         SchedulerState, build_thread_request, build_turn_request, load, new_record, save,
@@ -252,6 +290,28 @@ mod tests {
             ),
             "\x1b[32m[←app]\x1b[0m {\"type\":\"serverNotification\"}",
         );
+    }
+
+    #[test]
+    fn writes_plain_app_server_log_lines_to_a_file() {
+        let path = std::env::temp_dir().join(format!(
+            "ruxex-scheduler-jrpc-log-{}-{}",
+            std::process::id(),
+            Utc::now().timestamp_nanos_opt().unwrap_or_default(),
+        ));
+
+        write_app_server_log(
+            &path,
+            AppServerLogDirection::ToAppServer,
+            &serde_json::json!({ "method": "turn/start" }),
+        )
+        .unwrap();
+
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "[tauri→] {\"method\":\"turn/start\"}\n",
+        );
+        std::fs::remove_file(path).unwrap();
     }
 
     fn home(label: &str) -> std::path::PathBuf {

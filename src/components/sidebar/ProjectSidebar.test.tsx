@@ -12,13 +12,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
-const useAppServerEvents = vi.hoisted(() => vi.fn());
+const useThreadActivity = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
   useThreadList,
-  useAppServerEvents,
+  useThreadActivity,
   usePluginList,
 }));
 
@@ -49,9 +49,9 @@ describe("ProjectSidebar", () => {
       isLoading: false,
       isError: false,
     });
-    useAppServerEvents.mockReturnValue({
-      pendingServerRequests: {},
-      threads: {},
+    useThreadActivity.mockReturnValue({
+      status: undefined,
+      waitingForRequest: false,
     });
     usePluginList.mockReturnValue({
       data: {

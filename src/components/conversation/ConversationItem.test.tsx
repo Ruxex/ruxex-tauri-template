@@ -37,7 +37,9 @@ describe("ConversationItem", () => {
     expect(messageSurface?.className).not.toContain("chat-bubble");
     expect(messageSurface?.className).toContain("px-3");
     expect(messageSurface?.className).toContain("py-2");
-    expect(screen.getByRole("group", { name: "Message actions" })).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "Message actions" }).className,
+    ).toContain("chat-footer");
     expect(screen.getByRole("button", { name: "Copy message" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
     expect(

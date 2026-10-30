@@ -329,7 +329,7 @@ describe("ChatActivityTimeline", () => {
 
     expect(timeline.scrollTo).toHaveBeenCalledTimes(2);
     expect(timeline.scrollTo).toHaveBeenLastCalledWith({
-      behavior: "smooth",
+      behavior: "auto",
       top: 1000,
     });
   });
@@ -363,7 +363,7 @@ describe("ChatActivityTimeline", () => {
     );
 
     expect(container.scrollTo).toHaveBeenCalledWith({
-      behavior: "smooth",
+      behavior: "auto",
       top: 1000,
     });
     expect(timeline.scrollTo).toBeUndefined();
@@ -401,5 +401,30 @@ describe("ChatActivityTimeline", () => {
     expect(
       screen.getByTestId("activity-item").getAttribute("data-instance"),
     ).not.toBe(firstInstance);
+  });
+
+  it("does not rerender the timeline items when only equivalent props are recreated", () => {
+    const item = viewItem("message-1", "agentMessage", "Stable reply", "message");
+    const onEdit = vi.fn();
+    const onReject = vi.fn();
+    const onResolve = vi.fn();
+    const props = {
+      connected: true,
+      liveItems: [],
+      onEdit,
+      onReject,
+      onResolve,
+      pendingRequests: [],
+    };
+    const { rerender } = render(
+      <ChatActivityTimeline {...props} items={[item]} />,
+    );
+    conversation.mockClear();
+
+    rerender(
+      <ChatActivityTimeline {...props} items={[{ ...item }]} />,
+    );
+
+    expect(conversation).not.toHaveBeenCalled();
   });
 });

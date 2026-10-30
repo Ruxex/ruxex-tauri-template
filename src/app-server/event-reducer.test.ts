@@ -221,7 +221,7 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
-  it("starts a fresh live item window when a new turn starts", () => {
+  it("retains completed items when a new turn starts", () => {
     let state = reduceAppServerEvent(
       createInitialEventState(),
       notification({
@@ -259,8 +259,60 @@ describe("reduceAppServerEvent", () => {
     expect(state.threads["thread-1"]).toMatchObject({
       activeTurnId: "turn-2",
       status: "running",
-      items: [],
+      items: [{ id: "command-1", turnId: "turn-1", text: "done\n" }],
     });
+  });
+
+  it("keeps completed turn items when the next turn starts", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "item-1",
+          delta: "First reply",
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/completed",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "completed", items: [] },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-2", status: "inProgress" },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-2",
+          itemId: "item-2",
+          delta: "Second reply",
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      { id: "item-1", turnId: "turn-1", text: "First reply" },
+      { id: "item-2", turnId: "turn-2", text: "Second reply" },
+    ]);
   });
 
   it("keeps approval requests keyed by request id until resolved", () => {
@@ -505,7 +557,7 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
-  it("resets a completed turn when a new turn starts", () => {
+  it("clears completed turn metadata when a new turn starts", () => {
     let state = reduceAppServerEvent(
       createInitialEventState(),
       notification({

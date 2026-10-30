@@ -1,5 +1,6 @@
-import { useAppServerEvents, useThreadList } from "../../app-server/hooks";
+import { useThreadActivity, useThreadList } from "../../app-server/hooks";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
+import type { v2 } from "../../protocol";
 import { ChatListItem } from "../chats/ChatListItem";
 import { chatStatusFromThreadStatus } from "../chats/chat-status";
 
@@ -7,6 +8,15 @@ type ThreadListProps = {
   projectId?: string;
   selectedThreadId?: string;
   onSelect?: () => void;
+};
+
+type ThreadListThread = {
+  id: string;
+  name?: string | null;
+  preview?: string | null;
+  model?: string | null;
+  updatedAt: number;
+  status?: v2.ThreadStatus;
 };
 
 export function ThreadList({
@@ -24,8 +34,6 @@ export function ThreadList({
           sortDirection: "desc",
         },
   );
-  const events = useAppServerEvents();
-
   if (threads.isLoading) {
     return <span className="loading loading-spinner loading-sm" />;
   }
@@ -39,21 +47,40 @@ export function ThreadList({
   return (
     <ul className="menu w-full gap-0 p-0">
       {threads.data.data.map((thread) => (
-        <li key={thread.id}>
-          <ChatListItem
-            selected={selectedThreadId === thread.id}
-            status={chatStatusFromThreadStatus(
-              thread.status,
-              events.threads[thread.id]?.status,
-              Object.values(events.pendingServerRequests).some(
-                (request) => request.threadId === thread.id,
-              ),
-            )}
-            thread={thread}
-            onClick={onSelect}
-          />
-        </li>
+        <ThreadListRow
+          key={thread.id}
+          onClick={onSelect}
+          selected={selectedThreadId === thread.id}
+          thread={thread}
+        />
       ))}
     </ul>
+  );
+}
+
+function ThreadListRow({
+  thread,
+  selected,
+  onClick,
+}: {
+  thread: ThreadListThread;
+  selected: boolean;
+  onClick?: () => void;
+}) {
+  const activity = useThreadActivity(thread.id);
+
+  return (
+    <li>
+      <ChatListItem
+        selected={selected}
+        status={chatStatusFromThreadStatus(
+          thread.status,
+          activity.status,
+          activity.waitingForRequest,
+        )}
+        thread={thread}
+        onClick={onClick}
+      />
+    </li>
   );
 }

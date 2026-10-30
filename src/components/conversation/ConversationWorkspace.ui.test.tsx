@@ -14,9 +14,32 @@ const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
-const refetch = vi.hoisted(() => vi.fn());
+const resync = vi.hoisted(() => vi.fn());
 const revertMutation = vi.hoisted(() => vi.fn());
 const sendMutation = vi.hoisted(() => vi.fn());
+
+const createCompletedTurnEvent = (id: string, turnId: string) => ({
+  id,
+  event: {
+    type: "serverNotification" as const,
+    data: {
+      method: "turn/completed" as const,
+      params: {
+        threadId: "thread-1",
+        turn: { id: turnId, status: "completed" as const },
+      },
+    },
+  },
+});
+
+const initialCompletedTurnEvent = createCompletedTurnEvent(
+  "turn-1-completed",
+  "turn-1",
+);
+const laterCompletedTurnEvent = createCompletedTurnEvent(
+  "turn-2-completed",
+  "turn-2",
+);
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
@@ -37,7 +60,7 @@ describe("ConversationWorkspace", () => {
     useThreadConversation.mockReturnValue({
       isLoading: false,
       isError: false,
-      refetch,
+      resync,
       data: {
         thread: {
           id: "thread-1",
@@ -89,8 +112,11 @@ describe("ConversationWorkspace", () => {
     });
     useAppServerEvents.mockReturnValue({
       connected: true,
+      history: [initialCompletedTurnEvent],
       pendingServerRequests: {},
       resynchronizing: false,
+      skippedEvents: 0,
+      lastError: null,
       threads: {
         "thread-1": {
           threadId: "thread-1",
@@ -108,8 +134,8 @@ describe("ConversationWorkspace", () => {
         },
       },
     });
-    refetch.mockReset();
-    refetch.mockResolvedValue(undefined);
+    resync.mockReset();
+    resync.mockResolvedValue(undefined);
   });
 
   it("shows an error when the completed turn fails asynchronously", async () => {
@@ -149,12 +175,64 @@ describe("ConversationWorkspace", () => {
     ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
   });
 
-  it("refreshes the authoritative conversation when a turn completes", async () => {
+  it("does not fetch when a turn completes", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
     render(<ConversationWorkspace threadId="thread-1" />);
 
-    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.getByTestId("composer")).toBeTruthy());
+    expect(resync).not.toHaveBeenCalled();
+  });
+
+  it("does not fetch when a later completion event arrives", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    const view = render(<ConversationWorkspace threadId="thread-1" />);
+
+    await waitFor(() => expect(screen.getByTestId("composer")).toBeTruthy());
+
+    useAppServerEvents.mockReturnValue({
+      connected: true,
+      history: [initialCompletedTurnEvent, laterCompletedTurnEvent],
+      pendingServerRequests: {},
+      resynchronizing: false,
+      threads: {
+        "thread-1": {
+          threadId: "thread-1",
+          activeTurnId: null,
+          status: "failed",
+          items: [],
+          completedTurn: {
+            id: "turn-1",
+            status: "failed",
+            error: {
+              message: "Authentication required",
+              additionalDetails: null,
+            },
+          },
+        },
+      },
+    });
+    view.rerender(<ConversationWorkspace threadId="thread-1" />);
+
+    expect(resync).not.toHaveBeenCalled();
+  });
+
+  it("resynchronizes after the event stream reports lagged events", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    useAppServerEvents.mockReturnValue({
+      connected: true,
+      history: [initialCompletedTurnEvent],
+      pendingServerRequests: {},
+      resynchronizing: true,
+      skippedEvents: 3,
+      lastError: null,
+      threads: {},
+    });
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    await waitFor(() => expect(resync).toHaveBeenCalledTimes(1));
   });
 
   it("reverts an edited user message and starts the edited text", async () => {
