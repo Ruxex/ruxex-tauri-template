@@ -26,6 +26,7 @@ describe("AppLayout", () => {
   beforeEach(() => {
     useThread.mockReturnValue({ data: undefined });
     useProject.mockReturnValue({ data: undefined });
+    projectSidebarProps.mockReset();
   });
 
   it("does not render the removed context drawer", () => {
@@ -50,6 +51,9 @@ describe("AppLayout", () => {
     expect(navigation.parentElement).toBe(main);
     expect(screen.getByTestId("project-sidebar").parentElement).not.toBe(
       navigation.parentElement,
+    );
+    expect(projectSidebarProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ showContextPanel: true }),
     );
     expect(screen.queryByTestId("context-drawer")).toBeNull();
   });
@@ -94,7 +98,7 @@ describe("AppLayout", () => {
   });
 
   it.each(["/projects", "/projects/project-1", "/settings/account"])(
-    "does not render a left sidebar on %s",
+    "keeps the left rail without a context panel on %s",
     (pathname) => {
       useUiPreferences.mockReturnValue({
         preferences: { sidebarCollapsed: false },
@@ -107,7 +111,10 @@ describe("AppLayout", () => {
         </MemoryRouter>,
       );
 
-      expect(screen.queryByTestId("project-sidebar")).toBeNull();
+      expect(screen.getByTestId("project-sidebar")).toBeTruthy();
+      expect(projectSidebarProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({ showContextPanel: false }),
+      );
       expect(
         screen.queryByRole("button", { name: "Close sidebar overlay" }),
       ).toBeNull();

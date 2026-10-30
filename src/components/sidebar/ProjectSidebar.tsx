@@ -11,6 +11,7 @@ import { SidebarContextPanel } from "./RouteSidebar";
 type ProjectSidebarProps = {
   activePanel: SidebarPanel;
   collapsed: boolean;
+  showContextPanel?: boolean;
   selectedThreadId?: string;
   onPanelChange: (panel: SidebarPanel) => void;
   onToggle: () => void;
@@ -19,11 +20,13 @@ type ProjectSidebarProps = {
 export function ProjectSidebar({
   activePanel,
   collapsed,
+  showContextPanel = true,
   selectedThreadId,
   onPanelChange,
   onToggle,
 }: ProjectSidebarProps) {
   const navigate = useNavigate();
+  const contextPanelVisible = showContextPanel && !collapsed;
 
   function selectPanel(panel: SidebarPanelDefinition) {
     onPanelChange(panel.id);
@@ -39,7 +42,7 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar flex h-full min-h-0 shrink-0 ${collapsed ? "workbench-sidebar-collapsed" : "w-[22rem]"}`}
+      className={`workbench-sidebar flex h-full min-h-0 shrink-0 ${contextPanelVisible ? "w-[22rem]" : "workbench-sidebar-collapsed"}`}
       aria-label="Workspace sidebar"
     >
       <nav
@@ -72,7 +75,7 @@ export function ProjectSidebar({
           ))}
         </div>
       </nav>
-      {!collapsed && (
+      {contextPanelVisible && (
         <SidebarContextPanel
           activePanel={activePanel}
           onClose={onToggle}

@@ -233,6 +233,33 @@ describe("ProjectSidebar", () => {
     expect(sidebar.className).toContain("min-h-0");
   });
 
+  it("keeps only the compact rail when the context panel is disabled", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="projects"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+          showContextPanel={false}
+        />
+      </MemoryRouter>,
+    );
+
+    const sidebar = screen.getByRole("complementary", {
+      name: "Workspace sidebar",
+    });
+
+    expect(screen.getByRole("navigation", { name: "Workspace navigation" }))
+      .toBeTruthy();
+    expect(
+      screen.queryByRole("complementary", { name: "Chat sidebar" }),
+    ).toBeNull();
+    expect(sidebar.className).toContain("workbench-sidebar-collapsed");
+  });
+
   it("keeps navigation links accessible when the pane is collapsed", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 

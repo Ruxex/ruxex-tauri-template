@@ -18,7 +18,8 @@ export function AppLayout() {
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
   const isChatRoute = location.pathname.startsWith("/chat/");
-  const hidesSidebar = routePanel === "projects" || routePanel === "account";
+  const hidesContextPanel =
+    routePanel === "projects" || routePanel === "account";
   const chatTitle =
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
@@ -56,7 +57,7 @@ export function AppLayout() {
         projectTitle={project.data?.project.name}
       />
       <div className="flex min-h-0 flex-1">
-        {!hidesSidebar && !preferences.sidebarCollapsed && (
+        {!hidesContextPanel && !preferences.sidebarCollapsed && (
           <button
             aria-label="Close sidebar overlay"
             className="workbench-sidebar-backdrop"
@@ -64,17 +65,16 @@ export function AppLayout() {
             onClick={() => update({ sidebarCollapsed: true })}
           />
         )}
-        {!hidesSidebar && (
-          <ProjectSidebar
-            activePanel={activePanel}
-            collapsed={preferences.sidebarCollapsed}
-            selectedThreadId={threadId}
-            onPanelChange={handlePanelChange}
-            onToggle={() =>
-              update({ sidebarCollapsed: !preferences.sidebarCollapsed })
-            }
-          />
-        )}
+        <ProjectSidebar
+          activePanel={activePanel}
+          collapsed={preferences.sidebarCollapsed}
+          selectedThreadId={threadId}
+          showContextPanel={!hidesContextPanel}
+          onPanelChange={handlePanelChange}
+          onToggle={() =>
+            update({ sidebarCollapsed: !preferences.sidebarCollapsed })
+          }
+        />
         <div className="flex min-w-0 min-h-0 flex-1 flex-col">
           <section
             className={`workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 ${
