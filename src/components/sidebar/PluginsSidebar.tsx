@@ -7,6 +7,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import { usePluginList } from "../../app-server/hooks";
+import { MarketplaceAssetImage } from "../plugins/MarketplaceAssetImage";
 import { SidebarHeader } from "./SidebarHeader";
 
 export function PluginsSidebar({ onClose }: { onClose: () => void }) {
@@ -83,6 +84,29 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
                     type="button"
                     onClick={() => selectTab("plugins")}
                   >
+                    {(plugin.interface?.logo ??
+                      plugin.interface?.logoDark ??
+                      plugin.interface?.composerIcon ??
+                      plugin.interface?.logoUrl ??
+                      plugin.interface?.logoUrlDark ??
+                      plugin.interface?.composerIconUrl) && (
+                      <MarketplaceAssetImage
+                        alt=""
+                        className="size-5 rounded object-contain"
+                        localDarkSrc={plugin.interface?.logoDark}
+                        localSrc={
+                          plugin.interface.logo ??
+                          plugin.interface.logoDark ??
+                          plugin.interface.composerIcon
+                        }
+                        darkSrc={plugin.interface?.logoUrlDark}
+                        src={
+                          plugin.interface.logoUrl ??
+                          plugin.interface.logoUrlDark ??
+                          plugin.interface.composerIconUrl
+                        }
+                      />
+                    )}
                     <span className="truncate">
                       {plugin.interface?.displayName ?? plugin.name}
                     </span>

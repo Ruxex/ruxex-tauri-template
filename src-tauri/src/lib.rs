@@ -83,6 +83,8 @@ pub fn run() {
             app_server::ensure_app_server,
             app_server::app_server_daemon_control,
             desktop::read_image_file,
+            desktop::read_local_marketplace_asset,
+            desktop::read_marketplace_asset,
             desktop::open_browser_window,
             schedule_commands::schedule_list,
             schedule_commands::schedule_create,

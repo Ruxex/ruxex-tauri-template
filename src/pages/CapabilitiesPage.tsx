@@ -15,6 +15,7 @@ import {
   type StateBadgeTone,
 } from "../components/common/StateBadge";
 import { PageContainer } from "../components/layout/PageContainer";
+import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
 
@@ -233,6 +234,14 @@ export function CapabilitiesPage() {
                           plugin.interface?.displayName ?? plugin.name;
                         const isInstallable = marketplace.path !== null;
                         const isInstalling = installPlugin.isPending;
+                        const pluginLocalImage =
+                          plugin.interface?.logo ??
+                          plugin.interface?.logoDark ??
+                          plugin.interface?.composerIcon;
+                        const pluginImage =
+                          plugin.interface?.logoUrl ??
+                          plugin.interface?.logoUrlDark ??
+                          plugin.interface?.composerIconUrl;
 
                         return (
                           <li
@@ -240,33 +249,45 @@ export function CapabilitiesPage() {
                             key={plugin.id}
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div>
-                                <p className="font-medium">{displayName}</p>
-                                {plugin.interface?.shortDescription && (
-                                  <p className="text-sm text-base-content/70">
-                                    {plugin.interface.shortDescription}
-                                  </p>
+                              <div className="flex min-w-0 items-start gap-3">
+                                {(pluginLocalImage || pluginImage) && (
+                                  <MarketplaceAssetImage
+                                    alt={`${displayName} logo`}
+                                    className="size-10 rounded-box object-contain"
+                                    localDarkSrc={plugin.interface?.logoDark}
+                                    localSrc={pluginLocalImage}
+                                    darkSrc={plugin.interface?.logoUrlDark}
+                                    src={pluginImage}
+                                  />
                                 )}
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
-                                  <span>
-                                    {plugin.interface?.category ??
-                                      "Uncategorized"}
-                                  </span>
-                                  <StateBadge
-                                    tone={capabilityStatusTone(
-                                      plugin.enabled
+                                <div className="min-w-0">
+                                  <p className="font-medium">{displayName}</p>
+                                  {plugin.interface?.shortDescription && (
+                                    <p className="text-sm text-base-content/70">
+                                      {plugin.interface.shortDescription}
+                                    </p>
+                                  )}
+                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                                    <span>
+                                      {plugin.interface?.category ??
+                                        "Uncategorized"}
+                                    </span>
+                                    <StateBadge
+                                      tone={capabilityStatusTone(
+                                        plugin.enabled
+                                          ? "enabled"
+                                          : plugin.installed
+                                            ? "installed"
+                                            : "available",
+                                      )}
+                                    >
+                                      {plugin.enabled
                                         ? "enabled"
                                         : plugin.installed
                                           ? "installed"
-                                          : "available",
-                                    )}
-                                  >
-                                    {plugin.enabled
-                                      ? "enabled"
-                                      : plugin.installed
-                                        ? "installed"
-                                        : "available"}
-                                  </StateBadge>
+                                          : "available"}
+                                    </StateBadge>
+                                  </div>
                                 </div>
                               </div>
                               {!plugin.installed && isInstallable && (
