@@ -15,3 +15,7 @@ export function readLocalMarketplaceAsset(path: string): Promise<string> {
 export function openBrowserWindow(url: string): Promise<void> {
   return invoke("open_browser_window", { url });
 }
+
+export function closeQuickPanel(): Promise<void> {
+  return invoke("close_quick_panel");
+}

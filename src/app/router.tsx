@@ -14,6 +14,7 @@ import { ModelPage } from "../pages/ModelPage";
 import { NewChatRedirect } from "../pages/NewChatRedirect";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { ProjectsPage } from "../pages/ProjectsPage";
+import { QuickPanelPage } from "../components/quick-panel/QuickPanelPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
 import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SettingsPage } from "../pages/SettingsPage";
@@ -21,6 +22,7 @@ import { ThreadPage } from "../pages/ThreadPage";
 import { ThreadsPage } from "../pages/ThreadsPage";
 
 export const router = createHashRouter([
+  { path: "/quick-panel", element: <QuickPanelPage /> },
   {
     path: "/",
     element: <AppLayout />,
