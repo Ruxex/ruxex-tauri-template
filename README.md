@@ -24,6 +24,7 @@ need a sibling Ruxex checkout for frontend typechecking.
 
 ## Inject branding, provider, and home name
 
+Replace the template's `src-tauri/src/main.rs` with a small composition root.
 The library-facing Rust entrypoints accept one typed configuration. The home
 value is a directory name resolved below the current user's `~/`; it is not an
 absolute path.
@@ -44,9 +45,11 @@ fn desktop_config() -> DesktopConfig {
 
 fn main() {
     let config = desktop_config();
-    if std::env::args_os().any(|arg| {
+    let is_app_server_daemon = std::env::args_os().any(|arg| {
         arg == ruxex::desktop::daemon::HOST_APP_SERVER_DAEMON_MODE_ARG
-    }) {
+    });
+
+    if is_app_server_daemon {
         ruxex_desktop_lib::run_host_app_server_daemon_with_config(config)
             .expect("provider daemon failed");
     } else {
@@ -55,10 +58,22 @@ fn main() {
 }
 ```
 
-When branding is not customized, `run()` uses the template's default Ruxex
+`desktop_config()` is intentionally called in both modes. The hidden daemon
+is a separate process, so it must receive the same provider factory, branding,
+and Home directory name as the Tauri process.
+
+If only the provider is customized, the branding defaults can be kept:
+
+```rust
+fn desktop_config() -> ruxex_desktop_lib::DesktopConfig {
+    ruxex_desktop_lib::DesktopConfig::builder(my_provider::provider_factory()).build()
+}
+```
+
+When no customization is needed, `run()` uses the template's default Ruxex
 configuration. Updating the `ruxex` Cargo dependency then keeps the provider
-and runtime integration in the library boundary while the small application
-composition root remains stable.
+and runtime integration in the library boundary while this small composition
+root remains stable.
 
 ## Workbench data boundary
 
