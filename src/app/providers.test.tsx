@@ -15,7 +15,10 @@ vi.mock("../app-server/hooks", () => ({
   useAppServerNotifications: vi.fn(),
   useAppServerQuerySync: vi.fn(),
 }));
-vi.mock("../app-server/runtime", () => ({ isDesktopRuntime: false }));
+vi.mock("../app-server/runtime", () => ({
+  isDesktopRuntime: false,
+  isNativeDesktopRuntime: false,
+}));
 vi.mock("../platform/deep-links", () => ({
   pathForDeepLink: vi.fn(),
   startDeepLinkListener: vi.fn(),

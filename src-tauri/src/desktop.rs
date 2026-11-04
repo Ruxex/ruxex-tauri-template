@@ -17,15 +17,16 @@ use url::Url;
 #[cfg(feature = "example")]
 use ruxex_provider_host_example::dummy_provider;
 
+use crate::branding::BRANDING;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
 
 pub(crate) fn product_identity() -> ProductIdentity {
     ProductIdentity::new(
-        "Ruxex Desktop",
-        "ruxex-desktop",
-        ".ruxex_desktop",
-        "ruxex-home.json",
+        BRANDING.window_title,
+        BRANDING.product_slug,
+        BRANDING.home_dir_name,
+        BRANDING.home_marker_file,
     )
     .expect("desktop product identity is static and valid")
 }

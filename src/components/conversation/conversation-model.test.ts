@@ -6,6 +6,30 @@ import {
 } from "./conversation-model";
 
 describe("conversation model", () => {
+  it("uses the configured assistant name for agent messages", () => {
+    const items = mergeConversationItems(
+      [
+        {
+          turnId: "turn-1",
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "Hello",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      ],
+      [],
+      undefined,
+      [],
+      { assistantName: "Example Assistant" },
+    );
+
+    expect(items[0]?.title).toBe("Example Assistant");
+  });
+
   it("normalizes imageView items into screenshot presentation metadata", () => {
     const item = normalizeThreadItem("turn-1", {
       type: "imageView",

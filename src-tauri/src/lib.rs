@@ -1,4 +1,7 @@
+use tauri::Manager;
+
 mod app_server;
+mod branding;
 mod desktop;
 mod error;
 #[cfg(feature = "example")]
@@ -7,6 +10,8 @@ mod platform;
 mod schedule_commands;
 mod worktree;
 mod worktree_commands;
+
+use crate::branding::BRANDING;
 
 const SCHEDULE_POLL_INTERVAL_SECS: u64 = 60;
 
@@ -57,6 +62,11 @@ pub fn run() {
         ))
         .manage(schedule_commands::ScheduleState::default())
         .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                window
+                    .set_title(BRANDING.window_title)
+                    .map_err(std::io::Error::other)?;
+            }
             let home = desktop::ruxex_home().map_err(std::io::Error::other)?;
 
             #[cfg(feature = "example")]
@@ -80,6 +90,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            branding::get_branding,
             app_server::ensure_app_server,
             app_server::app_server_daemon_control,
             desktop::read_image_file,
@@ -101,5 +112,5 @@ pub fn run() {
             app_server::app_server_reject_server_request
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Ruxex Desktop");
+        .expect("error while running the desktop application");
 }

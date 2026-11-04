@@ -62,7 +62,7 @@ describe("conversation workspace selectors", () => {
         turnId: "turn-1",
         type: "agentMessage",
         category: "message",
-        title: "Ruxex",
+        title: "Assistant",
         text: "Hello world",
       },
       {
@@ -70,7 +70,7 @@ describe("conversation workspace selectors", () => {
         turnId: "turn-1",
         type: "agentMessage",
         category: "message",
-        title: "Ruxex",
+        title: "Assistant",
         text: "Next item",
       },
     ]);

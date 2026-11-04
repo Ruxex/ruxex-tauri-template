@@ -19,6 +19,15 @@ const queueMutation = vi.hoisted(() => vi.fn());
 const interruptMutation = vi.hoisted(() => vi.fn());
 const goalMutation = vi.hoisted(() => vi.fn());
 const settingsMutation = vi.hoisted(() => vi.fn());
+const assistantBranding = vi.hoisted(() => ({
+  appName: "Example App",
+  assistantName: "Example Assistant",
+  windowTitle: "Example App Desktop",
+}));
+
+vi.mock("../../app/branding-context", () => ({
+  useBranding: () => assistantBranding,
+}));
 
 vi.mock("../../app-server/hooks", () => ({
   useModelList: () => ({
@@ -114,6 +123,16 @@ describe("Composer", () => {
     expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
+  });
+
+  it("uses the configured assistant name in the message placeholder", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+
+    expect(screen.getByLabelText("Message").getAttribute("placeholder")).toBe(
+      "Ask Example Assistant to work on something…",
+    );
   });
 
   it.each([

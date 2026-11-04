@@ -12,6 +12,7 @@ import {
   useSendMessage,
   useThreadConversation,
 } from "../../app-server/hooks";
+import { useBranding } from "../../app/branding-context";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { Composer } from "./Composer";
 import { QueuedMessages } from "./QueuedMessages";
@@ -24,6 +25,7 @@ import {
 const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
+  const branding = useBranding();
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
   const [isRecovering, setIsRecovering] = useState(false);
@@ -59,10 +61,20 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
             liveItems,
             liveStatus,
             turns,
-            { preferAuthoritative: isRecovering },
+            {
+              preferAuthoritative: isRecovering,
+              assistantName: branding?.assistantName,
+            },
           )
         : [],
-    [authoritativeItems, isRecovering, liveItems, liveStatus, turns],
+    [
+      authoritativeItems,
+      branding?.assistantName,
+      isRecovering,
+      liveItems,
+      liveStatus,
+      turns,
+    ],
   );
   const pendingRequests = useMemo(
     () =>

@@ -10,6 +10,7 @@ import {
   useSendMessage,
   useSetThreadGoal,
 } from "../../app-server/hooks";
+import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
 import type { v2 } from "../../protocol";
 import {
@@ -28,6 +29,7 @@ type NewChatComposerProps = {
 };
 
 export function NewChatComposer({ projectId }: NewChatComposerProps) {
+  const branding = useBranding();
   const navigate = useNavigate();
   const models = useModelList();
   const projects = useProjectList();
@@ -159,7 +161,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
             className="textarea textarea-ghost min-h-24 w-full resize-none"
             disabled={isPending}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder="Ask Ruxex to work on something…"
+            placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
             value={message}
           />
           <input

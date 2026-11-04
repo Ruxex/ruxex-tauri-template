@@ -44,6 +44,7 @@ import {
   useSteerTurn,
   useUpdateThreadSettings,
 } from "../../app-server/hooks";
+import { useBranding } from "../../app/branding-context";
 
 type ComposerProps = {
   threadId: string;
@@ -62,6 +63,7 @@ export function Composer({
   initialMessage,
   onMessageSent,
 }: ComposerProps) {
+  const branding = useBranding();
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [goalMode, setGoalMode] = useState(false);
@@ -249,7 +251,7 @@ export function Composer({
         value={message}
         onChange={(event) => setMessage(event.target.value)}
         onKeyDown={handleMessageKeyDown}
-        placeholder="Ask Ruxex to work on something…"
+        placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
         disabled={isPending}
         aria-label="Message"
       />

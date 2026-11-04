@@ -12,6 +12,7 @@ import {
 } from "../app-server/hooks";
 import { isDesktopRuntime } from "../app-server/runtime";
 import { pathForDeepLink, startDeepLinkListener } from "../platform/deep-links";
+import { BrandingProvider } from "./branding";
 import { queryClient } from "./query-client";
 import { ThreadReadStateProvider } from "./thread-read-state";
 import { UiPreferencesProvider } from "./ui-preferences";
@@ -23,11 +24,13 @@ type AppProvidersProps = {
 export function AppProviders({ router }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThreadReadStateProvider>
-        <UiPreferencesProvider>
-          <AppRuntime router={router} />
-        </UiPreferencesProvider>
-      </ThreadReadStateProvider>
+      <BrandingProvider>
+        <ThreadReadStateProvider>
+          <UiPreferencesProvider>
+            <AppRuntime router={router} />
+          </UiPreferencesProvider>
+        </ThreadReadStateProvider>
+      </BrandingProvider>
     </QueryClientProvider>
   );
 }

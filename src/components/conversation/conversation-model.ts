@@ -44,8 +44,12 @@ export function mergeConversationItems(
   live: LiveConversationItem[],
   liveStatus?: ThreadExecutionState["status"],
   turns: v2.Turn[] = [],
-  options: { preferAuthoritative?: boolean } = {},
+  options: {
+    preferAuthoritative?: boolean;
+    assistantName?: string;
+  } = {},
 ): ConversationViewItem[] {
+  const assistantName = options.assistantName ?? "Assistant";
   const turnTimestamps = new Map(
     turns.map((turn) => [turn.id, turn.startedAt]),
   );
@@ -59,8 +63,8 @@ export function mergeConversationItems(
     const liveItem = liveById.get(key);
     const viewItem =
       liveItem && !options.preferAuthoritative
-        ? liveItemToViewItem(liveItem, liveStatus)
-        : normalizeThreadItem(turnId, item);
+        ? liveItemToViewItem(liveItem, liveStatus, assistantName)
+        : normalizeThreadItem(turnId, item, assistantName);
     const timestamp = turnTimestamps.get(turnId);
     return timestamp === undefined ? viewItem : { ...viewItem, timestamp };
   });
@@ -68,7 +72,7 @@ export function mergeConversationItems(
   for (const item of live) {
     const key = conversationItemKey(item.turnId, item.id);
     if (!seen.has(key)) {
-      const viewItem = liveItemToViewItem(item, liveStatus);
+      const viewItem = liveItemToViewItem(item, liveStatus, assistantName);
       const timestamp = turnTimestamps.get(item.turnId);
       merged.push(
         timestamp === undefined ? viewItem : { ...viewItem, timestamp },
@@ -81,6 +85,7 @@ export function mergeConversationItems(
 export function normalizeThreadItem(
   turnId: string,
   item: v2.ThreadItem,
+  assistantName = "Assistant",
 ): ConversationViewItem {
   switch (item.type) {
     case "userMessage": {
@@ -107,7 +112,7 @@ export function normalizeThreadItem(
         turnId,
         type: item.type,
         category: "message",
-        title: "Ruxex",
+        title: assistantName,
         text: item.text,
       };
     case "plan":
@@ -224,9 +229,14 @@ export function canSteerTurn(activeTurnId: string | null): boolean {
 function liveItemToViewItem(
   item: LiveConversationItem,
   liveStatus?: ThreadExecutionState["status"],
+  assistantName = "Assistant",
 ): ConversationViewItem {
   if (item.raw) {
-    const normalized = normalizeThreadItem(item.turnId, item.raw);
+    const normalized = normalizeThreadItem(
+      item.turnId,
+      item.raw,
+      assistantName,
+    );
     const viewItem = item.text
       ? { ...normalized, text: item.text }
       : normalized;
@@ -240,7 +250,7 @@ function liveItemToViewItem(
       turnId: item.turnId,
       type: item.type,
       category: "message",
-      title: "Ruxex",
+      title: assistantName,
       text: item.text,
     };
   }
