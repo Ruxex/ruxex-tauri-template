@@ -17,8 +17,33 @@ import type { ResidencyRequirement } from "./ResidencyRequirement";
 import type { SandboxMode } from "./SandboxMode";
 
 export type ConfigRequirements = {
-/**
- * Effective login methods after managed, forced-login, and workspace restrictions.
- * An empty list permits no login method. Older servers may omit this field.
- */
-allowedLoginMethods: Array<ForcedLoginMethod> | null, cliAuthCredentialsStore: CliAuthCredentialsStoreMode | null, managedAuthBaseUrl: string | null, additionalDeveloperInstructions: string | null, allowedApprovalPolicies: Array<AskForApproval> | null, allowedSandboxModes: Array<SandboxMode> | null, allowedPermissionProfiles: { [key in string]?: boolean } | null, defaultPermissions: string | null, allowedWebSearchModes: Array<WebSearchMode> | null, allowManagedHooksOnly: boolean | null, allowBrowserAndComputerUse: boolean | null, allowAppshots: boolean | null, computerUse: ComputerUseRequirements | null, browserUse: BrowserUseRequirements | null, inAppBrowser: InAppBrowserRequirements | null, featureRequirements: { [key in string]?: boolean } | null, hooks: ManagedHooksRequirements | null, enforceResidency: ResidencyRequirement | null, network: NetworkRequirements | null, application: ApplicationRequirements | null, models: ModelsRequirements | null, sqliteHome: PathUri | null, logDir: PathUri | null, modelCatalogJson: PathUri | null, allowLoginShell: boolean | null, };
+  /**
+   * Effective login methods after managed, forced-login, and workspace restrictions.
+   * An empty list permits no login method. Older servers may omit this field.
+   */
+  allowedLoginMethods: Array<ForcedLoginMethod> | null;
+  cliAuthCredentialsStore: CliAuthCredentialsStoreMode | null;
+  managedAuthBaseUrl: string | null;
+  additionalDeveloperInstructions: string | null;
+  allowedApprovalPolicies: Array<AskForApproval> | null;
+  allowedSandboxModes: Array<SandboxMode> | null;
+  allowedPermissionProfiles: { [key in string]?: boolean } | null;
+  defaultPermissions: string | null;
+  allowedWebSearchModes: Array<WebSearchMode> | null;
+  allowManagedHooksOnly: boolean | null;
+  allowBrowserAndComputerUse: boolean | null;
+  allowAppshots: boolean | null;
+  computerUse: ComputerUseRequirements | null;
+  browserUse: BrowserUseRequirements | null;
+  inAppBrowser: InAppBrowserRequirements | null;
+  featureRequirements: { [key in string]?: boolean } | null;
+  hooks: ManagedHooksRequirements | null;
+  enforceResidency: ResidencyRequirement | null;
+  network: NetworkRequirements | null;
+  application: ApplicationRequirements | null;
+  models: ModelsRequirements | null;
+  sqliteHome: PathUri | null;
+  logDir: PathUri | null;
+  modelCatalogJson: PathUri | null;
+  allowLoginShell: boolean | null;
+};

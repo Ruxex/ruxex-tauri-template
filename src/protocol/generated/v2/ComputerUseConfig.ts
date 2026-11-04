@@ -4,4 +4,7 @@
 import type { AllowDenyRequirement } from "./AllowDenyRequirement";
 import type { ComputerUseMacosConfig } from "./ComputerUseMacosConfig";
 
-export type ComputerUseConfig = { default_app_access: AllowDenyRequirement | null, macos: ComputerUseMacosConfig | null, };
+export type ComputerUseConfig = {
+  default_app_access: AllowDenyRequirement | null;
+  macos: ComputerUseMacosConfig | null;
+};

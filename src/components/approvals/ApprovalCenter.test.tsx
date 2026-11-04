@@ -55,7 +55,9 @@ describe("approval request model", () => {
         isBlocking: true,
       },
     } as never;
-    expect(buildUserInputResponse(request, { answer: { answers: ["yes"] } })).toEqual({
+    expect(
+      buildUserInputResponse(request, { answer: { answers: ["yes"] } }),
+    ).toEqual({
       answers: { answer: { answers: ["yes"] } },
     });
     expect(buildApprovalResponse(request, "accept")).toBeNull();

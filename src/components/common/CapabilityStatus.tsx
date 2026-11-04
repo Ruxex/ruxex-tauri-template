@@ -1,9 +1,6 @@
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-export type CapabilityStatusState =
-  | "enabled"
-  | "disabled"
-  | "unsupported";
+export type CapabilityStatusState = "enabled" | "disabled" | "unsupported";
 
 export function CapabilityStatus({
   label,

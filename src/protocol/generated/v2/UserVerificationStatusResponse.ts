@@ -6,4 +6,8 @@ import type { UserVerificationUnavailableReason } from "./UserVerificationUnavai
 /**
  * Local readiness only; this neither prompts nor queries server registration.
  */
-export type UserVerificationStatusResponse = { credentialId: string | null, unavailableReason: UserVerificationUnavailableReason | null, unavailableMessage: string | null, };
+export type UserVerificationStatusResponse = {
+  credentialId: string | null;
+  unavailableReason: UserVerificationUnavailableReason | null;
+  unavailableMessage: string | null;
+};

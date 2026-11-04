@@ -26,11 +26,7 @@ export function QueuedMessages({ threadId }: { threadId: string }) {
   );
 }
 
-function QueuedMessage({
-  submission,
-}: {
-  submission: v2.QueuedSubmission;
-}) {
+function QueuedMessage({ submission }: { submission: v2.QueuedSubmission }) {
   const text = submission.input
     .map((input) => (input.type === "text" ? input.text : null))
     .filter((value): value is string => value !== null)
@@ -45,7 +41,10 @@ function QueuedMessage({
         {hasNonTextInput ? (
           <PhotoIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         ) : (
-          <QueueListIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <QueueListIcon
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0"
+          />
         )}
         <p className="whitespace-pre-wrap break-words">
           {text || (hasNonTextInput ? "Image attachment" : "Queued message")}

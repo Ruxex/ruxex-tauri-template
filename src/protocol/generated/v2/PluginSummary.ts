@@ -8,12 +8,24 @@ import type { PluginInstallPolicySource } from "./PluginInstallPolicySource";
 import type { PluginInterface } from "./PluginInterface";
 import type { PluginSource } from "./PluginSource";
 
-export type PluginSummary = { id: string,
-/**
- * Version of the locally materialized plugin package when available.
- */
-localVersion: string | null, name: string, source: PluginSource, installed: boolean, enabled: boolean, installPolicy: PluginInstallPolicy, installPolicySource: PluginInstallPolicySource | null, mustShowInstallationInterstitial: boolean | null, authPolicy: PluginAuthPolicy,
-/**
- * Availability state for installing and using the plugin.
- */
-availability: PluginAvailability, interface: PluginInterface | null, keywords: Array<string>, };
+export type PluginSummary = {
+  id: string;
+  /**
+   * Version of the locally materialized plugin package when available.
+   */
+  localVersion: string | null;
+  name: string;
+  source: PluginSource;
+  installed: boolean;
+  enabled: boolean;
+  installPolicy: PluginInstallPolicy;
+  installPolicySource: PluginInstallPolicySource | null;
+  mustShowInstallationInterstitial: boolean | null;
+  authPolicy: PluginAuthPolicy;
+  /**
+   * Availability state for installing and using the plugin.
+   */
+  availability: PluginAvailability;
+  interface: PluginInterface | null;
+  keywords: Array<string>;
+};

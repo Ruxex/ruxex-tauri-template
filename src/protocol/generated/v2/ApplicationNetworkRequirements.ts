@@ -4,7 +4,9 @@
 import type { NetworkDomainPermission } from "./NetworkDomainPermission";
 
 export type ApplicationNetworkRequirements = {
-/**
- * When enabled, only explicitly allowed exact domains may be contacted.
- */
-enabled: boolean, domains: { [key in string]?: NetworkDomainPermission }, };
+  /**
+   * When enabled, only explicitly allowed exact domains may be contacted.
+   */
+  enabled: boolean;
+  domains: { [key in string]?: NetworkDomainPermission };
+};

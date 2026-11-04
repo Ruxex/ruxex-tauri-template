@@ -7,4 +7,7 @@ import type { ThreadAttachmentAddOutcome } from "./ThreadAttachmentAddOutcome";
 /**
  * The created or existing attachment.
  */
-export type ThreadAttachmentAddResponse = { outcome: ThreadAttachmentAddOutcome, attachment: ThreadAttachment, };
+export type ThreadAttachmentAddResponse = {
+  outcome: ThreadAttachmentAddOutcome;
+  attachment: ThreadAttachment;
+};

@@ -7,4 +7,6 @@ import type { RateLimitSnapshot } from "./RateLimitSnapshot";
  * Sparse rolling rate-limit update.
  *
  */
-export type AccountRateLimitsUpdatedNotification = { rateLimits: RateLimitSnapshot, };
+export type AccountRateLimitsUpdatedNotification = {
+  rateLimits: RateLimitSnapshot;
+};

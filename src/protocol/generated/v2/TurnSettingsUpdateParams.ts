@@ -10,22 +10,25 @@ import type { ReasoningSummary } from "../ReasoningSummary";
  * Any live task kind may accept publication. Child sessions and consumers of
  * frozen initial settings are unchanged.
  */
-export type TurnSettingsUpdateParams = { threadId: string, turnId: string,
-/**
- * Changes the active turn's reviewer without changing future thread settings.
- * Already captured steps and pending approvals retain their original reviewer.
- * Omission or `null` leaves the model unchanged.
- */
-model?: string | null,
-/**
- * Omission or `null` leaves the effort unchanged.
- */
-effort?: ReasoningEffort | null,
-/**
- * Omission or `null` leaves the summary preference unchanged.
- */
-summary?: ReasoningSummary | null,
-/**
- * `null` clears the requested tier; omission leaves it unchanged.
- */
-serviceTier?: string | null | null, };
+export type TurnSettingsUpdateParams = {
+  threadId: string;
+  turnId: string;
+  /**
+   * Changes the active turn's reviewer without changing future thread settings.
+   * Already captured steps and pending approvals retain their original reviewer.
+   * Omission or `null` leaves the model unchanged.
+   */
+  model?: string | null;
+  /**
+   * Omission or `null` leaves the effort unchanged.
+   */
+  effort?: ReasoningEffort | null;
+  /**
+   * Omission or `null` leaves the summary preference unchanged.
+   */
+  summary?: ReasoningSummary | null;
+  /**
+   * `null` clears the requested tier; omission leaves it unchanged.
+   */
+  serviceTier?: string | null | null;
+};

@@ -6,4 +6,10 @@ import type { ThreadAttachmentOperation } from "./ThreadAttachmentOperation";
 /**
  * Notification published after a thread attachment is created or deleted.
  */
-export type ThreadAttachmentUpdatedNotification = { threadId: string, attachmentType: string, identityKey: string, attachmentId: string, operation: ThreadAttachmentOperation, };
+export type ThreadAttachmentUpdatedNotification = {
+  threadId: string;
+  attachmentType: string;
+  identityKey: string;
+  attachmentId: string;
+  operation: ThreadAttachmentOperation;
+};

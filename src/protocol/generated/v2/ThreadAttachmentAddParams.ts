@@ -6,4 +6,9 @@ import type { JsonValue } from "../serde_json/JsonValue";
 /**
  * Parameters for creating or locating an attachment on its owning thread.
  */
-export type ThreadAttachmentAddParams = { threadId: string, attachmentType: string, identityKey: string, payload: JsonValue, };
+export type ThreadAttachmentAddParams = {
+  threadId: string;
+  attachmentType: string;
+  identityKey: string;
+  payload: JsonValue;
+};

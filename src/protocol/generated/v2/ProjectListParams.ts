@@ -4,12 +4,15 @@
 import type { ProjectSortKey } from "./ProjectSortKey";
 import type { SortDirection } from "./SortDirection";
 
-export type ProjectListParams = { cursor?: string | null, limit?: number | null,
-/**
- * Defaults to position. Recency sorting always places empty projects last.
- */
-sortKey?: ProjectSortKey | null,
-/**
- * Requires sortKey. Defaults to asc for position and desc for recencyAt.
- */
-sortDirection?: SortDirection | null, };
+export type ProjectListParams = {
+  cursor?: string | null;
+  limit?: number | null;
+  /**
+   * Defaults to position. Recency sorting always places empty projects last.
+   */
+  sortKey?: ProjectSortKey | null;
+  /**
+   * Requires sortKey. Defaults to asc for position and desc for recencyAt.
+   */
+  sortDirection?: SortDirection | null;
+};

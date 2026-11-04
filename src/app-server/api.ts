@@ -43,9 +43,9 @@ export function requestAppServer<Request extends ClientRequest>(
   request: Request,
 ): Promise<ResponseFor<Request>> {
   if (isMockAppServerRuntime) {
-    return getMockAppServer().invoke("app_server_request", { request }) as Promise<
-      ResponseFor<Request>
-    >;
+    return getMockAppServer().invoke("app_server_request", {
+      request,
+    }) as Promise<ResponseFor<Request>>;
   }
   return invoke<ClientResponse>("app_server_request", { request }) as Promise<
     ResponseFor<Request>

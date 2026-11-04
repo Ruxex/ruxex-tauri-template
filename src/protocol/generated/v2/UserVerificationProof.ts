@@ -5,8 +5,10 @@
 /**
  * A signature over the exact decoded challenge. The verifier validates and consumes it.
  */
-export type UserVerificationProof = { credentialId: string,
-/**
- * Unpadded base64url DER ECDSA signature using P-256 and SHA-256.
- */
-signature: string, };
+export type UserVerificationProof = {
+  credentialId: string;
+  /**
+   * Unpadded base64url DER ECDSA signature using P-256 and SHA-256.
+   */
+  signature: string;
+};

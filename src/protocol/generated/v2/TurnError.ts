@@ -4,8 +4,12 @@
 import type { MisalignmentErrorDetails } from "./MisalignmentErrorDetails";
 import type { RuxexErrorInfo } from "./RuxexErrorInfo";
 
-export type TurnError = { message: string, ruxexErrorInfo: RuxexErrorInfo | null, additionalDetails: string | null,
-/**
- * Optional public explanation and continuation instruction for a misalignment block.
- */
-misalignment: MisalignmentErrorDetails | null, };
+export type TurnError = {
+  message: string;
+  ruxexErrorInfo: RuxexErrorInfo | null;
+  additionalDetails: string | null;
+  /**
+   * Optional public explanation and continuation instruction for a misalignment block.
+   */
+  misalignment: MisalignmentErrorDetails | null;
+};

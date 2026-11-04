@@ -5,4 +5,8 @@
 /**
  * EXPERIMENTAL - list thread history in rollout order.
  */
-export type ThreadTimelineListParams = { threadId: string, cursor?: string | null, limit?: number | null, };
+export type ThreadTimelineListParams = {
+  threadId: string;
+  cursor?: string | null;
+  limit?: number | null;
+};

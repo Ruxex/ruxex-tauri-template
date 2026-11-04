@@ -4,8 +4,16 @@
 import type { LegacyAppPathString } from "../LegacyAppPathString";
 import type { RequestPermissionProfile } from "./RequestPermissionProfile";
 
-export type PermissionsRequestApprovalParams = { threadId: string, turnId: string, itemId: string, environmentId: string | null,
-/**
- * Unix timestamp (in milliseconds) when this approval request started.
- */
-startedAtMs: number, cwd: LegacyAppPathString, reason: string | null, permissions: RequestPermissionProfile, };
+export type PermissionsRequestApprovalParams = {
+  threadId: string;
+  turnId: string;
+  itemId: string;
+  environmentId: string | null;
+  /**
+   * Unix timestamp (in milliseconds) when this approval request started.
+   */
+  startedAtMs: number;
+  cwd: LegacyAppPathString;
+  reason: string | null;
+  permissions: RequestPermissionProfile;
+};

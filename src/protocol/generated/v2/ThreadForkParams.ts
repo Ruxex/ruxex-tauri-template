@@ -17,57 +17,66 @@ import type { ThreadSource } from "./ThreadSource";
  *
  * Prefer using thread_id whenever possible.
  */
-export type ThreadForkParams = { threadId: string,
-/**
- * Optional last turn id to fork through, inclusive.
- *
- * When specified, turns after `last_turn_id` are omitted from the fork.
- * The referenced turn cannot be in progress.
- */
-lastTurnId?: string | null,
-/**
- * Optional turn id to fork before, excluding that turn and all later turns.
- * Cannot be combined with `last_turn_id`.
- */
-beforeTurnId?: string | null,
-/**
- * [UNSTABLE] Specify the rollout path to fork from.
- * If specified, the thread_id param will be ignored.
- */
-path?: string | null,
-/**
- * Configuration overrides for the forked thread, if any.
- */
-model?: string | null, serviceTier?: string | null | null, cwd?: string | null,
-/**
- * Replace the thread's runtime workspace roots. Paths must be absolute.
- */
-runtimeWorkspaceRoots?: Array<AbsolutePathBuf> | null, approvalPolicy?: AskForApproval | null,
-/**
- * Override where approval requests are routed for review on this thread
- * and subsequent turns.
- */
-sandbox?: SandboxMode | null,
-/**
- * Named profile id for the forked thread. Cannot be combined with
- * `sandbox`.
- */
-permissions?: string | null, config?: { [key in string]?: JsonValue } | null, baseInstructions?: string | null, developerInstructions?: string | null, ephemeral?: boolean,
-/**
- * Optional client-supplied analytics source classification for this forked thread.
- */
-threadSource?: ThreadSource | null,
-/**
- * When true, return only thread metadata and live fork state without
- * populating `thread.turns`. This is useful when the client plans to call
- * `thread/turns/list` immediately after forking. Full-history hydration
- * is deprecated for paginated threads; use this with `thread/turns/list`
- * and `thread/items/list` instead.
- */
-excludeTurns?: boolean,
-/**
- * When true, carry the source thread's current goal into the fork without
- * starting its initial automatic continuation. The next explicit turn owns
- * the goal lifecycle, and normal automatic continuation resumes after it.
- */
-deferGoalContinuation?: boolean, };
+export type ThreadForkParams = {
+  threadId: string;
+  /**
+   * Optional last turn id to fork through, inclusive.
+   *
+   * When specified, turns after `last_turn_id` are omitted from the fork.
+   * The referenced turn cannot be in progress.
+   */
+  lastTurnId?: string | null;
+  /**
+   * Optional turn id to fork before, excluding that turn and all later turns.
+   * Cannot be combined with `last_turn_id`.
+   */
+  beforeTurnId?: string | null;
+  /**
+   * [UNSTABLE] Specify the rollout path to fork from.
+   * If specified, the thread_id param will be ignored.
+   */
+  path?: string | null;
+  /**
+   * Configuration overrides for the forked thread, if any.
+   */
+  model?: string | null;
+  serviceTier?: string | null | null;
+  cwd?: string | null;
+  /**
+   * Replace the thread's runtime workspace roots. Paths must be absolute.
+   */
+  runtimeWorkspaceRoots?: Array<AbsolutePathBuf> | null;
+  approvalPolicy?: AskForApproval | null;
+  /**
+   * Override where approval requests are routed for review on this thread
+   * and subsequent turns.
+   */
+  sandbox?: SandboxMode | null;
+  /**
+   * Named profile id for the forked thread. Cannot be combined with
+   * `sandbox`.
+   */
+  permissions?: string | null;
+  config?: { [key in string]?: JsonValue } | null;
+  baseInstructions?: string | null;
+  developerInstructions?: string | null;
+  ephemeral?: boolean;
+  /**
+   * Optional client-supplied analytics source classification for this forked thread.
+   */
+  threadSource?: ThreadSource | null;
+  /**
+   * When true, return only thread metadata and live fork state without
+   * populating `thread.turns`. This is useful when the client plans to call
+   * `thread/turns/list` immediately after forking. Full-history hydration
+   * is deprecated for paginated threads; use this with `thread/turns/list`
+   * and `thread/items/list` instead.
+   */
+  excludeTurns?: boolean;
+  /**
+   * When true, carry the source thread's current goal into the fork without
+   * starting its initial automatic continuation. The next explicit turn owns
+   * the goal lifecycle, and normal automatic continuation resumes after it.
+   */
+  deferGoalContinuation?: boolean;
+};

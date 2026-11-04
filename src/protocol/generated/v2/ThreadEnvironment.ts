@@ -6,4 +6,8 @@ import type { LegacyAppPathString } from "../LegacyAppPathString";
 /**
  * An environment selected by a loaded thread, independent of connection status.
  */
-export type ThreadEnvironment = { environmentId: string, cwd: LegacyAppPathString, runtimeWorkspaceRoots: Array<LegacyAppPathString>, };
+export type ThreadEnvironment = {
+  environmentId: string;
+  cwd: LegacyAppPathString;
+  runtimeWorkspaceRoots: Array<LegacyAppPathString>;
+};

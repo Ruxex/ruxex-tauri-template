@@ -7,4 +7,13 @@ import type { PluginSummary } from "./PluginSummary";
 import type { ScheduledTaskSummary } from "./ScheduledTaskSummary";
 import type { SkillSummary } from "./SkillSummary";
 
-export type PluginDetail = { marketplaceName: string, marketplacePath: AbsolutePathBuf | null, summary: PluginSummary, description: string | null, skills: Array<SkillSummary>, hooks: Array<PluginHookSummary>, mcpServers: Array<string>, scheduledTasks: Array<ScheduledTaskSummary> | null, };
+export type PluginDetail = {
+  marketplaceName: string;
+  marketplacePath: AbsolutePathBuf | null;
+  summary: PluginSummary;
+  description: string | null;
+  skills: Array<SkillSummary>;
+  hooks: Array<PluginHookSummary>;
+  mcpServers: Array<string>;
+  scheduledTasks: Array<ScheduledTaskSummary> | null;
+};

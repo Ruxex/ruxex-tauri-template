@@ -38,10 +38,7 @@ function breadcrumbsForPath(
   }
 
   if (pathname.startsWith("/projects/")) {
-    return [
-      { label: "Projects", to: "/projects" },
-      { label: projectTitle },
-    ];
+    return [{ label: "Projects", to: "/projects" }, { label: projectTitle }];
   }
 
   if (pathname === "/projects") {

@@ -18,8 +18,7 @@ export function useCloseDropdownOnOutsidePointerDown() {
     }
 
     document.addEventListener("pointerdown", handlePointerDown);
-    return () =>
-      document.removeEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, []);
 
   return detailsRef;

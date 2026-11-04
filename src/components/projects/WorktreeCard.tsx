@@ -67,7 +67,8 @@ export function WorktreeCard({ root }: { root: string }) {
         )}
         {worktrees.query.isError && (
           <p className="text-sm text-error">
-            Unable to load worktrees: {formatErrorMessage(worktrees.query.error)}
+            Unable to load worktrees:{" "}
+            {formatErrorMessage(worktrees.query.error)}
           </p>
         )}
         <ul className="space-y-2">

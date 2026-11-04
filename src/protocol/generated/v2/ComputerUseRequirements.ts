@@ -4,4 +4,9 @@
 import type { AllowDenyRequirement } from "./AllowDenyRequirement";
 import type { ComputerUseMacosRequirements } from "./ComputerUseMacosRequirements";
 
-export type ComputerUseRequirements = { allowLockedComputerUse: boolean | null, allowPersistentApproval: boolean | null, defaultAppAccess: AllowDenyRequirement | null, macos: ComputerUseMacosRequirements | null, };
+export type ComputerUseRequirements = {
+  allowLockedComputerUse: boolean | null;
+  allowPersistentApproval: boolean | null;
+  defaultAppAccess: AllowDenyRequirement | null;
+  macos: ComputerUseMacosRequirements | null;
+};

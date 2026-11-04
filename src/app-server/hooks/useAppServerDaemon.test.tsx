@@ -27,7 +27,9 @@ vi.mock("../runtime", () => ({
 
 function createWrapper(client: QueryClient) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    return (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
   };
 }
 
@@ -78,7 +80,10 @@ describe("useAppServerDaemon", () => {
 
   it("loads daemon status through the version action", async () => {
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
@@ -94,7 +99,10 @@ describe("useAppServerDaemon", () => {
   it("does not query daemon controls in InProcess mode", async () => {
     ensureAppServer.mockResolvedValue(inProcessStatus);
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
@@ -111,7 +119,10 @@ describe("useAppServerDaemon", () => {
     const error = new Error("in-process initialization failed");
     ensureAppServer.mockRejectedValue(error);
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
@@ -127,7 +138,10 @@ describe("useAppServerDaemon", () => {
   it("retains the last local mode when the connection status is cleared", async () => {
     ensureAppServer.mockResolvedValue(inProcessStatus);
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
@@ -146,7 +160,10 @@ describe("useAppServerDaemon", () => {
 
   it("reconnects after start and clears the app-server status after stop", async () => {
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     controlAppServerDaemon
       .mockResolvedValueOnce(startedDaemon)
@@ -177,7 +194,10 @@ describe("useAppServerDaemon", () => {
     const error = new Error("daemon unavailable");
     controlAppServerDaemon.mockRejectedValue(error);
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
@@ -193,7 +213,10 @@ describe("useAppServerDaemon", () => {
     const error = new Error("restart failed");
     controlAppServerDaemon.mockRejectedValue(error);
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     client.setQueryData(appServerQueryKeys.status, connectedStatus);
 

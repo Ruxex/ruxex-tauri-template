@@ -6,4 +6,7 @@ import type { ThreadTimelineEntry } from "./ThreadTimelineEntry";
 /**
  * EXPERIMENTAL - a bounded timeline page.
  */
-export type ThreadTimelineListResponse = { data: Array<ThreadTimelineEntry>, nextCursor: string | null, };
+export type ThreadTimelineListResponse = {
+  data: Array<ThreadTimelineEntry>;
+  nextCursor: string | null;
+};

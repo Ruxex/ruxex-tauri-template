@@ -83,11 +83,7 @@ describe("ComposerOptions", () => {
 
   it("closes an open menu when clicking outside it", () => {
     render(
-      <PermissionMenu
-        disabled={false}
-        mode="ask"
-        onModeChange={vi.fn()}
-      />,
+      <PermissionMenu disabled={false} mode="ask" onModeChange={vi.fn()} />,
     );
 
     const summary = screen.getByLabelText("Permission mode");

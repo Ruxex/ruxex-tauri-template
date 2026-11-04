@@ -10,32 +10,39 @@ import type { AskForApproval } from "./AskForApproval";
 import type { SandboxPolicy } from "./SandboxPolicy";
 import type { Thread } from "./Thread";
 
-export type ThreadForkResponse = { thread: Thread, model: string, serviceTier: string | null,
-/**
- * Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
- */
-disabledPluginIds: Array<string>, cwd: AbsolutePathBuf,
-/**
- * Thread-scoped runtime workspace roots used to materialize
- * `:workspace_roots`.
- */
-runtimeWorkspaceRoots: Array<AbsolutePathBuf>,
-/**
- * Environment-native paths to instruction source files currently loaded for this thread.
- */
-instructionSources: Array<LegacyAppPathString>, approvalPolicy: AskForApproval,
-/**
- * Reviewer currently used for approval requests on this thread.
- * Legacy sandbox policy retained for compatibility. Experimental clients
- * should prefer `activePermissionProfile` for profile provenance.
- */
-sandbox: SandboxPolicy,
-/**
- * Named or implicit built-in profile that produced the active
- * permissions, when known.
- */
-activePermissionProfile: ActivePermissionProfile | null, reasoningEffort: ReasoningEffort | null,
-/**
- * @deprecated Always `explicitRequestOnly`. Use `reasoningEffort` for Ultra behavior.
- */
-multiAgentMode: MultiAgentMode, };
+export type ThreadForkResponse = {
+  thread: Thread;
+  model: string;
+  serviceTier: string | null;
+  /**
+   * Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
+   */
+  disabledPluginIds: Array<string>;
+  cwd: AbsolutePathBuf;
+  /**
+   * Thread-scoped runtime workspace roots used to materialize
+   * `:workspace_roots`.
+   */
+  runtimeWorkspaceRoots: Array<AbsolutePathBuf>;
+  /**
+   * Environment-native paths to instruction source files currently loaded for this thread.
+   */
+  instructionSources: Array<LegacyAppPathString>;
+  approvalPolicy: AskForApproval;
+  /**
+   * Reviewer currently used for approval requests on this thread.
+   * Legacy sandbox policy retained for compatibility. Experimental clients
+   * should prefer `activePermissionProfile` for profile provenance.
+   */
+  sandbox: SandboxPolicy;
+  /**
+   * Named or implicit built-in profile that produced the active
+   * permissions, when known.
+   */
+  activePermissionProfile: ActivePermissionProfile | null;
+  reasoningEffort: ReasoningEffort | null;
+  /**
+   * @deprecated Always `explicitRequestOnly`. Use `reasoningEffort` for Ultra behavior.
+   */
+  multiAgentMode: MultiAgentMode;
+};

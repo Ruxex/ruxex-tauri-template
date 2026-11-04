@@ -4,22 +4,26 @@
 import type { AbsolutePathBuf } from "./AbsolutePathBuf";
 import type { AppServerIdentity } from "./AppServerIdentity";
 
-export type InitializeResponse = { userAgent: string,
-/**
- * Non-sensitive product identity selected by the app-server host.
- */
-productName: string, productSlug: string,
-/**
- * Absolute path to the server's $RUXEX_HOME directory.
- */
-ruxexHome: AbsolutePathBuf,
-/**
- * Platform family for the running app-server target, for example
- * `"unix"`.
- */
-platformFamily: string,
-/**
- * Operating system for the running app-server target, for example
- * `"macos"` or `"linux"`.
- */
-platformOs: string, appServerIdentity: AppServerIdentity, };
+export type InitializeResponse = {
+  userAgent: string;
+  /**
+   * Non-sensitive product identity selected by the app-server host.
+   */
+  productName: string;
+  productSlug: string;
+  /**
+   * Absolute path to the server's $RUXEX_HOME directory.
+   */
+  ruxexHome: AbsolutePathBuf;
+  /**
+   * Platform family for the running app-server target, for example
+   * `"unix"`.
+   */
+  platformFamily: string;
+  /**
+   * Operating system for the running app-server target, for example
+   * `"macos"` or `"linux"`.
+   */
+  platformOs: string;
+  appServerIdentity: AppServerIdentity;
+};

@@ -7,4 +7,4 @@ import type { RequestId } from "../RequestId";
  * Cancels a native verification RPC issued on this connection, not an elicitation.
  * Use a fresh request ID for each operation and a distinct ID for this cancellation RPC.
  */
-export type UserVerificationCancelParams = { requestId: RequestId, };
+export type UserVerificationCancelParams = { requestId: RequestId };

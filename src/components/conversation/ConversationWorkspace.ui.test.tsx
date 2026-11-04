@@ -105,9 +105,7 @@ describe("ConversationWorkspace", () => {
         data: [
           {
             id: "queued-1",
-            input: [
-              { type: "text", text: "Queued prompt", text_elements: [] },
-            ],
+            input: [{ type: "text", text: "Queued prompt", text_elements: [] }],
             clientUserMessageId: "client-queued-1",
           },
         ],

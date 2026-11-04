@@ -7,7 +7,8 @@ import type { CyberAccessProgram } from "./CyberAccessProgram";
  * Caller-specific explicit access programs advertised by model discovery.
  */
 export type ModelAccessPrograms = {
-/**
- * Accepted explicit selections.
- */
-cyber: Array<CyberAccessProgram>, };
+  /**
+   * Accepted explicit selections.
+   */
+  cyber: Array<CyberAccessProgram>;
+};

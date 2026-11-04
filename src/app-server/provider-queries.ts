@@ -59,7 +59,10 @@ export function usePermissionProfiles() {
   return useQuery<v2.PermissionProfileListResponse | null>({
     queryKey: appServerQueryKeys.permissionProfiles,
     queryFn: async () => {
-      const response = await requestAppServerMethod("permissionProfile/list", {});
+      const response = await requestAppServerMethod(
+        "permissionProfile/list",
+        {},
+      );
       return response.response;
     },
     enabled: Boolean(status.data),

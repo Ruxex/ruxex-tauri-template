@@ -1,7 +1,4 @@
-import {
-  ensureAppServer,
-  type AppServerStatus,
-} from "./api";
+import { ensureAppServer, type AppServerStatus } from "./api";
 import { startAppServerEventStore } from "./event-store";
 import { isMockAppServerRuntime } from "./runtime";
 

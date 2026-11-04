@@ -29,14 +29,18 @@ export function useProject(projectId: string) {
   return useQuery<v2.ProjectReadResponse>({
     queryKey: appServerQueryKeys.project(projectId),
     queryFn: async () => {
-      const response = await requestAppServerMethod("project/read", { projectId });
+      const response = await requestAppServerMethod("project/read", {
+        projectId,
+      });
       return response.response;
     },
     enabled: Boolean(status.data && projectId),
   });
 }
 
-export function projectThreadListParams(projectId: string): v2.ThreadListParams {
+export function projectThreadListParams(
+  projectId: string,
+): v2.ThreadListParams {
   return {
     projectId,
     archived: false,

@@ -8,4 +8,8 @@
  * For a currently ready remote environment, app-server asks the existing
  * exec-server connection for `environment/status` without allowing recovery.
  */
-export type EnvironmentStatusKind = "ready" | "pending" | "disconnected" | "unknown";
+export type EnvironmentStatusKind =
+  | "ready"
+  | "pending"
+  | "disconnected"
+  | "unknown";

@@ -35,6 +35,8 @@ describe("chat status", () => {
     [{ type: "systemError" }, "failed"],
     [{ type: "idle" }, undefined],
   ] as const)("maps thread status %o to %s", (status, expected) => {
-    expect(chatStatusFromThreadStatus(status as v2.ThreadStatus)).toBe(expected);
+    expect(chatStatusFromThreadStatus(status as v2.ThreadStatus)).toBe(
+      expected,
+    );
   });
 });

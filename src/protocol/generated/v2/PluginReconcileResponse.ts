@@ -9,9 +9,10 @@ import type { PluginReconcileChangedPlugin } from "./PluginReconcileChangedPlugi
  * changes are not listed.
  */
 export type PluginReconcileResponse = {
-/**
- * Plugins affected by bundle changes, enablement changes, or removals.
- * Installed-state changes compare against the previous cached snapshot, including
- * cached reinstalls. Removal hints survive cache cleanup failures; unchanged plugins are omitted.
- */
-changedPlugins: Array<PluginReconcileChangedPlugin>, };
+  /**
+   * Plugins affected by bundle changes, enablement changes, or removals.
+   * Installed-state changes compare against the previous cached snapshot, including
+   * cached reinstalls. Removal hints survive cache cleanup failures; unchanged plugins are omitted.
+   */
+  changedPlugins: Array<PluginReconcileChangedPlugin>;
+};

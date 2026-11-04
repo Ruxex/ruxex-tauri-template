@@ -20,7 +20,11 @@ type ThreadCardProps = {
   compact?: boolean;
 };
 
-export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps) {
+export function ThreadCard({
+  thread,
+  actions,
+  compact = false,
+}: ThreadCardProps) {
   const events = useAppServerEvents();
   const chatStatus = chatStatusFromThreadStatus(
     thread.status,
@@ -31,23 +35,13 @@ export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps
   );
 
   if (compact) {
-    return (
-      <ChatListItem
-        showPreview
-        status={chatStatus}
-        thread={thread}
-      />
-    );
+    return <ChatListItem showPreview status={chatStatus} thread={thread} />;
   }
 
   return (
     <article className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary">
       <div className="card-body gap-2 p-5">
-        <ChatListItem
-          showPreview
-          status={chatStatus}
-          thread={thread}
-        />
+        <ChatListItem showPreview status={chatStatus} thread={thread} />
         {actions && <div className="card-actions justify-end">{actions}</div>}
       </div>
     </article>

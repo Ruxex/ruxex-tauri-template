@@ -17,11 +17,16 @@ describe("listenToAppServerEvents", () => {
 
     const { listenToAppServerEvents } = await import("./events");
     const received: AppServerEvent[] = [];
-    const returnedUnlisten = await listenToAppServerEvents((event) => received.push(event));
+    const returnedUnlisten = await listenToAppServerEvents((event) =>
+      received.push(event),
+    );
     const event: AppServerEvent = { type: "lagged", data: { skipped: 4 } };
     callback?.({ payload: event });
 
-    expect(listen).toHaveBeenCalledWith("app-server-event", expect.any(Function));
+    expect(listen).toHaveBeenCalledWith(
+      "app-server-event",
+      expect.any(Function),
+    );
     expect(received).toEqual([event]);
     expect(returnedUnlisten).toBe(unlisten);
   });

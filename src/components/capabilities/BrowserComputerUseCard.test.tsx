@@ -39,9 +39,9 @@ describe("BrowserComputerUseCard", () => {
     expect(screen.getAllByRole("status", { name: "Available" })).toHaveLength(
       2,
     );
-    expect(
-      screen.getAllByRole("status", { name: "Configured" }),
-    ).toHaveLength(2);
+    expect(screen.getAllByRole("status", { name: "Configured" })).toHaveLength(
+      2,
+    );
     expect(
       screen.getAllByRole("status", { name: "Available" })[0].className,
     ).not.toContain("badge");

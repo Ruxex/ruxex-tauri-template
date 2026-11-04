@@ -384,9 +384,9 @@ describe("Composer", () => {
       />,
     );
 
-    expect((screen.getByLabelText("Message") as HTMLTextAreaElement).value).toBe(
-      "Original prompt",
-    );
+    expect(
+      (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
+    ).toBe("Original prompt");
   });
 
   it("updates model, effort, and permission settings from the controls", async () => {

@@ -9,4 +9,8 @@ import type { UserVerificationUnavailableReason } from "./UserVerificationUnavai
 /**
  * Closed error categories; native diagnostic payloads must not cross this boundary.
  */
-export type UserVerificationErrorDetails = { "type": "invalidRequest", reason: UserVerificationInvalidRequestReason, } | { "type": "unavailable", reason: UserVerificationUnavailableReason, } | { "type": "cancelled", reason: UserVerificationCancellationReason, } | { "type": "failed", reason: UserVerificationFailureReason, };
+export type UserVerificationErrorDetails =
+  | { type: "invalidRequest"; reason: UserVerificationInvalidRequestReason }
+  | { type: "unavailable"; reason: UserVerificationUnavailableReason }
+  | { type: "cancelled"; reason: UserVerificationCancellationReason }
+  | { type: "failed"; reason: UserVerificationFailureReason };

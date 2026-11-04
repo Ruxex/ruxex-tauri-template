@@ -6,15 +6,16 @@
  * Local signing primitive, independent of any pending elicitation.
  */
 export type UserVerificationVerifyParams = {
-/**
- * Unpadded base64url encoding of 1–4096 challenge bytes.
- */
-challenge: string,
-/**
- * Display context already approved by the UI; 1–256 UTF-8 bytes.
- */
-title: string,
-/**
- * Additional display context; at most 4096 UTF-8 bytes.
- */
-description: string, };
+  /**
+   * Unpadded base64url encoding of 1–4096 challenge bytes.
+   */
+  challenge: string;
+  /**
+   * Display context already approved by the UI; 1–256 UTF-8 bytes.
+   */
+  title: string;
+  /**
+   * Additional display context; at most 4096 UTF-8 bytes.
+   */
+  description: string;
+};

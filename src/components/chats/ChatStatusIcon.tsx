@@ -39,7 +39,12 @@ function statusColorClassName(status: ChatStatus): string {
 function statusIcon(status: ChatStatus) {
   switch (status) {
     case "running":
-      return <span aria-hidden="true" className="loading loading-spinner loading-xs" />;
+      return (
+        <span
+          aria-hidden="true"
+          className="loading loading-spinner loading-xs"
+        />
+      );
     case "completed":
       return <CheckCircleIcon aria-hidden="true" className="size-4" />;
     case "waiting":

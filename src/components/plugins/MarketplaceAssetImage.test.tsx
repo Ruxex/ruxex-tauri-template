@@ -68,10 +68,14 @@ describe("MarketplaceAssetImage", () => {
   });
 
   it("prefers a local path and delegates it to the native Tauri boundary", async () => {
-    readLocalMarketplaceAsset.mockResolvedValueOnce("data:image/svg+xml;base64,AA==");
+    readLocalMarketplaceAsset.mockResolvedValueOnce(
+      "data:image/svg+xml;base64,AA==",
+    );
 
     await expect(
-      loadLocalMarketplaceAsset("/home/user/.ruxex_desktop/marketplace-assets/logo.svg"),
+      loadLocalMarketplaceAsset(
+        "/home/user/.ruxex_desktop/marketplace-assets/logo.svg",
+      ),
     ).resolves.toBe("data:image/svg+xml;base64,AA==");
     expect(readLocalMarketplaceAsset).toHaveBeenCalledWith(
       "/home/user/.ruxex_desktop/marketplace-assets/logo.svg",

@@ -6,4 +6,8 @@ import type { UserVerificationErrorDetails } from "./UserVerificationErrorDetail
 /**
  * The error object inside the normal JSON-RPC envelope.
  */
-export type UserVerificationRpcError = { code: number, message: string, data: UserVerificationErrorDetails, };
+export type UserVerificationRpcError = {
+  code: number;
+  message: string;
+  data: UserVerificationErrorDetails;
+};

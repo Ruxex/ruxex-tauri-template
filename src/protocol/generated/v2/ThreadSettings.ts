@@ -11,11 +11,21 @@ import type { AskForApproval } from "./AskForApproval";
 import type { SandboxPolicy } from "./SandboxPolicy";
 
 export type ThreadSettings = {
-/**
- * Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
- */
-disabledPluginIds: Array<string>, cwd: AbsolutePathBuf, approvalPolicy: AskForApproval, sandboxPolicy: SandboxPolicy, activePermissionProfile: ActivePermissionProfile | null, model: string, serviceTier: string | null, effort: ReasoningEffort | null, summary: ReasoningSummary | null, collaborationMode: CollaborationMode,
-/**
- * @deprecated Always `explicitRequestOnly`. Use `effort` for Ultra behavior.
- */
-multiAgentMode: MultiAgentMode, };
+  /**
+   * Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
+   */
+  disabledPluginIds: Array<string>;
+  cwd: AbsolutePathBuf;
+  approvalPolicy: AskForApproval;
+  sandboxPolicy: SandboxPolicy;
+  activePermissionProfile: ActivePermissionProfile | null;
+  model: string;
+  serviceTier: string | null;
+  effort: ReasoningEffort | null;
+  summary: ReasoningSummary | null;
+  collaborationMode: CollaborationMode;
+  /**
+   * @deprecated Always `explicitRequestOnly`. Use `effort` for Ultra behavior.
+   */
+  multiAgentMode: MultiAgentMode;
+};

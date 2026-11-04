@@ -6,4 +6,10 @@ import type { JsonValue } from "../serde_json/JsonValue";
 /**
  * An independently persisted attachment associated with a thread.
  */
-export type ThreadAttachment = { id: string, attachmentType: string, identityKey: string, payload: JsonValue, createdAt: number, };
+export type ThreadAttachment = {
+  id: string;
+  attachmentType: string;
+  identityKey: string;
+  payload: JsonValue;
+  createdAt: number;
+};

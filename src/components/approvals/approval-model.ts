@@ -1,7 +1,11 @@
 import type { ServerRequest } from "../../protocol";
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 
-export type ApprovalDecision = "accept" | "acceptForSession" | "decline" | "cancel";
+export type ApprovalDecision =
+  | "accept"
+  | "acceptForSession"
+  | "decline"
+  | "cancel";
 
 export type ApprovalScope = {
   command?: string;

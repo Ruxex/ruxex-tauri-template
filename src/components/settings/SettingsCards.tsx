@@ -33,10 +33,7 @@ import {
 } from "../../app/ui-preferences";
 import { formatErrorMessage } from "../../app/error-message";
 import { CapabilityStatus } from "../common/CapabilityStatus";
-import {
-  StateBadge,
-  type StateBadgeTone,
-} from "../common/StateBadge";
+import { StateBadge, type StateBadgeTone } from "../common/StateBadge";
 
 export type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -337,10 +334,7 @@ export function NotificationsCard({
   onSoundChange: (sound: UiNotificationSound) => void;
 }) {
   return (
-    <SettingsPanel
-      icon={BellIcon}
-      title="Notifications"
-    >
+    <SettingsPanel icon={BellIcon} title="Notifications">
       <div className="text-sm">
         <SettingControlRow
           controlId="settings-desktop-notifications"
@@ -392,10 +386,7 @@ export function UiPreferencesCard({
   onAccentColorChange,
 }: UiPreferencesCardProps) {
   return (
-    <SettingsPanel
-      icon={PaintBrushIcon}
-      title="Interface"
-    >
+    <SettingsPanel icon={PaintBrushIcon} title="Interface">
       <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow controlId="settings-color-scheme" label="Color mode">
           <select
@@ -444,10 +435,7 @@ export function TypographyCard({
   onUiFontSizeChange: (fontSize: UiFontSize) => void;
 }) {
   return (
-    <SettingsPanel
-      icon={Bars3BottomLeftIcon}
-      title="Typography"
-    >
+    <SettingsPanel icon={Bars3BottomLeftIcon} title="Typography">
       <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow
           controlId="settings-chat-font-size"

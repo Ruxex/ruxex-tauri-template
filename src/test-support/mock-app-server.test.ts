@@ -7,7 +7,11 @@ import { MockAppServer } from "./mock-app-server";
 describe("MockAppServer", () => {
   it("serves typed method responses and records the request", async () => {
     const server = new MockAppServer();
-    server.respond("thread/list", { data: [], nextCursor: null, backwardsCursor: null });
+    server.respond("thread/list", {
+      data: [],
+      nextCursor: null,
+      backwardsCursor: null,
+    });
 
     const response = await server.invoke("app_server_request", {
       request: { method: "thread/list", id: 7, params: { limit: 25 } },
@@ -58,9 +62,11 @@ describe("MockAppServer", () => {
   it("fails loudly when a test forgets to register a response", async () => {
     const server = new MockAppServer();
 
-    await expect(server.invoke("app_server_request", {
-      request: { method: "model/list", id: 1, params: {} },
-    })).rejects.toThrow("No mock response registered for model/list");
+    await expect(
+      server.invoke("app_server_request", {
+        request: { method: "model/list", id: 1, params: {} },
+      }),
+    ).rejects.toThrow("No mock response registered for model/list");
   });
 
   it("supports a typed model response fixture", async () => {
