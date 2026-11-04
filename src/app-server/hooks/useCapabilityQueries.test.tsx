@@ -85,6 +85,11 @@ describe("capability query and mutation hooks", () => {
       "turn/settings/update",
       { threadId: "thread-1", turnId: "turn-1", effort: "high" },
     ],
+    [
+      "useMcpOauthLogin",
+      "mcpServer/oauth/login",
+      { name: "docs", scopes: ["read"] },
+    ],
   ] as const)(
     "maps %s to %s and returns the server payload",
     async (hookName, method, params) => {

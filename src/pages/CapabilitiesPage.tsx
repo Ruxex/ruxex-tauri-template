@@ -1,10 +1,12 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
 import {
   useCollaborationModes,
   useInstallPlugin,
+  useMcpOauthLogin,
   useMcpServerStatus,
   usePluginList,
   useReloadMcpServers,
@@ -17,6 +19,7 @@ import {
 } from "../components/common/StateBadge";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
+import { openBrowserWindow } from "../platform/native";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
 
@@ -46,6 +49,30 @@ function capabilityStatusTone(
   return "neutral";
 }
 
+function authStatusLabel(value: string): string {
+  switch (value) {
+    case "oAuth":
+      return "OAuth connected";
+    case "bearerToken":
+      return "Bearer token configured";
+    case "notLoggedIn":
+      return "Not connected";
+    case "unsupported":
+      return "Authentication unsupported";
+    default:
+      return "Authentication status unavailable";
+  }
+}
+
+function isAuthorizationUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 function groupPluginsByCategory<
   T extends { interface: { category: string | null } | null },
 >(plugins: T[]) {
@@ -66,6 +93,7 @@ function groupPluginsByCategory<
 }
 
 export function CapabilitiesPage() {
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: CapabilityTab =
@@ -79,6 +107,23 @@ export function CapabilitiesPage() {
   const reloadMcp = useReloadMcpServers();
   const installPlugin = useInstallPlugin();
   const upgradeMarketplace = useUpgradeMarketplace();
+  const oauthLogin = useMcpOauthLogin();
+
+  async function connectMcpServer(name: string) {
+    setConnectionError(null);
+    try {
+      const response = await oauthLogin.mutateAsync({ name });
+      if (!isAuthorizationUrl(response.authorizationUrl)) {
+        setConnectionError("OAuth authorization URL is invalid.");
+        return;
+      }
+      await openBrowserWindow(response.authorizationUrl);
+    } catch (error) {
+      setConnectionError(
+        error instanceof Error ? error.message : "Unable to start MCP login.",
+      );
+    }
+  }
 
   return (
     <PageContainer>
@@ -106,6 +151,11 @@ export function CapabilitiesPage() {
       {activeTab === "mcp" && reloadMcp.isError && (
         <p className="alert alert-error">
           {formatErrorMessage(reloadMcp.error)}
+        </p>
+      )}
+      {activeTab === "mcp" && connectionError && (
+        <p className="alert alert-error" role="alert">
+          {connectionError}
         </p>
       )}
       {activeTab === "mcp" ? (
@@ -140,8 +190,21 @@ export function CapabilitiesPage() {
                       <StateBadge
                         tone={capabilityStatusTone(server.authStatus)}
                       >
-                        {server.authStatus}
+                        {authStatusLabel(server.authStatus)}
                       </StateBadge>
+                      {(server.authStatus === "notLoggedIn" ||
+                        server.authStatus === "oAuth") && (
+                        <button
+                          className="btn btn-outline btn-xs"
+                          disabled={oauthLogin.isPending}
+                          onClick={() => void connectMcpServer(server.name)}
+                          type="button"
+                        >
+                          {server.authStatus === "notLoggedIn"
+                            ? `Connect ${server.name}`
+                            : `Re-authenticate ${server.name}`}
+                        </button>
+                      )}
                     </div>
                     {server.toolsError && (
                       <p className="mt-1 text-xs text-error">

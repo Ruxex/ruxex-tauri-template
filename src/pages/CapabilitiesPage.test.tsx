@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,6 +17,8 @@ const usePluginList = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
 const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
+const useMcpOauthLogin = vi.hoisted(() => vi.fn());
+const openBrowserWindow = vi.hoisted(() => vi.fn());
 const reloadMcp = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
@@ -29,6 +37,12 @@ const upgradeMarketplace = vi.hoisted(() => ({
   isError: false,
   error: null,
 }));
+const oauthLogin = vi.hoisted(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+}));
 
 vi.mock("../app-server/hooks", () => ({
   useCollaborationModes,
@@ -38,12 +52,21 @@ vi.mock("../app-server/hooks", () => ({
   useReloadMcpServers,
   useSkillsList,
   useUpgradeMarketplace,
+  useMcpOauthLogin,
 }));
+
+vi.mock("../platform/native", () => ({ openBrowserWindow }));
 
 describe("CapabilitiesPage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    openBrowserWindow.mockReset();
+    oauthLogin.mutateAsync.mockReset();
+    oauthLogin.mutateAsync.mockResolvedValue({
+      authorizationUrl: "https://auth.example.test/start",
+    });
+    useMcpOauthLogin.mockReturnValue(oauthLogin);
     reloadMcp.mutateAsync.mockReset();
     reloadMcp.mutateAsync.mockResolvedValue({});
     useReloadMcpServers.mockReturnValue(reloadMcp);
@@ -302,5 +325,87 @@ describe("CapabilitiesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reload MCP" }));
 
     expect(reloadMcp.mutateAsync).toHaveBeenCalledWith({});
+  });
+
+  it("connects an unauthenticated MCP server through the OS browser", async () => {
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Connect docs" }));
+
+    await waitFor(() =>
+      expect(oauthLogin.mutateAsync).toHaveBeenCalledWith({ name: "docs" }),
+    );
+    expect(openBrowserWindow).toHaveBeenCalledWith(
+      "https://auth.example.test/start",
+    );
+  });
+
+  it("rejects an invalid OAuth authorization URL", async () => {
+    oauthLogin.mutateAsync.mockResolvedValueOnce({
+      authorizationUrl: "javascript:alert(1)",
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Connect docs" }));
+
+    expect(
+      await screen.findByText("OAuth authorization URL is invalid."),
+    ).toBeTruthy();
+    expect(openBrowserWindow).not.toHaveBeenCalled();
+  });
+
+  it("labels OAuth, bearer-token, and unknown auth states distinctly", async () => {
+    useMcpServerStatus.mockReturnValue({
+      data: {
+        data: [
+          {
+            name: "oauth-docs",
+            runtimeStatus: "connected",
+            tools: {},
+            authStatus: "oAuth",
+            toolsError: null,
+          },
+          {
+            name: "token-docs",
+            runtimeStatus: "connected",
+            tools: {},
+            authStatus: "bearerToken",
+            toolsError: null,
+          },
+          {
+            name: "unknown-docs",
+            runtimeStatus: null,
+            tools: {},
+            authStatus: "unknown",
+            toolsError: null,
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("OAuth connected")).toBeTruthy();
+    expect(screen.getByText("Bearer token configured")).toBeTruthy();
+    expect(screen.getByText("Authentication status unavailable")).toBeTruthy();
   });
 });
