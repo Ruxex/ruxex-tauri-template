@@ -84,29 +84,24 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
                     type="button"
                     onClick={() => selectTab("plugins")}
                   >
-                    {(plugin.interface?.logo ??
-                      plugin.interface?.logoDark ??
-                      plugin.interface?.composerIcon ??
-                      plugin.interface?.logoUrl ??
-                      plugin.interface?.logoUrlDark ??
-                      plugin.interface?.composerIconUrl) && (
+                    <div className="size-5 shrink-0 rounded bg-base-200/60">
                       <MarketplaceAssetImage
                         alt=""
-                        className="size-5 rounded object-contain"
+                        className="size-full rounded object-contain"
                         localDarkSrc={plugin.interface?.logoDark}
                         localSrc={
-                          plugin.interface.logo ??
-                          plugin.interface.logoDark ??
-                          plugin.interface.composerIcon
+                          plugin.interface?.logo ??
+                          plugin.interface?.logoDark ??
+                          plugin.interface?.composerIcon
                         }
                         darkSrc={plugin.interface?.logoUrlDark}
                         src={
-                          plugin.interface.logoUrl ??
-                          plugin.interface.logoUrlDark ??
-                          plugin.interface.composerIconUrl
+                          plugin.interface?.logoUrl ??
+                          plugin.interface?.logoUrlDark ??
+                          plugin.interface?.composerIconUrl
                         }
                       />
-                    )}
+                    </div>
                     <span className="truncate">
                       {plugin.interface?.displayName ?? plugin.name}
                     </span>

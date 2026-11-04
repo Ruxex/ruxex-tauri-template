@@ -94,6 +94,17 @@ describe("CapabilitiesPage", () => {
                 installed: false,
                 enabled: false,
               },
+              {
+                id: "calendar",
+                name: "Calendar Plugin",
+                interface: {
+                  displayName: "Calendar Plugin",
+                  shortDescription: "Manages calendars",
+                  category: "Productivity",
+                },
+                installed: false,
+                enabled: false,
+              },
             ],
           },
           {
@@ -143,6 +154,16 @@ describe("CapabilitiesPage", () => {
     expect(screen.queryByText("docs")).toBeNull();
     expect(screen.getByText(/official ·/)).toBeTruthy();
     expect(screen.getByText("Official Plugins")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "developer-tools", level: 3 }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Productivity", level: 3 }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Uncategorized", level: 3 }),
+    ).toBeTruthy();
+    expect(screen.getAllByTestId("plugin-image-slot")).toHaveLength(3);
     const pluginSection = screen
       .getByRole("heading", { name: "Plugins", level: 2 })
       .closest("section");
