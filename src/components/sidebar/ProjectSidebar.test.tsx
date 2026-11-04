@@ -114,10 +114,11 @@ describe("ProjectSidebar", () => {
     expect(within(panel).getByText("Projects")).toBeTruthy();
     expect(within(panel).queryByText("Home")).toBeNull();
     expect(
-      within(panel)
-        .getByRole("link", { name: /Project Alpha/ })
-        .getAttribute("href"),
-    ).toBe("/projects/project-1");
+      within(panel).getByRole("button", { name: "Expand Project Alpha" }),
+    ).toBeTruthy();
+    expect(
+      within(panel).queryByRole("link", { name: /Project Alpha/ }),
+    ).toBeNull();
     expect(within(panel).queryByRole("link", { name: "Settings" })).toBeNull();
     expect(
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
@@ -189,8 +190,11 @@ describe("ProjectSidebar", () => {
       expect(within(panel).getByText("Recent chats")).toBeTruthy();
       expect(within(panel).getByText("Projects")).toBeTruthy();
       expect(
-        within(panel).getByRole("link", { name: /Project Alpha/ }),
+        within(panel).getByRole("button", { name: "Expand Project Alpha" }),
       ).toBeTruthy();
+      expect(
+        within(panel).queryByRole("link", { name: /Project Alpha/ }),
+      ).toBeNull();
       expect(
         within(panel).getByRole("link", { name: /Build the sidebar/ }),
       ).toBeTruthy();

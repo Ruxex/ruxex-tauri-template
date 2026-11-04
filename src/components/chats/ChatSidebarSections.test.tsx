@@ -82,11 +82,17 @@ describe("ChatSidebarSections", () => {
 
     expect(links[0].textContent?.trim()).toBe("New chat");
     expect(links[1].textContent).toContain("Build the sidebar");
-    expect(links[2].textContent?.trim()).toContain("Project Alpha");
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(2);
     expect(links[0].getAttribute("href")).toBe("/");
     expect(links[1].getAttribute("href")).toBe("/chat/thread-1");
-    expect(links[2].getAttribute("href")).toBe("/projects/project-1");
+    expect(
+      screen.queryByRole("link", {
+        name: "Open Project Alpha project",
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Expand Project Alpha" }),
+    ).toBeTruthy();
     expect(links[1].parentElement?.className).toContain("bg-base-200");
     expect(
       screen.getByRole("button", { name: "Archive Build the sidebar" }),
@@ -225,7 +231,7 @@ describe("ChatSidebarSections", () => {
       ),
     ).toBe(false);
 
-    fireEvent.click(alphaDisclosure);
+    fireEvent.click(screen.getByText("Project Alpha"));
 
     expect(alphaDisclosure.getAttribute("aria-expanded")).toBe("true");
     expect(betaDisclosure.getAttribute("aria-expanded")).toBe("false");
