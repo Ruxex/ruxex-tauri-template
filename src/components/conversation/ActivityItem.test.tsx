@@ -107,6 +107,8 @@ describe("ActivityItem", () => {
     expect(command.textContent).toBe("pnpm test");
     expect(result.textContent).toContain("done");
     expect(result.className).toContain("border-t");
+    expect(result.className).toContain("max-h-96");
+    expect(result.className).toContain("overflow-y-auto");
     expect(command.className).not.toContain("bg-neutral");
     expect(screen.queryByText("/workspace")).toBeNull();
     expect(screen.getByText("status")).toBeTruthy();

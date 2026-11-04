@@ -255,6 +255,66 @@ describe("ChatActivityTimeline", () => {
     );
   });
 
+  it("renders the completed turn duration at the completed turn", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        completedTurn={
+          {
+            id: "turn-1",
+            startedAt: 1,
+            completedAt: 241,
+            durationMs: 242_000,
+            status: "completed",
+          } as never
+        }
+        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        liveItems={[]}
+        liveStatus="completed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    const worked = screen.getByRole("status", {
+      name: "Worked for 4m 2s",
+    });
+    expect(worked.textContent).toBe("Worked for 4m 2s");
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(timeline.children[0]).toBe(worked);
+    expect(timeline.children[1]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+  });
+
+  it("falls back to completed and started timestamps when duration is absent", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        completedTurn={
+          {
+            id: "turn-1",
+            startedAt: 100,
+            completedAt: 102.5,
+            durationMs: null,
+            status: "completed",
+          } as never
+        }
+        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        liveItems={[]}
+        liveStatus="completed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("status", { name: "Worked for 2s" }).textContent,
+    ).toBe("Worked for 2s");
+  });
+
   it("falls back to Working when the start timestamp is invalid", () => {
     render(
       <ChatActivityTimeline

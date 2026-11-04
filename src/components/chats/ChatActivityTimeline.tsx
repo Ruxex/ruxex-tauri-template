@@ -5,6 +5,7 @@ import type {
   PendingServerRequest,
   ThreadExecutionState,
 } from "../../app-server/event-reducer";
+import type { v2 } from "../../protocol";
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
 import { ActivityItem } from "../conversation/ActivityItem";
 import { ConversationItem } from "../conversation/ConversationItem";
@@ -34,6 +35,7 @@ type ChatActivityTimelineProps = {
   pendingRequests: PendingServerRequest[];
   workingTurnId?: string | null;
   workingStartedAt?: number | null;
+  completedTurn?: v2.Turn | null;
 };
 
 export const ChatActivityTimeline = memo(function ChatActivityTimeline({
@@ -47,16 +49,28 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   pendingRequests,
   workingTurnId,
   workingStartedAt,
+  completedTurn,
 }: ChatActivityTimelineProps) {
   const timelineRef = useTimelineAutoScroll({ items, pendingRequests });
   const isBusy = liveStatus === "running" || liveStatus === "resynchronizing";
   const workingSeconds = useWorkingSeconds(isBusy ? workingStartedAt : null);
   const workingLabel =
     workingSeconds === null ? "Working" : `Working for ${workingSeconds}s`;
-  const workingItemIndex = workingTurnId
-    ? items.findIndex((item) => item.turnId === workingTurnId)
+  const workedSeconds = completedTurn
+    ? getTurnDurationSeconds(completedTurn)
+    : null;
+  const workedLabel =
+    workedSeconds === null
+      ? "Worked"
+      : `Worked for ${formatDuration(workedSeconds)}`;
+  const indicatorLabel = isBusy ? workingLabel : workedLabel;
+  const indicatorTurnId = isBusy ? workingTurnId : (completedTurn?.id ?? null);
+  const indicatorItemIndex = indicatorTurnId
+    ? items.findIndex((item) => item.turnId === indicatorTurnId)
     : 0;
-  const workingInsertionIndex = workingItemIndex < 0 ? 0 : workingItemIndex;
+  const indicatorInsertionIndex =
+    indicatorItemIndex < 0 ? 0 : indicatorItemIndex;
+  const showIndicator = isBusy || completedTurn != null;
 
   return (
     <section
@@ -65,13 +79,13 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       className="space-y-4 bg-base-200 p-4"
       ref={timelineRef}
     >
-      {items.length === 0 && isBusy && (
-        <WorkingIndicator label={workingLabel} />
+      {items.length === 0 && showIndicator && (
+        <WorkingIndicator label={indicatorLabel} />
       )}
       {items.map((item, index) => (
         <Fragment key={`item:${item.turnId}:${item.id}`}>
-          {isBusy && index === workingInsertionIndex && (
-            <WorkingIndicator label={workingLabel} />
+          {showIndicator && index === indicatorInsertionIndex && (
+            <WorkingIndicator label={indicatorLabel} />
           )}
           {item.category === "message" ? (
             <ConversationItem item={item} onEdit={onEdit} />
@@ -110,6 +124,7 @@ function areChatActivityTimelinePropsEqual(
     left.onResolve === right.onResolve &&
     left.workingTurnId === right.workingTurnId &&
     left.workingStartedAt === right.workingStartedAt &&
+    left.completedTurn === right.completedTurn &&
     areConversationItemsEqual(left.items, right.items) &&
     areLiveItemsEqual(left.liveItems, right.liveItems) &&
     arePendingRequestsEqual(left.pendingRequests, right.pendingRequests)
@@ -138,6 +153,34 @@ function useWorkingSeconds(
   }
 
   return Math.max(0, Math.floor(now / 1_000 - startedAt));
+}
+
+function getTurnDurationSeconds(turn: v2.Turn): number | null {
+  if (turn.durationMs !== null && Number.isFinite(turn.durationMs)) {
+    return Math.max(0, Math.floor(turn.durationMs / 1_000));
+  }
+  if (
+    turn.startedAt !== null &&
+    turn.completedAt !== null &&
+    Number.isFinite(turn.startedAt) &&
+    Number.isFinite(turn.completedAt)
+  ) {
+    return Math.max(0, Math.floor(turn.completedAt - turn.startedAt));
+  }
+  return null;
+}
+
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3_600);
+  const minutes = Math.floor((seconds % 3_600) / 60);
+  const remainingSeconds = seconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${remainingSeconds}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  return `${remainingSeconds}s`;
 }
 
 function WorkingIndicator({ label }: { label: string }) {

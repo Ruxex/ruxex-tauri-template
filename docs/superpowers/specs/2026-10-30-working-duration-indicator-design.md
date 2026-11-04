@@ -3,9 +3,10 @@
 ## Intent
 
 Replace the bottom-of-chat running spinner with a compact Codex-style status
-line such as `Working for 42s`, followed by a divider. This keeps the current
-streaming messages visible as the main progress signal while still showing
-that the turn is active and how long it has been running.
+line such as `Working for 42s`, followed by a divider. Keep the same status
+line after completion as `Worked for 4m 2s`, using the completed Turn's
+duration. This keeps the current streaming messages visible as the main
+progress signal while still showing how long the turn took.
 
 ## Scope
 
@@ -13,6 +14,8 @@ that the turn is active and how long it has been running.
   `ChatActivityTimeline`.
 - While the thread is `running` or `resynchronizing`, update and display the
   elapsed whole seconds once per second.
+- After a turn completes, display its total duration using `durationMs`, with
+  a `completedAt - startedAt` fallback when the duration is unavailable.
 - Keep the existing message/activity rendering and pending approval order
   unchanged.
 - Remove the separate centered spinner from the chat timeline.
@@ -39,6 +42,8 @@ small activity-level progress indicators remain unchanged.
   sequence while preserving approval placement at the bottom.
 - If no valid start timestamp is available, show `Working` without inventing a
   duration.
+- If a completed turn has no usable duration or timestamps, show `Worked`
+  without inventing a duration.
 
 ## Verification
 
