@@ -82,7 +82,7 @@ export function useTimelineAutoScroll({
     const scrollContainer = scrollContainerFor(timeline);
     if (typeof scrollContainer.scrollTo === "function") {
       scrollContainer.scrollTo({
-        behavior: addedUserMessage ? "smooth" : "auto",
+        behavior: "smooth",
         top: scrollContainer.scrollHeight,
       });
     } else {

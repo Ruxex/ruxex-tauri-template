@@ -510,7 +510,7 @@ describe("ChatActivityTimeline", () => {
 
     expect(timeline.scrollTo).toHaveBeenCalledTimes(2);
     expect(timeline.scrollTo).toHaveBeenLastCalledWith({
-      behavior: "auto",
+      behavior: "smooth",
       top: 1000,
     });
   });
@@ -544,7 +544,7 @@ describe("ChatActivityTimeline", () => {
     );
 
     expect(container.scrollTo).toHaveBeenCalledWith({
-      behavior: "auto",
+      behavior: "smooth",
       top: 1000,
     });
     expect(timeline.scrollTo).toBeUndefined();
