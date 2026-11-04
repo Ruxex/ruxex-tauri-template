@@ -1,17 +1,21 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
+const useCreateProject = vi.hoisted(() => vi.fn());
+const open = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({ useProjectList }));
+vi.mock("../app-server/hooks", () => ({ useCreateProject, useProjectList }));
+vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
 
 describe("ProjectsPage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    open.mockResolvedValue("/workspace/selected");
     useProjectList.mockReturnValue({
       data: {
         data: [
@@ -24,6 +28,12 @@ describe("ProjectsPage", () => {
       },
       isLoading: false,
       isError: false,
+    });
+    useCreateProject.mockReturnValue({
+      error: null,
+      isError: false,
+      isPending: false,
+      mutate: vi.fn(),
     });
   });
 
@@ -53,10 +63,29 @@ describe("ProjectsPage", () => {
     expect(
       screen.getByRole("link", { name: /Project Alpha/ }).getAttribute("href"),
     ).toBe("/projects/project-1");
-    expect(
-      screen.getByRole("link", { name: "New project" }).getAttribute("href"),
-    ).toBe("/projects/new");
+    expect(screen.getByRole("button", { name: "New project" })).toBeTruthy();
     expect(screen.queryByLabelText("Project name")).toBeNull();
+  });
+
+  it("opens project creation in a modal with visible overflow for metadata popovers", async () => {
+    const { ProjectsPage } = await import("./ProjectsPage");
+
+    render(
+      <MemoryRouter>
+        <ProjectsPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "New project" }));
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Create a project",
+    });
+    expect(dialog.getAttribute("open")).not.toBeNull();
+    expect(dialog.querySelector(".modal-box")?.className).toContain(
+      "overflow-visible",
+    );
+    expect(screen.getByRole("textbox", { name: "Project name" })).toBeTruthy();
   });
 
   it("keeps the empty state concise without an empty project table", async () => {
@@ -76,8 +105,6 @@ describe("ProjectsPage", () => {
     expect(screen.getByText("No projects yet")).toBeTruthy();
     expect(screen.queryByText(/Create your first project/)).toBeNull();
     expect(screen.queryByRole("table", { name: "Projects" })).toBeNull();
-    expect(
-      screen.getByRole("link", { name: "Create project" }).getAttribute("href"),
-    ).toBe("/projects/new");
+    expect(screen.getByRole("button", { name: "Create project" })).toBeTruthy();
   });
 });

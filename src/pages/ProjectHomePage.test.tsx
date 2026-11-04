@@ -103,6 +103,21 @@ describe("ProjectHomePage", () => {
     expect(screen.queryByTestId("worktree-card")).toBeNull();
   });
 
+  it("allows project metadata popovers to extend outside the modal box", async () => {
+    const { ProjectHomePage } = await import("./ProjectHomePage");
+
+    render(
+      <MemoryRouter>
+        <ProjectHomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit project" }));
+
+    const modalBox = screen.getByRole("dialog").querySelector(".modal-box");
+    expect(modalBox?.className).toContain("overflow-visible");
+  });
+
   it("updates the project name and workspace root from the edit dialog", async () => {
     const mutate = vi.fn();
     useUpdateProject.mockReturnValue({ isPending: false, mutate });

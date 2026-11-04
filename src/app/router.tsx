@@ -11,7 +11,6 @@ import { LoginPage } from "../pages/LoginPage";
 import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
 import { ModelPage } from "../pages/ModelPage";
 import { NewChatRedirect } from "../pages/NewChatRedirect";
-import { NewProjectPage } from "../pages/NewProjectPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { ProjectsPage } from "../pages/ProjectsPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
@@ -52,7 +51,6 @@ export const router = createHashRouter([
       { path: "chat/new", element: <NewChatRedirect /> },
       { path: "chat/:threadId", element: <ThreadPage /> },
       { path: "projects", element: <ProjectsPage /> },
-      { path: "projects/new", element: <NewProjectPage /> },
       { path: "projects/:projectId", element: <ProjectHomePage /> },
       {
         path: "projects/:projectId/chat/new",

@@ -202,7 +202,8 @@ export function ProjectHomePage() {
             handleCloseEditDialog();
           }}
         >
-          <div className="modal-box w-full max-w-2xl px-5 py-7">
+          {/* Keep popovers visible; modal-box defaults to overflow-y:auto. See https://github.com/saadeghi/daisyui/issues/3141 and https://github.com/saadeghi/daisyui/discussions/1812. */}
+          <div className="modal-box w-full max-w-2xl overflow-visible px-5 py-7">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

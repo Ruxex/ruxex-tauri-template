@@ -1,9 +1,11 @@
 import { FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
 import { ErrorState, LoadingState } from "../components/common/AsyncState";
 import { PageContainer } from "../components/layout/PageContainer";
+import { NewProjectDialog } from "../components/projects/NewProjectDialog";
 import { ProjectIcon } from "../components/projects/ProjectIcon";
 import {
   parseProjectMetadata,
@@ -11,6 +13,7 @@ import {
 } from "../components/projects/project-metadata";
 
 export function ProjectsPage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const projects = useProjectList({
     limit: 100,
     sortKey: "position",
@@ -22,10 +25,14 @@ export function ProjectsPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
         </div>
-        <Link className="btn btn-primary min-h-11 gap-2" to="/projects/new">
+        <button
+          className="btn btn-primary min-h-11 gap-2"
+          type="button"
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
           <PlusIcon aria-hidden="true" className="size-4" />
           New project
-        </Link>
+        </button>
       </header>
 
       <section>
@@ -43,13 +50,14 @@ export function ProjectsPage() {
                   className="mx-auto size-8 text-base-content/35"
                 />
                 <h3 className="mt-3 font-semibold">No projects yet</h3>
-                <Link
+                <button
                   className="btn btn-sm btn-primary mt-4"
-                  to="/projects/new"
+                  type="button"
+                  onClick={() => setIsCreateDialogOpen(true)}
                 >
                   <PlusIcon aria-hidden="true" className="size-4" />
                   Create project
-                </Link>
+                </button>
               </div>
             )}
           {projects.data?.data.length ? (
@@ -115,6 +123,9 @@ export function ProjectsPage() {
           ) : null}
         </div>
       </section>
+      {isCreateDialogOpen && (
+        <NewProjectDialog onClose={() => setIsCreateDialogOpen(false)} />
+      )}
     </PageContainer>
   );
 }

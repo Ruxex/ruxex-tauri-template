@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useCreateProject = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({ useCreateProject }));
+vi.mock("../../app-server/hooks", () => ({ useCreateProject }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
 
 function LocationProbe() {
@@ -21,7 +21,7 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}</output>;
 }
 
-describe("NewProjectPage", () => {
+describe("NewProjectDialog", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
@@ -34,32 +34,26 @@ describe("NewProjectPage", () => {
     open.mockResolvedValue("/workspace/selected");
   });
 
-  it("renders a page form with a link back to projects", async () => {
-    const { NewProjectPage } = await import("./NewProjectPage");
-    const { container } = render(
+  it("renders as a modal with visible overflow for metadata popovers", async () => {
+    const { NewProjectDialog } = await import("./NewProjectDialog");
+
+    render(
       <MemoryRouter>
-        <NewProjectPage />
+        <NewProjectDialog onClose={vi.fn()} />
       </MemoryRouter>,
     );
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("max-w-3xl");
-    expect(
-      screen.getByRole("heading", { name: "Create a project" }),
-    ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("link", { name: "Back to projects" })
-        .getAttribute("href"),
-    ).toBe("/projects");
-    expect(screen.queryByRole("dialog")).toBeNull();
+    const dialog = screen.getByRole("dialog", { name: "Create a project" });
+    expect(dialog.querySelector(".modal-box")?.className).toContain(
+      "overflow-visible",
+    );
   });
 
   it("creates a project with the selected metadata and workspace root", async () => {
-    const { NewProjectPage } = await import("./NewProjectPage");
+    const { NewProjectDialog } = await import("./NewProjectDialog");
     render(
       <MemoryRouter>
-        <NewProjectPage />
+        <NewProjectDialog onClose={vi.fn()} />
       </MemoryRouter>,
     );
 
@@ -95,10 +89,10 @@ describe("NewProjectPage", () => {
   });
 
   it("does not submit a blank project name", async () => {
-    const { NewProjectPage } = await import("./NewProjectPage");
+    const { NewProjectDialog } = await import("./NewProjectDialog");
     render(
       <MemoryRouter>
-        <NewProjectPage />
+        <NewProjectDialog onClose={vi.fn()} />
       </MemoryRouter>,
     );
 
@@ -120,11 +114,14 @@ describe("NewProjectPage", () => {
       isPending: false,
       mutate,
     });
-    const { NewProjectPage } = await import("./NewProjectPage");
+    const { NewProjectDialog } = await import("./NewProjectDialog");
     render(
-      <MemoryRouter initialEntries={["/projects/new"]}>
+      <MemoryRouter initialEntries={["/projects"]}>
         <Routes>
-          <Route path="/projects/new" element={<NewProjectPage />} />
+          <Route
+            path="/projects"
+            element={<NewProjectDialog onClose={vi.fn()} />}
+          />
           <Route path="*" element={<LocationProbe />} />
         </Routes>
       </MemoryRouter>,
