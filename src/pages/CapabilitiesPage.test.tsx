@@ -143,6 +143,10 @@ describe("CapabilitiesPage", () => {
     expect(screen.queryByText("docs")).toBeNull();
     expect(screen.getByText(/official ·/)).toBeTruthy();
     expect(screen.getByText("Official Plugins")).toBeTruthy();
+    const pluginSection = screen
+      .getByRole("heading", { name: "Plugins", level: 2 })
+      .closest("section");
+    expect(pluginSection?.className).not.toContain("lg:grid-cols-2");
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
     expect(
@@ -167,9 +171,12 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Install Lint Plugin" }),
-    );
+    const installButton = screen.getByRole("button", {
+      name: "Install Lint Plugin",
+    });
+    expect(installButton.className).toContain("btn-outline");
+    expect(installButton.textContent).not.toContain("Lint Plugin");
+    fireEvent.click(installButton);
     fireEvent.click(
       screen.getByRole("button", { name: "Refresh Official Plugins" }),
     );

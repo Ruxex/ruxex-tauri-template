@@ -1,3 +1,4 @@
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { useSearchParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
@@ -174,7 +175,7 @@ export function CapabilitiesPage() {
           </article>
         </section>
       ) : (
-        <section className="grid gap-4 lg:grid-cols-2">
+        <section className="grid gap-4">
           <article
             className="card border border-base-300 bg-base-100 shadow-sm"
             id="plugins"
@@ -292,7 +293,9 @@ export function CapabilitiesPage() {
                               </div>
                               {!plugin.installed && isInstallable && (
                                 <button
-                                  className="btn btn-primary btn-xs"
+                                  aria-label={`Install ${displayName}`}
+                                  className="btn btn-outline btn-square btn-sm"
+                                  title={`Install ${displayName}`}
                                   type="button"
                                   disabled={isInstalling}
                                   onClick={() =>
@@ -302,9 +305,17 @@ export function CapabilitiesPage() {
                                     })
                                   }
                                 >
-                                  {isInstalling
-                                    ? "Installing…"
-                                    : `Install ${displayName}`}
+                                  {isInstalling ? (
+                                    <span
+                                      aria-hidden="true"
+                                      className="loading loading-spinner loading-xs"
+                                    />
+                                  ) : (
+                                    <PlusIcon
+                                      aria-hidden="true"
+                                      className="size-4"
+                                    />
+                                  )}
                                 </button>
                               )}
                             </div>
