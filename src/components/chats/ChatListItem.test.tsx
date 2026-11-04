@@ -97,10 +97,11 @@ describe("ChatListItem", () => {
     expect(screen.queryByText(label)).toBeNull();
     if (status === "completed") {
       expect(statusIcon.className).toContain("text-success");
+      expect(statusIcon.querySelector(".rounded-full")).toBeTruthy();
     }
     if (status === "running") {
       expect(statusIcon.querySelector(".loading-spinner")).toBeTruthy();
-    } else {
+    } else if (status !== "completed") {
       expect(statusIcon.querySelector("svg")).toBeTruthy();
     }
 

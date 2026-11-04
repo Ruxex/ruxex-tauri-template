@@ -1,5 +1,4 @@
 import {
-  CheckCircleIcon,
   ExclamationCircleIcon,
   PauseCircleIcon,
   StopCircleIcon,
@@ -46,7 +45,9 @@ function statusIcon(status: ChatStatus) {
         />
       );
     case "completed":
-      return <CheckCircleIcon aria-hidden="true" className="size-4" />;
+      return (
+        <span aria-hidden="true" className="size-2 rounded-full bg-current" />
+      );
     case "waiting":
       return <PauseCircleIcon aria-hidden="true" className="size-4" />;
     case "failed":

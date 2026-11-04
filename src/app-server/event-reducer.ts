@@ -372,7 +372,9 @@ function updateFileChangeItem(
     (thread) => ({
       ...thread,
       items: thread.items.map((item) =>
-        item.id === params.itemId && item.raw?.type === "fileChange"
+        item.id === params.itemId &&
+        item.turnId === params.turnId &&
+        item.raw?.type === "fileChange"
           ? { ...item, raw: { ...item.raw, changes: params.changes } }
           : item,
       ),
@@ -392,7 +394,7 @@ function upsertStructuredItem(
     params.threadId,
     (thread) => {
       const index = thread.items.findIndex(
-        (item) => item.id === params.item.id,
+        (item) => item.id === params.item.id && item.turnId === params.turnId,
       );
       if (index === -1) {
         const completedWithoutActiveTurn = completed && !thread.activeTurnId;
@@ -438,7 +440,9 @@ function addDelta(
     state,
     params.threadId,
     (thread) => {
-      const index = thread.items.findIndex((item) => item.id === params.itemId);
+      const index = thread.items.findIndex(
+        (item) => item.id === params.itemId && item.turnId === params.turnId,
+      );
       if (index === -1) {
         return {
           ...thread,

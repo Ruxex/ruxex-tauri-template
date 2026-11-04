@@ -146,6 +146,108 @@ describe("reduceAppServerEvent", () => {
     ]);
   });
 
+  it("keeps repeated command item IDs separate across turns", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/started",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          item: {
+            type: "commandExecution",
+            id: "command-1",
+            pluginId: null,
+            scriptPath: null,
+            command: "ls",
+            cwd: "/workspace",
+            processId: null,
+            source: "agent",
+            status: "inProgress",
+            commandActions: [],
+            aggregatedOutput: null,
+            exitCode: null,
+            durationMs: null,
+          },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/commandExecution/outputDelta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "command-1",
+          delta: "first\n",
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/completed",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status: "completed" },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "turn/started",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-2", status: "inProgress" },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/started",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-2",
+          item: {
+            type: "commandExecution",
+            id: "command-1",
+            pluginId: null,
+            scriptPath: null,
+            command: "ls",
+            cwd: "/workspace",
+            processId: null,
+            source: "agent",
+            status: "inProgress",
+            commandActions: [],
+            aggregatedOutput: null,
+            exitCode: null,
+            durationMs: null,
+          },
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/commandExecution/outputDelta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-2",
+          itemId: "command-1",
+          delta: "second\n",
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      { id: "command-1", turnId: "turn-1", text: "first\n" },
+      { id: "command-1", turnId: "turn-2", text: "second\n" },
+    ]);
+  });
+
   it("keeps plan, reasoning, file-change, and MCP progress deltas separate", () => {
     let state = createInitialEventState();
     const deltas = [
