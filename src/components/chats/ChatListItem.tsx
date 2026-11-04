@@ -19,6 +19,7 @@ type ChatListItemProps = {
   projectName?: string;
   worktreeLabel?: string;
   selected?: boolean;
+  unread?: boolean;
   showPreview?: boolean;
   onClick?: () => void;
   onArchive?: () => void;
@@ -31,6 +32,7 @@ export function ChatListItem({
   projectName,
   worktreeLabel,
   selected = false,
+  unread = false,
   showPreview = false,
   onClick,
   onArchive,
@@ -50,6 +52,13 @@ export function ChatListItem({
         onMouseLeave={() => setIsTitleHovered(false)}
       >
         <span className="flex min-w-0 items-center gap-2">
+          {unread && (
+            <span
+              aria-label="Unread chat"
+              className="size-2 shrink-0 rounded-full bg-primary"
+              role="img"
+            />
+          )}
           {status && <ChatStatusIcon status={status} />}
           <ChatTitle isHovered={isTitleHovered} title={title} />
         </span>

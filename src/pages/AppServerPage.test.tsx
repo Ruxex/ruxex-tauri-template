@@ -54,6 +54,12 @@ function createDaemonResult() {
       isError: false,
       error: null as unknown,
     },
+    update: {
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+      error: null as unknown,
+    },
     appServerError: undefined as unknown,
     appServerReady: true,
     isAvailable: true,
@@ -115,6 +121,23 @@ describe("AppServerPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
     expect(status.refetch).toHaveBeenCalledOnce();
+  });
+
+  it("shows Update when the running and managed versions differ", () => {
+    const daemon = useDaemonResult({
+      status: {
+        ...useDaemonResult().status,
+        data: { ...runningDaemon, managedRuxexVersion: "0.5.0" },
+      },
+    });
+    const status = createStatusResult();
+    useAppServerDaemon.mockReturnValue(daemon);
+    useAppServerStatus.mockReturnValue(status);
+
+    render(<AppServerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    expect(daemon.update.mutate).toHaveBeenCalledOnce();
   });
 
   it("renders Browser and Computer Use status in Runtime settings", () => {

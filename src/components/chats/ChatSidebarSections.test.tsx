@@ -13,6 +13,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
+const useThreadReadState = vi.hoisted(() =>
+  vi.fn(() => ({ isThreadUnread: () => false })),
+);
 const useArchiveThread = vi.hoisted(() => vi.fn());
 const activeThreadListParams = vi.hoisted(() => vi.fn());
 
@@ -23,6 +26,7 @@ vi.mock("../../app-server/hooks", () => ({
   useArchiveThread,
   activeThreadListParams,
 }));
+vi.mock("../../app/thread-read-state", () => ({ useThreadReadState }));
 
 describe("ChatSidebarSections", () => {
   afterEach(cleanup);

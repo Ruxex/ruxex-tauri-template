@@ -31,9 +31,12 @@ export function AppServerPage() {
         isFetching={status.isFetching}
         mode={daemon.mode}
         isPending={daemon.control.isPending}
+        isUpdatePending={daemon.update.isPending}
         onAction={(action) => daemon.control.mutate(action)}
         onReconnect={() => void status.refetch()}
+        onUpdate={() => daemon.update.mutate()}
         resynchronizing={events.resynchronizing}
+        updateError={daemon.update.error}
       />
       <BrowserComputerUseCard
         config={config.data?.config ?? null}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 
+import { useThreadReadState } from "../../app/thread-read-state";
 import { useUiPreferences } from "../../app/ui-preferences";
 import { useProject, useThread } from "../../app-server/hooks";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
@@ -15,6 +16,7 @@ export function AppLayout() {
   }>();
   const thread = useThread(threadId ?? "");
   const project = useProject(projectId ?? "");
+  const { markThreadRead } = useThreadReadState();
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
   const isChatRoute = location.pathname.startsWith("/chat/");
@@ -23,6 +25,20 @@ export function AppLayout() {
   const chatTitle =
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
+
+  useEffect(() => {
+    const loadedThread = thread.data?.thread;
+    if (
+      !isChatRoute ||
+      !threadId ||
+      !loadedThread ||
+      loadedThread.id !== threadId ||
+      !Number.isFinite(loadedThread.updatedAt)
+    ) {
+      return;
+    }
+    markThreadRead(threadId, loadedThread.updatedAt);
+  }, [isChatRoute, markThreadRead, thread.data?.thread, threadId]);
 
   useEffect(() => {
     setActivePanel(routePanel);

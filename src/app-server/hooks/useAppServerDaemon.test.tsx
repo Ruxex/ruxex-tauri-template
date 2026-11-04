@@ -190,6 +190,83 @@ describe("useAppServerDaemon", () => {
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
   });
 
+  it("updates the managed App Server by stopping before starting", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    client.setQueryData(appServerQueryKeys.status, connectedStatus);
+
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await waitFor(() => expect(result.current.status.isSuccess).toBe(true));
+    controlAppServerDaemon.mockReset();
+    ensureAppServer.mockClear();
+    controlAppServerDaemon
+      .mockResolvedValueOnce(stoppedDaemon)
+      .mockResolvedValueOnce(startedDaemon);
+
+    await act(async () => result.current.update.mutateAsync());
+
+    expect(controlAppServerDaemon).toHaveBeenNthCalledWith(1, "stop");
+    expect(controlAppServerDaemon).toHaveBeenNthCalledWith(2, "start");
+    expect(ensureAppServer).toHaveBeenCalledOnce();
+  });
+
+  it("does not start an update when stopping fails", async () => {
+    const error = new Error("stop failed");
+    controlAppServerDaemon.mockRejectedValueOnce(error);
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await expect(
+      act(async () => result.current.update.mutateAsync()),
+    ).rejects.toBe(error);
+    expect(controlAppServerDaemon).toHaveBeenCalledWith("stop");
+    expect(controlAppServerDaemon).not.toHaveBeenCalledWith("start");
+  });
+
+  it("clears the connection when the update start step fails", async () => {
+    const error = new Error("start failed");
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await waitFor(() => expect(result.current.status.isSuccess).toBe(true));
+    controlAppServerDaemon.mockReset();
+    ensureAppServer.mockClear();
+    controlAppServerDaemon
+      .mockResolvedValueOnce(stoppedDaemon)
+      .mockRejectedValueOnce(error);
+    client.setQueryData(appServerQueryKeys.status, connectedStatus);
+
+    await expect(
+      act(async () => result.current.update.mutateAsync()),
+    ).rejects.toBe(error);
+    expect(controlAppServerDaemon).toHaveBeenNthCalledWith(1, "stop");
+    expect(controlAppServerDaemon).toHaveBeenNthCalledWith(2, "start");
+    expect(ensureAppServer).not.toHaveBeenCalled();
+    expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
+  });
+
   it("exposes a version query error when the daemon is unavailable", async () => {
     const error = new Error("daemon unavailable");
     controlAppServerDaemon.mockRejectedValue(error);

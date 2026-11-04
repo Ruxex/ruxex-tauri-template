@@ -65,6 +65,23 @@ export function useAppServerDaemon() {
     },
   });
 
+  const update = useMutation({
+    mutationFn: async () => {
+      const stopped = await controlAppServerDaemon("stop");
+      queryClient.setQueryData(appServerQueryKeys.daemonStatus, stopped);
+      queryClient.setQueryData(appServerQueryKeys.status, null);
+
+      const started = await controlAppServerDaemon("start");
+      queryClient.setQueryData(appServerQueryKeys.daemonStatus, started);
+      const connectedStatus = await ensureAppServerRuntime();
+      queryClient.setQueryData(appServerQueryKeys.status, connectedStatus);
+      return started;
+    },
+    onError: () => {
+      queryClient.setQueryData(appServerQueryKeys.status, null);
+    },
+  });
+
   return {
     status,
     control,
@@ -72,5 +89,6 @@ export function useAppServerDaemon() {
     mode,
     appServerError: appServerStatus.error,
     appServerReady: !isNativeDesktopRuntime || appServerStatus.isSuccess,
+    update,
   };
 }

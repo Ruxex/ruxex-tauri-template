@@ -6,10 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useArchivedThreadList = vi.hoisted(() => vi.fn());
 const useUnarchiveThread = vi.hoisted(() => vi.fn());
+const useDeleteThread = vi.hoisted(() => vi.fn());
 const mutateAsync = vi.hoisted(() => vi.fn());
+const deleteMutateAsync = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useArchivedThreadList,
+  useDeleteThread,
   useUnarchiveThread,
 }));
 vi.mock("../components/common/ThreadCard", () => ({
@@ -33,11 +36,20 @@ describe("ArchivePage", () => {
   beforeEach(() => {
     mutateAsync.mockReset();
     mutateAsync.mockResolvedValue({});
+    deleteMutateAsync.mockReset();
+    deleteMutateAsync.mockResolvedValue({});
+    useDeleteThread.mockReturnValue({
+      mutateAsync: deleteMutateAsync,
+      isPending: false,
+    });
     useUnarchiveThread.mockReturnValue({ mutateAsync, isPending: false });
     useArchivedThreadList.mockReturnValue({
       isLoading: false,
       isError: false,
-      data: { data: [{ id: "thread-old", name: "Old chat" }] },
+      data: {
+        data: [{ id: "thread-old", name: "Old chat" }],
+        nextCursor: null,
+      },
     });
   });
 
@@ -58,11 +70,55 @@ describe("ArchivePage", () => {
     ).toBe("/chat/thread-old");
   });
 
+  it("paginates archived chats with opaque cursors", async () => {
+    useArchivedThreadList.mockImplementation((cursor: string | null) => ({
+      isLoading: false,
+      isError: false,
+      data:
+        cursor === "cursor-next"
+          ? { data: [{ id: "thread-new", name: "New chat" }], nextCursor: null }
+          : {
+              data: [{ id: "thread-old", name: "Old chat" }],
+              nextCursor: "cursor-next",
+            },
+    }));
+    const { ArchivePage } = await import("./ArchivePage");
+
+    render(
+      <MemoryRouter>
+        <ArchivePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(await screen.findByText("New chat")).toBeTruthy();
+    expect(useArchivedThreadList).toHaveBeenLastCalledWith("cursor-next");
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    expect(await screen.findByText("Old chat")).toBeTruthy();
+  });
+
+  it("confirms permanent deletion before sending the delete request", async () => {
+    const { ArchivePage } = await import("./ArchivePage");
+
+    render(
+      <MemoryRouter>
+        <ArchivePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(screen.getByRole("heading", { name: "Delete chat?" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
+
+    expect(deleteMutateAsync).toHaveBeenCalledWith({ threadId: "thread-old" });
+  });
+
   it("renders the empty state for an empty archive", async () => {
     useArchivedThreadList.mockReturnValue({
       isLoading: false,
       isError: false,
-      data: { data: [] },
+      data: { data: [], nextCursor: null },
     });
     const { ArchivePage } = await import("./ArchivePage");
 

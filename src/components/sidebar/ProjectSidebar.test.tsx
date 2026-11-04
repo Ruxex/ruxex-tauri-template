@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
+const useThreadReadState = vi.hoisted(() => vi.fn());
 const useArchiveThread = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const activeThreadListParams = vi.hoisted(() => vi.fn());
@@ -25,6 +26,7 @@ vi.mock("../../app-server/hooks", () => ({
   activeThreadListParams,
   usePluginList,
 }));
+vi.mock("../../app/thread-read-state", () => ({ useThreadReadState }));
 
 describe("ProjectSidebar", () => {
   afterEach(cleanup);
@@ -62,6 +64,9 @@ describe("ProjectSidebar", () => {
     useThreadActivity.mockReturnValue({
       status: undefined,
       waitingForRequest: false,
+    });
+    useThreadReadState.mockReturnValue({
+      isThreadUnread: vi.fn(() => false),
     });
     useArchiveThread.mockReturnValue({
       isPending: false,

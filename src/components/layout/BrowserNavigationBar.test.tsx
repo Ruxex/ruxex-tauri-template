@@ -60,6 +60,16 @@ describe("BrowserNavigationBar", () => {
     expect(screen.getByText("Appearance")).toBeTruthy();
   });
 
+  it("renders the archived chats settings breadcrumb", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings/archive"]}>
+        <BrowserNavigationBar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Archived chats")).toBeTruthy();
+  });
+
   it("renders the chat title in the shared breadcrumb", () => {
     render(
       <MemoryRouter initialEntries={["/chat/thread-1"]}>

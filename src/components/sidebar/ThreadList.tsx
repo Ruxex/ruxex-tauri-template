@@ -4,6 +4,7 @@ import {
   useThreadActivity,
   useThreadList,
 } from "../../app-server/hooks";
+import { useThreadReadState } from "../../app/thread-read-state";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
 import type { v2 } from "../../protocol";
 import { ChatListItem } from "../chats/ChatListItem";
@@ -75,6 +76,7 @@ function ThreadListRow({
   isArchiving: boolean;
 }) {
   const activity = useThreadActivity(thread.id);
+  const { isThreadUnread } = useThreadReadState();
 
   return (
     <li>
@@ -86,6 +88,7 @@ function ThreadListRow({
           activity.waitingForRequest,
         )}
         thread={thread}
+        unread={isThreadUnread(thread.id, thread.updatedAt)}
         onClick={onClick}
         onArchive={onArchive}
         isArchiving={isArchiving}

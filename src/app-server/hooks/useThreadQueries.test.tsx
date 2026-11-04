@@ -375,6 +375,30 @@ describe("thread query hooks", () => {
     );
   });
 
+  it("passes an opaque cursor when loading the next archived page", async () => {
+    const { archivedThreadListParams, useArchivedThreadList } = await import(
+      "./useThreadQueries"
+    );
+    const { result } = renderHook(
+      () => useArchivedThreadList("opaque-next-cursor"),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(archivedThreadListParams("opaque-next-cursor")).toEqual({
+      archived: true,
+      cursor: "opaque-next-cursor",
+      limit: 50,
+      sortKey: "updated_at",
+      sortDirection: "desc",
+    });
+    expect(requestAppServerMethod).toHaveBeenCalledWith(
+      "thread/list",
+      archivedThreadListParams("opaque-next-cursor"),
+    );
+  });
+
   it("does not request an empty thread id", async () => {
     const { useThread, useThreadConversation } = await import(
       "./useThreadQueries"

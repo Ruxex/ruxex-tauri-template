@@ -55,6 +55,18 @@ export function useUnarchiveThread() {
   });
 }
 
+export function useDeleteThread() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ThreadDeleteParams) => {
+      const response = await requestAppServerMethod("thread/delete", params);
+      return response.response;
+    },
+    onSuccess: () => invalidateThreadList(queryClient),
+  });
+}
+
 export function useCompactThread() {
   const queryClient = useQueryClient();
 

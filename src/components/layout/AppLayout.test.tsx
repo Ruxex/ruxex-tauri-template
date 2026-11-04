@@ -7,9 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useUiPreferences = vi.hoisted(() => vi.fn());
 const useThread = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
+const useThreadReadState = vi.hoisted(() => vi.fn());
+const markThreadRead = vi.hoisted(() => vi.fn());
 const projectSidebarProps = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app/ui-preferences", () => ({ useUiPreferences }));
+vi.mock("../../app/thread-read-state", () => ({ useThreadReadState }));
 vi.mock("../../app-server/hooks", () => ({ useProject, useThread }));
 vi.mock("../sidebar/ProjectSidebar", () => ({
   ProjectSidebar: (props: Record<string, unknown>) => {
@@ -26,6 +29,8 @@ describe("AppLayout", () => {
   beforeEach(() => {
     useThread.mockReturnValue({ data: undefined });
     useProject.mockReturnValue({ data: undefined });
+    useThreadReadState.mockReturnValue({ markThreadRead });
+    markThreadRead.mockReset();
     projectSidebarProps.mockReset();
   });
 
@@ -140,6 +145,48 @@ describe("AppLayout", () => {
     );
 
     expect(screen.getByText("Command demo")).toBeTruthy();
+  });
+
+  it("marks the selected chat read at its current update position", () => {
+    useThread.mockReturnValue({
+      data: {
+        thread: {
+          id: "thread-1",
+          name: "Command demo",
+          preview: "fallback",
+          updatedAt: 42,
+        },
+      },
+    });
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <Routes>
+          <Route path="/chat/:threadId" element={<AppLayout />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(markThreadRead).toHaveBeenCalledWith("thread-1", 42);
+  });
+
+  it("does not mark a thread read outside a chat route", () => {
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    expect(markThreadRead).not.toHaveBeenCalled();
   });
 
   it("uses the selected project name in the shared navigation bar", () => {

@@ -82,10 +82,13 @@ export function AppServerCard({
   isAvailable,
   isFetching,
   isPending,
+  isUpdatePending,
   mode,
   onAction,
   onReconnect,
+  onUpdate,
   resynchronizing,
+  updateError,
 }: {
   appServerError?: unknown;
   appServerReady: boolean;
@@ -98,14 +101,21 @@ export function AppServerCard({
   isAvailable: boolean;
   isFetching: boolean;
   isPending: boolean;
+  isUpdatePending: boolean;
   mode?: "daemon" | "inprocess";
   onAction: (action: Exclude<AppServerDaemonAction, "version">) => void;
   onReconnect: () => void;
+  onUpdate: () => void;
   resynchronizing: boolean;
+  updateError?: unknown;
 }) {
   const inProcess = mode === "inprocess";
   const error =
-    connectionError ?? appServerError ?? controlError ?? daemonError;
+    connectionError ??
+    appServerError ??
+    controlError ??
+    updateError ??
+    daemonError;
   const showDaemonControls = !inProcess && isAvailable;
   const modeLabel = inProcess
     ? "InProcess mode"
@@ -118,6 +128,13 @@ export function AppServerCard({
       ? "success"
       : "error";
   const daemonStatus = daemon?.status ?? "Unavailable";
+  const displayedVersion = appServerVersion ?? daemon?.appServerVersion;
+  const needsUpdate = Boolean(
+    showDaemonControls &&
+      displayedVersion &&
+      daemon?.managedRuxexVersion &&
+      displayedVersion !== daemon.managedRuxexVersion,
+  );
 
   return (
     <SettingsPanel icon={ServerIcon} title="AppServer">
@@ -147,7 +164,19 @@ export function AppServerCard({
           </StateBadge>
         </SettingRow>
         <SettingRow label="AppServer version">
-          {appServerVersion ?? daemon?.appServerVersion ?? "Unavailable"}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span>{displayedVersion ?? "Unavailable"}</span>
+            {needsUpdate && (
+              <button
+                className="btn btn-outline btn-xs"
+                disabled={isUpdatePending || isPending}
+                onClick={onUpdate}
+                type="button"
+              >
+                {isUpdatePending ? "Updating…" : "Update"}
+              </button>
+            )}
+          </div>
         </SettingRow>
         {inProcess ? (
           <SettingRow label="Status">
@@ -193,9 +222,9 @@ export function AppServerCard({
         {showDaemonControls &&
           (
             [
-              ["start", "btn-success"],
-              ["restart", "btn-warning"],
-              ["stop", "btn-error"],
+              ["start", "btn-outline btn-success"],
+              ["restart", "btn-outline btn-warning"],
+              ["stop", "btn-outline btn-error"],
             ] as const
           ).map(([action, variant]) => (
             <button

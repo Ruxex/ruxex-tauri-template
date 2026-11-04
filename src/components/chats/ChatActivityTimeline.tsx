@@ -146,7 +146,7 @@ function useWorkingSeconds(
     updateNow();
     const intervalId = window.setInterval(updateNow, 1_000);
     return () => window.clearInterval(intervalId);
-  }, [hasValidStart, startedAt]);
+  }, [hasValidStart]);
 
   if (!hasValidStart || startedAt === undefined) {
     return null;

@@ -24,6 +24,7 @@ function breadcrumbsForPath(
     const labels: Record<string, string> = {
       account: "Account",
       appearance: "Appearance",
+      archive: "Archived chats",
       models: "Models",
     };
 

@@ -34,6 +34,7 @@ describe("thread mutation hooks", () => {
     ["thread/start", "useCreateThread", {}],
     ["thread/archive", "useArchiveThread", { threadId: "thread-1" }],
     ["thread/unarchive", "useUnarchiveThread", { threadId: "thread-1" }],
+    ["thread/delete", "useDeleteThread", { threadId: "thread-1" }],
     ["thread/compact/start", "useCompactThread", { threadId: "thread-1" }],
     [
       "thread/name/set",
@@ -184,6 +185,26 @@ describe("thread mutation hooks", () => {
     });
     const invalidateQueries = vi.spyOn(client, "invalidateQueries");
     const { result } = renderHook(() => useArchiveThread(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () => result.current.mutateAsync({ threadId: "thread-1" }));
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "threads"],
+    });
+  });
+
+  it("invalidates the thread list after deleting", async () => {
+    const { useDeleteThread } = await import("./useThreadMutations");
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(() => useDeleteThread(), {
       wrapper: createWrapper(client),
     });
 

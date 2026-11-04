@@ -46,17 +46,20 @@ export function useThreadSearch(searchTerm: string) {
   });
 }
 
-export function archivedThreadListParams(): v2.ThreadListParams {
+export function archivedThreadListParams(
+  cursor: string | null = null,
+): v2.ThreadListParams {
   return {
     archived: true,
+    ...(cursor === null ? {} : { cursor }),
     limit: 50,
     sortKey: "updated_at",
     sortDirection: "desc",
   };
 }
 
-export function useArchivedThreadList() {
-  return useThreadList(archivedThreadListParams());
+export function useArchivedThreadList(cursor: string | null = null) {
+  return useThreadList(archivedThreadListParams(cursor));
 }
 
 export function activeThreadListParams(): v2.ThreadListParams {

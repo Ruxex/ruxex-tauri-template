@@ -1,4 +1,5 @@
 import {
+  ArchiveBoxIcon,
   DocumentTextIcon,
   InformationCircleIcon,
   PuzzlePieceIcon,
@@ -64,6 +65,12 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               <NavLink to="/settings/app-server">
                 <ServerIcon aria-hidden="true" className="size-4" />
                 Runtime
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/settings/archive">
+                <ArchiveBoxIcon aria-hidden="true" className="size-4" />
+                Archived chats
               </NavLink>
             </li>
           </ul>

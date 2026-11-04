@@ -40,6 +40,7 @@ export const router = createHashRouter([
           { path: "appearance", element: <AppearancePage /> },
           { path: "models", element: <ModelPage /> },
           { path: "app-server", element: <AppServerPage /> },
+          { path: "archive", element: <ArchivePage /> },
           { path: "marketplaces", element: <MarketplaceSettingsPage /> },
           { path: "account", element: <AccountPage /> },
         ],

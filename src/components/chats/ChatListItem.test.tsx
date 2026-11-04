@@ -126,6 +126,39 @@ describe("ChatListItem", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
+  it("renders an accessible unread dot only when requested", () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <ChatListItem
+          unread
+          thread={{
+            id: "thread-1",
+            name: "Build the sidebar",
+            preview: null,
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("img", { name: "Unread chat" })).toBeTruthy();
+
+    rerender(
+      <MemoryRouter>
+        <ChatListItem
+          thread={{
+            id: "thread-1",
+            name: "Build the sidebar",
+            preview: null,
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("img", { name: "Unread chat" })).toBeNull();
+  });
+
   it("falls back to the preview or an untitled label", () => {
     const { rerender } = render(
       <MemoryRouter>
