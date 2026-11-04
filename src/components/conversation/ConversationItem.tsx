@@ -63,7 +63,9 @@ export const ConversationItem = memo(function ConversationItem({
   }
 
   return (
-    <article className={`group chat ${isUser ? "chat-end" : "chat-start"}`}>
+    <article
+      className={`group chat ${isUser ? "chat-end w-fit max-w-full ms-auto" : "chat-start"}`}
+    >
       {isEditing ? (
         <form
           className="w-full max-w-3xl rounded-box border border-primary bg-base-100 p-3 shadow-sm"

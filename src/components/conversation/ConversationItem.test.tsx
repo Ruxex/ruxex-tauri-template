@@ -67,6 +67,10 @@ describe("ConversationItem", () => {
     );
 
     const actions = screen.getByRole("group", { name: "Message actions" });
+    const article = screen.getByRole("article");
+
+    expect(article.className).toContain("w-fit");
+    expect(article.className).toContain("ms-auto");
     expect(actions.className).toContain("group-hover:opacity-100");
     expect(actions.className).not.toContain("group-focus-within:opacity-100");
   });
