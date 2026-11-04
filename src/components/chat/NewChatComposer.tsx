@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 
 import {
+  useCollaborationModes,
   useCreateThread,
   useModelList,
   useProject,
@@ -13,12 +14,14 @@ import {
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
 import type { v2 } from "../../protocol";
+import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 import {
   ComposerOptions,
   PermissionMenu,
   type PermissionMode,
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
+import { collaborationModeFromMask } from "../conversation/collaboration-model";
 import { useComposerSelection } from "../conversation/useComposerSelection";
 import { ProjectSelector } from "../chats/ProjectSelector";
 import { AttachmentPreview } from "../common/AttachmentPreview";
@@ -32,6 +35,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const branding = useBranding();
   const navigate = useNavigate();
   const models = useModelList();
+  const collaborationModes = useCollaborationModes();
   const projects = useProjectList();
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const project = useProject(selectedProjectId);
@@ -45,6 +49,10 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
+  const [collaborationModeName, setCollaborationModeName] = useState("");
+  const [collaborationMode, setCollaborationMode] = useState<
+    CollaborationMode | null | undefined
+  >(undefined);
   const {
     attachmentError,
     attachmentInput,
@@ -111,6 +119,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           threadId: thread.thread.id,
           input,
           turnTrigger: planMode ? "plan" : null,
+          ...(collaborationMode !== undefined ? { collaborationMode } : {}),
         });
       }
       setMessage("");
@@ -197,11 +206,22 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
             </div>
             <div className="ml-auto flex min-w-0 items-center gap-2">
               <ComposerSettings
+                collaborationModes={collaborationModes.data?.data ?? []}
+                collaborationModeName={collaborationModeName}
                 disabled={isPending}
                 effort={effort}
                 model={model}
                 models={models.data?.data ?? []}
                 onEffortChange={setEffort}
+                onCollaborationModeChange={(modeName) => {
+                  const mask = collaborationModes.data?.data.find(
+                    (option) => option.name === modeName,
+                  );
+                  setCollaborationModeName(modeName);
+                  setCollaborationMode(
+                    mask ? collaborationModeFromMask(mask) : null,
+                  );
+                }}
                 onModelChange={setModel}
               />
               <button

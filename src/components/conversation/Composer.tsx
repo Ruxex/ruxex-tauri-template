@@ -14,6 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { buildImageUserInput } from "./composer-model";
+import { collaborationModeFromMask } from "./collaboration-model";
 import { buildUserTextInput } from "./conversation-model";
 import {
   ComposerOptions,
@@ -29,6 +30,7 @@ import {
   type SlashCommandId,
 } from "./slash-command";
 import type { SubmissionMode } from "./composer-model";
+import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 import { useComposerSelection } from "./useComposerSelection";
 import { formatErrorMessage } from "../../app/error-message";
 import { AttachmentPreview } from "../common/AttachmentPreview";
@@ -36,6 +38,7 @@ import { useImageAttachment } from "../common/useImageAttachment";
 import {
   useArchiveThread,
   useCompactThread,
+  useCollaborationModes,
   useInterruptTurn,
   useModelList,
   useQueueMessage,
@@ -80,6 +83,11 @@ export function Composer({
     resetAttachment,
   } = useImageAttachment();
   const models = useModelList();
+  const collaborationModes = useCollaborationModes();
+  const [collaborationModeName, setCollaborationModeName] = useState("");
+  const [collaborationMode, setCollaborationMode] = useState<
+    CollaborationMode | null | undefined
+  >(undefined);
   const { effort, model, setEffort, setModel } = useComposerSelection(
     models.data?.data ?? [],
     initialModel,
@@ -149,6 +157,18 @@ export function Composer({
     }[value];
     void updateSettings
       .mutateAsync({ threadId, ...settings })
+      .catch(() => undefined);
+  }
+
+  function handleCollaborationModeChange(modeName: string) {
+    const mask = collaborationModes.data?.data.find(
+      (option) => option.name === modeName,
+    );
+    const nextMode = mask ? collaborationModeFromMask(mask) : null;
+    setCollaborationModeName(modeName);
+    setCollaborationMode(nextMode);
+    void updateSettings
+      .mutateAsync({ threadId, collaborationMode: nextMode })
       .catch(() => undefined);
   }
 
@@ -224,6 +244,7 @@ export function Composer({
           model: model || null,
           effort: effort || null,
           turnTrigger: planMode ? "plan" : null,
+          ...(collaborationMode !== undefined ? { collaborationMode } : {}),
         });
       }
       setMessage("");
@@ -288,11 +309,14 @@ export function Composer({
         </div>
         <div className="ml-auto flex min-w-0 items-center gap-2">
           <ComposerSettings
+            collaborationModes={collaborationModes.data?.data ?? []}
+            collaborationModeName={collaborationModeName}
             disabled={isPending}
             effort={effort}
             model={model}
             models={models.data?.data ?? []}
             onEffortChange={handleEffortChange}
+            onCollaborationModeChange={handleCollaborationModeChange}
             onModelChange={handleModelChange}
           />
           {activeTurnId && (

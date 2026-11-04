@@ -32,6 +32,11 @@ describe("thread mutation hooks", () => {
 
   it.each([
     ["thread/start", "useCreateThread", {}],
+    [
+      "thread/fork",
+      "useForkThread",
+      { threadId: "thread-1", excludeTurns: true },
+    ],
     ["thread/archive", "useArchiveThread", { threadId: "thread-1" }],
     ["thread/unarchive", "useUnarchiveThread", { threadId: "thread-1" }],
     ["thread/delete", "useDeleteThread", { threadId: "thread-1" }],

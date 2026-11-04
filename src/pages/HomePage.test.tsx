@@ -16,6 +16,7 @@ const useProject = vi.hoisted(() => vi.fn());
 const useProjectList = vi.hoisted(() => vi.fn());
 const useSetThreadGoal = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
+const useCollaborationModes = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useCreateThread,
@@ -24,6 +25,7 @@ vi.mock("../app-server/hooks", () => ({
   useProjectList,
   useSetThreadGoal,
   useSendMessage,
+  useCollaborationModes,
 }));
 vi.mock("react-router-dom", async () => {
   const actual =
@@ -37,6 +39,11 @@ describe("HomePage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    useCollaborationModes.mockReturnValue({
+      data: { data: [] },
+      isLoading: false,
+      isError: false,
+    });
     useCreateThread.mockReturnValue({
       error: null,
       isPending: false,

@@ -31,6 +31,24 @@ export function useCreateThread() {
   });
 }
 
+export function useForkThread() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ThreadForkParams) => {
+      const response = await requestAppServerMethod("thread/fork", params);
+      return response.response;
+    },
+    onSuccess: (response) => {
+      const threadId = response.thread?.id;
+      if (threadId) {
+        markThreadStarted(threadId);
+        upsertThreadInListCaches(queryClient, response.thread);
+      }
+    },
+  });
+}
+
 export function useArchiveThread() {
   const queryClient = useQueryClient();
 
