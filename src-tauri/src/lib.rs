@@ -3,15 +3,15 @@ use tauri::Manager;
 mod app_server;
 mod branding;
 mod desktop;
+mod desktop_config;
 mod error;
-#[cfg(feature = "example")]
-use ruxex_provider_host_example::dummy_provider;
 mod platform;
 mod schedule_commands;
 mod worktree;
 mod worktree_commands;
 
-use crate::branding::BRANDING;
+pub use crate::branding::Branding;
+pub use crate::desktop_config::{DesktopConfig, default_config};
 
 const SCHEDULE_POLL_INTERVAL_SECS: u64 = 60;
 
@@ -25,17 +25,31 @@ mod tests {
     }
 }
 
-#[cfg(feature = "example")]
-pub fn run_dummy_provider_host() -> anyhow::Result<()> {
+pub fn run_host_app_server_daemon_with_config(config: DesktopConfig) -> anyhow::Result<()> {
+    let runtime =
+        desktop_config::DesktopRuntimeState::new(config.clone()).map_err(anyhow::Error::msg)?;
+    desktop::initialize_provider_home(
+        runtime.home(),
+        &config.product_identity(),
+        &config.provider_factory.1,
+    )
+    .map_err(anyhow::Error::msg)?;
+    unsafe {
+        std::env::set_var("RUXEX_HOME", runtime.home());
+        std::env::set_var("RUXEX_SQLITE_HOME", runtime.home());
+    }
+
     ruxex::arg0::arg0_dispatch_or_else(|arg0_paths| async move {
+        let provider_factory = config.provider_factory.clone();
+        let product_identity = config.product_identity();
         let exit =
             ruxex::desktop::host::run_host_app_server_daemon_with_provider_factory_and_identity(
                 arg0_paths,
                 Default::default(),
                 Default::default(),
                 false,
-                dummy_provider::provider_factory(),
-                desktop::product_identity(),
+                provider_factory,
+                product_identity,
             )
             .await?;
         if exit == ruxex::desktop::AppServerExit::Forced {
@@ -46,6 +60,23 @@ pub fn run_dummy_provider_host() -> anyhow::Result<()> {
 }
 
 pub fn run() {
+    run_with_config(default_config());
+}
+
+pub fn run_with_config(config: DesktopConfig) {
+    let runtime = desktop_config::DesktopRuntimeState::new(config.clone())
+        .expect("desktop runtime configuration is valid");
+    desktop::initialize_provider_home(
+        runtime.home(),
+        &config.product_identity(),
+        &config.provider_factory.1,
+    )
+    .expect("desktop provider home is writable and compatible");
+    unsafe {
+        std::env::set_var("RUXEX_HOME", runtime.home());
+        std::env::set_var("RUXEX_SQLITE_HOME", runtime.home());
+    }
+
     let arg0_path_guard = ruxex::arg0::arg0_dispatch();
     let arg0_paths = arg0_path_guard
         .as_ref()
@@ -59,25 +90,20 @@ pub fn run() {
         .manage(app_server::AppServerState::with_arg0_paths(
             arg0_paths,
             arg0_path_guard,
+            config,
         ))
+        .manage(runtime)
         .manage(schedule_commands::ScheduleState::default())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 window
-                    .set_title(BRANDING.window_title)
+                    .set_title(
+                        &app.state::<desktop_config::DesktopRuntimeState>()
+                            .config()
+                            .branding
+                            .window_title,
+                    )
                     .map_err(std::io::Error::other)?;
-            }
-            let home = desktop::ruxex_home().map_err(std::io::Error::other)?;
-
-            #[cfg(feature = "example")]
-            desktop::initialize_provider_home(&home).map_err(std::io::Error::other)?;
-
-            // The setup hook runs before Tauri exposes commands or starts the
-            // app-server child, so these process-wide values are safe to set
-            // once here and are inherited by the managed daemon.
-            unsafe {
-                std::env::set_var("RUXEX_HOME", &home);
-                std::env::set_var("RUXEX_SQLITE_HOME", &home);
             }
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {

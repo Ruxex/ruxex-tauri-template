@@ -1,52 +1,78 @@
 use serde::Serialize;
+use tauri::State;
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Branding {
-    pub(crate) app_name: &'static str,
-    pub(crate) assistant_name: &'static str,
-    pub(crate) window_title: &'static str,
+pub struct Branding {
+    pub app_name: String,
+    pub assistant_name: String,
+    pub window_title: String,
     #[serde(skip_serializing)]
-    pub(crate) product_slug: &'static str,
+    pub product_slug: String,
     #[serde(skip_serializing)]
-    pub(crate) home_dir_name: &'static str,
+    pub home_dir_name: String,
     #[serde(skip_serializing)]
-    pub(crate) home_marker_file: &'static str,
+    pub home_marker_file: String,
 }
 
-pub(crate) const BRANDING: Branding = Branding {
-    app_name: "Ruxex",
-    assistant_name: "Ruxex",
-    window_title: "Ruxex Desktop",
-    product_slug: "ruxex-desktop",
-    home_dir_name: ".ruxex_desktop",
-    home_marker_file: "ruxex-home.json",
-};
+impl Branding {
+    pub fn new(
+        app_name: impl Into<String>,
+        assistant_name: impl Into<String>,
+        window_title: impl Into<String>,
+        product_slug: impl Into<String>,
+        home_dir_name: impl Into<String>,
+        home_marker_file: impl Into<String>,
+    ) -> Self {
+        Self {
+            app_name: app_name.into(),
+            assistant_name: assistant_name.into(),
+            window_title: window_title.into(),
+            product_slug: product_slug.into(),
+            home_dir_name: home_dir_name.into(),
+            home_marker_file: home_marker_file.into(),
+        }
+    }
+
+    pub fn ruxex() -> Self {
+        Self::new(
+            "Ruxex",
+            "Ruxex",
+            "Ruxex Desktop",
+            "ruxex-desktop",
+            ".ruxex_desktop",
+            "ruxex-home.json",
+        )
+    }
+}
 
 #[tauri::command]
-pub(crate) fn get_branding() -> Branding {
-    BRANDING
+pub(crate) fn get_branding(
+    state: State<'_, crate::desktop_config::DesktopRuntimeState>,
+) -> Branding {
+    state.config().branding.clone()
 }
 
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
-    use super::{BRANDING, Branding, get_branding};
+    use super::Branding;
 
     #[test]
     fn canonical_branding_contains_the_template_identity() {
-        assert_eq!(BRANDING.app_name, "Ruxex");
-        assert_eq!(BRANDING.assistant_name, "Ruxex");
-        assert_eq!(BRANDING.window_title, "Ruxex Desktop");
-        assert_eq!(BRANDING.product_slug, "ruxex-desktop");
-        assert_eq!(BRANDING.home_dir_name, ".ruxex_desktop");
-        assert_eq!(BRANDING.home_marker_file, "ruxex-home.json");
+        let branding = Branding::ruxex();
+        assert_eq!(branding.app_name, "Ruxex");
+        assert_eq!(branding.assistant_name, "Ruxex");
+        assert_eq!(branding.window_title, "Ruxex Desktop");
+        assert_eq!(branding.product_slug, "ruxex-desktop");
+        assert_eq!(branding.home_dir_name, ".ruxex_desktop");
+        assert_eq!(branding.home_marker_file, "ruxex-home.json");
     }
 
     #[test]
-    fn branding_command_exposes_only_ui_fields() {
-        let value = serde_json::to_value(get_branding()).unwrap();
+    fn branding_serializes_only_ui_fields() {
+        let value = serde_json::to_value(Branding::ruxex()).unwrap();
 
         assert_eq!(
             value,
@@ -59,9 +85,17 @@ mod tests {
     }
 
     #[test]
-    fn branding_is_copyable_for_tauri_state_free_access() {
-        let copy: Branding = BRANDING;
+    fn branding_can_be_injected_from_outside_the_template() {
+        let branding = Branding::new(
+            "Acme",
+            "Acme Assistant",
+            "Acme Desktop",
+            "acme-desktop",
+            ".acme_desktop",
+            "acme-home.json",
+        );
 
-        assert_eq!(copy.window_title, BRANDING.window_title);
+        assert_eq!(branding.home_dir_name, ".acme_desktop");
+        assert_eq!(branding.assistant_name, "Acme Assistant");
     }
 }

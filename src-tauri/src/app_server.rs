@@ -1,11 +1,7 @@
 use std::ffi::OsString;
 use std::sync::Arc;
 
-#[cfg(not(feature = "example"))]
-use ruxex::ModelProviderFactory;
 use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard};
-#[cfg(not(feature = "example"))]
-use ruxex::desktop::client::AppServerRuntimeBuilder;
 use ruxex::desktop::config::LoaderOverrides;
 use ruxex::desktop::core::{
     self,
@@ -15,8 +11,6 @@ use ruxex::desktop::core::{
 use ruxex::desktop::daemon::run_with_host_executable;
 #[cfg(not(feature = "example"))]
 use ruxex::desktop::daemon::{bootstrap_from_package_with_host_args, run};
-#[cfg(not(feature = "example"))]
-use ruxex::desktop::providers::ResponsesModelProvider;
 use ruxex::desktop::utils::absolute_path::AbsolutePathBuf;
 use ruxex::desktop::{
     app_server_control_socket_path,
@@ -40,7 +34,8 @@ use tauri::{AppHandle, Emitter, State};
 
 use ruxex_scheduler::{AppServerLogDirection, log_app_server_io};
 
-use crate::desktop::{product_identity, ruxex_home};
+use crate::desktop::ruxex_home;
+use crate::desktop_config::DesktopConfig;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 
 const DESKTOP_EXPERIMENTAL_API: bool = true;
@@ -53,12 +48,14 @@ pub(crate) struct AppServerState {
     shutdown: tauri::async_runtime::Mutex<Option<tauri::async_runtime::Sender<()>>>,
     arg0_paths: Arg0DispatchPaths,
     _arg0_path_guard: Option<Arg0PathEntryGuard>,
+    config: DesktopConfig,
 }
 
 impl AppServerState {
     pub(crate) fn with_arg0_paths(
         arg0_paths: Arg0DispatchPaths,
         arg0_path_guard: Option<Arg0PathEntryGuard>,
+        config: DesktopConfig,
     ) -> Self {
         Self {
             initialization: tauri::async_runtime::Mutex::new(()),
@@ -67,13 +64,18 @@ impl AppServerState {
             shutdown: tauri::async_runtime::Mutex::new(None),
             arg0_paths,
             _arg0_path_guard: arg0_path_guard,
+            config,
         }
     }
 }
 
 impl Default for AppServerState {
     fn default() -> Self {
-        Self::with_arg0_paths(Arg0DispatchPaths::default(), None)
+        Self::with_arg0_paths(
+            Arg0DispatchPaths::default(),
+            None,
+            crate::desktop_config::default_config(),
+        )
     }
 }
 
@@ -161,10 +163,11 @@ enum DesktopAppServerEvent {
 
 async fn connect_unix_socket(
     socket_path: AbsolutePathBuf,
+    config: &DesktopConfig,
 ) -> Result<RemoteAppServerClient, std::io::Error> {
     RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
-        client_name: product_identity().product_name().to_string(),
+        client_name: config.product_identity().product_name().to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: DESKTOP_EXPERIMENTAL_API,
         opt_out_notification_methods: Vec::new(),
@@ -240,6 +243,7 @@ async fn clear_connection_state(state: &AppServerState) {
 
 async fn connect_daemon_endpoint(
     app: &AppHandle,
+    config: &DesktopConfig,
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
@@ -247,7 +251,7 @@ async fn connect_daemon_endpoint(
         command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
     })?;
     let (client, effective_socket_path, bootstrapped_version, connected_version) =
-        match connect_unix_socket(socket_path.clone()).await {
+        match connect_unix_socket(socket_path.clone(), config).await {
             Ok(client) => {
                 let connected_version = client.server_version().map(str::to_owned);
                 (
@@ -260,7 +264,6 @@ async fn connect_daemon_endpoint(
             Err(_) => {
                 #[cfg(feature = "example")]
                 let _ = app;
-
                 #[cfg(feature = "example")]
                 {
                     let executable = std::env::current_exe().map_err(|error| {
@@ -292,7 +295,7 @@ async fn connect_daemon_endpoint(
                                     error.to_string(),
                                 )
                             })?;
-                    let client = connect_unix_socket(effective_socket_path.clone())
+                    let client = connect_unix_socket(effective_socket_path.clone(), config)
                         .await
                         .map_err(|error| {
                             command_error(
@@ -309,7 +312,6 @@ async fn connect_daemon_endpoint(
                         None,
                     )
                 }
-
                 #[cfg(not(feature = "example"))]
                 {
                     let package_source =
@@ -335,7 +337,7 @@ async fn connect_daemon_endpoint(
                                     error.to_string(),
                                 )
                             })?;
-                    let client = connect_unix_socket(effective_socket_path.clone())
+                    let client = connect_unix_socket(effective_socket_path.clone(), config)
                         .await
                         .map_err(|error| {
                             command_error(
@@ -364,11 +366,12 @@ async fn connect_daemon_endpoint(
 
 async fn connect_in_process_endpoint(
     arg0_paths: Arg0DispatchPaths,
+    desktop_config: &DesktopConfig,
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
     let _home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let (executable, runtime_paths) = resolve_in_process_paths(&arg0_paths)?;
-    let config = Config::load_with_cli_overrides_and_harness_overrides(
+    let loaded_config = Config::load_with_cli_overrides_and_harness_overrides(
         Vec::new(),
         ConfigOverrides {
             ruxex_self_exe: Some(executable.clone()),
@@ -383,15 +386,9 @@ async fn connect_in_process_endpoint(
         )
     })?;
 
-    #[cfg(feature = "example")]
-    let provider_factory = crate::dummy_provider::provider_factory();
-    #[cfg(not(feature = "example"))]
-    let provider_factory = (
-        AppServerRuntimeBuilder::build_from_provider_factory::<ResponsesModelProvider>,
-        ResponsesModelProvider::provider_descriptor(),
-    );
+    let provider_factory = desktop_config.provider_factory.clone();
     let provider_init =
-        provider_init_from_config_with_descriptor(&config, true, &provider_factory.1)
+        provider_init_from_config_with_descriptor(&loaded_config, true, &provider_factory.1)
             .await
             .map_err(|error| {
                 command_error(
@@ -400,11 +397,11 @@ async fn connect_in_process_endpoint(
                 )
             })?;
     let runtime = (provider_factory.0)(provider_init);
-    let state_db = core::init_state_db(&config).await;
+    let state_db = core::init_state_db(&loaded_config).await;
     let environment_manager = EnvironmentManager::from_ruxex_home(
-        &config.ruxex_home,
+        &loaded_config.ruxex_home,
         Some(runtime_paths),
-        config.http_client_factory(),
+        loaded_config.http_client_factory(),
     )
     .await
     .map_err(|error| {
@@ -413,7 +410,7 @@ async fn connect_in_process_endpoint(
             format!("failed to initialize in-process environment manager: {error}"),
         )
     })?;
-    let config_warnings = config
+    let config_warnings = loaded_config
         .startup_warnings
         .iter()
         .cloned()
@@ -424,10 +421,10 @@ async fn connect_in_process_endpoint(
             range: None,
         })
         .collect();
-    let product_identity = product_identity();
+    let product_identity = desktop_config.product_identity();
     let client = InProcessAppServerClient::start(InProcessClientStartArgs {
         arg0_paths,
-        config: Arc::new(config),
+        config: Arc::new(loaded_config),
         cli_overrides: Vec::new(),
         loader_overrides: LoaderOverrides::default(),
         strict_config: false,
@@ -468,10 +465,11 @@ async fn connect_in_process_endpoint(
 async fn connect_local_endpoint(
     app: &AppHandle,
     arg0_paths: Arg0DispatchPaths,
+    config: &DesktopConfig,
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
     match configured_app_server_mode()? {
-        AppServerMode::Daemon => connect_daemon_endpoint(app).await,
-        AppServerMode::InProcess => connect_in_process_endpoint(arg0_paths).await,
+        AppServerMode::Daemon => connect_daemon_endpoint(app, config).await,
+        AppServerMode::InProcess => connect_in_process_endpoint(arg0_paths, config).await,
     }
 }
 
@@ -535,7 +533,8 @@ pub(crate) async fn ensure_app_server(
     if let Some(status) = state.status.lock().await.clone() {
         return Ok(status);
     }
-    let (client, status) = connect_local_endpoint(&app, state.arg0_paths.clone()).await?;
+    let (client, status) =
+        connect_local_endpoint(&app, state.arg0_paths.clone(), &state.config).await?;
     install_connection(&app, &state, client, status).await
 }
 

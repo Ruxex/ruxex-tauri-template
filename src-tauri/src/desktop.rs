@@ -2,9 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-#[cfg(feature = "example")]
 use std::fs::OpenOptions;
-#[cfg(feature = "example")]
 use std::io::{ErrorKind, Write};
 
 use base64::Engine;
@@ -14,45 +12,49 @@ use ruxex::provider::transport::HttpClientFactory;
 use ruxex::provider::transport::OutboundProxyPolicy;
 use url::Url;
 
-#[cfg(feature = "example")]
-use ruxex_provider_host_example::dummy_provider;
-
-use crate::branding::BRANDING;
+use crate::desktop_config::DesktopConfig;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
 
-pub(crate) fn product_identity() -> ProductIdentity {
+pub(crate) fn product_identity(config: &DesktopConfig) -> ProductIdentity {
     ProductIdentity::new(
-        BRANDING.window_title,
-        BRANDING.product_slug,
-        BRANDING.home_dir_name,
-        BRANDING.home_marker_file,
+        &config.branding.window_title,
+        &config.branding.product_slug,
+        &config.branding.home_dir_name,
+        &config.branding.home_marker_file,
     )
     .expect("desktop product identity is static and valid")
 }
 
-fn ruxex_home_from_user_home(user_home: &Path) -> PathBuf {
-    product_identity()
+fn ruxex_home_from_user_home(user_home: &Path, config: &DesktopConfig) -> PathBuf {
+    product_identity(config)
         .resolve_home_from(user_home)
         .expect("desktop user home should be absolute")
         .into_path_buf()
 }
 
 pub(crate) fn ruxex_home() -> Result<PathBuf, String> {
+    if let Some(home) = std::env::var_os("RUXEX_HOME") {
+        let home = PathBuf::from(home);
+        fs::create_dir_all(&home)
+            .map_err(|error| format!("failed to create Desktop Ruxex home: {error}"))?;
+        return Ok(home);
+    }
     let user_home =
         dirs::home_dir().ok_or_else(|| "failed to resolve user home directory".to_string())?;
-    let home = ruxex_home_from_user_home(&user_home);
+    let home = ruxex_home_from_user_home(&user_home, &crate::desktop_config::default_config());
     fs::create_dir_all(&home)
         .map_err(|error| format!("failed to create Desktop Ruxex home: {error}"))?;
     Ok(home)
 }
 
-#[cfg(feature = "example")]
-pub(crate) fn initialize_provider_home(home: &Path) -> Result<(), String> {
-    let identity = product_identity();
+pub(crate) fn initialize_provider_home(
+    home: &Path,
+    identity: &ProductIdentity,
+    descriptor: &ruxex::provider::ProviderDescriptor,
+) -> Result<(), String> {
     let marker_file = identity.home_marker_file();
-    let descriptor = dummy_provider::provider_factory().1;
-    match ruxex::provider::mount_provider_home_with_marker(home, marker_file, &descriptor) {
+    match ruxex::provider::mount_provider_home_with_marker(home, marker_file, descriptor) {
         Ok(_) => Ok(()),
         Err(ruxex::provider::ProviderHomeError::DescriptorMismatch {
             expected, actual, ..
@@ -71,7 +73,7 @@ pub(crate) fn initialize_provider_home(home: &Path) -> Result<(), String> {
         }
         Err(ruxex::provider::ProviderHomeError::MissingMarker { .. }) => {
             let marker_path = home.join(marker_file);
-            let marker = ruxex::provider::ProviderHomeMarker::from(&descriptor);
+            let marker = ruxex::provider::ProviderHomeMarker::from(descriptor);
             let contents = serde_json::to_string_pretty(&marker)
                 .map_err(|error| format!("failed to serialize Desktop provider marker: {error}"))?;
             let mut marker_handle = match OpenOptions::new()
@@ -84,7 +86,7 @@ pub(crate) fn initialize_provider_home(home: &Path) -> Result<(), String> {
                     return ruxex::provider::mount_provider_home_with_marker(
                         home,
                         marker_file,
-                        &descriptor,
+                        descriptor,
                     )
                     .map(|_| ())
                     .map_err(|error| {
@@ -497,6 +499,7 @@ mod tests {
         ruxex_home_from_user_home, select_runtime_package, validate_marketplace_asset_url,
         validate_marketplace_svg,
     };
+    use crate::desktop_config::default_config;
 
     #[cfg(feature = "example")]
     use super::initialize_provider_home;
@@ -504,14 +507,15 @@ mod tests {
     #[test]
     fn desktop_home_is_isolated_under_user_home() {
         assert_eq!(
-            ruxex_home_from_user_home(Path::new("/home/user")),
+            ruxex_home_from_user_home(Path::new("/home/user"), &default_config()),
             Path::new("/home/user/.ruxex_desktop"),
         );
     }
 
     #[test]
     fn desktop_product_identity_is_separate_from_tui_branding() {
-        let identity = product_identity();
+        let config = default_config();
+        let identity = product_identity(&config);
 
         assert_eq!(identity.product_name(), "Ruxex Desktop");
         assert_eq!(identity.product_slug(), "ruxex-desktop");
@@ -592,13 +596,24 @@ mod tests {
         ));
         let _ = fs::remove_dir_all(&home);
 
-        initialize_provider_home(&home).unwrap();
-        let marker_path = home.join(product_identity().home_marker_file());
+        let config = default_config();
+        initialize_provider_home(
+            &home,
+            &product_identity(&config),
+            &config.provider_factory.1,
+        )
+        .unwrap();
+        let marker_path = home.join(product_identity(&config).home_marker_file());
         let marker = fs::read_to_string(&marker_path).unwrap();
         let marker: serde_json::Value = serde_json::from_str(&marker).unwrap();
         assert_eq!(marker["providerKind"], "dummy");
 
-        initialize_provider_home(&home).unwrap();
+        initialize_provider_home(
+            &home,
+            &product_identity(&config),
+            &config.provider_factory.1,
+        )
+        .unwrap();
 
         let _ = fs::remove_dir_all(home);
     }
@@ -613,7 +628,7 @@ mod tests {
         let _ = fs::remove_dir_all(&home);
         fs::create_dir_all(&home).unwrap();
         fs::write(
-            home.join(product_identity().home_marker_file()),
+            home.join(product_identity(&default_config()).home_marker_file()),
             serde_json::json!({
                 "formatVersion": 2,
                 "providerKind": "example",
@@ -624,10 +639,16 @@ mod tests {
         )
         .unwrap();
 
-        initialize_provider_home(&home).unwrap();
+        let config = default_config();
+        initialize_provider_home(
+            &home,
+            &product_identity(&config),
+            &config.provider_factory.1,
+        )
+        .unwrap();
 
         let marker: serde_json::Value = serde_json::from_str(
-            &fs::read_to_string(home.join(product_identity().home_marker_file())).unwrap(),
+            &fs::read_to_string(home.join(product_identity(&config).home_marker_file())).unwrap(),
         )
         .unwrap();
         assert_eq!(marker["providerKind"], "dummy");
@@ -645,10 +666,19 @@ mod tests {
         fs::create_dir_all(home.join("app-server-daemon")).unwrap();
         fs::write(home.join("schedules.json"), "[]\n").unwrap();
 
-        initialize_provider_home(&home).unwrap();
+        let config = default_config();
+        initialize_provider_home(
+            &home,
+            &product_identity(&config),
+            &config.provider_factory.1,
+        )
+        .unwrap();
 
         assert!(home.join("schedules.json").is_file());
-        assert!(home.join(product_identity().home_marker_file()).is_file());
+        assert!(
+            home.join(product_identity(&config).home_marker_file())
+                .is_file()
+        );
 
         let _ = fs::remove_dir_all(home);
     }

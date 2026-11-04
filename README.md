@@ -8,7 +8,7 @@ builder, windows, commands, routes, and visual design in your control.
 ## What you customize
 
 - Implement your model provider in the Rust application.
-- Provide your product identity and brand settings.
+- Provide your product identity and brand settings through `DesktopConfig`.
 - Replace the files under `src/` with your own React, Vue, Svelte, or other
   web UI.
 - Add your own Tauri commands, windows, menus, permissions, and packaging.
@@ -21,6 +21,47 @@ Use it as-is or adapt it to your own frontend architecture.
 The TypeScript App Server protocol is checked into `src/protocol/generated/`
 as the snapshot matching the pinned Ruxex v0.4.10 revision, so a clone does not
 need a sibling Ruxex checkout for frontend typechecking.
+
+## Inject branding, provider, and home name
+
+The library-facing Rust entrypoints accept one typed configuration. The home
+value is a directory name resolved below the current user's `~/`; it is not an
+absolute path.
+
+```rust
+use ruxex_desktop_lib::{Branding, DesktopConfig};
+
+fn desktop_config() -> DesktopConfig {
+    DesktopConfig::new(
+        Branding::new(
+            "Acme",
+            "Acme Assistant",
+            "Acme Desktop",
+            "acme-desktop",
+            ".acme_desktop",
+            "acme-home.json",
+        ),
+        my_provider::provider_factory(),
+    )
+}
+
+fn main() {
+    let config = desktop_config();
+    if std::env::args_os().any(|arg| {
+        arg == ruxex::desktop::daemon::HOST_APP_SERVER_DAEMON_MODE_ARG
+    }) {
+        ruxex_desktop_lib::run_host_app_server_daemon_with_config(config)
+            .expect("provider daemon failed");
+    } else {
+        ruxex_desktop_lib::run_with_config(config);
+    }
+}
+```
+
+When branding is not customized, `run()` uses the template's default Ruxex
+configuration. Updating the `ruxex` Cargo dependency then keeps the provider
+and runtime integration in the library boundary while the small application
+composition root remains stable.
 
 ## Workbench data boundary
 

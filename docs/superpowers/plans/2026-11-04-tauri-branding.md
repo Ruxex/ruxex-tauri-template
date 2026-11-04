@@ -4,7 +4,7 @@
 
 **Goal:** Make `src-tauri/src/branding.rs` the typed runtime branding source and expose its user-facing values to React through a Tauri command.
 
-**Architecture:** Rust owns one `Branding` constant containing display and product-identity fields. Tauri returns a serializable view of that value through `get_branding`; React loads it once into `BrandingProvider` and passes the assistant name into UI presentation code. Static Tauri bundle metadata remains in `tauri.conf.json` as packaging configuration.
+**Architecture:** Rust owns one typed `Branding` value composed with the provider runtime factory in `DesktopConfig`. Tauri returns a serializable view of the injected value through `get_branding`; React loads it once into `BrandingProvider` and passes the assistant name into UI presentation code. Static Tauri bundle metadata remains in `tauri.conf.json` as packaging configuration.
 
 **Tech Stack:** Rust 2024, Tauri 2, Serde, React 19, TypeScript, Vitest, Testing Library.
 
@@ -35,15 +35,15 @@
 - Test: `src-tauri/src/branding.rs` (inline Rust tests)
 
 **Interfaces:**
-- Produces `pub(crate) const BRANDING: Branding`.
+- Produces public `Branding` and `DesktopConfig` types with Ruxex defaults.
 - Produces `pub(crate) fn product_identity() -> ruxex::ProductIdentity` or an equivalent helper consumed by `desktop.rs`.
 - Produces `#[tauri::command] pub(crate) fn get_branding() -> Branding` for the frontend.
 
 - [ ] **Step 1: Write failing Rust tests** for the canonical Ruxex display values, product slug, home directory, marker file, and serialized UI view; keep the static deep-link scheme and bundle identifier covered by Tauri configuration tests.
 - [ ] **Step 2: Run `make rust-test`** and verify the new tests fail because the branding module and command do not exist.
-- [ ] **Step 3: Implement the typed `Branding` struct and `BRANDING` constant** in `src-tauri/src/branding.rs`, deriving `Clone`, `Copy`, and `Serialize`; keep runtime product identity fields in the same value while serializing only UI-facing fields. Leave the static bundle identifier and compatibility deep-link scheme in Tauri/platform configuration.
+- [ ] **Step 3: Implement the typed `Branding` struct and `DesktopConfig` composition root** in `src-tauri/src/branding.rs` and `src-tauri/src/desktop_config.rs`; keep runtime product identity fields in the same value while serializing only UI-facing fields. Leave the static bundle identifier and compatibility deep-link scheme in Tauri/platform configuration.
 - [ ] **Step 4: Register `branding` in `lib.rs`** and add `get_branding` to the Tauri invoke handler.
-- [ ] **Step 5: Make `desktop::product_identity()` consume `BRANDING`** and set the native window title from `BRANDING.window_title` during Tauri setup.
+- [ ] **Step 5: Make `DesktopConfig` supply `ProductIdentity`, provider factory, and the `~/home_dir_name` path** and set the native window title from the injected branding during Tauri setup.
 - [ ] **Step 6: Run `make rust-test`** and verify the branding and existing Rust tests pass.
 
 ### Task 2: Add the typed React bridge and provider

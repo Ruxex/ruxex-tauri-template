@@ -8,9 +8,10 @@ application metadata, and user-data identity must not drift apart.
 
 ## Goals
 
-- Make `branding.json` the only file users edit for application branding.
-- Validate the branding shape in TypeScript and Rust.
-- Reuse the values in the React UI, Rust `ProductIdentity`, and Tauri metadata.
+- Make `src-tauri/src/branding.rs` the single typed runtime branding source.
+- Allow a library consumer to inject branding and its provider factory through
+  one Rust `DesktopConfig` value.
+- Reuse the values in the React UI, Rust `ProductIdentity`, and App Server.
 - Preserve internal Ruxex protocol names, runtime package paths, storage keys,
   and compatibility identifiers unless they are explicitly part of the
   configurable product identity.
@@ -31,9 +32,9 @@ application metadata, and user-data identity must not drift apart.
    every rebrand would require coordinated edits in two languages.
 2. Keep branding in `tauri.conf.json`: rejected because the JSON is not the
    shared typed source for the React UI and Rust product identity.
-3. Use one typed-by-consumers `branding.json` source and synchronize consumers:
-   selected because it crosses the TypeScript/Rust/Tauri boundaries while
-   keeping the edit surface to one file.
+3. Keep one Rust-owned typed value and expose only its UI fields to React:
+   selected because the runtime, provider host, and data directory all share
+   the same composition root.
 
 ## Design
 
@@ -44,11 +45,19 @@ application metadata, and user-data identity must not drift apart.
 - product slug;
 - home directory and marker file names.
 
-Rust owns a typed `Branding` value and constructs `ProductIdentity` from it.
-The Tauri command `get_branding` returns the serializable UI-facing fields.
+Rust owns a typed `Branding` value and `DesktopConfig` composes it with the
+provider runtime factory. A consumer can construct `DesktopConfig::new(...)`
+from outside the template and pass it to `run_with_config` and
+`run_host_app_server_daemon_with_config`. The Tauri command `get_branding`
+returns the serializable UI-facing fields.
 React loads that value once into a branding context and uses it for all
 runtime-visible application labels. The native setup hook applies the same
 window title to the Tauri window.
+
+`Branding::home_dir_name` is a single directory name, not an absolute path.
+The template resolves it under the current user's `~/` and exports the
+resulting path as `RUXEX_HOME` before starting the App Server. This keeps the
+normal process, in-process runtime, and hidden daemon on the same data home.
 
 The static Tauri configuration remains responsible for installer metadata such
 as `productName`, `identifier`, and the `ruxex` deep-link scheme. Those values
@@ -57,7 +66,7 @@ intentionally kept out of the Rust runtime branding DTO.
 
 The existing `ruxex` names used by protocol fields, runtime package layout,
 local-storage keys, and generated types remain unchanged. Only hard-coded
-user-facing application labels are routed through `BRANDING`.
+user-facing application labels are routed through `Branding`.
 
 ## Verification
 
