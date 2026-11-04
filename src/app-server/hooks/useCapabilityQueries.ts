@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
+import {
+  extractGlobalMcpConfig,
+  type GlobalMcpConfig,
+} from "../mcp-config";
 import { requestAppServerMethod } from "../api";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
@@ -29,6 +33,34 @@ export function useMcpServerStatus(params: v2.ListMcpServerStatusParams = {}) {
         params,
       );
       return response.response;
+    },
+    enabled: Boolean(status.data),
+  });
+}
+
+export function useAllMcpServerStatus() {
+  const status = useAppServerStatus();
+
+  return useQuery<v2.ListMcpServerStatusResponse>({
+    queryKey: [...appServerQueryKeys.mcpServers, "all"],
+    queryFn: async () => {
+      const data: v2.McpServerStatus[] = [];
+      let cursor: string | null = null;
+
+      do {
+        const params: v2.ListMcpServerStatusParams = { detail: "full" };
+        if (cursor !== null) {
+          params.cursor = cursor;
+        }
+        const response = await requestAppServerMethod(
+          "mcpServerStatus/list",
+          params,
+        );
+        data.push(...response.response.data);
+        cursor = response.response.nextCursor;
+      } while (cursor !== null);
+
+      return { data, nextCursor: null };
     },
     enabled: Boolean(status.data),
   });
@@ -135,6 +167,40 @@ export function useConfig(params: v2.ConfigReadParams = {}) {
       return response.response;
     },
     enabled: Boolean(status.data),
+  });
+}
+
+export function useGlobalMcpConfig() {
+  const status = useAppServerStatus();
+
+  return useQuery<GlobalMcpConfig>({
+    queryKey: appServerQueryKeys.globalMcpConfig,
+    queryFn: async () => {
+      const response = await requestAppServerMethod("config/read", {
+        includeLayers: true,
+      });
+      return extractGlobalMcpConfig(response.response);
+    },
+    enabled: Boolean(status.data),
+  });
+}
+
+export function useWriteConfig() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ConfigBatchWriteParams) => {
+      const response = await requestAppServerMethod("config/batchWrite", params);
+      return response.response;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.configRoot,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.mcpServers,
+      });
+    },
   });
 }
 

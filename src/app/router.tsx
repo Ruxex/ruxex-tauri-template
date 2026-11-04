@@ -9,6 +9,7 @@ import { CapabilitiesPage } from "../pages/CapabilitiesPage";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
 import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
+import { McpServersPage } from "../pages/McpServersPage";
 import { ModelPage } from "../pages/ModelPage";
 import { NewChatRedirect } from "../pages/NewChatRedirect";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
@@ -41,6 +42,7 @@ export const router = createHashRouter([
           { path: "app-server", element: <AppServerPage /> },
           { path: "archive", element: <ArchivePage /> },
           { path: "marketplaces", element: <MarketplaceSettingsPage /> },
+          { path: "mcp-servers", element: <McpServersPage /> },
           { path: "account", element: <AccountPage /> },
         ],
       },

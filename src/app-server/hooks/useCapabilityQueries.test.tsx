@@ -123,6 +123,122 @@ describe("capability query and mutation hooks", () => {
     });
   });
 
+  it("reads the editable global MCP configuration from the user layer", async () => {
+    requestAppServerMethod.mockResolvedValueOnce({
+      response: {
+        config: {},
+        origins: {},
+        layers: [
+          {
+            name: {
+              type: "user",
+              file: "/tmp/config.toml",
+              profile: null,
+            },
+            version: "user-v1",
+            config: { mcp_servers: { docs: { command: "node" } } },
+            disabledReason: null,
+          },
+        ],
+      },
+    });
+    const { useGlobalMcpConfig } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useGlobalMcpConfig(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith("config/read", {
+      includeLayers: true,
+    });
+    expect(result.current.data?.servers.map((server) => server.name)).toEqual([
+      "docs",
+    ]);
+  });
+
+  it("fetches all MCP status pages and combines them", async () => {
+    requestAppServerMethod.mockImplementation(
+      async (method: string, params: { cursor?: string }) => {
+        if (method !== "mcpServerStatus/list") {
+          return { response: { data: [] } };
+        }
+        if (params.cursor === "next") {
+          return {
+            response: {
+              data: [{ name: "second" }],
+              nextCursor: null,
+            },
+          };
+        }
+        return {
+          response: {
+            data: [{ name: "first" }],
+            nextCursor: "next",
+          },
+        };
+      },
+    );
+    const { useAllMcpServerStatus } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useAllMcpServerStatus(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.data.map((server) => server.name)).toEqual([
+      "first",
+      "second",
+    ]);
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
+      1,
+      "mcpServerStatus/list",
+      { detail: "full" },
+    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
+      2,
+      "mcpServerStatus/list",
+      { detail: "full", cursor: "next" },
+    );
+  });
+
+  it("writes config batches and invalidates config and MCP status", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { useWriteConfig } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useWriteConfig(), {
+      wrapper: createWrapper(client),
+    });
+    const params = {
+      edits: [
+        {
+          keyPath: 'mcp_servers."docs"',
+          value: { command: "node" },
+          mergeStrategy: "replace" as const,
+        },
+      ],
+      reloadUserConfig: true,
+    };
+
+    await act(async () => result.current.mutateAsync(params));
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith(
+      "config/batchWrite",
+      params,
+    );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "config"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "mcp-servers"],
+    });
+  });
+
   it.each([
     "useAddMarketplace",
     "useUpgradeMarketplace",

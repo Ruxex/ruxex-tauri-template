@@ -6,6 +6,7 @@ export const appServerQueryKeys = {
   daemonStatus: ["app-server", "daemon-status"] as const,
   config: (params: object) => ["app-server", "config", params] as const,
   configRoot: ["app-server", "config"] as const,
+  globalMcpConfig: ["app-server", "config", "global-mcp"] as const,
   configRequirements: ["app-server", "config-requirements"] as const,
   schedules: ["platform", "schedules"] as const,
   worktrees: (root: string) => ["platform", "worktrees", root] as const,

@@ -11,4 +11,10 @@ describe("router", () => {
 
     expect(matches?.at(-1)?.route.path).toBe("projects");
   });
+
+  it("resolves the global MCP server settings route", () => {
+    const matches = matchRoutes(router.routes, "/settings/mcp-servers");
+
+    expect(matches?.at(-1)?.route.path).toBe("mcp-servers");
+  });
 });

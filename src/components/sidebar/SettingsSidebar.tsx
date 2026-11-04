@@ -5,6 +5,7 @@ import {
   PuzzlePieceIcon,
   ServerIcon,
   SparklesIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 
@@ -65,6 +66,12 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               <NavLink to="/settings/app-server">
                 <ServerIcon aria-hidden="true" className="size-4" />
                 Runtime
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/settings/mcp-servers">
+                <WrenchScrewdriverIcon aria-hidden="true" className="size-4" />
+                MCP servers
               </NavLink>
             </li>
             <li>

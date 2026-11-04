@@ -1,0 +1,382 @@
+import { ServerIcon } from "@heroicons/react/24/outline";
+import { useMemo, useRef, useState } from "react";
+
+import { formatErrorMessage } from "../app/error-message";
+import {
+  useAllMcpServerStatus,
+  useGlobalMcpConfig,
+  useReloadMcpServers,
+  useWriteConfig,
+} from "../app-server/hooks";
+import {
+  mcpServerKeyPath,
+  serializeMcpServerDraft,
+  type McpServerDraft,
+  type McpServerEntry,
+} from "../app-server/mcp-config";
+import { getConfigWriteErrorCode } from "../app-server/mcp-config-errors";
+import type { v2 } from "../protocol";
+import { StateBadge, type StateBadgeTone } from "../components/common/StateBadge";
+import { PageContainer } from "../components/layout/PageContainer";
+import { SettingsPanel } from "../components/settings/SettingsCards";
+import { McpServerDialog } from "./mcp-servers/McpServerDialog";
+import {
+  createMcpServerForm,
+  type McpServerFormState,
+} from "./mcp-servers/mcp-server-form";
+
+function statusTone(value: string | null | undefined): StateBadgeTone {
+  const normalized = value?.toLowerCase().replaceAll("_", "") ?? "";
+  if (["connected", "running", "ready"].includes(normalized)) {
+    return "success";
+  }
+  if (["error", "failed", "disconnected", "unavailable"].includes(normalized)) {
+    return "error";
+  }
+  return "neutral";
+}
+
+type OpenDialog = {
+  entry?: McpServerEntry;
+  form: McpServerFormState;
+  originalName?: string;
+};
+
+export function McpServersPage() {
+  const globalConfig = useGlobalMcpConfig();
+  const statuses = useAllMcpServerStatus();
+  const writeConfig = useWriteConfig();
+  const reloadMcp = useReloadMcpServers();
+  const [dialog, setDialog] = useState<OpenDialog | null>(null);
+  const [writeError, setWriteError] = useState<string | null>(null);
+  const [reloadError, setReloadError] = useState<string | null>(null);
+  const [higherLayerNotice, setHigherLayerNotice] = useState<string | null>(
+    null,
+  );
+  const [overrideNotice, setOverrideNotice] = useState<string | null>(null);
+  const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const entries = globalConfig.data?.servers ?? [];
+  const existingNames = useMemo(
+    () => entries.map((entry) => entry.name),
+    [entries],
+  );
+  const statusByName = useMemo(
+    () => new Map(statuses.data?.data.map((status) => [status.name, status])),
+    [statuses.data],
+  );
+
+  function focusDialogTrigger() {
+    queueMicrotask(() => dialogTriggerRef.current?.focus());
+  }
+
+  function closeDialog() {
+    setDialog(null);
+    focusDialogTrigger();
+  }
+
+  function openAddDialog(trigger: HTMLButtonElement) {
+    dialogTriggerRef.current = trigger;
+    setWriteError(null);
+    setDialog({ form: createMcpServerForm() });
+  }
+
+  function openEditDialog(entry: McpServerEntry, trigger: HTMLButtonElement) {
+    if (!entry.draft) {
+      return;
+    }
+    dialogTriggerRef.current = trigger;
+    setWriteError(null);
+    setDialog({
+      entry,
+      form: createMcpServerForm(entry.draft),
+      originalName: entry.name,
+    });
+  }
+
+  async function reloadAfterWrite(name: string, warnIfAnotherLayer: boolean) {
+    let reloadSucceeded = false;
+    try {
+      await reloadMcp.mutateAsync({});
+      reloadSucceeded = true;
+      setReloadError(null);
+    } catch {
+      setReloadError("Saved, but MCP reload failed");
+    }
+
+    if (warnIfAnotherLayer && reloadSucceeded) {
+      let currentStatuses = statuses.data?.data;
+      if (typeof statuses.refetch === "function") {
+        try {
+          const refreshed = await statuses.refetch();
+          currentStatuses = refreshed.data?.data ?? currentStatuses;
+        } catch {
+          currentStatuses = undefined;
+        }
+      }
+      if (!currentStatuses?.some((status) => status.name === name)) {
+        return;
+      }
+      setHigherLayerNotice(
+        `Another configuration source is still active for MCP server “${name}”.`,
+      );
+    }
+  }
+
+  async function handleSave(draft: McpServerDraft) {
+    const entry = dialog?.entry;
+    const edits: v2.ConfigEdit[] = [
+      {
+        keyPath: mcpServerKeyPath(draft.name),
+        value: serializeMcpServerDraft(draft, entry?.raw),
+        mergeStrategy: "replace",
+      },
+    ];
+    if (entry && entry.name !== draft.name) {
+      edits.push({
+        keyPath: mcpServerKeyPath(entry.name),
+        value: null,
+        mergeStrategy: "replace",
+      });
+    }
+
+    const params: v2.ConfigBatchWriteParams = {
+      edits,
+      reloadUserConfig: true,
+    };
+    if (globalConfig.data?.version) {
+      params.expectedVersion = globalConfig.data.version;
+    }
+
+    setWriteError(null);
+    setReloadError(null);
+    setHigherLayerNotice(null);
+    setOverrideNotice(null);
+    try {
+      const result = await writeConfig.mutateAsync(params);
+      if (result.status === "okOverridden") {
+        setOverrideNotice(
+          result.overriddenMetadata?.message ??
+            "A higher-priority configuration layer overrides this value.",
+        );
+      }
+    } catch (error) {
+      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
+        void globalConfig.refetch();
+      }
+      setWriteError(formatErrorMessage(error));
+      return;
+    }
+
+    setDialog(null);
+    focusDialogTrigger();
+    await reloadAfterWrite(draft.name, false);
+  }
+
+  async function handleDelete(entry: McpServerEntry) {
+    if (
+      !window.confirm(
+        `Delete MCP server “${entry.name}”? This removes only the global user configuration entry.`,
+      )
+    ) {
+      return;
+    }
+
+    const params: v2.ConfigBatchWriteParams = {
+      edits: [
+        {
+          keyPath: mcpServerKeyPath(entry.name),
+          value: null,
+          mergeStrategy: "replace",
+        },
+      ],
+      reloadUserConfig: true,
+    };
+    if (globalConfig.data?.version) {
+      params.expectedVersion = globalConfig.data.version;
+    }
+
+    setWriteError(null);
+    setReloadError(null);
+    setHigherLayerNotice(null);
+    setOverrideNotice(null);
+    try {
+      const result = await writeConfig.mutateAsync(params);
+      if (result.status === "okOverridden") {
+        setOverrideNotice(
+          result.overriddenMetadata?.message ??
+            "A higher-priority configuration layer overrides this value.",
+        );
+      }
+    } catch (error) {
+      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
+        void globalConfig.refetch();
+      }
+      setWriteError(formatErrorMessage(error));
+      return;
+    }
+
+    await reloadAfterWrite(entry.name, true);
+  }
+
+  async function retryReload() {
+    try {
+      await reloadMcp.mutateAsync({});
+      setReloadError(null);
+    } catch {
+      setReloadError("Saved, but MCP reload failed");
+    }
+  }
+
+  return (
+    <PageContainer>
+      <div>
+        <h1 className="text-3xl font-semibold">MCP servers</h1>
+        <p className="mt-1 text-sm text-base-content/60">
+          Manage the MCP servers in your global user configuration.
+        </p>
+      </div>
+
+      {writeError && !dialog && (
+        <p className="alert alert-error" role="alert">
+          {writeError}
+        </p>
+      )}
+
+      <SettingsPanel icon={ServerIcon} title="Global MCP configuration">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <p className="text-sm text-base-content/70">
+            These servers are available across your projects.
+          </p>
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={(event) => openAddDialog(event.currentTarget)}
+          >
+            Add MCP server
+          </button>
+        </div>
+      </SettingsPanel>
+
+      <SettingsPanel title="Configured MCP servers">
+        {globalConfig.isLoading && (
+          <div className="px-5 py-4">
+            <span className="loading loading-spinner" />
+          </div>
+        )}
+        {globalConfig.isError && (
+          <p className="px-5 py-4 text-error" role="alert">
+            Unable to load global MCP servers: {formatErrorMessage(globalConfig.error)}
+          </p>
+        )}
+        {statuses.isError && (
+          <p className="px-5 py-4 text-error" role="alert">
+            Unable to load MCP runtime status: {formatErrorMessage(statuses.error)}
+          </p>
+        )}
+        {!globalConfig.isLoading && !globalConfig.isError && !entries.length && (
+          <p className="px-5 py-4 text-sm text-base-content/60">
+            No global MCP servers configured.
+          </p>
+        )}
+        {entries.length > 0 && (
+          <ul className="divide-y divide-base-300">
+            {entries.map((entry) => {
+              const status = statusByName.get(entry.name);
+              return (
+                <li className="px-5 py-4" key={entry.name}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{entry.name}</p>
+                      {entry.draft ? (
+                        <p className="mt-1 text-xs text-base-content/60">
+                          {entry.draft.transport === "stdio"
+                            ? `stdio · ${entry.draft.command}`
+                            : `Streamable HTTP · ${entry.draft.url}`}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-error">
+                          Invalid configuration: {entry.error}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <StateBadge tone={statusTone(status?.runtimeStatus)}>
+                        {status?.runtimeStatus ?? "unavailable"}
+                      </StateBadge>
+                      {entry.draft && (
+                        <button
+                          className="btn btn-ghost btn-xs"
+                          type="button"
+                          onClick={(event) =>
+                            openEditDialog(entry, event.currentTarget)
+                          }
+                        >
+                          Edit {entry.name}
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-ghost btn-xs text-error"
+                        type="button"
+                        onClick={() => void handleDelete(entry)}
+                      >
+                        Delete {entry.name}
+                      </button>
+                    </div>
+                  </div>
+                  {status && (
+                    <p className="mt-2 text-xs text-base-content/60">
+                      {Object.keys(status.tools).length} tools · {status.authStatus}
+                    </p>
+                  )}
+                  {status?.toolsError && (
+                    <p className="mt-1 text-xs text-error">{status.toolsError}</p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {higherLayerNotice && (
+          <p className="px-5 py-4 text-sm text-warning" role="status">
+            {higherLayerNotice}
+          </p>
+        )}
+        {overrideNotice && (
+          <p className="px-5 py-4 text-sm text-warning" role="status">
+            {overrideNotice}
+          </p>
+        )}
+        {reloadError && (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+            <p className="text-sm text-warning" role="alert">
+              {reloadError}
+            </p>
+            <button
+              className="btn btn-ghost btn-sm"
+              type="button"
+              disabled={reloadMcp.isPending}
+              onClick={() => void retryReload()}
+            >
+              Retry MCP reload
+            </button>
+          </div>
+        )}
+      </SettingsPanel>
+
+      {dialog && (
+        <McpServerDialog
+          key={dialog.originalName ?? "new"}
+          existingNames={existingNames}
+          form={dialog.form}
+          isEditing={Boolean(dialog.entry)}
+          isPending={writeConfig.isPending}
+          error={writeError}
+          originalName={dialog.originalName}
+          onClose={closeDialog}
+          onSubmit={(draft) => void handleSave(draft)}
+        />
+      )}
+    </PageContainer>
+  );
+}

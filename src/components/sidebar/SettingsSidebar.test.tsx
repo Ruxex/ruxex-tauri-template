@@ -20,4 +20,16 @@ describe("SettingsSidebar", () => {
       screen.getByRole("link", { name: "Archived chats" }).getAttribute("href"),
     ).toBe("/settings/archive");
   });
+
+  it("links to global MCP server settings", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings/mcp-servers"]}>
+        <SettingsSidebar onClose={() => undefined} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "MCP servers" }).getAttribute("href"),
+    ).toBe("/settings/mcp-servers");
+  });
 });
