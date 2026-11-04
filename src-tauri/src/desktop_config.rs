@@ -19,14 +19,26 @@ pub struct DesktopConfig {
     pub provider_factory: ProviderRuntimeFactory,
 }
 
+/// Builder for the Tauri template's runtime composition root.
+pub struct DesktopConfigBuilder {
+    branding: Branding,
+    provider_factory: ProviderRuntimeFactory,
+}
+
 impl DesktopConfig {
-    /// Create a runtime configuration from an application identity and
-    /// provider-owned runtime factory.
-    pub fn new(branding: Branding, provider_factory: ProviderRuntimeFactory) -> Self {
-        Self {
-            branding,
+    /// Start a configuration with Ruxex branding defaults.
+    pub fn builder(provider_factory: ProviderRuntimeFactory) -> DesktopConfigBuilder {
+        DesktopConfigBuilder {
+            branding: Branding::ruxex(),
             provider_factory,
         }
+    }
+
+    /// Create a runtime configuration from an application identity and
+    /// provider-owned runtime factory.
+    #[deprecated(note = "use DesktopConfig::builder(provider_factory).branding(...).build()")]
+    pub fn new(branding: Branding, provider_factory: ProviderRuntimeFactory) -> Self {
+        Self::builder(provider_factory).branding(branding).build()
     }
 
     /// Resolve the product identity used by clients, markers, and the daemon.
@@ -49,6 +61,58 @@ impl DesktopConfig {
             .resolve_home_from(user_home)
             .map_err(|error| format!("failed to resolve desktop home: {error}"))?
             .into_path_buf())
+    }
+}
+
+impl DesktopConfigBuilder {
+    /// Replace the complete branding value.
+    pub fn branding(mut self, branding: Branding) -> Self {
+        self.branding = branding;
+        self
+    }
+
+    /// Set the product's visible application name.
+    pub fn app_name(mut self, value: impl Into<String>) -> Self {
+        self.branding.app_name = value.into();
+        self
+    }
+
+    /// Set the assistant name shown in the UI.
+    pub fn assistant_name(mut self, value: impl Into<String>) -> Self {
+        self.branding.assistant_name = value.into();
+        self
+    }
+
+    /// Set the native window title.
+    pub fn window_title(mut self, value: impl Into<String>) -> Self {
+        self.branding.window_title = value.into();
+        self
+    }
+
+    /// Set the stable product slug used by the App Server identity.
+    pub fn product_slug(mut self, value: impl Into<String>) -> Self {
+        self.branding.product_slug = value.into();
+        self
+    }
+
+    /// Set the single directory name used below the current user's home.
+    pub fn home_dir_name(mut self, value: impl Into<String>) -> Self {
+        self.branding.home_dir_name = value.into();
+        self
+    }
+
+    /// Set the provider marker filename stored in the product home.
+    pub fn home_marker_file(mut self, value: impl Into<String>) -> Self {
+        self.branding.home_marker_file = value.into();
+        self
+    }
+
+    /// Finish building the runtime configuration.
+    pub fn build(self) -> DesktopConfig {
+        DesktopConfig {
+            branding: self.branding,
+            provider_factory: self.provider_factory,
+        }
     }
 }
 
@@ -76,28 +140,23 @@ impl DesktopRuntimeState {
 
 #[cfg(feature = "example")]
 pub fn default_config() -> DesktopConfig {
-    DesktopConfig::new(
-        Branding::ruxex(),
-        ruxex_provider_host_example::dummy_provider::provider_factory(),
-    )
+    DesktopConfig::builder(ruxex_provider_host_example::dummy_provider::provider_factory()).build()
 }
 
 #[cfg(not(feature = "example"))]
 pub fn default_config() -> DesktopConfig {
-    DesktopConfig::new(
-        Branding::ruxex(),
-        (
-            ruxex::desktop::client::AppServerRuntimeBuilder::build_from_provider_factory::<
-                ruxex::desktop::providers::ResponsesModelProvider,
-            >,
-            ruxex::desktop::providers::ResponsesModelProvider::provider_descriptor(),
-        ),
-    )
+    DesktopConfig::builder((
+        ruxex::desktop::client::AppServerRuntimeBuilder::build_from_provider_factory::<
+            ruxex::desktop::providers::ResponsesModelProvider,
+        >,
+        ruxex::desktop::providers::ResponsesModelProvider::provider_descriptor(),
+    ))
+    .build()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::default_config;
+    use super::{DesktopConfig, default_config};
 
     #[test]
     fn default_home_is_resolved_from_the_injected_directory_name() {
@@ -114,9 +173,16 @@ mod tests {
     }
 
     #[test]
-    fn custom_branding_changes_product_home_without_changing_the_resolver() {
-        let mut config = default_config();
-        config.branding.home_dir_name = ".acme_desktop".to_string();
+    fn builder_changes_branding_and_product_home_without_changing_the_resolver() {
+        let defaults = default_config();
+        let config = DesktopConfig::builder(defaults.provider_factory.clone())
+            .app_name("Acme")
+            .assistant_name("Acme Assistant")
+            .window_title("Acme Desktop")
+            .product_slug("acme-desktop")
+            .home_dir_name(".acme_desktop")
+            .home_marker_file("acme-home.json")
+            .build();
 
         let home = config
             .product_identity()
@@ -127,5 +193,8 @@ mod tests {
             home.as_path(),
             std::path::Path::new("/home/test-user/.acme_desktop")
         );
+        assert_eq!(config.branding.app_name, "Acme");
+        assert_eq!(config.branding.assistant_name, "Acme Assistant");
+        assert_eq!(config.branding.home_marker_file, "acme-home.json");
     }
 }

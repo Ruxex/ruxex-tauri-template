@@ -46,8 +46,9 @@ application metadata, and user-data identity must not drift apart.
 - home directory and marker file names.
 
 Rust owns a typed `Branding` value and `DesktopConfig` composes it with the
-provider runtime factory. A consumer can construct `DesktopConfig::new(...)`
-from outside the template and pass it to `run_with_config` and
+provider runtime factory. A consumer can construct
+`DesktopConfig::builder(provider_factory)` from outside the template and pass
+the resulting value to `run_with_config` and
 `run_host_app_server_daemon_with_config`. The Tauri command `get_branding`
 returns the serializable UI-facing fields.
 React loads that value once into a branding context and uses it for all

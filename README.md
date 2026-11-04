@@ -29,20 +29,17 @@ value is a directory name resolved below the current user's `~/`; it is not an
 absolute path.
 
 ```rust
-use ruxex_desktop_lib::{Branding, DesktopConfig};
+use ruxex_desktop_lib::DesktopConfig;
 
 fn desktop_config() -> DesktopConfig {
-    DesktopConfig::new(
-        Branding::new(
-            "Acme",
-            "Acme Assistant",
-            "Acme Desktop",
-            "acme-desktop",
-            ".acme_desktop",
-            "acme-home.json",
-        ),
-        my_provider::provider_factory(),
-    )
+    DesktopConfig::builder(my_provider::provider_factory())
+        .app_name("Acme")
+        .assistant_name("Acme Assistant")
+        .window_title("Acme Desktop")
+        .product_slug("acme-desktop")
+        .home_dir_name(".acme_desktop")
+        .home_marker_file("acme-home.json")
+        .build()
 }
 
 fn main() {

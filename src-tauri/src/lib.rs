@@ -11,7 +11,7 @@ mod worktree;
 mod worktree_commands;
 
 pub use crate::branding::Branding;
-pub use crate::desktop_config::{DesktopConfig, default_config};
+pub use crate::desktop_config::{DesktopConfig, DesktopConfigBuilder, default_config};
 
 const SCHEDULE_POLL_INTERVAL_SECS: u64 = 60;
 
