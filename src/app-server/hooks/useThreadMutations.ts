@@ -55,6 +55,22 @@ export function useUnarchiveThread() {
   });
 }
 
+export function useCompactThread() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.ThreadCompactStartParams) => {
+      const response = await requestAppServerMethod(
+        "thread/compact/start",
+        params,
+      );
+      return response.response;
+    },
+    onSuccess: (_response, params) =>
+      invalidateThreadConversation(queryClient, params.threadId),
+  });
+}
+
 export function useRenameThread() {
   const queryClient = useQueryClient();
 

@@ -34,6 +34,7 @@ describe("thread mutation hooks", () => {
     ["thread/start", "useCreateThread", {}],
     ["thread/archive", "useArchiveThread", { threadId: "thread-1" }],
     ["thread/unarchive", "useUnarchiveThread", { threadId: "thread-1" }],
+    ["thread/compact/start", "useCompactThread", { threadId: "thread-1" }],
     [
       "thread/name/set",
       "useRenameThread",
@@ -190,6 +191,26 @@ describe("thread mutation hooks", () => {
 
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "threads"],
+    });
+  });
+
+  it("invalidates the thread conversation after compacting", async () => {
+    const { useCompactThread } = await import("./useThreadMutations");
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(() => useCompactThread(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () => result.current.mutateAsync({ threadId: "thread-1" }));
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "thread", "thread-1", "conversation"],
     });
   });
 

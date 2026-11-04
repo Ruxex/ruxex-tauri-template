@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
   type FormEvent,
   type KeyboardEvent,
@@ -21,17 +22,25 @@ import {
   type PermissionMode,
 } from "./ComposerOptions";
 import { ComposerSettings } from "./ComposerSettings";
+import { SlashCommandPalette } from "./SlashCommandPalette";
+import {
+  getSlashCommandInput,
+  selectSlashCommand,
+  type SlashCommandId,
+} from "./slash-command";
 import type { SubmissionMode } from "./composer-model";
 import { useComposerSelection } from "./useComposerSelection";
 import { formatErrorMessage } from "../../app/error-message";
 import { AttachmentPreview } from "../common/AttachmentPreview";
 import { useImageAttachment } from "../common/useImageAttachment";
 import {
+  useArchiveThread,
+  useCompactThread,
   useInterruptTurn,
   useModelList,
   useQueueMessage,
-  useSetThreadGoal,
   useSendMessage,
+  useSetThreadGoal,
   useSteerTurn,
   useUpdateThreadSettings,
 } from "../../app-server/hooks";
@@ -58,6 +67,7 @@ export function Composer({
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const {
     attachmentError,
     attachmentInput,
@@ -74,6 +84,8 @@ export function Composer({
     initialEffort,
   );
   const send = useSendMessage();
+  const archive = useArchiveThread();
+  const compact = useCompactThread();
   const steer = useSteerTurn();
   const queue = useQueueMessage();
   const interrupt = useInterruptTurn();
@@ -81,11 +93,14 @@ export function Composer({
   const updateSettings = useUpdateThreadSettings();
   const isPending =
     send.isPending ||
+    archive.isPending ||
+    compact.isPending ||
     steer.isPending ||
     queue.isPending ||
     interrupt.isPending ||
     setGoal.isPending ||
     updateSettings.isPending;
+  const showSlashCommands = getSlashCommandInput(message) !== null && !goalMode;
 
   useEffect(() => {
     if (initialMessage !== undefined) {
@@ -147,6 +162,27 @@ export function Composer({
     event.currentTarget.form?.requestSubmit();
   }
 
+  async function handleSlashCommandSelect(command: SlashCommandId) {
+    const selection = selectSlashCommand(message, command);
+    if (selection.kind === "goal") {
+      setGoalMode(true);
+      setMessage(selection.message);
+      textareaRef.current?.focus();
+      return;
+    }
+
+    try {
+      if (selection.command === "archive") {
+        await archive.mutateAsync({ threadId });
+      } else {
+        await compact.mutateAsync({ threadId });
+      }
+      setMessage("");
+    } catch {
+      // Mutation state renders the error below the composer.
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
@@ -201,7 +237,14 @@ export function Composer({
       className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
       onSubmit={(event) => void handleSubmit(event)}
     >
+      {showSlashCommands && (
+        <SlashCommandPalette
+          disabled={isPending}
+          onSelect={(command) => void handleSlashCommandSelect(command)}
+        />
+      )}
       <textarea
+        ref={textareaRef}
         className="textarea textarea-ghost min-h-24 w-full resize-none"
         value={message}
         onChange={(event) => setMessage(event.target.value)}
@@ -294,6 +337,8 @@ export function Composer({
       </div>
       {(attachmentError ||
         send.error ||
+        archive.error ||
+        compact.error ||
         steer.error ||
         queue.error ||
         interrupt.error ||
@@ -303,6 +348,8 @@ export function Composer({
           {attachmentError ||
             formatErrorMessage(
               send.error ||
+                archive.error ||
+                compact.error ||
                 steer.error ||
                 queue.error ||
                 interrupt.error ||

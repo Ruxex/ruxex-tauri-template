@@ -12,6 +12,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { COMPOSER_SELECTION_KEY } from "./useComposerSelection";
 
 const sendMutation = vi.hoisted(() => vi.fn());
+const archiveMutation = vi.hoisted(() => vi.fn());
+const compactMutation = vi.hoisted(() => vi.fn());
 const steerMutation = vi.hoisted(() => vi.fn());
 const queueMutation = vi.hoisted(() => vi.fn());
 const interruptMutation = vi.hoisted(() => vi.fn());
@@ -38,6 +40,16 @@ vi.mock("../../app-server/hooks", () => ({
   }),
   useSendMessage: () => ({
     mutateAsync: sendMutation,
+    isPending: false,
+    error: null,
+  }),
+  useArchiveThread: () => ({
+    mutateAsync: archiveMutation,
+    isPending: false,
+    error: null,
+  }),
+  useCompactThread: () => ({
+    mutateAsync: compactMutation,
     isPending: false,
     error: null,
   }),
@@ -74,17 +86,82 @@ describe("Composer", () => {
   beforeEach(() => {
     localStorage.removeItem(COMPOSER_SELECTION_KEY);
     sendMutation.mockReset();
+    archiveMutation.mockReset();
+    compactMutation.mockReset();
     steerMutation.mockReset();
     queueMutation.mockReset();
     interruptMutation.mockReset();
     goalMutation.mockReset();
     settingsMutation.mockReset();
     sendMutation.mockResolvedValue({});
+    archiveMutation.mockResolvedValue({});
+    compactMutation.mockResolvedValue({});
     steerMutation.mockResolvedValue({});
     queueMutation.mockResolvedValue({});
     interruptMutation.mockResolvedValue({});
     goalMutation.mockResolvedValue({});
     settingsMutation.mockResolvedValue({});
+  });
+
+  it("shows slash commands when the message starts with a slash", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "/" },
+    });
+
+    expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
+  });
+
+  it.each([
+    ["Archive", archiveMutation],
+    ["Compact", compactMutation],
+  ] as const)(
+    "executes %s immediately when selected",
+    async (label, mutation) => {
+      const { Composer } = await import("./Composer");
+
+      render(<Composer threadId="thread-1" activeTurnId={null} />);
+      fireEvent.change(screen.getByLabelText("Message"), {
+        target: { value: `/${label.toLowerCase()}` },
+      });
+      fireEvent.click(screen.getByRole("menuitem", { name: label }));
+
+      await waitFor(() =>
+        expect(mutation).toHaveBeenCalledWith({ threadId: "thread-1" }),
+      );
+      expect(
+        (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
+      ).toBe("");
+    },
+  );
+
+  it("waits for goal text and submission before starting the goal", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "/goal Ship the redesign" },
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Goal" }));
+
+    expect(goalMutation).not.toHaveBeenCalled();
+    expect(
+      (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
+    ).toBe("Ship the redesign");
+    fireEvent.click(screen.getByRole("button", { name: "Set goal" }));
+
+    await waitFor(() =>
+      expect(goalMutation).toHaveBeenCalledWith({
+        threadId: "thread-1",
+        objective: "Ship the redesign",
+        status: "active",
+      }),
+    );
+    expect(sendMutation).not.toHaveBeenCalled();
   });
 
   it("sends a selected image alongside the text input", async () => {
