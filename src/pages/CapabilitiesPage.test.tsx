@@ -84,8 +84,8 @@ describe("CapabilitiesPage", () => {
             interface: { displayName: "Official Plugins" },
             plugins: [
               {
-                id: "lint",
-                name: "Lint Plugin",
+                id: "lint@official",
+                name: "lint",
                 interface: {
                   displayName: "Lint Plugin",
                   shortDescription: "Checks project files",
@@ -95,8 +95,8 @@ describe("CapabilitiesPage", () => {
                 enabled: false,
               },
               {
-                id: "calendar",
-                name: "Calendar Plugin",
+                id: "calendar@official",
+                name: "calendar",
                 interface: {
                   displayName: "Calendar Plugin",
                   shortDescription: "Manages calendars",
@@ -113,8 +113,8 @@ describe("CapabilitiesPage", () => {
             interface: { displayName: "Remote Catalog" },
             plugins: [
               {
-                id: "remote-tool",
-                name: "Remote Tool",
+                id: "remote-tool@remote",
+                name: "remote-tool",
                 interface: null,
                 installed: false,
                 enabled: false,
@@ -209,6 +209,38 @@ describe("CapabilitiesPage", () => {
     expect(upgradeMarketplace.mutateAsync).toHaveBeenCalledWith({
       marketplaceName: "official",
     });
+  });
+
+  it("collapses marketplaces and plugin categories independently", async () => {
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    const marketplaces = screen.getAllByTestId("plugin-marketplace");
+    expect(marketplaces).toHaveLength(2);
+    expect((marketplaces[0] as HTMLDetailsElement).open).toBe(true);
+    expect((marketplaces[1] as HTMLDetailsElement).open).toBe(true);
+
+    const productivityHeading = screen.getByRole("heading", {
+      name: "Productivity",
+      level: 3,
+    });
+    const productivityCategory = productivityHeading.closest("details");
+    expect(productivityCategory).not.toBeNull();
+    expect((productivityCategory as HTMLDetailsElement).open).toBe(true);
+    fireEvent.click(
+      productivityCategory?.querySelector("summary") as HTMLElement,
+    );
+    expect((productivityCategory as HTMLDetailsElement).open).toBe(false);
+    expect((marketplaces[0] as HTMLDetailsElement).open).toBe(true);
+
+    fireEvent.click(marketplaces[0].querySelector("summary") as HTMLElement);
+    expect((marketplaces[0] as HTMLDetailsElement).open).toBe(false);
+    expect((marketplaces[1] as HTMLDetailsElement).open).toBe(true);
   });
 
   it("shows an empty state when the server returns no marketplaces", async () => {

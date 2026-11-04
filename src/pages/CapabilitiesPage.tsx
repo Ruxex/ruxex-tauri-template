@@ -223,16 +223,157 @@ export function CapabilitiesPage() {
                     key={marketplace.name}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">
-                          {marketplace.interface?.displayName ??
-                            marketplace.name}
-                        </p>
-                        <p className="text-xs text-base-content/60">
-                          {marketplace.name} · {marketplace.plugins.length}{" "}
-                          plugins
-                        </p>
-                      </div>
+                      <details
+                        className="min-w-0 flex-1"
+                        data-testid="plugin-marketplace"
+                        open
+                      >
+                        <summary className="cursor-pointer">
+                          <span className="block font-medium">
+                            {marketplace.interface?.displayName ??
+                              marketplace.name}
+                          </span>
+                          <span className="block text-xs text-base-content/60">
+                            {marketplace.name} · {marketplace.plugins.length}{" "}
+                            plugins
+                          </span>
+                        </summary>
+                        <div className="mt-3 space-y-4">
+                          {groupPluginsByCategory(marketplace.plugins).map(
+                            ({ category, plugins: categoryPlugins }) => (
+                              <details
+                                className="group"
+                                data-testid="plugin-category"
+                                key={category}
+                                open
+                              >
+                                <summary className="cursor-pointer">
+                                  <h3 className="inline text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                                    {category}
+                                  </h3>
+                                </summary>
+                                <ul className="mt-2 space-y-2">
+                                  {categoryPlugins.map((plugin) => {
+                                    const displayName =
+                                      plugin.interface?.displayName ??
+                                      plugin.name;
+                                    const isInstallable =
+                                      marketplace.path !== null;
+                                    const isInstalling =
+                                      installPlugin.isPending;
+                                    const pluginLocalImage =
+                                      plugin.interface?.logo ??
+                                      plugin.interface?.logoDark ??
+                                      plugin.interface?.composerIcon;
+                                    const pluginImage =
+                                      plugin.interface?.logoUrl ??
+                                      plugin.interface?.logoUrlDark ??
+                                      plugin.interface?.composerIconUrl;
+
+                                    return (
+                                      <li
+                                        className="rounded-box border border-base-300 bg-base-100 p-3"
+                                        key={plugin.id}
+                                      >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                          <div className="flex min-w-0 items-start gap-3">
+                                            <div
+                                              className="size-10 shrink-0 rounded-box bg-base-200/60"
+                                              data-testid="plugin-image-slot"
+                                            >
+                                              <MarketplaceAssetImage
+                                                alt={`${displayName} logo`}
+                                                className="size-full rounded-box object-contain"
+                                                localDarkSrc={
+                                                  plugin.interface?.logoDark
+                                                }
+                                                localSrc={pluginLocalImage}
+                                                darkSrc={
+                                                  plugin.interface?.logoUrlDark
+                                                }
+                                                src={pluginImage}
+                                              />
+                                            </div>
+                                            <div className="min-w-0">
+                                              <p className="font-medium">
+                                                {displayName}
+                                              </p>
+                                              {plugin.interface
+                                                ?.shortDescription && (
+                                                <p className="text-sm text-base-content/70">
+                                                  {
+                                                    plugin.interface
+                                                      .shortDescription
+                                                  }
+                                                </p>
+                                              )}
+                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                                                <StateBadge
+                                                  tone={capabilityStatusTone(
+                                                    plugin.enabled
+                                                      ? "enabled"
+                                                      : plugin.installed
+                                                        ? "installed"
+                                                        : "available",
+                                                  )}
+                                                >
+                                                  {plugin.enabled
+                                                    ? "enabled"
+                                                    : plugin.installed
+                                                      ? "installed"
+                                                      : "available"}
+                                                </StateBadge>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          {!plugin.installed &&
+                                            isInstallable && (
+                                              <button
+                                                aria-label={`Install ${displayName}`}
+                                                className="btn btn-outline btn-square btn-sm"
+                                                title={`Install ${displayName}`}
+                                                type="button"
+                                                disabled={isInstalling}
+                                                onClick={() =>
+                                                  void installPlugin.mutateAsync(
+                                                    {
+                                                      marketplacePath:
+                                                        marketplace.path,
+                                                      pluginName: plugin.name,
+                                                    },
+                                                  )
+                                                }
+                                              >
+                                                {isInstalling ? (
+                                                  <span
+                                                    aria-hidden="true"
+                                                    className="loading loading-spinner loading-xs"
+                                                  />
+                                                ) : (
+                                                  <PlusIcon
+                                                    aria-hidden="true"
+                                                    className="size-4"
+                                                  />
+                                                )}
+                                              </button>
+                                            )}
+                                        </div>
+                                        {!isInstallable &&
+                                          !plugin.installed && (
+                                            <p className="mt-2 text-xs text-base-content/60">
+                                              Remote marketplace plugins cannot
+                                              be installed here.
+                                            </p>
+                                          )}
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              </details>
+                            ),
+                          )}
+                        </div>
+                      </details>
                       <button
                         className="btn btn-ghost btn-xs"
                         type="button"
@@ -247,126 +388,6 @@ export function CapabilitiesPage() {
                           ? "Refreshing…"
                           : `Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
                       </button>
-                    </div>
-                    <div className="mt-3 space-y-4">
-                      {groupPluginsByCategory(marketplace.plugins).map(
-                        ({ category, plugins: categoryPlugins }) => (
-                          <section key={category}>
-                            <h3 className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                              {category}
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              {categoryPlugins.map((plugin) => {
-                                const displayName =
-                                  plugin.interface?.displayName ?? plugin.name;
-                                const isInstallable = marketplace.path !== null;
-                                const isInstalling = installPlugin.isPending;
-                                const pluginLocalImage =
-                                  plugin.interface?.logo ??
-                                  plugin.interface?.logoDark ??
-                                  plugin.interface?.composerIcon;
-                                const pluginImage =
-                                  plugin.interface?.logoUrl ??
-                                  plugin.interface?.logoUrlDark ??
-                                  plugin.interface?.composerIconUrl;
-
-                                return (
-                                  <li
-                                    className="rounded-box border border-base-300 bg-base-100 p-3"
-                                    key={plugin.id}
-                                  >
-                                    <div className="flex flex-wrap items-start justify-between gap-3">
-                                      <div className="flex min-w-0 items-start gap-3">
-                                        <div
-                                          className="size-10 shrink-0 rounded-box bg-base-200/60"
-                                          data-testid="plugin-image-slot"
-                                        >
-                                          <MarketplaceAssetImage
-                                            alt={`${displayName} logo`}
-                                            className="size-full rounded-box object-contain"
-                                            localDarkSrc={
-                                              plugin.interface?.logoDark
-                                            }
-                                            localSrc={pluginLocalImage}
-                                            darkSrc={
-                                              plugin.interface?.logoUrlDark
-                                            }
-                                            src={pluginImage}
-                                          />
-                                        </div>
-                                        <div className="min-w-0">
-                                          <p className="font-medium">
-                                            {displayName}
-                                          </p>
-                                          {plugin.interface
-                                            ?.shortDescription && (
-                                            <p className="text-sm text-base-content/70">
-                                              {
-                                                plugin.interface
-                                                  .shortDescription
-                                              }
-                                            </p>
-                                          )}
-                                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
-                                            <StateBadge
-                                              tone={capabilityStatusTone(
-                                                plugin.enabled
-                                                  ? "enabled"
-                                                  : plugin.installed
-                                                    ? "installed"
-                                                    : "available",
-                                              )}
-                                            >
-                                              {plugin.enabled
-                                                ? "enabled"
-                                                : plugin.installed
-                                                  ? "installed"
-                                                  : "available"}
-                                            </StateBadge>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      {!plugin.installed && isInstallable && (
-                                        <button
-                                          aria-label={`Install ${displayName}`}
-                                          className="btn btn-outline btn-square btn-sm"
-                                          title={`Install ${displayName}`}
-                                          type="button"
-                                          disabled={isInstalling}
-                                          onClick={() =>
-                                            void installPlugin.mutateAsync({
-                                              marketplacePath: marketplace.path,
-                                              pluginName: plugin.id,
-                                            })
-                                          }
-                                        >
-                                          {isInstalling ? (
-                                            <span
-                                              aria-hidden="true"
-                                              className="loading loading-spinner loading-xs"
-                                            />
-                                          ) : (
-                                            <PlusIcon
-                                              aria-hidden="true"
-                                              className="size-4"
-                                            />
-                                          )}
-                                        </button>
-                                      )}
-                                    </div>
-                                    {!isInstallable && !plugin.installed && (
-                                      <p className="mt-2 text-xs text-base-content/60">
-                                        Remote marketplace plugins cannot be
-                                        installed here.
-                                      </p>
-                                    )}
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </section>
-                        ),
-                      )}
                     </div>
                   </li>
                 ))}
