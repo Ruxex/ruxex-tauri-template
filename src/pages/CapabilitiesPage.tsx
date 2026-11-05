@@ -286,12 +286,19 @@ export function CapabilitiesPage() {
                     key={marketplace.name}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <details
-                        className="min-w-0 flex-1"
+                      <div
+                        className="collapse collapse-arrow min-w-0 flex-1"
                         data-testid="plugin-marketplace"
-                        open
                       >
-                        <summary className="cursor-pointer">
+                        <input
+                          aria-label={
+                            marketplace.interface?.displayName ??
+                            marketplace.name
+                          }
+                          defaultChecked
+                          type="checkbox"
+                        />
+                        <div className="collapse-title min-h-0 py-1 font-medium">
                           <span className="block font-medium">
                             {marketplace.interface?.displayName ??
                               marketplace.name}
@@ -300,22 +307,31 @@ export function CapabilitiesPage() {
                             {marketplace.name} · {marketplace.plugins.length}{" "}
                             plugins
                           </span>
-                        </summary>
-                        <div className="mt-3 space-y-4">
+                        </div>
+                        <div className="collapse-content px-0 pt-2">
+                          <div className="space-y-4">
                           {groupPluginsByCategory(marketplace.plugins).map(
                             ({ category, plugins: categoryPlugins }) => (
-                              <details
-                                className="group"
+                              <div
+                                className="collapse collapse-arrow"
                                 data-testid="plugin-category"
                                 key={category}
-                                open
                               >
-                                <summary className="cursor-pointer">
-                                  <h3 className="inline text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                                <input
+                                  aria-label={category}
+                                  defaultChecked
+                                  type="checkbox"
+                                />
+                                <div className="collapse-title min-h-0 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                                  <h3 className="inline">
                                     {category}
                                   </h3>
-                                </summary>
-                                <ul className="mt-2 space-y-2">
+                                </div>
+                                <div className="collapse-content px-2">
+                                <ul
+                                  className="mt-2 grid gap-2 lg:grid-cols-2"
+                                  data-testid="plugin-grid"
+                                >
                                   {categoryPlugins.map((plugin) => {
                                     const displayName =
                                       plugin.interface?.displayName ??
@@ -432,11 +448,13 @@ export function CapabilitiesPage() {
                                     );
                                   })}
                                 </ul>
-                              </details>
+                                </div>
+                              </div>
                             ),
                           )}
+                          </div>
                         </div>
-                      </details>
+                      </div>
                       <button
                         className="btn btn-ghost btn-xs"
                         type="button"

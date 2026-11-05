@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
   waitFor,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -190,7 +191,12 @@ describe("CapabilitiesPage", () => {
     const pluginSection = screen
       .getByRole("heading", { name: "Plugins", level: 2 })
       .closest("section");
-    expect(pluginSection?.className).not.toContain("lg:grid-cols-2");
+    expect(
+      pluginSection?.querySelector('[data-testid="plugin-grid"]')?.className,
+    ).toContain("lg:grid-cols-2");
+    expect(
+      screen.getAllByTestId("plugin-marketplace")[0].className,
+    ).toContain("collapse");
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
     expect(
@@ -245,25 +251,31 @@ describe("CapabilitiesPage", () => {
 
     const marketplaces = screen.getAllByTestId("plugin-marketplace");
     expect(marketplaces).toHaveLength(2);
-    expect((marketplaces[0] as HTMLDetailsElement).open).toBe(true);
-    expect((marketplaces[1] as HTMLDetailsElement).open).toBe(true);
+    const officialToggle = within(marketplaces[0]).getByRole("checkbox", {
+      name: "Official Plugins",
+    }) as HTMLInputElement;
+    const remoteToggle = within(marketplaces[1]).getByRole("checkbox", {
+      name: "Remote Catalog",
+    }) as HTMLInputElement;
+    expect(officialToggle.checked).toBe(true);
+    expect(remoteToggle.checked).toBe(true);
 
-    const productivityHeading = screen.getByRole("heading", {
-      name: "Productivity",
-      level: 3,
-    });
-    const productivityCategory = productivityHeading.closest("details");
+    const productivityCategory = screen
+      .getByRole("heading", { name: "Productivity", level: 3 })
+      .closest('[data-testid="plugin-category"]');
     expect(productivityCategory).not.toBeNull();
-    expect((productivityCategory as HTMLDetailsElement).open).toBe(true);
-    fireEvent.click(
-      productivityCategory?.querySelector("summary") as HTMLElement,
-    );
-    expect((productivityCategory as HTMLDetailsElement).open).toBe(false);
-    expect((marketplaces[0] as HTMLDetailsElement).open).toBe(true);
+    const productivityToggle = within(productivityCategory as HTMLElement).getByRole(
+      "checkbox",
+      { name: "Productivity" },
+    ) as HTMLInputElement;
+    expect(productivityToggle.checked).toBe(true);
+    fireEvent.click(productivityToggle);
+    expect(productivityToggle.checked).toBe(false);
+    expect(officialToggle.checked).toBe(true);
 
-    fireEvent.click(marketplaces[0].querySelector("summary") as HTMLElement);
-    expect((marketplaces[0] as HTMLDetailsElement).open).toBe(false);
-    expect((marketplaces[1] as HTMLDetailsElement).open).toBe(true);
+    fireEvent.click(officialToggle);
+    expect(officialToggle.checked).toBe(false);
+    expect(remoteToggle.checked).toBe(true);
   });
 
   it("shows an empty state when the server returns no marketplaces", async () => {
