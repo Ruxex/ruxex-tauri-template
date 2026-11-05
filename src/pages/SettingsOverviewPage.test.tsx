@@ -5,12 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const readQuickPanelShortcut = vi.hoisted(() => vi.fn());
 const updateQuickPanelShortcut = vi.hoisted(() => vi.fn());
-const openQuickPanel = vi.hoisted(() => vi.fn());
 
 vi.mock("../platform/native", () => ({
   readQuickPanelShortcut,
   updateQuickPanelShortcut,
-  openQuickPanel,
 }));
 
 import { UiPreferencesProvider } from "../app/ui-preferences";
@@ -31,7 +29,6 @@ describe("SettingsOverviewPage", () => {
     window.localStorage.clear();
     readQuickPanelShortcut.mockReset();
     updateQuickPanelShortcut.mockReset();
-    openQuickPanel.mockReset();
     readQuickPanelShortcut.mockResolvedValue({
       shortcut: "CmdOrCtrl+Alt+R",
       defaultShortcut: "CmdOrCtrl+Shift+Space",
@@ -42,15 +39,19 @@ describe("SettingsOverviewPage", () => {
     }));
   });
 
-  it("opens the quick panel directly from settings", async () => {
+  it("explains that global shortcuts are unavailable on Linux Wayland", async () => {
     renderPage();
 
     await screen.findByRole("textbox", {
       name: "Quick panel shortcut",
     });
-    fireEvent.click(screen.getByRole("button", { name: "Open" }));
 
-    await waitFor(() => expect(openQuickPanel).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
+    expect(
+      screen.getByText(
+        "Linux / Waylandではグローバルショートカットは現在利用できません。",
+      ),
+    ).toBeTruthy();
   });
 
   it("loads the native shortcut and saves a new value", async () => {

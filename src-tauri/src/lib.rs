@@ -144,7 +144,6 @@ pub fn run_with_config(config: DesktopConfig) {
             desktop::read_marketplace_asset,
             desktop::open_browser_window,
             quick_panel::close_quick_panel,
-            quick_panel::open_quick_panel,
             quick_panel::quick_panel_shortcut_read,
             quick_panel::quick_panel_shortcut_update,
             schedule_commands::schedule_list,
