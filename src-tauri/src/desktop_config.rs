@@ -145,16 +145,22 @@ pub fn default_config() -> DesktopConfig {
 }
 
 #[cfg(feature = "example")]
-fn example_provider_factory(selector: Option<&str>) -> ProviderRuntimeFactory {
+fn example_provider_factory(selector: Option<&str>) -> Result<ProviderRuntimeFactory, String> {
     match selector {
-        Some("cloudflare") => ruxex_provider_host_example::cloudflare::provider_factory(),
-        _ => ruxex_provider_host_example::dummy_provider::provider_factory(),
+        None => Ok(ruxex_provider_host_example::dummy_provider::provider_factory()),
+        Some("cloudflare") => Ok(ruxex_provider_host_example::cloudflare::provider_factory()),
+        Some(selector) => Err(format!(
+            "unsupported RUXEX_PROVIDER value `{selector}`; expected `cloudflare`"
+        )),
     }
 }
 
 #[cfg(feature = "example")]
 pub(crate) fn example_provider_config(selector: Option<&str>) -> DesktopConfig {
-    let builder = DesktopConfig::builder(example_provider_factory(selector));
+    let builder = DesktopConfig::builder(
+        example_provider_factory(selector)
+            .unwrap_or_else(|error| panic!("invalid example provider selection: {error}")),
+    );
     if selector == Some("cloudflare") {
         builder
             .home_dir_name(".ruxex_desktop_cloudflare")
@@ -198,7 +204,8 @@ mod tests {
     #[cfg(feature = "example")]
     #[test]
     fn example_provider_defaults_to_dummy() {
-        let (_, descriptor) = super::example_provider_factory(None);
+        let (_, descriptor) = super::example_provider_factory(None)
+            .expect("missing provider selection should use the dummy provider");
 
         assert_eq!(descriptor.provider_kind, "dummy");
     }
@@ -206,7 +213,8 @@ mod tests {
     #[cfg(feature = "example")]
     #[test]
     fn example_provider_can_select_cloudflare() {
-        let (_, descriptor) = super::example_provider_factory(Some("cloudflare"));
+        let (_, descriptor) = super::example_provider_factory(Some("cloudflare"))
+            .expect("cloudflare provider selection should be accepted");
 
         assert_eq!(descriptor.provider_kind, "cloudflare");
     }
@@ -222,10 +230,14 @@ mod tests {
 
     #[cfg(feature = "example")]
     #[test]
-    fn unknown_example_provider_falls_back_to_dummy() {
-        let (_, descriptor) = super::example_provider_factory(Some("unknown"));
+    fn unknown_example_provider_is_rejected() {
+        let error = super::example_provider_factory(Some("unknown"))
+            .expect_err("unknown provider selections must be rejected");
 
-        assert_eq!(descriptor.provider_kind, "dummy");
+        assert_eq!(
+            error,
+            "unsupported RUXEX_PROVIDER value `unknown`; expected `cloudflare`"
+        );
     }
 
     #[test]
