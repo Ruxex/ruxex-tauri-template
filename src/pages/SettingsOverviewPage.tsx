@@ -1,6 +1,7 @@
 import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { useUiPreferences } from "../app/ui-preferences";
+import { translateUi } from "../app/i18n";
 import {
   LanguageCard,
   NotificationsCard,
@@ -129,6 +130,10 @@ export function SettingsOverviewPage() {
         onSave={() => void saveShortcut()}
         onShortcutKeyDown={handleShortcutKeyDown}
         shortcut={shortcut}
+        waylandNotice={translateUi(
+          "quickPanelWaylandUnavailable",
+          preferences.language,
+        )}
       />
       <NotificationsCard
         enabled={preferences.notifications.desktop}

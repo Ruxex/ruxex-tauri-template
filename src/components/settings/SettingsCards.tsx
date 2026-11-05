@@ -412,6 +412,7 @@ export function QuickPanelCard({
   disabled,
   error,
   isLoading,
+  waylandNotice,
   onReset,
   onSave,
   onShortcutKeyDown,
@@ -421,6 +422,7 @@ export function QuickPanelCard({
   disabled: boolean;
   error?: string | null;
   isLoading: boolean;
+  waylandNotice: string;
   onReset: () => void;
   onSave: () => void;
   onShortcutKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
@@ -451,7 +453,7 @@ export function QuickPanelCard({
           )}
         </SettingControlRow>
         <p className="px-5 pb-3 text-xs text-base-content/60">
-          Linux / Waylandではグローバルショートカットは現在利用できません。
+          {waylandNotice}
         </p>
         {!isLoading && (
           <div className="flex flex-wrap items-center justify-end gap-2 px-5 py-3.5">

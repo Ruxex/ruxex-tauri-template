@@ -25,9 +25,9 @@ tauri-build = { version = "2.4.1", features = [] }
 anyhow = "1"
 base64 = "0.22"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
-# The desktop bridge consumes the public 0.5.3 desktop facade for App Server and host APIs.
-ruxex = { version = "0.5.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.5.3", default-features = false, features = ["desktop"] }
-ruxex-provider-host-example = { version = "0.5.3", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.5.3", features = ["dummy-provider"], optional = true }
+# The desktop bridge consumes the public 0.5.4 desktop facade for App Server and host APIs.
+ruxex = { version = "0.5.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.5.4", default-features = false, features = ["desktop"] }
+ruxex-provider-host-example = { version = "0.5.4", git = "https://github.com/Ruxex/ruxex.git", tag = "v0.5.4", features = ["dummy-provider"], optional = true }
 dirs = "6"
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }

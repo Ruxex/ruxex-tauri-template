@@ -1,10 +1,15 @@
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
 import { usePluginList, usePluginRead } from "../app-server/hooks";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
+import type { v2 } from "../protocol";
 
 function isHttpUrl(value: string | null | undefined): value is string {
   try {
@@ -13,6 +18,50 @@ function isHttpUrl(value: string | null | undefined): value is string {
   } catch {
     return false;
   }
+}
+
+const pluginPageClassName = "min-w-[640px]";
+
+function getSkillShortDescription(skill: v2.SkillSummary) {
+  return skill.interface?.shortDescription || skill.shortDescription || null;
+}
+
+function getPluginVersion(summary: v2.PluginSummary) {
+  if (summary.localVersion) {
+    return summary.localVersion;
+  }
+
+  return summary.source.type === "npm" ? summary.source.version : null;
+}
+
+function InformationItem({
+  href,
+  label,
+  value,
+}: {
+  href?: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <dt className="text-sm text-base-content/60">{label}</dt>
+      <dd className="mt-1 break-words">
+        {href ? (
+          <a
+            className="link link-primary"
+            href={href}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {value}
+          </a>
+        ) : (
+          value
+        )}
+      </dd>
+    </div>
+  );
 }
 
 export function PluginDetailPage() {
@@ -32,6 +81,9 @@ export function PluginDetailPage() {
       ? { marketplacePath: marketplace.path, pluginName }
       : null,
   );
+  const [selectedSkill, setSelectedSkill] = useState<v2.SkillSummary | null>(
+    null,
+  );
   const plugin = details.data?.plugin;
   const interfaceData = plugin?.summary.interface ?? summary?.interface;
   const displayName =
@@ -43,10 +95,52 @@ export function PluginDetailPage() {
     plugin?.description ??
     interfaceData?.longDescription ??
     interfaceData?.shortDescription;
+  const pluginSummary = plugin?.summary ?? summary;
+  const informationItems = [
+    {
+      label: "Capabilities",
+      value: interfaceData?.capabilities.join(", ") ?? null,
+    },
+    { label: "Developer", value: interfaceData?.developerName ?? null },
+    { label: "Category", value: interfaceData?.category ?? null },
+    {
+      label: "Version",
+      value: pluginSummary ? getPluginVersion(pluginSummary) : null,
+    },
+    ...(isHttpUrl(interfaceData?.websiteUrl)
+      ? [
+          {
+            href: interfaceData.websiteUrl,
+            label: "Website",
+            value: interfaceData.websiteUrl,
+          },
+        ]
+      : []),
+    ...(isHttpUrl(interfaceData?.privacyPolicyUrl)
+      ? [
+          {
+            href: interfaceData.privacyPolicyUrl,
+            label: "Privacy Policy",
+            value: interfaceData.privacyPolicyUrl,
+          },
+        ]
+      : []),
+    ...(isHttpUrl(interfaceData?.termsOfServiceUrl)
+      ? [
+          {
+            href: interfaceData.termsOfServiceUrl,
+            label: "Terms of Service",
+            value: interfaceData.termsOfServiceUrl,
+          },
+        ]
+      : []),
+  ].filter((item): item is { href?: string; label: string; value: string } =>
+    Boolean(item.value),
+  );
 
   if (plugins.isLoading) {
     return (
-      <PageContainer>
+      <PageContainer className={pluginPageClassName}>
         <span className="loading loading-spinner" />
       </PageContainer>
     );
@@ -54,7 +148,7 @@ export function PluginDetailPage() {
 
   if (plugins.isError) {
     return (
-      <PageContainer>
+      <PageContainer className={pluginPageClassName}>
         <p className="text-error">
           Unable to load plugin: {formatErrorMessage(plugins.error)}
         </p>
@@ -64,14 +158,14 @@ export function PluginDetailPage() {
 
   if (!summary || !marketplace) {
     return (
-      <PageContainer>
+      <PageContainer className={pluginPageClassName}>
         <h1 className="text-3xl font-semibold">Plugin not found</h1>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer>
+    <PageContainer className={pluginPageClassName}>
       <header className="flex flex-wrap items-start gap-4">
         <div className="size-20 shrink-0 rounded-box border border-base-300 bg-base-100 p-2">
           <MarketplaceAssetImage
@@ -88,10 +182,19 @@ export function PluginDetailPage() {
             {marketplace.interface?.displayName ?? marketplace.name}
           </p>
           <h1 className="text-3xl font-semibold">{displayName}</h1>
-          {interfaceData?.developerName && (
-            <p className="mt-1 text-sm text-base-content/60">
-              by {interfaceData.developerName}
-            </p>
+          {(interfaceData?.developerName || description) && (
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              {interfaceData?.developerName && (
+                <p className="text-sm text-base-content/60">
+                  by {interfaceData.developerName}
+                </p>
+              )}
+              {description && (
+                <p className="min-w-0 break-words whitespace-pre-wrap text-sm text-base-content/80">
+                  {description}
+                </p>
+              )}
+            </div>
           )}
           {isHttpUrl(interfaceData?.websiteUrl) && (
             <a
@@ -123,24 +226,26 @@ export function PluginDetailPage() {
           Detailed plugin metadata is unavailable for remote-only marketplaces.
         </p>
       )}
-      {description && (
-        <section>
-          <h2 className="text-xl font-semibold">About</h2>
-          <p className="mt-2 whitespace-pre-wrap text-base-content/80">
-            {description}
-          </p>
-        </section>
-      )}
       {plugin && (
         <div className="grid gap-4 lg:grid-cols-3">
           {plugin.skills.length > 0 && (
             <section className="rounded-box border border-base-300 bg-base-100 p-4">
               <h2 className="font-semibold">Skills</h2>
-              <ul className="mt-2 space-y-2 text-sm">
+              <ul className="mt-2 w-full space-y-2 text-sm">
                 {plugin.skills.map((skill) => (
-                  <li key={skill.name}>
-                    <p className="font-medium">{skill.name}</p>
-                    <p className="text-base-content/70">{skill.description}</p>
+                  <li className="w-full" key={skill.name}>
+                    <button
+                      className="w-full rounded-box p-2 text-left transition hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      type="button"
+                      onClick={() => setSelectedSkill(skill)}
+                    >
+                      <span className="block font-medium">{skill.name}</span>
+                      {getSkillShortDescription(skill) && (
+                        <span className="mt-1 block text-base-content/70">
+                          {getSkillShortDescription(skill)}
+                        </span>
+                      )}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -167,6 +272,51 @@ export function PluginDetailPage() {
             </section>
           )}
         </div>
+      )}
+      {informationItems.length > 0 && (
+        <section className="rounded-box border border-base-300 bg-base-100 p-4">
+          <h2 className="font-semibold">Information</h2>
+          <dl className="mt-3 grid gap-x-6 gap-y-4 sm:grid-cols-2">
+            {informationItems.map((item) => (
+              <InformationItem key={item.label} {...item} />
+            ))}
+          </dl>
+        </section>
+      )}
+      {selectedSkill && (
+        <dialog
+          aria-labelledby="skill-details-title"
+          className="modal"
+          open
+          onCancel={(event) => {
+            event.preventDefault();
+            setSelectedSkill(null);
+          }}
+        >
+          <div className="modal-box w-full max-w-2xl px-5 py-7">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="font-semibold" id="skill-details-title">
+                {selectedSkill.name}
+              </h2>
+              <button
+                aria-label="Close skill details"
+                className="btn btn-ghost btn-sm btn-square"
+                type="button"
+                onClick={() => setSelectedSkill(null)}
+              >
+                <XMarkIcon aria-hidden="true" className="size-4" />
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap text-base-content/80">
+              {selectedSkill.description}
+            </p>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button type="button" onClick={() => setSelectedSkill(null)}>
+              Close
+            </button>
+          </form>
+        </dialog>
       )}
     </PageContainer>
   );

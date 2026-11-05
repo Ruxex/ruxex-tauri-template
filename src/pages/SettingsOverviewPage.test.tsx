@@ -11,7 +11,11 @@ vi.mock("../platform/native", () => ({
   updateQuickPanelShortcut,
 }));
 
-import { UiPreferencesProvider } from "../app/ui-preferences";
+import {
+  DEFAULT_UI_PREFERENCES,
+  UI_PREFERENCES_KEY,
+  UiPreferencesProvider,
+} from "../app/ui-preferences";
 import { SettingsOverviewPage } from "./SettingsOverviewPage";
 
 function renderPage() {
@@ -40,6 +44,10 @@ describe("SettingsOverviewPage", () => {
   });
 
   it("explains that global shortcuts are unavailable on Linux Wayland", async () => {
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "en" }),
+    );
     renderPage();
 
     await screen.findByRole("textbox", {
@@ -49,6 +57,20 @@ describe("SettingsOverviewPage", () => {
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
     expect(
       screen.getByText(
+        "Linux / Wayland global shortcuts are currently unavailable.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("translates the Wayland shortcut notice into Japanese", async () => {
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
+    );
+    renderPage();
+
+    expect(
+      await screen.findByText(
         "Linux / Waylandではグローバルショートカットは現在利用できません。",
       ),
     ).toBeTruthy();

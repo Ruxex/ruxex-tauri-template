@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -41,8 +47,8 @@ describe("PluginDetailPage", () => {
                   category: "developer-tools",
                   capabilities: ["tools"],
                   websiteUrl: "https://example.com/plugin",
-                  privacyPolicyUrl: null,
-                  termsOfServiceUrl: null,
+                  privacyPolicyUrl: "https://example.com/privacy",
+                  termsOfServiceUrl: "https://example.com/terms",
                   defaultPrompt: null,
                   brandColor: null,
                   composerIcon: null,
@@ -79,7 +85,7 @@ describe("PluginDetailPage", () => {
             mustShowInstallationInterstitial: null,
             authPolicy: "ON_INSTALL",
             availability: "AVAILABLE",
-            localVersion: null,
+            localVersion: "1.2.3",
             keywords: ["developer-tools"],
             interface: {
               displayName: "Example Plugin",
@@ -89,8 +95,8 @@ describe("PluginDetailPage", () => {
               category: "developer-tools",
               capabilities: ["tools"],
               websiteUrl: "https://example.com/plugin",
-              privacyPolicyUrl: null,
-              termsOfServiceUrl: null,
+              privacyPolicyUrl: "https://example.com/privacy",
+              termsOfServiceUrl: "https://example.com/terms",
               defaultPrompt: null,
               brandColor: null,
               composerIcon: null,
@@ -109,6 +115,18 @@ describe("PluginDetailPage", () => {
             {
               name: "review",
               description: "Reviews changes",
+              shortDescription: "Review changes quickly",
+              interface: {
+                shortDescription: "Interface short description",
+                iconSmallUrl: null,
+                iconLargeUrl: null,
+              },
+              path: null,
+              enabled: true,
+            },
+            {
+              name: "deploy",
+              description: "Detailed deployment instructions",
               shortDescription: null,
               interface: null,
               path: null,
@@ -130,7 +148,7 @@ describe("PluginDetailPage", () => {
   it("loads and renders local plugin details", async () => {
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
-    render(
+    const { container } = render(
       <MemoryRouter
         initialEntries={["/capabilities/plugins/community/example"]}
       >
@@ -143,16 +161,50 @@ describe("PluginDetailPage", () => {
       </MemoryRouter>,
     );
 
+    expect(container.firstElementChild?.className).toContain("mx-auto");
+    expect(container.firstElementChild?.className).toContain("min-w-[640px]");
     expect(
       screen.getByRole("heading", { name: "Example Plugin", level: 1 }),
     ).toBeTruthy();
-    expect(
-      screen.getByText(
-        "The plugin read endpoint provides the canonical details.",
-      ),
-    ).toBeTruthy();
-    expect(screen.getByText("review")).toBeTruthy();
+    const header = screen.getByRole("banner");
+    const byline = within(header).getByText("by Example Dev");
+    const description = within(header).getByText(
+      "The plugin read endpoint provides the canonical details.",
+    );
+    expect(byline.parentElement).toBe(description.parentElement);
+    const skillButton = screen.getByRole("button", {
+      name: /review.*Interface short description/,
+    });
+    expect(skillButton).toBeTruthy();
+    expect(skillButton.className).toContain("w-full");
+    expect(screen.getByText("Interface short description")).toBeTruthy();
+    expect(screen.queryByText("Review changes quickly")).toBeNull();
+    expect(screen.queryByText("Reviews changes")).toBeNull();
+    expect(screen.getByText("deploy")).toBeTruthy();
+    expect(screen.queryByText("Detailed deployment instructions")).toBeNull();
+    fireEvent.click(skillButton);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("Reviews changes")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close skill details" }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByText("docs")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Information", level: 2 }),
+    ).toBeTruthy();
+    expect(screen.getByText("tools")).toBeTruthy();
+    expect(screen.getByText("developer-tools")).toBeTruthy();
+    expect(screen.getByText("1.2.3")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "https://example.com/plugin" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "https://example.com/privacy" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "https://example.com/terms" }),
+    ).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Open website" }).getAttribute("href"),
     ).toBe("https://example.com/plugin");
