@@ -36,7 +36,7 @@ describe("ConversationItem", () => {
     expect(messageSurface?.className).toContain("rounded-box");
     expect(messageSurface?.className).not.toContain("chat-bubble");
     expect(messageSurface?.className).toContain("px-3");
-    expect(messageSurface?.className).toContain("py-2");
+    expect(messageSurface?.className).toContain("py-1.5");
     expect(
       screen.getByRole("group", { name: "Message actions" }).className,
     ).toContain("chat-footer");
@@ -156,6 +156,10 @@ describe("ConversationItem", () => {
 
     expect(screen.getByText("…")).toBeTruthy();
     expect(screen.getByRole("article").className).toContain("chat-start");
+    const messageSurface = screen.getByText("…").closest("p")
+      ?.parentElement?.parentElement;
+    expect(messageSurface?.className).toContain("py-2");
+    expect(messageSurface?.className).not.toContain("py-3");
     expect(screen.queryByRole("button", { name: "Edit message" })).toBeNull();
   });
 

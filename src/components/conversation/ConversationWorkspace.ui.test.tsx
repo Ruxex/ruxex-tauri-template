@@ -192,6 +192,49 @@ describe("ConversationWorkspace", () => {
     ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
   });
 
+  it("centers the conversation loading indicator", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    useThreadConversation.mockReturnValueOnce({
+      isLoading: true,
+      isError: false,
+      resync,
+      data: null,
+    });
+
+    const { container } = render(<ConversationWorkspace threadId="thread-1" />);
+
+    const loadingWrapper = container.firstElementChild;
+    expect(loadingWrapper?.className.split(/\s+/)).toEqual(
+      expect.arrayContaining([
+        "flex",
+        "min-h-full",
+        "items-center",
+        "justify-center",
+      ]),
+    );
+    expect(container.querySelector(".loading-spinner")?.className).toContain(
+      "loading-lg",
+    );
+  });
+
+  it("keeps showing loading while conversation recovery is pending", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    useThreadConversation.mockReturnValueOnce({
+      isLoading: false,
+      isPending: true,
+      isError: false,
+      resync,
+      data: null,
+    });
+
+    const { container } = render(<ConversationWorkspace threadId="thread-1" />);
+
+    expect(container.querySelector(".loading-spinner")?.className).toContain(
+      "loading-lg",
+    );
+    expect(screen.queryByText("Unable to load this conversation.")).toBeNull();
+  });
+
   it("shows queued messages above the composer on the right", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 

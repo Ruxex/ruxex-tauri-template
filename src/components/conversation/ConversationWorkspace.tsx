@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBranding } from "../../app/branding-context";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
@@ -12,15 +13,14 @@ import {
   useSendMessage,
   useThreadConversation,
 } from "../../app-server/hooks";
-import { useBranding } from "../../app/branding-context";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { Composer } from "./Composer";
-import { QueuedMessages } from "./QueuedMessages";
 import {
   buildUserTextInput,
   type ConversationViewItem,
   mergeConversationItems,
 } from "./conversation-model";
+import { QueuedMessages } from "./QueuedMessages";
 
 const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 
@@ -163,8 +163,12 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     [],
   );
 
-  if (conversation.isLoading) {
-    return <span className="loading loading-spinner loading-lg" />;
+  if (conversation.isLoading || conversation.isPending) {
+    return (
+      <div className="flex min-h-full items-center justify-center">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
   }
   if (conversation.isError || !conversation.data) {
     return (

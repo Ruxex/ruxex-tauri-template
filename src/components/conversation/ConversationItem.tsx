@@ -98,7 +98,7 @@ export const ConversationItem = memo(function ConversationItem({
         </form>
       ) : (
         <div
-          className={`rounded-box border border-base-300 ${isUser ? "px-3 py-2" : "px-4 py-3"} ${isUser ? "bg-primary text-primary-content" : "bg-base-100"}`}
+          className={`rounded-box border border-base-300 ${isUser ? "px-3 py-1.5" : "px-4 py-2"} ${isUser ? "bg-primary text-primary-content" : "bg-base-100"}`}
         >
           <MarkdownContent text={item.text || "…"} />
         </div>
