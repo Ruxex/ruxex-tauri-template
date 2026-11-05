@@ -47,7 +47,12 @@ describe("SettingsOverviewPage", () => {
     });
     expect(input).toHaveProperty("value", "CmdOrCtrl+Alt+R");
 
-    fireEvent.change(input, { target: { value: "CmdOrCtrl+Alt+T" } });
+    fireEvent.keyDown(input, {
+      code: "KeyT",
+      ctrlKey: true,
+      key: "t",
+      altKey: true,
+    });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
@@ -56,6 +61,23 @@ describe("SettingsOverviewPage", () => {
       ),
     );
     expect(input).toHaveProperty("value", "CmdOrCtrl+Alt+T");
+  });
+
+  it("records a shortcut from the keys the user presses", async () => {
+    renderPage();
+    const input = await screen.findByRole("textbox", {
+      name: "Quick panel shortcut",
+    });
+
+    expect(input).toHaveProperty("readOnly", true);
+    fireEvent.keyDown(input, {
+      code: "KeyP",
+      ctrlKey: true,
+      key: "p",
+      shiftKey: true,
+    });
+
+    expect(input).toHaveProperty("value", "CmdOrCtrl+Shift+P");
   });
 
   it("resets the shortcut to the native default", async () => {
@@ -84,7 +106,12 @@ describe("SettingsOverviewPage", () => {
       name: "Quick panel shortcut",
     });
 
-    fireEvent.change(input, { target: { value: "CmdOrCtrl+Alt+T" } });
+    fireEvent.keyDown(input, {
+      code: "KeyT",
+      ctrlKey: true,
+      key: "t",
+      altKey: true,
+    });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(screen.getByRole("button", { name: "Saving…" })).toHaveProperty(
       "disabled",

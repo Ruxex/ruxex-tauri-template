@@ -92,7 +92,9 @@ pub fn run_with_config(config: DesktopConfig) {
                     use tauri_plugin_global_shortcut::ShortcutState;
 
                     if event.state() == ShortcutState::Pressed {
-                        let _ = quick_panel::show(app);
+                        if let Err(error) = quick_panel::show(app) {
+                            eprintln!("failed to show quick panel: {error}");
+                        }
                     }
                 })
                 .build(),
@@ -119,7 +121,9 @@ pub fn run_with_config(config: DesktopConfig) {
             }
             #[cfg(desktop)]
             {
-                quick_panel::register_startup(app.handle())?;
+                if let Err(error) = quick_panel::register_startup(app.handle()) {
+                    eprintln!("failed to register quick panel shortcut: {error}");
+                }
             }
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -153,6 +157,7 @@ pub fn run_with_config(config: DesktopConfig) {
             worktree_commands::worktree_remove,
             worktree_commands::worktree_open,
             app_server::app_server_request,
+            app_server::conversation_debug_log,
             app_server::app_server_resolve_server_request,
             app_server::app_server_reject_server_request
         ])

@@ -1,4 +1,9 @@
-import type { ComponentType, ReactNode, SVGProps } from "react";
+import type {
+  ComponentType,
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
+  SVGProps,
+} from "react";
 import {
   BellIcon,
   Bars3BottomLeftIcon,
@@ -409,7 +414,7 @@ export function QuickPanelCard({
   isLoading,
   onReset,
   onSave,
-  onShortcutChange,
+  onShortcutKeyDown,
   shortcut,
 }: {
   defaultShortcut: string;
@@ -418,7 +423,7 @@ export function QuickPanelCard({
   isLoading: boolean;
   onReset: () => void;
   onSave: () => void;
-  onShortcutChange: (shortcut: string) => void;
+  onShortcutKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   shortcut: string;
 }) {
   return (
@@ -436,7 +441,9 @@ export function QuickPanelCard({
               className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
               disabled={disabled}
               id="settings-quick-panel-shortcut"
-              onChange={(event) => onShortcutChange(event.target.value)}
+              onKeyDown={onShortcutKeyDown}
+              placeholder="Press keys…"
+              readOnly
               value={shortcut}
             />
           )}

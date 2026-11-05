@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { useUiPreferences } from "../app/ui-preferences";
 import {
@@ -10,6 +10,46 @@ import {
   readQuickPanelShortcut,
   updateQuickPanelShortcut,
 } from "../platform/native";
+
+function shortcutKeyFromEvent(
+  event: ReactKeyboardEvent<HTMLInputElement>,
+): string | null {
+  const modifierOnlyKeys = new Set([
+    "Alt",
+    "AltGraph",
+    "Control",
+    "Meta",
+    "OS",
+    "Shift",
+  ]);
+  if (modifierOnlyKeys.has(event.key)) {
+    return null;
+  }
+
+  const platform = navigator.platform.toLowerCase();
+  const isApple = platform.includes("mac") || platform.includes("iphone");
+  const modifiers: string[] = [];
+  if (event.ctrlKey) {
+    modifiers.push(isApple ? "Ctrl" : "CmdOrCtrl");
+  }
+  if (event.metaKey) {
+    modifiers.push(isApple ? "CmdOrCtrl" : "Super");
+  }
+  if (event.altKey) modifiers.push("Alt");
+  if (event.shiftKey) modifiers.push("Shift");
+
+  const code = event.code || event.key;
+  if (!code) return null;
+  let key = code;
+  if (code.startsWith("Key") && code.length === 4) {
+    key = code.slice(3);
+  } else if (code.startsWith("Digit") && code.length === 6) {
+    key = code.slice(5);
+  }
+  if (key.length === 1) key = key.toUpperCase();
+
+  return [...modifiers, key].join("+");
+}
 
 export function SettingsOverviewPage() {
   const { preferences, update } = useUiPreferences();
@@ -62,6 +102,17 @@ export function SettingsOverviewPage() {
     }
   }
 
+  function handleShortcutKeyDown(
+    event: ReactKeyboardEvent<HTMLInputElement>,
+  ) {
+    event.preventDefault();
+    const nextShortcut = shortcutKeyFromEvent(event);
+    if (nextShortcut) {
+      setShortcut(nextShortcut);
+      setShortcutError(null);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <h2 className="text-3xl font-semibold tracking-tight">General</h2>
@@ -76,10 +127,7 @@ export function SettingsOverviewPage() {
         isLoading={isLoadingShortcut}
         onReset={() => void saveShortcut(defaultShortcut)}
         onSave={() => void saveShortcut()}
-        onShortcutChange={(value) => {
-          setShortcut(value);
-          setShortcutError(null);
-        }}
+        onShortcutKeyDown={handleShortcutKeyDown}
         shortcut={shortcut}
       />
       <NotificationsCard

@@ -185,15 +185,21 @@ pub(crate) fn show<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         return Ok(());
     }
 
-    WebviewWindowBuilder::new(app, panel_label(), WebviewUrl::App(panel_route().into()))
-        .title("Quick request")
-        .inner_size(560.0, 360.0)
-        .min_inner_size(420.0, 280.0)
-        .resizable(true)
-        .always_on_top(true)
-        .decorations(true)
-        .center()
-        .build()?;
+    let window =
+        WebviewWindowBuilder::new(app, panel_label(), WebviewUrl::App(panel_route().into()))
+            .title("Quick request")
+            .inner_size(560.0, 360.0)
+            .min_inner_size(420.0, 280.0)
+            .resizable(true)
+            .always_on_top(true)
+            .decorations(true)
+            .visible(true)
+            .focused(true)
+            .center()
+            .build()?;
+
+    window.show()?;
+    window.set_focus()?;
 
     Ok(())
 }

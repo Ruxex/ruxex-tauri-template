@@ -232,9 +232,12 @@ describe("CapabilitiesPage", () => {
     expect(installButton.className).toContain("btn-outline");
     expect(installButton.textContent).not.toContain("Lint Plugin");
     fireEvent.click(installButton);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Refresh Official Plugins" }),
-    );
+    const refreshButton = screen.getByRole("button", {
+      name: "Refresh Official Plugins",
+    });
+    expect(refreshButton.className).toContain("btn-square");
+    expect(refreshButton.closest('[data-testid="plugin-marketplace"]')).not.toBeNull();
+    fireEvent.click(refreshButton);
 
     expect(installPlugin.mutateAsync).toHaveBeenCalledWith({
       marketplacePath: "/tmp/official",

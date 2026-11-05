@@ -1,4 +1,4 @@
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -298,7 +298,7 @@ export function CapabilitiesPage() {
                           defaultChecked
                           type="checkbox"
                         />
-                        <div className="collapse-title min-h-0 py-1 font-medium">
+                        <div className="collapse-title relative min-h-0 py-1 pr-10 font-medium">
                           <span className="block font-medium">
                             {marketplace.interface?.displayName ??
                               marketplace.name}
@@ -307,6 +307,24 @@ export function CapabilitiesPage() {
                             {marketplace.name} · {marketplace.plugins.length}{" "}
                             plugins
                           </span>
+                          <button
+                            aria-label={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                            className="btn btn-ghost btn-square btn-xs absolute right-2 top-1/2 -translate-y-1/2"
+                            disabled={upgradeMarketplace.isPending}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void upgradeMarketplace.mutateAsync({
+                                marketplaceName: marketplace.name,
+                              });
+                            }}
+                            title={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                            type="button"
+                          >
+                            <ArrowPathIcon
+                              aria-hidden="true"
+                              className={`size-4 ${upgradeMarketplace.isPending ? "animate-spin" : ""}`}
+                            />
+                          </button>
                         </div>
                         <div className="collapse-content px-0 pt-2">
                           <div className="space-y-4">
@@ -455,20 +473,6 @@ export function CapabilitiesPage() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        className="btn btn-ghost btn-xs"
-                        type="button"
-                        disabled={upgradeMarketplace.isPending}
-                        onClick={() =>
-                          void upgradeMarketplace.mutateAsync({
-                            marketplaceName: marketplace.name,
-                          })
-                        }
-                      >
-                        {upgradeMarketplace.isPending
-                          ? "Refreshing…"
-                          : `Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
-                      </button>
                     </div>
                   </li>
                 ))}
