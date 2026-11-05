@@ -137,6 +137,15 @@ and code/diff rendering, inline review startup, MCP status/reload, Skills,
 Plugins, collaboration-mode inventory, and a typed local/remote App Server
 connection UI.
 
+### Plugin compatibility philosophy
+
+Ruxex is provider-neutral and does not depend on OpenAI's registered Connected
+Apps or Connector IDs. Its plugin target is the open, community-oriented
+surface: Skills, standard MCP servers, MCP OAuth, hooks, scripts, local tools,
+and marketplace metadata. A community plugin should be usable in Ruxex when it
+uses those portable surfaces; provider-specific hosted App registrations are
+intentionally outside the compatibility promise.
+
 The four desktop capability boundaries are implemented behind explicit
 protocol and platform adapters:
 

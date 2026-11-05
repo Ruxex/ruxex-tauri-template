@@ -85,6 +85,20 @@ describe("turn mutation hooks", () => {
     });
   });
 
+  it("does not consume the started session for read-only callers", async () => {
+    markThreadStarted("thread-new");
+    const { ensureThreadResumed } = await import("../thread-session");
+
+    await Promise.all([
+      ensureThreadResumed("thread-new", { consumeStarted: false }),
+      ensureThreadResumed("thread-new", { consumeStarted: false }),
+      ensureThreadResumed("thread-new", { consumeStarted: false }),
+    ]);
+
+    await expect(ensureThreadResumed("thread-new")).resolves.toBeUndefined();
+    expect(requestAppServerMethod).not.toHaveBeenCalled();
+  });
+
   it("interrupts and steers the selected active turn", async () => {
     const { useInterruptTurn, useSteerTurn } = await import("./useTurns");
     const input = [

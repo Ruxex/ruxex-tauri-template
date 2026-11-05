@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { v2 } from "../../protocol";
 import { appServerQueryKeys } from "../query-keys";
+import { markThreadStarted, resetThreadSessionState } from "../thread-session";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => ({
@@ -31,6 +32,7 @@ describe("thread query hooks", () => {
   beforeEach(() => {
     appServerStatus.data = { appServerVersion: "test" };
     requestAppServerMethod.mockReset();
+    resetThreadSessionState();
     requestAppServerMethod.mockImplementation(async (method: string) => {
       if (method === "thread/read") {
         return { response: { thread: { id: "thread-1" } } };
@@ -122,6 +124,64 @@ describe("thread query hooks", () => {
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/items/list", {
       threadId: "thread-1",
     });
+  });
+
+  it("does not consume a started session while loading read-only queries", async () => {
+    markThreadStarted("thread-new");
+    const { useThread, useThreadConversation } = await import(
+      "./useThreadQueries"
+    );
+    const { result } = renderHook(
+      () => ({
+        metadata: useThread("thread-new"),
+        conversation: useThreadConversation("thread-new"),
+      }),
+      { wrapper },
+    );
+
+    await waitFor(() =>
+      expect(result.current.conversation.isSuccess).toBe(true),
+    );
+
+    expect(
+      requestAppServerMethod.mock.calls.some(
+        ([method]) => method === "thread/resume",
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps a canceled enabled query pending until it has data or an error", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+    });
+    requestAppServerMethod.mockImplementation(async (method: string) => {
+      if (method === "thread/read") {
+        return new Promise(() => undefined);
+      }
+      if (method === "thread/turns/list") {
+        return { response: { data: [], nextCursor: null } };
+      }
+      if (method === "thread/items/list") {
+        return { response: { data: [], nextCursor: null } };
+      }
+      return { response: {} };
+    });
+    const testWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { useThreadConversation } = await import("./useThreadQueries");
+    const { result } = renderHook(() => useThreadConversation("thread-1"), {
+      wrapper: testWrapper,
+    });
+
+    await waitFor(() => expect(result.current.isFetching).toBe(true));
+    void queryClient.cancelQueries({
+      queryKey: appServerQueryKeys.threadMetadata("thread-1"),
+    });
+
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data).toBeUndefined();
   });
 
   it("resumes before shared metadata and conversation queries load together", async () => {

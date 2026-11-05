@@ -6,8 +6,8 @@ const requestAppServerMethod = vi.hoisted(() => vi.fn());
 
 vi.mock("./api", () => ({ requestAppServerMethod }));
 
-import type { AppServerEvent } from "./events";
 import { synchronizeAppServerQueries } from "./event-query-sync";
+import type { AppServerEvent } from "./events";
 import { appServerQueryKeys } from "./query-keys";
 
 function createQueryClient() {
@@ -399,5 +399,60 @@ describe("app-server event query synchronization", () => {
     expect(queryClient.getQueryData(metadataKey)).toMatchObject({
       thread: { preview: "new preview", updatedAt: 30 },
     });
+  });
+
+  it("restores metadata canceled before its first response", async () => {
+    let resolveMetadata: ((value: unknown) => void) | undefined;
+    const queryClient = new RealQueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+    });
+    const metadataKey = [
+      ...appServerQueryKeys.threadMetadata("thread-1"),
+      { includeTurns: false },
+    ];
+    const metadataQuery = queryClient
+      .fetchQuery({
+        queryKey: metadataKey,
+        queryFn: () =>
+          new Promise((resolve) => {
+            resolveMetadata = resolve;
+          }),
+      })
+      .catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    requestAppServerMethod.mockResolvedValueOnce({
+      response: {
+        thread: {
+          id: "thread-1",
+          name: null,
+          preview: "new preview",
+          updatedAt: 30,
+          recencyAt: 30,
+        },
+      },
+    });
+
+    await synchronizeAppServerQueries(queryClient, {
+      type: "serverNotification",
+      data: {
+        method: "turn/completed",
+        params: { threadId: "thread-1", turn: { id: "turn-1" } as never },
+      },
+    } as AppServerEvent);
+    resolveMetadata?.({
+      thread: {
+        id: "thread-1",
+        name: null,
+        preview: "old preview",
+        updatedAt: 10,
+      },
+    });
+    await metadataQuery;
+
+    expect(queryClient.getQueryData(metadataKey)).toMatchObject({
+      thread: { preview: "new preview", updatedAt: 30 },
+    });
+    expect(queryClient.getQueryState(metadataKey)?.fetchStatus).toBe("idle");
   });
 });

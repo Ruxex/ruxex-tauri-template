@@ -81,11 +81,12 @@ export function threadMetadataQueryOptions(
       { includeTurns },
     ],
     queryFn: async () => {
-      await ensureThreadResumed(threadId);
-      const response = await requestAppServerMethod("thread/read", {
+      const request = {
         threadId,
         ...(includeTurns ? { includeTurns: true } : {}),
-      });
+      };
+      await ensureThreadResumed(threadId, { consumeStarted: false });
+      const response = await requestAppServerMethod("thread/read", request);
       return response.response;
     },
   };
@@ -197,7 +198,7 @@ async function fetchAllThreadTurns(
   threadId: string,
   params: Omit<v2.ThreadTurnsListParams, "threadId">,
 ): Promise<v2.ThreadTurnsListResponse> {
-  await ensureThreadResumed(threadId);
+  await ensureThreadResumed(threadId, { consumeStarted: false });
   const pages: v2.ThreadTurnsListResponse[] = [];
   let cursor = params.cursor ?? null;
   do {
@@ -221,7 +222,7 @@ async function fetchAllThreadItems(
   threadId: string,
   params: Omit<v2.ThreadItemsListParams, "threadId">,
 ): Promise<v2.ThreadItemsListResponse> {
-  await ensureThreadResumed(threadId);
+  await ensureThreadResumed(threadId, { consumeStarted: false });
   const pages: v2.ThreadItemsListResponse[] = [];
   let cursor = params.cursor ?? null;
   do {
@@ -282,15 +283,24 @@ export function useThreadConversation(
       throw failed.error;
     }
   }, [itemsQuery.refetch, threadQuery.refetch, turnsQuery.refetch]);
+  const isError =
+    threadQuery.isError || turnsQuery.isError || itemsQuery.isError;
+  const isPending =
+    enabled &&
+    !isError &&
+    ((!threadQuery.data && threadQuery.isPending) ||
+      (!turnsQuery.data && turnsQuery.isPending) ||
+      (!itemsQuery.data && itemsQuery.isPending));
 
   return {
     data,
     error: threadQuery.error ?? turnsQuery.error ?? itemsQuery.error,
-    isError: threadQuery.isError || turnsQuery.isError || itemsQuery.isError,
+    isError,
     isFetching:
       threadQuery.isFetching || turnsQuery.isFetching || itemsQuery.isFetching,
     isLoading:
       threadQuery.isLoading || turnsQuery.isLoading || itemsQuery.isLoading,
+    isPending,
     isSuccess:
       threadQuery.isSuccess && turnsQuery.isSuccess && itemsQuery.isSuccess,
     resync,

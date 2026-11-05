@@ -2,7 +2,6 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../protocol";
 import { requestAppServerMethod } from "./api";
-import { appServerQueryKeys } from "./query-keys";
 import type { AppServerEvent } from "./events";
 import {
   invalidateThreadConversation,
@@ -11,6 +10,7 @@ import {
   invalidateThreadQueue,
   upsertThreadInListCaches,
 } from "./query-invalidation";
+import { appServerQueryKeys } from "./query-keys";
 
 type PreviewRefreshState = {
   activeTurnId: string;
@@ -112,6 +112,13 @@ function refreshThreadPreview(
       const response = await requestAppServerMethod("thread/read", {
         threadId,
       });
+      queryClient.setQueryData(
+        [
+          ...appServerQueryKeys.threadMetadata(threadId),
+          { includeTurns: false },
+        ],
+        response.response,
+      );
       const { name: _name, ...previewPatch } = response.response.thread;
       patchThreadCaches(queryClient, threadId, previewPatch, {
         onlyIfNewer: true,

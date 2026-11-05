@@ -66,4 +66,46 @@ describe("thread session coordinator", () => {
       excludeTurns: true,
     });
   });
+
+  it("preserves the startup exemption for concurrent read consumers", async () => {
+    markThreadStarted("thread-new");
+    requestAppServerMethod.mockResolvedValue({ response: {} });
+
+    await Promise.all([
+      ensureThreadResumed("thread-new", { consumeStarted: false }),
+      ensureThreadResumed("thread-new", { consumeStarted: false }),
+      ensureThreadResumed("thread-new", { consumeStarted: false }),
+    ]);
+    await ensureThreadResumed("thread-new");
+
+    expect(requestAppServerMethod).not.toHaveBeenCalled();
+  });
+
+  it("retries resume without paginated history when the server lacks it", async () => {
+    requestAppServerMethod
+      .mockRejectedValueOnce({
+        code: -32601,
+        message: "list_turns is not supported yet",
+      })
+      .mockResolvedValueOnce({ response: {} });
+
+    await expect(ensureThreadResumed("thread-1")).resolves.toBeUndefined();
+
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "thread/resume", {
+      threadId: "thread-1",
+      excludeTurns: true,
+    });
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "thread/resume", {
+      threadId: "thread-1",
+      excludeTurns: false,
+    });
+  });
+
+  it("does not retry unrelated unsupported resume errors", async () => {
+    const error = { code: -32601, message: "thread/resume is not supported" };
+    requestAppServerMethod.mockRejectedValueOnce(error);
+
+    await expect(ensureThreadResumed("thread-1")).rejects.toEqual(error);
+    expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
+  });
 });
