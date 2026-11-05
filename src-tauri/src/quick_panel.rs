@@ -178,6 +178,11 @@ pub(crate) fn quick_panel_shortcut_update<R: Runtime>(
     quick_panel_shortcut_read(app)
 }
 
+#[tauri::command]
+pub(crate) fn open_quick_panel<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+    show(&app).map_err(|error| error.to_string())
+}
+
 pub(crate) fn show<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     if let Some(window) = app.get_webview_window(panel_label()) {
         window.show()?;

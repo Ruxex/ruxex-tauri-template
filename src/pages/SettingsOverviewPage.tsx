@@ -7,6 +7,7 @@ import {
   QuickPanelCard,
 } from "../components/settings/SettingsCards";
 import {
+  openQuickPanel,
   readQuickPanelShortcut,
   updateQuickPanelShortcut,
 } from "../platform/native";
@@ -113,6 +114,19 @@ export function SettingsOverviewPage() {
     }
   }
 
+  async function handleOpenQuickPanel() {
+    setShortcutError(null);
+    try {
+      await openQuickPanel();
+    } catch (error) {
+      setShortcutError(
+        error instanceof Error
+          ? error.message
+          : "Unable to open quick panel.",
+      );
+    }
+  }
+
   return (
     <div className="space-y-5">
       <h2 className="text-3xl font-semibold tracking-tight">General</h2>
@@ -127,6 +141,7 @@ export function SettingsOverviewPage() {
         isLoading={isLoadingShortcut}
         onReset={() => void saveShortcut(defaultShortcut)}
         onSave={() => void saveShortcut()}
+        onOpen={() => void handleOpenQuickPanel()}
         onShortcutKeyDown={handleShortcutKeyDown}
         shortcut={shortcut}
       />

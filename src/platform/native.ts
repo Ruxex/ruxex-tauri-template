@@ -25,6 +25,10 @@ export function closeQuickPanel(): Promise<void> {
   return invoke("close_quick_panel");
 }
 
+export function openQuickPanel(): Promise<void> {
+  return invoke("open_quick_panel");
+}
+
 export function readQuickPanelShortcut(): Promise<QuickPanelShortcutSettings> {
   return invoke<QuickPanelShortcutSettings>("quick_panel_shortcut_read");
 }

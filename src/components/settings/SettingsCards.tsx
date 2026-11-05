@@ -412,6 +412,7 @@ export function QuickPanelCard({
   disabled,
   error,
   isLoading,
+  onOpen,
   onReset,
   onSave,
   onShortcutKeyDown,
@@ -421,6 +422,7 @@ export function QuickPanelCard({
   disabled: boolean;
   error?: string | null;
   isLoading: boolean;
+  onOpen: () => void;
   onReset: () => void;
   onSave: () => void;
   onShortcutKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
@@ -436,16 +438,26 @@ export function QuickPanelCard({
           {isLoading ? (
             <span className="loading loading-spinner loading-sm justify-self-end" />
           ) : (
-            <input
-              aria-label="Quick panel shortcut"
-              className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
-              disabled={disabled}
-              id="settings-quick-panel-shortcut"
-              onKeyDown={onShortcutKeyDown}
-              placeholder="Press keys…"
-              readOnly
-              value={shortcut}
-            />
+            <div className="flex w-full max-w-sm justify-self-end gap-2 max-sm:max-w-none">
+              <input
+                aria-label="Quick panel shortcut"
+                className="input input-bordered input-sm min-w-0 flex-1"
+                disabled={disabled}
+                id="settings-quick-panel-shortcut"
+                onKeyDown={onShortcutKeyDown}
+                placeholder="Press keys…"
+                readOnly
+                value={shortcut}
+              />
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={disabled}
+                onClick={onOpen}
+                type="button"
+              >
+                Open
+              </button>
+            </div>
           )}
         </SettingControlRow>
         {!isLoading && (
