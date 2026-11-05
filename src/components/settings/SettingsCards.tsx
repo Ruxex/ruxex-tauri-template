@@ -3,6 +3,7 @@ import {
   BellIcon,
   Bars3BottomLeftIcon,
   CheckCircleIcon,
+  CommandLineIcon,
   CpuChipIcon,
   ExclamationTriangleIcon,
   GlobeAltIcon,
@@ -397,6 +398,78 @@ export function NotificationsCard({
           </select>
         </SettingControlRow>
       </div>
+    </SettingsPanel>
+  );
+}
+
+export function QuickPanelCard({
+  defaultShortcut,
+  disabled,
+  error,
+  isLoading,
+  onReset,
+  onSave,
+  onShortcutChange,
+  shortcut,
+}: {
+  defaultShortcut: string;
+  disabled: boolean;
+  error?: string | null;
+  isLoading: boolean;
+  onReset: () => void;
+  onSave: () => void;
+  onShortcutChange: (shortcut: string) => void;
+  shortcut: string;
+}) {
+  return (
+    <SettingsPanel icon={CommandLineIcon} title="Quick panel">
+      <div className="text-sm">
+        <SettingControlRow
+          controlId="settings-quick-panel-shortcut"
+          label="Global shortcut"
+        >
+          {isLoading ? (
+            <span className="loading loading-spinner loading-sm justify-self-end" />
+          ) : (
+            <input
+              aria-label="Quick panel shortcut"
+              className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+              disabled={disabled}
+              id="settings-quick-panel-shortcut"
+              onChange={(event) => onShortcutChange(event.target.value)}
+              value={shortcut}
+            />
+          )}
+        </SettingControlRow>
+        {!isLoading && (
+          <div className="flex flex-wrap items-center justify-end gap-2 px-5 py-3.5">
+            <span className="mr-auto text-xs text-base-content/60">
+              Default: {defaultShortcut}
+            </span>
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={disabled || shortcut === defaultShortcut}
+              onClick={onReset}
+              type="button"
+            >
+              Reset
+            </button>
+            <button
+              className="btn btn-primary btn-sm"
+              disabled={disabled || !shortcut.trim()}
+              onClick={onSave}
+              type="button"
+            >
+              {disabled ? "Saving…" : "Save"}
+            </button>
+          </div>
+        )}
+      </div>
+      {error && (
+        <p className="px-5 py-3 text-sm text-error" role="alert">
+          {error}
+        </p>
+      )}
     </SettingsPanel>
   );
 }

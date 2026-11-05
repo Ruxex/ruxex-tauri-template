@@ -26,4 +26,24 @@ describe("native platform bridge", () => {
       url: "https://example.test/session",
     });
   });
+
+  it("reads and updates the native quick panel shortcut", async () => {
+    invoke.mockResolvedValueOnce({
+      shortcut: "CmdOrCtrl+Alt+R",
+      defaultShortcut: "CmdOrCtrl+Shift+Space",
+    });
+    const { readQuickPanelShortcut, updateQuickPanelShortcut } = await import(
+      "./native"
+    );
+
+    await expect(readQuickPanelShortcut()).resolves.toEqual({
+      shortcut: "CmdOrCtrl+Alt+R",
+      defaultShortcut: "CmdOrCtrl+Shift+Space",
+    });
+    await updateQuickPanelShortcut("CmdOrCtrl+Alt+T");
+
+    expect(invoke).toHaveBeenLastCalledWith("quick_panel_shortcut_update", {
+      shortcut: "CmdOrCtrl+Alt+T",
+    });
+  });
 });
