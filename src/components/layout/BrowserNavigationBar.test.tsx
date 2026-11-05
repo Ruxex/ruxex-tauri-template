@@ -93,4 +93,19 @@ describe("BrowserNavigationBar", () => {
     ).toBe("/projects");
     expect(screen.getByText("Ruxex")).toBeTruthy();
   });
+
+  it("renders plugin details beneath the Plugins breadcrumb", () => {
+    render(
+      <MemoryRouter
+        initialEntries={["/capabilities/plugins/openai-curated/calendar"]}
+      >
+        <BrowserNavigationBar />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Plugins" }).getAttribute("href"),
+    ).toBe("/capabilities");
+    expect(screen.getByText("calendar")).toBeTruthy();
+  });
 });

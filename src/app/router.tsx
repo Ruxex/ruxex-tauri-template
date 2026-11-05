@@ -1,6 +1,7 @@
 import { createHashRouter, Navigate } from "react-router-dom";
 import { ApprovalCenter } from "../components/approvals/ApprovalCenter";
 import { AppLayout } from "../components/layout/AppLayout";
+import { QuickPanelPage } from "../components/quick-panel/QuickPanelPage";
 import { AccountPage } from "../pages/AccountPage";
 import { AppearancePage } from "../pages/AppearancePage";
 import { AppServerPage } from "../pages/AppServerPage";
@@ -12,9 +13,9 @@ import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
 import { McpServersPage } from "../pages/McpServersPage";
 import { ModelPage } from "../pages/ModelPage";
 import { NewChatRedirect } from "../pages/NewChatRedirect";
+import { PluginDetailPage } from "../pages/PluginDetailPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { ProjectsPage } from "../pages/ProjectsPage";
-import { QuickPanelPage } from "../components/quick-panel/QuickPanelPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
 import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SettingsPage } from "../pages/SettingsPage";
@@ -50,6 +51,10 @@ export const router = createHashRouter([
       },
       { path: "schedules", element: <SchedulesPage /> },
       { path: "capabilities", element: <CapabilitiesPage /> },
+      {
+        path: "capabilities/plugins/:marketplaceName/:pluginName",
+        element: <PluginDetailPage />,
+      },
       { path: "archive", element: <ArchivePage /> },
       { path: "threads", element: <ThreadsPage /> },
       { path: "chat/new", element: <NewChatRedirect /> },

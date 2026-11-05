@@ -46,6 +46,17 @@ function breadcrumbsForPath(
     return [{ label: "Projects" }];
   }
 
+  if (pathname.startsWith("/capabilities/plugins/")) {
+    const pluginName = pathname.split("/").at(-1) ?? "Plugin";
+    let label = pluginName;
+    try {
+      label = decodeURIComponent(pluginName);
+    } catch {
+      // Keep the route segment as-is when it is not valid URI encoding.
+    }
+    return [{ label: "Plugins", to: "/capabilities" }, { label }];
+  }
+
   const pageLabels: Record<string, string> = {
     "/approvals": "Approvals",
     "/archive": "Archive",

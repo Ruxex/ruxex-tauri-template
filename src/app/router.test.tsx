@@ -17,4 +17,15 @@ describe("router", () => {
 
     expect(matches?.at(-1)?.route.path).toBe("mcp-servers");
   });
+
+  it("resolves plugin detail routes", () => {
+    const matches = matchRoutes(
+      router.routes,
+      "/capabilities/plugins/community/example",
+    );
+
+    expect(matches?.at(-1)?.route.path).toBe(
+      "capabilities/plugins/:marketplaceName/:pluginName",
+    );
+  });
 });

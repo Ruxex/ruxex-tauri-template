@@ -1,11 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
-import {
-  extractGlobalMcpConfig,
-  type GlobalMcpConfig,
-} from "../mcp-config";
 import { requestAppServerMethod } from "../api";
+import { extractGlobalMcpConfig, type GlobalMcpConfig } from "../mcp-config";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
 
@@ -76,6 +73,24 @@ export function usePluginList(params: v2.PluginListParams = {}) {
       return response.response;
     },
     enabled: Boolean(status.data),
+  });
+}
+
+export function usePluginRead(params: v2.PluginReadParams | null) {
+  const status = useAppServerStatus();
+
+  return useQuery<v2.PluginReadResponse>({
+    queryKey: [...appServerQueryKeys.plugins, "detail", params],
+    queryFn: async () => {
+      if (!params) {
+        throw new Error("Plugin details require a local marketplace.");
+      }
+      const response = await requestAppServerMethod("plugin/read", params);
+      return response.response;
+    },
+    enabled: Boolean(
+      status.data && params?.marketplacePath && params.pluginName,
+    ),
   });
 }
 
@@ -190,7 +205,10 @@ export function useWriteConfig() {
 
   return useMutation({
     mutationFn: async (params: v2.ConfigBatchWriteParams) => {
-      const response = await requestAppServerMethod("config/batchWrite", params);
+      const response = await requestAppServerMethod(
+        "config/batchWrite",
+        params,
+      );
       return response.response;
     },
     onSuccess: () => {

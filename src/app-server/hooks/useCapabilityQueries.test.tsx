@@ -34,6 +34,11 @@ describe("capability query and mutation hooks", () => {
     ["useSkillsList", "skills/list", { forceReload: true }],
     ["useMcpServerStatus", "mcpServerStatus/list", { limit: 10 }],
     ["usePluginList", "plugin/list", {}],
+    [
+      "usePluginRead",
+      "plugin/read",
+      { marketplacePath: "/tmp/community", pluginName: "example" },
+    ],
     ["useCollaborationModes", "collaborationMode/list", {}],
     ["useConfig", "config/read", { includeLayers: true }],
     ["useConfigRequirements", "configRequirements/read", undefined],

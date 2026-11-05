@@ -5,13 +5,12 @@ import {
   fireEvent,
   render,
   screen,
-  within,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const useCollaborationModes = vi.hoisted(() => vi.fn());
 const useMcpServerStatus = vi.hoisted(() => vi.fn());
 const useInstallPlugin = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
@@ -46,7 +45,6 @@ const oauthLogin = vi.hoisted(() => ({
 }));
 
 vi.mock("../app-server/hooks", () => ({
-  useCollaborationModes,
   useMcpServerStatus,
   useInstallPlugin,
   usePluginList,
@@ -151,11 +149,6 @@ describe("CapabilitiesPage", () => {
       isLoading: false,
       isError: false,
     });
-    useCollaborationModes.mockReturnValue({
-      data: { data: [{ name: "reviewer", model: "ruxex" }] },
-      isLoading: false,
-      isError: false,
-    });
   });
 
   it("disables canonical apps from plugin metadata", async () => {
@@ -247,22 +240,38 @@ describe("CapabilitiesPage", () => {
         screen.getAllByRole("img", { name: "Plugin image unavailable" }),
       ).toHaveLength(3),
     );
-    const pluginSection = screen
-      .getByRole("heading", { name: "Plugins", level: 2 })
-      .closest("section");
     expect(
-      pluginSection?.querySelector('[data-testid="plugin-grid"]')?.className,
-    ).toContain("lg:grid-cols-2");
+      screen.queryByRole("heading", { name: "Plugins", level: 2 }),
+    ).toBeNull();
+    expect(document.getElementById("plugins")?.closest("article")).toBeNull();
+    expect(screen.getAllByTestId("plugin-grid")[0].className).toContain(
+      "lg:grid-cols-2",
+    );
     expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
       "collapse",
     );
+    expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
+      "bg-base-100",
+    );
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "View details for Lint Plugin" })
+        .getAttribute("href"),
+    ).toBe("/capabilities/plugins/openai-curated/lint");
     expect(screen.queryAllByText("available")).toHaveLength(0);
     const officialInstallButton = screen.getByRole("button", {
       name: "Install Lint Plugin",
     });
+    const officialInstallTooltip = officialInstallButton.closest(
+      '[data-testid="official-app-install-tooltip"]',
+    );
     expect((officialInstallButton as HTMLButtonElement).disabled).toBe(true);
+    expect(officialInstallTooltip).not.toBeNull();
+    expect(officialInstallTooltip?.getAttribute("title")).toBe(
+      "Official Apps are not supported in Ruxex.",
+    );
     expect(officialInstallButton.getAttribute("title")).toBe(
       "Official Apps are not supported in Ruxex.",
     );
@@ -273,7 +282,7 @@ describe("CapabilitiesPage", () => {
     expect(pluginCardContent.className).toContain(
       "grid-cols-[auto_minmax(0,1fr)_auto]",
     );
-    expect(pluginCardContent.children).toHaveLength(3);
+    expect(pluginCardContent.children).toHaveLength(2);
     expect(screen.getByText("Checks project files").className).toContain(
       "break-words",
     );
@@ -285,7 +294,7 @@ describe("CapabilitiesPage", () => {
     expect(
       screen.getByText("Remote marketplace plugins cannot be installed here."),
     ).toBeTruthy();
-    expect(screen.getByText("reviewer")).toBeTruthy();
+    expect(screen.queryByText("reviewer")).toBeNull();
     expect(
       screen
         .getByRole("link", { name: "Configure OpenAI Curated" })
@@ -486,6 +495,7 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
     expect(screen.getByText("docs")).toBeTruthy();
     expect(screen.queryByText("Official Plugins")).toBeNull();
+    expect(screen.queryByText("Collaboration modes")).toBeNull();
   });
 
   it("reloads MCP configuration through the mutation hook", async () => {
