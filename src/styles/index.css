@@ -1,6 +1,39 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+:root {
+  --ruxex-scrollbar-thumb: rgb(100 116 139 / 42%);
+  --ruxex-scrollbar-thumb-hover: rgb(71 85 105 / 62%);
+}
+
+:root[data-theme="dark"] {
+  --ruxex-scrollbar-thumb: rgb(148 163 184 / 42%);
+  --ruxex-scrollbar-thumb-hover: rgb(203 213 225 / 62%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ruxex-scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--ruxex-scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ruxex-scrollbar-thumb-hover);
+}
+
 html,
 body,
 #root,
