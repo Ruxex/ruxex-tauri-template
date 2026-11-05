@@ -1,6 +1,10 @@
-import { ArrowPathIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { NavLink, useSearchParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
 import {
@@ -90,6 +94,12 @@ function groupPluginsByCategory<
     category,
     plugins: groupedPlugins,
   }));
+}
+
+function isOfficialApp(
+  installPolicySource: string | null | undefined,
+): boolean {
+  return installPolicySource === "IMPLICIT_CANONICAL_APP";
 }
 
 export function CapabilitiesPage() {
@@ -298,7 +308,7 @@ export function CapabilitiesPage() {
                           defaultChecked
                           type="checkbox"
                         />
-                        <div className="collapse-title relative min-h-0 py-1 pr-10 font-medium">
+                        <div className="collapse-title min-h-0 py-1 font-medium">
                           <span className="block font-medium">
                             {marketplace.interface?.displayName ??
                               marketplace.name}
@@ -307,169 +317,201 @@ export function CapabilitiesPage() {
                             {marketplace.name} · {marketplace.plugins.length}{" "}
                             plugins
                           </span>
-                          <button
-                            aria-label={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
-                            className="btn btn-ghost btn-square btn-xs absolute right-2 top-1/2 -translate-y-1/2"
-                            disabled={upgradeMarketplace.isPending}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void upgradeMarketplace.mutateAsync({
-                                marketplaceName: marketplace.name,
-                              });
-                            }}
-                            title={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
-                            type="button"
-                          >
-                            <ArrowPathIcon
-                              aria-hidden="true"
-                              className={`size-4 ${upgradeMarketplace.isPending ? "animate-spin" : ""}`}
-                            />
-                          </button>
                         </div>
                         <div className="collapse-content px-0 pt-2">
+                          <div className="mb-3 flex items-center justify-end gap-1">
+                            <button
+                              aria-label={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                              className="btn btn-ghost btn-square btn-sm"
+                              disabled={upgradeMarketplace.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void upgradeMarketplace.mutateAsync({
+                                  marketplaceName: marketplace.name,
+                                });
+                              }}
+                              title={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                              type="button"
+                            >
+                              <ArrowPathIcon
+                                aria-hidden="true"
+                                className={`size-4 ${upgradeMarketplace.isPending ? "animate-spin" : ""}`}
+                              />
+                            </button>
+                            <NavLink
+                              aria-label={`Configure ${marketplace.interface?.displayName ?? marketplace.name}`}
+                              className="btn btn-ghost btn-square btn-sm"
+                              onClick={(event) => event.stopPropagation()}
+                              title={`Configure ${marketplace.interface?.displayName ?? marketplace.name}`}
+                              to="/settings/marketplaces"
+                            >
+                              <Cog6ToothIcon
+                                aria-hidden="true"
+                                className="size-4"
+                              />
+                            </NavLink>
+                          </div>
                           <div className="space-y-4">
-                          {groupPluginsByCategory(marketplace.plugins).map(
-                            ({ category, plugins: categoryPlugins }) => (
-                              <div
-                                className="collapse collapse-arrow"
-                                data-testid="plugin-category"
-                                key={category}
-                              >
-                                <input
-                                  aria-label={category}
-                                  defaultChecked
-                                  type="checkbox"
-                                />
-                                <div className="collapse-title min-h-0 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                                  <h3 className="inline">
-                                    {category}
-                                  </h3>
-                                </div>
-                                <div className="collapse-content px-2">
-                                <ul
-                                  className="mt-2 grid gap-2 lg:grid-cols-2"
-                                  data-testid="plugin-grid"
+                            {groupPluginsByCategory(marketplace.plugins).map(
+                              ({ category, plugins: categoryPlugins }) => (
+                                <div
+                                  className="collapse collapse-arrow"
+                                  data-testid="plugin-category"
+                                  key={category}
                                 >
-                                  {categoryPlugins.map((plugin) => {
-                                    const displayName =
-                                      plugin.interface?.displayName ??
-                                      plugin.name;
-                                    const isInstallable =
-                                      marketplace.path !== null;
-                                    const isInstalling =
-                                      installPlugin.isPending;
-                                    const pluginLocalImage =
-                                      plugin.interface?.logo ??
-                                      plugin.interface?.logoDark ??
-                                      plugin.interface?.composerIcon;
-                                    const pluginImage =
-                                      plugin.interface?.logoUrl ??
-                                      plugin.interface?.logoUrlDark ??
-                                      plugin.interface?.composerIconUrl;
+                                  <input
+                                    aria-label={category}
+                                    defaultChecked
+                                    type="checkbox"
+                                  />
+                                  <div className="collapse-title min-h-0 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                                    <h3 className="inline">{category}</h3>
+                                  </div>
+                                  <div className="collapse-content px-2">
+                                    <ul
+                                      className="mt-2 grid gap-2 lg:grid-cols-2"
+                                      data-testid="plugin-grid"
+                                    >
+                                      {categoryPlugins.map((plugin) => {
+                                        const displayName =
+                                          plugin.interface?.displayName ??
+                                          plugin.name;
+                                        const isOfficialApps = isOfficialApp(
+                                          plugin.installPolicySource,
+                                        );
+                                        const isRemoteOnly =
+                                          marketplace.path === null;
+                                        const isInstallable =
+                                          !isRemoteOnly && !isOfficialApps;
+                                        const isInstalling =
+                                          installPlugin.isPending;
+                                        const pluginLocalImage =
+                                          plugin.interface?.logo ??
+                                          plugin.interface?.logoDark ??
+                                          plugin.interface?.composerIcon;
+                                        const pluginImage =
+                                          plugin.interface?.logoUrl ??
+                                          plugin.interface?.logoUrlDark ??
+                                          plugin.interface?.composerIconUrl;
 
-                                    return (
-                                      <li
-                                        className="rounded-box border border-base-300 bg-base-100 p-3"
-                                        key={plugin.id}
-                                      >
-                                        <div className="flex flex-wrap items-start justify-between gap-3">
-                                          <div className="flex min-w-0 items-start gap-3">
+                                        return (
+                                          <li
+                                            className="rounded-box border border-base-300 bg-base-100 p-3"
+                                            key={plugin.id}
+                                          >
                                             <div
-                                              className="size-10 shrink-0 rounded-box bg-base-200/60"
-                                              data-testid="plugin-image-slot"
+                                              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3"
+                                              data-testid="plugin-card-content"
                                             >
-                                              <MarketplaceAssetImage
-                                                alt={`${displayName} logo`}
-                                                className="size-full rounded-box object-contain"
-                                                localDarkSrc={
-                                                  plugin.interface?.logoDark
-                                                }
-                                                localSrc={pluginLocalImage}
-                                                darkSrc={
-                                                  plugin.interface?.logoUrlDark
-                                                }
-                                                src={pluginImage}
-                                              />
-                                            </div>
-                                            <div className="min-w-0">
-                                              <p className="font-medium">
-                                                {displayName}
-                                              </p>
-                                              {plugin.interface
-                                                ?.shortDescription && (
-                                                <p className="text-sm text-base-content/70">
-                                                  {
-                                                    plugin.interface
-                                                      .shortDescription
+                                              <div
+                                                className="size-10 shrink-0 rounded-box bg-base-200/60"
+                                                data-testid="plugin-image-slot"
+                                              >
+                                                <MarketplaceAssetImage
+                                                  alt={`${displayName} logo`}
+                                                  className="size-full rounded-box object-contain"
+                                                  localDarkSrc={
+                                                    plugin.interface?.logoDark
                                                   }
+                                                  localSrc={pluginLocalImage}
+                                                  darkSrc={
+                                                    plugin.interface
+                                                      ?.logoUrlDark
+                                                  }
+                                                  src={pluginImage}
+                                                />
+                                              </div>
+                                              <div className="min-w-0">
+                                                <p className="font-medium">
+                                                  {displayName}
                                                 </p>
-                                              )}
-                                              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
-                                                <StateBadge
-                                                  tone={capabilityStatusTone(
-                                                    plugin.enabled
-                                                      ? "enabled"
-                                                      : plugin.installed
-                                                        ? "installed"
-                                                        : "available",
+                                                {plugin.interface
+                                                  ?.shortDescription && (
+                                                  <p className="break-words text-sm text-base-content/70">
+                                                    {
+                                                      plugin.interface
+                                                        .shortDescription
+                                                    }
+                                                  </p>
+                                                )}
+                                                {(plugin.enabled ||
+                                                  plugin.installed) && (
+                                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                                                    <StateBadge
+                                                      tone={capabilityStatusTone(
+                                                        plugin.enabled
+                                                          ? "enabled"
+                                                          : "installed",
+                                                      )}
+                                                    >
+                                                      {plugin.enabled
+                                                        ? "enabled"
+                                                        : "installed"}
+                                                    </StateBadge>
+                                                  </div>
+                                                )}
+                                              </div>
+                                              <div className="flex size-8 shrink-0 items-start justify-end">
+                                                {!plugin.installed &&
+                                                  !isRemoteOnly &&
+                                                  (isInstallable ||
+                                                    isOfficialApps) && (
+                                                    <button
+                                                      aria-label={`Install ${displayName}`}
+                                                      className={`btn btn-outline btn-square btn-sm ${isOfficialApps ? "opacity-50" : ""}`}
+                                                      title={
+                                                        isOfficialApps
+                                                          ? "Official Apps are not supported in Ruxex."
+                                                          : `Install ${displayName}`
+                                                      }
+                                                      type="button"
+                                                      disabled={
+                                                        isOfficialApps ||
+                                                        isInstalling
+                                                      }
+                                                      onClick={() => {
+                                                        if (marketplace.path) {
+                                                          void installPlugin.mutateAsync(
+                                                            {
+                                                              marketplacePath:
+                                                                marketplace.path,
+                                                              pluginName:
+                                                                plugin.name,
+                                                            },
+                                                          );
+                                                        }
+                                                      }}
+                                                    >
+                                                      {isInstalling ? (
+                                                        <span
+                                                          aria-hidden="true"
+                                                          className="loading loading-spinner loading-xs"
+                                                        />
+                                                      ) : (
+                                                        <PlusIcon
+                                                          aria-hidden="true"
+                                                          className="size-4"
+                                                        />
+                                                      )}
+                                                    </button>
                                                   )}
-                                                >
-                                                  {plugin.enabled
-                                                    ? "enabled"
-                                                    : plugin.installed
-                                                      ? "installed"
-                                                      : "available"}
-                                                </StateBadge>
                                               </div>
                                             </div>
-                                          </div>
-                                          {!plugin.installed &&
-                                            isInstallable && (
-                                              <button
-                                                aria-label={`Install ${displayName}`}
-                                                className="btn btn-outline btn-square btn-sm"
-                                                title={`Install ${displayName}`}
-                                                type="button"
-                                                disabled={isInstalling}
-                                                onClick={() =>
-                                                  void installPlugin.mutateAsync(
-                                                    {
-                                                      marketplacePath:
-                                                        marketplace.path,
-                                                      pluginName: plugin.name,
-                                                    },
-                                                  )
-                                                }
-                                              >
-                                                {isInstalling ? (
-                                                  <span
-                                                    aria-hidden="true"
-                                                    className="loading loading-spinner loading-xs"
-                                                  />
-                                                ) : (
-                                                  <PlusIcon
-                                                    aria-hidden="true"
-                                                    className="size-4"
-                                                  />
-                                                )}
-                                              </button>
-                                            )}
-                                        </div>
-                                        {!isInstallable &&
-                                          !plugin.installed && (
-                                            <p className="mt-2 text-xs text-base-content/60">
-                                              Remote marketplace plugins cannot
-                                              be installed here.
-                                            </p>
-                                          )}
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
+                                            {isRemoteOnly &&
+                                              !plugin.installed && (
+                                                <p className="mt-2 text-xs text-base-content/60">
+                                                  Remote marketplace plugins
+                                                  cannot be installed here.
+                                                </p>
+                                              )}
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  </div>
                                 </div>
-                              </div>
-                            ),
-                          )}
+                              ),
+                            )}
                           </div>
                         </div>
                       </div>

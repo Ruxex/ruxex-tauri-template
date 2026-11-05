@@ -158,7 +158,61 @@ describe("CapabilitiesPage", () => {
     });
   });
 
-  it("surfaces server-backed extensions and collaboration modes", async () => {
+  it("disables canonical apps from plugin metadata", async () => {
+    usePluginList.mockReturnValueOnce({
+      data: {
+        marketplaces: [
+          {
+            name: "openai-curated",
+            path: "/tmp/openai-curated",
+            interface: { displayName: "OpenAI Curated" },
+            plugins: [
+              {
+                id: "lint@openai-curated",
+                name: "lint",
+                installPolicySource: "IMPLICIT_CANONICAL_APP",
+                interface: {
+                  displayName: "Lint Plugin",
+                  shortDescription: "Checks project files",
+                  category: "developer-tools",
+                },
+                installed: false,
+                enabled: false,
+              },
+              {
+                id: "calendar@openai-curated",
+                name: "calendar",
+                installPolicySource: null,
+                interface: {
+                  displayName: "Calendar Plugin",
+                  shortDescription: "Manages calendars",
+                  category: "Productivity",
+                },
+                installed: false,
+                enabled: false,
+              },
+            ],
+          },
+          {
+            name: "remote",
+            path: null,
+            interface: { displayName: "Remote Catalog" },
+            plugins: [
+              {
+                id: "remote-tool@remote",
+                name: "remote-tool",
+                interface: null,
+                installed: false,
+                enabled: false,
+              },
+            ],
+          },
+        ],
+        marketplaceLoadErrors: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     const { container } = render(
@@ -176,8 +230,8 @@ describe("CapabilitiesPage", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("tablist")).toBeNull();
     expect(screen.queryByText("docs")).toBeNull();
-    expect(screen.getByText(/official ·/)).toBeTruthy();
-    expect(screen.getByText("Official Plugins")).toBeTruthy();
+    expect(screen.getByText(/openai-curated ·/)).toBeTruthy();
+    expect(screen.getByText("OpenAI Curated")).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "developer-tools", level: 3 }),
     ).toBeTruthy();
@@ -199,25 +253,74 @@ describe("CapabilitiesPage", () => {
     expect(
       pluginSection?.querySelector('[data-testid="plugin-grid"]')?.className,
     ).toContain("lg:grid-cols-2");
-    expect(
-      screen.getAllByTestId("plugin-marketplace")[0].className,
-    ).toContain("collapse");
+    expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
+      "collapse",
+    );
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
-    expect(
-      screen
-        .getAllByText("available")[0]
-        .querySelector("svg")
-        ?.getAttribute("class"),
-    ).toContain("text-base-content/60");
+    expect(screen.queryAllByText("available")).toHaveLength(0);
+    const officialInstallButton = screen.getByRole("button", {
+      name: "Install Lint Plugin",
+    });
+    expect((officialInstallButton as HTMLButtonElement).disabled).toBe(true);
+    expect(officialInstallButton.getAttribute("title")).toBe(
+      "Official Apps are not supported in Ruxex.",
+    );
+    expect(officialInstallButton.className).toContain("opacity-50");
+    fireEvent.click(officialInstallButton);
+    expect(installPlugin.mutateAsync).not.toHaveBeenCalled();
+    const pluginCardContent = screen.getAllByTestId("plugin-card-content")[0];
+    expect(pluginCardContent.className).toContain(
+      "grid-cols-[auto_minmax(0,1fr)_auto]",
+    );
+    expect(pluginCardContent.children).toHaveLength(3);
+    expect(screen.getByText("Checks project files").className).toContain(
+      "break-words",
+    );
+    const supportedInstallButton = screen.getByRole("button", {
+      name: "Install Calendar Plugin",
+    });
+    expect((supportedInstallButton as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByText("Remote Catalog")).toBeTruthy();
     expect(
       screen.getByText("Remote marketplace plugins cannot be installed here."),
     ).toBeTruthy();
     expect(screen.getByText("reviewer")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Configure OpenAI Curated" })
+        .getAttribute("href"),
+    ).toBe("/settings/marketplaces");
   });
 
   it("installs a local marketplace plugin and refreshes its marketplace", async () => {
+    usePluginList.mockReturnValueOnce({
+      data: {
+        marketplaces: [
+          {
+            name: "community",
+            path: "/tmp/community",
+            interface: { displayName: "Community Plugins" },
+            plugins: [
+              {
+                id: "format@community",
+                name: "format",
+                interface: {
+                  displayName: "Format Plugin",
+                  shortDescription: "Formats project files",
+                  category: "developer-tools",
+                },
+                installed: false,
+                enabled: false,
+              },
+            ],
+          },
+        ],
+        marketplaceLoadErrors: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
@@ -227,25 +330,77 @@ describe("CapabilitiesPage", () => {
     );
 
     const installButton = screen.getByRole("button", {
-      name: "Install Lint Plugin",
+      name: "Install Format Plugin",
     });
     expect(installButton.className).toContain("btn-outline");
-    expect(installButton.textContent).not.toContain("Lint Plugin");
+    expect(installButton.textContent).not.toContain("Format Plugin");
     fireEvent.click(installButton);
     const refreshButton = screen.getByRole("button", {
-      name: "Refresh Official Plugins",
+      name: "Refresh Community Plugins",
     });
     expect(refreshButton.className).toContain("btn-square");
-    expect(refreshButton.closest('[data-testid="plugin-marketplace"]')).not.toBeNull();
+    expect(refreshButton.closest(".collapse-content")).not.toBeNull();
+    expect(
+      refreshButton.closest('[data-testid="plugin-marketplace"]'),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "Configure Community Plugins" })
+        .getAttribute("href"),
+    ).toBe("/settings/marketplaces");
     fireEvent.click(refreshButton);
 
     expect(installPlugin.mutateAsync).toHaveBeenCalledWith({
-      marketplacePath: "/tmp/official",
-      pluginName: "lint",
+      marketplacePath: "/tmp/community",
+      pluginName: "format",
     });
     expect(upgradeMarketplace.mutateAsync).toHaveBeenCalledWith({
-      marketplaceName: "official",
+      marketplaceName: "community",
     });
+  });
+
+  it("keeps remote-only official plugins without an install button", async () => {
+    usePluginList.mockReturnValueOnce({
+      data: {
+        marketplaces: [
+          {
+            name: "official",
+            path: null,
+            interface: { displayName: "Official Remote Plugins" },
+            plugins: [
+              {
+                id: "remote-tool@official",
+                name: "remote-tool",
+                interface: {
+                  displayName: "Remote Tool",
+                  shortDescription: "A remote-only official plugin",
+                  category: "developer-tools",
+                },
+                installed: false,
+                enabled: false,
+              },
+            ],
+          },
+        ],
+        marketplaceLoadErrors: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Install Remote Tool" }),
+    ).toBeNull();
+    expect(
+      screen.getByText("Remote marketplace plugins cannot be installed here."),
+    ).toBeTruthy();
   });
 
   it("collapses marketplaces and plugin categories independently", async () => {
@@ -272,10 +427,9 @@ describe("CapabilitiesPage", () => {
       .getByRole("heading", { name: "Productivity", level: 3 })
       .closest('[data-testid="plugin-category"]');
     expect(productivityCategory).not.toBeNull();
-    const productivityToggle = within(productivityCategory as HTMLElement).getByRole(
-      "checkbox",
-      { name: "Productivity" },
-    ) as HTMLInputElement;
+    const productivityToggle = within(
+      productivityCategory as HTMLElement,
+    ).getByRole("checkbox", { name: "Productivity" }) as HTMLInputElement;
     expect(productivityToggle.checked).toBe(true);
     fireEvent.click(productivityToggle);
     expect(productivityToggle.checked).toBe(false);
