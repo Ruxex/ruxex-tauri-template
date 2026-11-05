@@ -18,7 +18,9 @@
     "lint:fix": "biome lint --write . && eslint src --fix",
     "preview": "vite preview",
     "tauri": "tauri",
-    "stage:runtime": "python3 scripts/stage-ruxex-package.py"
+    "stage:runtime": "python3 scripts/stage-ruxex-package.py",
+    "e2e:wdio": "wdio run wdio.conf.ts",
+    "e2e:wdio:verbose": "wdio run wdio.conf.ts --logLevel debug"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -41,6 +43,13 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
+    "@wdio/cli": "^9.33.0",
+    "@wdio/local-runner": "^9.33.0",
+    "@wdio/mocha-framework": "^9.33.0",
+    "@wdio/spec-reporter": "^9.33.0",
+    "@wdio/tauri-plugin": "^1.5.0",
+    "@wdio/tauri-service": "^1.5.1",
+    "@wdio/types": "^9.33.0",
     "daisyui": "^5.1.7",
     "eslint": "9.39.5",
     "eslint-plugin-react": "7.37.5",

@@ -83,7 +83,7 @@ pub fn run_with_config(config: DesktopConfig) {
         .as_ref()
         .map(|guard| guard.paths().clone())
         .unwrap_or_default();
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(
@@ -100,7 +100,12 @@ pub fn run_with_config(config: DesktopConfig) {
                 .build(),
         )
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_opener::init());
+
+    #[cfg(feature = "e2e")]
+    let builder = builder.plugin(tauri_plugin_wdio::init());
+
+    builder
         .manage(app_server::AppServerState::with_arg0_paths(
             arg0_paths,
             arg0_path_guard,

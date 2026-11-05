@@ -1,0 +1,379 @@
+#!/usr/bin/env python3
+"""Run the real-Tauri WebdriverIO suite in an isolated local environment."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import signal
+import shutil
+import subprocess
+import tempfile
+import time
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Mapping, Sequence
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ARTIFACT_ROOT = REPOSITORY_ROOT / "artifacts" / "e2e"
+SAFE_ENVIRONMENT_KEYS = frozenset(
+    {
+        "HOME",
+        "RUXEX_HOME",
+        "RUXEX_PROVIDER",
+        "RUXEX_APP_SERVER_MODE",
+        "GDK_BACKEND",
+        "DISPLAY",
+        "WAYLAND_DISPLAY",
+        "XDG_CONFIG_HOME",
+        "XDG_DATA_HOME",
+        "XDG_CACHE_HOME",
+        "XDG_STATE_HOME",
+        "RUXEX_E2E_APP_BINARY",
+        "RUXEX_E2E_ARTIFACTS",
+        "RUXEX_E2E_HEADLESS",
+        "RUXEX_E2E_PLUGIN",
+        "RUXEX_E2E_LOG_LEVEL",
+        "TAURI_DRIVER_PATH",
+        "WEBKIT_WEBDRIVER_PATH",
+        "XVFB_RUN_PATH",
+    }
+)
+SENSITIVE_ENV_PATTERN = re.compile(
+    r"(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|PRIVATE[_-]?KEY|CREDENTIAL)",
+    re.IGNORECASE,
+)
+
+
+def is_sensitive_environment_key(name: str) -> bool:
+    return bool(SENSITIVE_ENV_PATTERN.search(name))
+
+
+def build_environment(
+    base_env: Mapping[str, str], home_dir: Path, artifact_dir: Path
+) -> dict[str, str]:
+    """Return a child environment that cannot use the developer's Ruxex home."""
+
+    environment = {
+        key: value
+        for key, value in base_env.items()
+        if not is_sensitive_environment_key(key)
+    }
+    home_dir = home_dir.resolve()
+    artifact_dir = artifact_dir.resolve()
+    environment.pop("RUXEX_PROVIDER", None)
+    environment.update(
+        {
+            "HOME": str(home_dir),
+            "RUXEX_HOME": str(home_dir / ".ruxex_desktop"),
+            "RUXEX_APP_SERVER_MODE": "daemon",
+            "RUXEX_E2E_PLUGIN": base_env.get("RUXEX_E2E_PLUGIN", "1"),
+            "GDK_BACKEND": "x11",
+            "XDG_CONFIG_HOME": str(home_dir / "xdg-config"),
+            "XDG_DATA_HOME": str(home_dir / "xdg-data"),
+            "XDG_CACHE_HOME": str(home_dir / "xdg-cache"),
+            "XDG_STATE_HOME": str(home_dir / "xdg-state"),
+            "RUXEX_E2E_ARTIFACTS": str(artifact_dir),
+        }
+    )
+
+    additional_path_entries: list[str] = []
+    for variable in ("TAURI_DRIVER_PATH", "WEBKIT_WEBDRIVER_PATH", "XVFB_RUN_PATH"):
+        value = environment.get(variable)
+        if value:
+            additional_path_entries.append(str(Path(value).expanduser().resolve().parent))
+    if additional_path_entries:
+        existing_path = environment.get("PATH", "")
+        environment["PATH"] = os.pathsep.join(
+            [*additional_path_entries, existing_path]
+        )
+    return environment
+
+
+def build_wdio_command(spec: str | None = None) -> list[str]:
+    command = ["pnpm", "exec", "wdio", "run", "wdio.conf.ts"]
+    if spec:
+        command.extend(["--spec", spec])
+    return command
+
+
+def wrap_headless(command: Sequence[str], headless: bool) -> list[str]:
+    if not headless:
+        return list(command)
+    return [
+        "xvfb-run",
+        "--auto-servernum",
+        "--server-args=-screen 0 1280x800x24",
+        *command,
+    ]
+
+
+def safe_environment_metadata(environment: Mapping[str, str]) -> dict[str, str]:
+    return {
+        key: environment[key]
+        for key in sorted(SAFE_ENVIRONMENT_KEYS.intersection(environment))
+        if not is_sensitive_environment_key(key)
+    }
+
+
+def prepare_dummy_provider_home(environment: Mapping[str, str]) -> Path:
+    """Create only the local auth fixture needed by the fixed-response provider."""
+
+    ruxex_home = Path(environment["RUXEX_HOME"])
+    ruxex_home.mkdir(parents=True, exist_ok=True)
+    auth_file = ruxex_home / "auth.json"
+    auth_file.write_text(
+        json.dumps(
+            {
+                "auth_mode": "apiKey",
+                "api_key": "ruxex-e2e-dummy",
+                "credentials": {},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return auth_file
+
+
+def process_output_preview(output: str, max_chars: int = 4000) -> str:
+    """Keep terminal output useful without flooding the agent transcript."""
+
+    if len(output) <= max_chars:
+        return output
+    return "[...truncated...]\n" + output[-max_chars:]
+
+
+def _resolve_executable(
+    name: str, environment: Mapping[str, str], override_variable: str | None = None
+) -> str | None:
+    if override_variable:
+        override = environment.get(override_variable)
+        if override:
+            candidate = Path(override).expanduser()
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return str(candidate)
+    return shutil.which(name, path=environment.get("PATH"))
+
+
+def preflight_errors(
+    environment: Mapping[str, str], app_binary: Path, headless: bool
+) -> list[str]:
+    errors: list[str] = []
+    if not app_binary.is_file():
+        errors.append(f"Tauri app binary not found: {app_binary}")
+    elif not os.access(app_binary, os.X_OK):
+        errors.append(f"Tauri app binary is not executable: {app_binary}")
+    if _resolve_executable("pnpm", environment) is None:
+        errors.append("pnpm was not found in PATH")
+    if _resolve_executable("tauri-driver", environment, "TAURI_DRIVER_PATH") is None:
+        errors.append("tauri-driver was not found in PATH")
+    if (
+        _resolve_executable("WebKitWebDriver", environment, "WEBKIT_WEBDRIVER_PATH")
+        is None
+    ):
+        errors.append("WebKitWebDriver was not found in PATH")
+    if headless and _resolve_executable("xvfb-run", environment, "XVFB_RUN_PATH") is None:
+        errors.append("xvfb-run was not found in PATH for headless execution")
+    return errors
+
+
+def _write_json(path: Path, payload: object) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _create_artifact_directory(artifact_root: Path) -> Path:
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
+    run_directory = artifact_root / run_id
+    run_directory.mkdir()
+    return run_directory
+
+
+def _snapshot_service_logs() -> dict[Path, int]:
+    log_directory = REPOSITORY_ROOT / "logs"
+    if not log_directory.is_dir():
+        return {}
+    snapshot: dict[Path, int] = {}
+    for path in log_directory.glob("wdio-*.log"):
+        try:
+            snapshot[path] = path.stat().st_mtime_ns
+        except OSError:
+            continue
+    return snapshot
+
+
+def _copy_new_service_logs(
+    run_directory: Path, previous_logs: Mapping[Path, int]
+) -> None:
+    log_directory = REPOSITORY_ROOT / "logs"
+    if not log_directory.is_dir():
+        return
+    for source in log_directory.glob("wdio-*.log"):
+        try:
+            changed = previous_logs.get(source) != source.stat().st_mtime_ns
+        except OSError:
+            continue
+        if not changed:
+            continue
+        try:
+            shutil.copy2(source, run_directory / source.name)
+        except OSError as error:
+            print(f"E2E log artifact copy failed for {source.name}: {error}")
+
+
+def _isolated_process_ids(environment: Mapping[str, str]) -> list[int]:
+    """Find children that inherited this run's unique HOME and RUXEX_HOME."""
+
+    expected = {
+        key: environment[key]
+        for key in ("HOME", "RUXEX_HOME")
+        if key in environment
+    }
+    if len(expected) != 2 or not Path("/proc").is_dir():
+        return []
+
+    process_ids: list[int] = []
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            values = {
+                item.split(b"=", 1)[0].decode("utf-8", "replace"): item.split(
+                    b"=", 1
+                )[1].decode("utf-8", "replace")
+                for item in (entry / "environ").read_bytes().split(b"\0")
+                if b"=" in item
+            }
+        except (OSError, ValueError):
+            continue
+        if all(values.get(key) == value for key, value in expected.items()):
+            process_ids.append(int(entry.name))
+    return process_ids
+
+
+def _terminate_isolated_processes(environment: Mapping[str, str]) -> None:
+    """Stop app-server descendants before the temporary home is removed."""
+
+    process_ids = [pid for pid in _isolated_process_ids(environment) if pid != os.getpid()]
+    for process_id in process_ids:
+        try:
+            os.kill(process_id, signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        remaining = [
+            pid for pid in _isolated_process_ids(environment) if pid != os.getpid()
+        ]
+        if not remaining:
+            return
+        time.sleep(0.05)
+
+    for process_id in remaining:
+        try:
+            os.kill(process_id, signal.SIGKILL)
+        except ProcessLookupError:
+            continue
+
+
+def run_e2e(headless: bool, spec: str | None = None) -> int:
+    artifact_root = Path(
+        os.environ.get("RUXEX_E2E_ARTIFACT_ROOT", str(DEFAULT_ARTIFACT_ROOT))
+    ).expanduser()
+    run_directory = _create_artifact_directory(artifact_root)
+    app_binary = Path(
+        os.environ.get(
+            "RUXEX_E2E_APP_BINARY", str(REPOSITORY_ROOT / "target" / "debug" / "ruxex-desktop")
+        )
+    ).expanduser()
+    command = wrap_headless(build_wdio_command(spec), headless)
+
+    with tempfile.TemporaryDirectory(prefix="ruxex-e2e-home-") as temporary_home:
+        environment = build_environment(
+            os.environ, Path(temporary_home), run_directory
+        )
+        environment["RUXEX_E2E_APP_BINARY"] = str(app_binary.resolve())
+        if headless:
+            environment["RUXEX_E2E_HEADLESS"] = "1"
+        if os.environ.get("RUXEX_E2E_LOG_LEVEL"):
+            environment["RUXEX_E2E_LOG_LEVEL"] = os.environ["RUXEX_E2E_LOG_LEVEL"]
+        prepare_dummy_provider_home(environment)
+        previous_service_logs = _snapshot_service_logs()
+
+        metadata: dict[str, object] = {
+            "app_binary": str(app_binary.resolve()),
+            "command": command,
+            "environment": safe_environment_metadata(environment),
+            "headless": headless,
+            "spec": spec,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+        }
+        _write_json(run_directory / "run.json", metadata)
+
+        errors = preflight_errors(environment, app_binary.resolve(), headless)
+        if errors:
+            exit_code = 2
+            output = "E2E preflight failed:\n" + "\n".join(f"- {error}" for error in errors)
+        else:
+            try:
+                completed = subprocess.run(
+                    command,
+                    cwd=REPOSITORY_ROOT,
+                    env=environment,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    check=False,
+                )
+                exit_code = completed.returncode
+                output = completed.stdout
+            except KeyboardInterrupt:
+                exit_code = 130
+                output = "E2E command interrupted by user\n"
+            except OSError as error:
+                exit_code = 127
+                output = f"Failed to start E2E command: {error}"
+
+        (run_directory / "process.log").write_text(output, encoding="utf-8")
+        _copy_new_service_logs(run_directory, previous_service_logs)
+        metadata.update(
+            {
+                "exit_code": exit_code,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        _write_json(run_directory / "run.json", metadata)
+        _terminate_isolated_processes(environment)
+        print(f"E2E artifacts: {run_directory}")
+        if output:
+            preview = process_output_preview(output)
+            print(preview, end="" if preview.endswith("\n") else "\n")
+        return exit_code
+
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--spec")
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--binary", dest="app_binary")
+    return parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    arguments = parse_args(argv)
+    if arguments.app_binary:
+        os.environ["RUXEX_E2E_APP_BINARY"] = arguments.app_binary
+    if arguments.verbose:
+        os.environ["RUXEX_E2E_LOG_LEVEL"] = "debug"
+    return run_e2e(arguments.headless, arguments.spec)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

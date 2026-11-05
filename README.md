@@ -97,6 +97,16 @@ activity details so the UI remains inspectable without guessing their meaning.
 - Tauri's platform prerequisites
 - Python 3 for runtime-package staging tests
 
+For the Linux Tauri E2E loop, also install or make available:
+
+- `tauri-driver`
+- the WebKitGTK WebDriver executable (`WebKitWebDriver`)
+- `xvfb-run` for headless runs
+
+The runner performs preflight checks and fails with the missing executable's
+name. On a Wayland desktop it sets `GDK_BACKEND=x11` and uses the existing
+XWayland display. The headless target uses a private Xvfb display instead.
+
 The example Rust dependencies use the sibling Ruxex checkout at `../ruxex`,
 including its provider-host sample. For a distributable application, replace
 the Ruxex path dependency with the published release you intend to ship and
@@ -213,6 +223,40 @@ and `make run` starts the Tauri development application.
 
 The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.
+
+## Tauri agent E2E
+
+The repository provides an external WebDriver loop for the real Tauri binary:
+
+```sh
+make e2e-build
+make e2e
+make e2e-headless
+```
+
+`make e2e` drives the WebView through accessible roles and names, using a
+temporary HOME and the local dummy provider. It does not log in, call a model
+provider, or use the developer's Ruxex home. Failed tests keep screenshots and
+page source under `artifacts/e2e/`.
+
+For diagnostics and log forwarding, use the separate debug-only path:
+
+```sh
+make e2e-diagnostics
+make e2e-diagnostics-headless
+```
+
+This path enables `tauri-plugin-wdio`, `browser.tauri.execute()`, and frontend
+and backend log forwarding only in the E2E debug binary. The normal smoke
+binary intentionally omits the frontend invoke instrumentation because the
+WebKitGTK implementation can otherwise affect the App Server invoke flow.
+The normal capability remains `default`; the E2E capability and global Tauri
+API are selected only by `src-tauri/tauri.e2e.conf.json`.
+
+WebDriver observes and operates the Tauri WebView. It does not automate GNOME,
+other applications, OS file choosers, title bars, notifications, or global
+shortcuts. Screenshots saved by the E2E hook are WebView screenshots, not
+desktop-wide captures.
 
 ## License and provenance
 

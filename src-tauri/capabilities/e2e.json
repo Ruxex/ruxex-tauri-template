@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "e2e",
+  "description": "Debug-only WebdriverIO diagnostics capability",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "wdio:allow-get-active-window-label",
+    "wdio:allow-get-window-states",
+    "wdio:allow-list-windows",
+    "wdio:allow-debug-plugin",
+    "wdio:allow-execute",
+    "wdio:allow-log-frontend"
+  ]
+}

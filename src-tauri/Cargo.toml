@@ -9,6 +9,7 @@ build = "build.rs"
 [features]
 default = ["example"]
 example = ["dep:ruxex-provider-host-example"]
+e2e = ["dep:tauri-plugin-wdio"]
 
 [lib]
 name = "ruxex_desktop_lib"
@@ -45,3 +46,4 @@ tauri-plugin-global-shortcut = "2.3.2"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-opener = "2.5.0"
 tokio = { version = "1", features = ["macros", "sync", "time"] }
+tauri-plugin-wdio = { version = "1", optional = true }

@@ -9240,7 +9240,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-api",
  "ruxex-app-server",
@@ -9268,7 +9268,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-core",
  "ruxex-protocol",
@@ -9276,7 +9276,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-graph-store"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-protocol",
  "ruxex-state",
@@ -9286,7 +9286,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-roles"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-config",
  "ruxex-file-system",
@@ -9299,7 +9299,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-ansi-escape"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ansi-to-tui",
  "ratatui-core",
@@ -9309,7 +9309,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-api"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -9338,7 +9338,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -9414,7 +9414,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-client"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "futures",
  "ruxex-app-server",
@@ -9439,7 +9439,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-daemon"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -9461,7 +9461,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "inventory",
@@ -9489,11 +9489,11 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol-noop-macros"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-app-server-test-client"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -9514,7 +9514,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-transport"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -9554,7 +9554,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-apply-patch"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "ruxex-exec-server",
@@ -9569,7 +9569,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-arg0"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "dotenvy",
@@ -9587,7 +9587,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-async-utils"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "rand 0.9.5",
  "tokio",
@@ -9596,7 +9596,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-attachment-store"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "serde",
  "tracing",
@@ -9604,7 +9604,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-build-info"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-install-context",
  "semver",
@@ -9614,7 +9614,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-cli"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9689,7 +9689,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-client"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "futures",
  "http",
@@ -9701,7 +9701,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "futures",
  "http-body-util",
@@ -9723,7 +9723,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode-protocol"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "glob",
  "prost",
@@ -9740,11 +9740,11 @@ dependencies = [
 
 [[package]]
 name = "ruxex-collaboration-mode-templates"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-config"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9782,7 +9782,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-context-fragments"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-protocol",
  "ruxex-utils-string",
@@ -9790,7 +9790,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -9891,7 +9891,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core-plugins"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9935,7 +9935,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-credential-broker"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-crossterm"
@@ -9976,6 +9976,7 @@ dependencies = [
  "tauri-plugin-global-shortcut",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
+ "tauri-plugin-wdio",
  "tauri-runtime",
  "tokio",
  "url",
@@ -9983,14 +9984,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-diagnostics"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "ruxex-exec"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -10028,7 +10029,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "arc-swap",
  "base64 0.22.1",
@@ -10067,7 +10068,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server-protocol"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "ruxex-file-system",
@@ -10081,7 +10082,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-execpolicy"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -10098,7 +10099,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-experimental-api-macros"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10107,7 +10108,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-extension-api"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-config",
  "ruxex-context-fragments",
@@ -10123,7 +10124,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-extension-items"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-utils-absolute-path",
  "schemars 0.8.22",
@@ -10134,7 +10135,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-features"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-network-proxy",
  "ruxex-otel",
@@ -10147,7 +10148,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-search"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -10161,7 +10162,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-system"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "bytes",
  "futures",
@@ -10173,7 +10174,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-watcher"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "notify",
  "tokio",
@@ -10182,7 +10183,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-git-utils"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -10207,7 +10208,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-goal-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-core",
  "ruxex-extension-api",
@@ -10226,7 +10227,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-history"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-protocol",
  "schemars 0.8.22",
@@ -10236,7 +10237,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-history-notes-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "http",
  "ruxex-core",
@@ -10251,7 +10252,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-home"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-extension-api",
  "ruxex-utils-absolute-path",
@@ -10261,7 +10262,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-hooks"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -10285,7 +10286,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-http-client"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "bytes",
  "futures",
@@ -10311,7 +10312,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-install-context"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-utils-absolute-path",
  "ruxex-utils-home-dir",
@@ -10322,7 +10323,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-keyring-store"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "keyring",
  "tracing",
@@ -10330,7 +10331,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-linux-sandbox"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "clap",
  "globset",
@@ -10353,7 +10354,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-login"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -10381,7 +10382,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mcp"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -10411,7 +10412,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mcp-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "ruxex-config",
@@ -10433,14 +10434,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mermaid"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "unicode-width 0.2.3",
 ]
 
 [[package]]
 name = "ruxex-message-history"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "memchr",
  "ruxex-config",
@@ -10452,7 +10453,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "futures",
@@ -10478,7 +10479,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider-info"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "http",
  "ruxex-api",
@@ -10490,7 +10491,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-models-manager"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "ruxex-http-client",
@@ -10506,7 +10507,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-network-proxy"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -10549,7 +10550,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-otel"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "eventsource-stream",
@@ -10578,7 +10579,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-plugin"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-config",
  "ruxex-protocol",
@@ -10591,14 +10592,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-process-hardening"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "ruxex-prompts"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "ruxex-collaboration-mode-templates",
@@ -10613,7 +10614,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-protocol"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "chardetng",
  "chrono",
@@ -10655,14 +10656,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-provider-auth"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-model-provider",
 ]
 
 [[package]]
 name = "ruxex-provider-host-example"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "futures",
@@ -10684,7 +10685,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-providers"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "futures",
  "http",
@@ -10710,7 +10711,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-queue-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-core",
  "ruxex-extension-api",
@@ -10827,7 +10828,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-response-debug-context"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "http",
  "ruxex-api",
@@ -10835,7 +10836,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rmcp-client"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -10875,7 +10876,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rollout"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -10901,7 +10902,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rollout-trace"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "http",
@@ -10915,7 +10916,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-sandboxing"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "dunce",
@@ -10948,7 +10949,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-secrets"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "age",
  "anyhow",
@@ -10966,7 +10967,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-shell-command"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "libc",
@@ -10985,7 +10986,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-skills"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "include_dir",
  "ruxex-protocol",
@@ -11001,7 +11002,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-skills-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "dirs 6.0.0",
  "futures",
@@ -11028,7 +11029,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-state"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -11051,7 +11052,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-stdio-to-uds"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "ruxex-uds",
@@ -11060,7 +11061,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tcp-tunnel"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "bytes",
@@ -11079,14 +11080,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-terminal-detection"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "tracing",
 ]
 
 [[package]]
 name = "ruxex-thread-store"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "futures",
@@ -11128,7 +11129,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tools"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "bitflags 2.13.2",
  "jsonptr",
@@ -11149,7 +11150,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tui"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "arboard",
@@ -11272,7 +11273,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-uds"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "libc",
  "tokio",
@@ -11280,7 +11281,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-user-verification"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "core-foundation 0.10.1",
@@ -11298,7 +11299,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-absolute-path"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "dirs 6.0.0",
  "dunce",
@@ -11309,14 +11310,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-approval-presets"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-protocol",
 ]
 
 [[package]]
 name = "ruxex-utils-audio"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "ruxex-protocol",
@@ -11329,7 +11330,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cache"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "lru",
  "sha1 0.10.7",
@@ -11338,7 +11339,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cli"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "clap",
  "ruxex-protocol",
@@ -11349,15 +11350,15 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-elapsed"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-utils-fuzzy-match"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-utils-git-discovery"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "futures",
  "ruxex-git-utils",
@@ -11368,7 +11369,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-home-dir"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "dirs 6.0.0",
  "ruxex-utils-absolute-path",
@@ -11376,7 +11377,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-image"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "image",
@@ -11388,7 +11389,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-json-to-toml"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "serde_json",
  "toml 0.9.12+spec-1.1.0",
@@ -11396,7 +11397,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-output-truncation"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-protocol",
  "ruxex-utils-string",
@@ -11404,7 +11405,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-path"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "dunce",
  "ruxex-utils-absolute-path",
@@ -11413,7 +11414,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-path-uri"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "ruxex-utils-absolute-path",
@@ -11427,7 +11428,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-plugins"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-exec-server",
  "ruxex-exec-server-protocol",
@@ -11439,7 +11440,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-pty"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "libc",
@@ -11449,7 +11450,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-redacted-string"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "schemars 0.8.22",
  "serde",
@@ -11457,14 +11458,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-rustls-provider"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "rustls",
 ]
 
 [[package]]
 name = "ruxex-utils-sandbox-summary"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "ruxex-protocol",
  "ruxex-utils-path-uri",
@@ -11472,7 +11473,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-sleep-inhibitor"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "core-foundation 0.9.4",
  "libc",
@@ -11481,11 +11482,11 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-stream-parser"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-utils-string"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "regex-lite",
  "serde",
@@ -11494,11 +11495,11 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-template"
-version = "0.5.4"
+version = "0.6.0"
 
 [[package]]
 name = "ruxex-web-search-extension"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "http",
  "ruxex-api",
@@ -11518,7 +11519,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-websocket-client"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "futures",
  "rustls",
@@ -11531,7 +11532,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-worktree"
-version = "0.5.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "dunce",
@@ -13530,6 +13531,22 @@ dependencies = [
  "url",
  "windows 0.61.3",
  "zbus 5.19.0",
+]
+
+[[package]]
+name = "tauri-plugin-wdio"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9bd7c010be21e8f7011f7249fdb0a5921cd6c2beafeb15482b92c58b70757e0"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 1.0.69",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

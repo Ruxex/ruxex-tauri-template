@@ -1,6 +1,7 @@
 node_modules/
 dist/
 logs/
+artifacts/e2e/
 target/
 __pycache__/
 *.py[cod]
