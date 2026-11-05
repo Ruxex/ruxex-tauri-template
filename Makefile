@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test build fmt-check format-check verify run tauri-dev
+.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test build fmt-check format-check verify run tauri-dev local-cloudflare-inprocess
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -18,6 +18,7 @@ help:
 	@printf '%s\n' '  make verify             全検証とビルドを実行'
 	@printf '%s\n' '  make format-check       フォーマット検査'
 	@printf '%s\n' '  make run                Tauri開発アプリを起動'
+	@printf '%s\n' '  make local-cloudflare-inprocess ローカルCloudflareプロバイダをインプロセスで起動'
 
 install:
 	pnpm install --frozen-lockfile
@@ -62,3 +63,6 @@ run:
 	pnpm tauri dev
 
 tauri-dev: run
+
+local-cloudflare-inprocess:
+	RUXEX_PROVIDER=cloudflare RUXEX_APP_SERVER_MODE=inprocess pnpm tauri dev

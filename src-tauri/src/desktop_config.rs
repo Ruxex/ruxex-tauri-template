@@ -140,7 +140,16 @@ impl DesktopRuntimeState {
 
 #[cfg(feature = "example")]
 pub fn default_config() -> DesktopConfig {
-    DesktopConfig::builder(ruxex_provider_host_example::dummy_provider::provider_factory()).build()
+    let provider = std::env::var("RUXEX_PROVIDER").ok();
+    DesktopConfig::builder(example_provider_factory(provider.as_deref())).build()
+}
+
+#[cfg(feature = "example")]
+fn example_provider_factory(selector: Option<&str>) -> ProviderRuntimeFactory {
+    match selector {
+        Some("cloudflare") => ruxex_provider_host_example::cloudflare::provider_factory(),
+        _ => ruxex_provider_host_example::dummy_provider::provider_factory(),
+    }
 }
 
 #[cfg(not(feature = "example"))]
@@ -157,6 +166,30 @@ pub fn default_config() -> DesktopConfig {
 #[cfg(test)]
 mod tests {
     use super::{DesktopConfig, default_config};
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn example_provider_defaults_to_dummy() {
+        let (_, descriptor) = super::example_provider_factory(None);
+
+        assert_eq!(descriptor.provider_kind, "dummy");
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn example_provider_can_select_cloudflare() {
+        let (_, descriptor) = super::example_provider_factory(Some("cloudflare"));
+
+        assert_eq!(descriptor.provider_kind, "cloudflare");
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn unknown_example_provider_falls_back_to_dummy() {
+        let (_, descriptor) = super::example_provider_factory(Some("unknown"));
+
+        assert_eq!(descriptor.provider_kind, "dummy");
+    }
 
     #[test]
     fn default_home_is_resolved_from_the_injected_directory_name() {

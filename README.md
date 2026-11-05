@@ -129,6 +129,23 @@ shows `InProcess mode` and hides the daemon PID, socket, and Start/Restart/Stop
 controls. The mode is selected at startup and cannot be changed while the app
 is running.
 
+## Local provider-host development
+
+The template's example build uses the sibling checkout at `../ruxex` for
+the Ruxex and provider-host dependencies. It selects the dummy provider by
+default. Set `RUXEX_PROVIDER=cloudflare` to use the existing Cloudflare
+provider implementation from that checkout; credentials are still required
+before making a model request.
+
+For a local in-process launch with that provider, run:
+
+```sh
+make local-cloudflare-inprocess
+```
+
+This target only changes the local process configuration. It does not select a
+remote or paid model by itself.
+
 ## Capability boundary
 
 The reference application currently provides server-backed thread history,
