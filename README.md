@@ -97,9 +97,10 @@ activity details so the UI remains inspectable without guessing their meaning.
 - Tauri's platform prerequisites
 - Python 3 for runtime-package staging tests
 
-The Rust dependencies use the pinned Ruxex v0.4.10 Git tag while the public
-integration boundary is being finalized. The template does not require a
-sibling Ruxex checkout.
+The example Rust dependencies use the sibling Ruxex checkout at `../ruxex`,
+including its provider-host sample. For a distributable application, replace
+these local path dependencies with the published Ruxex release you intend to
+ship.
 
 ## Runtime package
 

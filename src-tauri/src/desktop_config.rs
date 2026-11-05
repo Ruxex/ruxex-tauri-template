@@ -141,7 +141,7 @@ impl DesktopRuntimeState {
 #[cfg(feature = "example")]
 pub fn default_config() -> DesktopConfig {
     let provider = std::env::var("RUXEX_PROVIDER").ok();
-    DesktopConfig::builder(example_provider_factory(provider.as_deref())).build()
+    example_provider_config(provider.as_deref())
 }
 
 #[cfg(feature = "example")]
@@ -149,6 +149,19 @@ fn example_provider_factory(selector: Option<&str>) -> ProviderRuntimeFactory {
     match selector {
         Some("cloudflare") => ruxex_provider_host_example::cloudflare::provider_factory(),
         _ => ruxex_provider_host_example::dummy_provider::provider_factory(),
+    }
+}
+
+#[cfg(feature = "example")]
+fn example_provider_config(selector: Option<&str>) -> DesktopConfig {
+    let builder = DesktopConfig::builder(example_provider_factory(selector));
+    if selector == Some("cloudflare") {
+        builder
+            .home_dir_name(".ruxex_desktop_cloudflare")
+            .home_marker_file("cloudflare-home.json")
+            .build()
+    } else {
+        builder.build()
     }
 }
 
@@ -181,6 +194,15 @@ mod tests {
         let (_, descriptor) = super::example_provider_factory(Some("cloudflare"));
 
         assert_eq!(descriptor.provider_kind, "cloudflare");
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn cloudflare_example_provider_uses_a_separate_home() {
+        let config = super::example_provider_config(Some("cloudflare"));
+
+        assert_eq!(config.branding.home_dir_name, ".ruxex_desktop_cloudflare");
+        assert_eq!(config.branding.home_marker_file, "cloudflare-home.json");
     }
 
     #[cfg(feature = "example")]

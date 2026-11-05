@@ -284,7 +284,10 @@ async fn connect_daemon_endpoint(
                     .map_err(|error| {
                         command_error(
                             DesktopAppServerErrorKind::Lifecycle,
-                            format!("failed to start the dummy provider app-server: {error:#}"),
+                            format!(
+                                "failed to start the {} provider app-server: {error:#}",
+                                config.provider_factory.1.provider_kind
+                            ),
                         )
                     })?;
                     let effective_socket_path =
