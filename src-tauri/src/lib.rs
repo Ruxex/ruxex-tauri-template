@@ -88,12 +88,10 @@ pub fn run_with_config(config: DesktopConfig) {
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, shortcut, event| {
+                .with_handler(|app, _shortcut, event| {
                     use tauri_plugin_global_shortcut::ShortcutState;
 
-                    if event.state() == ShortcutState::Pressed
-                        && shortcut.to_string() == quick_panel::default_shortcut()
-                    {
+                    if event.state() == ShortcutState::Pressed {
                         let _ = quick_panel::show(app);
                     }
                 })
@@ -121,11 +119,7 @@ pub fn run_with_config(config: DesktopConfig) {
             }
             #[cfg(desktop)]
             {
-                use tauri_plugin_global_shortcut::GlobalShortcutExt;
-
-                app.global_shortcut()
-                    .register(quick_panel::default_shortcut())
-                    .map_err(std::io::Error::other)?;
+                quick_panel::register_startup(app.handle())?;
             }
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -146,6 +140,8 @@ pub fn run_with_config(config: DesktopConfig) {
             desktop::read_marketplace_asset,
             desktop::open_browser_window,
             quick_panel::close_quick_panel,
+            quick_panel::quick_panel_shortcut_read,
+            quick_panel::quick_panel_shortcut_update,
             schedule_commands::schedule_list,
             schedule_commands::schedule_create,
             schedule_commands::schedule_update,
