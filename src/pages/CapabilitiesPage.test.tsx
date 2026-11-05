@@ -188,6 +188,11 @@ describe("CapabilitiesPage", () => {
       screen.getByRole("heading", { name: "Uncategorized", level: 3 }),
     ).toBeTruthy();
     expect(screen.getAllByTestId("plugin-image-slot")).toHaveLength(3);
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("img", { name: "Plugin image unavailable" }),
+      ).toHaveLength(3),
+    );
     const pluginSection = screen
       .getByRole("heading", { name: "Plugins", level: 2 })
       .closest("section");

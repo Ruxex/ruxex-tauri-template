@@ -112,4 +112,31 @@ describe("MarketplaceAssetImage", () => {
       "data:image/png;base64,AA==",
     );
   });
+
+  it("renders an image placeholder when the App Server has no image fields", () => {
+    render(<MarketplaceAssetImage alt="Plugin logo" />);
+
+    expect(
+      screen.getByRole("img", { name: "Plugin image unavailable" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("renders an image placeholder when every asset load fails", async () => {
+    readMarketplaceAsset.mockRejectedValueOnce(new Error("asset unavailable"));
+
+    render(
+      <MarketplaceAssetImage
+        alt="Plugin logo"
+        src="https://raw.githubusercontent.com/acme/plugin/main/logo.png"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("img", { name: "Plugin image unavailable" }),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByRole("status")).toBeNull();
+  });
 });

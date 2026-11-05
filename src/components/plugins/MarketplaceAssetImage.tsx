@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 
 import {
   loadLocalMarketplaceAsset,
@@ -36,15 +37,16 @@ export function MarketplaceAssetImage({
 }: MarketplaceAssetImageProps) {
   const [lightSource, setLightSource] = useState<string | null>(null);
   const [darkSource, setDarkSource] = useState<string | null>(null);
-  const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     setLightSource(null);
     setDarkSource(null);
-    setError(false);
+    setIsLoading(true);
 
     if (!localSrc && !localDarkSrc && !src && !darkSrc) {
+      setIsLoading(false);
       return () => {
         active = false;
       };
@@ -63,9 +65,7 @@ export function MarketplaceAssetImage({
       const dark = darkResult.status === "fulfilled" ? darkResult.value : null;
       setLightSource(light);
       setDarkSource(dark);
-      if (!light && !dark) {
-        setError(true);
-      }
+      setIsLoading(false);
     });
 
     return () => {
@@ -73,10 +73,7 @@ export function MarketplaceAssetImage({
     };
   }, [darkSrc, localDarkSrc, localSrc, src]);
 
-  if (error) {
-    return null;
-  }
-  if (!lightSource && !darkSource) {
+  if (isLoading) {
     return (
       <span
         aria-label="Loading plugin image"
@@ -88,7 +85,15 @@ export function MarketplaceAssetImage({
 
   const imageSource = lightSource ?? darkSource;
   if (!imageSource) {
-    return null;
+    return (
+      <span
+        aria-label="Plugin image unavailable"
+        className="inline-flex size-full items-center justify-center text-base-content/40"
+        role="img"
+      >
+        <PhotoIcon aria-hidden="true" className="size-5" />
+      </span>
+    );
   }
 
   return (
