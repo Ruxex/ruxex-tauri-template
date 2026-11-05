@@ -36,7 +36,11 @@ pub(crate) fn panel_route() -> &'static str {
 
 fn normalize_shortcut(value: &str) -> Option<String> {
     let shortcut = value.trim();
-    (!shortcut.is_empty()).then(|| shortcut.to_owned())
+    (!shortcut.is_empty()
+        && shortcut
+            .parse::<tauri_plugin_global_shortcut::Shortcut>()
+            .is_ok())
+    .then(|| shortcut.to_owned())
 }
 
 pub(crate) fn read_persisted_shortcut(path: &Path) -> String {
@@ -68,8 +72,22 @@ fn write_persisted_shortcut(path: &Path, shortcut: &str) -> Result<(), String> {
             temporary_path.display()
         )
     })?;
-    fs::rename(&temporary_path, path).map_err(|error| {
-        let _ = fs::remove_file(&temporary_path);
+    replace_preference_file(&temporary_path, path)
+}
+
+fn replace_preference_file(temporary_path: &Path, path: &Path) -> Result<(), String> {
+    #[cfg(windows)]
+    if path.exists() {
+        fs::remove_file(path).map_err(|error| {
+            format!(
+                "failed to replace quick panel preference `{}`: {error}",
+                path.display()
+            )
+        })?;
+    }
+
+    fs::rename(temporary_path, path).map_err(|error| {
+        let _ = fs::remove_file(temporary_path);
         format!(
             "failed to commit quick panel preference `{}`: {error}",
             path.display()
@@ -223,6 +241,9 @@ mod tests {
 
         fs::write(&path, "not-json").unwrap();
         assert_eq!(read_persisted_shortcut(&path), default_shortcut());
+
+        fs::write(&path, "{\"shortcut\":\"Ctrl+NotAKey\"}").unwrap();
+        assert_eq!(read_persisted_shortcut(&path), default_shortcut());
         fs::remove_file(path).unwrap();
     }
 
@@ -303,5 +324,21 @@ mod tests {
         );
 
         assert_eq!(result.unwrap_err(), "Quick panel shortcut cannot be empty.");
+    }
+
+    #[test]
+    fn replaces_an_existing_preference_file() {
+        let directory =
+            std::env::temp_dir().join(format!("ruxex-quick-panel-replace-{}", std::process::id()));
+        fs::create_dir_all(&directory).unwrap();
+        let temporary_path = directory.join("quick-panel.json.tmp");
+        let target_path = directory.join("quick-panel.json");
+        fs::write(&temporary_path, "new").unwrap();
+        fs::write(&target_path, "old").unwrap();
+
+        super::replace_preference_file(&temporary_path, &target_path).unwrap();
+
+        assert_eq!(fs::read_to_string(&target_path).unwrap(), "new");
+        fs::remove_dir_all(directory).unwrap();
     }
 }
