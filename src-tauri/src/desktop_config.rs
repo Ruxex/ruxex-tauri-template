@@ -153,7 +153,7 @@ fn example_provider_factory(selector: Option<&str>) -> ProviderRuntimeFactory {
 }
 
 #[cfg(feature = "example")]
-fn example_provider_config(selector: Option<&str>) -> DesktopConfig {
+pub(crate) fn example_provider_config(selector: Option<&str>) -> DesktopConfig {
     let builder = DesktopConfig::builder(example_provider_factory(selector));
     if selector == Some("cloudflare") {
         builder
@@ -178,7 +178,22 @@ pub fn default_config() -> DesktopConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::{DesktopConfig, default_config};
+    use super::DesktopConfig;
+
+    #[cfg(not(feature = "example"))]
+    use super::default_config;
+
+    fn test_default_config() -> DesktopConfig {
+        #[cfg(feature = "example")]
+        {
+            return super::example_provider_config(None);
+        }
+
+        #[cfg(not(feature = "example"))]
+        {
+            default_config()
+        }
+    }
 
     #[cfg(feature = "example")]
     #[test]
@@ -215,7 +230,7 @@ mod tests {
 
     #[test]
     fn default_home_is_resolved_from_the_injected_directory_name() {
-        let config = default_config();
+        let config = test_default_config();
         let home = config
             .product_identity()
             .resolve_home_from("/home/test-user")
@@ -229,7 +244,7 @@ mod tests {
 
     #[test]
     fn builder_changes_branding_and_product_home_without_changing_the_resolver() {
-        let defaults = default_config();
+        let defaults = test_default_config();
         let config = DesktopConfig::builder(defaults.provider_factory.clone())
             .app_name("Acme")
             .assistant_name("Acme Assistant")

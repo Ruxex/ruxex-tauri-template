@@ -99,8 +99,9 @@ activity details so the UI remains inspectable without guessing their meaning.
 
 The example Rust dependencies use the sibling Ruxex checkout at `../ruxex`,
 including its provider-host sample. For a distributable application, replace
-these local path dependencies with the published Ruxex release you intend to
-ship.
+the Ruxex path dependency with the published release you intend to ship and
+replace the `publish = false` provider-host sample with your own provider-host
+crate (published or kept in your application workspace).
 
 ## Runtime package
 

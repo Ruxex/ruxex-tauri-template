@@ -499,22 +499,37 @@ mod tests {
         ruxex_home_from_user_home, select_runtime_package, validate_marketplace_asset_url,
         validate_marketplace_svg,
     };
+    use crate::desktop_config::DesktopConfig;
+
+    #[cfg(not(feature = "example"))]
     use crate::desktop_config::default_config;
 
     #[cfg(feature = "example")]
     use super::initialize_provider_home;
 
+    fn test_default_config() -> DesktopConfig {
+        #[cfg(feature = "example")]
+        {
+            return crate::desktop_config::example_provider_config(None);
+        }
+
+        #[cfg(not(feature = "example"))]
+        {
+            default_config()
+        }
+    }
+
     #[test]
     fn desktop_home_is_isolated_under_user_home() {
         assert_eq!(
-            ruxex_home_from_user_home(Path::new("/home/user"), &default_config()),
+            ruxex_home_from_user_home(Path::new("/home/user"), &test_default_config()),
             Path::new("/home/user/.ruxex_desktop"),
         );
     }
 
     #[test]
     fn desktop_product_identity_is_separate_from_tui_branding() {
-        let config = default_config();
+        let config = test_default_config();
         let identity = product_identity(&config);
 
         assert_eq!(identity.product_name(), "Ruxex Desktop");
@@ -596,7 +611,7 @@ mod tests {
         ));
         let _ = fs::remove_dir_all(&home);
 
-        let config = default_config();
+        let config = test_default_config();
         initialize_provider_home(
             &home,
             &product_identity(&config),
@@ -628,7 +643,7 @@ mod tests {
         let _ = fs::remove_dir_all(&home);
         fs::create_dir_all(&home).unwrap();
         fs::write(
-            home.join(product_identity(&default_config()).home_marker_file()),
+            home.join(product_identity(&test_default_config()).home_marker_file()),
             serde_json::json!({
                 "formatVersion": 2,
                 "providerKind": "example",
@@ -639,7 +654,7 @@ mod tests {
         )
         .unwrap();
 
-        let config = default_config();
+        let config = test_default_config();
         initialize_provider_home(
             &home,
             &product_identity(&config),
@@ -666,7 +681,7 @@ mod tests {
         fs::create_dir_all(home.join("app-server-daemon")).unwrap();
         fs::write(home.join("schedules.json"), "[]\n").unwrap();
 
-        let config = default_config();
+        let config = test_default_config();
         initialize_provider_home(
             &home,
             &product_identity(&config),
