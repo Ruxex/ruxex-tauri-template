@@ -5,6 +5,7 @@ edition = "2024"
 license = "Apache-2.0"
 publish = false
 build = "build.rs"
+default-run = "ruxex-desktop"
 
 [features]
 default = ["example"]

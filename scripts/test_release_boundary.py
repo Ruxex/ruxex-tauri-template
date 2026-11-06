@@ -40,6 +40,10 @@ class ReleaseBoundaryTests(unittest.TestCase):
             r"#\[cfg\(feature\s*=\s*\"e2e\"\)\][\s\S]*?tauri_plugin_wdio::init\(\)",
         )
 
+    def test_cargo_run_defaults_to_the_desktop_binary(self):
+        cargo = (ROOT / "src-tauri/Cargo.toml").read_text()
+        self.assertRegex(cargo, r"default-run\s*=\s*\"ruxex-desktop\"")
+
     def test_frontend_plugin_import_is_guarded_by_e2e_flag(self):
         source = (ROOT / "src/main.tsx").read_text()
         self.assertRegex(source, r"VITE_E2E_PLUGIN\s*===\s*[\"']1[\"']")
