@@ -9,10 +9,13 @@ import os
 import re
 import signal
 import shutil
+import socket
 import subprocess
 import tempfile
 import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping, Sequence
@@ -20,6 +23,10 @@ from typing import Mapping, Sequence
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = REPOSITORY_ROOT / "artifacts" / "e2e"
+# Keep the generated home at a short repository-local path. The App Server's
+# Unix socket path includes RUXEX_HOME and must stay below Linux's limit.
+DUMMY_HOME_DIR = REPOSITORY_ROOT / ".d"
+TAURI_DRIVER_PORT = 4444
 SAFE_ENVIRONMENT_KEYS = frozenset(
     {
         "HOME",
@@ -63,7 +70,6 @@ def build_environment(
         for key, value in base_env.items()
         if not is_sensitive_environment_key(key)
     }
-    home_dir = home_dir.resolve()
     artifact_dir = artifact_dir.resolve()
     environment.pop("RUXEX_PROVIDER", None)
     environment.update(
@@ -94,8 +100,10 @@ def build_environment(
     return environment
 
 
-def build_wdio_command(spec: str | None = None) -> list[str]:
-    command = ["pnpm", "exec", "wdio", "run", "wdio.conf.ts"]
+def build_wdio_command(
+    spec: str | None = None, *, config: str = "wdio.conf.ts"
+) -> list[str]:
+    command = ["pnpm", "exec", "wdio", "run", config]
     if spec:
         command.extend(["--spec", spec])
     return command
@@ -140,6 +148,25 @@ def prepare_dummy_provider_home(environment: Mapping[str, str]) -> Path:
     return auth_file
 
 
+def prepare_persistent_dummy_home() -> Path:
+    """Reset and return the repository-local dummy-home directory."""
+
+    if DUMMY_HOME_DIR.exists():
+        shutil.rmtree(DUMMY_HOME_DIR)
+    DUMMY_HOME_DIR.mkdir(parents=True, exist_ok=True)
+    return DUMMY_HOME_DIR
+
+
+@contextmanager
+def _run_home(dummy_home: bool) -> Iterator[Path]:
+    if dummy_home:
+        yield prepare_persistent_dummy_home()
+        return
+
+    with tempfile.TemporaryDirectory(prefix="ruxex-e2e-home-") as temporary_home:
+        yield Path(temporary_home)
+
+
 def process_output_preview(output: str, max_chars: int = 4000) -> str:
     """Keep terminal output useful without flooding the agent transcript."""
 
@@ -158,6 +185,56 @@ def _resolve_executable(
             if candidate.is_file() and os.access(candidate, os.X_OK):
                 return str(candidate)
     return shutil.which(name, path=environment.get("PATH"))
+
+
+def _start_tauri_driver(
+    environment: Mapping[str, str], run_directory: Path
+) -> subprocess.Popen[bytes]:
+    executable = _resolve_executable(
+        "tauri-driver", environment, "TAURI_DRIVER_PATH"
+    )
+    if executable is None:
+        raise RuntimeError("tauri-driver was not found in PATH")
+
+    log_path = run_directory / "tauri-driver.log"
+    with log_path.open("wb") as log_file:
+        process = subprocess.Popen(
+            [executable, "--port", str(TAURI_DRIVER_PORT)],
+            cwd=REPOSITORY_ROOT,
+            env=dict(environment),
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+        )
+
+    deadline = time.monotonic() + 10.0
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError(
+                f"tauri-driver exited before becoming ready; see {log_path}"
+            )
+        try:
+            with socket.create_connection(
+                ("127.0.0.1", TAURI_DRIVER_PORT), timeout=0.2
+            ):
+                return process
+        except OSError:
+            time.sleep(0.05)
+
+    process.terminate()
+    raise RuntimeError(
+        f"tauri-driver did not become ready on port {TAURI_DRIVER_PORT}; see {log_path}"
+    )
+
+
+def _stop_tauri_driver(process: subprocess.Popen[bytes]) -> None:
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=2.0)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
 
 
 def preflight_errors(
@@ -282,7 +359,9 @@ def _terminate_isolated_processes(environment: Mapping[str, str]) -> None:
             continue
 
 
-def run_e2e(headless: bool, spec: str | None = None) -> int:
+def run_e2e(
+    headless: bool, spec: str | None = None, dummy_home: bool = False
+) -> int:
     artifact_root = Path(
         os.environ.get("RUXEX_E2E_ARTIFACT_ROOT", str(DEFAULT_ARTIFACT_ROOT))
     ).expanduser()
@@ -292,12 +371,11 @@ def run_e2e(headless: bool, spec: str | None = None) -> int:
             "RUXEX_E2E_APP_BINARY", str(REPOSITORY_ROOT / "target" / "debug" / "ruxex-desktop")
         )
     ).expanduser()
-    command = wrap_headless(build_wdio_command(spec), headless)
+    config = "wdio.dummy-home.conf.mjs" if dummy_home else "wdio.conf.ts"
+    command = wrap_headless(build_wdio_command(spec, config=config), headless)
 
-    with tempfile.TemporaryDirectory(prefix="ruxex-e2e-home-") as temporary_home:
-        environment = build_environment(
-            os.environ, Path(temporary_home), run_directory
-        )
+    with _run_home(dummy_home) as home_dir:
+        environment = build_environment(os.environ, home_dir, run_directory)
         environment["RUXEX_E2E_APP_BINARY"] = str(app_binary.resolve())
         if headless:
             environment["RUXEX_E2E_HEADLESS"] = "1"
@@ -311,6 +389,7 @@ def run_e2e(headless: bool, spec: str | None = None) -> int:
             "command": command,
             "environment": safe_environment_metadata(environment),
             "headless": headless,
+            "dummy_home": dummy_home,
             "spec": spec,
             "started_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -321,7 +400,12 @@ def run_e2e(headless: bool, spec: str | None = None) -> int:
             exit_code = 2
             output = "E2E preflight failed:\n" + "\n".join(f"- {error}" for error in errors)
         else:
+            tauri_driver_process: subprocess.Popen[bytes] | None = None
             try:
+                if dummy_home:
+                    tauri_driver_process = _start_tauri_driver(
+                        environment, run_directory
+                    )
                 completed = subprocess.run(
                     command,
                     cwd=REPOSITORY_ROOT,
@@ -339,6 +423,12 @@ def run_e2e(headless: bool, spec: str | None = None) -> int:
             except OSError as error:
                 exit_code = 127
                 output = f"Failed to start E2E command: {error}"
+            except RuntimeError as error:
+                exit_code = 127
+                output = f"Failed to start Tauri fixture runner: {error}\n"
+            finally:
+                if tauri_driver_process is not None:
+                    _stop_tauri_driver(tauri_driver_process)
 
         (run_directory / "process.log").write_text(output, encoding="utf-8")
         _copy_new_service_logs(run_directory, previous_service_logs)
@@ -363,6 +453,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--spec")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--binary", dest="app_binary")
+    parser.add_argument("--dummy-home", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -372,7 +463,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         os.environ["RUXEX_E2E_APP_BINARY"] = arguments.app_binary
     if arguments.verbose:
         os.environ["RUXEX_E2E_LOG_LEVEL"] = "debug"
-    return run_e2e(arguments.headless, arguments.spec)
+    return run_e2e(arguments.headless, arguments.spec, arguments.dummy_home)
 
 
 if __name__ == "__main__":

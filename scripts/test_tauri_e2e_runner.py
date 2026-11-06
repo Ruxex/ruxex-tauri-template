@@ -3,11 +3,68 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts import tauri_e2e_runner
 
 
 class TauriE2ERunnerTests(unittest.TestCase):
+    def test_parse_args_defaults_to_disposable_home_mode(self):
+        self.assertFalse(tauri_e2e_runner.parse_args([]).dummy_home)
+
+    def test_parse_args_enables_persistent_dummy_home_mode(self):
+        self.assertTrue(tauri_e2e_runner.parse_args(["--dummy-home"]).dummy_home)
+
+    def test_dummy_home_mode_keeps_the_selected_home_after_context_exit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            target = Path(temp_dir) / "dummy-home" / "home"
+            with mock.patch.object(
+                tauri_e2e_runner, "DUMMY_HOME_DIR", target, create=True
+            ):
+                with tauri_e2e_runner._run_home(True) as home:
+                    self.assertEqual(home, target)
+                    self.assertTrue(home.is_dir())
+
+            self.assertTrue(target.is_dir())
+
+    def test_default_home_mode_removes_the_selected_home_after_context_exit(self):
+        with tauri_e2e_runner._run_home(False) as home:
+            selected_home = home
+            self.assertTrue(selected_home.is_dir())
+
+        self.assertFalse(selected_home.exists())
+
+    def test_prepare_persistent_dummy_home_resets_only_the_target_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            parent = Path(temp_dir)
+            target = parent / "dummy-home" / "home"
+            target.mkdir(parents=True)
+            (target / "stale.txt").write_text("stale", encoding="utf-8")
+            sibling = target.parent / "keep.txt"
+            sibling.write_text("keep", encoding="utf-8")
+
+            with mock.patch.object(
+                tauri_e2e_runner, "DUMMY_HOME_DIR", target, create=True
+            ):
+                result = tauri_e2e_runner.prepare_persistent_dummy_home()
+
+            self.assertEqual(result, target)
+            self.assertTrue(target.is_dir())
+            self.assertEqual(list(target.iterdir()), [])
+            self.assertEqual(sibling.read_text(encoding="utf-8"), "keep")
+
+    def test_prepare_persistent_dummy_home_creates_missing_target(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            target = Path(temp_dir) / "dummy-home" / "home"
+
+            with mock.patch.object(
+                tauri_e2e_runner, "DUMMY_HOME_DIR", target, create=True
+            ):
+                result = tauri_e2e_runner.prepare_persistent_dummy_home()
+
+            self.assertEqual(result, target)
+            self.assertTrue(target.is_dir())
+
     def test_build_environment_isolates_home_provider_and_display_backend(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             home = Path(temp_dir) / "home"
@@ -60,6 +117,23 @@ class TauriE2ERunnerTests(unittest.TestCase):
                 "wdio.conf.ts",
                 "--spec",
                 "e2e/desktop-smoke.spec.ts",
+            ],
+        )
+
+    def test_build_wdio_command_supports_the_service_free_dummy_home_config(self):
+        self.assertEqual(
+            tauri_e2e_runner.build_wdio_command(
+                "fixtures/dummy-home/prepare.spec.ts",
+                config="wdio.dummy-home.conf.mjs",
+            ),
+            [
+                "pnpm",
+                "exec",
+                "wdio",
+                "run",
+                "wdio.dummy-home.conf.mjs",
+                "--spec",
+                "fixtures/dummy-home/prepare.spec.ts",
             ],
         )
 
