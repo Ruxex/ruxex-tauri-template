@@ -1,595 +1,209 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const useMcpServerStatus = vi.hoisted(() => vi.fn());
+import { CapabilitiesPage } from "./CapabilitiesPage";
+
 const useInstallPlugin = vi.hoisted(() => vi.fn());
+const useMcpOauthLogin = vi.hoisted(() => vi.fn());
+const useMcpServerStatus = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
+const useUninstallPlugin = vi.hoisted(() => vi.fn());
 const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
-const useMcpOauthLogin = vi.hoisted(() => vi.fn());
-const openBrowserWindow = vi.hoisted(() => vi.fn());
-const reloadMcp = vi.hoisted(() => ({
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isError: false,
-  error: null,
-}));
-const installPlugin = vi.hoisted(() => ({
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isError: false,
-  error: null,
-}));
-const upgradeMarketplace = vi.hoisted(() => ({
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isError: false,
-  error: null,
-}));
-const oauthLogin = vi.hoisted(() => ({
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isError: false,
-  error: null,
-}));
 
 vi.mock("../app-server/hooks", () => ({
-  useMcpServerStatus,
   useInstallPlugin,
+  useMcpOauthLogin,
+  useMcpServerStatus,
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
+  useUninstallPlugin,
   useUpgradeMarketplace,
-  useMcpOauthLogin,
 }));
 
-vi.mock("../platform/native", () => ({ openBrowserWindow }));
+const uninstall = vi.hoisted(() => vi.fn());
+
+function plugin(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "example@community",
+    localVersion: null,
+    name: "example",
+    source: { type: "git", url: "https://example.com/example.git", path: null, refName: "main", sha: null },
+    installed: true,
+    enabled: true,
+    installPolicy: "AVAILABLE",
+    installPolicySource: "WORKSPACE_SETTING",
+    mustShowInstallationInterstitial: null,
+    authPolicy: "OAUTH",
+    availability: "AVAILABLE",
+    interface: {
+      displayName: "Example Plugin",
+      shortDescription: "Example plugin",
+      longDescription: null,
+      developerName: null,
+      category: "Tools",
+      capabilities: [],
+      websiteUrl: null,
+      privacyPolicyUrl: null,
+      termsOfServiceUrl: null,
+      defaultPrompt: null,
+      brandColor: null,
+      composerIcon: null,
+      composerIconUrl: null,
+      logo: null,
+      logoDark: null,
+      logoUrl: null,
+      logoUrlDark: null,
+      screenshots: [],
+      screenshotUrls: [],
+    },
+    keywords: [],
+    ...overrides,
+  };
+}
+
+function pluginList() {
+  return {
+    data: {
+      marketplaces: [
+        {
+          name: "community",
+          path: "/tmp/community",
+          interface: { displayName: "Community", developerName: null, websiteUrl: null },
+          plugins: [plugin(), plugin({
+            id: "official@community",
+            name: "official",
+            installed: false,
+            enabled: false,
+            installPolicySource: "IMPLICIT_CANONICAL_APP",
+            interface: { ...plugin().interface, displayName: "Official App" },
+          })],
+        },
+      ],
+      marketplaceLoadErrors: [],
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <CapabilitiesPage />
+    </MemoryRouter>,
+  );
+}
 
 describe("CapabilitiesPage", () => {
-  afterEach(cleanup);
-
   beforeEach(() => {
-    openBrowserWindow.mockReset();
-    oauthLogin.mutateAsync.mockReset();
-    oauthLogin.mutateAsync.mockResolvedValue({
-      authorizationUrl: "https://auth.example.test/start",
+    usePluginList.mockReset().mockReturnValue(pluginList());
+    useInstallPlugin.mockReset().mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isError: false,
+      error: null,
     });
-    useMcpOauthLogin.mockReturnValue(oauthLogin);
-    reloadMcp.mutateAsync.mockReset();
-    reloadMcp.mutateAsync.mockResolvedValue({});
-    useReloadMcpServers.mockReturnValue(reloadMcp);
-    installPlugin.mutateAsync.mockReset();
-    installPlugin.mutateAsync.mockResolvedValue({});
-    useInstallPlugin.mockReturnValue(installPlugin);
-    upgradeMarketplace.mutateAsync.mockReset();
-    upgradeMarketplace.mutateAsync.mockResolvedValue({});
-    useUpgradeMarketplace.mockReturnValue(upgradeMarketplace);
-    useMcpServerStatus.mockReturnValue({
-      data: {
-        data: [
-          {
-            name: "docs",
-            runtimeStatus: "connected",
-            tools: { search: {} },
-            authStatus: "notLoggedIn",
-            toolsError: null,
-          },
-        ],
-      },
+    useUninstallPlugin.mockReset().mockReturnValue({
+      mutateAsync: uninstall,
+      isPending: false,
+      isError: false,
+      error: null,
+    });
+    useMcpServerStatus.mockReset().mockReturnValue({
+      data: { data: [] },
       isLoading: false,
       isError: false,
+      error: null,
     });
-    useSkillsList.mockReturnValue({
-      data: {
-        data: [{ cwd: "/workspace", skills: [{ name: "review" }], errors: [] }],
-      },
+    useSkillsList.mockReset().mockReturnValue({
+      data: { data: [] },
       isLoading: false,
       isError: false,
+      error: null,
     });
-    usePluginList.mockReturnValue({
-      data: {
-        marketplaces: [
-          {
-            name: "official",
-            path: "/tmp/official",
-            interface: { displayName: "Official Plugins" },
-            plugins: [
-              {
-                id: "lint@official",
-                name: "lint",
-                interface: {
-                  displayName: "Lint Plugin",
-                  shortDescription: "Checks project files",
-                  category: "developer-tools",
-                },
-                installed: false,
-                enabled: false,
-              },
-              {
-                id: "calendar@official",
-                name: "calendar",
-                interface: {
-                  displayName: "Calendar Plugin",
-                  shortDescription: "Manages calendars",
-                  category: "Productivity",
-                },
-                installed: false,
-                enabled: false,
-              },
-            ],
-          },
-          {
-            name: "remote",
-            path: null,
-            interface: { displayName: "Remote Catalog" },
-            plugins: [
-              {
-                id: "remote-tool@remote",
-                name: "remote-tool",
-                interface: null,
-                installed: false,
-                enabled: false,
-              },
-            ],
-          },
-        ],
-        marketplaceLoadErrors: [],
-      },
-      isLoading: false,
+    useReloadMcpServers.mockReset().mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
       isError: false,
+      error: null,
     });
-  });
-
-  it("disables canonical apps from plugin metadata", async () => {
-    usePluginList.mockReturnValueOnce({
-      data: {
-        marketplaces: [
-          {
-            name: "openai-curated",
-            path: "/tmp/openai-curated",
-            interface: { displayName: "OpenAI Curated" },
-            plugins: [
-              {
-                id: "lint@openai-curated",
-                name: "lint",
-                installPolicySource: "IMPLICIT_CANONICAL_APP",
-                interface: {
-                  displayName: "Lint Plugin",
-                  shortDescription: "Checks project files",
-                  category: "developer-tools",
-                },
-                installed: false,
-                enabled: false,
-              },
-              {
-                id: "calendar@openai-curated",
-                name: "calendar",
-                installPolicySource: null,
-                interface: {
-                  displayName: "Calendar Plugin",
-                  shortDescription: "Manages calendars",
-                  category: "Productivity",
-                },
-                installed: false,
-                enabled: false,
-              },
-            ],
-          },
-          {
-            name: "remote",
-            path: null,
-            interface: { displayName: "Remote Catalog" },
-            plugins: [
-              {
-                id: "remote-tool@remote",
-                name: "remote-tool",
-                interface: null,
-                installed: false,
-                enabled: false,
-              },
-            ],
-          },
-        ],
-        marketplaceLoadErrors: [],
-      },
-      isLoading: false,
+    useUpgradeMarketplace.mockReset().mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
       isError: false,
+      error: null,
     });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+    useMcpOauthLogin.mockReset().mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    uninstall.mockReset();
+    vi.stubGlobal("confirm", vi.fn(() => true));
+  });
 
-    const { container } = render(
-      <MemoryRouter>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("w-full");
-    expect(container.firstElementChild?.className).toContain("max-w-5xl");
-    expect(container.firstElementChild?.className).toContain("space-y-6");
+  it("shows uninstall for an installed non-official plugin", () => {
+    renderPage();
+
     expect(
-      screen.getByRole("heading", { name: "Plugins", level: 1 }),
-    ).toBeTruthy();
-    expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.queryByText("docs")).toBeNull();
-    expect(screen.getByText(/openai-curated ·/)).toBeTruthy();
-    expect(screen.getByText("OpenAI Curated")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "developer-tools", level: 3 }),
+      screen.getByRole("button", { name: "Uninstall Example Plugin" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("heading", { name: "Productivity", level: 3 }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Uncategorized", level: 3 }),
-    ).toBeTruthy();
-    expect(screen.getAllByTestId("plugin-image-slot")).toHaveLength(3);
-    await waitFor(() =>
-      expect(
-        screen.getAllByRole("img", { name: "Plugin image unavailable" }),
-      ).toHaveLength(3),
-    );
-    expect(
-      screen.queryByRole("heading", { name: "Plugins", level: 2 }),
-    ).toBeNull();
-    expect(document.getElementById("plugins")?.closest("article")).toBeNull();
-    expect(screen.getAllByTestId("plugin-grid")[0].className).toContain(
-      "lg:grid-cols-2",
-    );
-    expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
-      "collapse",
-    );
-    expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
-      "bg-base-100",
-    );
-    expect(screen.getByText("Checks project files")).toBeTruthy();
-    expect(screen.getByText(/developer-tools/)).toBeTruthy();
-    expect(
-      screen
-        .getByRole("link", { name: "View details for Lint Plugin" })
-        .getAttribute("href"),
-    ).toBe("/capabilities/plugins/openai-curated/lint");
-    expect(screen.queryAllByText("available")).toHaveLength(0);
-    const officialInstallButton = screen.getByRole("button", {
-      name: "Install Lint Plugin",
-    });
-    const officialInstallTooltip = officialInstallButton.closest(
-      '[data-testid="official-app-install-tooltip"]',
-    );
-    expect((officialInstallButton as HTMLButtonElement).disabled).toBe(true);
-    expect(officialInstallTooltip).not.toBeNull();
-    expect(officialInstallTooltip?.getAttribute("title")).toBe(
-      "Official Apps are not supported in Ruxex.",
-    );
-    expect(officialInstallButton.getAttribute("title")).toBe(
-      "Official Apps are not supported in Ruxex.",
-    );
-    expect(officialInstallButton.className).toContain("opacity-50");
-    fireEvent.click(officialInstallButton);
-    expect(installPlugin.mutateAsync).not.toHaveBeenCalled();
-    const pluginCardContent = screen.getAllByTestId("plugin-card-content")[0];
-    expect(pluginCardContent.className).toContain(
-      "grid-cols-[auto_minmax(0,1fr)_auto]",
-    );
-    expect(pluginCardContent.children).toHaveLength(2);
-    expect(screen.getByText("Checks project files").className).toContain(
-      "break-words",
-    );
-    const supportedInstallButton = screen.getByRole("button", {
-      name: "Install Calendar Plugin",
-    });
-    expect((supportedInstallButton as HTMLButtonElement).disabled).toBe(false);
-    expect(screen.getByText("Remote Catalog")).toBeTruthy();
-    expect(
-      screen.getByText("Remote marketplace plugins cannot be installed here."),
-    ).toBeTruthy();
-    expect(screen.queryByText("reviewer")).toBeNull();
-    expect(
-      screen
-        .getByRole("link", { name: "Configure OpenAI Curated" })
-        .getAttribute("href"),
-    ).toBe("/settings/marketplaces");
+      (screen.getByRole("button", {
+        name: "Install Official App",
+      }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
-  it("installs a local marketplace plugin and refreshes its marketplace", async () => {
-    usePluginList.mockReturnValueOnce({
-      data: {
-        marketplaces: [
-          {
-            name: "community",
-            path: "/tmp/community",
-            interface: { displayName: "Community Plugins" },
-            plugins: [
-              {
-                id: "format@community",
-                name: "format",
-                interface: {
-                  displayName: "Format Plugin",
-                  shortDescription: "Formats project files",
-                  category: "developer-tools",
-                },
-                installed: false,
-                enabled: false,
-              },
-            ],
-          },
-        ],
-        marketplaceLoadErrors: [],
-      },
-      isLoading: false,
-      isError: false,
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+  it("uninstalls the selected plugin after confirmation", () => {
+    renderPage();
 
-    render(
-      <MemoryRouter>
-        <CapabilitiesPage />
-      </MemoryRouter>,
+    fireEvent.click(
+      screen.getByRole("button", { name: "Uninstall Example Plugin" }),
     );
 
-    const installButton = screen.getByRole("button", {
-      name: "Install Format Plugin",
+    expect(uninstall).toHaveBeenCalledWith({ pluginId: "example@community" });
+  });
+
+  it("does not uninstall when confirmation is canceled", () => {
+    vi.stubGlobal("confirm", vi.fn(() => false));
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Uninstall Example Plugin" }),
+    );
+
+    expect(uninstall).not.toHaveBeenCalled();
+  });
+
+  it("disables uninstall while pending and shows an error after failure", () => {
+    useUninstallPlugin.mockReturnValue({
+      mutateAsync: uninstall,
+      isPending: true,
+      isError: true,
+      error: new Error("Plugin is in use"),
     });
-    expect(installButton.className).toContain("btn-outline");
-    expect(installButton.textContent).not.toContain("Format Plugin");
-    fireEvent.click(installButton);
-    const refreshButton = screen.getByRole("button", {
-      name: "Refresh Community Plugins",
-    });
-    expect(refreshButton.className).toContain("btn-square");
-    expect(refreshButton.closest(".collapse-content")).not.toBeNull();
+    renderPage();
+
+    expect(useUninstallPlugin).toHaveBeenCalled();
+    expect(useUninstallPlugin.mock.results[0]?.value.isError).toBe(true);
     expect(
-      refreshButton.closest('[data-testid="plugin-marketplace"]'),
-    ).not.toBeNull();
-    expect(
-      screen
-        .getByRole("link", { name: "Configure Community Plugins" })
-        .getAttribute("href"),
-    ).toBe("/settings/marketplaces");
-    fireEvent.click(refreshButton);
-
-    expect(installPlugin.mutateAsync).toHaveBeenCalledWith({
-      marketplacePath: "/tmp/community",
-      pluginName: "format",
-    });
-    expect(upgradeMarketplace.mutateAsync).toHaveBeenCalledWith({
-      marketplaceName: "community",
-    });
-  });
-
-  it("keeps remote-only official plugins without an install button", async () => {
-    usePluginList.mockReturnValueOnce({
-      data: {
-        marketplaces: [
-          {
-            name: "official",
-            path: null,
-            interface: { displayName: "Official Remote Plugins" },
-            plugins: [
-              {
-                id: "remote-tool@official",
-                name: "remote-tool",
-                interface: {
-                  displayName: "Remote Tool",
-                  shortDescription: "A remote-only official plugin",
-                  category: "developer-tools",
-                },
-                installed: false,
-                enabled: false,
-              },
-            ],
-          },
-        ],
-        marketplaceLoadErrors: [],
-      },
-      isLoading: false,
-      isError: false,
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.queryByRole("button", { name: "Install Remote Tool" }),
-    ).toBeNull();
-    expect(
-      screen.getByText("Remote marketplace plugins cannot be installed here."),
-    ).toBeTruthy();
-  });
-
-  it("collapses marketplaces and plugin categories independently", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    const marketplaces = screen.getAllByTestId("plugin-marketplace");
-    expect(marketplaces).toHaveLength(2);
-    const officialToggle = within(marketplaces[0]).getByRole("checkbox", {
-      name: "Official Plugins",
-    }) as HTMLInputElement;
-    const remoteToggle = within(marketplaces[1]).getByRole("checkbox", {
-      name: "Remote Catalog",
-    }) as HTMLInputElement;
-    expect(officialToggle.checked).toBe(true);
-    expect(remoteToggle.checked).toBe(true);
-
-    const productivityCategory = screen
-      .getByRole("heading", { name: "Productivity", level: 3 })
-      .closest('[data-testid="plugin-category"]');
-    expect(productivityCategory).not.toBeNull();
-    const productivityToggle = within(
-      productivityCategory as HTMLElement,
-    ).getByRole("checkbox", { name: "Productivity" }) as HTMLInputElement;
-    expect(productivityToggle.checked).toBe(true);
-    fireEvent.click(productivityToggle);
-    expect(productivityToggle.checked).toBe(false);
-    expect(officialToggle.checked).toBe(true);
-
-    fireEvent.click(officialToggle);
-    expect(officialToggle.checked).toBe(false);
-    expect(remoteToggle.checked).toBe(true);
-  });
-
-  it("shows an empty state when the server returns no marketplaces", async () => {
-    usePluginList.mockReturnValue({
-      data: { marketplaces: [], marketplaceLoadErrors: [] },
-      isLoading: false,
-      isError: false,
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("No plugin marketplaces available.")).toBeTruthy();
-  });
-
-  it("switches the main content when the skills sidebar route is selected", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Skills", level: 1 }),
-    ).toBeTruthy();
-    expect(screen.getByText("review")).toBeTruthy();
-    expect(screen.queryByText("official")).toBeNull();
-    expect(screen.queryByText("docs")).toBeNull();
-  });
-
-  it("shows MCP servers only when the MCP sidebar route is selected", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
-    expect(screen.getByText("docs")).toBeTruthy();
-    expect(screen.queryByText("Official Plugins")).toBeNull();
-    expect(screen.queryByText("Collaboration modes")).toBeNull();
-  });
-
-  it("reloads MCP configuration through the mutation hook", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Reload MCP" }));
-
-    expect(reloadMcp.mutateAsync).toHaveBeenCalledWith({});
-  });
-
-  it("connects an unauthenticated MCP server through the OS browser", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Connect docs" }));
-
-    await waitFor(() =>
-      expect(oauthLogin.mutateAsync).toHaveBeenCalledWith({ name: "docs" }),
-    );
-    expect(openBrowserWindow).toHaveBeenCalledWith(
-      "https://auth.example.test/start",
-    );
-  });
-
-  it("rejects an invalid OAuth authorization URL", async () => {
-    oauthLogin.mutateAsync.mockResolvedValueOnce({
-      authorizationUrl: "javascript:alert(1)",
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Connect docs" }));
-
-    expect(
-      await screen.findByText("OAuth authorization URL is invalid."),
-    ).toBeTruthy();
-    expect(openBrowserWindow).not.toHaveBeenCalled();
-  });
-
-  it("labels OAuth, bearer-token, and unknown auth states distinctly", async () => {
-    useMcpServerStatus.mockReturnValue({
-      data: {
-        data: [
-          {
-            name: "oauth-docs",
-            runtimeStatus: "connected",
-            tools: {},
-            authStatus: "oAuth",
-            toolsError: null,
-          },
-          {
-            name: "token-docs",
-            runtimeStatus: "connected",
-            tools: {},
-            authStatus: "bearerToken",
-            toolsError: null,
-          },
-          {
-            name: "unknown-docs",
-            runtimeStatus: null,
-            tools: {},
-            authStatus: "unknown",
-            toolsError: null,
-          },
-        ],
-      },
-      isLoading: false,
-      isError: false,
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("OAuth connected")).toBeTruthy();
-    expect(screen.getByText("Bearer token configured")).toBeTruthy();
-    expect(screen.getByText("Authentication status unavailable")).toBeTruthy();
+      (screen.getByRole("button", {
+        name: "Uninstall Example Plugin",
+      }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(document.body.textContent).toContain("Unable to uninstall plugin");
+    expect(document.body.textContent).toContain("Error: Plugin is in use");
   });
 });

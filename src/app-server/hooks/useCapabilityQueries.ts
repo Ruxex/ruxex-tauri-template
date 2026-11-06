@@ -98,14 +98,16 @@ type PluginMutationParams =
   | v2.MarketplaceAddParams
   | v2.MarketplaceRemoveParams
   | v2.MarketplaceUpgradeParams
-  | v2.PluginInstallParams;
+  | v2.PluginInstallParams
+  | v2.PluginUninstallParams;
 
 function usePluginMutation<TParams extends PluginMutationParams, TResponse>(
   method:
     | "marketplace/add"
     | "marketplace/remove"
     | "marketplace/upgrade"
-    | "plugin/install",
+    | "plugin/install"
+    | "plugin/uninstall",
 ) {
   const queryClient = useQueryClient();
 
@@ -121,6 +123,14 @@ function usePluginMutation<TParams extends PluginMutationParams, TResponse>(
       void queryClient.invalidateQueries({
         queryKey: appServerQueryKeys.plugins,
       });
+      if (method === "plugin/uninstall") {
+        void queryClient.invalidateQueries({
+          queryKey: appServerQueryKeys.skills,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: appServerQueryKeys.mcpServers,
+        });
+      }
       if (method.startsWith("marketplace/")) {
         void queryClient.invalidateQueries({
           queryKey: appServerQueryKeys.configRoot,
@@ -154,6 +164,13 @@ export function useInstallPlugin() {
   return usePluginMutation<v2.PluginInstallParams, v2.PluginInstallResponse>(
     "plugin/install",
   );
+}
+
+export function useUninstallPlugin() {
+  return usePluginMutation<
+    v2.PluginUninstallParams,
+    v2.PluginUninstallResponse
+  >("plugin/uninstall");
 }
 
 export function useCollaborationModes() {

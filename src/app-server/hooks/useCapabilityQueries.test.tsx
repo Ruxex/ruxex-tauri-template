@@ -84,6 +84,11 @@ describe("capability query and mutation hooks", () => {
       "plugin/install",
       { marketplacePath: "/tmp/community", pluginName: "example" },
     ],
+    [
+      "useUninstallPlugin",
+      "plugin/uninstall",
+      { pluginId: "example@community" },
+    ],
     ["useStartReview", "review/start", { threadId: "thread-1", target: {} }],
     [
       "useUpdateTurnSettings",
@@ -283,6 +288,34 @@ describe("capability query and mutation hooks", () => {
 
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "plugins"],
+    });
+  });
+
+  it("invalidates related capability queries after plugin uninstall", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { useUninstallPlugin } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useUninstallPlugin(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () =>
+      result.current.mutateAsync({ pluginId: "example@community" }),
+    );
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "plugins"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "skills"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "mcp-servers"],
     });
   });
 

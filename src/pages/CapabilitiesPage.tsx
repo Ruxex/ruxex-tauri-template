@@ -2,6 +2,7 @@ import {
   ArrowPathIcon,
   Cog6ToothIcon,
   PlusIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Link, NavLink, useSearchParams } from "react-router-dom";
@@ -14,6 +15,7 @@ import {
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
+  useUninstallPlugin,
   useUpgradeMarketplace,
 } from "../app-server/hooks";
 import {
@@ -121,6 +123,7 @@ export function CapabilitiesPage() {
   const plugins = usePluginList();
   const reloadMcp = useReloadMcpServers();
   const installPlugin = useInstallPlugin();
+  const uninstallPlugin = useUninstallPlugin();
   const upgradeMarketplace = useUpgradeMarketplace();
   const oauthLogin = useMcpOauthLogin();
 
@@ -388,6 +391,8 @@ export function CapabilitiesPage() {
                                       !isRemoteOnly && !isOfficialApps;
                                     const isInstalling =
                                       installPlugin.isPending;
+                                    const isUninstalling =
+                                      uninstallPlugin.isPending;
                                     const pluginLocalImage =
                                       plugin.interface?.logo ??
                                       plugin.interface?.logoDark ??
@@ -424,6 +429,38 @@ export function CapabilitiesPage() {
                                           />
                                         ) : (
                                           <PlusIcon
+                                            aria-hidden="true"
+                                            className="size-4"
+                                          />
+                                        )}
+                                      </button>
+                                    );
+                                    const uninstallButton = (
+                                      <button
+                                        aria-label={`Uninstall ${displayName}`}
+                                        className="btn btn-outline btn-square btn-sm text-error"
+                                        disabled={isUninstalling}
+                                        onClick={() => {
+                                          if (
+                                            window.confirm(
+                                              `Uninstall ${displayName}?`,
+                                            )
+                                          ) {
+                                            void uninstallPlugin.mutateAsync({
+                                              pluginId: plugin.id,
+                                            });
+                                          }
+                                        }}
+                                        title={`Uninstall ${displayName}`}
+                                        type="button"
+                                      >
+                                        {isUninstalling ? (
+                                          <span
+                                            aria-hidden="true"
+                                            className="loading loading-spinner loading-xs"
+                                          />
+                                        ) : (
+                                          <TrashIcon
                                             aria-hidden="true"
                                             className="size-4"
                                           />
@@ -497,6 +534,9 @@ export function CapabilitiesPage() {
                                             </div>
                                           </Link>
                                           <div className="flex size-8 shrink-0 items-start justify-end">
+                                            {plugin.installed &&
+                                              !isOfficialApps &&
+                                              uninstallButton}
                                             {!plugin.installed &&
                                               !isRemoteOnly &&
                                               (isInstallable ||
@@ -539,6 +579,11 @@ export function CapabilitiesPage() {
             <p className="mt-2 text-sm text-error">
               Unable to install plugin:{" "}
               {formatErrorMessage(installPlugin.error)}
+            </p>
+          )}
+          {uninstallPlugin.isError && (
+            <p className="mt-2 text-sm text-error">
+              Unable to uninstall plugin: {formatErrorMessage(uninstallPlugin.error)}
             </p>
           )}
           {upgradeMarketplace.isError && (
