@@ -57,7 +57,11 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     pendingRequests,
   });
   const isBusy = liveStatus === "running" || liveStatus === "resynchronizing";
-  const workingSeconds = useWorkingSeconds(isBusy ? workingStartedAt : null);
+  const showActiveIndicator = isBusy && pendingRequests.length === 0;
+  const showCompletedIndicator = !isBusy && completedTurn != null;
+  const workingSeconds = useWorkingSeconds(
+    showActiveIndicator ? workingStartedAt : null,
+  );
   const workingLabel =
     workingSeconds === null ? "Working" : `Working for ${workingSeconds}s`;
   const workedSeconds = completedTurn
@@ -67,14 +71,16 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     workedSeconds === null
       ? "Worked"
       : `Worked for ${formatDuration(workedSeconds)}`;
-  const indicatorLabel = isBusy ? workingLabel : workedLabel;
-  const indicatorTurnId = isBusy ? workingTurnId : (completedTurn?.id ?? null);
+  const indicatorLabel = showActiveIndicator ? workingLabel : workedLabel;
+  const indicatorTurnId = showActiveIndicator
+    ? workingTurnId
+    : (completedTurn?.id ?? null);
   const indicatorItemIndex = indicatorTurnId
     ? visibleItems.findIndex((item) => item.turnId === indicatorTurnId)
     : 0;
   const indicatorInsertionIndex =
     indicatorItemIndex < 0 ? 0 : indicatorItemIndex;
-  const showIndicator = isBusy || completedTurn != null;
+  const showIndicator = showActiveIndicator || showCompletedIndicator;
 
   return (
     <section
@@ -84,12 +90,15 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       ref={timelineRef}
     >
       {visibleItems.length === 0 && showIndicator && (
-        <WorkingIndicator label={indicatorLabel} />
+        <WorkingIndicator active={showActiveIndicator} label={indicatorLabel} />
       )}
       {visibleItems.map((item, index) => (
         <Fragment key={`item:${item.turnId}:${item.id}`}>
           {showIndicator && index === indicatorInsertionIndex && (
-            <WorkingIndicator label={indicatorLabel} />
+            <WorkingIndicator
+              active={showActiveIndicator}
+              label={indicatorLabel}
+            />
           )}
           {item.category === "message" ? (
             <ConversationItem item={item} onEdit={onEdit} />
@@ -191,7 +200,13 @@ function formatDuration(seconds: number): string {
   return `${remainingSeconds}s`;
 }
 
-function WorkingIndicator({ label }: { label: string }) {
+function WorkingIndicator({
+  active = false,
+  label,
+}: {
+  active?: boolean;
+  label: string;
+}) {
   return (
     <div
       aria-label={label}
@@ -199,7 +214,17 @@ function WorkingIndicator({ label }: { label: string }) {
       className="border-t border-base-300 pt-3 text-center text-sm text-base-content/60"
       role="status"
     >
-      {label}
+      {active ? (
+        <>
+          <span
+            aria-hidden="true"
+            className="loading loading-dots loading-sm"
+          />
+          <span className="sr-only">{label}</span>
+        </>
+      ) : (
+        label
+      )}
     </div>
   );
 }

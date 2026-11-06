@@ -220,7 +220,7 @@ describe("ChatActivityTimeline", () => {
     ).toEqual(["conversation-item", "pending-request"]);
   });
 
-  it("renders a Codex-style working duration before pending requests", () => {
+  it("does not show a working indicator while waiting for a pending request", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(43_000));
 
@@ -252,8 +252,39 @@ describe("ChatActivityTimeline", () => {
       />,
     );
 
+    expect(screen.queryByRole("status")).toBeNull();
+
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(timeline.children[0]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+    expect(timeline.children[1]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+    expect(timeline.lastElementChild).toBe(screen.getByTestId("pending-request"));
+  });
+
+  it("shows loading dots while running without a pending request", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(43_000));
+
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        liveItems={[]}
+        liveStatus="running"
+        workingTurnId="turn-1"
+        workingStartedAt={1}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
     const working = screen.getByRole("status", { name: "Working for 42s" });
     expect(working.textContent).toBe("Working for 42s");
+    expect(working.querySelector(".loading-dots")).toBeTruthy();
     expect(working.querySelector(".loading-spinner")).toBeNull();
 
     act(() => {
@@ -262,18 +293,6 @@ describe("ChatActivityTimeline", () => {
     expect(
       screen.getByRole("status", { name: "Working for 45s" }),
     ).toBeTruthy();
-
-    const timeline = screen.getByRole("region", { name: "Chat activity" });
-    expect(timeline.children[0]?.getAttribute("data-testid")).toBe(
-      "conversation-item",
-    );
-    expect(timeline.children[1]).toBe(working);
-    expect(timeline.children[2]?.getAttribute("data-testid")).toBe(
-      "conversation-item",
-    );
-    expect(timeline.lastElementChild).toBe(
-      screen.getByTestId("pending-request"),
-    );
   });
 
   it("renders the completed turn duration at the completed turn", () => {
@@ -353,6 +372,9 @@ describe("ChatActivityTimeline", () => {
     expect(screen.getByRole("status", { name: "Working" }).textContent).toBe(
       "Working",
     );
+    expect(
+      screen.getByRole("status", { name: "Working" }).querySelector(".loading-dots"),
+    ).toBeTruthy();
   });
 
   it("removes the working indicator when the turn is no longer running", () => {

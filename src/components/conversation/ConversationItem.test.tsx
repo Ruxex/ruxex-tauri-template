@@ -28,7 +28,9 @@ describe("ConversationItem", () => {
 
     expect(screen.queryByText("You")).toBeNull();
     expect(screen.getByText("Inspect").tagName).toBe("STRONG");
-    expect(screen.getByText("src").tagName).toBe("CODE");
+    const inlineCode = screen.getByText("src");
+    expect(inlineCode.tagName).toBe("CODE");
+    expect(inlineCode.className.split(/\s+/)).toContain("text-base-content");
     expect(screen.getByRole("article").className).toContain("chat-end");
 
     const messageSurface = screen.getByText("Inspect").closest("p")

@@ -114,6 +114,11 @@ describe("ServerRequestCard", () => {
     ).toBeTruthy();
     expect(screen.getByText("ruxex_smoke")).toBeTruthy();
     expect(screen.getByText("smoke-v1")).toBeTruthy();
+    expect(
+      screen.queryByText('Allow the ruxex_smoke MCP server to run tool "echo"?'),
+    ).toBeNull();
+    expect(screen.queryByText("thread-1")).toBeNull();
+    expect(screen.queryByText("turn-1")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Allow" }));
 
     expect(onResolve).toHaveBeenCalledWith({

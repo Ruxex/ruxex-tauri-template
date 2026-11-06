@@ -47,7 +47,6 @@ export function ServerRequestCard({
         mode?: string;
         _meta?: unknown;
         serverName: string;
-        message?: string;
       })
     : null;
   const mcpMeta = (mcpParams?._meta ?? null) as {
@@ -64,6 +63,9 @@ export function ServerRequestCard({
     mcpParams?.mode === "form" &&
     mcpMeta?.ruxex_approval_kind === "mcp_tool_call";
   const scope = buildApprovalScope(request);
+  const displayScope = Object.entries(scope).filter(
+    ([key]) => !isMcpToolApproval || (key !== "threadId" && key !== "turnId"),
+  );
   const title = isMcpToolApproval
     ? "MCP approval requested"
     : isUserInput
@@ -122,7 +124,6 @@ export function ServerRequestCard({
           {isMcpToolApproval && mcpParams && (
             <div className="mt-2 space-y-2 text-sm">
               <p>{mcpParams.serverName}</p>
-              <p>{mcpParams.message}</p>
               {mcpMeta?.tool_title && <p>{mcpMeta.tool_title}</p>}
               {mcpMeta?.tool_description && (
                 <p className="text-base-content/60">
@@ -138,7 +139,7 @@ export function ServerRequestCard({
             </div>
           )}
           <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
-            {Object.entries(scope).map(([key, value]) => (
+            {displayScope.map(([key, value]) => (
               <div className="flex min-w-0 gap-2" key={key}>
                 <dt className="font-medium">{key}</dt>
                 <dd className="truncate" title={value}>

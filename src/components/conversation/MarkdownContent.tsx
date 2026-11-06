@@ -23,7 +23,10 @@ function renderInline(text: string): ReactNode[] {
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code className="rounded bg-base-300 px-1 py-0.5 text-sm" key={key}>
+        <code
+          className="rounded bg-base-300 px-1 py-0.5 text-base-content text-sm"
+          key={key}
+        >
           {part.slice(1, -1)}
         </code>
       );
