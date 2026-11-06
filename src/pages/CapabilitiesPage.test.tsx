@@ -16,6 +16,7 @@ const useInstallPlugin = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
+const useWriteSkillConfig = vi.hoisted(() => vi.fn());
 const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
 const useMcpOauthLogin = vi.hoisted(() => vi.fn());
 const useUninstallPlugin = vi.hoisted(() => vi.fn());
@@ -44,6 +45,13 @@ const oauthLogin = vi.hoisted(() => ({
   isError: false,
   error: null,
 }));
+const writeSkillConfig = vi.hoisted(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+  variables: undefined,
+}));
 const uninstallPlugin = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
@@ -57,6 +65,7 @@ vi.mock("../app-server/hooks", () => ({
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
+  useWriteSkillConfig,
   useUpgradeMarketplace,
   useMcpOauthLogin,
   useUninstallPlugin,
@@ -112,6 +121,9 @@ describe("CapabilitiesPage", () => {
       isLoading: false,
       isError: false,
     });
+    writeSkillConfig.mutateAsync.mockReset();
+    writeSkillConfig.mutateAsync.mockResolvedValue({ effectiveEnabled: true });
+    useWriteSkillConfig.mockReturnValue(writeSkillConfig);
     usePluginList.mockReturnValue({
       data: {
         marketplaces: [
@@ -664,6 +676,149 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("review")).toBeTruthy();
     expect(screen.queryByText("official")).toBeNull();
     expect(screen.queryByText("docs")).toBeNull();
+  });
+
+  it("renders Skills with enabled state and writes by path", async () => {
+    const reviewPath = "/workspace/.agents/skills/review";
+    const deployPath = "/workspace/.agents/skills/deploy";
+    const mutateAsync = vi.fn().mockResolvedValue({ effectiveEnabled: false });
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace",
+            skills: [
+              {
+                name: "review",
+                description: "Review project changes",
+                path: reviewPath,
+                scope: "user",
+                enabled: true,
+                pluginId: null,
+              },
+              {
+                name: "deploy",
+                description: "Deploy the project",
+                path: deployPath,
+                scope: "workspace",
+                enabled: false,
+                pluginId: "deploy@community",
+              },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    useWriteSkillConfig.mockReturnValue({
+      ...writeSkillConfig,
+      mutateAsync,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    const reviewToggle = screen.getByRole("switch", { name: "Enable review" });
+    const deployToggle = screen.getByRole("switch", { name: "Enable deploy" });
+    expect((reviewToggle as HTMLInputElement).checked).toBe(true);
+    expect((deployToggle as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(reviewToggle);
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      path: reviewPath,
+      enabled: false,
+    });
+  });
+
+  it("limits Skill pending state to the affected path", async () => {
+    const reviewPath = "/workspace/.agents/skills/review";
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace",
+            skills: [
+              { name: "review", path: reviewPath, enabled: true, pluginId: null },
+              { name: "deploy", path: "/workspace/.agents/skills/deploy", enabled: false, pluginId: null },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    useWriteSkillConfig.mockReturnValue({
+      ...writeSkillConfig,
+      isPending: true,
+      variables: { path: reviewPath, enabled: false },
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      (screen.getByRole("switch", { name: "Enable review" }) as HTMLInputElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("switch", { name: "Enable deploy" }) as HTMLInputElement)
+        .disabled,
+    ).toBe(false);
+  });
+
+  it("keeps the server state after a failed Skill update", async () => {
+    const mutateAsync = vi
+      .fn()
+      .mockRejectedValue(new Error("Skill config rejected"));
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace",
+            skills: [
+              {
+                name: "review",
+                path: "/workspace/.agents/skills/review",
+                enabled: true,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    useWriteSkillConfig.mockReturnValue({
+      ...writeSkillConfig,
+      mutateAsync,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+    const reviewToggle = screen.getByRole("switch", { name: "Enable review" });
+    fireEvent.click(reviewToggle);
+
+    await waitFor(() =>
+      expect(document.body.textContent).toContain("Skill config rejected"),
+    );
+    expect((reviewToggle as HTMLInputElement).checked).toBe(true);
   });
 
   it("shows MCP servers only when the MCP sidebar route is selected", async () => {

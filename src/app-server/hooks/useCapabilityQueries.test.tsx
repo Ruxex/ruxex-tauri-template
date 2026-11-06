@@ -89,6 +89,11 @@ describe("capability query and mutation hooks", () => {
       "plugin/uninstall",
       { pluginId: "example@community" },
     ],
+    [
+      "useWriteSkillConfig",
+      "skills/config/write",
+      { path: "/workspace/.agents/skills/review", enabled: false },
+    ],
     ["useStartReview", "review/start", { threadId: "thread-1", target: {} }],
     [
       "useUpdateTurnSettings",
@@ -316,6 +321,31 @@ describe("capability query and mutation hooks", () => {
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "mcp-servers"],
+    });
+  });
+
+  it("invalidates Skills after a successful Skill config write", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const { useWriteSkillConfig } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useWriteSkillConfig(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () =>
+      result.current.mutateAsync({
+        path: "/workspace/.agents/skills/review",
+        enabled: false,
+      }),
+    );
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "skills"],
     });
   });
 

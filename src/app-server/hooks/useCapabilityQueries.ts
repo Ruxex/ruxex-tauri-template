@@ -19,6 +19,25 @@ export function useSkillsList(params: v2.SkillsListParams = {}) {
   });
 }
 
+export function useWriteSkillConfig() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.SkillsConfigWriteParams) => {
+      const response = await requestAppServerMethod(
+        "skills/config/write",
+        params,
+      );
+      return response.response;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.skills,
+      });
+    },
+  });
+}
+
 export function useMcpServerStatus(params: v2.ListMcpServerStatusParams = {}) {
   const status = useAppServerStatus();
 

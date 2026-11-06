@@ -17,6 +17,7 @@ import {
   useSkillsList,
   useUninstallPlugin,
   useUpgradeMarketplace,
+  useWriteSkillConfig,
 } from "../app-server/hooks";
 import {
   StateBadge,
@@ -25,6 +26,7 @@ import {
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { openBrowserWindow } from "../platform/native";
+import type { v2 } from "../protocol";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
 
@@ -112,6 +114,10 @@ function pluginDetailsPath(
 
 export function CapabilitiesPage() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [skillMutationPath, setSkillMutationPath] = useState<string | null>(
+    null,
+  );
+  const [skillErrors, setSkillErrors] = useState<Record<string, string>>({});
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: CapabilityTab =
@@ -126,6 +132,29 @@ export function CapabilitiesPage() {
   const uninstallPlugin = useUninstallPlugin();
   const upgradeMarketplace = useUpgradeMarketplace();
   const oauthLogin = useMcpOauthLogin();
+  const writeSkillConfig = useWriteSkillConfig();
+
+  async function toggleSkill(skill: v2.SkillMetadata) {
+    setSkillMutationPath(skill.path);
+    setSkillErrors((current) => {
+      const next = { ...current };
+      delete next[skill.path];
+      return next;
+    });
+    try {
+      await writeSkillConfig.mutateAsync({
+        path: skill.path,
+        enabled: !skill.enabled,
+      });
+    } catch (error) {
+      setSkillErrors((current) => ({
+        ...current,
+        [skill.path]: formatErrorMessage(error),
+      }));
+    } finally {
+      setSkillMutationPath(null);
+    }
+  }
 
   async function connectMcpServer(name: string) {
     setConnectionError(null);
@@ -266,11 +295,63 @@ export function CapabilitiesPage() {
                 {skills.data?.data.map((entry) => (
                   <li className="rounded-box bg-base-200 p-3" key={entry.cwd}>
                     <p className="text-xs text-base-content/60">{entry.cwd}</p>
-                    <p className="mt-1 font-medium">
-                      {entry.skills.length
-                        ? entry.skills.map((skill) => skill.name).join(", ")
-                        : "No skills"}
-                    </p>
+                    {entry.skills.length ? (
+                      <ul className="mt-2 space-y-2">
+                        {entry.skills.map((skill) => {
+                          const pendingPath =
+                            skillMutationPath ??
+                            (writeSkillConfig.isPending
+                              ? writeSkillConfig.variables?.path
+                              : null);
+                          const isPending = pendingPath === skill.path;
+                          const error = skillErrors[skill.path];
+                          return (
+                            <li
+                              className="rounded-box border border-base-300 bg-base-100 p-2"
+                              key={skill.path}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="font-medium">{skill.name}</p>
+                                  {skill.description && (
+                                    <p className="text-sm text-base-content/70">
+                                      {skill.description}
+                                    </p>
+                                  )}
+                                  <p className="mt-1 truncate text-xs text-base-content/60" title={skill.path}>
+                                    {skill.scope} · {skill.path}
+                                  </p>
+                                  {skill.pluginId && (
+                                    <p className="text-xs text-base-content/60">
+                                      {skill.pluginId}
+                                    </p>
+                                  )}
+                                </div>
+                                <label className="flex shrink-0 items-center gap-2 text-sm">
+                                  <span className="sr-only">Enable {skill.name}</span>
+                                  <input
+                                    aria-label={`Enable ${skill.name}`}
+                                    aria-checked={skill.enabled}
+                                    checked={skill.enabled}
+                                    disabled={isPending}
+                                    onChange={() => void toggleSkill(skill)}
+                                    role="switch"
+                                    type="checkbox"
+                                  />
+                                </label>
+                              </div>
+                              {error && (
+                                <p className="mt-1 text-xs text-error" role="alert">
+                                  Unable to update Skill: {error}
+                                </p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 font-medium">No skills</p>
+                    )}
                     {entry.errors.length > 0 && (
                       <p className="mt-1 text-xs text-error">
                         {entry.errors.length} discovery errors
