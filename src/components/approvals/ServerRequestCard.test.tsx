@@ -52,6 +52,35 @@ const mcpPending = {
   },
 } as never as PendingServerRequest;
 
+const permissionsPending = {
+  requestId: 31,
+  kind: "approval",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: "item-1",
+  request: {
+    method: "item/permissions/requestApproval",
+    id: 31,
+    params: {
+      threadId: "thread-1",
+      turnId: "turn-1",
+      itemId: "item-1",
+      environmentId: null,
+      startedAtMs: 123,
+      cwd: "/workspace",
+      reason: "Need to inspect the project",
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          globScanMaxDepth: 3,
+        },
+      },
+    },
+  },
+} as never as PendingServerRequest;
+
 describe("ServerRequestCard", () => {
   afterEach(cleanup);
 
@@ -94,6 +123,76 @@ describe("ServerRequestCard", () => {
         .querySelector("svg")
         ?.getAttribute("class"),
     ).toContain("text-warning");
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Deny" })).toBeNull();
+  });
+
+  it("shows permission details and resolves an allowed session grant", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={permissionsPending}
+      />,
+    );
+
+    expect(screen.getByText("Need to inspect the project")).toBeTruthy();
+    expect(screen.getByText("Network access")).toBeTruthy();
+    expect(screen.getByTitle("/workspace/read")).toBeTruthy();
+    expect(screen.getByTitle("/workspace/write")).toBeTruthy();
+    expect(
+      (screen.getByRole("radio", { name: "This turn" }) as HTMLInputElement)
+        .checked,
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole("radio", { name: "This session" }));
+    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          globScanMaxDepth: 3,
+        },
+      },
+      scope: "session",
+    });
+  });
+
+  it("denies permission requests without granting access", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={permissionsPending}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Deny" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      permissions: {},
+      scope: "turn",
+    });
+  });
+
+  it("does not expose permission controls while disconnected", () => {
+    render(
+      <ServerRequestCard
+        connected={false}
+        onReject={vi.fn(async () => undefined)}
+        onResolve={vi.fn(async () => undefined)}
+        pending={permissionsPending}
+      />,
+    );
+
+    expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Deny" })).toBeNull();
   });

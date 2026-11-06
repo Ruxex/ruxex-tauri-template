@@ -9,12 +9,15 @@ import {
 } from "@heroicons/react/24/outline";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
+import type { v2 } from "../../protocol";
 import {
   buildApprovalResponse,
   buildApprovalScope,
   buildMcpElicitationResponse,
+  buildPermissionsApprovalResponse,
   buildUserInputResponse,
   canResolvePendingRequest,
+  isPermissionsApproval,
   isRequestActionable,
   type ApprovalDecision,
 } from "./approval-model";
@@ -34,14 +37,20 @@ export function ServerRequestCard({
   onReject,
 }: ServerRequestCardProps) {
   const [answer, setAnswer] = useState("");
+  const [permissionScope, setPermissionScope] =
+    useState<v2.PermissionGrantScope>("turn");
   const request = pending.request;
   const actionable = canResolvePendingRequest(pending, connected);
   const isUserInput = request.method === "item/tool/requestUserInput";
   const isMcpElicitation = request.method === "mcpServer/elicitation/request";
+  const isPermissionsRequest = isPermissionsApproval(request);
   const requestParams = request.params as {
     command?: string | null;
     questions?: Array<{ id: string; header: string; question: string }>;
   };
+  const permissionParams = isPermissionsRequest
+    ? (request.params as v2.PermissionsRequestApprovalParams)
+    : null;
   const mcpParams = isMcpElicitation
     ? (request.params as {
         mode?: string;
@@ -82,6 +91,21 @@ export function ServerRequestCard({
         : ServerIcon;
 
   async function resolve(decision: ApprovalDecision) {
+    if (isPermissionsRequest) {
+      if (decision !== "accept" && decision !== "decline") {
+        return;
+      }
+      const permissionResult = buildPermissionsApprovalResponse(
+        request,
+        decision,
+        permissionScope,
+      );
+      if (permissionResult) {
+        await onResolve(permissionResult);
+      }
+      return;
+    }
+
     const result = buildApprovalResponse(request, decision);
     if (result) {
       await onResolve(result);
@@ -138,6 +162,44 @@ export function ServerRequestCard({
               ))}
             </div>
           )}
+          {permissionParams && (
+            <div className="mt-2 space-y-2 text-sm">
+              {permissionParams.reason && <p>{permissionParams.reason}</p>}
+              {permissionParams.permissions.network && (
+                <p>
+                  <span className="font-medium">Network access</span>: {permissionParams.permissions.network.enabled === true ? "enabled" : "requested"}
+                </p>
+              )}
+              {permissionParams.permissions.fileSystem && (
+                <div className="space-y-1">
+                  <p className="font-medium">File System access</p>
+                  {permissionParams.permissions.fileSystem.read?.map((path) => (
+                    <p className="truncate text-xs" key={`read:${path}`} title={path}>
+                      Read: {path}
+                    </p>
+                  ))}
+                  {permissionParams.permissions.fileSystem.write?.map((path) => (
+                    <p className="truncate text-xs" key={`write:${path}`} title={path}>
+                      Write: {path}
+                    </p>
+                  ))}
+                  {permissionParams.permissions.fileSystem.entries?.map(
+                    (entry) => {
+                      const path = formatValue(entry.path);
+                      return (
+                        <p
+                          className="truncate text-xs"
+                          key={`entry:${entry.access}:${path}`}
+                        >
+                          {entry.access}: {path}
+                        </p>
+                      );
+                    },
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
             {displayScope.map(([key, value]) => (
               <div className="flex min-w-0 gap-2" key={key}>
@@ -161,6 +223,33 @@ export function ServerRequestCard({
                 disabled={!actionable}
               />
             </label>
+          )}
+          {actionable && permissionParams && (
+            <fieldset className="mt-3 flex flex-wrap gap-3 text-sm">
+              <legend className="sr-only">Permission duration</legend>
+              <label className="flex items-center gap-2">
+                <input
+                  aria-label="This turn"
+                  checked={permissionScope === "turn"}
+                  name="permission-scope"
+                  onChange={() => setPermissionScope("turn")}
+                  type="radio"
+                  value="turn"
+                />
+                This turn
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  aria-label="This session"
+                  checked={permissionScope === "session"}
+                  name="permission-scope"
+                  onChange={() => setPermissionScope("session")}
+                  type="radio"
+                  value="session"
+                />
+                This session
+              </label>
+            </fieldset>
           )}
           {!isRequestActionable(request) && (
             <p className="mt-2 text-sm text-error">

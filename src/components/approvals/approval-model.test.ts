@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { ServerRequest } from "../../protocol";
+import type { v2 } from "../../protocol";
 import {
   buildApprovalResponse,
   buildApprovalScope,
   buildMcpElicitationResponse,
   buildUserInputResponse,
+  buildPermissionsApprovalResponse,
   canResolvePendingRequest,
+  isPermissionsApproval,
   isRequestActionable,
 } from "./approval-model";
 
@@ -20,6 +23,62 @@ function request(
 }
 
 describe("approval model", () => {
+  const permissions = {
+    network: { enabled: true },
+    fileSystem: {
+      read: ["/workspace/read"],
+      write: ["/workspace/write"],
+      globScanMaxDepth: 3,
+    },
+  } satisfies v2.RequestPermissionProfile;
+
+  const permissionsRequest = request("item/permissions/requestApproval", {
+    threadId: "thread-1",
+    turnId: "turn-1",
+    itemId: "item-1",
+    environmentId: null,
+    startedAtMs: 123,
+    cwd: "/workspace",
+    reason: "Need to inspect the project",
+    permissions,
+  });
+
+  it("identifies permission approval requests", () => {
+    expect(isPermissionsApproval(permissionsRequest)).toBe(true);
+    expect(
+      isPermissionsApproval(request("item/commandExecution/requestApproval")),
+    ).toBe(false);
+  });
+
+  it.each(["turn", "session"] as const)(
+    "builds an allowed permission response for %s scope",
+    (scope) => {
+      expect(
+        buildPermissionsApprovalResponse(
+          permissionsRequest,
+          "accept",
+          scope,
+        ),
+      ).toEqual({ permissions, scope });
+    },
+  );
+
+  it("builds a denied permission response without granting permissions", () => {
+    expect(
+      buildPermissionsApprovalResponse(permissionsRequest, "decline", "session"),
+    ).toEqual({ permissions: {}, scope: "turn" });
+  });
+
+  it("does not build permission responses for unrelated requests", () => {
+    expect(
+      buildPermissionsApprovalResponse(
+        request("item/commandExecution/requestApproval"),
+        "accept",
+        "turn",
+      ),
+    ).toBeNull();
+  });
+
   it("keeps only non-empty string approval scope fields", () => {
     expect(
       buildApprovalScope(

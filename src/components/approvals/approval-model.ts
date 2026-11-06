@@ -3,6 +3,7 @@ import type {
   McpServerElicitationAction,
   McpServerElicitationRequestResponse,
 } from "../../protocol/generated/v2";
+import type { v2 } from "../../protocol";
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 
 export type ApprovalDecision =
@@ -41,6 +42,41 @@ export function buildApprovalResponse(
     return { decision };
   }
   return null;
+}
+
+export function isPermissionsApproval(request: ServerRequest): boolean {
+  return request.method === "item/permissions/requestApproval";
+}
+
+export function buildPermissionsApprovalResponse(
+  request: ServerRequest,
+  decision: "accept" | "decline",
+  scope: v2.PermissionGrantScope,
+): v2.PermissionsRequestApprovalResponse | null {
+  if (!isPermissionsApproval(request)) {
+    return null;
+  }
+
+  const params = request.params as Partial<v2.PermissionsRequestApprovalParams>;
+  if (!params.permissions) {
+    return null;
+  }
+
+  if (decision === "decline") {
+    return { permissions: {}, scope: "turn" };
+  }
+
+  return {
+    permissions: {
+      ...(params.permissions.network
+        ? { network: params.permissions.network }
+        : {}),
+      ...(params.permissions.fileSystem
+        ? { fileSystem: params.permissions.fileSystem }
+        : {}),
+    },
+    scope,
+  };
 }
 
 export function buildMcpElicitationResponse(
