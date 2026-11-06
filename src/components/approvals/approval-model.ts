@@ -1,4 +1,8 @@
 import type { ServerRequest } from "../../protocol";
+import type {
+  McpServerElicitationAction,
+  McpServerElicitationRequestResponse,
+} from "../../protocol/generated/v2";
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 
 export type ApprovalDecision =
@@ -37,6 +41,15 @@ export function buildApprovalResponse(
     return { decision };
   }
   return null;
+}
+
+export function buildMcpElicitationResponse(
+  request: ServerRequest,
+  action: McpServerElicitationAction,
+): McpServerElicitationRequestResponse | null {
+  return request.method === "mcpServer/elicitation/request"
+    ? { action, content: null, _meta: null }
+    : null;
 }
 
 export function buildUserInputResponse(

@@ -25,6 +25,33 @@ const pending = {
   },
 } as never as PendingServerRequest;
 
+const mcpPending = {
+  requestId: 23,
+  kind: "elicitation",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: null,
+  request: {
+    method: "mcpServer/elicitation/request",
+    id: 23,
+    params: {
+      threadId: "thread-1",
+      turnId: "turn-1",
+      serverName: "ruxex_smoke",
+      mode: "form",
+      _meta: {
+        ruxex_approval_kind: "mcp_tool_call",
+        tool_title: "Echo",
+        tool_params_display: [
+          { name: "message", displayName: "message", value: "smoke-v1" },
+        ],
+      },
+      message: 'Allow the ruxex_smoke MCP server to run tool "echo"?',
+      requestedSchema: { type: "object", properties: {} },
+    },
+  },
+} as never as PendingServerRequest;
+
 describe("ServerRequestCard", () => {
   afterEach(cleanup);
 
@@ -69,5 +96,51 @@ describe("ServerRequestCard", () => {
     ).toContain("text-warning");
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Deny" })).toBeNull();
+  });
+
+  it("renders MCP tool approval elicitation and resolves Allow", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={mcpPending}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "MCP approval requested" }),
+    ).toBeTruthy();
+    expect(screen.getByText("ruxex_smoke")).toBeTruthy();
+    expect(screen.getByText("smoke-v1")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      action: "accept",
+      content: null,
+      _meta: null,
+    });
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
+  });
+
+  it("resolves MCP tool approval cancellation", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={mcpPending}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      action: "cancel",
+      content: null,
+      _meta: null,
+    });
   });
 });

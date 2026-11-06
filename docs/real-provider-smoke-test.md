@@ -37,11 +37,11 @@
 ## 安全上の前提
 
 - 実プロバイダのAPI keyをリポジトリへ保存しない。
-- 通常利用中のRuxexホームとは分離したスモークテスト用ホームを使う。
-- ツール確認では、`printf`、`pwd`など副作用のないコマンドだけを使う。
+- 通常のユーザーホームを使う。Cloudflare版は通常ホーム配下の`~/.ruxex_desktop_cloudflare`をプロバイダ専用ホームとして使うため、`mktemp`で`HOME`、`RUXEX_HOME`、`XDG_*`を上書きしない。
+- ツール確認では、`printf`、`pwd`、`cat /etc/hostname`など副作用のないコマンドだけを使う。RP-06の`cat /etc/hostname`はworkspace外の読み取り挙動を確認するための固定参照であり、別のパスへ変更しない。
 - 実行前に、選択中のモデル、権限モード、対象ホーム、利用料が発生することを確認する。
 - 実行ごとにテスト対象のProvider、モデル、fixtureのrevision、開始時刻を記録する。
-- スモークテスト中に作成したスレッドや資格情報を通常環境へ混ぜない。
+- スモークテスト中に作成したスレッドや資格情報はCloudflare専用ホームに保持し、通常のRuxexホーム（`~/.ruxex`）へ混ぜない。
 - テスト終了時はWDIOセッション、`tauri-driver`、Tauriアプリを明示的に終了する。
 
 ## MCP fixture
@@ -56,7 +56,7 @@ export MCP_FIXTURE_BIN="$PWD/target/debug/ruxex-mcp-fixture"
 test -x "$MCP_FIXTURE_BIN"
 ```
 
-`make mcp-fixture-build`はTauriTemplateの`src-tauri`ワークスペースからfixtureバイナリをビルドします。TauriTemplate本体のビルドとE2Eも、後述の`make e2e-build`、`make e2e`、またはこの文書の実Provider用WDIOコマンドで行います。
+`make mcp-fixture-build`はTauriTemplateの`src-tauri`ワークスペースからfixtureバイナリをビルドします。TauriTemplate本体は、後述の通常Cloudflare debugビルドと、この文書の実Provider用WDIOコマンドで確認します。
 
 MCP fixture単体のstdio疎通は、実LLMを使わずに次で確認できます。
 
@@ -89,31 +89,29 @@ MCP_STREAMABLE_HTTP_BIND_ADDR=127.0.0.1:3920 \
 
 ### ビルド
 
-既存のE2E用debugバイナリを使う場合は、次を実行します。
+`make local-cloudflare`と同じCloudflare provider・daemon構成で、E2E専用featureを含まない通常のdebugバイナリを生成する場合は、次を実行します。
 
 ```sh
-make e2e-build
+RUXEX_PROVIDER=cloudflare \
+RUXEX_APP_SERVER_MODE=daemon \
+pnpm tauri build --debug --no-bundle
 ```
 
-このバイナリはdebug用途です。診断用プラグインを使う場合でも、リリース用のTauri capabilityへ権限を追加してはいけません。
+生成されるバイナリは`target/debug/ruxex-desktop`です。`--features e2e`や`src-tauri/tauri.e2e.conf.json`は使いません。このバイナリはdebug用途なので、診断用プラグインを使う場合でも、リリース用のTauri capabilityへ権限を追加してはいけません。
 
-### 専用ホームの準備
+### 通常ホームの準備
 
-実際の資格情報を使う場合も、テスト用ディレクトリを用意して通常のRuxexホームと分離します。以下の例では、`SMOKE_ROOT`は明示的に作成したテスト用ディレクトリを指します。
-
-```sh
-export SMOKE_ROOT="$(mktemp -d)"
-export HOME="$SMOKE_ROOT/home"
-export RUXEX_HOME="$SMOKE_ROOT/ruxex-home"
-export XDG_CONFIG_HOME="$SMOKE_ROOT/xdg-config"
-export XDG_DATA_HOME="$SMOKE_ROOT/xdg-data"
-export XDG_CACHE_HOME="$SMOKE_ROOT/xdg-cache"
-export XDG_STATE_HOME="$SMOKE_ROOT/xdg-state"
-mkdir -p "$HOME" "$RUXEX_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" \
-  "$XDG_CACHE_HOME" "$XDG_STATE_HOME"
-```
+RP-02以降へログイン状態を引き継ぐため、通常のユーザーホームをそのまま使います。Cloudflare版は通常ホーム配下の`~/.ruxex_desktop_cloudflare`をプロバイダ専用ホームとして使うため、通常の`~/.ruxex`とは分離されます。スモークテストのたびに`mktemp`で`HOME`や`XDG_*`を差し替えないでください。
 
 Cloudflareの場合は、通常どおり`CLOUDFLARE_ACCOUNT_ID`を環境変数または`.env.local`から提供します。`CLOUDFLARE_MODEL`を設定すると、モデル一覧がその1モデルに絞られ、チャット送信時もそのモデルが強制されます。API keyはテスト中にUIから入力し、ファイルへ記録しません。
+
+`.env.local`を使う場合は、`tauri-driver`を起動するシェルとWDIOセッションを開くシェルのそれぞれで、次を実行して値をexportします。
+
+```sh
+set -a
+. ./.env.local
+set +a
+```
 
 ### `tauri-driver`と永続WDIOセッション
 
@@ -260,25 +258,25 @@ printf 'ruxex-tool-check\\n' を実行して、標準出力を報告してくだ
 - 最終assistantメッセージが表示される。
 - 同一コマンドが意図せず二重実行されていない。
 
-### RP-06: ローカルツール呼び出しとDeny
+### RP-06: ローカルツール呼び出しとworkspace外参照
 
-目的: 承認拒否が対象requestの実行を防ぐことを確認する。
+目的: workspace外の読み取りが、現在のsandboxと承認ポリシーでどのように扱われるかを確認する。
 
 入力例:
 
 ```text
-pwdを実行して結果を返してください。
+cat /etc/hostname を実行して、内容を返してください。通常のローカルコマンドとして実行し、参照先はこのパスに固定してください。
 ```
 
-Approvalカードが表示されたら、AllowではなくDenyまたはRejectを押します。
+`workspace-write`では読み取りだけのworkspace外参照が自動許可される場合があります。その場合はApprovalカードが出ないこと自体を失敗とはせず、command executionの結果とログ上の承認request有無を記録します。Approvalカードが表示された場合は、AllowではなくDenyまたはRejectを押し、拒否後にコマンドが成功状態にならないことを確認します。
 
 合格条件:
 
-- 拒否したrequestに対応するcommand executionが成功状態にならない。
-- 拒否結果がUIに表示される。
-- 拒否したrequestが自動的にAllowへ変換されない。
-- モデルが再試行した場合、別のrequestとして識別できる。
-- 再試行の実行可否が、現在の権限ポリシーと一致している。
+- command executionがworkspace外の参照として記録される。
+- Approvalカードが出た場合、拒否したrequestに対応するcommand executionが成功状態にならない。
+- Approvalカードが出た場合、拒否結果がUIに表示され、拒否したrequestが自動的にAllowへ変換されない。
+- Approvalカードが出なかった場合、承認requestなしで自動許可されたことをログで確認する。
+- モデルが再試行した場合、別のrequestとして識別でき、再試行の実行可否が現在の権限ポリシーと一致している。
 
 モデルが拒否後に別の権限で同じコマンドを再要求する場合は、最初の拒否と再試行を別requestとしてログで確認します。プロダクト仕様として再試行も禁止する場合は、その再試行も拒否されることを合格条件に加えます。
 
@@ -384,10 +382,10 @@ pnpm exec wdio session diff --session ruxex-provider-smoke
 - provider errorやturn errorが表示される。
 - `Reconnect`後にApp ServerがConnectedへ戻る。
 - 既存スレッドが消えない。
-- アプリを終了して同じテスト用ホームで再起動した後、スレッド履歴が表示される。
+- アプリを終了して同じ通常ホームのCloudflare専用ホームで再起動した後、スレッド履歴が表示される。
 - Activity、tool結果、最終assistantメッセージが復元される。
 
-このシナリオでは、通常利用中の設定を壊すために資格情報やホームを直接変更しません。専用ホームまたはテスト用の制御可能な接続断だけを使います。
+このシナリオでは、通常利用中の設定を壊すために資格情報やホームを直接変更しません。Cloudflare専用ホームと、テスト用の制御可能な接続断だけを使います。
 
 ### RP-11: Providerエラー、レート制限、キャンセル (P1)
 

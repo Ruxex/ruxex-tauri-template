@@ -5,6 +5,7 @@ import type { ServerRequest } from "../../protocol";
 import {
   buildApprovalResponse,
   buildApprovalScope,
+  buildMcpElicitationResponse,
   buildUserInputResponse,
   canResolvePendingRequest,
   isRequestActionable,
@@ -57,6 +58,27 @@ describe("approval model", () => {
   it("does not turn unrelated server requests into approval responses", () => {
     expect(
       buildApprovalResponse(request("item/tool/requestUserInput"), "accept"),
+    ).toBeNull();
+  });
+
+  it("builds MCP elicitation responses only for MCP elicitation requests", () => {
+    const elicitation = request("mcpServer/elicitation/request");
+
+    expect(buildMcpElicitationResponse(elicitation, "accept")).toEqual({
+      action: "accept",
+      content: null,
+      _meta: null,
+    });
+    expect(buildMcpElicitationResponse(elicitation, "cancel")).toEqual({
+      action: "cancel",
+      content: null,
+      _meta: null,
+    });
+    expect(
+      buildMcpElicitationResponse(
+        request("item/commandExecution/requestApproval"),
+        "accept",
+      ),
     ).toBeNull();
   });
 
