@@ -21,6 +21,15 @@ describe("app-server query keys", () => {
     );
   });
 
+  it("keeps MCP Resource identity separate from server status", () => {
+    expect(
+      appServerQueryKeys.mcpResource("docs", "resource://guide"),
+    ).not.toEqual(appServerQueryKeys.mcpResource("docs", "resource://other"));
+    expect(appServerQueryKeys.mcpResource("docs", "resource://guide")).not.toEqual(
+      appServerQueryKeys.mcpServers,
+    );
+  });
+
   it("separates account refresh variants", () => {
     expect(appServerQueryKeys.accountRead(false)).not.toEqual(
       appServerQueryKeys.accountRead(true),

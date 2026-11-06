@@ -15,12 +15,14 @@ const useAllMcpServerStatus = vi.hoisted(() => vi.fn());
 const useGlobalMcpConfig = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useWriteConfig = vi.hoisted(() => vi.fn());
+const useMcpResource = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useAllMcpServerStatus,
   useGlobalMcpConfig,
   useReloadMcpServers,
   useWriteConfig,
+  useMcpResource,
 }));
 
 function draft(overrides: Partial<McpServerDraft> = {}) {
@@ -98,6 +100,12 @@ describe("McpServersPage", () => {
       mutateAsync: vi.fn().mockResolvedValue({}),
       isPending: false,
     });
+    useMcpResource.mockReset().mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
     vi.stubGlobal("confirm", vi.fn(() => true));
   });
 
@@ -113,6 +121,72 @@ describe("McpServersPage", () => {
     expect(screen.getByText("No global MCP servers configured.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Add MCP server" }));
     expect(screen.getByRole("heading", { name: "Add MCP server" })).toBeTruthy();
+  });
+
+  it("lists MCP resources and reads the selected URI without reading templates", () => {
+    const resource = {
+      name: "guide",
+      title: "Guide",
+      description: "Documentation",
+      uri: "resource://guide",
+      mimeType: "text/plain",
+    };
+    useGlobalMcpConfig.mockReturnValue(
+      config({ servers: [entry()] }),
+    );
+    useAllMcpServerStatus.mockReturnValue({
+      ...status(["docs"]),
+      data: {
+        data: [
+          {
+            name: "docs",
+            runtimeStatus: "connected",
+            authStatus: "loggedIn",
+            tools: { search: {} },
+            toolsError: null,
+            resources: [resource],
+            resourceTemplates: [
+              {
+                name: "dynamic-guide",
+                uriTemplate: "resource://guide/{section}",
+                description: "Dynamic guide",
+              },
+            ],
+          },
+        ],
+        nextCursor: null,
+      },
+    });
+    useMcpResource.mockReturnValue({
+      data: {
+        contents: [
+          {
+            uri: "resource://guide",
+            mimeType: "text/plain",
+            text: "Guide content",
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    renderPage();
+
+    expect(screen.getByText("Resources (1)")).toBeTruthy();
+    expect(screen.getByText("Dynamic resources")).toBeTruthy();
+    expect(screen.getByText(/dynamic-guide/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Read guide from docs" }));
+
+    expect(useMcpResource).toHaveBeenLastCalledWith({
+      server: "docs",
+      uri: "resource://guide",
+    });
+    expect(screen.getByText("Guide content")).toBeTruthy();
+    expect(useMcpResource).not.toHaveBeenCalledWith({
+      server: "docs",
+      uri: "resource://guide/{section}",
+    });
   });
 
   it("returns focus to the add trigger when the dialog closes", async () => {

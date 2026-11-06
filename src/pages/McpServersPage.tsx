@@ -5,6 +5,7 @@ import { formatErrorMessage } from "../app/error-message";
 import {
   useAllMcpServerStatus,
   useGlobalMcpConfig,
+  useMcpResource,
   useReloadMcpServers,
   useWriteConfig,
 } from "../app-server/hooks";
@@ -19,6 +20,7 @@ import type { v2 } from "../protocol";
 import { StateBadge, type StateBadgeTone } from "../components/common/StateBadge";
 import { PageContainer } from "../components/layout/PageContainer";
 import { SettingsPanel } from "../components/settings/SettingsCards";
+import { McpResourceViewer } from "../components/mcp/McpResourceViewer";
 import { McpServerDialog } from "./mcp-servers/McpServerDialog";
 import {
   createMcpServerForm,
@@ -42,6 +44,11 @@ type OpenDialog = {
   originalName?: string;
 };
 
+type SelectedResource = {
+  server: string;
+  uri: string;
+} | null;
+
 export function McpServersPage() {
   const globalConfig = useGlobalMcpConfig();
   const statuses = useAllMcpServerStatus();
@@ -54,7 +61,10 @@ export function McpServersPage() {
     null,
   );
   const [overrideNotice, setOverrideNotice] = useState<string | null>(null);
+  const [selectedResource, setSelectedResource] =
+    useState<SelectedResource>(null);
   const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const resourceRead = useMcpResource(selectedResource);
 
   const entries = globalConfig.data?.servers ?? [];
   const existingNames = useMemo(
@@ -332,6 +342,68 @@ export function McpServersPage() {
                       {Object.keys(status.tools).length} tools · {status.authStatus}
                     </p>
                   )}
+                  {status &&
+                    ((status.resources ?? []).length > 0 ||
+                      (status.resourceTemplates ?? []).length > 0) && (
+                      <div className="mt-3 space-y-2 rounded-box bg-base-200 p-3">
+                        <p className="text-sm font-medium">
+                          Resources ({(status.resources ?? []).length})
+                        </p>
+                        {(status.resources ?? []).length > 0 && (
+                          <ul className="space-y-1">
+                            {(status.resources ?? []).map((resource) => (
+                              <li
+                                className="flex items-center justify-between gap-2"
+                                key={resource.uri}
+                              >
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm" title={resource.uri}>
+                                    {resource.title ?? resource.name}
+                                  </p>
+                                  <p className="truncate text-xs text-base-content/60">
+                                    {resource.mimeType ?? resource.uri}
+                                  </p>
+                                </div>
+                                <button
+                                  aria-label={`Read ${resource.name} from ${entry.name}`}
+                                  className="btn btn-ghost btn-xs"
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedResource({
+                                      server: entry.name,
+                                      uri: resource.uri,
+                                    })
+                                  }
+                                >
+                                  Read
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {(status.resourceTemplates ?? []).length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-base-content/70">
+                              Dynamic resources
+                            </p>
+                            <ul className="mt-1 space-y-1 text-xs text-base-content/60">
+                              {(status.resourceTemplates ?? []).map((template) => (
+                                <li key={template.uriTemplate}>
+                                  {template.name} · {template.uriTemplate}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {selectedResource?.server === entry.name && (
+                          <McpResourceViewer
+                            error={resourceRead.error}
+                            isLoading={resourceRead.isLoading}
+                            response={resourceRead.data}
+                          />
+                        )}
+                      </div>
+                    )}
                   {status?.toolsError && (
                     <p className="mt-1 text-xs text-error">{status.toolsError}</p>
                   )}

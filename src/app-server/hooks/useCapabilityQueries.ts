@@ -82,6 +82,39 @@ export function useAllMcpServerStatus() {
   });
 }
 
+export function useMcpResource(params: v2.McpResourceReadParams | null) {
+  const status = useAppServerStatus();
+  const queryKey = params
+    ? appServerQueryKeys.mcpResource(
+        params.server,
+        params.uri,
+        params.threadId,
+      )
+    : appServerQueryKeys.mcpResource("", "");
+
+  return useQuery<v2.McpResourceReadResponse>({
+    queryKey,
+    queryFn: async () => {
+      if (!params) {
+        throw new Error("MCP Resource selection is required.");
+      }
+      const requestParams: v2.McpResourceReadParams = {
+        server: params.server,
+        uri: params.uri,
+      };
+      if (params.threadId) {
+        requestParams.threadId = params.threadId;
+      }
+      const response = await requestAppServerMethod(
+        "mcpServer/resource/read",
+        requestParams,
+      );
+      return response.response;
+    },
+    enabled: Boolean(status.data && params?.server && params.uri),
+  });
+}
+
 export function usePluginList(params: v2.PluginListParams = {}) {
   const status = useAppServerStatus();
 

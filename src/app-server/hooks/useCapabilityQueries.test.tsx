@@ -39,6 +39,11 @@ describe("capability query and mutation hooks", () => {
       "plugin/read",
       { marketplacePath: "/tmp/community", pluginName: "example" },
     ],
+    [
+      "useMcpResource",
+      "mcpServer/resource/read",
+      { server: "docs", uri: "resource://guide" },
+    ],
     ["useCollaborationModes", "collaborationMode/list", {}],
     ["useConfig", "config/read", { includeLayers: true }],
     ["useConfigRequirements", "configRequirements/read", undefined],
@@ -220,6 +225,16 @@ describe("capability query and mutation hooks", () => {
       "mcpServerStatus/list",
       { detail: "full", cursor: "next" },
     );
+  });
+
+  it("does not read an MCP Resource before one is selected", async () => {
+    const { useMcpResource } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useMcpResource(null), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(requestAppServerMethod).not.toHaveBeenCalled();
   });
 
   it("writes config batches and invalidates config and MCP status", async () => {
