@@ -156,7 +156,8 @@ make local-cloudflare-inprocess
 ```
 
 This target only changes the local process configuration. It does not select a
-remote or paid model by itself.
+remote or paid model by itself. Set `CLOUDFLARE_MODEL` to restrict the model
+catalog to one model and force chat requests to use that model.
 
 ## Capability boundary
 
@@ -257,6 +258,11 @@ WebDriver observes and operates the Tauri WebView. It does not automate GNOME,
 other applications, OS file choosers, title bars, notifications, or global
 shortcuts. Screenshots saved by the E2E hook are WebView screenshots, not
 desktop-wide captures.
+
+For an exploratory smoke test against a real provider and LLM, see
+[Real provider smoke test](docs/real-provider-smoke-test.md). It uses the
+persistent WDIO session and covers authentication, model discovery, streaming,
+tool approval, denial, multi-turn history, and session continuity.
 
 ## License and provenance
 

@@ -23,14 +23,25 @@ path = "src/main.rs"
 tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
+axum = { version = "0.8", default-features = false, features = [
+    "http1",
+    "json",
+    "tokio",
+] }
 anyhow = "1"
 base64 = "0.22"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
-# The desktop bridge consumes the public 0.5.4 desktop facade for App Server and host APIs.
-ruxex = { path = "../../ruxex", default-features = false, features = ["desktop"] }
-ruxex-provider-host-example = { path = "../../ruxex/examples/provider-host", features = ["dummy-provider", "cloudflare-provider"], optional = true }
+# Pin runtime and example-provider dependencies to the published Ruxex release.
+ruxex = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.6.1", version = "0.6.1", default-features = false, features = ["desktop"] }
+ruxex-provider-host-example = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.6.1", package = "ruxex-provider-host-example", version = "0.6.1", features = ["dummy-provider", "cloudflare-provider"], optional = true }
 dirs = "6"
 futures = "0.3"
+rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", rev = "3e636cab26c013eca5131103c03d20237f12c4df", version = "=3.3.0", default-features = false, features = [
+    "macros",
+    "server",
+    "transport-async-rw",
+    "transport-streamable-http-server",
+] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 url = "2"
@@ -45,5 +56,12 @@ tauri-plugin-dialog = "2.2.2"
 tauri-plugin-global-shortcut = "2.3.2"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-opener = "2.5.0"
-tokio = { version = "1", features = ["macros", "sync", "time"] }
+tokio = { version = "1", features = [
+    "io-std",
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "sync",
+    "time",
+] }
 tauri-plugin-wdio = { version = "1", optional = true }

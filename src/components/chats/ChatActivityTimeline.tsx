@@ -51,7 +51,11 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   workingStartedAt,
   completedTurn,
 }: ChatActivityTimelineProps) {
-  const timelineRef = useTimelineAutoScroll({ items, pendingRequests });
+  const visibleItems = items.filter(isVisibleTimelineItem);
+  const timelineRef = useTimelineAutoScroll({
+    items: visibleItems,
+    pendingRequests,
+  });
   const isBusy = liveStatus === "running" || liveStatus === "resynchronizing";
   const workingSeconds = useWorkingSeconds(isBusy ? workingStartedAt : null);
   const workingLabel =
@@ -66,7 +70,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   const indicatorLabel = isBusy ? workingLabel : workedLabel;
   const indicatorTurnId = isBusy ? workingTurnId : (completedTurn?.id ?? null);
   const indicatorItemIndex = indicatorTurnId
-    ? items.findIndex((item) => item.turnId === indicatorTurnId)
+    ? visibleItems.findIndex((item) => item.turnId === indicatorTurnId)
     : 0;
   const indicatorInsertionIndex =
     indicatorItemIndex < 0 ? 0 : indicatorItemIndex;
@@ -79,10 +83,10 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       className="space-y-4 bg-base-200 p-4"
       ref={timelineRef}
     >
-      {items.length === 0 && showIndicator && (
+      {visibleItems.length === 0 && showIndicator && (
         <WorkingIndicator label={indicatorLabel} />
       )}
-      {items.map((item, index) => (
+      {visibleItems.map((item, index) => (
         <Fragment key={`item:${item.turnId}:${item.id}`}>
           {showIndicator && index === indicatorInsertionIndex && (
             <WorkingIndicator label={indicatorLabel} />
@@ -103,7 +107,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
           pending={pending}
         />
       ))}
-      {items.length === 0 && pendingRequests.length === 0 && !isBusy && (
+      {visibleItems.length === 0 && pendingRequests.length === 0 && !isBusy && (
         <p className="py-12 text-center text-base-content/60">
           No activity yet.
         </p>
@@ -111,6 +115,10 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     </section>
   );
 }, areChatActivityTimelinePropsEqual);
+
+function isVisibleTimelineItem(item: ConversationViewItem): boolean {
+  return item.type !== "agentMessage" || item.text.trim().length > 0;
+}
 
 function areChatActivityTimelinePropsEqual(
   left: ChatActivityTimelineProps,

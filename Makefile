@@ -1,6 +1,10 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test build fmt-check format-check verify run tauri-dev local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless
+# Optional local configuration. .env.local overrides .env when both exist.
+-include .env .env.local
+export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
+
+.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -14,6 +18,8 @@ help:
 	@printf '%s\n' '  make check-tests        型チェック、Lint、フロントエンドテストを実行'
 	@printf '%s\n' '  make package-test       ランタイムパッケージのテストを実行'
 	@printf '%s\n' '  make rust-test          Rust/Tauriのテストを実行'
+	@printf '%s\n' '  make mcp-fixture-build  テスト用MCPサーバーをビルド'
+	@printf '%s\n' '  make mcp-fixture-test   テスト用MCPサーバーの疎通を確認'
 	@printf '%s\n' '  make build              フロントエンドをビルド'
 	@printf '%s\n' '  make verify             全検証とビルドを実行'
 	@printf '%s\n' '  make format-check       フォーマット検査'
@@ -23,7 +29,7 @@ help:
 	@printf '%s\n' '  make e2e-headless      Xvfb上でTauri E2Eを実行'
 	@printf '%s\n' '  make e2e-diagnostics   E2Eプラグイン付き診断を実行'
 	@printf '%s\n' '  make e2e-diagnostics-headless Xvfb上でE2E診断を実行'
-	@printf '%s\n' '  make local-cloudflare-inprocess ローカルCloudflareプロバイダをインプロセスで起動'
+	@printf '%s\n' '  make local-cloudflare     ローカルCloudflareプロバイダをデーモンモードで起動'
 
 install:
 	pnpm install --frozen-lockfile
@@ -53,6 +59,14 @@ package-test:
 rust-test:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml
 
+mcp-fixture-build:
+	cargo build --locked --manifest-path src-tauri/Cargo.toml \
+		--bin ruxex-mcp-fixture --bin ruxex-mcp-http-fixture
+
+mcp-fixture-test: mcp-fixture-build
+	MCP_FIXTURE_BIN=target/debug/ruxex-mcp-fixture \
+		python3 -m unittest scripts/test_mcp_fixture.py -v
+
 build:
 	pnpm build
 
@@ -69,8 +83,11 @@ run:
 
 tauri-dev: run
 
-local-cloudflare-inprocess:
-	RUXEX_PROVIDER=cloudflare RUXEX_APP_SERVER_MODE=inprocess pnpm tauri dev
+local-cloudflare:
+	RUXEX_PROVIDER=cloudflare RUXEX_APP_SERVER_MODE=daemon pnpm tauri dev
+
+# Keep the old entrypoint working while routing it through the safer daemon mode.
+local-cloudflare-inprocess: local-cloudflare
 
 e2e-build:
 	VITE_E2E=1 pnpm tauri build --debug --no-bundle --features e2e --config src-tauri/tauri.e2e.conf.json

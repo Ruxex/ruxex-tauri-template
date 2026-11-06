@@ -179,6 +179,27 @@ describe("ChatActivityTimeline", () => {
     expect(serverRequest).toHaveBeenCalledOnce();
   });
 
+  it("does not render empty agent messages", () => {
+    render(
+      <ChatActivityTimeline
+        {...timelineProps([
+          viewItem("empty-agent-message", "agentMessage", "   ", "message"),
+          viewItem(
+            "visible-agent-message",
+            "agentMessage",
+            "Visible reply",
+            "message",
+          ),
+          viewItem("activity-1", "commandExecution", "ls", "activity"),
+        ])}
+      />,
+    );
+
+    expect(screen.getAllByTestId("conversation-item")).toHaveLength(1);
+    expect(screen.getByText("Message: Visible reply")).toBeTruthy();
+    expect(screen.getByTestId("activity-item")).toBeTruthy();
+  });
+
   it("renders pending requests after conversation items", () => {
     render(
       <ChatActivityTimeline

@@ -6,6 +6,11 @@ target/
 __pycache__/
 *.py[cod]
 
+# Local environment overrides may contain credentials or account identifiers.
+.env
+.env.local
+!.env.local.example
+
 src-tauri/gen/
 src-tauri/resources/ruxex-package/*
 !src-tauri/resources/ruxex-package/.gitignore
