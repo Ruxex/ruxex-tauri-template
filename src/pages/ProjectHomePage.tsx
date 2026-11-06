@@ -282,6 +282,7 @@ export function ProjectHomePage() {
               />
               <div className="flex justify-end">
                 <button
+                  aria-label={updateProject.isPending ? "Saving…" : "Save project"}
                   className="btn btn-primary min-h-11 whitespace-nowrap"
                   disabled={updateProject.isPending}
                   type="submit"
@@ -332,6 +333,7 @@ export function ProjectHomePage() {
             )}
             <div className="mt-6 flex justify-end gap-2">
               <button
+                aria-label="Cancel"
                 className="btn btn-ghost"
                 type="button"
                 onClick={handleCloseDeleteDialog}
@@ -339,6 +341,7 @@ export function ProjectHomePage() {
                 Cancel
               </button>
               <button
+                aria-label={deleteProject.isPending ? "Deleting…" : "Delete project"}
                 className="btn btn-error"
                 disabled={deleteProject.isPending}
                 type="button"
@@ -349,7 +352,11 @@ export function ProjectHomePage() {
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button type="button" onClick={handleCloseDeleteDialog}>
+            <button
+              aria-label="Close"
+              type="button"
+              onClick={handleCloseDeleteDialog}
+            >
               Close
             </button>
           </form>

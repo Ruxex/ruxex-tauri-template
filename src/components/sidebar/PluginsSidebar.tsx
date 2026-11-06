@@ -35,19 +35,31 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
       <SidebarHeader label="Capabilities" onClose={onClose} />
       <nav aria-label="Capability sections" className="menu w-full gap-1 p-0">
         <li>
-          <button type="button" onClick={() => selectTab("plugins")}>
+          <button
+            aria-label="Plugins"
+            type="button"
+            onClick={() => selectTab("plugins")}
+          >
             <PuzzlePieceIcon aria-hidden="true" className="size-4" />
             Plugins
           </button>
         </li>
         <li>
-          <button type="button" onClick={() => selectTab("skills")}>
+          <button
+            aria-label="Skills"
+            type="button"
+            onClick={() => selectTab("skills")}
+          >
             <SparklesIcon aria-hidden="true" className="size-4" />
             Skills
           </button>
         </li>
         <li>
-          <button type="button" onClick={() => selectTab("mcp")}>
+          <button
+            aria-label="MCP"
+            type="button"
+            onClick={() => selectTab("mcp")}
+          >
             <ServerIcon aria-hidden="true" className="size-4" />
             MCP
           </button>
@@ -80,6 +92,7 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
               {installedPlugins.map((plugin) => (
                 <li key={plugin.id}>
                   <button
+                    aria-label={plugin.interface?.displayName ?? plugin.name}
                     className="w-full justify-start"
                     type="button"
                     onClick={() => selectTab("plugins")}

@@ -80,6 +80,7 @@ export const ConversationItem = memo(function ConversationItem({
           />
           <div className="mt-2 flex justify-end gap-2">
             <button
+              aria-label="Cancel"
               className="btn btn-ghost btn-sm"
               disabled={isSubmitting}
               onClick={() => setIsEditing(false)}
@@ -88,6 +89,7 @@ export const ConversationItem = memo(function ConversationItem({
               Cancel
             </button>
             <button
+              aria-label={isSubmitting ? "Sending…" : "Send"}
               className="btn btn-primary btn-sm"
               disabled={isSubmitting || !draft.trim()}
               type="submit"

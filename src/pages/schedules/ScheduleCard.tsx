@@ -22,6 +22,7 @@ export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
         Create your first schedule to automate a prompt.
       </p>
       <button
+        aria-label="Create schedule"
         className="btn btn-sm btn-primary mt-4"
         type="button"
         onClick={onCreate}

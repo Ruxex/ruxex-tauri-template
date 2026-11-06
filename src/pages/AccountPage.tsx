@@ -56,6 +56,7 @@ export function AccountPage() {
         {data?.authStatus === "authenticated" ? (
           <div className="flex justify-end px-5 py-4">
             <button
+              aria-label={logout.isPending ? "Logging out…" : "Log out"}
               className="btn btn-outline"
               disabled={logout.isPending}
               type="button"

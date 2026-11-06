@@ -46,11 +46,11 @@ export function ThreadsPage() {
         </Link>
       </div>
       <input
+        aria-label="Search chats"
         className="input input-bordered w-full"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search chats"
-        aria-label="Search chats"
       />
       {(threads.isLoading || searchResults.isLoading) && (
         <span className="loading loading-spinner loading-lg" />

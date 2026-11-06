@@ -209,6 +209,7 @@ export function QuickPanelPage() {
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
+            aria-label="Capture screen"
             className="btn btn-ghost btn-sm"
             disabled={isCapturing}
             onClick={() => void captureScreen()}
@@ -217,6 +218,7 @@ export function QuickPanelPage() {
             {isCapturing ? "Capturing…" : "Capture screen"}
           </button>
           <button
+            aria-label="Attach image"
             className="btn btn-ghost btn-sm"
             onClick={() =>
               document.querySelector<HTMLInputElement>(
@@ -229,6 +231,7 @@ export function QuickPanelPage() {
           </button>
           {isRecording ? (
             <button
+              aria-label="Stop recording"
               className="btn btn-warning btn-sm"
               onClick={stopRecording}
               type="button"
@@ -237,6 +240,7 @@ export function QuickPanelPage() {
             </button>
           ) : (
             <button
+              aria-label="Record audio"
               className="btn btn-ghost btn-sm"
               onClick={() => void startRecording()}
               type="button"
@@ -245,6 +249,11 @@ export function QuickPanelPage() {
             </button>
           )}
           <button
+            aria-label={
+              createThread.isPending || sendMessage.isPending
+                ? "Sending…"
+                : "Send"
+            }
             className="btn btn-primary btn-sm ml-auto"
             disabled={
               createThread.isPending ||

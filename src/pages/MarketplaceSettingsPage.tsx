@@ -169,6 +169,7 @@ export function MarketplaceSettingsPage() {
           <div className="divide-y divide-base-300 text-sm">
             <MarketplaceFieldRow label="Source" controlId="marketplace-source">
               <input
+                aria-label="Source"
                 id="marketplace-source"
                 className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
                 value={source}
@@ -181,6 +182,7 @@ export function MarketplaceSettingsPage() {
               controlId="marketplace-ref"
             >
               <input
+                aria-label="Git ref (optional)"
                 id="marketplace-ref"
                 className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
                 value={refName}
@@ -193,6 +195,7 @@ export function MarketplaceSettingsPage() {
               controlId="marketplace-sparse-paths"
             >
               <input
+                aria-label="Sparse paths (optional)"
                 id="marketplace-sparse-paths"
                 className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
                 value={sparsePaths}
@@ -212,6 +215,7 @@ export function MarketplaceSettingsPage() {
           )}
           <div className="flex justify-end px-5 py-4">
             <button
+              aria-label={addMarketplace.isPending ? "Adding…" : "Add marketplace"}
               className="btn btn-primary btn-sm"
               type="submit"
               disabled={isBusy}
@@ -262,6 +266,11 @@ export function MarketplaceSettingsPage() {
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     <button
+                      aria-label={
+                        upgradeMarketplace.isPending
+                          ? "Updating…"
+                          : `Update ${marketplace.name}`
+                      }
                       className="btn btn-ghost btn-sm"
                       type="button"
                       disabled={isBusy}
@@ -277,6 +286,7 @@ export function MarketplaceSettingsPage() {
                     </button>
                     {definition && (
                       <button
+                        aria-label={isPending ? "Disabling…" : `Disable ${marketplace.name}`}
                         className="btn btn-outline btn-sm"
                         type="button"
                         disabled={isBusy}
@@ -290,6 +300,7 @@ export function MarketplaceSettingsPage() {
                       </button>
                     )}
                     <button
+                      aria-label={`Remove ${marketplace.name}`}
                       className="btn btn-outline btn-error btn-sm"
                       type="button"
                       disabled={isBusy}
@@ -328,6 +339,7 @@ export function MarketplaceSettingsPage() {
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
                       <button
+                        aria-label={isPending ? "Enabling…" : `Enable ${name}`}
                         className="btn btn-primary btn-sm"
                         type="button"
                         disabled={isBusy}
@@ -336,6 +348,7 @@ export function MarketplaceSettingsPage() {
                         {isPending ? "Enabling…" : `Enable ${name}`}
                       </button>
                       <button
+                        aria-label={`Forget ${name}`}
                         className="btn btn-outline btn-error btn-sm"
                         type="button"
                         disabled={isBusy}

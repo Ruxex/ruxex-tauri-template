@@ -33,6 +33,7 @@ export function SlashCommandPalette({
           return (
             <li className="flex-1" key={command.id}>
               <button
+                aria-label={command.label}
                 disabled={disabled}
                 onClick={() => onSelect(command.id)}
                 role="menuitem"

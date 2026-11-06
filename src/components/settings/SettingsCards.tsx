@@ -174,6 +174,7 @@ export function AppServerCard({
             <span>{displayedVersion ?? "Unavailable"}</span>
             {needsUpdate && (
               <button
+                aria-label={isUpdatePending ? "Updating…" : "Update"}
                 className="btn btn-outline btn-xs"
                 disabled={isUpdatePending || isPending}
                 onClick={onUpdate}
@@ -218,6 +219,7 @@ export function AppServerCard({
       )}
       <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
         <button
+          aria-label={isFetching ? "Reconnecting…" : "Reconnect"}
           className="btn btn-sm btn-outline"
           type="button"
           onClick={onReconnect}
@@ -234,6 +236,7 @@ export function AppServerCard({
             ] as const
           ).map(([action, variant]) => (
             <button
+              aria-label={action[0].toUpperCase() + action.slice(1)}
               className={`btn btn-sm ${variant}`}
               disabled={isPending}
               key={action}
@@ -340,6 +343,7 @@ export function LanguageCard({
       <div className="text-sm">
         <SettingControlRow controlId="settings-language" label="Language">
           <select
+            aria-label="Language"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-language"
             value={language}
@@ -376,6 +380,7 @@ export function NotificationsCard({
           label="Desktop notifications"
         >
           <input
+            aria-label="Desktop notifications"
             className="toggle justify-self-end"
             checked={enabled}
             id="settings-desktop-notifications"
@@ -388,6 +393,7 @@ export function NotificationsCard({
           label="Notification sound"
         >
           <select
+            aria-label="Notification sound"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-notification-sound"
             value={sound}
@@ -461,6 +467,7 @@ export function QuickPanelCard({
               Default: {defaultShortcut}
             </span>
             <button
+              aria-label="Reset"
               className="btn btn-ghost btn-sm"
               disabled={disabled || shortcut === defaultShortcut}
               onClick={onReset}
@@ -469,6 +476,7 @@ export function QuickPanelCard({
               Reset
             </button>
             <button
+              aria-label={disabled ? "Saving…" : "Save"}
               className="btn btn-primary btn-sm"
               disabled={disabled || !shortcut.trim()}
               onClick={onSave}
@@ -506,6 +514,7 @@ export function UiPreferencesCard({
       <div className="divide-y divide-base-300 text-sm">
         <SettingControlRow controlId="settings-color-scheme" label="Color mode">
           <select
+            aria-label="Color mode"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-color-scheme"
             value={colorScheme}
@@ -520,6 +529,7 @@ export function UiPreferencesCard({
         </SettingControlRow>
         <SettingControlRow controlId="settings-theme" label="Theme">
           <select
+            aria-label="Theme"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-theme"
             value={theme.accentColor}
@@ -558,6 +568,7 @@ export function TypographyCard({
           label="Chat font size"
         >
           <input
+            aria-label="Chat font size"
             className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-chat-font-size"
             max={UI_FONT_SIZE_MAX}
@@ -577,6 +588,7 @@ export function TypographyCard({
           label="UI font size"
         >
           <input
+            aria-label="UI font size"
             className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-ui-font-size"
             max={UI_FONT_SIZE_MAX}

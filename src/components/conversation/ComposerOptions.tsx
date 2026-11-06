@@ -49,6 +49,7 @@ export function ComposerOptions({
       <ul className="menu dropdown-content z-20 mb-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
         <li>
           <button
+            aria-label="Attach file"
             disabled={disabled}
             onClick={(event) => {
               onAttach();
@@ -64,6 +65,7 @@ export function ComposerOptions({
         <li>
           <button
             aria-current={goalMode ? "true" : undefined}
+            aria-label="Goal mode"
             className={goalMode ? "active" : undefined}
             disabled={disabled}
             onClick={(event) => {
@@ -80,6 +82,7 @@ export function ComposerOptions({
         <li>
           <button
             aria-current={planMode ? "true" : undefined}
+            aria-label="Plan mode"
             className={planMode ? "active" : undefined}
             disabled={disabled}
             onClick={(event) => {
@@ -138,6 +141,7 @@ export function PermissionMenu({
           <li key={option.mode}>
             <button
               aria-current={mode === option.mode ? "true" : undefined}
+              aria-label={option.label}
               disabled={disabled}
               onClick={(event) => {
                 onModeChange(option.mode);
@@ -184,6 +188,13 @@ export function SubmissionModeMenu({
         {options.map((option) => (
           <li key={option}>
             <button
+              aria-label={
+                option === "send"
+                  ? "Send"
+                  : option === "steer"
+                    ? "Steer active turn"
+                    : "Queue next message"
+              }
               type="button"
               role="menuitem"
               disabled={disabled || !modes.includes(option)}

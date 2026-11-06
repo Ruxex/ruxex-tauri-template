@@ -235,6 +235,7 @@ export function PluginDetailPage() {
                 {plugin.skills.map((skill) => (
                   <li className="w-full" key={skill.name}>
                     <button
+                      aria-label={`${skill.name}${getSkillShortDescription(skill) ? ` ${getSkillShortDescription(skill)}` : ""}`}
                       className="w-full rounded-box p-2 text-left transition hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       type="button"
                       onClick={() => setSelectedSkill(skill)}
@@ -312,7 +313,11 @@ export function PluginDetailPage() {
             </p>
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button type="button" onClick={() => setSelectedSkill(null)}>
+            <button
+              aria-label="Close"
+              type="button"
+              onClick={() => setSelectedSkill(null)}
+            >
               Close
             </button>
           </form>

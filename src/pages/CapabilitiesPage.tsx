@@ -154,6 +154,7 @@ export function CapabilitiesPage() {
         </div>
         {activeTab === "mcp" && (
           <button
+            aria-label={reloadMcp.isPending ? "Reloading…" : "Reload MCP"}
             className="btn btn-primary"
             type="button"
             disabled={reloadMcp.isPending}
@@ -210,6 +211,13 @@ export function CapabilitiesPage() {
                       {(server.authStatus === "notLoggedIn" ||
                         server.authStatus === "oAuth") && (
                         <button
+                          aria-label={
+                            oauthLogin.isPending
+                              ? "Connecting…"
+                              : server.authStatus === "notLoggedIn"
+                                ? `Connect ${server.name}`
+                                : `Re-authenticate ${server.name}`
+                          }
                           className="btn btn-outline btn-xs"
                           disabled={oauthLogin.isPending}
                           onClick={() => void connectMcpServer(server.name)}

@@ -53,10 +53,16 @@ export function ScheduleActionDialog({
           </p>
         )}
         <div className="mt-6 flex justify-end gap-2">
-          <button className="btn btn-ghost" type="button" onClick={onClose}>
+          <button
+            aria-label="Cancel"
+            className="btn btn-ghost"
+            type="button"
+            onClick={onClose}
+          >
             Cancel
           </button>
           <button
+            aria-label={action.kind === "run" ? "Run now" : "Delete"}
             className={`btn ${action.kind === "delete" ? "btn-error" : "btn-primary"}`}
             disabled={isPending}
             type="button"
@@ -67,7 +73,7 @@ export function ScheduleActionDialog({
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button type="button" onClick={onClose}>
+        <button aria-label="Close" type="button" onClick={onClose}>
           Close
         </button>
       </form>

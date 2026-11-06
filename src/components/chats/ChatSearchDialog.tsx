@@ -33,6 +33,7 @@ export function ChatSearchDialog({ onClose, onSelect }: ChatSearchDialogProps) {
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-semibold">Search chats</h3>
         <button
+          aria-label="Close"
           className="btn btn-ghost btn-xs"
           type="button"
           onClick={onClose}

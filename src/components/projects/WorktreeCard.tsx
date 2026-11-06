@@ -45,6 +45,7 @@ export function WorktreeCard({ root }: { root: string }) {
             value={branch}
           />
           <button
+            aria-label="Create worktree"
             className="btn btn-sm btn-primary"
             disabled={worktrees.create.isPending}
             type="submit"
@@ -55,6 +56,7 @@ export function WorktreeCard({ root }: { root: string }) {
         </form>
         <label className="label cursor-pointer justify-start gap-2">
           <input
+            aria-label="Force removal of dirty worktrees"
             checked={force}
             className="checkbox checkbox-sm"
             onChange={(event) => setForce(event.target.checked)}

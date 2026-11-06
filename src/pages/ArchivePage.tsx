@@ -70,6 +70,7 @@ export function ArchivePage() {
             actions={
               <>
                 <button
+                  aria-label="Restore"
                   className="btn btn-primary btn-sm"
                   type="button"
                   disabled={unarchive.isPending}
@@ -80,6 +81,7 @@ export function ArchivePage() {
                   Restore
                 </button>
                 <button
+                  aria-label="Delete"
                   className="btn btn-error btn-outline btn-sm"
                   disabled={deleteThread.isPending}
                   onClick={() => openDeleteDialog(thread)}
@@ -104,6 +106,7 @@ export function ArchivePage() {
           className="flex items-center justify-center gap-3"
         >
           <button
+            aria-label="Previous"
             className="btn btn-ghost btn-sm"
             disabled={archived.isFetching || pageNumber === 1}
             onClick={() => setCursorHistory((history) => history.slice(0, -1))}
@@ -115,6 +118,7 @@ export function ArchivePage() {
             Page {pageNumber}
           </span>
           <button
+            aria-label="Next"
             className="btn btn-ghost btn-sm"
             disabled={archived.isFetching || !archived.data.nextCursor}
             onClick={() =>
@@ -150,6 +154,7 @@ export function ArchivePage() {
             )}
             <div className="modal-action">
               <button
+                aria-label="Cancel"
                 className="btn btn-ghost"
                 disabled={deleteThread.isPending}
                 onClick={closeDeleteDialog}
@@ -158,6 +163,7 @@ export function ArchivePage() {
                 Cancel
               </button>
               <button
+                aria-label={deleteThread.isPending ? "Deleting…" : "Delete permanently"}
                 className="btn btn-error"
                 disabled={deleteThread.isPending}
                 onClick={deleteArchivedThread}

@@ -35,6 +35,7 @@ export function ChatSidebarSections({
         New chat
       </Link>
       <button
+        aria-label="Search chats"
         className="btn btn-ghost mb-4 w-full justify-start"
         type="button"
         onClick={() => setSearchOpen(true)}

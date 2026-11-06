@@ -249,6 +249,7 @@ export function McpServersPage() {
             These servers are available across your projects.
           </p>
           <button
+            aria-label="Add MCP server"
             className="btn btn-primary"
             type="button"
             onClick={(event) => openAddDialog(event.currentTarget)}
@@ -306,6 +307,7 @@ export function McpServersPage() {
                       </StateBadge>
                       {entry.draft && (
                         <button
+                          aria-label={`Edit ${entry.name}`}
                           className="btn btn-ghost btn-xs"
                           type="button"
                           onClick={(event) =>
@@ -316,6 +318,7 @@ export function McpServersPage() {
                         </button>
                       )}
                       <button
+                        aria-label={`Delete ${entry.name}`}
                         className="btn btn-ghost btn-xs text-error"
                         type="button"
                         onClick={() => void handleDelete(entry)}
@@ -353,6 +356,7 @@ export function McpServersPage() {
               {reloadError}
             </p>
             <button
+              aria-label={reloadMcp.isPending ? "Reloading…" : "Retry MCP reload"}
               className="btn btn-ghost btn-sm"
               type="button"
               disabled={reloadMcp.isPending}

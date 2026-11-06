@@ -321,6 +321,7 @@ export function Composer({
           />
           {activeTurnId && (
             <button
+              aria-label="Stop"
               className="btn btn-error btn-sm btn-outline"
               type="button"
               onClick={() =>
@@ -334,6 +335,17 @@ export function Composer({
           )}
           <div className="join">
             <button
+              aria-label={
+                isPending
+                  ? "Working…"
+                  : goalMode
+                    ? "Set goal"
+                    : mode === "queue"
+                      ? "Queue"
+                      : mode === "steer"
+                        ? "Steer"
+                        : "Send"
+              }
               className="btn btn-primary btn-sm join-item"
               type="submit"
               disabled={isPending || (!message.trim() && !imageFile)}

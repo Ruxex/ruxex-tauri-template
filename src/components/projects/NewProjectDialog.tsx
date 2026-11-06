@@ -169,6 +169,7 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
 
           <div className="flex justify-end border-t border-base-300 pt-4">
             <button
+              aria-label="Create project"
               className="btn btn-primary min-h-11 whitespace-nowrap"
               disabled={createProject.isPending}
               type="submit"

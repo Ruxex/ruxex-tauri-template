@@ -37,6 +37,7 @@ export function LoginPage() {
           <label className="form-control">
             <span className="label-text">API key</span>
             <input
+              aria-label="API key"
               className="input input-bordered mt-2"
               type="password"
               value={apiKey}
@@ -53,6 +54,7 @@ export function LoginPage() {
               Back home
             </Link>
             <button
+              aria-label={login.isPending ? "Logging in…" : "Log in"}
               className="btn btn-primary"
               type="submit"
               disabled={login.isPending}

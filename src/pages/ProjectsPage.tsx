@@ -26,6 +26,7 @@ export function ProjectsPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
         </div>
         <button
+          aria-label="New project"
           className="btn btn-primary min-h-11 gap-2"
           type="button"
           onClick={() => setIsCreateDialogOpen(true)}
@@ -51,6 +52,7 @@ export function ProjectsPage() {
                 />
                 <h3 className="mt-3 font-semibold">No projects yet</h3>
                 <button
+                  aria-label="Create project"
                   className="btn btn-sm btn-primary mt-4"
                   type="button"
                   onClick={() => setIsCreateDialogOpen(true)}

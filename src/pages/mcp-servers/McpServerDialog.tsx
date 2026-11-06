@@ -249,6 +249,7 @@ export function McpServerDialog({
           )}
           <div className="flex justify-end gap-2 pt-2">
             <button
+              aria-label="Cancel"
               className="btn btn-ghost"
               disabled={isPending}
               type="button"
@@ -257,6 +258,13 @@ export function McpServerDialog({
               Cancel
             </button>
             <button
+              aria-label={
+                isPending
+                  ? "Saving…"
+                  : isEditing
+                    ? "Save changes"
+                    : "Add MCP server"
+              }
               className="btn btn-primary gap-2"
               disabled={isPending}
               type="submit"

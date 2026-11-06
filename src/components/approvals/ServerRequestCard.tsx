@@ -101,6 +101,7 @@ export function ServerRequestCard({
                 {requestParams.questions[0].question}
               </span>
               <input
+                aria-label={requestParams.questions[0].question}
                 className="input input-bordered input-sm mt-1"
                 value={answer}
                 onChange={(event) => setAnswer(event.target.value)}
@@ -122,6 +123,7 @@ export function ServerRequestCard({
         <div className="card-actions justify-end">
           {actionable && isUserInput && (
             <button
+              aria-label="Submit"
               className="btn btn-primary btn-sm"
               type="button"
               onClick={() => void submitInput()}
@@ -136,6 +138,7 @@ export function ServerRequestCard({
             request.method.includes("requestApproval") && (
               <>
                 <button
+                  aria-label="Allow"
                   className="btn btn-success btn-sm"
                   type="button"
                   onClick={() => void resolve("accept")}
@@ -144,6 +147,7 @@ export function ServerRequestCard({
                   Allow
                 </button>
                 <button
+                  aria-label="Deny"
                   className="btn btn-error btn-sm btn-outline"
                   type="button"
                   onClick={() => void resolve("decline")}
@@ -157,6 +161,7 @@ export function ServerRequestCard({
             !isUserInput &&
             !request.method.includes("requestApproval") && (
               <button
+                aria-label="Reject"
                 className="btn btn-error btn-sm btn-outline"
                 type="button"
                 onClick={() => void onReject("Unsupported server request")}

@@ -95,6 +95,7 @@ export const ActivityItem = memo(
           ))}
           {item.browserUrl && (
             <button
+              aria-label="Open in browser"
               className="btn btn-sm btn-outline mb-3"
               onClick={() => void openBrowserWindow(item.browserUrl ?? "")}
               type="button"

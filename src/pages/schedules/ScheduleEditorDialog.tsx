@@ -212,6 +212,15 @@ export function ScheduleEditorDialog({
           )}
           <div className="flex justify-end pt-2">
             <button
+              aria-label={
+                isEditing
+                  ? isPending
+                    ? "Saving…"
+                    : "Save changes"
+                  : isPending
+                    ? "Creating…"
+                    : "Create schedule"
+              }
               className="btn btn-primary min-h-11 gap-2"
               disabled={isPending}
               type="submit"

@@ -104,6 +104,7 @@ export function SchedulesPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Automation</h1>
         <button
           aria-expanded={isScheduleModalOpen}
+          aria-label={isScheduleModalOpen ? "Close" : "New schedule"}
           className="btn btn-primary min-h-11 gap-2"
           type="button"
           onClick={() =>
