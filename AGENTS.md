@@ -50,21 +50,12 @@ and upstream provenance notices.
 - Before reporting completion, run `git diff --check` and inspect the final
   diff. Preserve unrelated changes and report unrelated failures explicitly.
 
-### Tauri agent E2E loop
+### Tauri agent verification
 
-- Use `make e2e` for the real-Tauri smoke flow on Wayland/XWayland and
-  `make e2e-headless` for the same flow under Xvfb.
-- Use `make e2e-diagnostics` or `make e2e-diagnostics-headless` when frontend
-  and backend log forwarding or `browser.tauri.execute()` observation is
-  needed. The diagnostics command uses a separate debug-only binary because
-  the WebKitGTK invoke instrumentation can interfere with the app's normal
-  App Server invoke flow.
-- E2E runs use a temporary HOME, XDG directories, and local dummy-provider
-  auth fixture. Never copy the developer's credentials or provider API keys
-  into the E2E environment, and never use a real provider request.
-- Inspect the newest `artifacts/e2e/<run-id>/` directory after a failure.
-  It contains `run.json`, `process.log`, WebDriver service logs when enabled,
-  and failure screenshots/page source when available.
+- After completing a UI, Tauri, WebView, IPC, or App Server task, use the
+  [Ruxex Tauri agent verification skill](.agents/skills/ruxex-tauri-agent-verification/SKILL.md)
+  when real-app observation is useful. It covers the persistent WDIO session,
+  need-based observation, and safe teardown.
 - Keep the normal Tauri capability limited to `default`. Do not add `wdio`
   permissions, `withGlobalTauri`, or the frontend diagnostics plugin to a
   release path.

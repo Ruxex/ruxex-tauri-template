@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruxex Tauri Agent Verification"
+  short_description: "Verify Ruxex UI changes with a persistent WDIO session"
+  default_prompt: "Use the persistent WebdriverIO session to inspect and interact with the Ruxex Tauri app as needed after implementation."
