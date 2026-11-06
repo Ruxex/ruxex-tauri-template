@@ -54,7 +54,7 @@ pub(crate) fn initialize_provider_home(
     descriptor: &ruxex::provider::ProviderDescriptor,
 ) -> Result<(), String> {
     let marker_file = identity.home_marker_file();
-    match ruxex::provider::mount_provider_home_with_marker(home, marker_file, descriptor) {
+    match ruxex::provider::mount_provider_home(home, marker_file, descriptor) {
         Ok(_) => Ok(()),
         Err(ruxex::provider::ProviderHomeError::DescriptorMismatch {
             expected, actual, ..
@@ -83,15 +83,11 @@ pub(crate) fn initialize_provider_home(
             {
                 Ok(handle) => handle,
                 Err(error) if error.kind() == ErrorKind::AlreadyExists => {
-                    return ruxex::provider::mount_provider_home_with_marker(
-                        home,
-                        marker_file,
-                        descriptor,
-                    )
-                    .map(|_| ())
-                    .map_err(|error| {
-                        format!("failed to initialize Desktop provider home: {error}")
-                    });
+                    return ruxex::provider::mount_provider_home(home, marker_file, descriptor)
+                        .map(|_| ())
+                        .map_err(|error| {
+                            format!("failed to initialize Desktop provider home: {error}")
+                        });
                 }
                 Err(error) => {
                     return Err(format!(

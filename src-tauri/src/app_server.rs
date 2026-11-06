@@ -389,17 +389,14 @@ async fn connect_in_process_endpoint(
         )
     })?;
 
-    let provider_factory = desktop_config.provider_factory.clone();
-    let provider_init =
-        provider_init_from_config_with_descriptor(&loaded_config, true, &provider_factory.1)
-            .await
-            .map_err(|error| {
-                command_error(
-                    DesktopAppServerErrorKind::Initialization,
-                    format!("failed to initialize the in-process provider: {error}"),
-                )
-            })?;
-    let runtime = (provider_factory.0)(provider_init);
+    let runtime = initialize_in_process_runtime(&loaded_config, desktop_config)
+        .await
+        .map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Initialization,
+                format!("failed to initialize the in-process provider: {error}"),
+            )
+        })?;
     let state_db = core::init_state_db(&loaded_config).await;
     let environment_manager = EnvironmentManager::from_ruxex_home(
         &loaded_config.ruxex_home,
@@ -463,6 +460,21 @@ async fn connect_in_process_endpoint(
         mode: Some(AppServerMode::InProcess),
     };
     Ok((client, status))
+}
+
+async fn initialize_in_process_runtime(
+    loaded_config: &Config,
+    desktop_config: &DesktopConfig,
+) -> anyhow::Result<ruxex::desktop::client::AppServerRuntime> {
+    let provider_factory = &desktop_config.provider_factory;
+    let provider_init = provider_init_from_config_with_descriptor(
+        loaded_config,
+        true,
+        &provider_factory.1,
+        desktop_config.product_identity().home_marker_file(),
+    )
+    .await?;
+    Ok((provider_factory.0)(provider_init))
 }
 
 async fn connect_local_endpoint(
@@ -646,7 +658,8 @@ mod tests {
 
     use super::{
         AppServerDaemonAction, AppServerMode, AppServerStatus, DESKTOP_EXPERIMENTAL_API,
-        DesktopAppServerEvent, parse_app_server_mode, resolve_in_process_paths,
+        DesktopAppServerEvent, initialize_in_process_runtime, parse_app_server_mode,
+        resolve_in_process_paths,
     };
 
     #[test]
@@ -691,6 +704,44 @@ mod tests {
     #[test]
     fn desktop_connects_with_experimental_protocol_capability() {
         assert!(DESKTOP_EXPERIMENTAL_API);
+    }
+
+    #[cfg(feature = "example")]
+    #[tokio::test]
+    async fn cloudflare_in_process_runtime_uses_the_injected_marker() {
+        let home = std::env::temp_dir().join(format!(
+            "ruxex-desktop-marker-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("test clock should be after the Unix epoch")
+                .as_nanos()
+        ));
+        std::fs::create_dir(&home).expect("test home should be created");
+        let result = async {
+            let config =
+                ruxex::desktop::core::Config::load_default_with_cli_overrides_for_ruxex_home(
+                    home.clone(),
+                    Vec::new(),
+                )
+                .await
+                .expect("test config should load");
+            let desktop_config = crate::desktop_config::example_provider_config(Some("cloudflare"));
+            ruxex::provider::mount_provider_home(
+                &config.ruxex_home,
+                desktop_config.product_identity().home_marker_file(),
+                &desktop_config.provider_factory.1,
+            )
+            .expect("Cloudflare marker should initialize");
+
+            let runtime = initialize_in_process_runtime(&config, &desktop_config)
+                .await
+                .expect("in-process provider runtime should initialize");
+            assert_eq!(runtime.provider_descriptor().provider_kind, "cloudflare");
+        }
+        .await;
+        std::fs::remove_dir_all(&home).expect("test home should be removed");
+        result
     }
 
     #[test]
