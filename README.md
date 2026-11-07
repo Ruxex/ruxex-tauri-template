@@ -286,6 +286,19 @@ they are recreated by this WDIO operation set and are not restored from the
 database. The volatile run can leave the conversations it starts in `.d/`, so
 run `make prepare-dummy-home` again when a clean persistent catalog is needed.
 
+To capture the pages that do not depend on an in-progress event, rebuild the
+home first and run:
+
+```sh
+make prepare-dummy-home
+make dummy-home-pages
+```
+
+This captures 15 screenshots covering the home, thread/archive/project pages,
+all settings sections, Automation, Approval center, and one project detail
+page. The screenshots are written to the ignored `artifacts/e2e/` run
+directory and the prepared home is preserved in `.d/`.
+
 ### Real plugin marketplace fixture home
 
 For Marketplace and plugin UI screenshots, keep the real sibling checkout at
