@@ -96,6 +96,19 @@ export function PluginDetailPage() {
     interfaceData?.longDescription ??
     interfaceData?.shortDescription;
   const pluginSummary = plugin?.summary ?? summary;
+  const detailSectionCount = plugin
+    ? [
+        plugin.skills.length,
+        plugin.mcpServers.length,
+        plugin.hooks.length,
+      ].filter((count) => count > 0).length
+    : 0;
+  const detailGridClassName =
+    detailSectionCount === 1
+      ? "grid gap-4"
+      : detailSectionCount === 2
+        ? "grid gap-4 lg:grid-cols-2"
+        : "grid gap-4 lg:grid-cols-3";
   const informationItems = [
     {
       label: "Capabilities",
@@ -227,7 +240,7 @@ export function PluginDetailPage() {
         </p>
       )}
       {plugin && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className={detailGridClassName}>
           {plugin.skills.length > 0 && (
             <section className="rounded-box border border-base-300 bg-base-100 p-4">
               <h2 className="font-semibold">Skills</h2>

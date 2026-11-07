@@ -12,7 +12,7 @@ describe("real plugin marketplace home", () => {
     await waitForMarketplaceDesktopReady();
 
     await openCapabilities();
-    await $("p=No plugin marketplaces available.").waitForDisplayed({
+    await $("p*=No plugin marketplaces available.").waitForDisplayed({
       timeout: 10_000,
     });
     await saveMarketplaceScreenshot("marketplace-empty.png");
@@ -67,13 +67,17 @@ describe("real plugin marketplace home", () => {
 
     await openCapabilities();
     await $("button[aria-label='Install Build Web Apps']").click();
-    await $("button[aria-label='Uninstall Build Web Apps']").waitForDisplayed({
+    const installedButton = $("button[aria-label='Uninstall Build Web Apps']");
+    await installedButton.waitForDisplayed({
       timeout: 30_000,
     });
+    await installedButton.scrollIntoView({ block: "center" });
     await saveMarketplaceScreenshot("marketplace-installed-list.png");
 
     await $("a[aria-label='View details for Build Web Apps']").click();
-    await $("h1=Build Web Apps").waitForDisplayed({ timeout: 10_000 });
+    const buildWebAppsHeading = $("h1=Build Web Apps");
+    await buildWebAppsHeading.waitForDisplayed({ timeout: 10_000 });
+    await buildWebAppsHeading.scrollIntoView({ block: "start" });
     await $("h2=Skills").waitForDisplayed({ timeout: 10_000 });
     await $("h2=Information").waitForDisplayed({ timeout: 10_000 });
     await saveMarketplaceScreenshot("marketplace-build-web-apps-detail.png");

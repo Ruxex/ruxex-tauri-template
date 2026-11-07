@@ -163,53 +163,80 @@ export function ServerRequestCard({
             </div>
           )}
           {permissionParams && (
-            <div className="mt-2 space-y-2 text-sm">
-              {permissionParams.reason && <p>{permissionParams.reason}</p>}
-              {permissionParams.permissions.network && (
-                <p>
-                  <span className="font-medium">Network access</span>: {permissionParams.permissions.network.enabled === true ? "enabled" : "requested"}
-                </p>
-              )}
-              {permissionParams.permissions.fileSystem && (
-                <div className="space-y-1">
-                  <p className="font-medium">File System access</p>
-                  {permissionParams.permissions.fileSystem.read?.map((path) => (
-                    <p className="truncate text-xs" key={`read:${path}`} title={path}>
-                      Read: {path}
-                    </p>
-                  ))}
-                  {permissionParams.permissions.fileSystem.write?.map((path) => (
-                    <p className="truncate text-xs" key={`write:${path}`} title={path}>
-                      Write: {path}
-                    </p>
-                  ))}
-                  {permissionParams.permissions.fileSystem.entries?.map(
-                    (entry) => {
-                      const path = formatValue(entry.path);
-                      return (
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer font-medium text-base-content/80">
+                Requested access
+              </summary>
+              <div className="mt-2 space-y-2">
+                {permissionParams.reason && <p>{permissionParams.reason}</p>}
+                {permissionParams.permissions.network && (
+                  <p>
+                    <span className="font-medium">Network access:</span>
+                    <span className="ml-1">
+                      {permissionParams.permissions.network.enabled === true
+                        ? "enabled"
+                        : "requested"}
+                    </span>
+                  </p>
+                )}
+                {permissionParams.permissions.fileSystem && (
+                  <div className="space-y-1">
+                    <p className="font-medium">File System access</p>
+                    {permissionParams.permissions.fileSystem.read?.map(
+                      (path) => (
                         <p
                           className="truncate text-xs"
-                          key={`entry:${entry.access}:${path}`}
+                          key={`read:${path}`}
+                          title={path}
                         >
-                          {entry.access}: {path}
+                          Read: {path}
                         </p>
-                      );
-                    },
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          <dl className="mt-2 grid gap-x-3 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
-            {displayScope.map(([key, value]) => (
-              <div className="flex min-w-0 gap-2" key={key}>
-                <dt className="font-medium">{key}</dt>
-                <dd className="truncate" title={value}>
-                  {value}
-                </dd>
+                      ),
+                    )}
+                    {permissionParams.permissions.fileSystem.write?.map(
+                      (path) => (
+                        <p
+                          className="truncate text-xs"
+                          key={`write:${path}`}
+                          title={path}
+                        >
+                          Write: {path}
+                        </p>
+                      ),
+                    )}
+                    {permissionParams.permissions.fileSystem.entries?.map(
+                      (entry) => {
+                        const path = formatValue(entry.path);
+                        return (
+                          <p
+                            className="truncate text-xs"
+                            key={`entry:${entry.access}:${path}`}
+                          >
+                            {entry.access}: {path}
+                          </p>
+                        );
+                      },
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
-          </dl>
+            </details>
+          )}
+          <details className="mt-2 text-xs text-base-content/60">
+            <summary className="cursor-pointer text-sm font-medium text-base-content/70">
+              Request details
+            </summary>
+            <dl className="mt-2 grid gap-x-3 gap-y-1 sm:grid-cols-2">
+              {displayScope.map(([key, value]) => (
+                <div className="flex min-w-0 gap-2" key={key}>
+                  <dt className="font-medium">{key}</dt>
+                  <dd className="truncate" title={value}>
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </details>
           {isUserInput && requestParams.questions?.[0] && (
             <label className="form-control mt-2">
               <span className="label-text">

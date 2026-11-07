@@ -67,6 +67,13 @@ export async function openNewChat(): Promise<void> {
   });
 }
 
+export async function closeSidebarPanel(): Promise<void> {
+  const closeButton = $("button[aria-label='Close sidebar panel']");
+  if (await closeButton.isDisplayed().catch(() => false)) {
+    await closeButton.click();
+  }
+}
+
 export async function sendScenario(
   scenario: PersistentScenario,
   occurrence: number,

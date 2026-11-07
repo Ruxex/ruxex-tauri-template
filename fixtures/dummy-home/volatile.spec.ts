@@ -1,5 +1,6 @@
 import { VOLATILE_SCENARIOS } from "./catalog";
 import {
+  closeSidebarPanel,
   openNewChat,
   resolveApproval,
   saveFixtureScreenshot,
@@ -30,6 +31,7 @@ describe("Volatile DummyProvider event states", () => {
         case "pending-approval":
           await sendComposerPrompt(prompt);
           await waitForPendingRequest();
+          await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           await resolveApproval("deny");
           await waitForPendingControlsGone();
@@ -41,6 +43,7 @@ describe("Volatile DummyProvider event states", () => {
           ).waitForDisplayed({
             timeout: 30_000,
           });
+          await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           await submitUserInput("Fixture user input answer");
           await waitForCompletedTurn({
@@ -51,6 +54,7 @@ describe("Volatile DummyProvider event states", () => {
         case "pending-permissions":
           await sendComposerPrompt(prompt);
           await waitForPendingRequest();
+          await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           await resolveApproval("deny");
           await waitForPendingControlsGone();
@@ -58,6 +62,7 @@ describe("Volatile DummyProvider event states", () => {
         case "slow-stream":
           await sendComposerPrompt(prompt);
           await waitForActiveTurn();
+          await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           await $("button[aria-label='Stop']").click();
           await waitForTurnFinish();
@@ -67,6 +72,7 @@ describe("Volatile DummyProvider event states", () => {
           await waitForActiveTurn();
           await selectSubmissionMode("queue");
           await sendQueuedPrompt("Fixture queued follow-up [[example:basic]]");
+          await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           await $("button[aria-label='Stop']").click();
           await waitForTurnFinish();
@@ -77,6 +83,7 @@ describe("Volatile DummyProvider event states", () => {
             kind: "error",
             value: "example provider disconnected after partial output",
           });
+          await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           return;
         case "pending-mcp-elicitation":

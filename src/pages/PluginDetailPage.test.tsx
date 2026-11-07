@@ -297,4 +297,67 @@ describe("PluginDetailPage", () => {
     ).toBeTruthy();
     expect(usePluginRead).toHaveBeenCalledWith(null);
   });
+
+  it("lets a plugin with only skills use the full detail width", async () => {
+    usePluginRead.mockReturnValueOnce({
+      data: {
+        plugin: {
+          marketplaceName: "community",
+          marketplacePath: "/tmp/community",
+          summary: {
+            name: "example",
+            id: "example@community",
+            source: { type: "git", url: "https://example.com/plugin" },
+            localVersion: "1.2.3",
+            interface: {
+              displayName: "Example Plugin",
+              capabilities: [],
+              developerName: "Example Dev",
+              category: "tools",
+              websiteUrl: null,
+              privacyPolicyUrl: null,
+              termsOfServiceUrl: null,
+            },
+          },
+          description: "A plugin with skills only.",
+          skills: [
+            {
+              name: "review",
+              description: "Reviews changes",
+              shortDescription: "Review changes quickly",
+              interface: null,
+              path: null,
+              enabled: true,
+            },
+          ],
+          hooks: [],
+          mcpServers: [],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const { PluginDetailPage } = await import("./PluginDetailPage");
+
+    render(
+      <MemoryRouter
+        initialEntries={["/capabilities/plugins/community/example"]}
+      >
+        <Routes>
+          <Route
+            path="/capabilities/plugins/:marketplaceName/:pluginName"
+            element={<PluginDetailPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const skillsSection = screen
+      .getByRole("heading", { name: "Skills", level: 2 })
+      .closest("section");
+    expect(skillsSection?.parentElement?.className).not.toContain(
+      "lg:grid-cols-3",
+    );
+  });
 });

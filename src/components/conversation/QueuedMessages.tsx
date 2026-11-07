@@ -18,6 +18,10 @@ export function QueuedMessages({ threadId }: { threadId: string }) {
       data-testid="queued-messages"
     >
       <div className="flex max-w-full flex-col items-end gap-2">
+        <div className="flex items-center gap-2 self-stretch text-xs font-semibold uppercase tracking-wide text-base-content/60">
+          <QueueListIcon aria-hidden="true" className="size-4" />
+          <span>Queued messages</span>
+        </div>
         {submissions.map((submission) => (
           <QueuedMessage key={submission.id} submission={submission} />
         ))}

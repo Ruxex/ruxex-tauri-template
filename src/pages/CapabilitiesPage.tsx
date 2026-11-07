@@ -318,7 +318,10 @@ export function CapabilitiesPage() {
                                       {skill.description}
                                     </p>
                                   )}
-                                  <p className="mt-1 truncate text-xs text-base-content/60" title={skill.path}>
+                                  <p
+                                    className="mt-1 truncate text-xs text-base-content/60"
+                                    title={skill.path}
+                                  >
                                     {skill.scope} · {skill.path}
                                   </p>
                                   {skill.pluginId && (
@@ -328,7 +331,9 @@ export function CapabilitiesPage() {
                                   )}
                                 </div>
                                 <label className="flex shrink-0 items-center gap-2 text-sm">
-                                  <span className="sr-only">Enable {skill.name}</span>
+                                  <span className="sr-only">
+                                    Enable {skill.name}
+                                  </span>
                                   <input
                                     aria-label={`Enable ${skill.name}`}
                                     aria-checked={skill.enabled}
@@ -341,7 +346,10 @@ export function CapabilitiesPage() {
                                 </label>
                               </div>
                               {error && (
-                                <p className="mt-1 text-xs text-error" role="alert">
+                                <p
+                                  className="mt-1 text-xs text-error"
+                                  role="alert"
+                                >
                                   Unable to update Skill: {error}
                                 </p>
                               )}
@@ -374,9 +382,21 @@ export function CapabilitiesPage() {
           {!plugins.isLoading &&
             !plugins.isError &&
             !plugins.data?.marketplaces.length && (
-              <p className="text-sm text-base-content/60">
-                No plugin marketplaces available.
-              </p>
+              <article className="card border border-dashed border-base-300 bg-base-100">
+                <div className="card-body items-start gap-3 sm:p-8">
+                  <h2 className="card-title">No plugin marketplaces yet</h2>
+                  <p className="max-w-xl text-sm text-base-content/70">
+                    No plugin marketplaces available. Add a marketplace to
+                    browse and install plugins.
+                  </p>
+                  <Link
+                    className="btn btn-primary btn-sm"
+                    to="/settings/marketplaces"
+                  >
+                    Add plugin marketplace
+                  </Link>
+                </div>
+              </article>
             )}
           <ul className="space-y-3">
             {plugins.data?.marketplaces.map((marketplace) => (
@@ -488,7 +508,7 @@ export function CapabilitiesPage() {
                                     const installButton = (
                                       <button
                                         aria-label={`Install ${displayName}`}
-                                        className={`btn btn-outline btn-square btn-sm ${isOfficialApps ? "opacity-50" : ""}`}
+                                        className={`btn btn-outline btn-square btn-sm ${isOfficialApps ? "opacity-50" : "btn-primary"}`}
                                         title={installTooltip}
                                         type="button"
                                         disabled={
@@ -599,17 +619,16 @@ export function CapabilitiesPage() {
                                               {(plugin.enabled ||
                                                 plugin.installed) && (
                                                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
-                                                  <StateBadge
-                                                    tone={capabilityStatusTone(
-                                                      plugin.enabled
-                                                        ? "enabled"
-                                                        : "installed",
-                                                    )}
-                                                  >
-                                                    {plugin.enabled
-                                                      ? "enabled"
-                                                      : "installed"}
-                                                  </StateBadge>
+                                                  {plugin.installed && (
+                                                    <StateBadge tone="success">
+                                                      Installed
+                                                    </StateBadge>
+                                                  )}
+                                                  {plugin.enabled && (
+                                                    <StateBadge tone="success">
+                                                      Enabled
+                                                    </StateBadge>
+                                                  )}
                                                 </div>
                                               )}
                                             </div>
@@ -664,7 +683,8 @@ export function CapabilitiesPage() {
           )}
           {uninstallPlugin.isError && (
             <p className="mt-2 text-sm text-error">
-              Unable to uninstall plugin: {formatErrorMessage(uninstallPlugin.error)}
+              Unable to uninstall plugin:{" "}
+              {formatErrorMessage(uninstallPlugin.error)}
             </p>
           )}
           {upgradeMarketplace.isError && (

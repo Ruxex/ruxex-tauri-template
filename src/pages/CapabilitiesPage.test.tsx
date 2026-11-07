@@ -431,6 +431,7 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByText("Installed")).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: "Uninstall Format Plugin" }),
     );
@@ -658,7 +659,12 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("No plugin marketplaces available.")).toBeTruthy();
+    expect(screen.getByText(/No plugin marketplaces available\./)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Add plugin marketplace" })
+        .getAttribute("href"),
+    ).toBe("/settings/marketplaces");
   });
 
   it("switches the main content when the skills sidebar route is selected", async () => {

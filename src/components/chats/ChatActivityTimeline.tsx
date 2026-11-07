@@ -220,10 +220,12 @@ function WorkingIndicator({
             aria-hidden="true"
             className="loading loading-dots loading-sm"
           />
-          <span className="sr-only">{label}</span>
+          <span className="ml-2" data-testid="working-indicator-label">
+            {label}
+          </span>
         </>
       ) : (
-        label
+        <span data-testid="working-indicator-label">{label}</span>
       )}
     </div>
   );

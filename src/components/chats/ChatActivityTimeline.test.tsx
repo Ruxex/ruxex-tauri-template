@@ -284,6 +284,9 @@ describe("ChatActivityTimeline", () => {
 
     const working = screen.getByRole("status", { name: "Working for 42s" });
     expect(working.textContent).toBe("Working for 42s");
+    expect(screen.getByTestId("working-indicator-label").textContent).toBe(
+      "Working for 42s",
+    );
     expect(working.querySelector(".loading-dots")).toBeTruthy();
     expect(working.querySelector(".loading-spinner")).toBeNull();
 

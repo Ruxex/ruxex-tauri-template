@@ -97,6 +97,7 @@ describe("ServerRequestCard", () => {
 
     expect(screen.getAllByText("pnpm check")).toHaveLength(2);
     expect(screen.getByText("/workspace")).toBeTruthy();
+    expect(screen.getByText("Request details")).toBeTruthy();
     expect(
       screen
         .getByRole("heading", { name: "Approval requested" })
@@ -139,7 +140,8 @@ describe("ServerRequestCard", () => {
     );
 
     expect(screen.getByText("Need to inspect the project")).toBeTruthy();
-    expect(screen.getByText("Network access")).toBeTruthy();
+    expect(screen.getByText("Requested access")).toBeTruthy();
+    expect(screen.getByText("Network access:")).toBeTruthy();
     expect(screen.getByTitle("/workspace/read")).toBeTruthy();
     expect(screen.getByTitle("/workspace/write")).toBeTruthy();
     expect(
@@ -214,7 +216,9 @@ describe("ServerRequestCard", () => {
     expect(screen.getByText("ruxex_smoke")).toBeTruthy();
     expect(screen.getByText("smoke-v1")).toBeTruthy();
     expect(
-      screen.queryByText('Allow the ruxex_smoke MCP server to run tool "echo"?'),
+      screen.queryByText(
+        'Allow the ruxex_smoke MCP server to run tool "echo"?',
+      ),
     ).toBeNull();
     expect(screen.queryByText("thread-1")).toBeNull();
     expect(screen.queryByText("turn-1")).toBeNull();
