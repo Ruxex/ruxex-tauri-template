@@ -1,4 +1,8 @@
-import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 
 import { useUiPreferences } from "../app/ui-preferences";
 import { translateUi } from "../app/i18n";
@@ -103,9 +107,7 @@ export function SettingsOverviewPage() {
     }
   }
 
-  function handleShortcutKeyDown(
-    event: ReactKeyboardEvent<HTMLInputElement>,
-  ) {
+  function handleShortcutKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
     event.preventDefault();
     const nextShortcut = shortcutKeyFromEvent(event);
     if (nextShortcut) {

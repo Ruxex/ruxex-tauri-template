@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const readQuickPanelShortcut = vi.hoisted(() => vi.fn());
@@ -93,9 +99,7 @@ describe("SettingsOverviewPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
-      expect(updateQuickPanelShortcut).toHaveBeenCalledWith(
-        "CmdOrCtrl+Alt+T",
-      ),
+      expect(updateQuickPanelShortcut).toHaveBeenCalledWith("CmdOrCtrl+Alt+T"),
     );
     expect(input).toHaveProperty("value", "CmdOrCtrl+Alt+T");
   });

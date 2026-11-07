@@ -261,7 +261,9 @@ describe("ChatActivityTimeline", () => {
     expect(timeline.children[1]?.getAttribute("data-testid")).toBe(
       "conversation-item",
     );
-    expect(timeline.lastElementChild).toBe(screen.getByTestId("pending-request"));
+    expect(timeline.lastElementChild).toBe(
+      screen.getByTestId("pending-request"),
+    );
   });
 
   it("shows loading dots while running without a pending request", () => {
@@ -376,7 +378,9 @@ describe("ChatActivityTimeline", () => {
       "Working",
     );
     expect(
-      screen.getByRole("status", { name: "Working" }).querySelector(".loading-dots"),
+      screen
+        .getByRole("status", { name: "Working" })
+        .querySelector(".loading-dots"),
     ).toBeTruthy();
   });
 

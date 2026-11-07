@@ -85,11 +85,7 @@ export function useAllMcpServerStatus() {
 export function useMcpResource(params: v2.McpResourceReadParams | null) {
   const status = useAppServerStatus();
   const queryKey = params
-    ? appServerQueryKeys.mcpResource(
-        params.server,
-        params.uri,
-        params.threadId,
-      )
+    ? appServerQueryKeys.mcpResource(params.server, params.uri, params.threadId)
     : appServerQueryKeys.mcpResource("", "");
 
   return useQuery<v2.McpResourceReadResponse>({

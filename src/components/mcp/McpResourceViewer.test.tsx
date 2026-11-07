@@ -49,11 +49,11 @@ describe("McpResourceViewer", () => {
     const { rerender } = render(
       <McpResourceViewer response={{ contents: [] }} />,
     );
-    expect(screen.getByRole("status").textContent).toContain("No Resource content");
-
-    rerender(
-      <McpResourceViewer error={new Error("Resource unavailable")} />,
+    expect(screen.getByRole("status").textContent).toContain(
+      "No Resource content",
     );
+
+    rerender(<McpResourceViewer error={new Error("Resource unavailable")} />);
     expect(screen.getByRole("alert").textContent).toContain(
       "Resource unavailable",
     );

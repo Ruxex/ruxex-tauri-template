@@ -21,7 +21,11 @@ function userLayer(
   version = "user-v1",
 ): v2.ConfigLayer {
   return {
-    name: { type: "user", file: "/home/test/.ruxex/config.toml", profile: null },
+    name: {
+      type: "user",
+      file: "/home/test/.ruxex/config.toml",
+      profile: null,
+    },
     version,
     config,
     disabledReason: null,
@@ -63,7 +67,9 @@ describe("global MCP configuration adapter", () => {
           disabledReason: null,
         },
       ],
-      { mcp_servers: { effective: { url: "https://effective" } } } as unknown as v2.Config,
+      {
+        mcp_servers: { effective: { url: "https://effective" } },
+      } as unknown as v2.Config,
     );
 
     const result = extractGlobalMcpConfig(response);
@@ -88,9 +94,7 @@ describe("global MCP configuration adapter", () => {
   });
 
   it("quotes dots, quotes, and backslashes in a server key path", () => {
-    expect(mcpServerKeyPath('a.b"c\\d')).toBe(
-      'mcp_servers."a.b\\"c\\\\d"',
-    );
+    expect(mcpServerKeyPath('a.b"c\\d')).toBe('mcp_servers."a.b\\"c\\\\d"');
   });
 
   it("normalizes environment variable references and reports malformed entries", () => {
@@ -100,7 +104,10 @@ describe("global MCP configuration adapter", () => {
           mcp_servers: {
             docs: {
               command: "node",
-              env_vars: ["DOCS_TOKEN", { name: "REMOTE_TOKEN", source: "remote" }],
+              env_vars: [
+                "DOCS_TOKEN",
+                { name: "REMOTE_TOKEN", source: "remote" },
+              ],
             },
             broken: { enabled: "yes" },
           },

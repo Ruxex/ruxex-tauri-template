@@ -215,7 +215,9 @@ export function MarketplaceSettingsPage() {
           )}
           <div className="flex justify-end px-5 py-4">
             <button
-              aria-label={addMarketplace.isPending ? "Adding…" : "Add marketplace"}
+              aria-label={
+                addMarketplace.isPending ? "Adding…" : "Add marketplace"
+              }
               className="btn btn-primary btn-sm"
               type="submit"
               disabled={isBusy}
@@ -286,7 +288,11 @@ export function MarketplaceSettingsPage() {
                     </button>
                     {definition && (
                       <button
-                        aria-label={isPending ? "Disabling…" : `Disable ${marketplace.name}`}
+                        aria-label={
+                          isPending
+                            ? "Disabling…"
+                            : `Disable ${marketplace.name}`
+                        }
                         className="btn btn-outline btn-sm"
                         type="button"
                         disabled={isBusy}

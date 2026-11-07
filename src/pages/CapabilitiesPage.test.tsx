@@ -80,7 +80,10 @@ describe("CapabilitiesPage", () => {
   });
 
   beforeEach(() => {
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
     openBrowserWindow.mockReset();
     oauthLogin.mutateAsync.mockReset();
     oauthLogin.mutateAsync.mockResolvedValue({
@@ -442,7 +445,10 @@ describe("CapabilitiesPage", () => {
   });
 
   it("does not uninstall a plugin when confirmation is canceled", async () => {
-    vi.stubGlobal("confirm", vi.fn(() => false));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => false),
+    );
     usePluginList.mockReturnValueOnce({
       data: {
         marketplaces: [
@@ -750,8 +756,18 @@ describe("CapabilitiesPage", () => {
           {
             cwd: "/workspace",
             skills: [
-              { name: "review", path: reviewPath, enabled: true, pluginId: null },
-              { name: "deploy", path: "/workspace/.agents/skills/deploy", enabled: false, pluginId: null },
+              {
+                name: "review",
+                path: reviewPath,
+                enabled: true,
+                pluginId: null,
+              },
+              {
+                name: "deploy",
+                path: "/workspace/.agents/skills/deploy",
+                enabled: false,
+                pluginId: null,
+              },
             ],
             errors: [],
           },
@@ -774,12 +790,18 @@ describe("CapabilitiesPage", () => {
     );
 
     expect(
-      (screen.getByRole("switch", { name: "Enable review" }) as HTMLInputElement)
-        .disabled,
+      (
+        screen.getByRole("switch", {
+          name: "Enable review",
+        }) as HTMLInputElement
+      ).disabled,
     ).toBe(true);
     expect(
-      (screen.getByRole("switch", { name: "Enable deploy" }) as HTMLInputElement)
-        .disabled,
+      (
+        screen.getByRole("switch", {
+          name: "Enable deploy",
+        }) as HTMLInputElement
+      ).disabled,
     ).toBe(false);
   });
 
@@ -937,4 +959,3 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("Authentication status unavailable")).toBeTruthy();
   });
 });
-

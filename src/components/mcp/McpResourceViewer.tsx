@@ -49,7 +49,9 @@ export function McpResourceViewer({
             key={`blob:${content.uri}`}
           >
             <p className="font-medium">Binary content</p>
-            <p className="text-xs text-base-content/60">{content.mimeType ?? "MIME type unavailable"}</p>
+            <p className="text-xs text-base-content/60">
+              {content.mimeType ?? "MIME type unavailable"}
+            </p>
             <p className="text-xs text-base-content/60">
               {content.blob.length} base64 characters
             </p>

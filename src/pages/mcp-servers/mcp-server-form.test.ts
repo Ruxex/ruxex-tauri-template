@@ -81,8 +81,6 @@ describe("MCP server form model", () => {
     expect(validateMcpServerForm(form, ["docs", "github"])).toMatchObject({
       name: "A server with this name already exists.",
     });
-    expect(validateMcpServerForm(form, ["docs", "github"], "docs")).toEqual(
-      {},
-    );
+    expect(validateMcpServerForm(form, ["docs", "github"], "docs")).toEqual({});
   });
 });

@@ -25,9 +25,9 @@ describe("app-server query keys", () => {
     expect(
       appServerQueryKeys.mcpResource("docs", "resource://guide"),
     ).not.toEqual(appServerQueryKeys.mcpResource("docs", "resource://other"));
-    expect(appServerQueryKeys.mcpResource("docs", "resource://guide")).not.toEqual(
-      appServerQueryKeys.mcpServers,
-    );
+    expect(
+      appServerQueryKeys.mcpResource("docs", "resource://guide"),
+    ).not.toEqual(appServerQueryKeys.mcpServers);
   });
 
   it("separates account refresh variants", () => {

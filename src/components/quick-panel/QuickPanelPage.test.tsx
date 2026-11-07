@@ -54,9 +54,7 @@ describe("QuickPanelPage", () => {
     await waitFor(() =>
       expect(sendMessage).toHaveBeenCalledWith({
         threadId: "thread-1",
-        input: [
-          { type: "text", text: "Summarize this", text_elements: [] },
-        ],
+        input: [{ type: "text", text: "Summarize this", text_elements: [] }],
       }),
     );
     expect(closeQuickPanel).toHaveBeenCalled();
@@ -119,7 +117,9 @@ describe("QuickPanelPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Record audio" }));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Stop recording" })).toBeTruthy(),
+      expect(
+        screen.getByRole("button", { name: "Stop recording" }),
+      ).toBeTruthy(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Stop recording" }));
     await screen.findByText("Audio recorded");
@@ -162,6 +162,8 @@ describe("QuickPanelPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Record audio" }));
 
-    expect(await screen.findByText("Audio recording is unavailable.")).toBeTruthy();
+    expect(
+      await screen.findByText("Audio recording is unavailable."),
+    ).toBeTruthy();
   });
 });

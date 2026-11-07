@@ -36,13 +36,7 @@ export type GlobalMcpConfig = {
   version?: string;
 };
 
-const STDIO_ONLY_KEYS = [
-  "command",
-  "args",
-  "env",
-  "env_vars",
-  "cwd",
-] as const;
+const STDIO_ONLY_KEYS = ["command", "args", "env", "env_vars", "cwd"] as const;
 
 const HTTP_ONLY_KEYS = [
   "url",
@@ -72,9 +66,7 @@ function readOptionalString(
   if (value === undefined) {
     return { value: "" };
   }
-  return isString(value)
-    ? { value }
-    : { error: `${key} must be a string` };
+  return isString(value) ? { value } : { error: `${key} must be a string` };
 }
 
 function readBoolean(
@@ -86,9 +78,7 @@ function readBoolean(
   if (value === undefined) {
     return { value: fallback };
   }
-  return isBoolean(value)
-    ? { value }
-    : { error: `${key} must be a boolean` };
+  return isBoolean(value) ? { value } : { error: `${key} must be a boolean` };
 }
 
 function readStringArray(
@@ -99,7 +89,10 @@ function readStringArray(
   if (value === undefined) {
     return { value: [] };
   }
-  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+  if (
+    !Array.isArray(value) ||
+    !value.every((item) => typeof item === "string")
+  ) {
     return { error: `${key} must be an array of strings` };
   }
   return { value };
@@ -125,14 +118,12 @@ function readEnvironmentVariables(
       continue;
     }
     if (!isJsonObject(item) || typeof item.name !== "string") {
-      return { error: "env_vars entries must be strings or objects with a name" };
+      return {
+        error: "env_vars entries must be strings or objects with a name",
+      };
     }
     const source = item.source;
-    if (
-      source !== undefined &&
-      source !== "local" &&
-      source !== "remote"
-    ) {
+    if (source !== undefined && source !== "local" && source !== "remote") {
       return { error: "env_vars source must be local or remote" };
     }
     variables.push({
@@ -145,7 +136,9 @@ function readEnvironmentVariables(
 
 function readEnvironmentHeaders(
   raw: JsonObject,
-): { value: Record<string, string>; error?: never } | { value?: never; error: string } {
+):
+  | { value: Record<string, string>; error?: never }
+  | { value?: never; error: string } {
   const value = raw.env_http_headers;
   if (value === undefined) {
     return { value: {} };
@@ -166,11 +159,21 @@ function readEnvironmentHeaders(
 function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
   const enabled = readBoolean(raw, "enabled", true);
   if ("error" in enabled) {
-    return { name, raw, draft: null, error: enabled.error ?? "enabled must be a boolean" };
+    return {
+      name,
+      raw,
+      draft: null,
+      error: enabled.error ?? "enabled must be a boolean",
+    };
   }
   const required = readBoolean(raw, "required", false);
   if ("error" in required) {
-    return { name, raw, draft: null, error: required.error ?? "required must be a boolean" };
+    return {
+      name,
+      raw,
+      draft: null,
+      error: required.error ?? "required must be a boolean",
+    };
   }
 
   const hasCommand = raw.command !== undefined;
@@ -187,19 +190,39 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
   if (hasCommand) {
     const command = readOptionalString(raw, "command");
     if ("error" in command) {
-      return { name, raw, draft: null, error: command.error ?? "command must be a string" };
+      return {
+        name,
+        raw,
+        draft: null,
+        error: command.error ?? "command must be a string",
+      };
     }
     const args = readStringArray(raw, "args");
     if ("error" in args) {
-      return { name, raw, draft: null, error: args.error ?? "args must be an array of strings" };
+      return {
+        name,
+        raw,
+        draft: null,
+        error: args.error ?? "args must be an array of strings",
+      };
     }
     const cwd = readOptionalString(raw, "cwd");
     if ("error" in cwd) {
-      return { name, raw, draft: null, error: cwd.error ?? "cwd must be a string" };
+      return {
+        name,
+        raw,
+        draft: null,
+        error: cwd.error ?? "cwd must be a string",
+      };
     }
     const envVars = readEnvironmentVariables(raw);
     if ("error" in envVars) {
-      return { name, raw, draft: null, error: envVars.error ?? "env_vars is invalid" };
+      return {
+        name,
+        raw,
+        draft: null,
+        error: envVars.error ?? "env_vars is invalid",
+      };
     }
     return {
       name,
@@ -223,7 +246,12 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
 
   const url = readOptionalString(raw, "url");
   if ("error" in url) {
-    return { name, raw, draft: null, error: url.error ?? "url must be a string" };
+    return {
+      name,
+      raw,
+      draft: null,
+      error: url.error ?? "url must be a string",
+    };
   }
   const bearerTokenEnvVar = readOptionalString(raw, "bearer_token_env_var");
   if ("error" in bearerTokenEnvVar) {
@@ -266,7 +294,9 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
 export function extractGlobalMcpConfig(
   response: v2.ConfigReadResponse,
 ): GlobalMcpConfig {
-  const layer = response.layers?.find((candidate) => candidate.name.type === "user");
+  const layer = response.layers?.find(
+    (candidate) => candidate.name.type === "user",
+  );
   if (!layer || !isJsonObject(layer.config)) {
     return { servers: [], version: undefined };
   }

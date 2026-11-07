@@ -73,7 +73,9 @@ describe("McpServerDialog", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Edit MCP server" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Edit MCP server" }),
+    ).toBeTruthy();
     expect(
       (screen.getByRole("textbox", { name: "Command" }) as HTMLInputElement)
         .value,
@@ -82,7 +84,9 @@ describe("McpServerDialog", () => {
       target: { value: "streamableHttp" },
     });
     expect(screen.getByRole("textbox", { name: "URL" })).toBeTruthy();
-    expect(screen.getByText("The server configuration is invalid.")).toBeTruthy();
+    expect(
+      screen.getByText("The server configuration is invalid."),
+    ).toBeTruthy();
   });
 
   it("disables save while pending and exposes an accessible close action", () => {

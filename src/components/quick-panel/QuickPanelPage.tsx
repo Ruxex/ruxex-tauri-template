@@ -91,7 +91,9 @@ export function QuickPanelPage() {
       const dataUrl = canvas.toDataURL("image/png");
       const response = await fetch(dataUrl);
       const blob = await response.blob();
-      setImageFile(new File([blob], "screen-capture.png", { type: "image/png" }));
+      setImageFile(
+        new File([blob], "screen-capture.png", { type: "image/png" }),
+      );
     } catch {
       setError("Screen capture cancelled.");
     } finally {
@@ -150,7 +152,11 @@ export function QuickPanelPage() {
 
   async function handleSubmit() {
     const text = message.trim();
-    if ((!text && !imageFile && !audioUrl) || createThread.isPending || sendMessage.isPending) {
+    if (
+      (!text && !imageFile && !audioUrl) ||
+      createThread.isPending ||
+      sendMessage.isPending
+    ) {
       return;
     }
     setError(null);
@@ -221,9 +227,11 @@ export function QuickPanelPage() {
             aria-label="Attach image"
             className="btn btn-ghost btn-sm"
             onClick={() =>
-              document.querySelector<HTMLInputElement>(
-                'input[aria-label="Image attachment"]',
-              )?.click()
+              document
+                .querySelector<HTMLInputElement>(
+                  'input[aria-label="Image attachment"]',
+                )
+                ?.click()
             }
             type="button"
           >
@@ -263,7 +271,9 @@ export function QuickPanelPage() {
             onClick={() => void handleSubmit()}
             type="button"
           >
-            {createThread.isPending || sendMessage.isPending ? "Sending…" : "Send"}
+            {createThread.isPending || sendMessage.isPending
+              ? "Sending…"
+              : "Send"}
           </button>
         </div>
         {error && (

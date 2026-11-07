@@ -54,18 +54,18 @@ describe("approval model", () => {
     "builds an allowed permission response for %s scope",
     (scope) => {
       expect(
-        buildPermissionsApprovalResponse(
-          permissionsRequest,
-          "accept",
-          scope,
-        ),
+        buildPermissionsApprovalResponse(permissionsRequest, "accept", scope),
       ).toEqual({ permissions, scope });
     },
   );
 
   it("builds a denied permission response without granting permissions", () => {
     expect(
-      buildPermissionsApprovalResponse(permissionsRequest, "decline", "session"),
+      buildPermissionsApprovalResponse(
+        permissionsRequest,
+        "decline",
+        "session",
+      ),
     ).toEqual({ permissions: {}, scope: "turn" });
   });
 

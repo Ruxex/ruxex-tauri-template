@@ -16,7 +16,9 @@ const UI_TRANSLATIONS: Record<
   },
 };
 
-function resolveUiLanguage(language: UiLanguage): Exclude<UiLanguage, "system"> {
+function resolveUiLanguage(
+  language: UiLanguage,
+): Exclude<UiLanguage, "system"> {
   if (language !== "system") {
     return language;
   }
