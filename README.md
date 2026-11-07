@@ -282,10 +282,17 @@ they are recreated by this WDIO operation set and are not restored from the
 database. The complete target intentionally leaves those volatile conversations
 in `.d/` for manual UI inspection after the run.
 
-This captures 15 screenshots covering the home, thread/archive/project pages,
-all settings sections, Automation, Approval center, and one project detail
-page. The screenshots are written to the ignored `artifacts/e2e/` run
-directory and the prepared home is preserved in `.d/`.
+This captures 15 stable page screenshots covering the home,
+thread/archive/project pages, all settings sections, Automation, Approval
+center, and one project detail page. It then captures the remaining page and
+interactive states: login, Quick request, Skills/MCP tabs, a completed
+conversation, project creation pickers, chat search, composer menus and slash
+commands, populated Automation cards/dialogs, and MCP transport dialogs. The
+same pass starts the repository-owned HTTP MCP fixture and captures a
+configured server with its Resource list, Resource content, and edit dialog.
+There are 21 screenshots in this additional group. All screenshots are written
+to the ignored `artifacts/e2e/` run directory and the prepared home is
+preserved in `.d/`.
 
 ### Real plugin marketplace fixture home
 
