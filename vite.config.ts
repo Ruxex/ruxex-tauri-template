@@ -8,6 +8,7 @@ export default defineConfig({
     exclude: [
       "e2e/**",
       "fixtures/dummy-home/**/*.spec.ts",
+      "fixtures/marketplace-home/**/*.spec.ts",
       "**/node_modules/**",
     ],
   },

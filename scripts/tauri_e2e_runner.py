@@ -27,6 +27,7 @@ DEFAULT_ARTIFACT_ROOT = REPOSITORY_ROOT / "artifacts" / "e2e"
 # Keep the generated home at a short repository-local path. The App Server's
 # Unix socket path includes RUXEX_HOME and must stay below Linux's limit.
 DUMMY_HOME_DIR = REPOSITORY_ROOT / ".d"
+MARKETPLACE_HOME_DIR = REPOSITORY_ROOT / ".m"
 TAURI_DRIVER_PORT = 4444
 SAFE_ENVIRONMENT_KEYS = frozenset(
     {
@@ -171,10 +172,23 @@ def prepare_persistent_dummy_home() -> Path:
     return DUMMY_HOME_DIR
 
 
+def prepare_persistent_marketplace_home() -> Path:
+    """Reset and return the repository-local marketplace fixture directory."""
+
+    if MARKETPLACE_HOME_DIR.exists():
+        shutil.rmtree(MARKETPLACE_HOME_DIR)
+    MARKETPLACE_HOME_DIR.mkdir(parents=True, exist_ok=True)
+    return MARKETPLACE_HOME_DIR
+
+
 @contextmanager
-def _run_home(dummy_home: bool, dummy_events: bool = False) -> Iterator[Path]:
-    if dummy_home and dummy_events:
-        raise ValueError("dummy home and dummy events modes are mutually exclusive")
+def _run_home(
+    dummy_home: bool,
+    dummy_events: bool = False,
+    marketplace_home: bool = False,
+) -> Iterator[Path]:
+    if sum((dummy_home, dummy_events, marketplace_home)) > 1:
+        raise ValueError("fixture home modes are mutually exclusive")
     if dummy_home:
         yield prepare_persistent_dummy_home()
         return
@@ -186,6 +200,10 @@ def _run_home(dummy_home: bool, dummy_events: bool = False) -> Iterator[Path]:
                 "run make prepare-dummy-home first"
             )
         yield DUMMY_HOME_DIR
+        return
+
+    if marketplace_home:
+        yield prepare_persistent_marketplace_home()
         return
 
     with tempfile.TemporaryDirectory(prefix="ruxex-e2e-home-") as temporary_home:
@@ -389,6 +407,7 @@ def run_e2e(
     spec: str | None = None,
     dummy_home: bool = False,
     dummy_events: bool = False,
+    marketplace_home: bool = False,
 ) -> int:
     artifact_root = Path(
         os.environ.get("RUXEX_E2E_ARTIFACT_ROOT", str(DEFAULT_ARTIFACT_ROOT))
@@ -399,18 +418,18 @@ def run_e2e(
             "RUXEX_E2E_APP_BINARY", str(REPOSITORY_ROOT / "target" / "debug" / "ruxex-desktop")
         )
     ).expanduser()
-    fixture_home = dummy_home or dummy_events
-    config = "wdio.dummy-home.conf.mjs" if fixture_home else "wdio.conf.ts"
+    fixture_home = dummy_home or dummy_events or marketplace_home
+    config = fixture_wdio_config(dummy_home, dummy_events, marketplace_home)
     command = wrap_headless(build_wdio_command(spec, config=config), headless)
 
-    with _run_home(dummy_home, dummy_events) as home_dir:
+    with _run_home(dummy_home, dummy_events, marketplace_home) as home_dir:
         environment = build_environment(os.environ, home_dir, run_directory)
         environment["RUXEX_E2E_APP_BINARY"] = str(app_binary.resolve())
         if headless:
             environment["RUXEX_E2E_HEADLESS"] = "1"
         if os.environ.get("RUXEX_E2E_LOG_LEVEL"):
             environment["RUXEX_E2E_LOG_LEVEL"] = os.environ["RUXEX_E2E_LOG_LEVEL"]
-        if dummy_home:
+        if dummy_home or marketplace_home:
             prepare_dummy_provider_home(environment)
         previous_service_logs = _snapshot_service_logs()
 
@@ -421,11 +440,14 @@ def run_e2e(
             "headless": headless,
             "dummy_home": dummy_home,
             "dummy_events": dummy_events,
+            "marketplace_home": marketplace_home,
             "fixture_mode": (
                 "persistent"
                 if dummy_home
                 else "volatile"
                 if dummy_events
+                else "marketplace"
+                if marketplace_home
                 else "temporary"
             ),
             "spec": spec,
@@ -494,7 +516,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     fixture_modes = parser.add_mutually_exclusive_group()
     fixture_modes.add_argument("--dummy-home", action="store_true")
     fixture_modes.add_argument("--dummy-events", action="store_true")
+    fixture_modes.add_argument("--marketplace-home", action="store_true")
     return parser.parse_args(argv)
+
+
+def fixture_wdio_config(
+    dummy_home: bool, dummy_events: bool, marketplace_home: bool
+) -> str:
+    if marketplace_home:
+        return "wdio.marketplace-home.conf.mjs"
+    if dummy_home or dummy_events:
+        return "wdio.dummy-home.conf.mjs"
+    return "wdio.conf.ts"
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -509,6 +542,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             arguments.spec,
             arguments.dummy_home,
             arguments.dummy_events,
+            arguments.marketplace_home,
         )
     except RuntimeError as error:
         print(f"E2E preflight failed: {error}", file=sys.stderr)

@@ -286,6 +286,29 @@ they are recreated by this WDIO operation set and are not restored from the
 database. The volatile run can leave the conversations it starts in `.d/`, so
 run `make prepare-dummy-home` again when a clean persistent catalog is needed.
 
+### Real plugin marketplace fixture home
+
+For Marketplace and plugin UI screenshots, keep the real sibling checkout at
+`../../openai-plugins` relative to this repository root and run:
+
+```sh
+make prepare-marketplace-home
+```
+
+The WDIO fixture stores only that relative path in tracked source, resolves it
+to an absolute path at runtime, and adds it through the normal Marketplace
+settings UI. The generated home is `.m/` and is intentionally ignored. The
+Marketplace checkout is not copied into this repository; plugin installation
+is still performed by the App Server into the generated home, matching the
+real application flow.
+
+The run covers the empty Marketplace state, the real `openai-curated` list,
+an uninstalled Notion detail page, and an installed Build Web Apps state. The
+five screenshots are saved under the ignored `artifacts/e2e/` run directory:
+`marketplace-empty.png`, `marketplace-list.png`,
+`marketplace-notion-detail.png`, `marketplace-installed-list.png`, and
+`marketplace-build-web-apps-detail.png`.
+
 For an exploratory smoke test against a real provider and LLM, see
 [Real provider smoke test](docs/real-provider-smoke-test.md). It uses the
 persistent WDIO session and covers authentication, model discovery, streaming,

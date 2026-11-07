@@ -3,6 +3,7 @@ dist/
 logs/
 artifacts/e2e/
 /.d/
+/.m/
 target/
 __pycache__/
 *.py[cod]
