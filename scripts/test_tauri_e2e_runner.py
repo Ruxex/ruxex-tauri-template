@@ -11,9 +11,17 @@ from scripts import tauri_e2e_runner
 class TauriE2ERunnerTests(unittest.TestCase):
     def test_parse_args_defaults_to_disposable_home_mode(self):
         self.assertFalse(tauri_e2e_runner.parse_args([]).dummy_home)
+        self.assertFalse(tauri_e2e_runner.parse_args([]).dummy_events)
 
     def test_parse_args_enables_persistent_dummy_home_mode(self):
         self.assertTrue(tauri_e2e_runner.parse_args(["--dummy-home"]).dummy_home)
+
+    def test_parse_args_enables_volatile_dummy_events_mode(self):
+        self.assertTrue(tauri_e2e_runner.parse_args(["--dummy-events"]).dummy_events)
+
+    def test_parse_args_rejects_persistent_and_volatile_modes_together(self):
+        with self.assertRaises(SystemExit):
+            tauri_e2e_runner.parse_args(["--dummy-home", "--dummy-events"])
 
     def test_dummy_home_mode_keeps_the_selected_home_after_context_exit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -33,6 +41,32 @@ class TauriE2ERunnerTests(unittest.TestCase):
             self.assertTrue(selected_home.is_dir())
 
         self.assertFalse(selected_home.exists())
+
+    def test_dummy_events_mode_preserves_the_prepared_home(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            target = Path(temp_dir) / "dummy-home" / "home"
+            target.mkdir(parents=True)
+            sentinel = target / "sentinel.txt"
+            sentinel.write_text("keep", encoding="utf-8")
+
+            with mock.patch.object(
+                tauri_e2e_runner, "DUMMY_HOME_DIR", target, create=True
+            ):
+                with tauri_e2e_runner._run_home(False, True) as home:
+                    self.assertEqual(home, target)
+                    self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
+    def test_dummy_events_mode_requires_a_prepared_home(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            target = Path(temp_dir) / "dummy-home" / "missing"
+            with mock.patch.object(
+                tauri_e2e_runner, "DUMMY_HOME_DIR", target, create=True
+            ):
+                with self.assertRaisesRegex(RuntimeError, "prepare-dummy-home"):
+                    with tauri_e2e_runner._run_home(False, True):
+                        pass
 
     def test_prepare_persistent_dummy_home_resets_only_the_target_directory(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -85,6 +119,9 @@ class TauriE2ERunnerTests(unittest.TestCase):
 
             self.assertEqual(environment["HOME"], str(home))
             self.assertEqual(environment["RUXEX_HOME"], str(home / ".ruxex_desktop"))
+            self.assertEqual(
+                environment["RUXEX_DUMMY_HOME"], str(home / ".ruxex_desktop")
+            )
             self.assertNotIn("RUXEX_PROVIDER", environment)
             self.assertEqual(environment["RUXEX_APP_SERVER_MODE"], "daemon")
             self.assertEqual(environment["GDK_BACKEND"], "x11")
@@ -100,6 +137,10 @@ class TauriE2ERunnerTests(unittest.TestCase):
             auth_file = tauri_e2e_runner.prepare_dummy_provider_home(environment)
             self.assertEqual(
                 json.loads(auth_file.read_text())["api_key"], "ruxex-e2e-dummy"
+            )
+            self.assertIn(
+                "default_mode_request_user_input = true",
+                (home / ".ruxex_desktop" / "config.toml").read_text(),
             )
 
     def test_build_wdio_command_adds_spec_only_when_requested(self):
@@ -123,7 +164,7 @@ class TauriE2ERunnerTests(unittest.TestCase):
     def test_build_wdio_command_supports_the_service_free_dummy_home_config(self):
         self.assertEqual(
             tauri_e2e_runner.build_wdio_command(
-                "fixtures/dummy-home/prepare.spec.ts",
+                "fixtures/dummy-home/persistent.spec.ts",
                 config="wdio.dummy-home.conf.mjs",
             ),
             [
@@ -133,7 +174,7 @@ class TauriE2ERunnerTests(unittest.TestCase):
                 "run",
                 "wdio.dummy-home.conf.mjs",
                 "--spec",
-                "fixtures/dummy-home/prepare.spec.ts",
+                "fixtures/dummy-home/persistent.spec.ts",
             ],
         )
 

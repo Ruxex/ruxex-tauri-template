@@ -70,7 +70,7 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     count: 1,
     kind: "conversation",
     providerMarker: "[[example:long-stream]]",
-    completionText: "# Long stream fixture",
+    completionText: "Long stream fixture",
   },
   {
     id: "multi-turn",

@@ -11,6 +11,7 @@ import signal
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -31,6 +32,7 @@ SAFE_ENVIRONMENT_KEYS = frozenset(
     {
         "HOME",
         "RUXEX_HOME",
+        "RUXEX_DUMMY_HOME",
         "RUXEX_PROVIDER",
         "RUXEX_APP_SERVER_MODE",
         "GDK_BACKEND",
@@ -54,6 +56,13 @@ SENSITIVE_ENV_PATTERN = re.compile(
     r"(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PASSWD|PRIVATE[_-]?KEY|CREDENTIAL)",
     re.IGNORECASE,
 )
+DUMMY_PROVIDER_CONFIG = (
+    'approval_policy = "on-request"\n'
+    'sandbox_mode = "read-only"\n\n'
+    '[features]\n'
+    'request_permissions_tool = true\n'
+    'default_mode_request_user_input = true\n'
+)
 
 
 def is_sensitive_environment_key(name: str) -> bool:
@@ -76,6 +85,7 @@ def build_environment(
         {
             "HOME": str(home_dir),
             "RUXEX_HOME": str(home_dir / ".ruxex_desktop"),
+            "RUXEX_DUMMY_HOME": str(home_dir / ".ruxex_desktop"),
             "RUXEX_APP_SERVER_MODE": "daemon",
             "RUXEX_E2E_PLUGIN": base_env.get("RUXEX_E2E_PLUGIN", "1"),
             "GDK_BACKEND": "x11",
@@ -133,6 +143,10 @@ def prepare_dummy_provider_home(environment: Mapping[str, str]) -> Path:
 
     ruxex_home = Path(environment["RUXEX_HOME"])
     ruxex_home.mkdir(parents=True, exist_ok=True)
+    (ruxex_home / "config.toml").write_text(
+        DUMMY_PROVIDER_CONFIG,
+        encoding="utf-8",
+    )
     auth_file = ruxex_home / "auth.json"
     auth_file.write_text(
         json.dumps(
@@ -158,9 +172,20 @@ def prepare_persistent_dummy_home() -> Path:
 
 
 @contextmanager
-def _run_home(dummy_home: bool) -> Iterator[Path]:
+def _run_home(dummy_home: bool, dummy_events: bool = False) -> Iterator[Path]:
+    if dummy_home and dummy_events:
+        raise ValueError("dummy home and dummy events modes are mutually exclusive")
     if dummy_home:
         yield prepare_persistent_dummy_home()
+        return
+
+    if dummy_events:
+        if not DUMMY_HOME_DIR.is_dir():
+            raise RuntimeError(
+                "volatile dummy events require a prepared home; "
+                "run make prepare-dummy-home first"
+            )
+        yield DUMMY_HOME_DIR
         return
 
     with tempfile.TemporaryDirectory(prefix="ruxex-e2e-home-") as temporary_home:
@@ -360,7 +385,10 @@ def _terminate_isolated_processes(environment: Mapping[str, str]) -> None:
 
 
 def run_e2e(
-    headless: bool, spec: str | None = None, dummy_home: bool = False
+    headless: bool,
+    spec: str | None = None,
+    dummy_home: bool = False,
+    dummy_events: bool = False,
 ) -> int:
     artifact_root = Path(
         os.environ.get("RUXEX_E2E_ARTIFACT_ROOT", str(DEFAULT_ARTIFACT_ROOT))
@@ -371,17 +399,19 @@ def run_e2e(
             "RUXEX_E2E_APP_BINARY", str(REPOSITORY_ROOT / "target" / "debug" / "ruxex-desktop")
         )
     ).expanduser()
-    config = "wdio.dummy-home.conf.mjs" if dummy_home else "wdio.conf.ts"
+    fixture_home = dummy_home or dummy_events
+    config = "wdio.dummy-home.conf.mjs" if fixture_home else "wdio.conf.ts"
     command = wrap_headless(build_wdio_command(spec, config=config), headless)
 
-    with _run_home(dummy_home) as home_dir:
+    with _run_home(dummy_home, dummy_events) as home_dir:
         environment = build_environment(os.environ, home_dir, run_directory)
         environment["RUXEX_E2E_APP_BINARY"] = str(app_binary.resolve())
         if headless:
             environment["RUXEX_E2E_HEADLESS"] = "1"
         if os.environ.get("RUXEX_E2E_LOG_LEVEL"):
             environment["RUXEX_E2E_LOG_LEVEL"] = os.environ["RUXEX_E2E_LOG_LEVEL"]
-        prepare_dummy_provider_home(environment)
+        if dummy_home:
+            prepare_dummy_provider_home(environment)
         previous_service_logs = _snapshot_service_logs()
 
         metadata: dict[str, object] = {
@@ -390,6 +420,14 @@ def run_e2e(
             "environment": safe_environment_metadata(environment),
             "headless": headless,
             "dummy_home": dummy_home,
+            "dummy_events": dummy_events,
+            "fixture_mode": (
+                "persistent"
+                if dummy_home
+                else "volatile"
+                if dummy_events
+                else "temporary"
+            ),
             "spec": spec,
             "started_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -402,7 +440,7 @@ def run_e2e(
         else:
             tauri_driver_process: subprocess.Popen[bytes] | None = None
             try:
-                if dummy_home:
+                if fixture_home:
                     tauri_driver_process = _start_tauri_driver(
                         environment, run_directory
                     )
@@ -453,7 +491,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--spec")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--binary", dest="app_binary")
-    parser.add_argument("--dummy-home", action="store_true")
+    fixture_modes = parser.add_mutually_exclusive_group()
+    fixture_modes.add_argument("--dummy-home", action="store_true")
+    fixture_modes.add_argument("--dummy-events", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -463,7 +503,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         os.environ["RUXEX_E2E_APP_BINARY"] = arguments.app_binary
     if arguments.verbose:
         os.environ["RUXEX_E2E_LOG_LEVEL"] = "debug"
-    return run_e2e(arguments.headless, arguments.spec, arguments.dummy_home)
+    try:
+        return run_e2e(
+            arguments.headless,
+            arguments.spec,
+            arguments.dummy_home,
+            arguments.dummy_events,
+        )
+    except RuntimeError as error:
+        print(f"E2E preflight failed: {error}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

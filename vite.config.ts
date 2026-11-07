@@ -5,7 +5,11 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
-    exclude: ["e2e/**", "**/node_modules/**"],
+    exclude: [
+      "e2e/**",
+      "fixtures/dummy-home/**/*.spec.ts",
+      "**/node_modules/**",
+    ],
   },
   server: {
     port: 1420,

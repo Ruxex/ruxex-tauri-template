@@ -259,6 +259,33 @@ other applications, OS file choosers, title bars, notifications, or global
 shortcuts. Screenshots saved by the E2E hook are WebView screenshots, not
 desktop-wide captures.
 
+### DummyProvider UI fixture home
+
+For repeatable UI design checks, build the ignored repository-local fixture
+home through the same desktop UI operations used by the app:
+
+```sh
+make prepare-dummy-home
+```
+
+The generated home is `.d/` and is intentionally not committed. The default
+persistent catalog contains 14 threads: 12 active and 2 archived, across
+three rootless projects with 2, 1, and 0 project threads. Re-running the
+command resets and rebuilds that catalog, so its counts remain deterministic.
+
+To capture transient UI states without resetting the prepared home, run:
+
+```sh
+make dummy-home-events
+```
+
+This headful run captures six screenshots: pending approval, pending user
+input, pending permissions, slow streaming, queued message, and disconnect
+recovery. Pending request cards and in-progress streams live only in memory;
+they are recreated by this WDIO operation set and are not restored from the
+database. The volatile run can leave the conversations it starts in `.d/`, so
+run `make prepare-dummy-home` again when a clean persistent catalog is needed.
+
 For an exploratory smoke test against a real provider and LLM, see
 [Real provider smoke test](docs/real-provider-smoke-test.md). It uses the
 persistent WDIO session and covers authentication, model discovery, streaming,
