@@ -219,7 +219,9 @@ describe("ProjectSidebar", () => {
     expect(within(panel).getByRole("button", { name: "Skills" })).toBeTruthy();
     expect(within(panel).getByRole("button", { name: "MCP" })).toBeTruthy();
 
-    const installed = within(panel).getByText("Installed").closest("details");
+    const installed = within(panel)
+      .getByText("Installed (1)")
+      .closest("details");
     expect(installed?.open).toBe(false);
     fireEvent.click(installed?.querySelector("summary") as HTMLElement);
     expect(installed?.open).toBe(true);

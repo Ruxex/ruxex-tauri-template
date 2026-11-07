@@ -2,6 +2,7 @@ import {
   closeSidebarPanel,
   saveFixtureScreenshot,
   waitForDesktopReady,
+  waitForHomeReady,
 } from "./support";
 
 type PageFixture = {
@@ -48,7 +49,7 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
   },
   {
     path: "/settings/app-server",
-    heading: "h2=Runtime",
+    heading: "h2.text-3xl",
     screenshotName: "settings-runtime.png",
   },
   {
@@ -90,6 +91,9 @@ describe("DummyProvider page screenshots", () => {
     for (const page of PAGE_FIXTURES) {
       await browser.url(`tauri://localhost/#${page.path}`);
       await $(page.heading).waitForDisplayed({ timeout: 10_000 });
+      if (page.path === "/") {
+        await waitForHomeReady();
+      }
       await saveFixtureScreenshot(page.screenshotName);
     }
 

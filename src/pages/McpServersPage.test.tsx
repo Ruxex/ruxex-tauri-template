@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   GlobalMcpConfig,
-  McpServerEntry,
   McpServerDraft,
+  McpServerEntry,
 } from "../app-server/mcp-config";
 import { McpServersPage } from "./McpServersPage";
 
@@ -106,7 +112,10 @@ describe("McpServersPage", () => {
       isError: false,
       error: null,
     });
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
   });
 
   afterEach(() => {
@@ -120,7 +129,9 @@ describe("McpServersPage", () => {
     expect(screen.getByRole("heading", { name: "MCP servers" })).toBeTruthy();
     expect(screen.getByText("No global MCP servers configured.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Add MCP server" }));
-    expect(screen.getByRole("heading", { name: "Add MCP server" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Add MCP server" }),
+    ).toBeTruthy();
   });
 
   it("lists MCP resources and reads the selected URI without reading templates", () => {
@@ -131,9 +142,7 @@ describe("McpServersPage", () => {
       uri: "resource://guide",
       mimeType: "text/plain",
     };
-    useGlobalMcpConfig.mockReturnValue(
-      config({ servers: [entry()] }),
-    );
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
     useAllMcpServerStatus.mockReturnValue({
       ...status(["docs"]),
       data: {
@@ -176,7 +185,9 @@ describe("McpServersPage", () => {
     expect(screen.getByText("Resources (1)")).toBeTruthy();
     expect(screen.getByText("Dynamic resources")).toBeTruthy();
     expect(screen.getByText(/dynamic-guide/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Read guide from docs" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Read guide from docs" }),
+    );
 
     expect(useMcpResource).toHaveBeenLastCalledWith({
       server: "docs",
@@ -187,6 +198,43 @@ describe("McpServersPage", () => {
       server: "docs",
       uri: "resource://guide/{section}",
     });
+  });
+
+  it("separates unavailable connection state from authentication state", () => {
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
+    useAllMcpServerStatus.mockReturnValue({
+      ...status(["docs"]),
+      data: {
+        data: [
+          {
+            name: "docs",
+            runtimeStatus: null,
+            authStatus: "notLoggedIn",
+            tools: {},
+            toolsError: null,
+            resources: [
+              {
+                name: "guide",
+                title: "Guide",
+                description: null,
+                uri: "resource://guide",
+                mimeType: "text/plain",
+              },
+            ],
+            resourceTemplates: [],
+          },
+        ],
+        nextCursor: null,
+      },
+    });
+
+    renderPage();
+
+    expect(screen.getByText("Connection:")).toBeTruthy();
+    expect(screen.getByText("Status unavailable")).toBeTruthy();
+    expect(screen.getByText("Authentication:")).toBeTruthy();
+    expect(screen.getByText("Authentication not configured")).toBeTruthy();
+    expect(screen.getByText("Resources (1)")).toBeTruthy();
   });
 
   it("returns focus to the add trigger when the dialog closes", async () => {
@@ -202,7 +250,10 @@ describe("McpServersPage", () => {
     const write = vi.fn().mockResolvedValue({ status: "ok" });
     const reload = vi.fn().mockResolvedValue({});
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
-    useReloadMcpServers.mockReturnValue({ mutateAsync: reload, isPending: false });
+    useReloadMcpServers.mockReturnValue({
+      mutateAsync: reload,
+      isPending: false,
+    });
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: "Add MCP server" }));
@@ -212,7 +263,9 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "npx" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Add MCP server" })[1],
+    );
 
     await waitFor(() => expect(write).toHaveBeenCalledOnce());
     expect(write).toHaveBeenCalledWith({
@@ -231,9 +284,7 @@ describe("McpServersPage", () => {
 
   it("preserves unknown fields and writes an atomic rename", async () => {
     const write = vi.fn().mockResolvedValue({ status: "ok" });
-    useGlobalMcpConfig.mockReturnValue(
-      config({ servers: [entry()] }),
-    );
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
     renderPage();
 
@@ -275,10 +326,14 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "node" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Add MCP server" })[1],
+    );
 
     await waitFor(() =>
-      expect(screen.getByText("Managed policy overrides this value.")).toBeTruthy(),
+      expect(
+        screen.getByText("Managed policy overrides this value."),
+      ).toBeTruthy(),
     );
   });
 
@@ -338,10 +393,14 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "node" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Add MCP server" })[1],
+    );
 
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
-    expect(screen.getByRole("heading", { name: "Add MCP server" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Add MCP server" }),
+    ).toBeTruthy();
   });
 
   it("shows a saved-but-reload-failed warning", async () => {
@@ -363,7 +422,9 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "node" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Add MCP server" })[1],
+    );
 
     await waitFor(() =>
       expect(screen.getByText("Saved, but MCP reload failed")).toBeTruthy(),

@@ -3,7 +3,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
-import { ErrorState, LoadingState } from "../components/common/AsyncState";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "../components/common/AsyncState";
 import { PageContainer } from "../components/layout/PageContainer";
 import { NewProjectDialog } from "../components/projects/NewProjectDialog";
 import { ProjectIcon } from "../components/projects/ProjectIcon";
@@ -45,22 +49,22 @@ export function ProjectsPage() {
           {!projects.isLoading &&
             !projects.isError &&
             !projects.data?.data.length && (
-              <div className="rounded-xl border border-dashed border-base-300 bg-base-100/50 px-6 py-10 text-center">
-                <FolderIcon
-                  aria-hidden="true"
-                  className="mx-auto size-8 text-base-content/35"
-                />
-                <h3 className="mt-3 font-semibold">No projects yet</h3>
-                <button
-                  aria-label="Create project"
-                  className="btn btn-sm btn-primary mt-4"
-                  type="button"
-                  onClick={() => setIsCreateDialogOpen(true)}
-                >
-                  <PlusIcon aria-hidden="true" className="size-4" />
-                  Create project
-                </button>
-              </div>
+              <EmptyState
+                action={
+                  <button
+                    aria-label="Create project"
+                    className="btn btn-sm btn-primary"
+                    type="button"
+                    onClick={() => setIsCreateDialogOpen(true)}
+                  >
+                    <PlusIcon aria-hidden="true" className="size-4" />
+                    Create project
+                  </button>
+                }
+                description="Create a project to organize chats and workspaces."
+                icon={FolderIcon}
+                title="No projects yet"
+              />
             )}
           {projects.data?.data.length ? (
             <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">

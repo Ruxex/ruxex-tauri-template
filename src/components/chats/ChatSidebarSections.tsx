@@ -53,7 +53,7 @@ export function ChatSidebarSections({
         />
       )}
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+      <div className="-mr-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-4">
         <details className="group rounded-box" open>
           <summary
             aria-controls="recent-chats-list"

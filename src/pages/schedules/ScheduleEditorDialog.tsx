@@ -1,10 +1,10 @@
-import {
-  CalendarDaysIcon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { CalendarDaysIcon, PlusIcon } from "@heroicons/react/24/outline";
 import type { Dispatch, FormEvent } from "react";
 
+import {
+  DialogFooter,
+  DialogHeader,
+} from "../../components/common/DialogParts";
 import type { ScheduleFormAction, ScheduleFormState } from "./schedule-form";
 import {
   cadenceLabel,
@@ -41,24 +41,13 @@ export function ScheduleEditorDialog({
       }}
     >
       <div className="modal-box w-full max-w-2xl px-5 py-7">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <CalendarDaysIcon aria-hidden="true" className="size-5" />
-            </div>
-            <h2 className="font-semibold" id="schedule-dialog-title">
-              {isEditing ? "Edit schedule" : "Create a schedule"}
-            </h2>
-          </div>
-          <button
-            aria-label="Close schedule dialog"
-            className="btn btn-ghost btn-sm btn-square"
-            type="button"
-            onClick={onClose}
-          >
-            <XMarkIcon aria-hidden="true" className="size-4" />
-          </button>
-        </div>
+        <DialogHeader
+          closeLabel="Close schedule dialog"
+          icon={CalendarDaysIcon}
+          onClose={onClose}
+          title={isEditing ? "Edit schedule" : "Create a schedule"}
+          titleId="schedule-dialog-title"
+        />
 
         <form className="grid gap-3" onSubmit={onSubmit}>
           <label className="form-control">
@@ -210,7 +199,7 @@ export function ScheduleEditorDialog({
               {error}
             </p>
           )}
-          <div className="flex justify-end pt-2">
+          <DialogFooter>
             <button
               aria-label={
                 isEditing
@@ -234,7 +223,7 @@ export function ScheduleEditorDialog({
                   ? "Creating…"
                   : "Create schedule"}
             </button>
-          </div>
+          </DialogFooter>
         </form>
       </div>
       <form method="dialog" className="modal-backdrop">

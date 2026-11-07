@@ -6,31 +6,28 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-
+import { EmptyState } from "../../components/common/AsyncState";
 import type { ScheduleRecord } from "../../platform/schedules";
 import { formatDateTime, scheduleCadenceLabel } from "./schedule-format";
 
 export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="mt-4 rounded-xl border border-dashed border-base-300 bg-base-100/50 px-6 py-10 text-center">
-      <CalendarDaysIcon
-        aria-hidden="true"
-        className="mx-auto size-8 text-base-content/35"
-      />
-      <h3 className="mt-3 font-semibold">No schedules yet</h3>
-      <p className="mt-1 text-sm text-base-content/60">
-        Create your first schedule to automate a prompt.
-      </p>
-      <button
-        aria-label="Create schedule"
-        className="btn btn-sm btn-primary mt-4"
-        type="button"
-        onClick={onCreate}
-      >
-        <PlusIcon aria-hidden="true" className="size-4" />
-        Create schedule
-      </button>
-    </div>
+    <EmptyState
+      action={
+        <button
+          aria-label="Create schedule"
+          className="btn btn-sm btn-primary"
+          type="button"
+          onClick={onCreate}
+        >
+          <PlusIcon aria-hidden="true" className="size-4" />
+          Create schedule
+        </button>
+      }
+      description="Create your first schedule to automate a prompt."
+      icon={CalendarDaysIcon}
+      title="No schedules yet"
+    />
   );
 }
 

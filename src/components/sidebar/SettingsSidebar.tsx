@@ -72,7 +72,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
             <li>
               <NavLink to="/settings/app-server">
                 <ServerIcon aria-hidden="true" className="size-4" />
-                Runtime
+                App Server
               </NavLink>
             </li>
             <li>

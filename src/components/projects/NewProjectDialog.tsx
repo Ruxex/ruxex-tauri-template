@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import { formatErrorMessage } from "../../app/error-message";
 import { useCreateProject } from "../../app-server/hooks";
+import { DialogFooter, DialogHeader } from "../common/DialogParts";
 import { ProjectMetadataFields } from "./ProjectMetadataFields";
 import {
   DEFAULT_PROJECT_METADATA,
@@ -83,24 +84,13 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
     >
       {/* Keep popovers visible; modal-box defaults to overflow-y:auto. See https://github.com/saadeghi/daisyui/issues/3141 and https://github.com/saadeghi/daisyui/discussions/1812. */}
       <div className="modal-box w-full max-w-2xl overflow-visible px-5 py-7">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <PlusIcon aria-hidden="true" className="size-5" />
-            </div>
-            <h2 className="font-semibold" id="new-project-title">
-              Create a project
-            </h2>
-          </div>
-          <button
-            aria-label="Close create project dialog"
-            className="btn btn-ghost btn-sm btn-square"
-            type="button"
-            onClick={onClose}
-          >
-            <XMarkIcon aria-hidden="true" className="size-4" />
-          </button>
-        </div>
+        <DialogHeader
+          closeLabel="Close create project dialog"
+          icon={PlusIcon}
+          onClose={onClose}
+          title="Create a project"
+          titleId="new-project-title"
+        />
 
         <form className="grid w-full gap-4" onSubmit={handleSubmit}>
           <div className="form-control w-full">
@@ -167,7 +157,7 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
 
           <ProjectMetadataFields value={metadata} onChange={setMetadata} />
 
-          <div className="flex justify-end border-t border-base-300 pt-4">
+          <DialogFooter>
             <button
               aria-label="Create project"
               className="btn btn-primary min-h-11 whitespace-nowrap"
@@ -177,7 +167,7 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
               <PlusIcon aria-hidden="true" className="size-4" />
               {createProject.isPending ? "Creating…" : "Create project"}
             </button>
-          </div>
+          </DialogFooter>
           {createProject.isError && (
             <p className="text-sm text-error" role="alert">
               Unable to create project:{" "}

@@ -1,12 +1,12 @@
+import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
+import { formatErrorMessage } from "../app/error-message";
 import {
   useArchivedThreadList,
   useDeleteThread,
   useUnarchiveThread,
 } from "../app-server/hooks";
-import { formatErrorMessage } from "../app/error-message";
 import {
   EmptyState,
   ErrorState,
@@ -60,7 +60,11 @@ export function ArchivePage() {
         <ErrorState>Unable to load archived chats.</ErrorState>
       )}
       {!archived.isLoading && !archived.data?.data.length && (
-        <EmptyState>No archived chats.</EmptyState>
+        <EmptyState
+          description="Restored chats will appear in your active history."
+          icon={ArchiveBoxIcon}
+          title="No archived chats."
+        />
       )}
       <div className="grid gap-3">
         {archived.data?.data.map((thread) => (
@@ -163,7 +167,9 @@ export function ArchivePage() {
                 Cancel
               </button>
               <button
-                aria-label={deleteThread.isPending ? "Deleting…" : "Delete permanently"}
+                aria-label={
+                  deleteThread.isPending ? "Deleting…" : "Delete permanently"
+                }
                 className="btn btn-error"
                 disabled={deleteThread.isPending}
                 onClick={deleteArchivedThread}

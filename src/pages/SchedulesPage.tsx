@@ -1,5 +1,5 @@
-import { type FormEvent, useReducer, useState } from "react";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { type FormEvent, useReducer, useState } from "react";
 
 import { formatErrorMessage } from "../app/error-message";
 import { useSchedules } from "../app-server/hooks";
@@ -7,8 +7,8 @@ import { isDesktopRuntime } from "../app-server/runtime";
 import { PageContainer } from "../components/layout/PageContainer";
 import type { ScheduleRecord } from "../platform/schedules";
 import {
-  ScheduleActionDialog,
   type ScheduleAction,
+  ScheduleActionDialog,
 } from "./schedules/ScheduleActionDialog";
 import { EmptyScheduleList, ScheduleCard } from "./schedules/ScheduleCard";
 import { ScheduleEditorDialog } from "./schedules/ScheduleEditorDialog";
@@ -188,7 +188,10 @@ export function SchedulesPage() {
         {!schedules.query.isLoading && !schedules.query.data?.length && (
           <EmptyScheduleList onCreate={openCreatePanel} />
         )}
-        <div className="grid gap-3 pt-4 sm:grid-cols-2">
+        <div
+          className={`grid gap-3 pt-4 ${savedSchedules.length > 1 ? "sm:grid-cols-2" : "max-w-2xl"}`}
+          data-testid="schedule-grid"
+        >
           {schedules.query.data?.map((schedule) => (
             <ScheduleCard
               key={schedule.id}

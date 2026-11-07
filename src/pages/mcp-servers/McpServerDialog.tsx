@@ -1,7 +1,10 @@
-import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useState } from "react";
-
 import type { McpServerDraft } from "../../app-server/mcp-config";
+import {
+  DialogFooter,
+  DialogHeader,
+} from "../../components/common/DialogParts";
 import {
   formStateToDraft,
   type McpServerFormState,
@@ -70,20 +73,13 @@ export function McpServerDialog({
       }}
     >
       <div className="modal-box w-full max-w-2xl px-5 py-7">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h2 className="font-semibold" id="mcp-server-dialog-title">
-            {title}
-          </h2>
-          <button
-            aria-label="Close MCP server dialog"
-            className="btn btn-ghost btn-sm btn-square"
-            disabled={isPending}
-            type="button"
-            onClick={onClose}
-          >
-            <XMarkIcon aria-hidden="true" className="size-4" />
-          </button>
-        </div>
+        <DialogHeader
+          closeLabel="Close MCP server dialog"
+          disabled={isPending}
+          onClose={onClose}
+          title={title}
+          titleId="mcp-server-dialog-title"
+        />
 
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <label className="form-control">
@@ -190,7 +186,9 @@ export function McpServerDialog({
                 )}
               </label>
               <label className="form-control">
-                <span className="label-text">Bearer token environment variable</span>
+                <span className="label-text">
+                  Bearer token environment variable
+                </span>
                 <input
                   aria-label="Bearer token environment variable"
                   className="input input-bordered mt-1 w-full"
@@ -247,7 +245,7 @@ export function McpServerDialog({
               {error}
             </p>
           )}
-          <div className="flex justify-end gap-2 pt-2">
+          <DialogFooter>
             <button
               aria-label="Cancel"
               className="btn btn-ghost"
@@ -270,13 +268,21 @@ export function McpServerDialog({
               type="submit"
             >
               <PlusIcon aria-hidden="true" className="size-4" />
-              {isPending ? "Saving…" : isEditing ? "Save changes" : "Add MCP server"}
+              {isPending
+                ? "Saving…"
+                : isEditing
+                  ? "Save changes"
+                  : "Add MCP server"}
             </button>
-          </div>
+          </DialogFooter>
         </form>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button aria-label="Close MCP server dialog" type="button" onClick={onClose}>
+        <button
+          aria-label="Close MCP server dialog"
+          type="button"
+          onClick={onClose}
+        >
           Close
         </button>
       </form>

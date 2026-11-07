@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from "react";
 import {
+  ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
   FolderIcon,
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { open } from "@tauri-apps/plugin-dialog";
+import { type FormEvent, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
@@ -26,10 +27,10 @@ import { ProjectIcon } from "../components/projects/ProjectIcon";
 import { ProjectMetadataFields } from "../components/projects/ProjectMetadataFields";
 import {
   DEFAULT_PROJECT_METADATA,
+  type ProjectMetadata,
   parseProjectMetadata,
   projectColorClassName,
   projectMetadataToRecord,
-  type ProjectMetadata,
 } from "../components/projects/project-metadata";
 
 export function ProjectHomePage() {
@@ -282,7 +283,9 @@ export function ProjectHomePage() {
               />
               <div className="flex justify-end">
                 <button
-                  aria-label={updateProject.isPending ? "Saving…" : "Save project"}
+                  aria-label={
+                    updateProject.isPending ? "Saving…" : "Save project"
+                  }
                   className="btn btn-primary min-h-11 whitespace-nowrap"
                   disabled={updateProject.isPending}
                   type="submit"
@@ -341,7 +344,9 @@ export function ProjectHomePage() {
                 Cancel
               </button>
               <button
-                aria-label={deleteProject.isPending ? "Deleting…" : "Delete project"}
+                aria-label={
+                  deleteProject.isPending ? "Deleting…" : "Delete project"
+                }
                 className="btn btn-error"
                 disabled={deleteProject.isPending}
                 type="button"
@@ -370,7 +375,11 @@ export function ProjectHomePage() {
             <ErrorState>Unable to load project chats.</ErrorState>
           )}
           {!threads.isLoading && !threads.data?.data.length && (
-            <EmptyState>No chats in this project yet.</EmptyState>
+            <EmptyState
+              description="Start a new chat to keep work for this project together."
+              icon={ChatBubbleLeftRightIcon}
+              title="No chats in this project yet."
+            />
           )}
           <div className="grid gap-3">
             {threads.data?.data.map((thread) => (

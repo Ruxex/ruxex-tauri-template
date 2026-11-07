@@ -59,6 +59,9 @@ describe("SchedulesPage", () => {
     expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     expect(screen.getByText("Last run failed: offline")).toBeTruthy();
+    expect(screen.getByTestId("schedule-grid").className).not.toContain(
+      "sm:grid-cols-2",
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Run now: Nightly checks" }),
     );

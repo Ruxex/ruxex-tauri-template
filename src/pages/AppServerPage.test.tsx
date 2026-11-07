@@ -106,8 +106,9 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    expect(screen.getByRole("heading", { name: "Runtime" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "App Server" })).toBeTruthy();
+    expect(screen.getAllByRole("heading", { name: "App Server" })).toHaveLength(
+      2,
+    );
     expect(screen.getByText("running")).toBeTruthy();
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
@@ -139,7 +140,7 @@ describe("AppServerPage", () => {
     expect(daemon.update.mutate).toHaveBeenCalledOnce();
   });
 
-  it("renders Browser and Computer Use status in Runtime settings", () => {
+  it("renders Browser and Computer Use status in App Server settings", () => {
     useConfig.mockReturnValue({
       data: { config: { browser_use: {}, computer_use: {} } },
     });
@@ -273,7 +274,7 @@ describe("SettingsSidebar AppServer navigation", () => {
     cleanup();
   });
 
-  it("links to the Runtime settings section", () => {
+  it("links to the App Server settings section", () => {
     render(
       <MemoryRouter initialEntries={["/settings"]}>
         <SettingsSidebar onClose={vi.fn()} />
@@ -281,7 +282,7 @@ describe("SettingsSidebar AppServer navigation", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: "Runtime" }).getAttribute("href"),
+      screen.getByRole("link", { name: "App Server" }).getAttribute("href"),
     ).toBe("/settings/app-server");
   });
 
@@ -301,7 +302,7 @@ describe("SettingsSidebar AppServer navigation", () => {
       screen.getByRole("link", { name: "Plugin marketplaces" }),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Models / Engines" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Runtime" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "App Server" })).toBeTruthy();
   });
 
   it("links to the plugin marketplace settings section", () => {

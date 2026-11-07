@@ -4,7 +4,7 @@ import {
   ServerIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { usePluginList } from "../../app-server/hooks";
 import { MarketplaceAssetImage } from "../plugins/MarketplaceAssetImage";
@@ -12,11 +12,20 @@ import { SidebarHeader } from "./SidebarHeader";
 
 export function PluginsSidebar({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const plugins = usePluginList();
   const installedPlugins =
     plugins.data?.marketplaces
       .flatMap((marketplace) => marketplace.plugins)
       .filter((plugin) => plugin.installed) ?? [];
+  const activeTab = location.pathname.startsWith("/capabilities/plugins")
+    ? "plugins"
+    : searchParams.get("tab") === "skills"
+      ? "skills"
+      : searchParams.get("tab") === "mcp"
+        ? "mcp"
+        : "plugins";
 
   function selectTab(tab: "plugins" | "skills" | "mcp") {
     const paths = {
@@ -34,36 +43,26 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
     >
       <SidebarHeader label="Capabilities" onClose={onClose} />
       <nav aria-label="Capability sections" className="menu w-full gap-1 p-0">
-        <li>
-          <button
-            aria-label="Plugins"
-            type="button"
-            onClick={() => selectTab("plugins")}
-          >
-            <PuzzlePieceIcon aria-hidden="true" className="size-4" />
-            Plugins
-          </button>
-        </li>
-        <li>
-          <button
-            aria-label="Skills"
-            type="button"
-            onClick={() => selectTab("skills")}
-          >
-            <SparklesIcon aria-hidden="true" className="size-4" />
-            Skills
-          </button>
-        </li>
-        <li>
-          <button
-            aria-label="MCP"
-            type="button"
-            onClick={() => selectTab("mcp")}
-          >
-            <ServerIcon aria-hidden="true" className="size-4" />
-            MCP
-          </button>
-        </li>
+        {(
+          [
+            ["plugins", "Plugins", PuzzlePieceIcon],
+            ["skills", "Skills", SparklesIcon],
+            ["mcp", "MCP", ServerIcon],
+          ] as const
+        ).map(([tab, label, Icon]) => (
+          <li key={tab}>
+            <button
+              aria-current={activeTab === tab ? "page" : undefined}
+              aria-label={label}
+              className={activeTab === tab ? "menu-active" : undefined}
+              type="button"
+              onClick={() => selectTab(tab)}
+            >
+              <Icon aria-hidden="true" className="size-4" />
+              {label}
+            </button>
+          </li>
+        ))}
       </nav>
       <details className="group mt-5 rounded-box">
         <summary className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60 hover:bg-base-200">
@@ -71,7 +70,9 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
             aria-hidden="true"
             className="size-4 shrink-0 transition-transform group-open:rotate-90"
           />
-          <span>Installed</span>
+          <span>
+            Installed{plugins.isLoading ? "" : ` (${installedPlugins.length})`}
+          </span>
         </summary>
         <div className="pl-4 pt-1">
           {plugins.isLoading && (

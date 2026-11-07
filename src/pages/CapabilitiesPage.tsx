@@ -19,57 +19,14 @@ import {
   useUpgradeMarketplace,
   useWriteSkillConfig,
 } from "../app-server/hooks";
-import {
-  StateBadge,
-  type StateBadgeTone,
-} from "../components/common/StateBadge";
+import { StateBadge } from "../components/common/StateBadge";
 import { PageContainer } from "../components/layout/PageContainer";
+import { McpStatusSummary } from "../components/mcp/McpStatusSummary";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { openBrowserWindow } from "../platform/native";
 import type { v2 } from "../protocol";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
-
-function capabilityStatusTone(
-  value: string | null | undefined,
-): StateBadgeTone {
-  const normalized = value?.toLowerCase().replaceAll("_", "") ?? "";
-  if (
-    [
-      "connected",
-      "running",
-      "ready",
-      "enabled",
-      "installed",
-      "authenticated",
-      "loggedin",
-    ].includes(normalized)
-  ) {
-    return "success";
-  }
-  if (["unavailable", "error", "failed", "disconnected"].includes(normalized)) {
-    return "error";
-  }
-  if (["notloggedin", "unauthenticated"].includes(normalized)) {
-    return "warning";
-  }
-  return "neutral";
-}
-
-function authStatusLabel(value: string): string {
-  switch (value) {
-    case "oAuth":
-      return "OAuth connected";
-    case "bearerToken":
-      return "Bearer token configured";
-    case "notLoggedIn":
-      return "Not connected";
-    case "unsupported":
-      return "Authentication unsupported";
-    default:
-      return "Authentication status unavailable";
-  }
-}
 
 function isAuthorizationUrl(value: string): boolean {
   try {
@@ -225,21 +182,15 @@ export function CapabilitiesPage() {
               <ul className="space-y-2">
                 {mcp.data?.data.map((server) => (
                   <li className="rounded-box bg-base-200 p-3" key={server.name}>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <span className="font-medium">{server.name}</span>
-                      <StateBadge
-                        tone={capabilityStatusTone(server.runtimeStatus)}
-                      >
-                        {server.runtimeStatus ?? "unavailable"}
-                      </StateBadge>
+                      <McpStatusSummary
+                        authStatus={server.authStatus}
+                        runtimeStatus={server.runtimeStatus}
+                      />
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-base-content/60">
                       <span>{Object.keys(server.tools).length} tools</span>
-                      <StateBadge
-                        tone={capabilityStatusTone(server.authStatus)}
-                      >
-                        {authStatusLabel(server.authStatus)}
-                      </StateBadge>
                       {(server.authStatus === "notLoggedIn" ||
                         server.authStatus === "oAuth") && (
                         <button

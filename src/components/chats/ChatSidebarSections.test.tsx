@@ -78,6 +78,7 @@ describe("ChatSidebarSections", () => {
     const navigation = screen.getByRole("navigation", {
       name: "Chat navigation",
     });
+    const scrollRegion = navigation.querySelector(".overflow-y-auto");
     const links = within(navigation).getAllByRole("link");
 
     expect(links[0].textContent?.trim()).toBe("New chat");
@@ -85,6 +86,8 @@ describe("ChatSidebarSections", () => {
     expect(links).toHaveLength(2);
     expect(links[0].getAttribute("href")).toBe("/");
     expect(links[1].getAttribute("href")).toBe("/chat/thread-1");
+    expect(scrollRegion?.className).toContain("-mr-4");
+    expect(scrollRegion?.className).toContain("pr-4");
     expect(
       screen.queryByRole("link", {
         name: "Open Project Alpha project",

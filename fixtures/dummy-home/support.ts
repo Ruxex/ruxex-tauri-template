@@ -67,6 +67,19 @@ export async function openNewChat(): Promise<void> {
   });
 }
 
+export async function waitForHomeReady(): Promise<void> {
+  await $("textarea[aria-label='Message']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  await browser.waitUntil(
+    async () => !(await $("main").getText()).includes("Loading projects..."),
+    {
+      timeout: 10_000,
+      timeoutMsg: "The Home project sidebar should finish loading",
+    },
+  );
+}
+
 export async function closeSidebarPanel(): Promise<void> {
   const closeButton = $("button[aria-label='Close sidebar panel']");
   if (await closeButton.isDisplayed().catch(() => false)) {

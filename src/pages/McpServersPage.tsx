@@ -10,33 +10,22 @@ import {
   useWriteConfig,
 } from "../app-server/hooks";
 import {
-  mcpServerKeyPath,
-  serializeMcpServerDraft,
   type McpServerDraft,
   type McpServerEntry,
+  mcpServerKeyPath,
+  serializeMcpServerDraft,
 } from "../app-server/mcp-config";
 import { getConfigWriteErrorCode } from "../app-server/mcp-config-errors";
-import type { v2 } from "../protocol";
-import { StateBadge, type StateBadgeTone } from "../components/common/StateBadge";
 import { PageContainer } from "../components/layout/PageContainer";
-import { SettingsPanel } from "../components/settings/SettingsCards";
 import { McpResourceViewer } from "../components/mcp/McpResourceViewer";
+import { McpStatusSummary } from "../components/mcp/McpStatusSummary";
+import { SettingsPanel } from "../components/settings/SettingsCards";
+import type { v2 } from "../protocol";
 import { McpServerDialog } from "./mcp-servers/McpServerDialog";
 import {
   createMcpServerForm,
   type McpServerFormState,
 } from "./mcp-servers/mcp-server-form";
-
-function statusTone(value: string | null | undefined): StateBadgeTone {
-  const normalized = value?.toLowerCase().replaceAll("_", "") ?? "";
-  if (["connected", "running", "ready"].includes(normalized)) {
-    return "success";
-  }
-  if (["error", "failed", "disconnected", "unavailable"].includes(normalized)) {
-    return "error";
-  }
-  return "neutral";
-}
 
 type OpenDialog = {
   entry?: McpServerEntry;
@@ -277,19 +266,23 @@ export function McpServersPage() {
         )}
         {globalConfig.isError && (
           <p className="px-5 py-4 text-error" role="alert">
-            Unable to load global MCP servers: {formatErrorMessage(globalConfig.error)}
+            Unable to load global MCP servers:{" "}
+            {formatErrorMessage(globalConfig.error)}
           </p>
         )}
         {statuses.isError && (
           <p className="px-5 py-4 text-error" role="alert">
-            Unable to load MCP runtime status: {formatErrorMessage(statuses.error)}
+            Unable to load MCP runtime status:{" "}
+            {formatErrorMessage(statuses.error)}
           </p>
         )}
-        {!globalConfig.isLoading && !globalConfig.isError && !entries.length && (
-          <p className="px-5 py-4 text-sm text-base-content/60">
-            No global MCP servers configured.
-          </p>
-        )}
+        {!globalConfig.isLoading &&
+          !globalConfig.isError &&
+          !entries.length && (
+            <p className="px-5 py-4 text-sm text-base-content/60">
+              No global MCP servers configured.
+            </p>
+          )}
         {entries.length > 0 && (
           <ul className="divide-y divide-base-300">
             {entries.map((entry) => {
@@ -312,9 +305,16 @@ export function McpServersPage() {
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <StateBadge tone={statusTone(status?.runtimeStatus)}>
-                        {status?.runtimeStatus ?? "unavailable"}
-                      </StateBadge>
+                      {status ? (
+                        <McpStatusSummary
+                          authStatus={status.authStatus}
+                          runtimeStatus={status.runtimeStatus}
+                        />
+                      ) : (
+                        <span className="text-xs text-base-content/60">
+                          Connection: Status unavailable
+                        </span>
+                      )}
                       {entry.draft && (
                         <button
                           aria-label={`Edit ${entry.name}`}
@@ -339,7 +339,7 @@ export function McpServersPage() {
                   </div>
                   {status && (
                     <p className="mt-2 text-xs text-base-content/60">
-                      {Object.keys(status.tools).length} tools · {status.authStatus}
+                      {Object.keys(status.tools).length} tools
                     </p>
                   )}
                   {status &&
@@ -357,7 +357,10 @@ export function McpServersPage() {
                                 key={resource.uri}
                               >
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm" title={resource.uri}>
+                                  <p
+                                    className="truncate text-sm"
+                                    title={resource.uri}
+                                  >
                                     {resource.title ?? resource.name}
                                   </p>
                                   <p className="truncate text-xs text-base-content/60">
@@ -387,11 +390,13 @@ export function McpServersPage() {
                               Dynamic resources
                             </p>
                             <ul className="mt-1 space-y-1 text-xs text-base-content/60">
-                              {(status.resourceTemplates ?? []).map((template) => (
-                                <li key={template.uriTemplate}>
-                                  {template.name} · {template.uriTemplate}
-                                </li>
-                              ))}
+                              {(status.resourceTemplates ?? []).map(
+                                (template) => (
+                                  <li key={template.uriTemplate}>
+                                    {template.name} · {template.uriTemplate}
+                                  </li>
+                                ),
+                              )}
                             </ul>
                           </div>
                         )}
@@ -405,7 +410,9 @@ export function McpServersPage() {
                       </div>
                     )}
                   {status?.toolsError && (
-                    <p className="mt-1 text-xs text-error">{status.toolsError}</p>
+                    <p className="mt-1 text-xs text-error">
+                      {status.toolsError}
+                    </p>
                   )}
                 </li>
               );
@@ -428,7 +435,9 @@ export function McpServersPage() {
               {reloadError}
             </p>
             <button
-              aria-label={reloadMcp.isPending ? "Reloading…" : "Retry MCP reload"}
+              aria-label={
+                reloadMcp.isPending ? "Reloading…" : "Retry MCP reload"
+              }
               className="btn btn-ghost btn-sm"
               type="button"
               disabled={reloadMcp.isPending}

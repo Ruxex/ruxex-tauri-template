@@ -1,16 +1,17 @@
-import { Link } from "react-router-dom";
-
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
 import {
-  useAppServerEvents,
   activeThreadListParams,
+  useAppServerEvents,
   useThreadList,
   useThreadSearch,
 } from "../app-server/hooks";
-import { ThreadCard } from "../components/common/ThreadCard";
 import { organizeChats } from "../components/chats/chat-organizer";
+import { EmptyState } from "../components/common/AsyncState";
+import { ThreadCard } from "../components/common/ThreadCard";
 
 export function ThreadsPage() {
   const [search, setSearch] = useState("");
@@ -65,14 +66,16 @@ export function ThreadsPage() {
         !searchResults.isLoading &&
         !searchError &&
         rows.length === 0 && (
-          <div className="card border border-dashed border-base-300 bg-base-100">
-            <div className="card-body items-center text-center">
-              <p>No threads yet.</p>
+          <EmptyState
+            action={
               <Link className="btn btn-sm btn-primary" to="/">
                 Start a chat
               </Link>
-            </div>
-          </div>
+            }
+            description="Start a conversation to see it in your history."
+            icon={ChatBubbleLeftRightIcon}
+            title="No threads yet."
+          />
         )}
       <div className="space-y-5">
         {(
