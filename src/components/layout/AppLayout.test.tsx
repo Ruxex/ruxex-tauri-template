@@ -102,7 +102,7 @@ describe("AppLayout", () => {
     ).toBeNull();
   });
 
-  it.each(["/projects", "/projects/project-1", "/settings/account"])(
+  it.each(["/projects", "/projects/project-1"])(
     "keeps the left rail without a context panel on %s",
     (pathname) => {
       useUiPreferences.mockReturnValue({
@@ -126,6 +126,23 @@ describe("AppLayout", () => {
       cleanup();
     },
   );
+
+  it("keeps the settings context panel visible on the account page", () => {
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/settings/account"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    expect(projectSidebarProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ showContextPanel: true }),
+    );
+  });
 
   it("uses the selected thread title in the shared navigation bar", () => {
     useThread.mockReturnValue({

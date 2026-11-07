@@ -5,6 +5,7 @@ import {
   PuzzlePieceIcon,
   ServerIcon,
   SparklesIcon,
+  UserCircleIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
@@ -31,6 +32,12 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               <NavLink end to="/settings">
                 <InformationCircleIcon aria-hidden="true" className="size-4" />
                 General
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/settings/account">
+                <UserCircleIcon aria-hidden="true" className="size-4" />
+                Account
               </NavLink>
             </li>
             <li>

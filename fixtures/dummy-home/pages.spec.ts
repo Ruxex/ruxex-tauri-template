@@ -48,8 +48,7 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
   },
   {
     path: "/settings/app-server",
-    heading:
-      "//h2[contains(@class, 'text-3xl') and normalize-space(.)='AppServer']",
+    heading: "h2=Runtime",
     screenshotName: "settings-runtime.png",
   },
   {

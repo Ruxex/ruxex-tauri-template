@@ -70,6 +70,21 @@ describe("BrowserNavigationBar", () => {
     expect(screen.getByText("Archived chats")).toBeTruthy();
   });
 
+  it.each([
+    ["/settings/app-server", "Runtime"],
+    ["/settings/marketplaces", "Plugin marketplaces"],
+    ["/settings/mcp-servers", "MCP servers"],
+  ])("renders the %s settings breadcrumb", (pathname, label) => {
+    render(
+      <MemoryRouter initialEntries={[pathname]}>
+        <BrowserNavigationBar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(label)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeTruthy();
+  });
+
   it("renders the chat title in the shared breadcrumb", () => {
     render(
       <MemoryRouter initialEntries={["/chat/thread-1"]}>

@@ -1,16 +1,15 @@
-import { Link } from "react-router-dom";
-
-import { formatErrorMessage } from "../app/error-message";
-import { useAccount, useLogout } from "../app-server/hooks";
-import {
-  SettingRow,
-  SettingsPanel,
-} from "../components/settings/SettingsCards";
-import { StateBadge } from "../components/common/StateBadge";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import { Link } from "react-router-dom";
+import { formatErrorMessage } from "../app/error-message";
+import { useAccount, useLogout } from "../app-server/hooks";
+import { StateBadge } from "../components/common/StateBadge";
+import {
+  SettingRow,
+  SettingsPanel,
+} from "../components/settings/SettingsCards";
 
 export function AccountPage() {
   const account = useAccount();
@@ -50,7 +49,7 @@ export function AccountPage() {
             </StateBadge>
           </SettingRow>
           <SettingRow label="Account type">
-            {data?.account?.type ?? "Not signed in"}
+            {formatAccountType(data?.account?.type)}
           </SettingRow>
         </dl>
         {data?.authStatus === "authenticated" ? (
@@ -80,4 +79,10 @@ export function AccountPage() {
       </SettingsPanel>
     </div>
   );
+}
+
+function formatAccountType(type: string | undefined): string {
+  if (!type) return "Not signed in";
+  if (type === "apiKey") return "API key";
+  return type;
 }

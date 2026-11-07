@@ -1,12 +1,6 @@
-import type {
-  ComponentType,
-  KeyboardEvent as ReactKeyboardEvent,
-  ReactNode,
-  SVGProps,
-} from "react";
 import {
-  BellIcon,
   Bars3BottomLeftIcon,
+  BellIcon,
   CheckCircleIcon,
   CommandLineIcon,
   CpuChipIcon,
@@ -20,9 +14,12 @@ import {
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import type {
-  AppServerDaemonAction,
-  AppServerDaemonOutput,
-} from "../../app-server/daemon-api";
+  ComponentType,
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
+  SVGProps,
+} from "react";
+import { formatErrorMessage } from "../../app/error-message";
 import type {
   UiAccentColor,
   UiColorScheme,
@@ -32,12 +29,15 @@ import type {
   UiTheme,
 } from "../../app/ui-preferences";
 import {
+  clampUiFontSize,
   UI_FONT_SIZE_MAX,
   UI_FONT_SIZE_MIN,
   UI_NOTIFICATION_SOUND_OPTIONS,
-  clampUiFontSize,
 } from "../../app/ui-preferences";
-import { formatErrorMessage } from "../../app/error-message";
+import type {
+  AppServerDaemonAction,
+  AppServerDaemonOutput,
+} from "../../app-server/daemon-api";
 import { CapabilityStatus } from "../common/CapabilityStatus";
 import { StateBadge, type StateBadgeTone } from "../common/StateBadge";
 
@@ -143,7 +143,7 @@ export function AppServerCard({
   );
 
   return (
-    <SettingsPanel icon={ServerIcon} title="AppServer">
+    <SettingsPanel icon={ServerIcon} title="App Server">
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Mode">
           <StateBadge
@@ -169,7 +169,7 @@ export function AppServerCard({
             {resynchronizing ? "Resynchronizing" : "Synchronized"}
           </StateBadge>
         </SettingRow>
-        <SettingRow label="AppServer version">
+        <SettingRow label="App Server version">
           <div className="flex flex-wrap items-center justify-end gap-2">
             <span>{displayedVersion ?? "Unavailable"}</span>
             {needsUpdate && (
@@ -205,10 +205,19 @@ export function AppServerCard({
                 {daemonStatus}
               </StateBadge>
             </SettingRow>
-            <SettingRow label="PID">{daemon?.pid ?? "Unavailable"}</SettingRow>
-            <SettingRow label="Socket">
-              {daemon?.socketPath ?? "Unavailable"}
-            </SettingRow>
+            {daemon?.pid !== undefined && (
+              <SettingRow label="PID">{daemon.pid}</SettingRow>
+            )}
+            {daemon?.socketPath && (
+              <SettingRow label="Socket">
+                <span
+                  className="block max-w-full truncate font-mono text-xs"
+                  title={daemon.socketPath}
+                >
+                  {daemon.socketPath}
+                </span>
+              </SettingRow>
+            )}
           </>
         )}
       </dl>
@@ -293,7 +302,7 @@ export function CapabilitiesCard({
     <SettingsPanel icon={SparklesIcon} title="Capabilities">
       <dl className="divide-y divide-base-300 text-sm">
         {Object.entries(capabilities).map(([name, enabled]) => (
-          <SettingRow label={name} key={name}>
+          <SettingRow label={capabilityLabel(name)} key={name}>
             {typeof enabled === "boolean" ? (
               <CapabilityStatus
                 label={enabled ? "Enabled" : "Disabled"}
@@ -306,6 +315,32 @@ export function CapabilitiesCard({
         ))}
       </dl>
     </SettingsPanel>
+  );
+}
+
+const CAPABILITY_LABELS: Record<string, string> = {
+  apiKeyModelDiscovery: "API key model discovery",
+  commandAuth: "Command authorization",
+  externalWebAccess: "External web access",
+  historyNotes: "History notes",
+  interactiveLogin: "Interactive login",
+  modelListing: "Model listing",
+  namespaceTools: "Namespace tools",
+  remoteCompaction: "Remote compaction",
+  standaloneWebSearch: "Standalone web search",
+  streaming: "Streaming",
+  usage: "Usage reporting",
+  webSearch: "Web search",
+  websocket: "WebSocket",
+};
+
+function capabilityLabel(name: string): string {
+  return (
+    CAPABILITY_LABELS[name] ??
+    name
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replaceAll("_", " ")
+      .replace(/^./, (character) => character.toUpperCase())
   );
 }
 

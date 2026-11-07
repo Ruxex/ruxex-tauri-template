@@ -32,4 +32,16 @@ describe("SettingsSidebar", () => {
       screen.getByRole("link", { name: "MCP servers" }).getAttribute("href"),
     ).toBe("/settings/mcp-servers");
   });
+
+  it("links to the account settings page", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings/account"]}>
+        <SettingsSidebar onClose={() => undefined} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Account" }).getAttribute("href"),
+    ).toBe("/settings/account");
+  });
 });

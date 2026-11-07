@@ -21,11 +21,12 @@ export function SidebarContextPanel({
 }) {
   switch (activePanel) {
     case "home":
-    case "account":
     case "projects":
       return (
         <HomeSidebar onClose={onClose} selectedThreadId={selectedThreadId} />
       );
+    case "account":
+      return <SettingsSidebar onClose={onClose} />;
     case "plugins":
       return <PluginsSidebar onClose={onClose} />;
     case "settings":

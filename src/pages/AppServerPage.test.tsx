@@ -106,9 +106,8 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    expect(screen.getAllByRole("heading", { name: "AppServer" })).toHaveLength(
-      2,
-    );
+    expect(screen.getByRole("heading", { name: "Runtime" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "App Server" })).toBeTruthy();
     expect(screen.getByText("running")).toBeTruthy();
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
@@ -226,6 +225,22 @@ describe("AppServerPage", () => {
     for (const name of ["Start", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
+  });
+
+  it("omits unavailable daemon details when the server does not report them", () => {
+    useAppServerDaemon.mockReturnValue(
+      useDaemonResult({
+        status: {
+          ...useDaemonResult().status,
+          data: { ...runningDaemon, pid: undefined },
+        },
+      }),
+    );
+
+    render(<AppServerPage />);
+
+    expect(screen.queryByText("PID")).toBeNull();
+    expect(screen.getByText("/tmp/ruxex.sock")).toBeTruthy();
   });
 
   it("shows App Server initialization errors with daemon recovery controls", () => {

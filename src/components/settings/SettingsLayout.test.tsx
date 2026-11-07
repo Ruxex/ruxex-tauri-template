@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
 import { BellIcon } from "@heroicons/react/24/outline";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
+import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
 import {
   AppServerCard,
   CapabilitiesCard,
@@ -14,7 +14,6 @@ import {
   TypographyCard,
   UiPreferencesCard,
 } from "./SettingsCards";
-import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
 
 describe("settings card layout", () => {
   afterEach(cleanup);
@@ -76,7 +75,7 @@ describe("settings card layout", () => {
     );
 
     const connectionPanel = screen
-      .getByRole("heading", { name: "AppServer" })
+      .getByRole("heading", { name: "App Server" })
       .closest("section");
 
     expect(connectionPanel?.className).toContain("overflow-hidden");
@@ -198,6 +197,18 @@ describe("settings card layout", () => {
     expect(screen.getByText("Unsupported").className).not.toContain("badge");
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
+  });
+
+  it("humanizes provider capability keys", () => {
+    render(
+      <CapabilitiesCard
+        capabilities={{ apiKeyModelDiscovery: true, namespaceTools: false }}
+      />,
+    );
+
+    expect(screen.getByText("API key model discovery")).toBeTruthy();
+    expect(screen.getByText("Namespace tools")).toBeTruthy();
+    expect(screen.queryByText("apiKeyModelDiscovery")).toBeNull();
   });
 
   it("renders language and notification settings in general panels", () => {

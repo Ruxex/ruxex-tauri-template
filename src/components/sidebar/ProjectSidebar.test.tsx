@@ -164,42 +164,39 @@ describe("ProjectSidebar", () => {
     expect(onToggle).toHaveBeenCalledOnce();
   });
 
-  it.each(["account", "projects"] as const)(
-    "renders the shared chat panel for %s",
-    async (activePanel) => {
-      const { ProjectSidebar } = await import("./ProjectSidebar");
+  it("renders the shared chat panel for projects", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
 
-      render(
-        <MemoryRouter>
-          <ProjectSidebar
-            activePanel={activePanel}
-            collapsed={false}
-            onPanelChange={vi.fn()}
-            onToggle={vi.fn()}
-          />
-        </MemoryRouter>,
-      );
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="projects"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
 
-      const panel = screen.getByRole("complementary", {
-        name: "Chat sidebar",
-      });
-      expect(
-        screen.getByRole("complementary", { name: "Workspace sidebar" })
-          .className,
-      ).not.toContain("workbench-sidebar-collapsed");
-      expect(within(panel).getByText("Recent chats")).toBeTruthy();
-      expect(within(panel).getByText("Projects")).toBeTruthy();
-      expect(
-        within(panel).getByRole("button", { name: "Expand Project Alpha" }),
-      ).toBeTruthy();
-      expect(
-        within(panel).queryByRole("link", { name: /Project Alpha/ }),
-      ).toBeNull();
-      expect(
-        within(panel).getByRole("link", { name: /Build the sidebar/ }),
-      ).toBeTruthy();
-    },
-  );
+    const panel = screen.getByRole("complementary", {
+      name: "Chat sidebar",
+    });
+    expect(
+      screen.getByRole("complementary", { name: "Workspace sidebar" })
+        .className,
+    ).not.toContain("workbench-sidebar-collapsed");
+    expect(within(panel).getByText("Recent chats")).toBeTruthy();
+    expect(within(panel).getByText("Projects")).toBeTruthy();
+    expect(
+      within(panel).getByRole("button", { name: "Expand Project Alpha" }),
+    ).toBeTruthy();
+    expect(
+      within(panel).queryByRole("link", { name: /Project Alpha/ }),
+    ).toBeNull();
+    expect(
+      within(panel).getByRole("link", { name: /Build the sidebar/ }),
+    ).toBeTruthy();
+  });
 
   it("renders plugin and skill navigation with collapsed installed plugins", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
@@ -419,6 +416,6 @@ describe("ProjectSidebar", () => {
     expect(
       within(panel).getByRole("link", { name: "Models / Engines" }),
     ).toBeTruthy();
-    expect(within(panel).queryByRole("link", { name: "Account" })).toBeNull();
+    expect(within(panel).getByRole("link", { name: "Account" })).toBeTruthy();
   });
 });

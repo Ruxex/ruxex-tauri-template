@@ -43,7 +43,7 @@ describe("AccountPage", () => {
         .querySelector("svg")
         ?.getAttribute("class"),
     ).toContain("text-success");
-    expect(screen.getByText("apiKey")).toBeTruthy();
+    expect(screen.getByText("API key")).toBeTruthy();
     expect(
       screen
         .getByRole("heading", { name: "Account information" })
