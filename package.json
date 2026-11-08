@@ -8,6 +8,7 @@
     "ladle": "ladle serve",
     "ladle:build": "ladle build",
     "ladle:serve": "ladle serve",
+    "check:catalog": "node scripts/check-ladle-component-stories.mjs",
     "typecheck": "tsc --noEmit",
     "check": "pnpm typecheck && pnpm lint",
     "build": "vite build",
