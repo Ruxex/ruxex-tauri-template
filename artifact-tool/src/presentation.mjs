@@ -44,6 +44,8 @@ class Slide {
     this.presentation = presentation;
     this.layout = options.layout ?? "wide";
     this.objects = [];
+    this.shapes = new ShapeCollection(this);
+    this.tables = new TableCollection(this);
   }
 
   addText(text, options = {}) {
@@ -69,6 +71,72 @@ class Slide {
   }
 }
 
+function mapPosition(options = {}) {
+  const { position, ...rest } = options;
+  if (!position) return { ...rest };
+  return {
+    ...rest,
+    ...(position.left !== undefined ? { x: position.left } : {}),
+    ...(position.top !== undefined ? { y: position.top } : {}),
+    ...(position.width !== undefined ? { w: position.width } : {}),
+    ...(position.height !== undefined ? { h: position.height } : {}),
+  };
+}
+
+class ShapeCollection {
+  constructor(slide) {
+    this.slide = slide;
+  }
+
+  add(config = {}) {
+    const { geometry, text, ...options } = config;
+    const mappedOptions = mapPosition(options);
+    if (geometry === "textbox") {
+      this.slide.addText(text ?? "", mappedOptions);
+      return this.slide.objects.at(-1);
+    }
+    if (geometry === "rect") {
+      this.slide.addShape("rect", mappedOptions);
+      return this.slide.objects.at(-1);
+    }
+    throw new ArtifactToolError(
+      "unsupported_shape",
+      `unsupported presentation shape: ${geometry}`,
+    );
+  }
+}
+
+class TableCollection {
+  constructor(slide) {
+    this.slide = slide;
+  }
+
+  add(config = {}) {
+    const { rows, ...options } = config;
+    this.slide.addTable(rows, mapPosition(options));
+    return this.slide.objects.at(-1);
+  }
+}
+
+class SlideCollection {
+  constructor(presentation) {
+    this.presentation = presentation;
+    this.items = [];
+  }
+
+  add(options = {}) {
+    return this.presentation.createSlide(options);
+  }
+
+  get length() {
+    return this.items.length;
+  }
+
+  [Symbol.iterator]() {
+    return this.items[Symbol.iterator]();
+  }
+}
+
 function addSlideObjects(presentation, slideModel) {
   const slide = presentation.addSlide();
   for (const object of slideModel.objects) {
@@ -83,11 +151,12 @@ function addSlideObjects(presentation, slideModel) {
 export class Presentation {
   constructor(options = {}) {
     this.title = options.title ?? "";
-    this.slides = [];
+    this.slides = new SlideCollection(this);
     this.sourcePath = options.sourcePath;
+    this.shallowImport = options.shallowImport === true;
   }
 
-  static async create(options = {}) {
+  static create(options = {}) {
     return new Presentation(options);
   }
 
@@ -96,12 +165,22 @@ export class Presentation {
     if (bytes.subarray(0, 2).toString() !== "PK") {
       throw new ArtifactToolError("invalid_ooxml_package", `not a PPTX package: ${inputPath}`);
     }
-    return new Presentation({ sourcePath: inputPath });
+    return new Presentation({ sourcePath: inputPath, shallowImport: true });
   }
 
   addSlide(options = {}) {
+    return this.createSlide(options);
+  }
+
+  createSlide(options = {}) {
+    if (this.shallowImport) {
+      throw new ArtifactToolError(
+        "unsupported_operation",
+        "shallow PPTX imports cannot be edited until slide content is parsed",
+      );
+    }
     const slide = new Slide(this, options);
-    this.slides.push(slide);
+    this.slides.items.push(slide);
     return slide;
   }
 
@@ -110,7 +189,7 @@ export class Presentation {
       ok: true,
       valid: true,
       slides: this.slides.length,
-      objects: this.slides.reduce((total, slide) => total + slide.objects.length, 0),
+      objects: this.slides.items.reduce((total, slide) => total + slide.objects.length, 0),
       ...(this.sourcePath ? { sourcePath: this.sourcePath } : {}),
     };
   }
@@ -120,7 +199,7 @@ export class Presentation {
     presentation.layout = "LAYOUT_WIDE";
     presentation.author = "Ruxex";
     presentation.subject = this.title;
-    for (const slide of this.slides) addSlideObjects(presentation, slide);
+    for (const slide of this.slides.items) addSlideObjects(presentation, slide);
     await mkdir(dirname(outputPath), { recursive: true });
     await presentation.writeFile({ fileName: outputPath });
     return { ok: true, format: "pptx", output: outputPath };
