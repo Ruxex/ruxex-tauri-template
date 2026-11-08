@@ -14,10 +14,12 @@ through the managed runtime PATH.
 
 1. Check support with `ruxex-artifacts capabilities --json`.
 2. Write one `.mjs` builder that imports `@ruxex/artifact-tool`.
-3. Create the requested `Workbook`, `Document`, or `Presentation`.
+3. Create the requested `Workbook`, `Document`, or `Presentation`, or import
+   an existing workbook/deck with `FileBlob` and the matching file facade.
 4. Use the format-specific API to add values, text, headings, tables, slides,
    and supported editable shapes.
-5. Call `inspect()` and export to an explicit absolute output path.
+5. Call `inspect()` and save the file-facade output to an explicit absolute
+   output path.
 6. Always run the matching `xlsx validate`, `docx validate`, or `pptx validate`
    command on the generated file.
 7. Report the absolute output path and validation result.
@@ -26,8 +28,11 @@ through the managed runtime PATH.
 
 ```js
 import {
+  FileBlob,
   Document,
   Presentation,
+  PresentationFile,
+  SpreadsheetFile,
   Workbook,
 } from "@ruxex/artifact-tool";
 
@@ -35,7 +40,13 @@ const workbook = await Workbook.create();
 const sheet = workbook.worksheets.add("Summary");
 sheet.getRange("A1:B2").values = [["Name", "Count"], ["Ada", 3]];
 workbook.recalculate();
-await workbook.exportXlsx("/absolute/path/report.xlsx");
+const workbookFile = await SpreadsheetFile.exportXlsx(workbook);
+await workbookFile.save("/absolute/path/report.xlsx");
+
+const existingWorkbook = await SpreadsheetFile.importXlsx(
+  await FileBlob.load("/absolute/path/input.xlsx"),
+);
+await existingWorkbook.inspect();
 
 const document = await Document.create({ title: "Project Report" });
 document.addHeading("Project Report", 1);
@@ -44,15 +55,33 @@ document.addTable([["Area", "Status"], ["Artifacts", "Ready"]]);
 await document.inspect();
 await document.exportDocx("/absolute/path/report.docx");
 
-const presentation = await Presentation.create({ title: "Project Review" });
-const slide = presentation.addSlide({ layout: "title" });
-slide.addText("Project Review", { role: "title" });
-slide.addText("Local artifact generation", { role: "body" });
-slide.addTable([["Area", "Status"], ["DOCX", "Ready"]]);
-slide.addShape("rect", { x: 1, y: 1, w: 2, h: 1 });
+const presentation = Presentation.create({ title: "Project Review" });
+const slide = presentation.slides.add({ layout: "title" });
+slide.shapes.add({
+  geometry: "textbox",
+  position: { left: 72, top: 64, width: 800, height: 80 },
+  text: "Project Review",
+});
+slide.tables.add({
+  position: { left: 72, top: 180, width: 640, height: 180 },
+  rows: [["Area", "Status"], ["PPTX", "Ready"]],
+});
+slide.shapes.add({
+  geometry: "rect",
+  position: { left: 80, top: 400, width: 120, height: 60 },
+});
 await presentation.inspect();
-await presentation.exportPptx("/absolute/path/review.pptx");
+const presentationFile = await PresentationFile.exportPptx(presentation);
+await presentationFile.save("/absolute/path/review.pptx");
 ```
+
+`SpreadsheetFile.importXlsx()` currently imports sheet names and scalar cell
+values. `PresentationFile.importPptx()` is a shallow import for validation and
+source tracking; it does not yet expose existing slide objects for editing.
+Use the direct `Workbook`, `Presentation`, and `Document` methods when a
+compatibility facade is not needed. The Word `Document` facade currently
+creates new documents and performs structural validation; full existing-file
+editing is not yet available.
 
 ## Commands
 

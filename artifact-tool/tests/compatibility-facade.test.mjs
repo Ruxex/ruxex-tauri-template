@@ -4,8 +4,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { ArtifactOutput, FileBlob } from "../src/file-blob.mjs";
-import { PresentationFile, SpreadsheetFile, Workbook, Presentation } from "../src/index.mjs";
+import {
+  ArtifactOutput,
+  FileBlob,
+  PresentationFile,
+  SpreadsheetFile,
+  Workbook,
+  Presentation,
+} from "../src/index.mjs";
 
 test("FileBlob loads a local file lazily and reports its format", async () => {
   const directory = await mkdtemp(join(tmpdir(), "ruxex-file-blob-"));
