@@ -153,6 +153,10 @@ test("PresentationFile imports paths and FileBlobs as explicit shallow documents
     Promise.resolve().then(() => fromPath.slides.add()),
     (error) => error.code === "unsupported_operation",
   );
+  await assert.rejects(
+    PresentationFile.exportPptx(fromPath).save(join(directory, "lost-content.pptx")),
+    (error) => error.code === "unsupported_operation",
+  );
 });
 
 test("Presentation shape adapters reject unsupported geometry", async () => {

@@ -195,6 +195,12 @@ export class Presentation {
   }
 
   async exportPptx(outputPath) {
+    if (this.shallowImport) {
+      throw new ArtifactToolError(
+        "unsupported_operation",
+        "shallow PPTX imports cannot be exported until slide content is parsed",
+      );
+    }
     const presentation = new PptxGenJS();
     presentation.layout = "LAYOUT_WIDE";
     presentation.author = "Ruxex";
