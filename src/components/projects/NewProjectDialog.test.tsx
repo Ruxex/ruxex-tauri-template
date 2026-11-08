@@ -49,6 +49,31 @@ describe("NewProjectDialog", () => {
     );
   });
 
+  it("supports restoring a draft with a selected workspace folder", async () => {
+    const { NewProjectDialog } = await import("./NewProjectDialog");
+
+    render(
+      <MemoryRouter>
+        <NewProjectDialog
+          initialName="Design system"
+          initialRoot="/workspace/design-system"
+          onClose={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Project name" }).getAttribute(
+        "value",
+      ),
+    ).toBe("Design system");
+    expect(
+      screen.getByRole("button", {
+        name: "Selected workspace folder: /workspace/design-system",
+      }),
+    ).toBeTruthy();
+  });
+
   it("creates a project with the selected metadata and workspace root", async () => {
     const { NewProjectDialog } = await import("./NewProjectDialog");
     render(
@@ -104,6 +129,26 @@ describe("NewProjectDialog", () => {
     expect(
       useCreateProject.mock.results[0]?.value.mutate,
     ).not.toHaveBeenCalled();
+  });
+
+  it("shows inline validation when the project name is missing", async () => {
+    const { NewProjectDialog } = await import("./NewProjectDialog");
+    render(
+      <MemoryRouter>
+        <NewProjectDialog onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Create project" }));
+
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Enter a project name",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Project name" }).getAttribute(
+        "aria-invalid",
+      ),
+    ).toBe("true");
   });
 
   it("navigates to the created project after success", async () => {

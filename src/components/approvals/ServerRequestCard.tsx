@@ -51,6 +51,9 @@ export function ServerRequestCard({
   const permissionParams = isPermissionsRequest
     ? (request.params as v2.PermissionsRequestApprovalParams)
     : null;
+  const permissionSummary = permissionParams
+    ? buildPermissionSummary(permissionParams)
+    : [];
   const mcpParams = isMcpElicitation
     ? (request.params as {
         mode?: string;
@@ -138,7 +141,9 @@ export function ServerRequestCard({
               <RequestIcon aria-hidden="true" className="size-5" />
               {title}
             </h2>
-            <span className="badge badge-warning">{String(request.id)}</span>
+            <span className="badge badge-ghost badge-sm text-base-content/60">
+              Request {String(request.id)}
+            </span>
           </div>
           {requestParams.command && (
             <code className="mt-2 block rounded bg-base-200 p-2 text-sm">
@@ -163,12 +168,31 @@ export function ServerRequestCard({
             </div>
           )}
           {permissionParams && (
-            <details className="mt-2 text-sm">
-              <summary className="cursor-pointer font-medium text-base-content/80">
-                Requested access
-              </summary>
-              <div className="mt-2 space-y-2">
-                {permissionParams.reason && <p>{permissionParams.reason}</p>}
+            <>
+              <section
+                aria-label="Requested access"
+                className="mt-2 rounded-box border border-warning/30 bg-warning/5 p-3 text-sm"
+              >
+                <h3 className="font-medium">Requested access</h3>
+                {permissionParams.reason && (
+                  <p className="mt-1 text-base-content/75">
+                    {permissionParams.reason}
+                  </p>
+                )}
+                <ul className="mt-2 space-y-1">
+                  {permissionSummary.map((item) => (
+                    <li className="truncate" key={item} title={item}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <details className="mt-2 text-sm">
+                <summary className="cursor-pointer font-medium text-base-content/80">
+                  Access details
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {permissionParams.reason && <p>{permissionParams.reason}</p>}
                 {permissionParams.permissions.network && (
                   <p>
                     <span className="font-medium">Network access:</span>
@@ -219,8 +243,9 @@ export function ServerRequestCard({
                     )}
                   </div>
                 )}
-              </div>
-            </details>
+                </div>
+              </details>
+            </>
           )}
           <details className="mt-2 text-xs text-base-content/60">
             <summary className="cursor-pointer text-sm font-medium text-base-content/70">
@@ -369,6 +394,32 @@ export function ServerRequestCard({
       </div>
     </article>
   );
+}
+
+function buildPermissionSummary(
+  params: v2.PermissionsRequestApprovalParams,
+): string[] {
+  const items: string[] = [];
+  if (params.permissions.network) {
+    items.push(
+      params.permissions.network.enabled === true
+        ? "Network access"
+        : "Network access requested",
+    );
+  }
+
+  const fileSystem = params.permissions.fileSystem;
+  fileSystem?.read?.forEach((path) => {
+    items.push(`Read: ${path}`);
+  });
+  fileSystem?.write?.forEach((path) => {
+    items.push(`Write: ${path}`);
+  });
+  fileSystem?.entries?.forEach((entry) => {
+    items.push(`${entry.access}: ${formatValue(entry.path)}`);
+  });
+
+  return items.length > 0 ? items : ["Specific access requested"];
 }
 
 function formatValue(value: unknown): string {

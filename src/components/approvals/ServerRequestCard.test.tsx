@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
@@ -139,7 +145,14 @@ describe("ServerRequestCard", () => {
       />,
     );
 
-    expect(screen.getByText("Need to inspect the project")).toBeTruthy();
+    const summary = screen.getByRole("region", {
+      name: "Requested access",
+    });
+    expect(within(summary).getByText("Need to inspect the project")).toBeTruthy();
+    expect(within(summary).getByText("Network access")).toBeTruthy();
+    expect(within(summary).getByText("Read: /workspace/read")).toBeTruthy();
+    expect(within(summary).getByText("Write: /workspace/write")).toBeTruthy();
+    expect(screen.getAllByText("Need to inspect the project")).toHaveLength(2);
     expect(screen.getByText("Requested access")).toBeTruthy();
     expect(screen.getByText("Network access:")).toBeTruthy();
     expect(screen.getByTitle("/workspace/read")).toBeTruthy();

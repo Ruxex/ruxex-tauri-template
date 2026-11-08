@@ -199,6 +199,23 @@ describe("Composer", () => {
     expect(sendMutation).not.toHaveBeenCalled();
   });
 
+  it("shows active goal and plan mode indicators outside the options menu", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.click(screen.getByLabelText("Composer options"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
+    fireEvent.click(screen.getByLabelText("Composer options"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Plan mode" }));
+
+    expect(
+      screen.getByRole("status", { name: "Goal mode active" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("status", { name: "Plan mode active" }),
+    ).toBeTruthy();
+  });
+
   it("sends a selected image alongside the text input", async () => {
     const { Composer } = await import("./Composer");
 

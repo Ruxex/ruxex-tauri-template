@@ -9,22 +9,16 @@ export function ErrorState({ children }: { children: ReactNode }) {
 }
 
 export function EmptyState({
-  children,
   action,
   description,
   icon: Icon,
   title,
 }: {
-  children?: ReactNode;
   action?: ReactNode;
   description?: ReactNode;
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   title?: ReactNode;
 }) {
-  if (title === undefined) {
-    return <p className="text-base-content/60">{children}</p>;
-  }
-
   return (
     <div className="rounded-xl border border-dashed border-base-300 bg-base-100/50 px-6 py-10 text-center">
       {Icon && (

@@ -39,7 +39,7 @@ export function ComposerSettings({
     <details className="dropdown dropdown-top dropdown-end" ref={detailsRef}>
       <summary
         aria-label="Model and effort"
-        className="btn btn-ghost btn-sm max-w-64 gap-1"
+        className={`btn btn-ghost btn-sm max-w-64 gap-1 ${selectedModel ? "" : "text-base-content/60"}`}
       >
         <AdjustmentsHorizontalIcon aria-hidden="true" className="size-4" />
         <span className="truncate">{modelLabel}</span>

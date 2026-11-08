@@ -57,6 +57,46 @@ describe("ChatSearchDialog", () => {
     expect(onSelect).toHaveBeenCalledWith("thread-1");
   });
 
+  it("supports an initial search term for restored search state", async () => {
+    useThreadSearch.mockImplementation((term: string) => ({
+      data: term
+        ? {
+            data: [
+              {
+                snippet: "Fix the compiler",
+                thread: {
+                  id: "thread-1",
+                  name: "Fix the compiler",
+                  preview: "Fix the compiler error",
+                  updatedAt: 1,
+                },
+              },
+            ],
+          }
+        : undefined,
+      isError: false,
+      isLoading: false,
+    }));
+    const { ChatSearchDialog } = await import("./ChatSearchDialog");
+
+    render(
+      <MemoryRouter>
+        <ChatSearchDialog
+          initialSearchTerm="compiler"
+          onClose={vi.fn()}
+          onSelect={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("searchbox", { name: "Search chats" }).getAttribute(
+        "value",
+      ),
+    ).toBe("compiler");
+    expect(screen.getByRole("link", { name: /Fix the compiler/ })).toBeTruthy();
+  });
+
   it("shows blank, loading, error, and empty states and closes on Escape", async () => {
     const onClose = vi.fn();
     const { ChatSearchDialog } = await import("./ChatSearchDialog");

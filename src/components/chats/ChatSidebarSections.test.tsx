@@ -96,7 +96,8 @@ describe("ChatSidebarSections", () => {
     expect(
       screen.getByRole("button", { name: "Expand Project Alpha" }),
     ).toBeTruthy();
-    expect(links[1].parentElement?.className).toContain("bg-base-200");
+    expect(links[1].parentElement?.className).toContain("ring-1");
+    expect(links[1].parentElement?.className).toContain("border-primary/30");
     expect(
       screen.getByRole("button", { name: "Archive Build the sidebar" }),
     ).toBeTruthy();
@@ -138,6 +139,38 @@ describe("ChatSidebarSections", () => {
       screen.getByRole("button", { name: "Archive Build the sidebar" }),
     );
     expect(archiveThread).toHaveBeenCalledWith({ threadId: "thread-1" });
+  });
+
+  it("uses structured empty states for chats and projects", async () => {
+    activeThreadListParams.mockReturnValue({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
+    useProjectList.mockReturnValue({
+      data: { data: [] },
+      isError: false,
+      isLoading: false,
+    });
+    useThreadList.mockReturnValue({
+      data: { data: [] },
+      isError: false,
+      isLoading: false,
+    });
+    const { ChatSidebarSections } = await import("./ChatSidebarSections");
+
+    render(
+      <MemoryRouter>
+        <ChatSidebarSections onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "No chats yet" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "No projects yet" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open projects" })).toBeTruthy();
   });
 
   it("expands each project independently with project-scoped recent chats", async () => {

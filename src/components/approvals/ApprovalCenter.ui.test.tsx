@@ -83,6 +83,16 @@ describe("ApprovalCenter", () => {
     expect(screen.getByText("No pending approvals.")).toBeTruthy();
   });
 
+  it("can render a supplied request set for presentation surfaces", async () => {
+    useServerRequests.mockReturnValue([]);
+    const { ApprovalCenter } = await import("./ApprovalCenter");
+
+    render(<ApprovalCenter connected={true} pendingRequests={[pending]} />);
+
+    expect(screen.getAllByText("pnpm check").length).toBeGreaterThan(0);
+    expect(screen.queryByText("No pending approvals.")).toBeNull();
+  });
+
   it("rejects unsupported actionable requests through the standard message", async () => {
     useServerRequests.mockReturnValue([
       {

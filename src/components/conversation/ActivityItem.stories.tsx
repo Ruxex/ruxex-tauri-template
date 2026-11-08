@@ -31,3 +31,33 @@ export const InProgress: Story = () => (
     }}
   />
 );
+
+export const ToolCall: Story = () => (
+  <ActivityItem
+    item={{
+      ...commandItem,
+      id: "activity-tool",
+      type: "dynamicToolCall",
+      title: "Inspect repository",
+      text: '{"path":"/workspace/ruxex"}',
+      metadata: {
+        namespace: "filesystem",
+        status: "completed",
+        success: "true",
+      },
+    }}
+  />
+);
+
+export const FileChanges: Story = () => (
+  <ActivityItem
+    item={{
+      ...commandItem,
+      id: "activity-files",
+      type: "fileChange",
+      title: "Update component styles",
+      text: "src/components/Composer.tsx\nsrc/components/Sidebar.tsx",
+      metadata: { files: "2", status: "completed" },
+    }}
+  />
+);

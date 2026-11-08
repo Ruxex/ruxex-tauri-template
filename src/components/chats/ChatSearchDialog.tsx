@@ -4,12 +4,17 @@ import { formatErrorMessage } from "../../app/error-message";
 import { ChatListItem } from "./ChatListItem";
 
 type ChatSearchDialogProps = {
+  initialSearchTerm?: string;
   onClose: () => void;
   onSelect: (threadId: string) => void;
 };
 
-export function ChatSearchDialog({ onClose, onSelect }: ChatSearchDialogProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+export function ChatSearchDialog({
+  initialSearchTerm = "",
+  onClose,
+  onSelect,
+}: ChatSearchDialogProps) {
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useThreadSearch(searchTerm);
 

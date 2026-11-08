@@ -43,7 +43,7 @@ export function ChatListItem({
   const [isTitleHovered, setIsTitleHovered] = useState(false);
   return (
     <div
-      className={`group/thread grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden rounded-box border border-transparent p-0 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "bg-base-200" : ""}`}
+      className={`group/thread grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden rounded-box border border-transparent p-0 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "border-primary/30 bg-primary/10 ring-1 ring-inset ring-primary/30" : ""}`}
     >
       <Link
         className="block h-full w-full min-w-0 max-w-full overflow-hidden px-2 py-1"

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useProjectList } from "../../app-server/hooks";
+import { EmptyState } from "../common/AsyncState";
 import { ThreadList } from "../sidebar/ThreadList";
 import { ChatSearchDialog } from "./ChatSearchDialog";
 
@@ -57,7 +58,7 @@ export function ChatSidebarSections({
         <details className="group rounded-box" open>
           <summary
             aria-controls="recent-chats-list"
-            className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60 hover:bg-base-200"
+            className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/75 hover:bg-base-200"
             id="recent-chats-heading"
           >
             <ChevronRightIcon
@@ -74,7 +75,7 @@ export function ChatSidebarSections({
         <details className="group rounded-box" open>
           <summary
             aria-controls="projects-list"
-            className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/60 hover:bg-base-200"
+            className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/75 hover:bg-base-200"
             id="projects-heading"
           >
             <ChevronRightIcon
@@ -126,9 +127,18 @@ export function ChatSidebarSections({
               </li>
             ))}
             {!projects.isLoading && !projects.data?.data.length && (
-              <p className="px-3 text-xs text-base-content/60">
-                No projects yet.
-              </p>
+              <div className="px-1">
+                <EmptyState
+                  action={
+                    <Link className="btn btn-ghost btn-xs" to="/projects">
+                      Open projects
+                    </Link>
+                  }
+                  description="Create a project to organize chats and workspaces."
+                  icon={FolderIcon}
+                  title="No projects yet"
+                />
+              </div>
             )}
           </div>
         </details>

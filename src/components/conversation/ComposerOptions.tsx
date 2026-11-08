@@ -178,9 +178,16 @@ export function SubmissionModeMenu({
 
   return (
     <details className="dropdown dropdown-top dropdown-end" ref={detailsRef}>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: summary is the native details trigger. */}
       <summary
-        className="btn btn-primary btn-sm join-item px-2"
+        aria-disabled={disabled || undefined}
+        className={`btn btn-primary btn-sm join-item px-2 ${disabled ? "opacity-50" : ""}`}
         aria-label="Submission mode menu"
+        onClick={(event) => {
+          if (disabled) {
+            event.preventDefault();
+          }
+        }}
       >
         <span aria-hidden="true">▾</span>
       </summary>

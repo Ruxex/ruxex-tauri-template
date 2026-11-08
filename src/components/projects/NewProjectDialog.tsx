@@ -14,6 +14,8 @@ import {
 } from "./project-metadata";
 
 type NewProjectDialogProps = {
+  initialName?: string;
+  initialRoot?: string;
   onClose: () => void;
 };
 
@@ -21,14 +23,19 @@ function newIdempotencyKey() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 
-export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
+export function NewProjectDialog({
+  initialName = "",
+  initialRoot = "",
+  onClose,
+}: NewProjectDialogProps) {
   const navigate = useNavigate();
   const createProject = useCreateProject();
-  const [name, setName] = useState("");
-  const [root, setRoot] = useState("");
+  const [name, setName] = useState(initialName);
+  const [root, setRoot] = useState(initialRoot);
   const [metadata, setMetadata] = useState<ProjectMetadata>(
     DEFAULT_PROJECT_METADATA,
   );
+  const [nameValidationError, setNameValidationError] = useState(false);
   const [rootSelectionError, setRootSelectionError] = useState<string | null>(
     null,
   );
@@ -54,7 +61,11 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const projectName = name.trim();
-    if (!projectName) return;
+    if (!projectName) {
+      setNameValidationError(true);
+      return;
+    }
+    setNameValidationError(false);
 
     createProject.mutate(
       {
@@ -92,7 +103,11 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
           titleId="new-project-title"
         />
 
-        <form className="grid w-full gap-4" onSubmit={handleSubmit}>
+        <form
+          className="grid w-full gap-4"
+          noValidate
+          onSubmit={handleSubmit}
+        >
           <div className="form-control w-full">
             <label className="label" htmlFor="new-project-name">
               <span className="label-text text-sm font-medium">
@@ -101,13 +116,24 @@ export function NewProjectDialog({ onClose }: NewProjectDialogProps) {
             </label>
             <input
               aria-label="Project name"
+              aria-invalid={nameValidationError || undefined}
               className="input input-bordered min-h-11 w-full"
               id="new-project-name"
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                if (event.target.value.trim()) {
+                  setNameValidationError(false);
+                }
+              }}
               placeholder="Project name"
               required
               value={name}
             />
+            {nameValidationError && (
+              <p className="mt-1 text-xs text-error" role="alert">
+                Enter a project name.
+              </p>
+            )}
           </div>
 
           <div className="form-control w-full">

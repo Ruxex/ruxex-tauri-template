@@ -7,13 +7,24 @@ import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
 } from "../../app-server/api";
+import type { PendingServerRequest } from "../../app-server/event-reducer";
 import { useAppServerEvents, useServerRequests } from "../../app-server/hooks";
 import { StateBadge } from "../common/StateBadge";
 import { ServerRequestCard } from "./ServerRequestCard";
 
-export function ApprovalCenter() {
-  const pending = useServerRequests();
-  const { connected } = useAppServerEvents();
+type ApprovalCenterProps = {
+  connected?: boolean;
+  pendingRequests?: PendingServerRequest[];
+};
+
+export function ApprovalCenter({
+  connected: connectedOverride,
+  pendingRequests: pendingOverride,
+}: ApprovalCenterProps = {}) {
+  const pendingFromStore = useServerRequests();
+  const { connected: connectedFromStore } = useAppServerEvents();
+  const pending = pendingOverride ?? pendingFromStore;
+  const connected = connectedOverride ?? connectedFromStore;
 
   return (
     <div className="space-y-5">

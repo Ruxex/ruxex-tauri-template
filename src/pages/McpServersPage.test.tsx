@@ -230,9 +230,9 @@ describe("McpServersPage", () => {
 
     renderPage();
 
-    expect(screen.getByText("Connection:")).toBeTruthy();
+    expect(screen.getByText("Connection", { exact: true })).toBeTruthy();
     expect(screen.getByText("Status unavailable")).toBeTruthy();
-    expect(screen.getByText("Authentication:")).toBeTruthy();
+    expect(screen.getByText("Authentication", { exact: true })).toBeTruthy();
     expect(screen.getByText("Authentication not configured")).toBeTruthy();
     expect(screen.getByText("Resources (1)")).toBeTruthy();
   });

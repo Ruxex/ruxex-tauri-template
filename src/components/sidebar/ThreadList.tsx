@@ -4,11 +4,13 @@ import {
   useThreadActivity,
   useThreadList,
 } from "../../app-server/hooks";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { useThreadReadState } from "../../app/thread-read-state";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
 import type { v2 } from "../../protocol";
 import { ChatListItem } from "../chats/ChatListItem";
 import { chatStatusFromThreadStatus } from "../chats/chat-status";
+import { EmptyState } from "../common/AsyncState";
 
 type ThreadListProps = {
   projectId?: string;
@@ -41,7 +43,13 @@ export function ThreadList({
     return <p className="text-xs text-error">Unable to load chats.</p>;
   }
   if (!threads.data?.data.length) {
-    return <p className="text-xs text-base-content/60">No chats yet.</p>;
+    return (
+      <EmptyState
+        description="Start a new chat to see it here."
+        icon={ChatBubbleLeftRightIcon}
+        title="No chats yet"
+      />
+    );
   }
 
   return (

@@ -153,4 +153,21 @@ describe("ComposerOptions", () => {
       true,
     );
   });
+
+  it("shows the submission mode control as disabled when the composer is busy", () => {
+    render(
+      <SubmissionModeMenu
+        activeTurnId="turn-1"
+        disabled
+        mode="send"
+        onModeChange={vi.fn()}
+      />,
+    );
+
+    const summary = screen.getByLabelText("Submission mode menu");
+    expect(summary.getAttribute("aria-disabled")).toBe("true");
+    expect(summary.className.split(/\s+/)).toContain("opacity-50");
+    fireEvent.click(summary);
+    expect(summary.closest("details")?.open).toBe(false);
+  });
 });

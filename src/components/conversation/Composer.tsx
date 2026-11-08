@@ -301,6 +301,31 @@ export function Composer({
             onAttach={() => attachmentInput.current?.click()}
             planMode={planMode}
           />
+          {(goalMode || planMode) && (
+            <fieldset
+              aria-label="Active composer modes"
+              className="flex flex-wrap items-center gap-1"
+            >
+              {goalMode && (
+                <span
+                  aria-label="Goal mode active"
+                  className="badge badge-primary badge-sm"
+                  role="status"
+                >
+                  Goal
+                </span>
+              )}
+              {planMode && (
+                <span
+                  aria-label="Plan mode active"
+                  className="badge badge-secondary badge-sm"
+                  role="status"
+                >
+                  Plan
+                </span>
+              )}
+            </fieldset>
+          )}
           <PermissionMenu
             disabled={isPending}
             mode={permissionMode}

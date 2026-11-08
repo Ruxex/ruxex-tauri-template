@@ -30,12 +30,6 @@ export const ErrorState: Story = () => (
   </Surface>
 );
 
-export const EmptyLegacy: Story = () => (
-  <Surface>
-    <EmptyState>No projects yet.</EmptyState>
-  </Surface>
-);
-
 export const EmptyWithAction: Story = () => (
   <Surface>
     <EmptyState
