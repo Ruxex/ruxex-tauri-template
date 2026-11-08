@@ -7,7 +7,12 @@ const sourceFiles = ["src/**/*.{ts,tsx}"];
 
 export default [
   {
-    ignores: ["dist/**", "src-tauri/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "src-tauri/**",
+      "node_modules/**",
+      "src/**/*.stories.{ts,tsx}",
+    ],
   },
   {
     files: sourceFiles,
