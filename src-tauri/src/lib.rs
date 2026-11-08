@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 mod app_server;
+pub mod artifacts;
 mod branding;
 mod desktop;
 mod desktop_config;

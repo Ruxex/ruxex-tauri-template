@@ -116,14 +116,20 @@ crate (published or kept in your application workspace).
 ## Runtime package
 
 The Tauri application bundles a platform-specific `ruxex-package` containing
-the Ruxex executable, the code-mode host, ripgrep, and the platform sandbox
-helper where applicable. This template repository does not include or publish
-platform-specific runtime binaries or Rusty V8 artifacts; staging is an
-explicit local or CI input.
+the Ruxex executable, the code-mode host, ripgrep, the bundled
+`ruxex-artifacts` launcher and engine, the Node.js/JS artifact runtime, and
+the platform sandbox helper where applicable.
+This template repository does not include or publish platform-specific
+runtime binaries or Rusty V8 artifacts; staging is an explicit local or CI
+input.
 
 Stage those files with `scripts/stage-ruxex-package.py`, passing the paths to
 the built Ruxex executable and code-mode host plus `rg` and, on Linux,
-`bwrap`. The staged directory is intentionally ignored by Git.
+`bwrap`. Pass `--artifact-tools` when the helper is not discoverable on
+`PATH`, and pass `--node-runtime`, `--artifact-sdk`, and `--artifact-engine`
+for the JS facade resources. The staged `ruxex-path` directory is prepended to
+agent command sessions, so the `ruxex-artifacts` Skill can invoke the helper
+directly. The staged directory is intentionally ignored by Git.
 
 ## App Server runtime mode
 

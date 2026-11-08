@@ -9,6 +9,7 @@ export default defineConfig({
       "e2e/**",
       "fixtures/dummy-home/**/*.spec.ts",
       "fixtures/marketplace-home/**/*.spec.ts",
+      "artifact-tool/**",
       "**/node_modules/**",
     ],
   },

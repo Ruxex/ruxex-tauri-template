@@ -20,6 +20,14 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 name = "ruxex-desktop"
 path = "src/main.rs"
 
+[[bin]]
+name = "ruxex-artifacts"
+path = "src/bin/ruxex-artifacts.rs"
+
+[[bin]]
+name = "ruxex-artifacts-engine"
+path = "src/bin/ruxex-artifacts-engine.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.4.1", features = [] }
 
@@ -31,6 +39,7 @@ axum = { version = "0.8", default-features = false, features = [
 ] }
 anyhow = "1"
 base64 = "0.22"
+calamine = "0.31"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
 # Pin runtime and example-provider dependencies to the published Ruxex release.
 ruxex = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.6.1", version = "0.6.1", default-features = false, features = ["desktop"] }
@@ -43,6 +52,7 @@ rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", rev = "3e636c
     "transport-async-rw",
     "transport-streamable-http-server",
 ] }
+rust_xlsxwriter = "0.92"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 url = "2"
