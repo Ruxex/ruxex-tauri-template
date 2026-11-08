@@ -1,5 +1,5 @@
 import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
-import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 import { formatErrorMessage } from "../app/error-message";
 import {
@@ -17,6 +17,7 @@ import {
   useUpgradeMarketplace,
 } from "../app-server/hooks";
 import { SettingsPanel } from "../components/settings/SettingsCards";
+import { FormFieldRow } from "../components/common/FormFieldRow";
 
 export function MarketplaceSettingsPage() {
   const [source, setSource] = useState("");
@@ -167,7 +168,7 @@ export function MarketplaceSettingsPage() {
       <SettingsPanel icon={PuzzlePieceIcon} title="Add marketplace">
         <form onSubmit={handleSubmit}>
           <div className="divide-y divide-base-300 text-sm">
-            <MarketplaceFieldRow label="Source" controlId="marketplace-source">
+            <FormFieldRow label="Source" controlId="marketplace-source">
               <input
                 aria-label="Source"
                 id="marketplace-source"
@@ -176,8 +177,8 @@ export function MarketplaceSettingsPage() {
                 onChange={(event) => setSource(event.target.value)}
                 placeholder="https://github.com/example/marketplace.git or /path/to/marketplace"
               />
-            </MarketplaceFieldRow>
-            <MarketplaceFieldRow
+            </FormFieldRow>
+            <FormFieldRow
               label="Git ref (optional)"
               controlId="marketplace-ref"
             >
@@ -189,8 +190,8 @@ export function MarketplaceSettingsPage() {
                 onChange={(event) => setRefName(event.target.value)}
                 placeholder="main"
               />
-            </MarketplaceFieldRow>
-            <MarketplaceFieldRow
+            </FormFieldRow>
+            <FormFieldRow
               label="Sparse paths (optional)"
               controlId="marketplace-sparse-paths"
             >
@@ -202,7 +203,7 @@ export function MarketplaceSettingsPage() {
                 onChange={(event) => setSparsePaths(event.target.value)}
                 placeholder="plugins/example, plugins/another"
               />
-            </MarketplaceFieldRow>
+            </FormFieldRow>
           </div>
           {formError && (
             <p className="px-5 pt-4 text-sm text-error">{formError}</p>
@@ -403,7 +404,6 @@ export function MarketplaceSettingsPage() {
     </div>
   );
 }
-
 function readMarketplaceDefinition(
   config: unknown,
   marketplaceName: string,
@@ -430,23 +430,4 @@ function readMarketplaceDefinition(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function MarketplaceFieldRow({
-  label,
-  controlId,
-  children,
-}: {
-  label: string;
-  controlId: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 max-sm:grid-cols-1 max-sm:items-start">
-      <label className="label-text" htmlFor={controlId}>
-        {label}
-      </label>
-      {children}
-    </div>
-  );
 }

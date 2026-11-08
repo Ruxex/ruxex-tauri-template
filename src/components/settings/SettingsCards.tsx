@@ -39,6 +39,7 @@ import type {
   AppServerDaemonOutput,
 } from "../../app-server/daemon-api";
 import { CapabilityStatus } from "../common/CapabilityStatus";
+import { FormFieldRow } from "../common/FormFieldRow";
 import { StateBadge, type StateBadgeTone } from "../common/StateBadge";
 
 export type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -53,7 +54,6 @@ function appServerStatusTone(status: string): StateBadgeTone {
   }
   return "warning";
 }
-
 export function SettingsPanel({
   title,
   icon: Icon,
@@ -376,7 +376,7 @@ export function LanguageCard({
   return (
     <SettingsPanel icon={GlobeAltIcon} title="Language">
       <div className="text-sm">
-        <SettingControlRow controlId="settings-language" label="Language">
+        <FormFieldRow controlId="settings-language" label="Language">
           <select
             aria-label="Language"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
@@ -390,7 +390,7 @@ export function LanguageCard({
             <option value="en">English</option>
             <option value="ja">日本語</option>
           </select>
-        </SettingControlRow>
+        </FormFieldRow>
       </div>
     </SettingsPanel>
   );
@@ -410,7 +410,7 @@ export function NotificationsCard({
   return (
     <SettingsPanel icon={BellIcon} title="Notifications">
       <div className="text-sm">
-        <SettingControlRow
+        <FormFieldRow
           controlId="settings-desktop-notifications"
           label="Desktop notifications"
         >
@@ -422,8 +422,8 @@ export function NotificationsCard({
             onChange={(event) => onEnabledChange(event.target.checked)}
             type="checkbox"
           />
-        </SettingControlRow>
-        <SettingControlRow
+        </FormFieldRow>
+        <FormFieldRow
           controlId="settings-notification-sound"
           label="Notification sound"
         >
@@ -442,7 +442,7 @@ export function NotificationsCard({
               </option>
             ))}
           </select>
-        </SettingControlRow>
+        </FormFieldRow>
       </div>
     </SettingsPanel>
   );
@@ -472,7 +472,7 @@ export function QuickPanelCard({
   return (
     <SettingsPanel icon={CommandLineIcon} title="Quick panel">
       <div className="text-sm">
-        <SettingControlRow
+        <FormFieldRow
           controlId="settings-quick-panel-shortcut"
           label="Global shortcut"
         >
@@ -492,7 +492,7 @@ export function QuickPanelCard({
               />
             </div>
           )}
-        </SettingControlRow>
+        </FormFieldRow>
         <p className="px-5 pb-3 text-xs text-base-content/60">
           {waylandNotice}
         </p>
@@ -547,7 +547,7 @@ export function UiPreferencesCard({
   return (
     <SettingsPanel icon={PaintBrushIcon} title="Interface">
       <div className="divide-y divide-base-300 text-sm">
-        <SettingControlRow controlId="settings-color-scheme" label="Color mode">
+        <FormFieldRow controlId="settings-color-scheme" label="Color mode">
           <select
             aria-label="Color mode"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
@@ -561,8 +561,8 @@ export function UiPreferencesCard({
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
-        </SettingControlRow>
-        <SettingControlRow controlId="settings-theme" label="Theme">
+        </FormFieldRow>
+        <FormFieldRow controlId="settings-theme" label="Theme">
           <select
             aria-label="Theme"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
@@ -578,7 +578,7 @@ export function UiPreferencesCard({
             <option value="amber">Amber</option>
             <option value="rose">Rose</option>
           </select>
-        </SettingControlRow>
+        </FormFieldRow>
       </div>
     </SettingsPanel>
   );
@@ -598,7 +598,7 @@ export function TypographyCard({
   return (
     <SettingsPanel icon={Bars3BottomLeftIcon} title="Typography">
       <div className="divide-y divide-base-300 text-sm">
-        <SettingControlRow
+        <FormFieldRow
           controlId="settings-chat-font-size"
           label="Chat font size"
         >
@@ -617,11 +617,8 @@ export function TypographyCard({
             type="number"
             value={chatFontSize}
           />
-        </SettingControlRow>
-        <SettingControlRow
-          controlId="settings-ui-font-size"
-          label="UI font size"
-        >
+        </FormFieldRow>
+        <FormFieldRow controlId="settings-ui-font-size" label="UI font size">
           <input
             aria-label="UI font size"
             className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
@@ -637,7 +634,7 @@ export function TypographyCard({
             type="number"
             value={uiFontSize}
           />
-        </SettingControlRow>
+        </FormFieldRow>
       </div>
     </SettingsPanel>
   );
@@ -656,25 +653,6 @@ export function SettingRow({
       <dd className="min-w-0 w-full max-w-full justify-self-end text-right">
         {children}
       </dd>
-    </div>
-  );
-}
-
-function SettingControlRow({
-  controlId,
-  label,
-  children,
-}: {
-  controlId: string;
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 max-sm:grid-cols-1 max-sm:items-start">
-      <label className="label-text" htmlFor={controlId}>
-        {label}
-      </label>
-      {children}
     </div>
   );
 }

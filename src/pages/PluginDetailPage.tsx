@@ -9,6 +9,7 @@ import { formatErrorMessage } from "../app/error-message";
 import { usePluginList, usePluginRead } from "../app-server/hooks";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
+import { PluginInformationItem } from "../components/plugins/PluginInformationItem";
 import type { v2 } from "../protocol";
 
 function isHttpUrl(value: string | null | undefined): value is string {
@@ -32,36 +33,6 @@ function getPluginVersion(summary: v2.PluginSummary) {
   }
 
   return summary.source.type === "npm" ? summary.source.version : null;
-}
-
-function InformationItem({
-  href,
-  label,
-  value,
-}: {
-  href?: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div>
-      <dt className="text-sm text-base-content/60">{label}</dt>
-      <dd className="mt-1 break-words">
-        {href ? (
-          <a
-            className="link link-primary"
-            href={href}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {value}
-          </a>
-        ) : (
-          value
-        )}
-      </dd>
-    </div>
-  );
 }
 
 export function PluginDetailPage() {
@@ -292,7 +263,7 @@ export function PluginDetailPage() {
           <h2 className="font-semibold">Information</h2>
           <dl className="mt-3 grid gap-x-6 gap-y-4 sm:grid-cols-2">
             {informationItems.map((item) => (
-              <InformationItem key={item.label} {...item} />
+              <PluginInformationItem key={item.label} {...item} />
             ))}
           </dl>
         </section>
