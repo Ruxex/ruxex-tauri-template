@@ -25,6 +25,7 @@ fn run_builder(args: &[OsString]) -> ExitCode {
     };
 
     let node = root.join("ruxex-resources/node/bin/node");
+    let node_modules = root.join("ruxex-resources/node/node_modules");
     let sdk = root.join("ruxex-resources/ruxex-artifact-tool");
     let loader = sdk.join("src/loader.mjs");
     let runner = root.join("ruxex-resources/ruxex-artifact-tool/src/runner.mjs");
@@ -52,7 +53,8 @@ fn run_builder(args: &[OsString]) -> ExitCode {
         .arg(builder)
         .args(&args[1..])
         .env("RUXEX_ARTIFACT_ENGINE", engine)
-        .env("RUXEX_ARTIFACT_SDK", sdk);
+        .env("RUXEX_ARTIFACT_SDK", sdk)
+        .env("RUXEX_ARTIFACT_NODE_MODULES", node_modules);
     match command.status() {
         Ok(status) => status
             .code()

@@ -24,6 +24,12 @@ class ArtifactSkillContractTest(unittest.TestCase):
         self.assertIn("inspect", skill)
         self.assertIn("exportXlsx", skill)
         self.assertIn("xlsx validate", skill)
+        self.assertIn("Document.create", skill)
+        self.assertIn("exportDocx", skill)
+        self.assertIn("docx validate", skill)
+        self.assertIn("Presentation.create", skill)
+        self.assertIn("exportPptx", skill)
+        self.assertIn("pptx validate", skill)
 
     def test_skill_does_not_require_user_runtime_installations(self) -> None:
         skill = SKILL.read_text(encoding="utf-8").lower()

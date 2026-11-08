@@ -10098,6 +10098,7 @@ dependencies = [
  "tauri-runtime",
  "tokio",
  "url",
+ "zip 7.4.0",
 ]
 
 [[package]]

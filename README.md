@@ -129,7 +129,10 @@ the built Ruxex executable and code-mode host plus `rg` and, on Linux,
 `PATH`, and pass `--node-runtime`, `--artifact-sdk`, and `--artifact-engine`
 for the JS facade resources. The staged `ruxex-path` directory is prepended to
 agent command sessions, so the `ruxex-artifacts` Skill can invoke the helper
-directly. The staged directory is intentionally ignored by Git.
+directly. The bundled Node runtime must contain the `docx` and `pptxgenjs`
+packages as well as the Ruxex SDK. The helper can generate and validate local
+XLSX, DOCX, and PPTX artifacts. The staged directory is intentionally ignored
+by Git.
 
 ## App Server runtime mode
 

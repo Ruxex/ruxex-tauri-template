@@ -3,7 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { ArtifactToolError, parseRange } from "./a1-range.mjs";
+import { Document } from "./document.mjs";
 import { runEngine } from "./engine-client.mjs";
+import { Presentation } from "./presentation.mjs";
 
 function cloneRows(rows) {
   return rows.map((row) => [...row]);
@@ -175,4 +177,4 @@ export class Workbook {
   }
 }
 
-export { ArtifactToolError };
+export { ArtifactToolError, Document, Presentation };

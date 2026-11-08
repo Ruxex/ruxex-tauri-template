@@ -56,6 +56,8 @@ def validate_package(root: Path, version: str, target: str) -> None:
         "ruxex-path/ruxex-artifacts",
         "ruxex-path/ruxex-artifacts-engine",
         "ruxex-resources/node/bin/node",
+        "ruxex-resources/node/node_modules/docx/package.json",
+        "ruxex-resources/node/node_modules/pptxgenjs/package.json",
         "ruxex-resources/ruxex-artifact-tool/src/loader.mjs",
         "ruxex-resources/ruxex-artifact-tool/src/runner.mjs",
     ]

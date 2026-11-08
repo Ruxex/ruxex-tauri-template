@@ -152,6 +152,8 @@ fn run(args: Vec<OsString>) -> Result<Value, ArtifactError> {
     match args.first().map(String::as_str) {
         Some("capabilities") => capabilities(&args[1..]),
         Some("xlsx") => run_xlsx(&args[1..]),
+        Some("docx") => run_ooxml("docx", &args[1..]),
+        Some("pptx") => run_ooxml("pptx", &args[1..]),
         Some(command) => Err(ArtifactError::new(
             "invalid_arguments",
             format!("unknown command: {command}"),
@@ -169,6 +171,8 @@ fn capabilities(args: &[String]) -> Result<Value, ArtifactError> {
         "ok": true,
         "commands": {
             "xlsx": ["create", "read", "validate"],
+            "docx": ["create", "read", "validate"],
+            "pptx": ["create", "read", "validate"],
         },
     }))
 }
@@ -202,6 +206,91 @@ fn run_xlsx(args: &[String]) -> Result<Value, ArtifactError> {
             format!("unknown xlsx operation: {operation}"),
         )),
     }
+}
+
+fn run_ooxml(format: &str, args: &[String]) -> Result<Value, ArtifactError> {
+    let Some(operation) = args.first().map(String::as_str) else {
+        return Err(ArtifactError::new(
+            "invalid_arguments",
+            format!("a {format} operation is required"),
+        ));
+    };
+    let flags = parse_flags(&args[1..])?;
+    for (flag, _) in &flags {
+        if !matches!(flag.as_str(), "input" | "--json") {
+            return Err(ArtifactError::new(
+                "invalid_arguments",
+                format!("unknown flag: --{flag}"),
+            ));
+        }
+    }
+    match operation {
+        "read" | "validate" => inspect_ooxml(format, required_flag(&flags, "input")?),
+        "create" => Err(ArtifactError::new(
+            "unsupported_operation",
+            format!("{format} creation is available through `ruxex-artifacts run`"),
+        )),
+        _ => Err(ArtifactError::new(
+            "invalid_arguments",
+            format!("unknown {format} operation: {operation}"),
+        )),
+    }
+}
+
+fn inspect_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError> {
+    let file = fs::File::open(input_path).map_err(|error| {
+        ArtifactError::new(
+            "ooxml_read_error",
+            format!("failed to read {input_path}: {error}"),
+        )
+    })?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|error| {
+        ArtifactError::new(
+            "ooxml_read_error",
+            format!("failed to open {input_path} as a ZIP package: {error}"),
+        )
+    })?;
+    let parts = (0..archive.len())
+        .filter_map(|index| archive.by_index(index).ok().map(|entry| entry.name().to_owned()))
+        .collect::<Vec<_>>();
+    let required = match format {
+        "docx" => vec![
+            "[Content_Types].xml",
+            "_rels/.rels",
+            "word/document.xml",
+            "word/_rels/document.xml.rels",
+            "word/styles.xml",
+        ],
+        "pptx" => vec![
+            "[Content_Types].xml",
+            "_rels/.rels",
+            "ppt/presentation.xml",
+            "ppt/_rels/presentation.xml.rels",
+            "ppt/slides/slide1.xml",
+        ],
+        _ => {
+            return Err(ArtifactError::new(
+                "invalid_arguments",
+                format!("unsupported OOXML format: {format}"),
+            ));
+        }
+    };
+    let missing = required
+        .into_iter()
+        .filter(|required_part| !parts.iter().any(|part| part == required_part))
+        .collect::<Vec<_>>();
+    if !missing.is_empty() {
+        return Err(ArtifactError::new(
+            "invalid_ooxml_package",
+            format!("{format} package is missing required parts: {}", missing.join(", ")),
+        ));
+    }
+    Ok(json!({
+        "ok": true,
+        "valid": true,
+        "format": format,
+        "parts": parts,
+    }))
 }
 
 fn parse_flags(args: &[String]) -> Result<Vec<(String, Option<String>)>, ArtifactError> {

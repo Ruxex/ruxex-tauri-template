@@ -53,6 +53,7 @@ rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", rev = "3e636c
     "transport-streamable-http-server",
 ] }
 rust_xlsxwriter = "0.92"
+zip = { version = "7.4.0", default-features = false, features = ["deflate"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 url = "2"

@@ -20,6 +20,13 @@ class StageRuxexPackageTest(unittest.TestCase):
         node_bin.parent.mkdir(parents=True)
         node_bin.write_text("node", encoding="utf-8")
         node_bin.chmod(0o755)
+        for package_name in ("docx", "pptxgenjs"):
+            package_json = node / "node_modules" / package_name / "package.json"
+            package_json.parent.mkdir(parents=True)
+            package_json.write_text(
+                '{"name": "' + package_name + '", "version": "test"}\n',
+                encoding="utf-8",
+            )
 
         sdk = resources / "sdk"
         (sdk / "src").mkdir(parents=True)
@@ -204,6 +211,11 @@ class StageRuxexPackageTest(unittest.TestCase):
                     "ruxex-resources/node",
                     "ruxex-resources/node/bin",
                     "ruxex-resources/node/bin/node",
+                    "ruxex-resources/node/node_modules",
+                    "ruxex-resources/node/node_modules/docx",
+                    "ruxex-resources/node/node_modules/docx/package.json",
+                    "ruxex-resources/node/node_modules/pptxgenjs",
+                    "ruxex-resources/node/node_modules/pptxgenjs/package.json",
                     "ruxex-resources/ruxex-artifact-tool",
                     "ruxex-resources/ruxex-artifact-tool/src",
                     "ruxex-resources/ruxex-artifact-tool/src/loader.mjs",
@@ -212,6 +224,39 @@ class StageRuxexPackageTest(unittest.TestCase):
             )
             self.assertTrue(os.access(output / "bin/ruxex", os.X_OK))
             MODULE.validate_package(output, "0.1.0", "x86_64-unknown-linux-gnu")
+
+    def test_rejects_a_node_runtime_without_document_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._runtime_inputs(root)
+            (paths["node-runtime"] / "node_modules/docx/package.json").unlink()
+            old_argv = MODULE.sys.argv
+            try:
+                MODULE.sys.argv = [
+                    str(SCRIPT),
+                    "--output",
+                    str(root / "package"),
+                    "--ruxex-bin",
+                    str(paths["ruxex"]),
+                    "--code-mode-host",
+                    str(paths["ruxex-code-mode-host"]),
+                    "--rg",
+                    str(paths["rg"]),
+                    "--artifact-tools",
+                    str(paths["ruxex-artifacts"]),
+                    "--node-runtime",
+                    str(paths["node-runtime"]),
+                    "--artifact-sdk",
+                    str(paths["artifact-sdk"]),
+                    "--artifact-engine",
+                    str(paths["artifact-engine"]),
+                    "--bwrap",
+                    str(paths["bwrap"]),
+                ]
+                with self.assertRaisesRegex(SystemExit, "missing .*docx"):
+                    MODULE.main()
+            finally:
+                MODULE.sys.argv = old_argv
 
     def test_rejects_a_missing_runtime_binary(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -256,6 +301,8 @@ class StageRuxexPackageTest(unittest.TestCase):
                 "ruxex-path/ruxex-artifacts-engine",
                 "ruxex-resources/bwrap",
                 "ruxex-resources/node/bin/node",
+                "ruxex-resources/node/node_modules/docx/package.json",
+                "ruxex-resources/node/node_modules/pptxgenjs/package.json",
                 "ruxex-resources/ruxex-artifact-tool/src/loader.mjs",
                 "ruxex-resources/ruxex-artifact-tool/src/runner.mjs",
             ):

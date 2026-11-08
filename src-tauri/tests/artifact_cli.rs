@@ -1,4 +1,5 @@
 use std::fs;
+use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -55,6 +56,21 @@ fn write_input(dir: &Path, contents: &str) -> PathBuf {
     path
 }
 
+fn write_ooxml_package(dir: &Path, label: &str, parts: &[&str]) -> PathBuf {
+    let path = dir.join(format!("{label}.zip"));
+    let file = File::create(&path).expect("package is writable");
+    let mut archive = zip::ZipWriter::new(file);
+    let options = zip::write::SimpleFileOptions::default();
+    for part in parts {
+        archive.start_file(*part, options).expect("package part starts");
+        archive
+            .write_all(b"<package-part />")
+            .expect("package part is writable");
+    }
+    archive.finish().expect("package finishes");
+    path
+}
+
 #[test]
 fn capabilities_reports_the_supported_artifact_commands() {
     let output = run(&["capabilities", "--json"]);
@@ -65,6 +81,86 @@ fn capabilities_reports_the_supported_artifact_commands() {
     assert_eq!(value["commands"]["xlsx"][0], "create");
     assert_eq!(value["commands"]["xlsx"][1], "read");
     assert_eq!(value["commands"]["xlsx"][2], "validate");
+    assert_eq!(value["commands"]["docx"][0], "create");
+    assert_eq!(value["commands"]["docx"][1], "read");
+    assert_eq!(value["commands"]["docx"][2], "validate");
+    assert_eq!(value["commands"]["pptx"][0], "create");
+    assert_eq!(value["commands"]["pptx"][1], "read");
+    assert_eq!(value["commands"]["pptx"][2], "validate");
+}
+
+#[test]
+fn docx_validate_accepts_a_minimal_editable_package() {
+    let dir = temp_dir("docx-validate");
+    let package = write_ooxml_package(
+        &dir,
+        "report.docx",
+        &[
+            "[Content_Types].xml",
+            "_rels/.rels",
+            "word/document.xml",
+            "word/_rels/document.xml.rels",
+            "word/styles.xml",
+        ],
+    );
+    let output = run(&[
+        "docx",
+        "validate",
+        "--input",
+        package.to_str().unwrap(),
+        "--json",
+    ]);
+
+    assert!(output.status.success());
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["valid"], true);
+    assert_eq!(value["format"], "docx");
+}
+
+#[test]
+fn pptx_validate_accepts_a_minimal_editable_package() {
+    let dir = temp_dir("pptx-validate");
+    let package = write_ooxml_package(
+        &dir,
+        "review.pptx",
+        &[
+            "[Content_Types].xml",
+            "_rels/.rels",
+            "ppt/presentation.xml",
+            "ppt/_rels/presentation.xml.rels",
+            "ppt/slides/slide1.xml",
+        ],
+    );
+    let output = run(&[
+        "pptx",
+        "validate",
+        "--input",
+        package.to_str().unwrap(),
+        "--json",
+    ]);
+
+    assert!(output.status.success());
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["valid"], true);
+    assert_eq!(value["format"], "pptx");
+}
+
+#[test]
+fn ooxml_validate_rejects_a_package_without_required_parts() {
+    let dir = temp_dir("invalid-ooxml");
+    let package = write_ooxml_package(&dir, "broken.docx", &["junk.txt"]);
+    let output = run(&[
+        "docx",
+        "validate",
+        "--input",
+        package.to_str().unwrap(),
+        "--json",
+    ]);
+
+    assert!(!output.status.success());
+    let diagnostic: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
+    assert_eq!(diagnostic["ok"], false);
+    assert_eq!(diagnostic["error"]["code"], "invalid_ooxml_package");
 }
 
 #[test]
