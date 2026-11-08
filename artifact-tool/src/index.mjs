@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { ArtifactToolError, parseRange } from "./a1-range.mjs";
 import { Document } from "./document.mjs";
 import { runEngine } from "./engine-client.mjs";
+import { SpreadsheetFile } from "./spreadsheet-file.mjs";
 import { Presentation } from "./presentation.mjs";
 
 function cloneRows(rows) {
@@ -177,4 +178,4 @@ export class Workbook {
   }
 }
 
-export { ArtifactToolError, Document, Presentation };
+export { ArtifactToolError, Document, Presentation, SpreadsheetFile };
