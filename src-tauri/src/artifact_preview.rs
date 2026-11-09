@@ -115,6 +115,85 @@ pub(crate) fn preview_artifact(path: String) -> CommandResult<ArtifactPreview> {
     })
 }
 
+#[tauri::command]
+pub(crate) fn open_artifact(path: String) -> CommandResult<()> {
+    let canonical = validated_artifact_path(&path)?;
+    tauri_plugin_opener::open_path(canonical, None::<&str>).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to open artifact: {error}"),
+        )
+    })
+}
+
+#[tauri::command]
+pub(crate) fn save_artifact(path: String, destination: String) -> CommandResult<String> {
+    let source = validated_artifact_path(&path)?;
+    let destination = PathBuf::from(&destination);
+    if !destination.is_absolute() {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "artifact destination must be absolute",
+        ));
+    }
+    if preview_format(&destination) != preview_format(&source) {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "artifact destination must keep the source file extension",
+        ));
+    }
+    if destination == source {
+        return Ok(destination.to_string_lossy().into_owned());
+    }
+    if let Ok(metadata) = fs::symlink_metadata(&destination) {
+        if metadata.file_type().is_symlink() || !metadata.file_type().is_file() {
+            return Err(command_error(
+                DesktopAppServerErrorKind::Initialization,
+                "artifact destination must be a regular file",
+            ));
+        }
+    }
+    let parent = destination.parent().ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "artifact destination has no parent directory",
+        )
+    })?;
+    let parent_metadata = fs::metadata(parent).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("artifact destination directory cannot be opened: {error}"),
+        )
+    })?;
+    if !parent_metadata.is_dir() {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "artifact destination parent must be a directory",
+        ));
+    }
+    fs::copy(&source, &destination).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to save artifact: {error}"),
+        )
+    })?;
+    Ok(destination.to_string_lossy().into_owned())
+}
+
+fn validated_artifact_path(path: &str) -> CommandResult<PathBuf> {
+    let requested = PathBuf::from(path);
+    let home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let workspace = std::env::current_dir().map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to resolve workspace root: {error}"),
+        )
+    })?;
+    validate_preview_path(&requested, &[home.as_path(), workspace.as_path()])
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))
+}
+
 fn document_from_preview_sections(
     format: &str,
     byte_size: u64,

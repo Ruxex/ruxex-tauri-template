@@ -29,6 +29,14 @@ export function previewArtifact(path: string): Promise<ArtifactPreviewData> {
   return invoke<ArtifactPreviewData>("preview_artifact", { path });
 }
 
+export function openArtifact(path: string): Promise<void> {
+  return invoke("open_artifact", { path });
+}
+
+export function saveArtifact(path: string, destination: string): Promise<string> {
+  return invoke<string>("save_artifact", { path, destination });
+}
+
 export function readImageFile(path: string): Promise<string> {
   return invoke<string>("read_image_file", { path });
 }
