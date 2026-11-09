@@ -16,11 +16,13 @@ export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
     (metadata?.status !== undefined || metadata?.exitCode !== undefined);
   const isInProgress =
     metadata?.status === "inProgress" || metadata?.status === "running";
-  const summaryPadding = isCommandExecution ? "py-1" : "py-3";
+  const summaryClassName = isCommandExecution
+    ? "min-h-0 gap-1.5 px-3 py-0.5 pr-8 text-xs"
+    : "gap-2 py-3 text-sm";
 
   return (
     <summary
-      className={`collapse-title flex items-center gap-2 ${summaryPadding} text-sm font-medium`}
+      className={`collapse-title flex items-center ${summaryClassName} font-medium`}
     >
       <span
         aria-label={presentation.label}

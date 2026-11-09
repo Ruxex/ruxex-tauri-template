@@ -301,7 +301,11 @@ describe("ProjectHomePage", () => {
       </MemoryRouter>,
     );
 
+    const workspaceStatus = screen.getByRole("status");
     expect(screen.getByText("No workspace root configured")).toBeTruthy();
+    expect(workspaceStatus.querySelector("span")?.className).toContain(
+      "min-w-0",
+    );
   });
 
   it("renders a stable error state when project loading fails", async () => {

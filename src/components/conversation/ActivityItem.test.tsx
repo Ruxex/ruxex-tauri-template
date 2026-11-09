@@ -1,17 +1,15 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const openBrowserWindow = vi.hoisted(() => vi.fn());
 const previewArtifact = vi.hoisted(() => vi.fn());
 
-vi.mock("../../platform/native", () => ({ openBrowserWindow, previewArtifact }));
+vi.mock("../../platform/native", () => ({
+  openBrowserWindow,
+  previewArtifact,
+}));
 
 import { ActivityItem } from "./ActivityItem";
 
@@ -174,7 +172,10 @@ describe("ActivityItem", () => {
     expect(screen.getByRole("img", { name: "Command completed" })).toBeTruthy();
     expect(screen.getByText("0")).toBeTruthy();
     expect(screen.getByText("Command").closest("summary")?.className).toContain(
-      "py-1",
+      "min-h-0",
+    );
+    expect(screen.getByText("Command").closest("summary")?.className).toContain(
+      "py-0.5",
     );
     expect(screen.queryByTestId("command-execution-diagnostics")).toBeNull();
     expect(screen.queryByText("status", { exact: true })).toBeNull();
@@ -281,7 +282,9 @@ describe("ActivityItem", () => {
       />,
     );
 
-    expect(await screen.findByRole("img", { name: "Artifact preview" })).toBeTruthy();
+    expect(
+      await screen.findByRole("img", { name: "Artifact preview" }),
+    ).toBeTruthy();
     expect(previewArtifact).toHaveBeenCalledWith("/workspace/report.xlsx");
   });
 

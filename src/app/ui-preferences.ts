@@ -8,9 +8,8 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 7;
+const UI_PREFERENCES_VERSION = 8;
 
-export type UiColorScheme = "system" | "light" | "dark";
 export type UiLanguage = "system" | "en" | "ja";
 export const UI_ACCENT_COLORS = [
   "blue",
@@ -44,8 +43,23 @@ export const UI_THEME_COLOR_KEYS = [
 ] as const;
 export type UiThemeColorKey = (typeof UI_THEME_COLOR_KEYS)[number];
 export type UiThemeColors = Partial<Record<UiThemeColorKey, string>>;
+export type UiThemePresetMode = "system" | "light" | "dark";
+export type UiThemePresetPreview = {
+  background: string;
+  surface: string;
+  card: string;
+  text: string;
+  muted: string;
+  primary: string;
+  primaryContent: string;
+  secondary: string;
+  accent: string;
+  accentContent: string;
+};
 export const UI_THEME_PRESET_IDS = [
-  "daisyui",
+  "system",
+  "ruxex-light",
+  "ruxex-dark",
   "vscode-dark",
   "github-light",
   "github-dark",
@@ -118,8 +132,41 @@ function createThemeColors({
   };
 }
 
+const RUXEX_LIGHT_COLORS = createThemeColors({
+  base100: "#ffffff",
+  base200: "#f5f7fb",
+  base300: "#dbe3ef",
+  baseContent: "#172033",
+  primary: "#2563eb",
+  secondary: "#7c3aed",
+  accent: "#0d9488",
+  neutral: "#334155",
+  info: "#0284c7",
+  success: "#16a34a",
+  warning: "#d97706",
+  error: "#dc2626",
+});
+
+const RUXEX_DARK_COLORS = createThemeColors({
+  base100: "#111827",
+  base200: "#0f172a",
+  base300: "#1e293b",
+  baseContent: "#e2e8f0",
+  primary: "#60a5fa",
+  secondary: "#c084fc",
+  accent: "#5eead4",
+  neutral: "#64748b",
+  info: "#38bdf8",
+  success: "#4ade80",
+  warning: "#fbbf24",
+  error: "#fb7185",
+  coloredContent: "#0f172a",
+});
+
 export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
-  { id: "daisyui", label: "DaisyUI Default", colors: {} },
+  { id: "system", label: "System", colors: {} },
+  { id: "ruxex-light", label: "Ruxex Light", colors: RUXEX_LIGHT_COLORS },
+  { id: "ruxex-dark", label: "Ruxex Dark", colors: RUXEX_DARK_COLORS },
   {
     id: "vscode-dark",
     label: "VS Code Dark+",
@@ -327,6 +374,55 @@ export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
   },
 ];
 
+const DARK_THEME_PRESET_IDS = new Set<UiThemePresetId>([
+  "ruxex-dark",
+  "vscode-dark",
+  "github-dark",
+  "dracula",
+  "nord",
+  "monokai",
+  "tokyo-night",
+  "catppuccin-mocha",
+  "gruvbox-dark",
+  "one-dark",
+]);
+
+export function getUiThemePresetMode(
+  preset: UiThemePresetId,
+): UiThemePresetMode {
+  if (preset === "system") return "system";
+  return DARK_THEME_PRESET_IDS.has(preset) ? "dark" : "light";
+}
+
+function getUiThemePresetColors(
+  preset: UiThemePreset,
+  mode: "light" | "dark",
+): UiThemeColors {
+  if (preset.id === "system") {
+    return mode === "dark" ? RUXEX_DARK_COLORS : RUXEX_LIGHT_COLORS;
+  }
+  return preset.colors;
+}
+
+export function getUiThemePresetPreview(
+  preset: UiThemePreset,
+  mode: "light" | "dark" = "light",
+): UiThemePresetPreview {
+  const colors = getUiThemePresetColors(preset, mode);
+  return {
+    background: colors["base-200"] ?? "#f4f4f5",
+    surface: colors["base-100"] ?? "#ffffff",
+    card: colors["base-300"] ?? colors["base-200"] ?? "#e4e4e7",
+    text: colors["base-content"] ?? "#27272a",
+    muted: colors["base-content"] ?? colors.neutral ?? "#71717a",
+    primary: colors.primary ?? "#4f46e5",
+    primaryContent: colors["primary-content"] ?? "#ffffff",
+    secondary: colors.secondary ?? "#c026d3",
+    accent: colors.accent ?? "#14b8a6",
+    accentContent: colors["accent-content"] ?? "#ffffff",
+  };
+}
+
 export type UiTheme = {
   accentColor: UiAccentColor;
   preset?: UiThemePresetId;
@@ -363,7 +459,6 @@ export type UiPreferences = {
   sidebarCollapsed: boolean;
   language: UiLanguage;
   notifications: UiNotifications;
-  colorScheme: UiColorScheme;
   theme: UiTheme;
   chatFontSize: UiFontSize;
   uiFontSize: UiFontSize;
@@ -374,8 +469,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   sidebarCollapsed: false,
   language: "system",
   notifications: { desktop: true, sound: "system" },
-  colorScheme: "system",
-  theme: { accentColor: "blue", preset: "daisyui" },
+  theme: { accentColor: "blue", preset: "system" },
   chatFontSize: DEFAULT_CHAT_FONT_SIZE,
   uiFontSize: DEFAULT_UI_FONT_SIZE,
 };
@@ -417,17 +511,33 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.version !== 4 &&
         parsed.version !== 5 &&
         parsed.version !== 6 &&
+        parsed.version !== 7 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
     }
 
-    const legacyColorScheme = parsed.version === 1 ? parsed.theme : undefined;
+    const legacyColorScheme =
+      typeof parsed.colorScheme === "string"
+        ? parsed.colorScheme
+        : parsed.version === 1 && typeof parsed.theme === "string"
+          ? parsed.theme
+          : undefined;
     const storedTheme = isRecord(parsed.theme) ? parsed.theme : undefined;
     const storedPreset = readOptionalEnum(
       storedTheme?.preset,
       UI_THEME_PRESET_IDS,
     );
+    const legacyPreset =
+      legacyColorScheme === "dark"
+        ? "ruxex-dark"
+        : legacyColorScheme === "light"
+          ? "ruxex-light"
+          : legacyColorScheme === "system"
+            ? "system"
+            : storedTheme?.preset === "daisyui"
+              ? "system"
+              : undefined;
 
     return {
       version: UI_PREFERENCES_VERSION,
@@ -455,11 +565,6 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
           DEFAULT_UI_PREFERENCES.notifications.sound,
         ),
       },
-      colorScheme: readEnum(
-        parsed.colorScheme ?? legacyColorScheme,
-        ["system", "light", "dark"],
-        DEFAULT_UI_PREFERENCES.colorScheme,
-      ),
       theme: {
         accentColor: readEnum(
           storedTheme?.accentColor,
@@ -467,10 +572,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
           DEFAULT_UI_PREFERENCES.theme.accentColor,
         ),
         preset:
-          storedPreset ??
-          (storedTheme?.accentColor === undefined
-            ? DEFAULT_UI_PREFERENCES.theme.preset
-            : undefined),
+          storedPreset ?? legacyPreset ?? DEFAULT_UI_PREFERENCES.theme.preset,
         colors: readThemeColors(storedTheme?.colors),
       },
       chatFontSize: readFontSize(
@@ -545,9 +647,10 @@ function readStoredPreferences(): UiPreferences {
   return parseUiPreferences(window.localStorage.getItem(UI_PREFERENCES_KEY));
 }
 
-function resolvedColorScheme(colorScheme: UiColorScheme): "light" | "dark" {
-  if (colorScheme !== "system") {
-    return colorScheme;
+function resolvedThemeMode(preset: UiThemePresetId): "light" | "dark" {
+  const mode = getUiThemePresetMode(preset);
+  if (mode !== "system") {
+    return mode;
   }
 
   return typeof window.matchMedia === "function" &&
@@ -556,10 +659,11 @@ function resolvedColorScheme(colorScheme: UiColorScheme): "light" | "dark" {
     : "light";
 }
 
-function applyThemeColors(theme: UiTheme): void {
-  const presetColors = UI_THEME_PRESETS.find(
-    (preset) => preset.id === theme.preset,
-  )?.colors;
+function applyThemeColors(theme: UiTheme, mode: "light" | "dark"): void {
+  const preset =
+    UI_THEME_PRESETS.find((preset) => preset.id === theme.preset) ??
+    UI_THEME_PRESETS[0];
+  const presetColors = getUiThemePresetColors(preset, mode);
   const colors = { ...presetColors, ...(theme.colors ?? {}) };
 
   for (const key of UI_THEME_COLOR_KEYS) {
@@ -580,15 +684,6 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
       UI_PREFERENCES_KEY,
       JSON.stringify(preferences),
     );
-    document.documentElement.dataset.theme = resolvedColorScheme(
-      preferences.colorScheme,
-    );
-    if (preferences.theme.preset) {
-      document.documentElement.removeAttribute("data-accent");
-    } else {
-      document.documentElement.dataset.accent = preferences.theme.accentColor;
-    }
-    applyThemeColors(preferences.theme);
     document.documentElement.dataset.uiFontSize = String(
       preferences.uiFontSize,
     );
@@ -607,6 +702,29 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
           : "en"
         : preferences.language;
   }, [preferences]);
+
+  useEffect(() => {
+    const preset = preferences.theme.preset ?? "system";
+    const applyTheme = () => {
+      const mode = resolvedThemeMode(preset);
+      document.documentElement.dataset.theme = mode;
+      document.documentElement.removeAttribute("data-accent");
+      applyThemeColors(preferences.theme, mode);
+    };
+
+    applyTheme();
+    if (
+      getUiThemePresetMode(preset) !== "system" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => applyTheme();
+    media.addEventListener?.("change", onChange);
+    return () => media.removeEventListener?.("change", onChange);
+  }, [preferences.theme]);
 
   function update(patch: UiPreferencePatch) {
     setPreferences((current) => updateUiPreferences(current, patch));

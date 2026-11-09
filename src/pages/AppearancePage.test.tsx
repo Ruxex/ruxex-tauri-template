@@ -19,8 +19,7 @@ describe("AppearancePage", () => {
     useUiPreferences.mockReturnValue({
       preferences: {
         sidebarCollapsed: false,
-        colorScheme: "system",
-        theme: { accentColor: "blue" },
+        theme: { accentColor: "blue", preset: "system" },
         chatFontSize: 12,
         uiFontSize: 14,
       },
@@ -39,6 +38,7 @@ describe("AppearancePage", () => {
     expect(heading.className).toContain("text-3xl");
     expect(heading.className).toContain("tracking-tight");
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
+    expect(screen.queryByLabelText("Color mode")).toBeNull();
     expect(screen.getByText("Advanced theme colors")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     expect(

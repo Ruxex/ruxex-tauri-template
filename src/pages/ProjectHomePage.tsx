@@ -161,8 +161,14 @@ export function ProjectHomePage() {
               {details.roots.length} workspace root
               {details.roots.length === 1 ? "" : "s"}
             </p>
-            <p className="mt-1 truncate text-xs text-base-content/60">
-              {details.roots[0]?.path ?? "No workspace root configured"}
+            <p
+              className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full bg-base-200 px-2 py-1 text-xs text-base-content/70"
+              role="status"
+            >
+              <FolderIcon aria-hidden="true" className="size-3.5 shrink-0" />
+              <span className="min-w-0 truncate">
+                {details.roots[0]?.path ?? "No workspace root configured"}
+              </span>
             </p>
           </div>
         </div>
@@ -376,6 +382,14 @@ export function ProjectHomePage() {
           )}
           {!threads.isLoading && !threads.data?.data.length && (
             <EmptyState
+              action={
+                <Link
+                  className="btn btn-sm btn-primary"
+                  to={`/?projectId=${encodeURIComponent(projectId)}`}
+                >
+                  New chat
+                </Link>
+              }
               description="Start a new chat to keep work for this project together."
               icon={ChatBubbleLeftRightIcon}
               title="No chats in this project yet."

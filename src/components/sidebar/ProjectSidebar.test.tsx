@@ -411,7 +411,9 @@ describe("ProjectSidebar", () => {
     const panel = screen.getByRole("complementary", {
       name: "Settings sidebar",
     });
-    expect(within(panel).getByRole("link", { name: "General" })).toBeTruthy();
+    expect(
+      within(panel).getByRole("link", { name: "General" }).className,
+    ).toContain("text-base-content");
     expect(
       within(panel).getByRole("link", { name: "Appearance" }),
     ).toBeTruthy();

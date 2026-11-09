@@ -16,15 +16,14 @@ export function AppearancePage() {
     <div className="space-y-5">
       <h2 className="text-3xl font-semibold tracking-tight">Appearance</h2>
       <UiPreferencesCard
-        colorScheme={preferences.colorScheme}
         onThemePresetChange={(preset) =>
           update({ theme: { ...preferences.theme, preset, colors: {} } })
         }
-        onColorSchemeChange={(colorScheme) => update({ colorScheme })}
-        preset={preferences.theme.preset ?? "daisyui"}
+        preset={preferences.theme.preset ?? "system"}
       />
       <ThemeColorsCard
         colors={preferences.theme.colors ?? {}}
+        onReset={() => update({ theme: { ...preferences.theme, colors: {} } })}
         onColorChange={(key, value) => {
           const colors = { ...(preferences.theme.colors ?? {}) };
           if (value.trim()) {
@@ -34,6 +33,7 @@ export function AppearancePage() {
           }
           update({ theme: { ...preferences.theme, colors } });
         }}
+        preset={preferences.theme.preset ?? "system"}
       />
       <TypographyCard
         chatFontSize={preferences.chatFontSize}

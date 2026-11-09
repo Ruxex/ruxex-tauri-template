@@ -43,16 +43,14 @@ describe("settings and composer selectors", () => {
     expect(
       updateUiPreferences(DEFAULT_UI_PREFERENCES, {
         chatFontSize: 24,
-        colorScheme: "dark",
-        theme: { accentColor: "violet" },
+        theme: { accentColor: "violet", preset: "ruxex-dark" },
         uiFontSize: 12,
       }),
     ).toMatchObject({
       chatFontSize: 24,
-      colorScheme: "dark",
-      theme: { accentColor: "violet" },
+      theme: { accentColor: "violet", preset: "ruxex-dark" },
       uiFontSize: 12,
-      version: 7,
+      version: 8,
     });
   });
 });

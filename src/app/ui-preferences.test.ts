@@ -7,6 +7,8 @@ import {
   UI_THEME_PRESETS,
   UI_THEME_COLOR_KEYS,
   UI_NOTIFICATION_SOUND_OPTIONS,
+  getUiThemePresetMode,
+  getUiThemePresetPreview,
   updateUiPreferences,
 } from "./ui-preferences";
 
@@ -42,10 +44,12 @@ describe("ui preferences", () => {
     });
   });
 
-  it("exposes twelve built-in theme presets", () => {
-    expect(UI_THEME_PRESETS).toHaveLength(12);
+  it("exposes the system and Ruxex built-in theme presets", () => {
+    expect(UI_THEME_PRESETS).toHaveLength(14);
     expect(UI_THEME_PRESETS.map((preset) => preset.label)).toEqual([
-      "DaisyUI Default",
+      "System",
+      "Ruxex Light",
+      "Ruxex Dark",
       "VS Code Dark+",
       "GH Light",
       "GH Dark",
@@ -60,6 +64,32 @@ describe("ui preferences", () => {
     ]);
   });
 
+  it("keeps the default theme preview independent from the active CSS theme", () => {
+    const system = UI_THEME_PRESETS.find((preset) => preset.id === "system");
+    const catppuccin = UI_THEME_PRESETS.find(
+      (preset) => preset.id === "catppuccin-mocha",
+    );
+
+    expect(system).toBeTruthy();
+    expect(catppuccin).toBeTruthy();
+    if (!system || !catppuccin) throw new Error("Theme preset missing");
+    const defaultPreview = getUiThemePresetPreview(system);
+    const catppuccinPreview = getUiThemePresetPreview(catppuccin);
+
+    expect(defaultPreview.background).not.toMatch(/^var\(/);
+    expect(defaultPreview.surface).not.toMatch(/^var\(/);
+    expect(defaultPreview.primary).not.toMatch(/^var\(/);
+    expect(defaultPreview.background).not.toBe(catppuccinPreview.background);
+    expect(getUiThemePresetMode(system.id)).toBe("system");
+
+    const dracula = UI_THEME_PRESETS.find((preset) => preset.id === "dracula");
+    expect(dracula).toBeTruthy();
+    if (!dracula) throw new Error("Theme preset missing");
+    expect(getUiThemePresetPreview(dracula).muted).not.toBe(
+      getUiThemePresetPreview(dracula).card,
+    );
+  });
+
   it("rejects a preference record from an unknown version", () => {
     expect(
       parseUiPreferences(
@@ -72,14 +102,12 @@ describe("ui preferences", () => {
     expect(
       updateUiPreferences(DEFAULT_UI_PREFERENCES, {
         sidebarCollapsed: true,
-        colorScheme: "dark",
-        theme: { accentColor: "violet" },
+        theme: { accentColor: "violet", preset: "ruxex-dark" },
       }),
     ).toEqual({
       ...DEFAULT_UI_PREFERENCES,
       sidebarCollapsed: true,
-      colorScheme: "dark",
-      theme: { accentColor: "violet" },
+      theme: { accentColor: "violet", preset: "ruxex-dark" },
     });
   });
 
@@ -87,9 +115,20 @@ describe("ui preferences", () => {
     expect(
       parseUiPreferences(JSON.stringify({ version: 1, theme: "dark" })),
     ).toMatchObject({
-      colorScheme: "dark",
-      theme: { accentColor: "blue" },
+      theme: { accentColor: "blue", preset: "ruxex-dark" },
     });
+  });
+
+  it("migrates the former DaisyUI preset and color mode values", () => {
+    expect(
+      parseUiPreferences(
+        JSON.stringify({
+          version: 7,
+          colorScheme: "light",
+          theme: { accentColor: "blue", preset: "daisyui" },
+        }),
+      ),
+    ).toMatchObject({ theme: { preset: "ruxex-light" } });
   });
 
   it("parses every notification sound declared by the option metadata", () => {

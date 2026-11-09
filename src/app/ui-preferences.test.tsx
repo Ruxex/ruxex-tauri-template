@@ -21,13 +21,12 @@ function Probe() {
       onClick={() =>
         update({
           chatFontSize: 24,
-          colorScheme: "dark",
-          theme: { accentColor: "violet" },
+          theme: { accentColor: "violet", preset: "ruxex-dark" },
           uiFontSize: 12,
         })
       }
     >
-      {preferences.colorScheme}:{preferences.theme.accentColor}:
+      {preferences.theme.preset}:{preferences.theme.accentColor}:
       {preferences.chatFontSize}px:{preferences.uiFontSize}px
     </button>
   );
@@ -54,7 +53,7 @@ describe("UI preference persistence", () => {
     expect(
       parseUiPreferences(
         JSON.stringify({
-          version: 1,
+          version: 7,
           sidebarCollapsed: true,
           colorScheme: "dark",
           theme: { accentColor: "violet" },
@@ -64,8 +63,7 @@ describe("UI preference persistence", () => {
       ),
     ).toMatchObject({
       sidebarCollapsed: true,
-      colorScheme: "dark",
-      theme: { accentColor: "violet" },
+      theme: { accentColor: "violet", preset: "ruxex-dark" },
       chatFontSize: 24,
       uiFontSize: 12,
     });
@@ -84,16 +82,13 @@ describe("UI preference persistence", () => {
 
   it("updates presentation preferences without changing the version", () => {
     const next = updateUiPreferences(DEFAULT_UI_PREFERENCES, {
-      colorScheme: "light",
-      theme: { accentColor: "rose" },
+      theme: { accentColor: "rose", preset: "ruxex-light" },
     });
 
     expect(next).toMatchObject({
-      version: 7,
-      colorScheme: "light",
-      theme: { accentColor: "rose" },
+      version: 8,
+      theme: { accentColor: "rose", preset: "ruxex-light" },
     });
-    expect(DEFAULT_UI_PREFERENCES.colorScheme).toBe("system");
   });
 
   it("loads, persists, and applies provider preferences to document data attributes", () => {
@@ -101,9 +96,9 @@ describe("UI preference persistence", () => {
       UI_PREFERENCES_KEY,
       JSON.stringify({
         ...DEFAULT_UI_PREFERENCES,
-        colorScheme: "light",
         theme: {
           accentColor: "emerald",
+          preset: "ruxex-light",
           colors: { primary: "#123456" },
         },
       }),
@@ -115,22 +110,21 @@ describe("UI preference persistence", () => {
     );
 
     expect(screen.getByRole("button").textContent).toBe(
-      "light:emerald:14px:14px",
+      "ruxex-light:emerald:14px:14px",
     );
     expect(document.documentElement.dataset.theme).toBe("light");
-    expect(document.documentElement.dataset.accent).toBe("emerald");
+    expect(document.documentElement.dataset.accent).toBeUndefined();
     expect(
       document.documentElement.style.getPropertyValue("--color-primary"),
     ).toBe("#123456");
     fireEvent.click(screen.getByRole("button"));
 
     expect(screen.getByRole("button").textContent).toBe(
-      "dark:violet:24px:12px",
+      "ruxex-dark:violet:24px:12px",
     );
     expect(
       JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
     ).toMatchObject({
-      colorScheme: "dark",
       theme: { accentColor: "violet" },
       chatFontSize: 24,
       uiFontSize: 12,
@@ -164,7 +158,7 @@ describe("UI preference persistence", () => {
     expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
   });
 
-  it("resolves system color mode from the OS preference", () => {
+  it("resolves the System theme from the OS preference", () => {
     const matchMedia = vi.fn().mockReturnValue({ matches: true });
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
@@ -179,5 +173,8 @@ describe("UI preference persistence", () => {
 
     expect(matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: dark)");
     expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(
+      document.documentElement.style.getPropertyValue("--color-base-100"),
+    ).toBe("#111827");
   });
 });

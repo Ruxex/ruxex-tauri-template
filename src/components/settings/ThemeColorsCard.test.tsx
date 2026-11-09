@@ -8,13 +8,16 @@ import { ThemeColorsCard } from "./ThemeColorsCard";
 describe("ThemeColorsCard", () => {
   afterEach(cleanup);
 
-  it("renders DaisyUI color controls and reports edits", () => {
+  it("renders grouped color controls, shows the inherited preset, and reports edits", () => {
     const onColorChange = vi.fn();
+    const onReset = vi.fn();
 
     render(
       <ThemeColorsCard
         colors={{ primary: "#123456" }}
+        onReset={onReset}
         onColorChange={onColorChange}
+        preset="system"
       />,
     );
 
@@ -28,11 +31,19 @@ describe("ThemeColorsCard", () => {
     expect(
       (screen.getByLabelText("Base 100 color") as HTMLInputElement).value,
     ).toBe("");
+    expect(screen.getByText("Inherited from System")).toBeTruthy();
+    expect(screen.getByText("Base colors")).toBeTruthy();
+    expect(screen.getByText("Brand colors")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Primary color"), {
       target: { value: "oklch(60% 0.2 250)" },
     });
 
     expect(onColorChange).toHaveBeenCalledWith("primary", "oklch(60% 0.2 250)");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset advanced colors" }),
+    );
+    expect(onReset).toHaveBeenCalledOnce();
   });
 });

@@ -164,12 +164,7 @@ describe("settings card layout", () => {
         <CapabilitiesCard
           capabilities={{ browser: true, shell: false, native: "Unsupported" }}
         />
-        <UiPreferencesCard
-          onColorSchemeChange={vi.fn()}
-          onThemePresetChange={vi.fn()}
-          colorScheme="system"
-          preset="daisyui"
-        />
+        <UiPreferencesCard onThemePresetChange={vi.fn()} preset="system" />
         <TypographyCard
           onChatFontSizeChange={vi.fn()}
           onReset={vi.fn()}
@@ -186,9 +181,7 @@ describe("settings card layout", () => {
         .closest("section")
         ?.querySelector("div.grid")?.className,
     ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
-    expect(screen.getByText("Color mode").closest("div")?.className).toContain(
-      "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
-    );
+    expect(screen.queryByText("Color mode")).toBeNull();
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
@@ -218,14 +211,12 @@ describe("settings card layout", () => {
     expect(screen.queryByText("apiKeyModelDiscovery")).toBeNull();
   });
 
-  it("offers built-in theme presets as a color preview grid", () => {
+  it("offers built-in theme presets as realistic preview cards", () => {
     const onThemePresetChange = vi.fn();
     render(
       <UiPreferencesCard
-        colorScheme="system"
-        onColorSchemeChange={vi.fn()}
         onThemePresetChange={onThemePresetChange}
-        preset="daisyui"
+        preset="system"
       />,
     );
 
@@ -238,7 +229,7 @@ describe("settings card layout", () => {
         "Theme palettes are inspired by third-party projects. Ruxex is not affiliated with or endorsed by those projects.",
       ),
     ).toBeTruthy();
-    expect(within(presetGrid).getAllByRole("button")).toHaveLength(12);
+    expect(within(presetGrid).getAllByRole("button")).toHaveLength(14);
     expect(
       within(presetGrid)
         .getByRole("button", { name: "GH Dark" })
@@ -247,9 +238,17 @@ describe("settings card layout", () => {
     expect(within(presetGrid).getByText("GH Dark")).toBeTruthy();
     expect(
       within(presetGrid)
-        .getByRole("button", { name: "DaisyUI Default" })
-        .querySelectorAll("[data-theme-preview-swatch]"),
-    ).toHaveLength(4);
+        .getByRole("button", { name: "System" })
+        .querySelector("[data-theme-preview-panel]"),
+    ).toBeTruthy();
+    expect(
+      within(presetGrid)
+        .getByRole("button", { name: "System" })
+        .querySelector("[data-theme-selected]"),
+    ).toBeTruthy();
+    expect(
+      within(presetGrid).getAllByText("Follows OS").length,
+    ).toBeGreaterThan(0);
     fireEvent.click(
       within(presetGrid).getByRole("button", { name: "GH Dark" }),
     );
@@ -305,12 +304,7 @@ describe("settings card layout", () => {
           onSoundChange={vi.fn()}
           sound="system"
         />
-        <UiPreferencesCard
-          onColorSchemeChange={vi.fn()}
-          onThemePresetChange={vi.fn()}
-          colorScheme="system"
-          preset="daisyui"
-        />
+        <UiPreferencesCard onThemePresetChange={vi.fn()} preset="system" />
         <TypographyCard
           onChatFontSizeChange={vi.fn()}
           onReset={vi.fn()}
@@ -346,5 +340,24 @@ describe("settings card layout", () => {
         .getByRole("heading", { name: "Renamed notification settings" })
         .querySelector("svg"),
     ).toBeTruthy();
+  });
+
+  it("wraps panel actions instead of squeezing the title at narrow widths", () => {
+    render(
+      <SettingsPanel
+        action={<button type="button">Reset</button>}
+        title="A settings panel with a long title"
+      >
+        <p>Content</p>
+      </SettingsPanel>,
+    );
+
+    const heading = screen.getByRole("heading", {
+      name: "A settings panel with a long title",
+    });
+    expect(heading.parentElement?.className).toContain("flex-wrap");
+    expect(
+      screen.getByRole("button", { name: "Reset" }).parentElement?.className,
+    ).toContain("shrink-0");
   });
 });

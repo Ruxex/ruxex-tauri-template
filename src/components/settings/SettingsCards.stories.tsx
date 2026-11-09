@@ -93,10 +93,8 @@ export const QuickPanel: Story = () => (
 
 export const Interface: Story = () => (
   <UiPreferencesCard
-    colorScheme="light"
-    onColorSchemeChange={() => undefined}
     onThemePresetChange={() => undefined}
-    preset="daisyui"
+    preset="system"
   />
 );
 

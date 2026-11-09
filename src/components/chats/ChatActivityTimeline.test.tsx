@@ -383,6 +383,9 @@ describe("ChatActivityTimeline", () => {
         .getByRole("status", { name: "Working" })
         .querySelector(".loading-dots"),
     ).toBeTruthy();
+    expect(screen.getByRole("status", { name: "Working" }).className).toContain(
+      "max-w-md",
+    );
   });
 
   it("removes the working indicator when the turn is no longer running", () => {
@@ -400,6 +403,32 @@ describe("ChatActivityTimeline", () => {
     );
 
     expect(screen.queryByRole("status", { name: /Working/ })).toBeNull();
+  });
+
+  it("does not pair a completed empty card with the generic empty message", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        completedTurn={
+          {
+            id: "turn-1",
+            startedAt: 1,
+            completedAt: 2,
+            durationMs: 1_000,
+            status: "completed",
+          } as never
+        }
+        items={[]}
+        liveItems={[]}
+        liveStatus="completed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Worked for 1s" })).toBeTruthy();
+    expect(screen.queryByText("No activity yet.")).toBeNull();
   });
 
   it("does not render a separate empty state when the timeline has no items", () => {

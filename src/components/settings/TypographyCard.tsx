@@ -23,7 +23,20 @@ export function TypographyCard({
   onUiFontSizeChange: (fontSize: UiFontSize) => void;
 }) {
   return (
-    <SettingsPanel icon={Bars3BottomLeftIcon} title="Typography">
+    <SettingsPanel
+      action={
+        <button
+          aria-label="Reset to default"
+          className="btn btn-ghost btn-sm"
+          onClick={onReset}
+          type="button"
+        >
+          Reset to default
+        </button>
+      }
+      icon={Bars3BottomLeftIcon}
+      title="Typography"
+    >
       <div className="divide-y divide-base-300 text-sm">
         <FormFieldRow
           controlId="settings-chat-font-size"
@@ -62,16 +75,6 @@ export function TypographyCard({
             value={uiFontSize}
           />
         </FormFieldRow>
-      </div>
-      <div className="flex justify-end px-5 py-3">
-        <button
-          aria-label="Reset to default"
-          className="btn btn-ghost btn-sm"
-          onClick={onReset}
-          type="button"
-        >
-          Reset to default
-        </button>
       </div>
     </SettingsPanel>
   );

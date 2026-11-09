@@ -92,7 +92,11 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     >
       <ConversationMinimap items={visibleItems} timelineRef={timelineRef} />
       {visibleItems.length === 0 && showIndicator && (
-        <WorkingIndicator active={showActiveIndicator} label={indicatorLabel} />
+        <WorkingIndicator
+          active={showActiveIndicator}
+          empty
+          label={indicatorLabel}
+        />
       )}
       {visibleItems.map((item, index) => (
         <Fragment key={`item:${item.turnId}:${item.id}`}>
@@ -118,11 +122,14 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
           pending={pending}
         />
       ))}
-      {visibleItems.length === 0 && pendingRequests.length === 0 && !isBusy && (
-        <p className="py-12 text-center text-base-content/60">
-          No activity yet.
-        </p>
-      )}
+      {visibleItems.length === 0 &&
+        pendingRequests.length === 0 &&
+        !isBusy &&
+        !showIndicator && (
+          <p className="py-12 text-center text-base-content/60">
+            No activity yet.
+          </p>
+        )}
     </section>
   );
 }, areChatActivityTimelinePropsEqual);
@@ -204,16 +211,22 @@ function formatDuration(seconds: number): string {
 
 function WorkingIndicator({
   active = false,
+  empty = false,
   label,
 }: {
   active?: boolean;
+  empty?: boolean;
   label: string;
 }) {
   return (
     <div
       aria-label={label}
       aria-live="polite"
-      className="border-t border-base-300 pt-3 text-center text-sm text-base-content/60"
+      className={
+        empty
+          ? "mx-auto flex max-w-md items-center justify-center gap-3 rounded-box border border-dashed border-primary/30 bg-base-100 px-5 py-6 text-center text-sm text-base-content/70 shadow-sm"
+          : "border-t border-base-300 pt-3 text-center text-sm text-base-content/60"
+      }
       role="status"
     >
       {active ? (

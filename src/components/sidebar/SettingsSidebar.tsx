@@ -29,25 +29,54 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
           </h3>
           <ul className="menu w-full gap-1 p-0">
             <li>
-              <NavLink end to="/settings">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                end
+                to="/settings"
+              >
                 <InformationCircleIcon aria-hidden="true" className="size-4" />
                 General
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings/account">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/account"
+              >
                 <UserCircleIcon aria-hidden="true" className="size-4" />
                 Account
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings/appearance">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/appearance"
+              >
                 <SparklesIcon aria-hidden="true" className="size-4" />
                 Appearance
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings/marketplaces">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/marketplaces"
+              >
                 <PuzzlePieceIcon aria-hidden="true" className="size-4" />
                 Plugin marketplaces
               </NavLink>
@@ -64,25 +93,53 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
           </h3>
           <ul className="menu w-full gap-1 p-0">
             <li>
-              <NavLink to="/settings/models">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/models"
+              >
                 <DocumentTextIcon aria-hidden="true" className="size-4" />
                 Models / Engines
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings/app-server">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/app-server"
+              >
                 <ServerIcon aria-hidden="true" className="size-4" />
                 App Server
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings/mcp-servers">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/mcp-servers"
+              >
                 <WrenchScrewdriverIcon aria-hidden="true" className="size-4" />
                 MCP servers
               </NavLink>
             </li>
             <li>
-              <NavLink to="/settings/archive">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/archive"
+              >
                 <ArchiveBoxIcon aria-hidden="true" className="size-4" />
                 Archived chats
               </NavLink>
