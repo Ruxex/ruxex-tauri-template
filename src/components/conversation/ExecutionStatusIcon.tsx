@@ -14,16 +14,15 @@ export function ExecutionStatusIcon({
   exitCode,
 }: ExecutionStatusIconProps) {
   const hasExitCode = exitCode !== undefined && exitCode !== "";
-  const showExitCode = hasExitCode && !(status === "completed" && exitCode === "0");
 
-  if (!status && !showExitCode) {
+  if (!status && !hasExitCode) {
     return null;
   }
 
   return (
     <span className="inline-flex items-center gap-2">
       {status && <StatusIcon status={status} />}
-      {showExitCode && <ExitCodeIcon exitCode={exitCode} />}
+      {hasExitCode && <ExitCodeIcon exitCode={exitCode} />}
     </span>
   );
 }
@@ -74,12 +73,10 @@ function ExitCodeIcon({ exitCode }: { exitCode: string }) {
   if (exitCode === "0") {
     return (
       <span
-        aria-label="Command exited successfully"
-        className="inline-flex size-4 shrink-0 items-center justify-center text-success"
-        role="img"
-        title="Command exited successfully"
+        className="font-mono text-xs text-base-content/70"
+        title="Exit code 0"
       >
-        <CheckCircleIcon aria-hidden="true" className="size-4" />
+        0
       </span>
     );
   }
@@ -92,7 +89,7 @@ function ExitCodeIcon({ exitCode }: { exitCode: string }) {
       title={`Command exited with code ${exitCode}`}
     >
       <XCircleIcon aria-hidden="true" className="size-4" />
-      <span>Exit code: {exitCode}</span>
+      <span>{exitCode}</span>
     </span>
   );
 }

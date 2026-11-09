@@ -1,18 +1,13 @@
 import { MarkdownContent } from "./MarkdownContent";
-import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
 
 type CommandExecutionViewProps = {
   command: string;
   result: string;
-  status?: string;
-  exitCode?: string;
 };
 
 export function CommandExecutionView({
   command,
   result,
-  status,
-  exitCode,
 }: CommandExecutionViewProps) {
   return (
     <div
@@ -28,14 +23,6 @@ export function CommandExecutionView({
       >
         <MarkdownContent text={result || "…"} />
       </div>
-      {(status || exitCode) && (
-        <div
-          className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-base-300 bg-base-100 px-3 py-2 text-xs text-base-content/60"
-          data-testid="command-execution-diagnostics"
-        >
-          <ExecutionStatusIcon exitCode={exitCode} status={status} />
-        </div>
-      )}
     </div>
   );
 }

@@ -5,7 +5,6 @@ import {
   fireEvent,
   render,
   screen,
-  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -110,8 +109,8 @@ describe("ActivityItem", () => {
 
     expect(screen.getByText("Command")).toBeTruthy();
     expect(screen.getByText("pnpm test")).toBeTruthy();
-    const diagnostics = screen.getByTestId("command-execution-diagnostics");
-    expect(within(diagnostics).getByRole("img", { name: "Command completed" })).toBeTruthy();
+    expect(screen.getByText("0")).toBeTruthy();
+    expect(screen.queryByTestId("command-execution-diagnostics")).toBeNull();
     expect(screen.getByText("done")).toBeTruthy();
   });
 
@@ -148,19 +147,11 @@ describe("ActivityItem", () => {
     expect(result.className).toContain("overflow-y-auto");
     expect(command.className).not.toContain("bg-neutral");
     expect(screen.queryByText("/workspace")).toBeNull();
-    const diagnostics = screen.getByTestId("command-execution-diagnostics");
-    expect(
-      within(diagnostics).getByRole("img", { name: "Command completed" }),
-    ).toBeTruthy();
-    expect(
-      within(diagnostics).queryByRole("img", {
-        name: "Command exited successfully",
-      }),
-    ).toBeNull();
-    expect(within(diagnostics).getAllByRole("img")).toHaveLength(1);
+    expect(screen.getByRole("img", { name: "Command completed" })).toBeTruthy();
+    expect(screen.getByText("0")).toBeTruthy();
+    expect(screen.queryByTestId("command-execution-diagnostics")).toBeNull();
     expect(screen.queryByText("status", { exact: true })).toBeNull();
     expect(screen.queryByText("exit code", { exact: true })).toBeNull();
-    expect(diagnostics.className).toContain("flex");
     expect(screen.queryByText("command", { exact: true })).toBeNull();
     expect(screen.queryByText("result", { exact: true })).toBeNull();
   });
@@ -184,16 +175,14 @@ describe("ActivityItem", () => {
       />,
     );
 
-    const diagnostics = screen.getByTestId("command-execution-diagnostics");
+    expect(screen.getByRole("img", { name: "Command failed" })).toBeTruthy();
     expect(
-      within(diagnostics).getByRole("img", { name: "Command failed" }),
-    ).toBeTruthy();
-    expect(
-      within(diagnostics).getByRole("img", {
+      screen.getByRole("img", {
         name: "Command exited with code 1",
       }),
     ).toBeTruthy();
-    expect(screen.getByText("Exit code: 1")).toBeTruthy();
+    expect(screen.getByText("1")).toBeTruthy();
+    expect(screen.queryByTestId("command-execution-diagnostics")).toBeNull();
     expect(screen.queryByText("exit code", { exact: true })).toBeNull();
   });
 

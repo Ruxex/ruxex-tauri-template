@@ -1,5 +1,7 @@
 import type { Story } from "@ladle/react";
 
+import { StoryVariantList } from "../../../.ladle/support/StoryVariantList";
+
 import { ActivityItem } from "./ActivityItem";
 import type { ConversationViewItem } from "./conversation-model";
 
@@ -31,60 +33,61 @@ const loadArtifactPreview = async () => ({
   diagnostics: [],
 });
 
-export const Command: Story = () => <ActivityItem item={commandItem} />;
-
-export const InProgress: Story = () => (
-  <ActivityItem
-    item={{
-      ...commandItem,
-      id: "activity-running",
-      title: "Running checks",
-      metadata: { ...commandItem.metadata, status: "inProgress" },
-      text: "",
-    }}
-  />
-);
-
-export const ToolCall: Story = () => (
-  <ActivityItem
-    item={{
-      ...commandItem,
-      id: "activity-tool",
-      type: "dynamicToolCall",
-      title: "Inspect repository",
-      text: '{"path":"/workspace/ruxex"}',
-      metadata: {
-        namespace: "filesystem",
-        status: "completed",
-        success: "true",
+export const States: Story = () => (
+  <StoryVariantList
+    variants={[
+      {
+        content: <ActivityItem item={commandItem} />,
+        label: "Completed · exit code 0",
       },
-    }}
-  />
-);
-
-export const FileChanges: Story = () => (
-  <ActivityItem
-    item={{
-      ...commandItem,
-      id: "activity-files",
-      type: "fileChange",
-      title: "Update component styles",
-      text: "src/components/Composer.tsx\nsrc/components/Sidebar.tsx",
-      metadata: { files: "2", status: "completed" },
-    }}
-  />
-);
-
-export const Artifact: Story = () => (
-  <ActivityItem
-    item={{
-      ...commandItem,
-      id: "activity-artifact",
-      title: "Generate report",
-      text: '{"ok":true,"format":"xlsx","output":"/workspace/report.xlsx"}',
-      artifactPath: "/workspace/report.xlsx",
-      artifactFormat: "xlsx",
-    }}
-    loadArtifactPreview={loadArtifactPreview}
+      {
+        content: (
+          <ActivityItem
+            item={{
+              ...commandItem,
+              id: "activity-running",
+              title: "Running checks",
+              metadata: { ...commandItem.metadata, status: "inProgress" },
+              text: "",
+            }}
+          />
+        ),
+        label: "In progress",
+      },
+      {
+        content: (
+          <ActivityItem
+            item={{
+              ...commandItem,
+              id: "activity-failed",
+              title: "Checks failed",
+              text: "One assertion failed.",
+              metadata: {
+                ...commandItem.metadata,
+                status: "failed",
+                exitCode: "1",
+              },
+            }}
+          />
+        ),
+        label: "Failed · exit code 1",
+      },
+      {
+        content: (
+          <ActivityItem
+            item={{
+              ...commandItem,
+              id: "activity-artifact",
+              title: "Generate report",
+              text: '{"ok":true,"format":"xlsx","output":"/workspace/report.xlsx"}',
+              artifactPath: "/workspace/report.xlsx",
+              artifactFormat: "xlsx",
+            }}
+            loadArtifactPreview={loadArtifactPreview}
+          />
+        ),
+        label: "Artifact",
+      },
+    ]}
   />
 );

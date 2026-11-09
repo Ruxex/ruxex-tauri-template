@@ -5,12 +5,18 @@ import {
   CatalogQueryProvider,
   CatalogSurface,
 } from "../../../.ladle/support/catalog-providers";
+import { LadleDialogTrigger } from "../../../.ladle/support/LadleDialogTrigger";
 import { ChatSearchDialog } from "./ChatSearchDialog";
 
 export const Open: Story = () => (
-  <CatalogSurface>
-    <ChatSearchDialog onClose={() => undefined} onSelect={() => undefined} />
-  </CatalogSurface>
+  <LadleDialogTrigger
+    label="Open chat search"
+    renderDialog={(onClose) => (
+      <CatalogSurface>
+        <ChatSearchDialog onClose={onClose} onSelect={() => undefined} />
+      </CatalogSurface>
+    )}
+  />
 );
 
 const searchParams = {
@@ -43,13 +49,18 @@ export const Results: Story = () => (
       },
     ]}
   >
-    <CatalogSurface>
-      <ChatSearchDialog
-        initialSearchTerm="compiler"
-        onClose={() => undefined}
-        onSelect={() => undefined}
-      />
-    </CatalogSurface>
+    <LadleDialogTrigger
+      label="Open search results"
+      renderDialog={(onClose) => (
+        <CatalogSurface>
+          <ChatSearchDialog
+            initialSearchTerm="compiler"
+            onClose={onClose}
+            onSelect={() => undefined}
+          />
+        </CatalogSurface>
+      )}
+    />
   </CatalogQueryProvider>
 );
 
@@ -65,13 +76,18 @@ export const NoResults: Story = () => {
         },
       ]}
     >
-      <CatalogSurface>
-        <ChatSearchDialog
-          initialSearchTerm="nothing-matches"
-          onClose={() => undefined}
-          onSelect={() => undefined}
-        />
-      </CatalogSurface>
+      <LadleDialogTrigger
+        label="Open no-results search"
+        renderDialog={(onClose) => (
+          <CatalogSurface>
+            <ChatSearchDialog
+              initialSearchTerm="nothing-matches"
+              onClose={onClose}
+              onSelect={() => undefined}
+            />
+          </CatalogSurface>
+        )}
+      />
     </CatalogQueryProvider>
   );
 };

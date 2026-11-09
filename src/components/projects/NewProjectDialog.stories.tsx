@@ -1,19 +1,31 @@
 import type { Story } from "@ladle/react";
 
+import { LadleDialogTrigger } from "../../../.ladle/support/LadleDialogTrigger";
 import { NewProjectDialog } from "./NewProjectDialog";
 
 export const EmptyForm: Story = () => (
-  <NewProjectDialog onClose={() => undefined} />
+  <LadleDialogTrigger
+    label="Open empty project dialog"
+    renderDialog={(onClose) => <NewProjectDialog onClose={onClose} />}
+  />
 );
 
 export const Validation: Story = () => (
-  <NewProjectDialog onClose={() => undefined} />
+  <LadleDialogTrigger
+    label="Open validation dialog"
+    renderDialog={(onClose) => <NewProjectDialog onClose={onClose} />}
+  />
 );
 
 export const SelectedWorkspace: Story = () => (
-  <NewProjectDialog
-    initialName="Design system"
-    initialRoot="/workspace/design-system"
-    onClose={() => undefined}
+  <LadleDialogTrigger
+    label="Open selected workspace dialog"
+    renderDialog={(onClose) => (
+      <NewProjectDialog
+        initialName="Design system"
+        initialRoot="/workspace/design-system"
+        onClose={onClose}
+      />
+    )}
   />
 );

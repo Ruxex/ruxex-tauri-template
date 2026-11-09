@@ -38,12 +38,9 @@ describe("ExecutionStatusIcon", () => {
   it("uses only a green success icon for exit code zero", () => {
     const { container } = render(<ExecutionStatusIcon exitCode="0" />);
 
-    const status = screen.getByRole("img", {
-      name: "Command exited successfully",
-    });
-    expect(status.className).toContain("text-success");
+    expect(container.textContent).toContain("0");
     expect(screen.queryByText("Exit code: 0")).toBeNull();
-    expect(container.querySelector("svg")).toBeTruthy();
+    expect(container.querySelector("svg")).toBeNull();
   });
 
   it("does not duplicate a completed status with a zero exit code", () => {
@@ -55,16 +52,18 @@ describe("ExecutionStatusIcon", () => {
     expect(
       container.querySelector('[aria-label="Command completed"]'),
     ).toBeTruthy();
+    expect(container.textContent).toContain("0");
   });
 
   it("shows a red error icon and the non-zero exit code", () => {
-    render(<ExecutionStatusIcon exitCode="1" />);
+    const { container } = render(<ExecutionStatusIcon exitCode="1" />);
 
     const status = screen.getByRole("img", {
       name: "Command exited with code 1",
     });
     expect(status.className).toContain("text-error");
-    expect(screen.getByText("Exit code: 1")).toBeTruthy();
+    expect(container.textContent).toContain("1");
+    expect(screen.queryByText("Exit code: 1")).toBeNull();
   });
 
   it("renders nothing when no status or exit code is available", () => {

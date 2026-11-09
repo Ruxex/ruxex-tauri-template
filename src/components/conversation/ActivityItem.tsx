@@ -85,7 +85,10 @@ export const ActivityItem = memo(
           </span>
           <span>{item.title}</span>
           {isCommandExecution && item.metadata?.status && (
-            <ExecutionStatusIcon status={item.metadata.status} />
+            <ExecutionStatusIcon
+              exitCode={item.metadata.exitCode}
+              status={item.metadata.status}
+            />
           )}
           {!isCommandExecution && isInProgress && (
             <ExecutionStatusIcon status={item.metadata?.status} />
@@ -123,9 +126,7 @@ export const ActivityItem = memo(
           {isCommandExecution && command && (
             <CommandExecutionView
               command={command}
-              exitCode={item.metadata?.exitCode}
               result={item.text}
-              status={item.metadata?.status}
             />
           )}
           {metadataEntries.length > 0 && (

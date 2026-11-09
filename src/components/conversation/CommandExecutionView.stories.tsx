@@ -1,41 +1,45 @@
 import type { Story } from "@ladle/react";
 
+import { StoryVariantList } from "../../../.ladle/support/StoryVariantList";
+
 import { CommandExecutionView } from "./CommandExecutionView";
 
-export const Completed: Story = () => (
-  <CommandExecutionView
-    command="pnpm check"
-    exitCode="0"
-    result={"All checks passed.\nNo changes required."}
-    status="completed"
-  />
-);
-
-export const Running: Story = () => (
-  <CommandExecutionView
-    command="pnpm test --watch"
-    result={"Running test suite…\nWaiting for file changes."}
-    status="inProgress"
-  />
-);
-
-export const EmptyOutput: Story = () => (
-  <CommandExecutionView command="git status --short" result="" status="completed" />
-);
-
-export const StatusOnly: Story = () => (
-  <CommandExecutionView
-    command="git diff --check"
-    result="No whitespace errors found."
-    status="completed"
-  />
-);
-
-export const Failed: Story = () => (
-  <CommandExecutionView
-    command="pnpm test --runInBand"
-    exitCode="1"
-    result="Test suite failed with one assertion."
-    status="failed"
+export const States: Story = () => (
+  <StoryVariantList
+    variants={[
+      {
+        content: (
+          <CommandExecutionView
+            command="pnpm check"
+            result={"All checks passed.\nNo changes required."}
+          />
+        ),
+        label: "Completed",
+      },
+      {
+        content: (
+          <CommandExecutionView
+            command="pnpm test --watch"
+            result={"Running test suite…\nWaiting for file changes."}
+          />
+        ),
+        label: "Running",
+      },
+      {
+        content: (
+          <CommandExecutionView command="git status --short" result="" />
+        ),
+        label: "Empty output",
+      },
+      {
+        content: (
+          <CommandExecutionView
+            command="pnpm test --runInBand"
+            result="Test suite failed with one assertion."
+          />
+        ),
+        label: "Failed result",
+      },
+    ]}
   />
 );
