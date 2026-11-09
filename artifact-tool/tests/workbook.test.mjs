@@ -101,6 +101,11 @@ test("Workbook supports formulas, formatting, merges, tables, and charts", async
 
   await SpreadsheetFile.exportXlsx(workbook).save(output);
   assert.equal((await readFile(output)).subarray(0, 2).toString(), "PK");
+  const imported = await SpreadsheetFile.importXlsx(await FileBlob.load(output));
+  const importedSheet = imported.worksheets.getItem("Summary");
+  assert.equal(importedSheet.tables.items[0].name, "SummaryTable");
+  assert.equal(importedSheet.charts.items[0].type, "column");
+  assert.equal(importedSheet.merges[0].range, "A1:B1");
 });
 
 test("Workbook clears stale formulas when values replace them", () => {

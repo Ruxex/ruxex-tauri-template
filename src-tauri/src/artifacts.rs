@@ -1117,7 +1117,7 @@ fn open_xlsx(path: &str) -> Result<Xlsx<std::io::BufReader<fs::File>>, ArtifactE
 
 fn read_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
     let mut workbook = open_xlsx(input_path)?;
-    let sheets = read_sheets(&mut workbook)?;
+    let sheets = read_sheets(&mut workbook, input_path)?;
     Ok(json!({
         "ok": true,
         "format": "xlsx",
@@ -1152,11 +1152,13 @@ fn validate_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
 
 fn read_sheets<R: std::io::Read + std::io::Seek>(
     workbook: &mut Xlsx<R>,
+    input_path: &str,
 ) -> Result<Vec<Value>, ArtifactError> {
     workbook
         .sheet_names()
         .iter()
-        .map(|name| {
+        .enumerate()
+        .map(|(sheet_index, name)| {
             let range = workbook.worksheet_range(name).map_err(|error| {
                 ArtifactError::new("xlsx_read_error", format!("failed to read {name}: {error}"))
             })?;
@@ -1169,12 +1171,315 @@ fn read_sheets<R: std::io::Read + std::io::Seek>(
                 }
                 rows.push(Value::Array(row));
             }
+            let metadata = read_xlsx_sheet_metadata(input_path, sheet_index)?;
+            let formulas = read_xlsx_formulas(input_path, sheet_index, row_count, column_count)?;
             Ok(json!({
                 "name": name,
                 "rows": rows,
+                "formulas": formulas,
+                "formats": metadata.formats,
+                "merges": metadata.merges,
+                "tables": metadata.tables,
+                "charts": metadata.charts,
+                "images": metadata.images,
+                "columnWidths": metadata.column_widths,
             }))
         })
         .collect()
+}
+
+#[derive(Default)]
+struct XlsxSheetMetadata {
+    formats: Vec<Value>,
+    merges: Vec<Value>,
+    tables: Vec<Value>,
+    charts: Vec<Value>,
+    images: Vec<Value>,
+    column_widths: Vec<Value>,
+}
+
+fn read_xlsx_sheet_metadata(
+    input_path: &str,
+    sheet_index: usize,
+) -> Result<XlsxSheetMetadata, ArtifactError> {
+    let sheet_path = format!("xl/worksheets/sheet{}.xml", sheet_index + 1);
+    let sheet_xml = read_xlsx_zip_text(input_path, &sheet_path)?.unwrap_or_default();
+    let mut metadata = XlsxSheetMetadata::default();
+    for reference in xlsx_xml_attribute_values(&sheet_xml, "mergeCell", "ref") {
+        metadata.merges.push(json!({"range": reference}));
+    }
+    for attributes in xlsx_xml_elements(&sheet_xml, "col") {
+        if let (Some(min), Some(max), Some(width)) = (
+            attributes.get("min"),
+            attributes.get("max"),
+            attributes.get("width"),
+        ) {
+            let first = min.parse::<u32>().unwrap_or(1);
+            let last = max.parse::<u32>().unwrap_or(first);
+            let width = width.parse::<f64>().unwrap_or_default();
+            metadata.column_widths.push(json!({
+                "column": format!("{}:{}", xlsx_column_label(first), xlsx_column_label(last)),
+                "width": width,
+            }));
+        }
+    }
+    for attributes in xlsx_xml_elements(&sheet_xml, "c ") {
+        if let (Some(cell), Some(style_index)) = (attributes.get("r"), attributes.get("s")) {
+            metadata.formats.push(
+                json!({"range": cell, "styleIndex": style_index.parse::<u32>().unwrap_or(0)}),
+            );
+        }
+    }
+
+    let relationships_path = format!("xl/worksheets/_rels/sheet{}.xml.rels", sheet_index + 1);
+    let relationships = read_xlsx_zip_text(input_path, &relationships_path)?.unwrap_or_default();
+    for relation in xlsx_xml_elements(&relationships, "Relationship") {
+        let target = relation.get("Target").cloned().unwrap_or_default();
+        if target.contains("table") {
+            let table_path = xlsx_normalize_target(&target, "xl/worksheets");
+            if let Some(table_xml) = read_xlsx_zip_text(input_path, &table_path)? {
+                if let Some(table) = xlsx_xml_elements(&table_xml, "table").first() {
+                    metadata.tables.push(json!({
+                        "name": table.get("name").cloned().unwrap_or_else(|| "Table".to_string()),
+                        "range": table.get("ref").cloned().unwrap_or_default(),
+                        "hasHeaders": table.get("headerRowCount").map_or(true, |value| value != "0"),
+                    }));
+                }
+            }
+        } else if target.contains("drawing") {
+            let drawing_path = xlsx_normalize_target(&target, "xl/worksheets");
+            let drawing_relationships_path = format!(
+                "{}/_rels/{}.rels",
+                Path::new(&drawing_path)
+                    .parent()
+                    .unwrap_or(Path::new("xl"))
+                    .display(),
+                Path::new(&drawing_path)
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("drawing1.xml")
+            );
+            let drawing_relationships =
+                read_xlsx_zip_text(input_path, &drawing_relationships_path)?.unwrap_or_default();
+            for drawing_relation in xlsx_xml_elements(&drawing_relationships, "Relationship") {
+                let drawing_target = drawing_relation.get("Target").cloned().unwrap_or_default();
+                if !drawing_target.contains("chart") {
+                    continue;
+                }
+                let chart_path = xlsx_normalize_target(
+                    &drawing_target,
+                    &Path::new(&drawing_path)
+                        .parent()
+                        .unwrap_or(Path::new("xl"))
+                        .to_string_lossy(),
+                );
+                let chart_xml = read_xlsx_zip_text(input_path, &chart_path)?.unwrap_or_default();
+                let chart_type = if chart_xml.contains("barChart") {
+                    if chart_xml.contains("barDir val=\"bar\"") {
+                        "bar"
+                    } else {
+                        "column"
+                    }
+                } else if chart_xml.contains("lineChart") {
+                    "line"
+                } else if chart_xml.contains("pieChart") {
+                    "pie"
+                } else if chart_xml.contains("doughnutChart") {
+                    "doughnut"
+                } else {
+                    "chart"
+                };
+                metadata.charts.push(json!({
+                    "type": chart_type,
+                    "position": "",
+                    "series": [],
+                }));
+            }
+        }
+    }
+    let file = fs::File::open(input_path).map_err(|error| {
+        ArtifactError::new(
+            "xlsx_read_error",
+            format!("failed to read {input_path}: {error}"),
+        )
+    })?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|error| ArtifactError::new("xlsx_read_error", error.to_string()))?;
+    for index in 0..archive.len() {
+        if let Ok(entry) = archive.by_index(index) {
+            let name = entry.name().to_string();
+            if name.starts_with("xl/media/") {
+                let mime_type = match Path::new(&name)
+                    .extension()
+                    .and_then(|extension| extension.to_str())
+                {
+                    Some("png") => "image/png",
+                    Some("jpg") | Some("jpeg") => "image/jpeg",
+                    Some("gif") => "image/gif",
+                    _ => "application/octet-stream",
+                };
+                metadata.images.push(json!({
+                    "name": name,
+                    "mimeType": mime_type,
+                    "byteSize": entry.size(),
+                }));
+            }
+        }
+    }
+    Ok(metadata)
+}
+
+fn read_xlsx_formulas(
+    input_path: &str,
+    sheet_index: usize,
+    rows: usize,
+    columns: usize,
+) -> Result<Vec<Vec<Value>>, ArtifactError> {
+    let sheet_path = format!("xl/worksheets/sheet{}.xml", sheet_index + 1);
+    let xml = read_xlsx_zip_text(input_path, &sheet_path)?.unwrap_or_default();
+    let mut formulas = vec![vec![Value::Null; columns]; rows];
+    let mut cursor = 0;
+    while let Some(offset) = xml[cursor..].find("<c ") {
+        let start = cursor + offset;
+        let Some(tag_end_offset) = xml[start..].find('>') else {
+            break;
+        };
+        let tag_end = start + tag_end_offset;
+        let attributes = xlsx_parse_attributes(&xml[start + 3..tag_end]);
+        let Some(cell) = attributes.get("r") else {
+            cursor = tag_end + 1;
+            continue;
+        };
+        let Some(close_offset) = xml[tag_end + 1..].find("</c>") else {
+            break;
+        };
+        let body_end = tag_end + 1 + close_offset;
+        let body = &xml[tag_end + 1..body_end];
+        if let Some(formula_start) = body.find("<f") {
+            if let Some(formula_open_end_offset) = body[formula_start..].find('>') {
+                let formula_open_end = formula_start + formula_open_end_offset;
+                let formula = body[formula_open_end + 1..]
+                    .find("</f>")
+                    .map(|end| body[formula_open_end + 1..formula_open_end + 1 + end].to_string());
+                if let Some(formula) = formula {
+                    if let Ok(range) = parse_a1_range(cell) {
+                        if (range.first_row as usize) < rows && (range.first_col as usize) < columns
+                        {
+                            formulas[range.first_row as usize][range.first_col as usize] =
+                                json!(format!("={formula}"));
+                        }
+                    }
+                }
+            }
+        }
+        cursor = body_end + 4;
+    }
+    Ok(formulas)
+}
+
+fn read_xlsx_zip_text(input_path: &str, part_path: &str) -> Result<Option<String>, ArtifactError> {
+    let file = fs::File::open(input_path).map_err(|error| {
+        ArtifactError::new(
+            "xlsx_read_error",
+            format!("failed to read {input_path}: {error}"),
+        )
+    })?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|error| ArtifactError::new("xlsx_read_error", error.to_string()))?;
+    let Ok(entry) = archive.by_name(part_path) else {
+        return Ok(None);
+    };
+    let mut contents = Vec::new();
+    entry
+        .take(2 * 1024 * 1024 + 1)
+        .read_to_end(&mut contents)
+        .map_err(|error| ArtifactError::new("xlsx_read_error", error.to_string()))?;
+    if contents.len() > 2 * 1024 * 1024 {
+        return Err(ArtifactError::new(
+            "xlsx_read_error",
+            format!("{part_path} exceeds the 2 MiB XML limit"),
+        ));
+    }
+    Ok(Some(String::from_utf8_lossy(&contents).into_owned()))
+}
+
+fn xlsx_normalize_target(target: &str, base: &str) -> String {
+    let mut parts = base.split('/').collect::<Vec<_>>();
+    for part in target.split('/') {
+        match part {
+            ".." => {
+                parts.pop();
+            }
+            "." | "" => {}
+            value => parts.push(value),
+        }
+    }
+    parts.join("/")
+}
+
+fn xlsx_xml_attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
+    xlsx_xml_elements(xml, tag)
+        .into_iter()
+        .filter_map(|attributes| attributes.get(attribute).cloned())
+        .collect()
+}
+
+fn xlsx_xml_elements(xml: &str, tag: &str) -> Vec<std::collections::HashMap<String, String>> {
+    let marker = format!("<{tag}");
+    let mut cursor = 0;
+    let mut elements = Vec::new();
+    while let Some(offset) = xml[cursor..].find(&marker) {
+        let start = cursor + offset;
+        let Some(end_offset) = xml[start..].find('>') else {
+            break;
+        };
+        let tag_contents = &xml[start + marker.len()..start + end_offset];
+        if !tag.ends_with(' ')
+            && tag_contents.chars().next().is_some_and(|character| {
+                character.is_ascii_alphanumeric() || character == ':' || character == '_'
+            })
+        {
+            cursor = start + marker.len();
+            continue;
+        }
+        elements.push(xlsx_parse_attributes(tag_contents));
+        cursor = start + end_offset + 1;
+    }
+    elements
+}
+
+fn xlsx_parse_attributes(value: &str) -> std::collections::HashMap<String, String> {
+    let mut attributes = std::collections::HashMap::new();
+    let mut rest = value;
+    while let Some(equal) = rest.find('=') {
+        let name = rest[..equal].split_whitespace().last().unwrap_or_default();
+        let quoted = rest[equal + 1..].trim_start();
+        let Some(quote) = quoted.chars().next() else {
+            break;
+        };
+        if quote != '"' && quote != '\'' {
+            break;
+        }
+        let Some(close) = quoted[1..].find(quote) else {
+            break;
+        };
+        attributes.insert(name.to_string(), quoted[1..close + 1].to_string());
+        rest = &quoted[close + 2..];
+    }
+    attributes
+}
+
+fn xlsx_column_label(number: u32) -> String {
+    let mut index = number.saturating_sub(1);
+    let mut result = String::new();
+    loop {
+        result.insert(0, (b'A' + (index % 26) as u8) as char);
+        if index < 26 {
+            break;
+        }
+        index = index / 26 - 1;
+    }
+    result
 }
 
 fn data_to_json(cell: Option<&Data>) -> Value {

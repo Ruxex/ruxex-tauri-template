@@ -408,6 +408,9 @@ fn engine_creates_rich_xlsx_metadata_and_reports_formula_counts() {
               "font": {"bold": true, "color": "#ffffff"},
               "fill": "#1f4e78",
               "horizontal_alignment": "center"
+            }, {
+              "range": "A2",
+              "font": {"italic": true}
             }],
             "merges": [{"range": "A1:B1"}],
             "column_widths": [{"column": "A", "width": 18}],
@@ -444,12 +447,30 @@ fn engine_creates_rich_xlsx_metadata_and_reports_formula_counts() {
     assert_eq!(response["objects"]["charts"], 1);
     assert!(workbook.is_file());
 
-    let file = File::open(workbook).unwrap();
+    let file = File::open(&workbook).unwrap();
     let mut archive = zip::ZipArchive::new(file).unwrap();
     let worksheet = archive.by_name("xl/worksheets/sheet1.xml").unwrap();
     let worksheet = std::io::read_to_string(worksheet).unwrap();
     assert!(worksheet.contains("<f>SUM(B2:B3)</f>"));
     assert!(worksheet.contains("<mergeCell ref=\"A1:B1\""));
+
+    let read = run(&[
+        "xlsx",
+        "read",
+        "--input",
+        workbook.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(
+        read.status.success(),
+        "{}",
+        String::from_utf8_lossy(&read.stderr)
+    );
+    let read_value: serde_json::Value = serde_json::from_slice(&read.stdout).unwrap();
+    assert_eq!(read_value["sheets"][0]["merges"][0]["range"], "A1:B1");
+    assert_eq!(read_value["sheets"][0]["tables"][0]["name"], "SummaryTable");
+    assert_eq!(read_value["sheets"][0]["charts"][0]["type"], "column");
+    assert!(read_value["sheets"][0]["formats"].as_array().unwrap().len() >= 1);
 }
 
 #[test]

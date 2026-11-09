@@ -204,6 +204,7 @@ class Worksheet {
     this.formats = new Map((input.formats ?? []).map((format) => [format.range, format]));
     this.merges = [...(input.merges ?? [])];
     this.columnWidths = new Map((input.columnWidths ?? []).map((item) => [item.column, item.width]));
+    this.images = [...(input.images ?? [])];
     this._tableData = [...(input.tables ?? [])];
     this._chartData = [...(input.charts ?? [])];
     this.tablesCollection = new TableCollection(this);
@@ -333,6 +334,7 @@ function formatForEngine(format) {
     vertical_alignment: format.verticalAlignment,
     wrap_text: format.wrapText,
     number_format: format.numberFormat,
+    style_index: format.styleIndex,
   };
 }
 
@@ -352,6 +354,7 @@ function sheetForEngine(sheet) {
       has_headers: table.hasHeaders,
     })),
     charts: [...sheet._chartData],
+    images: sheet.images,
   };
 }
 
@@ -451,6 +454,8 @@ export class Workbook {
         merges: sheet.merges.length,
         tables: sheet._tableData.length,
         charts: sheet._chartData.length,
+        formats: sheet.formats.size,
+        images: sheet.images.length,
       }));
     return { ok: true, valid: true, sheets };
   }

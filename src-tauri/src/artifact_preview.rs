@@ -42,6 +42,7 @@ pub(crate) struct ArtifactPreview {
 pub(crate) struct PreviewSheet {
     name: String,
     cells: Vec<Vec<String>>,
+    annotations: Vec<String>,
 }
 
 #[tauri::command]
@@ -215,6 +216,7 @@ fn read_pdf_sections(path: &Path) -> Result<Vec<PreviewSheet>, String> {
                     }
                 })
                 .collect(),
+            annotations: Vec::new(),
         })
         .collect::<Vec<_>>();
     if sections.is_empty() {
@@ -241,12 +243,247 @@ fn read_xlsx_sections(path: &Path) -> Result<Vec<PreviewSheet>, String> {
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
-        sheets.push(PreviewSheet { name, cells });
+        sheets.push(PreviewSheet {
+            name,
+            cells,
+            annotations: xlsx_sheet_annotations(path, sheets.len())?,
+        });
     }
     if sheets.is_empty() {
         return Err("xlsx artifact contains no worksheets".to_string());
     }
     Ok(sheets)
+}
+
+fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>, String> {
+    let file =
+        fs::File::open(path).map_err(|error| format!("failed to open xlsx artifact: {error}"))?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|error| format!("failed to read xlsx package: {error}"))?;
+    let sheet_name = format!("xl/worksheets/sheet{}.xml", sheet_index + 1);
+    let mut xml = String::new();
+    archive
+        .by_name(&sheet_name)
+        .map_err(|error| format!("failed to read {sheet_name}: {error}"))?
+        .take(PREVIEW_MAX_XML_BYTES + 1)
+        .read_to_string(&mut xml)
+        .map_err(|error| format!("failed to decode {sheet_name}: {error}"))?;
+    if xml.len() as u64 > PREVIEW_MAX_XML_BYTES {
+        return Err(format!("{sheet_name} exceeds the preview XML limit"));
+    }
+
+    let mut annotations = Vec::new();
+    for reference in xml_attribute_values(&xml, "mergeCell", "ref") {
+        annotations.push(format!("Merged: {reference}"));
+    }
+    for attributes in xml_elements(&xml, "col") {
+        if let (Some(min), Some(max), Some(width)) = (
+            attributes.get("min"),
+            attributes.get("max"),
+            attributes.get("width"),
+        ) {
+            annotations.push(format!(
+                "Column width: {}-{} = {}",
+                column_label_from_number(min.parse().unwrap_or(1)),
+                column_label_from_number(max.parse().unwrap_or(1)),
+                width
+            ));
+        }
+    }
+    for attributes in xml_elements(&xml, "c ") {
+        if let (Some(cell), Some(style)) = (attributes.get("r"), attributes.get("s")) {
+            annotations.push(format!("Styled cell: {cell} (style {style})"));
+        }
+    }
+
+    let relationship_name = format!("xl/worksheets/_rels/sheet{}.xml.rels", sheet_index + 1);
+    let relationship_xml = archive
+        .by_name(&relationship_name)
+        .ok()
+        .and_then(|mut entry| {
+            let mut contents = String::new();
+            entry.read_to_string(&mut contents).ok()?;
+            Some(contents)
+        });
+    let mut drawing_target = None;
+    if let Some(relationships) = relationship_xml.as_deref() {
+        for attributes in xml_elements(relationships, "Relationship") {
+            let target = attributes.get("Target").cloned().unwrap_or_default();
+            if target.contains("table") {
+                let table_path = normalize_xlsx_target(&target, "xl/worksheets");
+                if let Ok(table_xml) = read_zip_text(&mut archive, &table_path) {
+                    let name = xml_elements(&table_xml, "table")
+                        .first()
+                        .and_then(|attributes| attributes.get("name"))
+                        .cloned()
+                        .unwrap_or_else(|| "unnamed".to_string());
+                    let range = xml_elements(&table_xml, "table")
+                        .first()
+                        .and_then(|attributes| attributes.get("ref"))
+                        .cloned()
+                        .unwrap_or_default();
+                    annotations.push(format!("Table: {name} ({range})"));
+                }
+            } else if target.contains("drawing") {
+                drawing_target = Some(normalize_xlsx_target(&target, "xl/worksheets"));
+            }
+        }
+    }
+    if let Some(drawing_path) = drawing_target {
+        if let Ok(drawing_xml) = read_zip_text(&mut archive, &drawing_path) {
+            let drawing_parent = Path::new(&drawing_path).parent().unwrap_or(Path::new("xl"));
+            let drawing_file = Path::new(&drawing_path)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("drawing1.xml");
+            let drawing_rels = format!("{}/_rels/{}.rels", drawing_parent.display(), drawing_file);
+            let chart_ids = xml_attribute_values(&drawing_xml, "chart", "id");
+            let mut chart_count = 0;
+            for chart_id in chart_ids {
+                if let Ok(rels_xml) = read_zip_text(&mut archive, &drawing_rels) {
+                    if let Some(target) = xml_elements(&rels_xml, "Relationship")
+                        .into_iter()
+                        .find_map(|attributes| {
+                            (attributes.get("Id") == Some(&chart_id))
+                                .then(|| attributes.get("Target").cloned())
+                                .flatten()
+                        })
+                    {
+                        let chart_path = normalize_xlsx_target(
+                            &target,
+                            &Path::new(&drawing_path)
+                                .parent()
+                                .unwrap_or(Path::new("xl"))
+                                .to_string_lossy(),
+                        );
+                        if let Ok(chart_xml) = read_zip_text(&mut archive, &chart_path) {
+                            let chart_type = ["barChart", "lineChart", "pieChart", "doughnutChart"]
+                                .into_iter()
+                                .find(|kind| chart_xml.contains(kind))
+                                .unwrap_or("chart");
+                            annotations.push(format!("Chart: {chart_type}"));
+                            chart_count += 1;
+                        }
+                    }
+                }
+            }
+            if chart_count == 0 && drawing_xml.contains("graphicFrame") {
+                annotations.push("Chart: chart".to_string());
+            }
+        }
+    }
+    let mut media_count = 0;
+    for index in 0..archive.len() {
+        if archive
+            .by_index(index)
+            .ok()
+            .is_some_and(|entry| entry.name().starts_with("xl/media/"))
+        {
+            media_count += 1;
+        }
+    }
+    if media_count > 0 {
+        annotations.push(format!("Images: {media_count}"));
+    }
+    annotations.truncate(32);
+    Ok(annotations)
+}
+
+fn read_zip_text<R: std::io::Read + std::io::Seek>(
+    archive: &mut zip::ZipArchive<R>,
+    path: &str,
+) -> Result<String, String> {
+    let entry = archive
+        .by_name(path)
+        .map_err(|error| format!("missing package part {path}: {error}"))?;
+    let mut contents = String::new();
+    entry
+        .take(PREVIEW_MAX_XML_BYTES + 1)
+        .read_to_string(&mut contents)
+        .map_err(|error| format!("failed to decode package part {path}: {error}"))?;
+    if contents.len() as u64 > PREVIEW_MAX_XML_BYTES {
+        return Err(format!("package part {path} exceeds the preview XML limit"));
+    }
+    Ok(contents)
+}
+
+fn normalize_xlsx_target(target: &str, base: &str) -> String {
+    let mut parts = base.split('/').collect::<Vec<_>>();
+    for part in target.split('/') {
+        match part {
+            ".." => {
+                parts.pop();
+            }
+            "." | "" => {}
+            value => parts.push(value),
+        }
+    }
+    parts.join("/")
+}
+
+fn xml_attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
+    xml_elements(xml, tag)
+        .into_iter()
+        .filter_map(|attributes| attributes.get(attribute).cloned())
+        .collect()
+}
+
+fn xml_elements(xml: &str, tag: &str) -> Vec<std::collections::HashMap<String, String>> {
+    let marker = format!("<{tag}");
+    let mut cursor = 0;
+    let mut elements = Vec::new();
+    while let Some(offset) = xml[cursor..].find(&marker) {
+        let start = cursor + offset;
+        let Some(end_offset) = xml[start..].find('>') else {
+            break;
+        };
+        let tag_contents = &xml[start + marker.len()..start + end_offset];
+        if !tag.ends_with(' ')
+            && tag_contents.chars().next().is_some_and(|character| {
+                character.is_ascii_alphanumeric() || character == ':' || character == '_'
+            })
+        {
+            cursor = start + marker.len();
+            continue;
+        }
+        let mut attributes = std::collections::HashMap::new();
+        let mut rest = tag_contents;
+        while let Some(equal) = rest.find('=') {
+            let name = rest[..equal].split_whitespace().last().unwrap_or_default();
+            let quoted = rest[equal + 1..].trim_start();
+            let Some(quote) = quoted.chars().next() else {
+                break;
+            };
+            if quote != '"' && quote != '\'' {
+                break;
+            }
+            let value_start = 1;
+            let Some(close) = quoted[value_start..].find(quote) else {
+                break;
+            };
+            attributes.insert(
+                name.to_string(),
+                quoted[value_start..value_start + close].to_string(),
+            );
+            rest = &quoted[value_start + close + 1..];
+        }
+        elements.push(attributes);
+        cursor = start + end_offset + 1;
+    }
+    elements
+}
+
+fn column_label_from_number(number: u32) -> String {
+    let mut index = number.saturating_sub(1);
+    let mut result = String::new();
+    loop {
+        result.insert(0, (b'A' + (index % 26) as u8) as char);
+        if index < 26 {
+            break;
+        }
+        index = index / 26 - 1;
+    }
+    result
 }
 
 fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, String> {
@@ -302,6 +539,7 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
                 format!("Slide {}", index + 1)
             },
             cells,
+            annotations: Vec::new(),
         });
     }
     Ok(sections)
@@ -388,10 +626,11 @@ fn render_svg(sheets: &[PreviewSheet]) -> String {
     let mut y = PADDING;
     for sheet in sheets {
         let rows = sheet.cells.len().max(1).min(PREVIEW_MAX_ROWS);
+        let annotation_height = sheet.annotations.len().min(8) * 20;
         svg.push_str(&format!(
             "<rect x=\"{PADDING}\" y=\"{y}\" width=\"{}\" height=\"{}\" rx=\"8\" fill=\"#ffffff\" stroke=\"#cbd5e1\"/>",
             width - PADDING * 2,
-            SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows
+            SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + annotation_height
         ));
         svg.push_str(&format!(
             "<text x=\"{}\" y=\"{}\" font-family=\"sans-serif\" font-size=\"18\" font-weight=\"700\" fill=\"#0f172a\">{}</text>",
@@ -432,7 +671,15 @@ fn render_svg(sheets: &[PreviewSheet]) -> String {
                 grid_y + rows * ROW_HEIGHT - 8
             ));
         }
-        y += SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + PADDING;
+        for (index, annotation) in sheet.annotations.iter().take(8).enumerate() {
+            svg.push_str(&format!(
+                "<text x=\"{}\" y=\"{}\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#475569\">{}</text>",
+                PADDING + 8,
+                grid_y + rows * ROW_HEIGHT + 16 + index * 20,
+                escape_xml(annotation)
+            ));
+        }
+        y += SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + annotation_height + PADDING;
     }
     svg.push_str("</svg>");
     svg
@@ -449,7 +696,8 @@ fn svg_dimensions(sheets: &[PreviewSheet]) -> (usize, usize) {
     let mut height = PADDING;
     for sheet in sheets {
         let rows = sheet.cells.len().max(1).min(PREVIEW_MAX_ROWS);
-        height += SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + PADDING;
+        let annotation_height = sheet.annotations.len().min(8) * 20;
+        height += SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + annotation_height + PADDING;
     }
     (width, height)
 }
@@ -479,6 +727,7 @@ mod tests {
         let svg = render_svg(&[PreviewSheet {
             name: "<sheet>".to_string(),
             cells: vec![vec!["<&\"'".to_string()]],
+            annotations: Vec::new(),
         }]);
 
         assert!(svg.contains("&lt;sheet&gt;"));
@@ -494,6 +743,7 @@ mod tests {
         let svg = render_svg(&[PreviewSheet {
             name: "Large".to_string(),
             cells,
+            annotations: Vec::new(),
         }]);
 
         assert!(svg.contains("Preview truncated"));
@@ -603,6 +853,63 @@ mod tests {
         assert_eq!(sheets[0].cells[1][0], "Ada <3");
         assert!(svg.contains("Ada &lt;3"));
         assert!(svg.contains("3"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn includes_xlsx_merges_tables_and_charts_in_the_preview_annotations() {
+        let root =
+            std::env::temp_dir().join(format!("ruxex-preview-rich-xlsx-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("report.xlsx");
+        let mut workbook = rust_xlsxwriter::Workbook::new();
+        let worksheet = workbook.add_worksheet();
+        worksheet.write_string(0, 0, "Name").unwrap();
+        worksheet.write_string(0, 1, "Count").unwrap();
+        worksheet.write_string(1, 0, "Ada").unwrap();
+        worksheet.write_number(1, 1, 3.0).unwrap();
+        worksheet
+            .merge_range(0, 0, 0, 1, "Name", &rust_xlsxwriter::Format::new())
+            .unwrap();
+        worksheet
+            .add_table(
+                0,
+                0,
+                1,
+                1,
+                &rust_xlsxwriter::Table::new().set_name("SummaryTable"),
+            )
+            .unwrap();
+        let mut chart = rust_xlsxwriter::Chart::new(rust_xlsxwriter::ChartType::Column);
+        chart
+            .add_series()
+            .set_categories("Sheet1!$A$2:$A$2")
+            .set_values("Sheet1!$B$2:$B$2");
+        worksheet.insert_chart(3, 3, &chart).unwrap();
+        workbook.save(&path).unwrap();
+
+        let sheets = read_preview_sections(&path).unwrap();
+        assert!(
+            sheets[0]
+                .annotations
+                .iter()
+                .any(|value| value.contains("Merged"))
+        );
+        assert!(
+            sheets[0]
+                .annotations
+                .iter()
+                .any(|value| value.contains("Table"))
+        );
+        assert!(
+            sheets[0]
+                .annotations
+                .iter()
+                .any(|value| value.contains("Chart"))
+        );
+        let svg = render_svg(&sheets);
+        assert!(svg.contains("SummaryTable"));
         let _ = fs::remove_dir_all(root);
     }
 
