@@ -70,9 +70,6 @@ export function UiPreferencesCard({
                       </span>
                     )}
                   </span>
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/55">
-                    {getThemePresetModeLabel(option.id)}
-                  </span>
                 </button>
               );
             })}
@@ -109,11 +106,6 @@ function ThemePresetPreview({ preset }: { preset: UiThemePreset }) {
       />
     </span>
   );
-}
-
-function getThemePresetModeLabel(preset: UiThemePresetId): string {
-  const mode = getUiThemePresetMode(preset);
-  return mode === "system" ? "Follows OS" : `${mode} palette`;
 }
 
 function ThemePreviewPanel({
@@ -174,7 +166,7 @@ function ThemePreviewPanel({
               color: colors.primaryContent,
             }}
           >
-            Go
+            Aa
           </span>
         </span>
       </span>

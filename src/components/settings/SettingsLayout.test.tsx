@@ -232,10 +232,10 @@ describe("settings card layout", () => {
     expect(within(presetGrid).getAllByRole("button")).toHaveLength(14);
     expect(
       within(presetGrid)
-        .getByRole("button", { name: "GH Dark" })
+        .getByRole("button", { name: "GitHub Dark" })
         .getAttribute("aria-pressed"),
     ).toBe("false");
-    expect(within(presetGrid).getByText("GH Dark")).toBeTruthy();
+    expect(within(presetGrid).getByText("GitHub Dark")).toBeTruthy();
     expect(
       within(presetGrid)
         .getByRole("button", { name: "System" })
@@ -246,14 +246,14 @@ describe("settings card layout", () => {
         .getByRole("button", { name: "System" })
         .querySelector("[data-theme-selected]"),
     ).toBeTruthy();
-    expect(
-      within(presetGrid).getAllByText("Follows OS").length,
-    ).toBeGreaterThan(0);
+    expect(within(presetGrid).queryByText("Follows OS")).toBeNull();
+    expect(within(presetGrid).queryByText("LIGHT PALETTE")).toBeNull();
+    expect(within(presetGrid).queryByText("DARK PALETTE")).toBeNull();
     expect(
       within(presetGrid).getByRole("button", { name: "System" }).className,
     ).toContain("min-h-32");
     fireEvent.click(
-      within(presetGrid).getByRole("button", { name: "GH Dark" }),
+      within(presetGrid).getByRole("button", { name: "GitHub Dark" }),
     );
     expect(onThemePresetChange).toHaveBeenCalledWith("github-dark");
   });

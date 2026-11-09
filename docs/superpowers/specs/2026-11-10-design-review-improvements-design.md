@@ -35,3 +35,10 @@ architecture or behavior.
 - Run the affected Vitest suites, then the full test/typecheck/build checks.
 - Capture the same representative Tauri screens and inspect the resulting
   screenshots for the reviewed layouts.
+
+## Follow-up visual decision
+
+Theme cards use the recognizable third-party theme names because the attribution
+note already explains the relationship. Mode labels such as “dark palette” are
+omitted to reduce repetition, and the preview action label uses “Aa” as a
+neutral typography cue instead of an implied action such as “Go”.
