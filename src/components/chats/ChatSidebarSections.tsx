@@ -135,6 +135,7 @@ export function ChatSidebarSections({
                       Open projects
                     </Link>
                   }
+                  compact
                   description="Create a project to organize chats and workspaces."
                   icon={FolderIcon}
                   title="No projects yet"

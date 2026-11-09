@@ -81,8 +81,8 @@ export function McpServerDialog({
           titleId="mcp-server-dialog-title"
         />
 
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <label className="form-control">
+        <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+          <label className="form-control sm:col-span-2">
             <span className="label-text">Server name</span>
             <input
               aria-label="Server name"
@@ -97,7 +97,7 @@ export function McpServerDialog({
             )}
           </label>
 
-          <label className="form-control">
+          <label className="form-control sm:col-span-2">
             <span className="label-text">Transport</span>
             <select
               aria-label="Transport"
@@ -119,7 +119,7 @@ export function McpServerDialog({
 
           {localForm.draft.transport === "stdio" ? (
             <>
-              <label className="form-control">
+              <label className="form-control sm:col-span-2">
                 <span className="label-text">Command</span>
                 <input
                   aria-label="Command"
@@ -156,7 +156,7 @@ export function McpServerDialog({
                   onChange={(event) => updateDraft({ cwd: event.target.value })}
                 />
               </label>
-              <label className="form-control">
+              <label className="form-control sm:col-span-2">
                 <span className="label-text">Environment variables</span>
                 <textarea
                   aria-label="Environment variables"
@@ -171,7 +171,7 @@ export function McpServerDialog({
             </>
           ) : (
             <>
-              <label className="form-control">
+              <label className="form-control sm:col-span-2">
                 <span className="label-text">URL</span>
                 <input
                   aria-label="URL"
@@ -198,7 +198,7 @@ export function McpServerDialog({
                   }
                 />
               </label>
-              <label className="form-control">
+              <label className="form-control sm:col-span-2">
                 <span className="label-text">Environment-backed headers</span>
                 <textarea
                   aria-label="Environment-backed headers"
@@ -213,7 +213,7 @@ export function McpServerDialog({
             </>
           )}
 
-          <div className="grid gap-2 rounded-lg border border-base-300 px-3 py-3 sm:grid-cols-2">
+          <div className="grid gap-2 rounded-lg border border-base-300 px-3 py-3 sm:col-span-2 sm:grid-cols-2">
             <label className="label cursor-pointer justify-start gap-3">
               <input
                 aria-label="Enabled"
@@ -241,40 +241,42 @@ export function McpServerDialog({
           </div>
 
           {error && (
-            <p className="text-sm text-error" role="alert">
+            <p className="text-sm text-error sm:col-span-2" role="alert">
               {error}
             </p>
           )}
-          <DialogFooter>
-            <button
-              aria-label="Cancel"
-              className="btn btn-ghost"
-              disabled={isPending}
-              type="button"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              aria-label={
-                isPending
+          <div className="sm:col-span-2">
+            <DialogFooter>
+              <button
+                aria-label="Cancel"
+                className="btn btn-ghost"
+                disabled={isPending}
+                type="button"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                aria-label={
+                  isPending
+                    ? "Saving…"
+                    : isEditing
+                      ? "Save changes"
+                      : "Add MCP server"
+                }
+                className="btn btn-primary gap-2"
+                disabled={isPending}
+                type="submit"
+              >
+                <PlusIcon aria-hidden="true" className="size-4" />
+                {isPending
                   ? "Saving…"
                   : isEditing
                     ? "Save changes"
-                    : "Add MCP server"
-              }
-              className="btn btn-primary gap-2"
-              disabled={isPending}
-              type="submit"
-            >
-              <PlusIcon aria-hidden="true" className="size-4" />
-              {isPending
-                ? "Saving…"
-                : isEditing
-                  ? "Save changes"
-                  : "Add MCP server"}
-            </button>
-          </DialogFooter>
+                    : "Add MCP server"}
+              </button>
+            </DialogFooter>
+          </div>
         </form>
       </div>
       <form method="dialog" className="modal-backdrop">

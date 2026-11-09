@@ -102,6 +102,30 @@ describe("AppLayout", () => {
     ).toBeNull();
   });
 
+  it.each(["/approvals", "/login"])(
+    "keeps the navigation rail but hides the unrelated context panel on %s",
+    (pathname) => {
+      useUiPreferences.mockReturnValue({
+        preferences: { sidebarCollapsed: false },
+        update: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={[pathname]}>
+          <AppLayout />
+        </MemoryRouter>,
+      );
+
+      expect(projectSidebarProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({ showContextPanel: false }),
+      );
+      expect(
+        screen.queryByRole("button", { name: "Close sidebar overlay" }),
+      ).toBeNull();
+      cleanup();
+    },
+  );
+
   it.each(["/projects", "/projects/project-1"])(
     "keeps the left rail without a context panel on %s",
     (pathname) => {

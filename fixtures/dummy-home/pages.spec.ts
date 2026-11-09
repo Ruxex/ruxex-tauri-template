@@ -14,7 +14,7 @@ type PageFixture = {
 const PAGE_FIXTURES: readonly PageFixture[] = [
   {
     path: "/",
-    heading: "textarea[aria-label='Message']",
+    heading: "[contenteditable='true'][aria-label='Message']",
     screenshotName: "home-new-chat.png",
   },
   {

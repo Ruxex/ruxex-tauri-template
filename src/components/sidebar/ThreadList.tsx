@@ -45,6 +45,7 @@ export function ThreadList({
   if (!threads.data?.data.length) {
     return (
       <EmptyState
+        compact
         description="Start a new chat to see it here."
         icon={ChatBubbleLeftRightIcon}
         title="No chats yet"

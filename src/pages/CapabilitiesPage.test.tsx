@@ -748,6 +748,23 @@ describe("CapabilitiesPage", () => {
     });
   });
 
+  it("gives the Skills content the full page width", async () => {
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    const skillsCard = screen.getByRole("heading", { name: "Skills", level: 2 })
+      .parentElement?.parentElement;
+    expect(skillsCard?.className).toContain("w-full");
+    expect(skillsCard?.parentElement?.className).not.toContain(
+      "lg:grid-cols-2",
+    );
+  });
+
   it("limits Skill pending state to the affected path", async () => {
     const reviewPath = "/workspace/.agents/skills/review";
     useSkillsList.mockReturnValue({

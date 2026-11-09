@@ -87,6 +87,27 @@ const permissionsPending = {
   },
 } as never as PendingServerRequest;
 
+const userInputPending = {
+  requestId: 41,
+  kind: "userInput",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: "item-1",
+  request: {
+    method: "item/tool/requestUserInput",
+    id: 41,
+    params: {
+      questions: [
+        {
+          id: "answer",
+          header: "Answer",
+          question: "What should I use?",
+        },
+      ],
+    },
+  },
+} as never as PendingServerRequest;
+
 describe("ServerRequestCard", () => {
   afterEach(cleanup);
 
@@ -148,7 +169,9 @@ describe("ServerRequestCard", () => {
     const summary = screen.getByRole("region", {
       name: "Requested access",
     });
-    expect(within(summary).getByText("Need to inspect the project")).toBeTruthy();
+    expect(
+      within(summary).getByText("Need to inspect the project"),
+    ).toBeTruthy();
     expect(within(summary).getByText("Network access")).toBeTruthy();
     expect(within(summary).getByText("Read: /workspace/read")).toBeTruthy();
     expect(within(summary).getByText("Write: /workspace/write")).toBeTruthy();
@@ -176,6 +199,21 @@ describe("ServerRequestCard", () => {
       },
       scope: "session",
     });
+  });
+
+  it("gives user-input answers the full card width", () => {
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={vi.fn(async () => undefined)}
+        pending={userInputPending}
+      />,
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "What should I use?" }).className,
+    ).toContain("w-full");
   });
 
   it("denies permission requests without granting access", () => {

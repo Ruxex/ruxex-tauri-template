@@ -23,4 +23,13 @@ describe("EmptyState", () => {
     expect(screen.getByText("Nothing has been created yet.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create one" })).toBeTruthy();
   });
+
+  it("supports a compact layout for dense navigation panels", () => {
+    render(<EmptyState compact icon={CalendarDaysIcon} title="No chats yet" />);
+
+    expect(
+      screen.getByRole("heading", { name: "No chats yet" }).parentElement
+        ?.className,
+    ).toContain("py-4");
+  });
 });

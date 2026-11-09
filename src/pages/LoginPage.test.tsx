@@ -54,6 +54,11 @@ describe("LoginPage", () => {
         <LoginPage />
       </MemoryRouter>,
     );
+    expect(
+      screen.getByRole("heading", { name: "Log in" }).closest("div.mx-auto")
+        ?.className,
+    ).toContain("max-w-xl");
+    expect(screen.getByLabelText("API key").className).toContain("w-full");
     fireEvent.change(screen.getByPlaceholderText("Enter your API key"), {
       target: { value: "secret" },
     });

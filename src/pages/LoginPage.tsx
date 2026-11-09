@@ -22,7 +22,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto w-full max-w-xl">
       <div className="card border border-base-300 bg-base-100 shadow-sm">
         <form
           className="card-body gap-5"
@@ -38,7 +38,7 @@ export function LoginPage() {
             <span className="label-text">API key</span>
             <input
               aria-label="API key"
-              className="input input-bordered mt-2"
+              className="input input-bordered mt-2 w-full"
               type="password"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}

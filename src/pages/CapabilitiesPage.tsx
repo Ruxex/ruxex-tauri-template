@@ -224,9 +224,9 @@ export function CapabilitiesPage() {
           </article>
         </section>
       ) : activeTab === "skills" ? (
-        <section className="grid gap-4 lg:grid-cols-2">
+        <section className="grid gap-4">
           <article
-            className="card border border-base-300 bg-base-100 shadow-sm"
+            className="card w-full border border-base-300 bg-base-100 shadow-sm"
             id="skills"
           >
             <div className="card-body">

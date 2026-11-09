@@ -10,28 +10,38 @@ export function ErrorState({ children }: { children: ReactNode }) {
 
 export function EmptyState({
   action,
+  compact = false,
   description,
   icon: Icon,
   title,
 }: {
   action?: ReactNode;
+  compact?: boolean;
   description?: ReactNode;
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   title?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-base-300 bg-base-100/50 px-6 py-10 text-center">
+    <div
+      className={`rounded-xl border border-dashed border-base-300 bg-base-100/50 text-center ${compact ? "px-3 py-4" : "px-6 py-10"}`}
+    >
       {Icon && (
         <Icon
           aria-hidden="true"
-          className="mx-auto size-8 text-base-content/35"
+          className={`mx-auto text-base-content/35 ${compact ? "size-6" : "size-8"}`}
         />
       )}
-      <h3 className="mt-3 font-semibold">{title}</h3>
+      <h3 className={`${compact ? "mt-2 text-sm" : "mt-3"} font-semibold`}>
+        {title}
+      </h3>
       {description && (
-        <p className="mt-1 text-sm text-base-content/60">{description}</p>
+        <p
+          className={`${compact ? "text-xs" : "text-sm"} mt-1 text-base-content/60`}
+        >
+          {description}
+        </p>
       )}
-      {action && <div className="mt-4">{action}</div>}
+      {action && <div className={compact ? "mt-2" : "mt-4"}>{action}</div>}
     </div>
   );
 }

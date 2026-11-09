@@ -49,7 +49,7 @@ export function UiPreferencesCard({
                 <button
                   aria-label={option.label}
                   aria-pressed={selected}
-                  className={`flex min-h-36 flex-col justify-between gap-2 rounded-lg border p-2 text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-base-300 bg-base-100 hover:border-primary/60"}`}
+                  className={`flex min-h-32 flex-col justify-between gap-1.5 rounded-lg border p-2 text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-base-300 bg-base-100 hover:border-primary/60"}`}
                   key={option.id}
                   title={option.label}
                   type="button"
@@ -128,11 +128,11 @@ function ThemePreviewPanel({
   return (
     <span
       aria-hidden="true"
-      className="block p-2"
+      className="block p-1.5"
       style={{ backgroundColor: colors.background, color: colors.text }}
     >
       <span
-        className="mb-1.5 flex items-center justify-between rounded-sm px-1.5 py-1"
+        className="mb-1 flex items-center justify-between rounded-sm px-1.5 py-1"
         style={{ backgroundColor: colors.surface }}
       >
         <span className="flex items-center gap-1.5">
@@ -151,7 +151,7 @@ function ThemePreviewPanel({
         />
       </span>
       <span
-        className="block rounded-sm p-2"
+        className="block rounded-sm p-1.5"
         style={{ backgroundColor: colors.card }}
       >
         <span
@@ -162,7 +162,7 @@ function ThemePreviewPanel({
           className="block h-1.5 w-1/2 rounded-full opacity-45"
           style={{ backgroundColor: colors.muted }}
         />
-        <span className="mt-2 flex items-center justify-between gap-1">
+        <span className="mt-1.5 flex items-center justify-between gap-1">
           <span
             className="h-1.5 w-8 rounded-full"
             style={{ backgroundColor: colors.muted }}

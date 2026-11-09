@@ -47,7 +47,7 @@ describe("DummyProvider unshot UI screenshots", () => {
 });
 
 async function captureComposerStates(): Promise<void> {
-  const composer = $("textarea[aria-label='Message']");
+  const composer = $("[contenteditable='true'][aria-label='Message']");
   await composer.waitForDisplayed({ timeout: 10_000 });
 
   await $("summary[aria-label='Composer options']").click();
@@ -78,7 +78,7 @@ async function captureComposerStates(): Promise<void> {
 }
 
 async function captureChatSearch(): Promise<void> {
-  await openRoute("/", "textarea[aria-label='Message']");
+  await openRoute("/", "[contenteditable='true'][aria-label='Message']");
   const searchButton = $("button[aria-label='Search chats']");
   if (!(await searchButton.isDisplayed().catch(() => false))) {
     await $(

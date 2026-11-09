@@ -62,13 +62,13 @@ export async function openNewChat(): Promise<void> {
     await browser.url("tauri://localhost/#/");
   }
 
-  await $("textarea[aria-label='Message']").waitForDisplayed({
+  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
 }
 
 export async function waitForHomeReady(): Promise<void> {
-  await $("textarea[aria-label='Message']").waitForDisplayed({
+  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
   await browser.waitUntil(
@@ -99,7 +99,7 @@ export async function sendScenarioFromCurrentComposer(
   scenario: PersistentScenario,
   occurrence: number,
 ): Promise<void> {
-  const message = $("textarea[aria-label='Message']");
+  const message = $("[contenteditable='true'][aria-label='Message']");
   await message.setValue(scenarioPrompt(scenario, occurrence));
 
   if (scenario.kind === "goal") {
@@ -133,7 +133,7 @@ export async function sendScenarioFromCurrentComposer(
 }
 
 export async function sendFollowUp(text: string): Promise<void> {
-  const message = $("textarea[aria-label='Message']");
+  const message = $("[contenteditable='true'][aria-label='Message']");
   await message.waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(async () => message.isEnabled(), {
     timeout: 15_000,
@@ -144,7 +144,7 @@ export async function sendFollowUp(text: string): Promise<void> {
 }
 
 export async function sendComposerPrompt(prompt: string): Promise<void> {
-  const message = $("textarea[aria-label='Message']");
+  const message = $("[contenteditable='true'][aria-label='Message']");
   await message.waitForDisplayed({ timeout: 10_000 });
   await message.setValue(prompt);
   await sendComposerMessage();
@@ -159,11 +159,11 @@ export async function selectSubmissionMode(
 }
 
 export async function sendQueuedPrompt(prompt: string): Promise<void> {
-  const message = $("textarea[aria-label='Message']");
+  const message = $("[contenteditable='true'][aria-label='Message']");
   await message.waitForDisplayed({ timeout: 10_000 });
   await message.setValue(prompt);
   await $(
-    "//textarea[@aria-label='Message']/ancestor::form[1]//button[@type='submit'][@aria-label='Queue']",
+    "//*[@contenteditable='true' and @aria-label='Message']/ancestor::form[1]//button[@type='submit'][@aria-label='Queue']",
   ).click();
 }
 
@@ -173,7 +173,7 @@ export async function waitForActiveTurn(): Promise<void> {
 
 async function sendComposerMessage(): Promise<void> {
   await $(
-    "//textarea[@aria-label='Message']/ancestor::form[1]//button[@type='submit'][@aria-label='Send']",
+    "//*[@contenteditable='true' and @aria-label='Message']/ancestor::form[1]//button[@type='submit'][@aria-label='Send']",
   ).click();
 }
 
@@ -262,7 +262,7 @@ export async function openProjectChat(projectName: string): Promise<void> {
   }
 
   const newChat = $(
-    "//section[contains(@class, 'workbench-main')]//a[normalize-space(.)='New chat']",
+    "(//section[contains(@class, 'workbench-main')]//a[normalize-space(.)='New chat'])[1]",
   );
   await newChat.waitForDisplayed({ timeout: 10_000 });
   await newChat.click();
@@ -273,13 +273,13 @@ export async function openProjectChat(projectName: string): Promise<void> {
       timeoutMsg: "The project-scoped new chat route should open",
     },
   );
-  await $("textarea[aria-label='Message']").waitForDisplayed({
+  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
 }
 
 export async function archiveCurrentThread(): Promise<void> {
-  const message = $("textarea[aria-label='Message']");
+  const message = $("[contenteditable='true'][aria-label='Message']");
   await message.setValue("/archive");
   await $("button[aria-label='Archive']").click();
   await browser.waitUntil(
@@ -300,7 +300,7 @@ export async function setCurrentGoal(objective: string): Promise<void> {
   if (await goalMode.isExisting()) {
     await goalMode.click();
   }
-  const message = $("textarea[aria-label='Message']");
+  const message = $("[contenteditable='true'][aria-label='Message']");
   await message.setValue(objective);
   await $("button[aria-label='Set goal']").click();
 }

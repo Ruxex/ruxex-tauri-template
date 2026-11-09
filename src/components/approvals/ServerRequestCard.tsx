@@ -193,56 +193,56 @@ export function ServerRequestCard({
                 </summary>
                 <div className="mt-2 space-y-2">
                   {permissionParams.reason && <p>{permissionParams.reason}</p>}
-                {permissionParams.permissions.network && (
-                  <p>
-                    <span className="font-medium">Network access:</span>
-                    <span className="ml-1">
-                      {permissionParams.permissions.network.enabled === true
-                        ? "enabled"
-                        : "requested"}
-                    </span>
-                  </p>
-                )}
-                {permissionParams.permissions.fileSystem && (
-                  <div className="space-y-1">
-                    <p className="font-medium">File System access</p>
-                    {permissionParams.permissions.fileSystem.read?.map(
-                      (path) => (
-                        <p
-                          className="truncate text-xs"
-                          key={`read:${path}`}
-                          title={path}
-                        >
-                          Read: {path}
-                        </p>
-                      ),
-                    )}
-                    {permissionParams.permissions.fileSystem.write?.map(
-                      (path) => (
-                        <p
-                          className="truncate text-xs"
-                          key={`write:${path}`}
-                          title={path}
-                        >
-                          Write: {path}
-                        </p>
-                      ),
-                    )}
-                    {permissionParams.permissions.fileSystem.entries?.map(
-                      (entry) => {
-                        const path = formatValue(entry.path);
-                        return (
+                  {permissionParams.permissions.network && (
+                    <p>
+                      <span className="font-medium">Network access:</span>
+                      <span className="ml-1">
+                        {permissionParams.permissions.network.enabled === true
+                          ? "enabled"
+                          : "requested"}
+                      </span>
+                    </p>
+                  )}
+                  {permissionParams.permissions.fileSystem && (
+                    <div className="space-y-1">
+                      <p className="font-medium">File System access</p>
+                      {permissionParams.permissions.fileSystem.read?.map(
+                        (path) => (
                           <p
                             className="truncate text-xs"
-                            key={`entry:${entry.access}:${path}`}
+                            key={`read:${path}`}
+                            title={path}
                           >
-                            {entry.access}: {path}
+                            Read: {path}
                           </p>
-                        );
-                      },
-                    )}
-                  </div>
-                )}
+                        ),
+                      )}
+                      {permissionParams.permissions.fileSystem.write?.map(
+                        (path) => (
+                          <p
+                            className="truncate text-xs"
+                            key={`write:${path}`}
+                            title={path}
+                          >
+                            Write: {path}
+                          </p>
+                        ),
+                      )}
+                      {permissionParams.permissions.fileSystem.entries?.map(
+                        (entry) => {
+                          const path = formatValue(entry.path);
+                          return (
+                            <p
+                              className="truncate text-xs"
+                              key={`entry:${entry.access}:${path}`}
+                            >
+                              {entry.access}: {path}
+                            </p>
+                          );
+                        },
+                      )}
+                    </div>
+                  )}
                 </div>
               </details>
             </>
@@ -263,13 +263,13 @@ export function ServerRequestCard({
             </dl>
           </details>
           {isUserInput && requestParams.questions?.[0] && (
-            <label className="form-control mt-2">
+            <label className="form-control mt-2 w-full">
               <span className="label-text">
                 {requestParams.questions[0].question}
               </span>
               <input
                 aria-label={requestParams.questions[0].question}
-                className="input input-bordered input-sm mt-1"
+                className="input input-bordered input-sm mt-1 w-full"
                 value={answer}
                 onChange={(event) => setAnswer(event.target.value)}
                 disabled={!actionable}

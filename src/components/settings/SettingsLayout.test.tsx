@@ -249,6 +249,9 @@ describe("settings card layout", () => {
     expect(
       within(presetGrid).getAllByText("Follows OS").length,
     ).toBeGreaterThan(0);
+    expect(
+      within(presetGrid).getByRole("button", { name: "System" }).className,
+    ).toContain("min-h-32");
     fireEvent.click(
       within(presetGrid).getByRole("button", { name: "GH Dark" }),
     );
