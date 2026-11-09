@@ -96,6 +96,7 @@ export function ArtifactPreview({
     <figure className="my-3 overflow-auto rounded-box border border-base-300 bg-base-200 p-2">
       <ArtifactViewer preview={preview} />
       <button
+        aria-label="Open artifact file"
         className="btn btn-xs btn-outline mt-2"
         onClick={() => void openArtifact(path)}
         type="button"
@@ -103,6 +104,7 @@ export function ArtifactPreview({
         Open file
       </button>
       <button
+        aria-label="Save a copy of the artifact"
         className="btn btn-xs btn-outline mt-2 ml-2"
         onClick={() => void handleSave()}
         type="button"

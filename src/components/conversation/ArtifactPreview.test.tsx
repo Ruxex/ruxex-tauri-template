@@ -140,9 +140,9 @@ describe("ArtifactPreview", () => {
 
     render(<ArtifactPreview path="/workspace/report.pdf" />);
 
-    await screen.findByRole("button", { name: "Open file" });
-    screen.getByRole("button", { name: "Open file" }).click();
-    screen.getByRole("button", { name: "Save a copy" }).click();
+    await screen.findByRole("button", { name: "Open artifact file" });
+    screen.getByRole("button", { name: "Open artifact file" }).click();
+    screen.getByRole("button", { name: "Save a copy of the artifact" }).click();
 
     expect(openArtifact).toHaveBeenCalledWith("/workspace/report.pdf");
     await waitFor(() => {
