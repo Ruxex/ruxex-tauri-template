@@ -40,6 +40,30 @@ describe("ActivityItem", () => {
     expect(screen.getByLabelText(label)).toBeTruthy();
   });
 
+  it("does not repeat status or exit code in non-command activity details", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "tool-1",
+          turnId: "turn-1",
+          type: "dynamicToolCall",
+          category: "activity",
+          title: "Inspect repository",
+          text: "done",
+          metadata: {
+            namespace: "filesystem",
+            status: "completed",
+            exitCode: "0",
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("filesystem")).toBeTruthy();
+    expect(screen.queryByText("status", { exact: true })).toBeNull();
+    expect(screen.queryByText("exitCode", { exact: true })).toBeNull();
+  });
+
   it("shows a spinner while an activity is in progress", () => {
     render(
       <ActivityItem

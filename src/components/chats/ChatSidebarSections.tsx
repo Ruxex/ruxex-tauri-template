@@ -51,6 +51,7 @@ export function ChatSidebarSections({
             setSearchOpen(false);
             onClose();
           }}
+          open={searchOpen}
         />
       )}
 

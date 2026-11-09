@@ -13,7 +13,11 @@ export const Open: Story = () => (
     label="Open chat search"
     renderDialog={(onClose) => (
       <CatalogSurface>
-        <ChatSearchDialog onClose={onClose} onSelect={() => undefined} />
+        <ChatSearchDialog
+          onClose={onClose}
+          onSelect={() => undefined}
+          open
+        />
       </CatalogSurface>
     )}
   />
@@ -57,6 +61,7 @@ export const Results: Story = () => (
             initialSearchTerm="compiler"
             onClose={onClose}
             onSelect={() => undefined}
+            open
           />
         </CatalogSurface>
       )}
@@ -84,6 +89,7 @@ export const NoResults: Story = () => {
               initialSearchTerm="nothing-matches"
               onClose={onClose}
               onSelect={() => undefined}
+              open
             />
           </CatalogSurface>
         )}

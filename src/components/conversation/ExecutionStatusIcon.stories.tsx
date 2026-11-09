@@ -3,6 +3,7 @@ import type { Story } from "@ladle/react";
 import { StoryVariantList } from "../../../.ladle/support/StoryVariantList";
 
 import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
+import { ExecutionStatusSummary } from "./ExecutionStatusSummary";
 
 export const States: Story = () => (
   <StoryVariantList
@@ -20,11 +21,11 @@ export const States: Story = () => (
         label: "Failed",
       },
       {
-        content: <ExecutionStatusIcon exitCode="0" />,
+        content: <ExecutionStatusSummary exitCode="0" />,
         label: "Exit code 0",
       },
       {
-        content: <ExecutionStatusIcon exitCode="1" status="failed" />,
+        content: <ExecutionStatusSummary exitCode="1" status="failed" />,
         label: "Exit code 1",
       },
     ]}

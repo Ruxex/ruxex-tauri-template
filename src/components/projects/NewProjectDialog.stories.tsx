@@ -6,14 +6,18 @@ import { NewProjectDialog } from "./NewProjectDialog";
 export const EmptyForm: Story = () => (
   <LadleDialogTrigger
     label="Open empty project dialog"
-    renderDialog={(onClose) => <NewProjectDialog onClose={onClose} />}
+    renderDialog={(onClose) => (
+      <NewProjectDialog onClose={onClose} open />
+    )}
   />
 );
 
 export const Validation: Story = () => (
   <LadleDialogTrigger
     label="Open validation dialog"
-    renderDialog={(onClose) => <NewProjectDialog onClose={onClose} />}
+    renderDialog={(onClose) => (
+      <NewProjectDialog onClose={onClose} open />
+    )}
   />
 );
 
@@ -25,6 +29,7 @@ export const SelectedWorkspace: Story = () => (
         initialName="Design system"
         initialRoot="/workspace/design-system"
         onClose={onClose}
+        open
       />
     )}
   />

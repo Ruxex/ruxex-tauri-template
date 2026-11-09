@@ -4,6 +4,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
+import {
+  ExecutionStatusSummary,
+  ExitCodeDisplay,
+} from "./ExecutionStatusSummary";
 
 describe("ExecutionStatusIcon", () => {
   it("centers a high-contrast spinner while the command is running", () => {
@@ -35,8 +39,14 @@ describe("ExecutionStatusIcon", () => {
     expect(status.className).toContain("text-warning");
   });
 
-  it("uses only a green success icon for exit code zero", () => {
-    const { container } = render(<ExecutionStatusIcon exitCode="0" />);
+  it("uses the supplied subject in the accessible status label", () => {
+    render(<ExecutionStatusIcon status="inProgress" subject="MCP tool" />);
+
+    expect(screen.getByRole("img", { name: "MCP tool running" })).toBeTruthy();
+  });
+
+  it("shows exit code zero as text without an icon", () => {
+    const { container } = render(<ExitCodeDisplay exitCode="0" />);
 
     expect(container.textContent).toContain("0");
     expect(screen.queryByText("Exit code: 0")).toBeNull();
@@ -45,7 +55,7 @@ describe("ExecutionStatusIcon", () => {
 
   it("does not duplicate a completed status with a zero exit code", () => {
     const { container } = render(
-      <ExecutionStatusIcon exitCode="0" status="completed" />,
+      <ExecutionStatusSummary exitCode="0" status="completed" />,
     );
 
     expect(container.querySelectorAll('[role="img"]')).toHaveLength(1);
@@ -56,7 +66,7 @@ describe("ExecutionStatusIcon", () => {
   });
 
   it("shows a red error icon and the non-zero exit code", () => {
-    const { container } = render(<ExecutionStatusIcon exitCode="1" />);
+    const { container } = render(<ExitCodeDisplay exitCode="1" />);
 
     const status = screen.getByRole("img", {
       name: "Command exited with code 1",
@@ -67,7 +77,7 @@ describe("ExecutionStatusIcon", () => {
   });
 
   it("renders nothing when no status or exit code is available", () => {
-    const { container } = render(<ExecutionStatusIcon />);
+    const { container } = render(<ExecutionStatusSummary />);
 
     expect(container.firstChild).toBeNull();
   });

@@ -130,7 +130,10 @@ export function ProjectsPage() {
         </div>
       </section>
       {isCreateDialogOpen && (
-        <NewProjectDialog onClose={() => setIsCreateDialogOpen(false)} />
+        <NewProjectDialog
+          onClose={() => setIsCreateDialogOpen(false)}
+          open={isCreateDialogOpen}
+        />
       )}
     </PageContainer>
   );

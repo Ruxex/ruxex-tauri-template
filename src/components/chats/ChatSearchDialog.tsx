@@ -1,51 +1,48 @@
 import { useEffect, useRef, useState } from "react";
 import { useThreadSearch } from "../../app-server/hooks";
 import { formatErrorMessage } from "../../app/error-message";
+import { DialogShell } from "../common/DialogShell";
 import { ChatListItem } from "./ChatListItem";
 
 type ChatSearchDialogProps = {
   initialSearchTerm?: string;
   onClose: () => void;
   onSelect: (threadId: string) => void;
+  open?: boolean;
 };
 
 export function ChatSearchDialog({
   initialSearchTerm = "",
   onClose,
   onSelect,
+  open = true,
 }: ChatSearchDialogProps) {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useThreadSearch(searchTerm);
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
     inputRef.current?.focus();
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, open]);
 
   const rows = results.data?.data ?? [];
 
   return (
-    <section
-      aria-label="Chat search"
-      className="mb-4 rounded-box border border-base-300 bg-base-200 p-3"
-      role="dialog"
+    <DialogShell
+      closeLabel="Close chat search"
+      onClose={onClose}
+      open={open}
+      title="Search chats"
+      titleId="chat-search-title"
     >
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">Search chats</h3>
-        <button
-          aria-label="Close"
-          className="btn btn-ghost btn-xs"
-          type="button"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
       <input
         ref={inputRef}
         aria-label="Search chats"
@@ -84,6 +81,6 @@ export function ChatSearchDialog({
           </ul>
         )}
       </div>
-    </section>
+    </DialogShell>
   );
 }

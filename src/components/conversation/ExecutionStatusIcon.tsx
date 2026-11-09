@@ -1,40 +1,28 @@
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 type ExecutionStatusIconProps = {
   status?: string;
-  exitCode?: string;
+  subject?: string;
 };
 
 export function ExecutionStatusIcon({
   status,
-  exitCode,
+  subject = "Command",
 }: ExecutionStatusIconProps) {
-  const hasExitCode = exitCode !== undefined && exitCode !== "";
-
-  if (!status && !hasExitCode) {
+  if (!status) {
     return null;
   }
 
-  return (
-    <span className="inline-flex items-center gap-2">
-      {status && <StatusIcon status={status} />}
-      {hasExitCode && <ExitCodeIcon exitCode={exitCode} />}
-    </span>
-  );
-}
-
-function StatusIcon({ status }: { status: string }) {
   if (status === "inProgress" || status === "running") {
     return (
       <span
-        aria-label="Command running"
+        aria-label={`${subject} running`}
         className="inline-flex size-4 shrink-0 items-center justify-center text-primary"
         role="img"
-        title="Command running"
+        title={`${subject} running`}
       >
         <span
           aria-hidden="true"
@@ -47,10 +35,10 @@ function StatusIcon({ status }: { status: string }) {
   if (status === "completed") {
     return (
       <span
-        aria-label="Command completed"
+        aria-label={`${subject} completed`}
         className="inline-flex size-4 shrink-0 items-center justify-center text-success"
         role="img"
-        title="Command completed"
+        title={`${subject} completed`}
       >
         <CheckCircleIcon aria-hidden="true" className="size-4" />
       </span>
@@ -59,37 +47,12 @@ function StatusIcon({ status }: { status: string }) {
 
   return (
     <span
-      aria-label={status === "failed" ? "Command failed" : `Command status: ${status}`}
+      aria-label={status === "failed" ? `${subject} failed` : `${subject} status: ${status}`}
       className="inline-flex size-4 shrink-0 items-center justify-center text-warning"
       role="img"
-      title={status === "failed" ? "Command failed" : `Command status: ${status}`}
+      title={status === "failed" ? `${subject} failed` : `${subject} status: ${status}`}
     >
       <ExclamationTriangleIcon aria-hidden="true" className="size-4" />
-    </span>
-  );
-}
-
-function ExitCodeIcon({ exitCode }: { exitCode: string }) {
-  if (exitCode === "0") {
-    return (
-      <span
-        className="font-mono text-xs text-base-content/70"
-        title="Exit code 0"
-      >
-        0
-      </span>
-    );
-  }
-
-  return (
-    <span
-      aria-label={`Command exited with code ${exitCode}`}
-      className="inline-flex shrink-0 items-center gap-1 text-error"
-      role="img"
-      title={`Command exited with code ${exitCode}`}
-    >
-      <XCircleIcon aria-hidden="true" className="size-4" />
-      <span>{exitCode}</span>
     </span>
   );
 }

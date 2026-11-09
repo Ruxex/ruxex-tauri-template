@@ -1,11 +1,12 @@
 import { FolderIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { formatErrorMessage } from "../../app/error-message";
 import { useCreateProject } from "../../app-server/hooks";
-import { DialogFooter, DialogHeader } from "../common/DialogParts";
+import { DialogShell } from "../common/DialogShell";
+import { DialogFooter } from "../common/DialogParts";
 import { ProjectMetadataFields } from "./ProjectMetadataFields";
 import {
   DEFAULT_PROJECT_METADATA,
@@ -17,6 +18,7 @@ type NewProjectDialogProps = {
   initialName?: string;
   initialRoot?: string;
   onClose: () => void;
+  open?: boolean;
 };
 
 function newIdempotencyKey() {
@@ -27,6 +29,7 @@ export function NewProjectDialog({
   initialName = "",
   initialRoot = "",
   onClose,
+  open = true,
 }: NewProjectDialogProps) {
   const navigate = useNavigate();
   const createProject = useCreateProject();
@@ -43,7 +46,7 @@ export function NewProjectDialog({
   async function handleSelectRoot() {
     setRootSelectionError(null);
     try {
-      const selected = await open({
+      const selected = await openDialog({
         directory: true,
         multiple: false,
         title: "Select workspace folder",
@@ -84,30 +87,15 @@ export function NewProjectDialog({
   }
 
   return (
-    <dialog
-      aria-labelledby="new-project-title"
-      className="modal"
-      open
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
+    <DialogShell
+      closeLabel="Close create project dialog"
+      icon={PlusIcon}
+      onClose={onClose}
+      open={open}
+      title="Create a project"
+      titleId="new-project-title"
     >
-      {/* Keep popovers visible; modal-box defaults to overflow-y:auto. See https://github.com/saadeghi/daisyui/issues/3141 and https://github.com/saadeghi/daisyui/discussions/1812. */}
-      <div className="modal-box w-full max-w-2xl overflow-visible px-5 py-7">
-        <DialogHeader
-          closeLabel="Close create project dialog"
-          icon={PlusIcon}
-          onClose={onClose}
-          title="Create a project"
-          titleId="new-project-title"
-        />
-
-        <form
-          className="grid w-full gap-4"
-          noValidate
-          onSubmit={handleSubmit}
-        >
+      <form className="grid w-full gap-4" noValidate onSubmit={handleSubmit}>
           <div className="form-control w-full">
             <label className="label" htmlFor="new-project-name">
               <span className="label-text text-sm font-medium">
@@ -200,17 +188,7 @@ export function NewProjectDialog({
               {formatErrorMessage(createProject.error)}
             </p>
           )}
-        </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button
-          aria-label="Close create project dialog"
-          type="button"
-          onClick={onClose}
-        >
-          Close
-        </button>
       </form>
-    </dialog>
+    </DialogShell>
   );
 }
