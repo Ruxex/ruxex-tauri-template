@@ -3,6 +3,7 @@ dist/
 build/
 logs/
 artifacts/e2e/
+.local-dev/
 /.d/
 /.m/
 target/
