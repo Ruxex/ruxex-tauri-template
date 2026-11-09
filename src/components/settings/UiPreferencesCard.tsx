@@ -1,25 +1,22 @@
 import { PaintBrushIcon } from "@heroicons/react/24/outline";
 
-import type {
-  UiAccentColor,
-  UiColorScheme,
-  UiTheme,
-} from "../../app/ui-preferences";
+import type { UiColorScheme, UiThemePresetId } from "../../app/ui-preferences";
+import { UI_THEME_PRESETS } from "../../app/ui-preferences";
 import { FormFieldRow } from "../common/FormFieldRow";
 import { SettingsPanel } from "./SettingsPanel";
 
 type UiPreferencesCardProps = {
   colorScheme: UiColorScheme;
-  theme: UiTheme;
+  preset: UiThemePresetId;
   onColorSchemeChange: (colorScheme: UiColorScheme) => void;
-  onAccentColorChange: (accentColor: UiAccentColor) => void;
+  onThemePresetChange: (preset: UiThemePresetId) => void;
 };
 
 export function UiPreferencesCard({
   colorScheme,
-  theme,
+  preset,
   onColorSchemeChange,
-  onAccentColorChange,
+  onThemePresetChange,
 }: UiPreferencesCardProps) {
   return (
     <SettingsPanel icon={PaintBrushIcon} title="Interface">
@@ -39,21 +36,21 @@ export function UiPreferencesCard({
             <option value="dark">Dark</option>
           </select>
         </FormFieldRow>
-        <FormFieldRow controlId="settings-theme" label="Theme">
+        <FormFieldRow controlId="settings-theme-preset" label="Theme preset">
           <select
-            aria-label="Theme"
+            aria-label="Theme preset"
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
-            id="settings-theme"
-            value={theme.accentColor}
+            id="settings-theme-preset"
+            value={preset}
             onChange={(event) =>
-              onAccentColorChange(event.target.value as UiAccentColor)
+              onThemePresetChange(event.target.value as UiThemePresetId)
             }
           >
-            <option value="blue">Blue</option>
-            <option value="violet">Violet</option>
-            <option value="emerald">Emerald</option>
-            <option value="amber">Amber</option>
-            <option value="rose">Rose</option>
+            {UI_THEME_PRESETS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </FormFieldRow>
       </div>

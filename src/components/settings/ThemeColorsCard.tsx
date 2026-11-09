@@ -5,7 +5,6 @@ import {
   type UiThemeColorKey,
   type UiThemeColors,
 } from "../../app/ui-preferences";
-import { SettingsPanel } from "./SettingsPanel";
 
 const THEME_COLOR_LABELS: Record<UiThemeColorKey, string> = {
   "base-100": "Base 100",
@@ -38,30 +37,36 @@ export function ThemeColorsCard({
   onColorChange: (key: UiThemeColorKey, value: string) => void;
 }) {
   return (
-    <SettingsPanel icon={SwatchIcon} title="Theme colors">
-      <div className="grid gap-4 p-5 sm:grid-cols-2">
-        {UI_THEME_COLOR_KEYS.map((key) => {
-          const label = THEME_COLOR_LABELS[key];
-          const inputId = `settings-theme-color-${key}`;
-          return (
-            <label className="grid gap-1" htmlFor={inputId} key={key}>
-              <span className="text-sm font-medium">{label}</span>
-              <span className="font-mono text-xs text-base-content/60">
-                --color-{key}
-              </span>
-              <input
-                aria-label={`${label} color`}
-                className="input input-bordered input-sm w-full"
-                id={inputId}
-                onChange={(event) => onColorChange(key, event.target.value)}
-                placeholder="DaisyUI default"
-                type="text"
-                value={colors[key] ?? ""}
-              />
-            </label>
-          );
-        })}
+    <details className="collapse collapse-arrow rounded-box border border-base-300 bg-base-100 shadow-sm">
+      <summary className="collapse-title flex items-center gap-2 py-3 text-sm font-medium">
+        <SwatchIcon aria-hidden="true" className="size-5 text-primary" />
+        Advanced theme colors
+      </summary>
+      <div className="collapse-content p-0">
+        <div className="grid gap-4 border-t border-base-300 p-5 sm:grid-cols-2">
+          {UI_THEME_COLOR_KEYS.map((key) => {
+            const label = THEME_COLOR_LABELS[key];
+            const inputId = `settings-theme-color-${key}`;
+            return (
+              <label className="grid gap-1" htmlFor={inputId} key={key}>
+                <span className="text-sm font-medium">{label}</span>
+                <span className="font-mono text-xs text-base-content/60">
+                  --color-{key}
+                </span>
+                <input
+                  aria-label={`${label} color`}
+                  className="input input-bordered input-sm w-full"
+                  id={inputId}
+                  onChange={(event) => onColorChange(key, event.target.value)}
+                  placeholder="DaisyUI default"
+                  type="text"
+                  value={colors[key] ?? ""}
+                />
+              </label>
+            );
+          })}
+        </div>
       </div>
-    </SettingsPanel>
+    </details>
   );
 }

@@ -17,11 +17,11 @@ export function AppearancePage() {
       <h2 className="text-3xl font-semibold tracking-tight">Appearance</h2>
       <UiPreferencesCard
         colorScheme={preferences.colorScheme}
-        onAccentColorChange={(accentColor) =>
-          update({ theme: { ...preferences.theme, accentColor } })
+        onThemePresetChange={(preset) =>
+          update({ theme: { ...preferences.theme, preset, colors: {} } })
         }
         onColorSchemeChange={(colorScheme) => update({ colorScheme })}
-        theme={preferences.theme}
+        preset={preferences.theme.preset ?? "daisyui"}
       />
       <ThemeColorsCard
         colors={preferences.theme.colors ?? {}}

@@ -165,10 +165,10 @@ describe("settings card layout", () => {
           capabilities={{ browser: true, shell: false, native: "Unsupported" }}
         />
         <UiPreferencesCard
-          onAccentColorChange={vi.fn()}
           onColorSchemeChange={vi.fn()}
+          onThemePresetChange={vi.fn()}
           colorScheme="system"
-          theme={{ accentColor: "blue" }}
+          preset="daisyui"
         />
         <TypographyCard
           onChatFontSizeChange={vi.fn()}
@@ -216,6 +216,23 @@ describe("settings card layout", () => {
     expect(screen.getByText("API key model discovery")).toBeTruthy();
     expect(screen.getByText("Namespace tools")).toBeTruthy();
     expect(screen.queryByText("apiKeyModelDiscovery")).toBeNull();
+  });
+
+  it("offers the built-in theme presets", () => {
+    const onThemePresetChange = vi.fn();
+    render(
+      <UiPreferencesCard
+        colorScheme="system"
+        onColorSchemeChange={vi.fn()}
+        onThemePresetChange={onThemePresetChange}
+        preset="daisyui"
+      />,
+    );
+
+    const preset = screen.getByLabelText("Theme preset") as HTMLSelectElement;
+    expect(preset.options).toHaveLength(8);
+    fireEvent.change(preset, { target: { value: "github-dark" } });
+    expect(onThemePresetChange).toHaveBeenCalledWith("github-dark");
   });
 
   it("provides a font reset action", () => {
@@ -268,10 +285,10 @@ describe("settings card layout", () => {
           sound="system"
         />
         <UiPreferencesCard
-          onAccentColorChange={vi.fn()}
           onColorSchemeChange={vi.fn()}
+          onThemePresetChange={vi.fn()}
           colorScheme="system"
-          theme={{ accentColor: "blue" }}
+          preset="daisyui"
         />
         <TypographyCard
           onChatFontSizeChange={vi.fn()}

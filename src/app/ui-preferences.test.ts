@@ -4,6 +4,7 @@ import {
   DEFAULT_CHAT_FONT_SIZE,
   DEFAULT_UI_PREFERENCES,
   parseUiPreferences,
+  UI_THEME_PRESETS,
   UI_THEME_COLOR_KEYS,
   UI_NOTIFICATION_SOUND_OPTIONS,
   updateUiPreferences,
@@ -39,6 +40,20 @@ describe("ui preferences", () => {
       primary: "#123456",
       "base-100": "oklch(98% 0 0)",
     });
+  });
+
+  it("exposes eight built-in theme presets", () => {
+    expect(UI_THEME_PRESETS).toHaveLength(8);
+    expect(UI_THEME_PRESETS.map((preset) => preset.label)).toEqual([
+      "DaisyUI Default",
+      "VS Code Dark+",
+      "GitHub Light",
+      "GitHub Dark",
+      "Dracula",
+      "Nord",
+      "Solarized Light",
+      "Monokai",
+    ]);
   });
 
   it("rejects a preference record from an unknown version", () => {

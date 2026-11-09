@@ -18,7 +18,10 @@ describe("ThemeColorsCard", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Theme colors" })).toBeTruthy();
+    const details = screen
+      .getByText("Advanced theme colors")
+      .closest("details") as HTMLDetailsElement;
+    expect(details.open).toBe(false);
     expect(
       (screen.getByLabelText("Primary color") as HTMLInputElement).value,
     ).toBe("#123456");

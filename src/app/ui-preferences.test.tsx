@@ -37,6 +37,7 @@ describe("UI preference persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.dataset.theme = "";
+    document.documentElement.removeAttribute("data-accent");
     document.documentElement.removeAttribute("data-chat-font-size");
     document.documentElement.removeAttribute("data-ui-font-size");
   });
@@ -88,7 +89,7 @@ describe("UI preference persistence", () => {
     });
 
     expect(next).toMatchObject({
-      version: 6,
+      version: 7,
       colorScheme: "light",
       theme: { accentColor: "rose" },
     });
@@ -136,6 +137,31 @@ describe("UI preference persistence", () => {
     });
     expect(document.documentElement.dataset.chatFontSize).toBeUndefined();
     expect(document.documentElement.dataset.uiFontSize).toBe("12");
+  });
+
+  it("applies a selected theme preset to DaisyUI variables", () => {
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify({
+        ...DEFAULT_UI_PREFERENCES,
+        theme: {
+          accentColor: "blue",
+          preset: "github-dark",
+          colors: {},
+        },
+      }),
+    );
+
+    render(
+      <UiPreferencesProvider>
+        <Probe />
+      </UiPreferencesProvider>,
+    );
+
+    expect(
+      document.documentElement.style.getPropertyValue("--color-base-100"),
+    ).toBe("#0d1117");
+    expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
   });
 
   it("resolves system color mode from the OS preference", () => {

@@ -94,9 +94,9 @@ export const QuickPanel: Story = () => (
 export const Interface: Story = () => (
   <UiPreferencesCard
     colorScheme="light"
-    onAccentColorChange={() => undefined}
     onColorSchemeChange={() => undefined}
-    theme={{ accentColor: "blue" }}
+    onThemePresetChange={() => undefined}
+    preset="daisyui"
   />
 );
 

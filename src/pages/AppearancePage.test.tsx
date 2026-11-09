@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +15,7 @@ describe("AppearancePage", () => {
   afterEach(cleanup);
 
   it("renders presentation preferences on their own settings tab", async () => {
+    const update = vi.fn();
     useUiPreferences.mockReturnValue({
       preferences: {
         sidebarCollapsed: false,
@@ -23,7 +24,7 @@ describe("AppearancePage", () => {
         chatFontSize: 12,
         uiFontSize: 14,
       },
-      update: vi.fn(),
+      update,
     });
 
     const { AppearancePage } = await import("./AppearancePage");
@@ -38,9 +39,9 @@ describe("AppearancePage", () => {
     expect(heading.className).toContain("text-3xl");
     expect(heading.className).toContain("tracking-tight");
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Theme colors" })).toBeTruthy();
+    expect(screen.getByText("Advanced theme colors")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
-    expect(screen.getByLabelText("Theme")).toBeTruthy();
+    expect(screen.getByLabelText("Theme preset")).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.queryByLabelText("Density")).toBeNull();
@@ -52,5 +53,16 @@ describe("AppearancePage", () => {
     expect(screen.getByLabelText("UI font size").getAttribute("value")).toBe(
       "14",
     );
+
+    fireEvent.change(screen.getByLabelText("Theme preset"), {
+      target: { value: "github-dark" },
+    });
+    expect(update).toHaveBeenCalledWith({
+      theme: {
+        accentColor: "blue",
+        colors: {},
+        preset: "github-dark",
+      },
+    });
   });
 });

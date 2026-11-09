@@ -8,7 +8,7 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 6;
+const UI_PREFERENCES_VERSION = 7;
 
 export type UiColorScheme = "system" | "light" | "dark";
 export type UiLanguage = "system" | "en" | "ja";
@@ -44,8 +44,212 @@ export const UI_THEME_COLOR_KEYS = [
 ] as const;
 export type UiThemeColorKey = (typeof UI_THEME_COLOR_KEYS)[number];
 export type UiThemeColors = Partial<Record<UiThemeColorKey, string>>;
+export const UI_THEME_PRESET_IDS = [
+  "daisyui",
+  "vscode-dark",
+  "github-light",
+  "github-dark",
+  "dracula",
+  "nord",
+  "solarized-light",
+  "monokai",
+] as const;
+export type UiThemePresetId = (typeof UI_THEME_PRESET_IDS)[number];
+export type UiThemePreset = {
+  id: UiThemePresetId;
+  label: string;
+  colors: UiThemeColors;
+};
+
+function createThemeColors({
+  base100,
+  base200,
+  base300,
+  baseContent,
+  primary,
+  secondary,
+  accent,
+  neutral,
+  info,
+  success,
+  warning,
+  error,
+  coloredContent = "#ffffff",
+}: {
+  base100: string;
+  base200: string;
+  base300: string;
+  baseContent: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  neutral: string;
+  info: string;
+  success: string;
+  warning: string;
+  error: string;
+  coloredContent?: string;
+}): UiThemeColors {
+  return {
+    "base-100": base100,
+    "base-200": base200,
+    "base-300": base300,
+    "base-content": baseContent,
+    primary,
+    "primary-content": coloredContent,
+    secondary,
+    "secondary-content": coloredContent,
+    accent,
+    "accent-content": coloredContent,
+    neutral,
+    "neutral-content": coloredContent,
+    info,
+    "info-content": coloredContent,
+    success,
+    "success-content": coloredContent,
+    warning,
+    "warning-content": coloredContent,
+    error,
+    "error-content": coloredContent,
+  };
+}
+
+export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
+  { id: "daisyui", label: "DaisyUI Default", colors: {} },
+  {
+    id: "vscode-dark",
+    label: "VS Code Dark+",
+    colors: createThemeColors({
+      base100: "#1e1e1e",
+      base200: "#252526",
+      base300: "#333333",
+      baseContent: "#d4d4d4",
+      primary: "#007acc",
+      secondary: "#569cd6",
+      accent: "#c586c0",
+      neutral: "#808080",
+      info: "#4fc1ff",
+      success: "#6a9955",
+      warning: "#dcdcaa",
+      error: "#f44747",
+    }),
+  },
+  {
+    id: "github-light",
+    label: "GitHub Light",
+    colors: createThemeColors({
+      base100: "#ffffff",
+      base200: "#f6f8fa",
+      base300: "#d0d7de",
+      baseContent: "#1f2328",
+      primary: "#0969da",
+      secondary: "#8250df",
+      accent: "#1a7f37",
+      neutral: "#6e7781",
+      info: "#0969da",
+      success: "#1a7f37",
+      warning: "#9a6700",
+      error: "#cf222e",
+      coloredContent: "#ffffff",
+    }),
+  },
+  {
+    id: "github-dark",
+    label: "GitHub Dark",
+    colors: createThemeColors({
+      base100: "#0d1117",
+      base200: "#161b22",
+      base300: "#30363d",
+      baseContent: "#e6edf3",
+      primary: "#2f81f7",
+      secondary: "#a371f7",
+      accent: "#3fb950",
+      neutral: "#8b949e",
+      info: "#58a6ff",
+      success: "#3fb950",
+      warning: "#d29922",
+      error: "#f85149",
+    }),
+  },
+  {
+    id: "dracula",
+    label: "Dracula",
+    colors: createThemeColors({
+      base100: "#282a36",
+      base200: "#44475a",
+      base300: "#6272a4",
+      baseContent: "#f8f8f2",
+      primary: "#bd93f9",
+      secondary: "#ff79c6",
+      accent: "#50fa7b",
+      neutral: "#6272a4",
+      info: "#8be9fd",
+      success: "#50fa7b",
+      warning: "#ffb86c",
+      error: "#ff5555",
+    }),
+  },
+  {
+    id: "nord",
+    label: "Nord",
+    colors: createThemeColors({
+      base100: "#2e3440",
+      base200: "#3b4252",
+      base300: "#434c5e",
+      baseContent: "#eceff4",
+      primary: "#5e81ac",
+      secondary: "#b48ead",
+      accent: "#88c0d0",
+      neutral: "#4c566a",
+      info: "#81a1c1",
+      success: "#a3be8c",
+      warning: "#ebcb8b",
+      error: "#bf616a",
+      coloredContent: "#2e3440",
+    }),
+  },
+  {
+    id: "solarized-light",
+    label: "Solarized Light",
+    colors: createThemeColors({
+      base100: "#fdf6e3",
+      base200: "#eee8d5",
+      base300: "#93a1a1",
+      baseContent: "#586e75",
+      primary: "#268bd2",
+      secondary: "#6c71c4",
+      accent: "#2aa198",
+      neutral: "#657b83",
+      info: "#2aa198",
+      success: "#859900",
+      warning: "#b58900",
+      error: "#dc322f",
+      coloredContent: "#ffffff",
+    }),
+  },
+  {
+    id: "monokai",
+    label: "Monokai",
+    colors: createThemeColors({
+      base100: "#272822",
+      base200: "#3e3d32",
+      base300: "#75715e",
+      baseContent: "#f8f8f2",
+      primary: "#66d9ef",
+      secondary: "#ae81ff",
+      accent: "#a6e22e",
+      neutral: "#75715e",
+      info: "#66d9ef",
+      success: "#a6e22e",
+      warning: "#e6db74",
+      error: "#f92672",
+    }),
+  },
+];
+
 export type UiTheme = {
   accentColor: UiAccentColor;
+  preset?: UiThemePresetId;
   colors?: UiThemeColors;
 };
 export const UI_FONT_SIZE_MIN = 10;
@@ -91,7 +295,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   language: "system",
   notifications: { desktop: true, sound: "system" },
   colorScheme: "system",
-  theme: { accentColor: "blue" },
+  theme: { accentColor: "blue", preset: "daisyui" },
   chatFontSize: DEFAULT_CHAT_FONT_SIZE,
   uiFontSize: DEFAULT_UI_FONT_SIZE,
 };
@@ -132,6 +336,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.version !== 3 &&
         parsed.version !== 4 &&
         parsed.version !== 5 &&
+        parsed.version !== 6 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
@@ -139,6 +344,10 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
 
     const legacyColorScheme = parsed.version === 1 ? parsed.theme : undefined;
     const storedTheme = isRecord(parsed.theme) ? parsed.theme : undefined;
+    const storedPreset = readOptionalEnum(
+      storedTheme?.preset,
+      UI_THEME_PRESET_IDS,
+    );
 
     return {
       version: UI_PREFERENCES_VERSION,
@@ -177,6 +386,11 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
           UI_ACCENT_COLORS,
           DEFAULT_UI_PREFERENCES.theme.accentColor,
         ),
+        preset:
+          storedPreset ??
+          (storedTheme?.accentColor === undefined
+            ? DEFAULT_UI_PREFERENCES.theme.preset
+            : undefined),
         colors: readThemeColors(storedTheme?.colors),
       },
       chatFontSize: readFontSize(
@@ -209,6 +423,15 @@ function readEnum<T extends string>(
   return typeof value === "string" && values.includes(value as T)
     ? (value as T)
     : fallback;
+}
+
+function readOptionalEnum<T extends string>(
+  value: unknown,
+  values: readonly T[],
+): T | undefined {
+  return typeof value === "string" && values.includes(value as T)
+    ? (value as T)
+    : undefined;
 }
 
 function readFontSize(value: unknown, fallback: UiFontSize): UiFontSize {
@@ -253,9 +476,14 @@ function resolvedColorScheme(colorScheme: UiColorScheme): "light" | "dark" {
     : "light";
 }
 
-function applyThemeColors(colors: UiThemeColors | undefined): void {
+function applyThemeColors(theme: UiTheme): void {
+  const presetColors = UI_THEME_PRESETS.find(
+    (preset) => preset.id === theme.preset,
+  )?.colors;
+  const colors = { ...presetColors, ...(theme.colors ?? {}) };
+
   for (const key of UI_THEME_COLOR_KEYS) {
-    const value = colors?.[key]?.trim();
+    const value = colors[key]?.trim();
     if (value) {
       document.documentElement.style.setProperty(`--color-${key}`, value);
     } else {
@@ -275,8 +503,12 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
     document.documentElement.dataset.theme = resolvedColorScheme(
       preferences.colorScheme,
     );
-    document.documentElement.dataset.accent = preferences.theme.accentColor;
-    applyThemeColors(preferences.theme.colors);
+    if (preferences.theme.preset) {
+      document.documentElement.removeAttribute("data-accent");
+    } else {
+      document.documentElement.dataset.accent = preferences.theme.accentColor;
+    }
+    applyThemeColors(preferences.theme);
     document.documentElement.dataset.uiFontSize = String(
       preferences.uiFontSize,
     );
