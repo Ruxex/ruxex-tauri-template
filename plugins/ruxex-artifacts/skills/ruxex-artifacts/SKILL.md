@@ -113,7 +113,7 @@ Range formatting supports font bold/italic/size/color, fill color, horizontal
 and vertical alignment, wrapping, number formats, and column widths. Ranges can
 be merged, and worksheets can add tables plus column, bar, line, pie, or doughnut
 charts. These features are serialized by the bundled native engine, so no
-system Excel, Python, Node package, or office runtime is required.
+system Office tooling, Node package, or external office runtime is required.
 
 When the builder prints the JSON returned by `ArtifactOutput.save()`, the
 desktop conversation can show an in-app image preview for generated XLSX files.
