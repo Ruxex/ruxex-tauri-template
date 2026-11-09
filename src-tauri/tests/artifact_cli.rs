@@ -339,3 +339,88 @@ fn launcher_reports_missing_bundled_runtime_instead_of_using_host_node() {
     let diagnostic: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
     assert_eq!(diagnostic["error"]["code"], "missing_runtime_resource");
 }
+
+#[test]
+fn engine_creates_rich_xlsx_metadata_and_reports_formula_counts() {
+    let dir = temp_dir("engine-rich-xlsx");
+    let input = write_input(
+        &dir,
+        r##"{
+          "sheets": [{
+            "name": "Summary",
+            "rows": [["Name", "Count"], ["Ada", 3], ["Grace", 5], ["Total", 8]],
+            "formulas": [[null, null], [null, null], [null, null], [null, "=SUM(B2:B3)"]],
+            "formats": [{
+              "range": "A1:B1",
+              "font": {"bold": true, "color": "#ffffff"},
+              "fill": "#1f4e78",
+              "horizontal_alignment": "center"
+            }],
+            "merges": [{"range": "A1:B1"}],
+            "column_widths": [{"column": "A", "width": 18}],
+            "tables": [{"name": "SummaryTable", "range": "A1:B3", "has_headers": true}],
+            "charts": [{
+              "type": "column",
+              "position": "D2:J16",
+              "series": [{"name": "Count", "categories": "A2:A3", "values": "B2:B3"}]
+            }]
+          }]
+        }"##,
+    );
+    let workbook = dir.join("rich.xlsx");
+    let output = run(&[
+        "xlsx",
+        "create",
+        "--input",
+        input.to_str().unwrap(),
+        "--output",
+        workbook.to_str().unwrap(),
+        "--json",
+    ]);
+
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(response["formulas"]["total"], 1);
+    assert_eq!(response["formulas"]["evaluated"], 1);
+    assert_eq!(response["objects"]["merges"], 1);
+    assert_eq!(response["objects"]["tables"], 1);
+    assert_eq!(response["objects"]["charts"], 1);
+    assert!(workbook.is_file());
+
+    let file = File::open(workbook).unwrap();
+    let mut archive = zip::ZipArchive::new(file).unwrap();
+    let worksheet = archive.by_name("xl/worksheets/sheet1.xml").unwrap();
+    let worksheet = std::io::read_to_string(worksheet).unwrap();
+    assert!(worksheet.contains("<f>SUM(B2:B3)</f>"));
+    assert!(worksheet.contains("<mergeCell ref=\"A1:B1\""));
+}
+
+#[test]
+fn engine_rejects_invalid_rich_xlsx_metadata() {
+    let dir = temp_dir("engine-invalid-rich-xlsx");
+    let input = write_input(
+        &dir,
+        r##"{
+          "sheets": [{
+            "name": "Summary",
+            "rows": [[1]],
+            "formats": [{"range": "A1", "fill": "not-a-color"}]
+          }]
+        }"##,
+    );
+    let workbook = dir.join("invalid-rich.xlsx");
+    let output = run(&[
+        "xlsx",
+        "create",
+        "--input",
+        input.to_str().unwrap(),
+        "--output",
+        workbook.to_str().unwrap(),
+        "--json",
+    ]);
+
+    assert!(!output.status.success());
+    let diagnostic: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
+    assert_eq!(diagnostic["error"]["code"], "invalid_format");
+    assert!(!workbook.exists());
+}
