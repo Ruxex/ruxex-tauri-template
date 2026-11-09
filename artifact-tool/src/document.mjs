@@ -120,16 +120,22 @@ export class Document {
   }
 
   async inspect() {
-    return {
+    const inspection = {
       ok: true,
       valid: true,
       paragraphs: this.items.filter((item) => item.kind === "paragraph" || item.kind === "heading")
         .length,
       tables: this.items.filter((item) => item.kind === "table").length,
-      diagnostics: this.lossDiagnostics,
-      editable: this.lossDiagnostics.length === 0,
-      ...(this.sourcePath ? { sourcePath: this.sourcePath } : {}),
     };
+    if (this.sourcePath) {
+      return {
+        ...inspection,
+        diagnostics: this.lossDiagnostics,
+        editable: this.lossDiagnostics.length === 0,
+        sourcePath: this.sourcePath,
+      };
+    }
+    return inspection;
   }
 
   async exportDocx(outputPath, options = {}) {

@@ -137,7 +137,7 @@ test("PresentationFile exposes Codex-shaped slide, shape, and table collections"
   assert.equal((await readFile(outputPath)).subarray(0, 2).toString(), "PK");
 });
 
-test("PresentationFile imports paths and FileBlobs as explicit shallow documents", async () => {
+test("PresentationFile imports paths and FileBlobs as editable loss-aware documents", async () => {
   const directory = await mkdtemp(join(tmpdir(), "ruxex-presentation-import-"));
   const inputPath = join(directory, "source.pptx");
   const source = await Presentation.create();
@@ -149,13 +149,15 @@ test("PresentationFile imports paths and FileBlobs as explicit shallow documents
 
   assert.equal(fromPath.sourcePath, inputPath);
   assert.equal(fromBlob.sourcePath, inputPath);
+  assert.equal(fromPath.slides.length, 1);
+  assert.equal(fromPath.slides.items[0].objects[0].text, "Source");
+  assert.equal((await fromPath.inspect()).editable, false);
   await assert.rejects(
-    Promise.resolve().then(() => fromPath.slides.add()),
-    (error) => error.code === "unsupported_operation",
+    PresentationFile.exportPptx(fromPath).save(join(directory, "round-trip.pptx")),
+    (error) => error.code === "lossy_import",
   );
-  await assert.rejects(
-    PresentationFile.exportPptx(fromPath).save(join(directory, "lost-content.pptx")),
-    (error) => error.code === "unsupported_operation",
+  await PresentationFile.exportPptx(fromPath, { acceptDiagnostics: true }).save(
+    join(directory, "round-trip.pptx"),
   );
 });
 

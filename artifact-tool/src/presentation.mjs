@@ -186,7 +186,7 @@ export class Presentation {
       lossDiagnostics: response.diagnostics ?? [],
     });
     for (const slideModel of response.slides ?? []) {
-      const slide = presentation.addSlide();
+      const slide = presentation.slides.add();
       for (const object of slideModel.objects ?? []) {
         if (object.kind === "text") slide.addText(object.text);
       }
@@ -195,15 +195,21 @@ export class Presentation {
   }
 
   async inspect() {
-    return {
+    const inspection = {
       ok: true,
       valid: true,
       slides: this.slides.length,
       objects: this.slides.items.reduce((total, slide) => total + slide.objects.length, 0),
-      diagnostics: this.lossDiagnostics,
-      editable: this.lossDiagnostics.length === 0,
-      ...(this.sourcePath ? { sourcePath: this.sourcePath } : {}),
     };
+    if (this.sourcePath) {
+      return {
+        ...inspection,
+        diagnostics: this.lossDiagnostics,
+        editable: this.lossDiagnostics.length === 0,
+        sourcePath: this.sourcePath,
+      };
+    }
+    return inspection;
   }
 
 }
