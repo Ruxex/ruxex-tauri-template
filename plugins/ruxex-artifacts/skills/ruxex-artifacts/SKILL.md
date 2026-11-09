@@ -16,8 +16,8 @@ through the managed runtime PATH.
 2. Write one `.mjs` builder that imports `@ruxex/artifact-tool`.
 3. Create the requested `Workbook`, `Document`, or `Presentation`, or import
    an existing workbook/deck with `FileBlob` and the matching file facade.
-4. Use the format-specific API to add values, text, headings, tables, slides,
-   and supported editable shapes.
+4. Use the format-specific API to add values, formulas, formatting, merges,
+   tables, charts, text, headings, slides, and supported editable shapes.
 5. Call `inspect()` and save the file-facade output to an explicit absolute
    output path.
 6. Always run the matching `xlsx validate`, `docx validate`, or `pptx validate`
@@ -38,8 +38,23 @@ import {
 
 const workbook = Workbook.create();
 const sheet = workbook.worksheets.add("Summary");
-sheet.getRange("A1:B2").values = [["Name", "Count"], ["Ada", 3]];
-workbook.recalculate();
+sheet.getRange("A1:B3").values = [["Name", "Count"], ["Ada", 3], ["Grace", 5]];
+sheet.getRange("B4").formulas = [["=SUM(B2:B3)"]];
+sheet.getRange("A1:B1").format = {
+  font: { bold: true, color: "#ffffff" },
+  fill: "#1f4e78",
+  horizontalAlignment: "center",
+};
+sheet.getRange("A1:B1").merge();
+sheet.getRange("A1:A4").format = { columnWidth: 18 };
+sheet.tables.add({ name: "SummaryTable", range: "A1:B3", hasHeaders: true });
+sheet.charts.add({
+  type: "column",
+  position: "D2:J16",
+  series: [{ name: "Count", categories: "A2:A3", values: "B2:B3" }],
+});
+const calculation = workbook.recalculate();
+if (!calculation.ok || calculation.unsupported !== 0) throw new Error("formula calculation failed");
 const workbookFile = SpreadsheetFile.exportXlsx(workbook);
 await workbookFile.save("/absolute/path/report.xlsx");
 
@@ -83,6 +98,20 @@ Workbook and presentation file I/O is facade-only: use `Workbook` and
 import or export a file. The Word `Document` facade currently creates new
 documents and performs structural validation; full existing-file editing is
 not yet available.
+
+## Workbook generation support
+
+The bundled workbook runtime evaluates formulas locally before export. Supported
+functions are `SUM`, `AVERAGE`, `MIN`, `MAX`, `COUNT`, `COUNTA`, and `IF`, along
+with cell/range references, arithmetic, and comparisons. `recalculate()` returns
+`{ ok, formulas, evaluated, unsupported }`; unsupported or circular formulas are
+reported and do not execute.
+
+Range formatting supports font bold/italic/size/color, fill color, horizontal
+and vertical alignment, wrapping, number formats, and column widths. Ranges can
+be merged, and worksheets can add tables plus column, bar, line, pie, or doughnut
+charts. These features are serialized by the bundled native engine, so no
+system Excel, Python, Node package, or office runtime is required.
 
 ## Commands
 

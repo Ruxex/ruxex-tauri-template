@@ -15,8 +15,25 @@ if (!outputDirectory) throw new Error("--output-dir is required");
 
 const workbook = Workbook.create();
 const sheet = workbook.worksheets.add("Smoke");
-sheet.getRange("A1:B2").values = [["Name", "Count"], ["Ada", 3]];
-workbook.recalculate();
+sheet.getRange("A1:B3").values = [["Name", "Count"], ["Ada", 3], ["Grace", 5]];
+sheet.getRange("B4").formulas = [["=SUM(B2:B3)"]];
+sheet.getRange("A1:B1").format = {
+  font: { bold: true, color: "#ffffff" },
+  fill: "#1f4e78",
+  horizontalAlignment: "center",
+};
+sheet.getRange("A1:B1").merge();
+sheet.getRange("A1:A4").format = { columnWidth: 18 };
+sheet.tables.add({ name: "SmokeTable", range: "A1:B3", hasHeaders: true });
+sheet.charts.add({
+  type: "column",
+  position: "D2:J16",
+  series: [{ name: "Count", categories: "A2:A3", values: "B2:B3" }],
+});
+const recalculation = workbook.recalculate();
+if (recalculation.evaluated !== 1 || sheet.getRange("B4").values[0][0] !== 8) {
+  throw new Error("rich workbook smoke calculation failed");
+}
 await workbook.inspect({ kind: "sheet", sheetName: "Smoke" });
 const workbookOutput = join(outputDirectory, "smoke.xlsx");
 const workbookFile = SpreadsheetFile.exportXlsx(workbook);
