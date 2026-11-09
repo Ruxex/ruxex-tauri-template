@@ -31,8 +31,12 @@ export function ComposerSettings({
     visibleModels.find((item) => item.model === model) ??
     visibleModels.find((item) => item.isDefault);
   const modelLabel = selectedModel?.displayName ?? "No model available";
-  const effortLabel = effort || "medium";
   const availableEfforts = selectedModel?.supportedReasoningEfforts ?? [];
+  const effortLabel = availableEfforts.some(
+    (option) => option.reasoningEffort === effort,
+  )
+    ? effort
+    : "";
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
 
   return (
@@ -43,10 +47,16 @@ export function ComposerSettings({
       >
         <AdjustmentsHorizontalIcon aria-hidden="true" className="size-4" />
         <span className="truncate">{modelLabel}</span>
-        <span aria-hidden="true" className="text-base-content/50">
-          ·
-        </span>
-        <span className="truncate text-base-content/70">{effortLabel}</span>
+        {effortLabel && (
+          <>
+            <span aria-hidden="true" className="text-base-content/50">
+              ·
+            </span>
+            <span className="truncate text-base-content/70">
+              {effortLabel}
+            </span>
+          </>
+        )}
       </summary>
       <div className="dropdown-content z-20 mb-2 w-64 rounded-box border border-base-300 bg-base-100 p-3 shadow-lg">
         <label className="form-control">

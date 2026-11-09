@@ -11,8 +11,8 @@ import { createMemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppProviders } from "../app/providers";
-import { LoginPage } from "../pages/LoginPage";
 import { HomePage } from "../pages/HomePage";
+import { LoginPage } from "../pages/LoginPage";
 import { MockAppServer } from "../test-support/mock-app-server";
 
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
@@ -20,6 +20,30 @@ const { listen } = vi.hoisted(() => ({ listen: vi.fn() }));
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
+vi.mock("../components/conversation/ComposerMessageInput", () => ({
+  ComposerMessageInput: ({
+    disabled,
+    onChange,
+    onKeyDown,
+    placeholder,
+    value,
+  }: {
+    disabled: boolean;
+    onChange: (value: string) => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
+    placeholder: string;
+    value: string;
+  }) => (
+    <textarea
+      aria-label="Message"
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      value={value}
+    />
+  ),
+}));
 
 describe("desktop app-server flow", () => {
   let server: MockAppServer;

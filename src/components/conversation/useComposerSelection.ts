@@ -40,12 +40,15 @@ function findModel(models: v2.Model[], model: string): v2.Model | undefined {
 
 export function defaultEffortForModel(model: v2.Model | undefined): string {
   const efforts = model?.supportedReasoningEfforts ?? [];
+  if (efforts.length === 0) {
+    return "";
+  }
   return (
     efforts.find((option) =>
       ["medium", "mid"].includes(option.reasoningEffort.toLowerCase()),
     )?.reasoningEffort ??
     efforts[0]?.reasoningEffort ??
-    "medium"
+    ""
   );
 }
 

@@ -93,6 +93,31 @@ vi.mock("../../app-server/hooks", () => ({
   useSkillsList,
 }));
 
+vi.mock("./ComposerMessageInput", () => ({
+  ComposerMessageInput: ({
+    disabled,
+    onChange,
+    onKeyDown,
+    placeholder,
+    value,
+  }: {
+    disabled: boolean;
+    onChange: (value: string) => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
+    placeholder: string;
+    value: string;
+  }) => (
+    <textarea
+      aria-label="Message"
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      value={value}
+    />
+  ),
+}));
+
 describe("Composer", () => {
   afterEach(cleanup);
 
@@ -179,8 +204,12 @@ describe("Composer", () => {
     expect(
       (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
     ).toBe("Explain the changes");
-    fireEvent.click(screen.getByRole("button", { name: "Remove skill review" }));
-    expect(screen.queryByRole("status", { name: "Selected skill: review" })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove skill review" }),
+    );
+    expect(
+      screen.queryByRole("status", { name: "Selected skill: review" }),
+    ).toBeNull();
     expect(
       (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
     ).toBe("Explain the changes");
@@ -211,7 +240,9 @@ describe("Composer", () => {
     fireEvent.click(screen.getByLabelText("Composer options"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
 
-    expect(screen.queryByRole("status", { name: "Selected skill: review" })).toBeNull();
+    expect(
+      screen.queryByRole("status", { name: "Selected skill: review" }),
+    ).toBeNull();
   });
 
   it.each([
@@ -244,7 +275,9 @@ describe("Composer", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
       if (_mode !== "send") {
         fireEvent.click(screen.getByLabelText("Submission mode menu"));
-        fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(submitLabel) }));
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: new RegExp(submitLabel) }),
+        );
       }
       fireEvent.click(screen.getByRole("button", { name: submitLabel }));
 
@@ -253,7 +286,11 @@ describe("Composer", () => {
         threadId: "thread-1",
         ...(submitLabel === "Steer" ? { expectedTurnId: "turn-1" } : {}),
         input: [
-          { type: "skill", name: "review", path: "/workspace/.agents/skills/review" },
+          {
+            type: "skill",
+            name: "review",
+            path: "/workspace/.agents/skills/review",
+          },
           { type: "text", text: "Explain the changes", text_elements: [] },
         ],
         ...(submitLabel === "Send"
@@ -271,6 +308,35 @@ describe("Composer", () => {
     expect(screen.getByLabelText("Message").getAttribute("placeholder")).toBe(
       "Ask Example Assistant to work on something…",
     );
+  });
+
+  it("submits with Ctrl+Enter but keeps Enter and Shift+Enter as newlines", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    const message = screen.getByLabelText("Message");
+    fireEvent.change(message, { target: { value: "Send this" } });
+
+    fireEvent.keyDown(message, { key: "Enter" });
+    fireEvent.keyDown(message, { key: "Enter", shiftKey: true });
+    expect(sendMutation).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(message, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => expect(sendMutation).toHaveBeenCalled());
+  });
+
+  it("keeps the editable input after sending a rendered message", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "# Preview this" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() => expect(sendMutation).toHaveBeenCalled());
+    expect(screen.getByRole("textbox")).toBeTruthy();
   });
 
   it.each([
@@ -407,7 +473,7 @@ describe("Composer", () => {
     );
   });
 
-  it("keeps Enter for newlines and sends with Shift+Enter", async () => {
+  it("keeps Enter and Shift+Enter for newlines and sends with Ctrl+Enter", async () => {
     const { Composer } = await import("./Composer");
 
     render(<Composer threadId="thread-1" activeTurnId={null} />);
@@ -418,6 +484,9 @@ describe("Composer", () => {
     expect(sendMutation).not.toHaveBeenCalled();
 
     fireEvent.keyDown(message, { key: "Enter", shiftKey: true });
+    expect(sendMutation).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(message, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => expect(sendMutation).toHaveBeenCalled());
     expect(sendMutation).toHaveBeenCalledWith({
@@ -437,20 +506,20 @@ describe("Composer", () => {
     fireEvent.change(message, { target: { value: "入力中" } });
     fireEvent.keyDown(message, {
       key: "Enter",
-      shiftKey: true,
+      ctrlKey: true,
       isComposing: true,
     });
 
     await waitFor(() => expect(sendMutation).not.toHaveBeenCalled());
   });
 
-  it("does not submit an empty message with Shift+Enter", async () => {
+  it("does not submit an empty message with Ctrl+Enter", async () => {
     const { Composer } = await import("./Composer");
 
     render(<Composer threadId="thread-1" activeTurnId={null} />);
     fireEvent.keyDown(screen.getByLabelText("Message"), {
       key: "Enter",
-      shiftKey: true,
+      ctrlKey: true,
     });
 
     await waitFor(() => expect(sendMutation).not.toHaveBeenCalled());
@@ -474,7 +543,7 @@ describe("Composer", () => {
     });
   });
 
-  it("keeps image-only input sendable with Shift+Enter", async () => {
+  it("keeps image-only input sendable with Ctrl+Enter", async () => {
     const { Composer } = await import("./Composer");
 
     render(<Composer threadId="thread-1" activeTurnId={null} />);
@@ -485,7 +554,7 @@ describe("Composer", () => {
     });
     fireEvent.keyDown(screen.getByLabelText("Message"), {
       key: "Enter",
-      shiftKey: true,
+      ctrlKey: true,
     });
 
     await waitFor(() => expect(sendMutation).toHaveBeenCalled());

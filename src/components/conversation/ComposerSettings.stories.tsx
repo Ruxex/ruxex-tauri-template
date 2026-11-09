@@ -5,7 +5,7 @@ import { ComposerSettings } from "./ComposerSettings";
 export const EmptyModelList: Story = () => (
   <ComposerSettings
     disabled={false}
-    effort="medium"
+    effort=""
     model=""
     models={[]}
     onEffortChange={() => undefined}

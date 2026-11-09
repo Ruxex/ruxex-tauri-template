@@ -1,58 +1,61 @@
 import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type KeyboardEvent,
-} from "react";
-import {
   ArrowPathIcon,
   ArrowUturnRightIcon,
   PaperAirplaneIcon,
   QueueListIcon,
-  StopIcon,
   SparklesIcon,
+  StopIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-
-import { buildImageUserInput } from "./composer-model";
-import { collaborationModeFromMask } from "./collaboration-model";
-import { buildUserTextInput } from "./conversation-model";
 import {
-  ComposerOptions,
-  PermissionMenu,
-  SubmissionModeMenu,
-  type PermissionMode,
-} from "./ComposerOptions";
-import { ComposerSettings } from "./ComposerSettings";
-import { SlashCommandPalette } from "./SlashCommandPalette";
-import {
-  getSlashCommandInput,
-  selectSlashSkill,
-  selectSlashCommand,
-  type SlashCommandId,
-} from "./slash-command";
-import type { SubmissionMode } from "./composer-model";
-import type { v2 } from "../../protocol";
-import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
-import { useComposerSelection } from "./useComposerSelection";
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
-import { AttachmentPreview } from "../common/AttachmentPreview";
-import { useImageAttachment } from "../common/useImageAttachment";
 import {
   useArchiveThread,
-  useCompactThread,
   useCollaborationModes,
+  useCompactThread,
   useInterruptTurn,
   useModelList,
   useQueueMessage,
   useSendMessage,
-  useSkillsList,
   useSetThreadGoal,
+  useSkillsList,
   useSteerTurn,
   useUpdateThreadSettings,
 } from "../../app-server/hooks";
-import { useBranding } from "../../app/branding-context";
+import type { v2 } from "../../protocol";
+import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
+import { AttachmentPreview } from "../common/AttachmentPreview";
+import { useImageAttachment } from "../common/useImageAttachment";
+import { ComposerMessageInput } from "./ComposerMessageInput";
+import {
+  ComposerOptions,
+  PermissionMenu,
+  type PermissionMode,
+  SubmissionModeMenu,
+} from "./ComposerOptions";
+import { ComposerSettings } from "./ComposerSettings";
+import { collaborationModeFromMask } from "./collaboration-model";
+import type { SubmissionMode } from "./composer-model";
+import {
+  buildImageUserInput,
+  isComposerSubmitShortcut,
+} from "./composer-model";
+import { buildUserTextInput } from "./conversation-model";
+import { SlashCommandPalette } from "./SlashCommandPalette";
+import {
+  getSlashCommandInput,
+  type SlashCommandId,
+  selectSlashCommand,
+  selectSlashSkill,
+} from "./slash-command";
+import { useComposerSelection } from "./useComposerSelection";
 
 type ComposerProps = {
   threadId: string;
@@ -81,7 +84,7 @@ export function Composer({
     path: string;
   } | null>(null);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLElement>(null);
   const {
     attachmentError,
     attachmentInput,
@@ -183,16 +186,12 @@ export function Composer({
       .catch(() => undefined);
   }
 
-  function handleMessageKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (
-      event.nativeEvent.isComposing ||
-      event.key !== "Enter" ||
-      !event.shiftKey
-    ) {
+  function handleMessageKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!isComposerSubmitShortcut(event)) {
       return;
     }
     event.preventDefault();
-    event.currentTarget.form?.requestSubmit();
+    event.currentTarget.closest("form")?.requestSubmit();
   }
 
   async function handleSlashCommandSelect(command: SlashCommandId) {
@@ -200,7 +199,7 @@ export function Composer({
     if (selection.kind === "goal") {
       setGoalMode(true);
       setMessage(selection.message);
-      textareaRef.current?.focus();
+      editorRef.current?.focus();
       return;
     }
 
@@ -223,7 +222,7 @@ export function Composer({
       path: selection.skill.path,
     });
     setMessage(selection.message);
-    textareaRef.current?.focus();
+    editorRef.current?.focus();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -295,21 +294,19 @@ export function Composer({
           onSelect={(command) => void handleSlashCommandSelect(command)}
           query={slashCommandInput?.query}
           skills={skills.data?.data.flatMap((entry) => entry.skills) ?? []}
-          skillsError={
-            skills.isError ? formatErrorMessage(skills.error) : null
-          }
+          skillsError={skills.isError ? formatErrorMessage(skills.error) : null}
           skillsLoading={skills.isLoading}
         />
       )}
-      <textarea
-        ref={textareaRef}
-        className="textarea textarea-ghost min-h-24 w-full resize-none"
-        value={message}
-        onChange={(event) => setMessage(event.target.value)}
+      <ComposerMessageInput
+        disabled={isPending}
+        onChange={setMessage}
+        onEditorReady={(element) => {
+          editorRef.current = element;
+        }}
         onKeyDown={handleMessageKeyDown}
         placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
-        disabled={isPending}
-        aria-label="Message"
+        value={message}
       />
       <input
         ref={attachmentInput}

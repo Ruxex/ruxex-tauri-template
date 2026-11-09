@@ -27,6 +27,30 @@ vi.mock("../app-server/hooks", () => ({
   useSendMessage,
   useCollaborationModes,
 }));
+vi.mock("../components/conversation/ComposerMessageInput", () => ({
+  ComposerMessageInput: ({
+    disabled,
+    onChange,
+    onKeyDown,
+    placeholder,
+    value,
+  }: {
+    disabled: boolean;
+    onChange: (value: string) => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
+    placeholder: string;
+    value: string;
+  }) => (
+    <textarea
+      aria-label="Message"
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      value={value}
+    />
+  ),
+}));
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(

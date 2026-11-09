@@ -1,7 +1,8 @@
-import { useNavigate } from "react-router-dom";
-import { useState, type FormEvent } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
-
+import { type FormEvent, type KeyboardEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useBranding } from "../../app/branding-context";
+import { formatErrorMessage } from "../../app/error-message";
 import {
   useCollaborationModes,
   useCreateThread,
@@ -11,10 +12,12 @@ import {
   useSendMessage,
   useSetThreadGoal,
 } from "../../app-server/hooks";
-import { useBranding } from "../../app/branding-context";
-import { formatErrorMessage } from "../../app/error-message";
 import type { v2 } from "../../protocol";
 import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
+import { ProjectSelector } from "../chats/ProjectSelector";
+import { AttachmentPreview } from "../common/AttachmentPreview";
+import { useImageAttachment } from "../common/useImageAttachment";
+import { ComposerMessageInput } from "../conversation/ComposerMessageInput";
 import {
   ComposerOptions,
   PermissionMenu,
@@ -22,10 +25,8 @@ import {
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
 import { collaborationModeFromMask } from "../conversation/collaboration-model";
+import { isComposerSubmitShortcut } from "../conversation/composer-model";
 import { useComposerSelection } from "../conversation/useComposerSelection";
-import { ProjectSelector } from "../chats/ProjectSelector";
-import { AttachmentPreview } from "../common/AttachmentPreview";
-import { useImageAttachment } from "../common/useImageAttachment";
 
 type NewChatComposerProps = {
   projectId?: string;
@@ -135,6 +136,14 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
     }
   }
 
+  function handleMessageKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!isComposerSubmitShortcut(event)) {
+      return;
+    }
+    event.preventDefault();
+    event.currentTarget.closest("form")?.requestSubmit();
+  }
+
   const isPending =
     createThread.isPending || sendMessage.isPending || setGoal.isPending;
   const isProjectLoading = Boolean(selectedProjectId && project.isLoading);
@@ -165,11 +174,10 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
           onSubmit={(event) => void handleSubmit(event)}
         >
-          <textarea
-            aria-label="Message"
-            className="textarea textarea-ghost min-h-24 w-full resize-none"
+          <ComposerMessageInput
             disabled={isPending}
-            onChange={(event) => setMessage(event.target.value)}
+            onChange={setMessage}
+            onKeyDown={handleMessageKeyDown}
             placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
             value={message}
           />

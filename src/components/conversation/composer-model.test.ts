@@ -3,8 +3,21 @@ import { describe, expect, it } from "vitest";
 import {
   availableSubmissionModes,
   buildImageUserInput,
+  isComposerSubmitShortcut,
   submissionModeLabel,
 } from "./composer-model";
+
+function keyboardEvent(overrides: Partial<KeyboardEvent>): KeyboardEvent {
+  return {
+    altKey: false,
+    ctrlKey: false,
+    key: "Enter",
+    metaKey: false,
+    nativeEvent: { isComposing: false },
+    shiftKey: false,
+    ...overrides,
+  } as KeyboardEvent;
+}
 
 describe("composer model", () => {
   it("allows only send before a turn is active", () => {
@@ -30,5 +43,26 @@ describe("composer model", () => {
       type: "image",
       url: "data:image/png;base64,AA==",
     });
+  });
+});
+
+describe("isComposerSubmitShortcut", () => {
+  it.each([
+    ["Ctrl+Enter", { ctrlKey: true }, true],
+    ["Enter", {}, false],
+    ["Shift+Enter", { shiftKey: true }, false],
+    ["Ctrl+Shift+Enter", { ctrlKey: true, shiftKey: true }, false],
+    [
+      "composing Ctrl+Enter",
+      { ctrlKey: true, nativeEvent: { isComposing: true } },
+      false,
+    ],
+    [
+      "native composing Ctrl+Enter",
+      { ctrlKey: true, isComposing: true },
+      false,
+    ],
+  ] as const)("handles %s", (_label, event, expected) => {
+    expect(isComposerSubmitShortcut(keyboardEvent(event))).toBe(expected);
   });
 });
