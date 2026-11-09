@@ -15,6 +15,8 @@ export type ConversationViewItem = {
   imagePath?: string;
   imageUrls?: string[];
   browserUrl?: string;
+  artifactPath?: string;
+  artifactFormat?: string;
   editable?: boolean;
   timestamp?: number | null;
 };
@@ -32,6 +34,8 @@ export function areConversationViewItemsEqual(
     left.title === right.title &&
     left.imagePath === right.imagePath &&
     left.browserUrl === right.browserUrl &&
+    left.artifactPath === right.artifactPath &&
+    left.artifactFormat === right.artifactFormat &&
     left.editable === right.editable &&
     left.timestamp === right.timestamp &&
     areStringArraysEqual(left.imageUrls, right.imageUrls) &&
@@ -126,19 +130,22 @@ export function normalizeThreadItem(
         [...item.summary, ...item.content].join("\n"),
       );
     case "commandExecution":
-      return messageActivity(
-        item.id,
-        turnId,
-        item.type,
-        "Command",
-        item.aggregatedOutput || item.command,
-        compactMetadata({
-          command: item.command,
-          cwd: item.cwd,
-          status: item.status,
-          exitCode: item.exitCode,
-        }),
-      );
+      return {
+        ...messageActivity(
+          item.id,
+          turnId,
+          item.type,
+          "Command",
+          item.aggregatedOutput || item.command,
+          compactMetadata({
+            command: item.command,
+            cwd: item.cwd,
+            status: item.status,
+            exitCode: item.exitCode,
+          }),
+        ),
+        ...findArtifactOutput(item.aggregatedOutput),
+      };
     case "fileChange":
       return messageActivity(
         item.id,
@@ -359,6 +366,35 @@ function safeJson(value: unknown): string {
   } catch {
     return "This activity cannot be previewed.";
   }
+}
+
+function findArtifactOutput(
+  output: string | null,
+): Pick<ConversationViewItem, "artifactPath" | "artifactFormat"> {
+  if (!output) return {};
+  for (const line of output.split(/\r?\n/).reverse()) {
+    try {
+      const value = JSON.parse(line) as {
+        format?: unknown;
+        output?: unknown;
+        artifactPath?: unknown;
+      };
+      const artifactPath =
+        typeof value.artifactPath === "string"
+          ? value.artifactPath
+          : typeof value.output === "string"
+            ? value.output
+            : null;
+      const artifactFormat =
+        typeof value.format === "string" ? value.format : undefined;
+      if (artifactPath && artifactFormat) {
+        return { artifactPath, artifactFormat };
+      }
+    } catch {
+      // Only explicit JSON output is an artifact signal; ordinary command text is unchanged.
+    }
+  }
+  return {};
 }
 
 function findHttpUrl(value: unknown): string | undefined {

@@ -80,6 +80,30 @@ describe("conversation model", () => {
     expect(item.browserUrl).toBe("https://example.test/session");
   });
 
+  it("extracts an explicit artifact output path from command JSON", () => {
+    const item = normalizeThreadItem("turn-1", {
+      type: "commandExecution",
+      id: "command-artifact-1",
+      pluginId: null,
+      scriptPath: null,
+      command: "ruxex-artifacts run /workspace/build.mjs",
+      cwd: "/workspace",
+      processId: null,
+      source: "agent",
+      status: "completed",
+      commandActions: [],
+      aggregatedOutput:
+        '{"ok":true,"format":"xlsx","output":"/workspace/report.xlsx"}',
+      exitCode: 0,
+      durationMs: 12,
+    });
+
+    expect(item).toMatchObject({
+      artifactPath: "/workspace/report.xlsx",
+      artifactFormat: "xlsx",
+    });
+  });
+
   it("lets the authoritative snapshot replace a stale live item during recovery", () => {
     const items = mergeConversationItems(
       [

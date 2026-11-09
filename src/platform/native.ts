@@ -5,6 +5,19 @@ export type QuickPanelShortcutSettings = {
   defaultShortcut: string;
 };
 
+export type ArtifactPreviewData = {
+  mimeType: "image/svg+xml";
+  dataUrl: string;
+  format: "xlsx";
+  sheets: number;
+  rows: number;
+  columns: number;
+};
+
+export function previewArtifact(path: string): Promise<ArtifactPreviewData> {
+  return invoke<ArtifactPreviewData>("preview_artifact", { path });
+}
+
 export function readImageFile(path: string): Promise<string> {
   return invoke<string>("read_image_file", { path });
 }
