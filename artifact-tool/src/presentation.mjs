@@ -118,6 +118,18 @@ class TableCollection {
   }
 }
 
+function createSlide(presentation, options = {}) {
+  if (presentation.shallowImport) {
+    throw new ArtifactToolError(
+      "unsupported_operation",
+      "shallow PPTX imports cannot be edited until slide content is parsed",
+    );
+  }
+  const slide = new Slide(presentation, options);
+  presentation.slides.items.push(slide);
+  return slide;
+}
+
 class SlideCollection {
   constructor(presentation) {
     this.presentation = presentation;
@@ -125,7 +137,7 @@ class SlideCollection {
   }
 
   add(options = {}) {
-    return this.presentation.createSlide(options);
+    return createSlide(this.presentation, options);
   }
 
   get length() {
@@ -168,22 +180,6 @@ export class Presentation {
     return new Presentation({ sourcePath: inputPath, shallowImport: true });
   }
 
-  addSlide(options = {}) {
-    return this.createSlide(options);
-  }
-
-  createSlide(options = {}) {
-    if (this.shallowImport) {
-      throw new ArtifactToolError(
-        "unsupported_operation",
-        "shallow PPTX imports cannot be edited until slide content is parsed",
-      );
-    }
-    const slide = new Slide(this, options);
-    this.slides.items.push(slide);
-    return slide;
-  }
-
   async inspect() {
     return {
       ok: true,
@@ -194,20 +190,21 @@ export class Presentation {
     };
   }
 
-  async exportPptx(outputPath) {
-    if (this.shallowImport) {
-      throw new ArtifactToolError(
-        "unsupported_operation",
-        "shallow PPTX imports cannot be exported until slide content is parsed",
-      );
-    }
-    const presentation = new PptxGenJS();
-    presentation.layout = "LAYOUT_WIDE";
-    presentation.author = "Ruxex";
-    presentation.subject = this.title;
-    for (const slide of this.slides.items) addSlideObjects(presentation, slide);
-    await mkdir(dirname(outputPath), { recursive: true });
-    await presentation.writeFile({ fileName: outputPath });
-    return { ok: true, format: "pptx", output: outputPath };
+}
+
+export async function exportPresentationPptx(presentationModel, outputPath) {
+  if (presentationModel.shallowImport) {
+    throw new ArtifactToolError(
+      "unsupported_operation",
+      "shallow PPTX imports cannot be exported until slide content is parsed",
+    );
   }
+  const presentation = new PptxGenJS();
+  presentation.layout = "LAYOUT_WIDE";
+  presentation.author = "Ruxex";
+  presentation.subject = presentationModel.title;
+  for (const slide of presentationModel.slides.items) addSlideObjects(presentation, slide);
+  await mkdir(dirname(outputPath), { recursive: true });
+  await presentation.writeFile({ fileName: outputPath });
+  return { ok: true, format: "pptx", output: outputPath };
 }

@@ -1,5 +1,6 @@
 import { ArtifactToolError } from "./a1-range.mjs";
 import { ArtifactOutput, FileBlob } from "./file-blob.mjs";
+import { exportPresentationPptx, Presentation } from "./presentation.mjs";
 
 async function inputPath(input) {
   if (input instanceof FileBlob) return input.path;
@@ -14,12 +15,12 @@ export class PresentationFile {
   }
 
   static exportPptx(presentation) {
-    if (!presentation || typeof presentation.exportPptx !== "function") {
+    if (!(presentation instanceof Presentation)) {
       throw new ArtifactToolError(
         "invalid_presentation",
         "PresentationFile.exportPptx requires a Presentation",
       );
     }
-    return ArtifactOutput.fromSaver("pptx", (outputPath) => presentation.exportPptx(outputPath));
+    return ArtifactOutput.fromSaver("pptx", (outputPath) => exportPresentationPptx(presentation, outputPath));
   }
 }
