@@ -42,8 +42,8 @@ describe("ui preferences", () => {
     });
   });
 
-  it("exposes eight built-in theme presets", () => {
-    expect(UI_THEME_PRESETS).toHaveLength(8);
+  it("exposes twelve built-in theme presets", () => {
+    expect(UI_THEME_PRESETS).toHaveLength(12);
     expect(UI_THEME_PRESETS.map((preset) => preset.label)).toEqual([
       "DaisyUI Default",
       "VS Code Dark+",
@@ -53,6 +53,10 @@ describe("ui preferences", () => {
       "Nord",
       "Solarized Light",
       "Monokai",
+      "Tokyo Night",
+      "Catppuccin Mocha",
+      "Gruvbox Dark",
+      "One Dark",
     ]);
   });
 

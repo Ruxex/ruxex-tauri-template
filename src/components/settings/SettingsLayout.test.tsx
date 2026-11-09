@@ -238,7 +238,7 @@ describe("settings card layout", () => {
         "Theme palettes are inspired by third-party projects. Ruxex is not affiliated with or endorsed by those projects.",
       ),
     ).toBeTruthy();
-    expect(within(presetGrid).getAllByRole("button")).toHaveLength(8);
+    expect(within(presetGrid).getAllByRole("button")).toHaveLength(12);
     expect(
       within(presetGrid)
         .getByRole("button", { name: "GH Dark" })
