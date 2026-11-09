@@ -173,6 +173,9 @@ describe("ActivityItem", () => {
     expect(screen.queryByText("/workspace")).toBeNull();
     expect(screen.getByRole("img", { name: "Command completed" })).toBeTruthy();
     expect(screen.getByText("0")).toBeTruthy();
+    expect(screen.getByText("Command").closest("summary")?.className).toContain(
+      "py-1",
+    );
     expect(screen.queryByTestId("command-execution-diagnostics")).toBeNull();
     expect(screen.queryByText("status", { exact: true })).toBeNull();
     expect(screen.queryByText("exit code", { exact: true })).toBeNull();

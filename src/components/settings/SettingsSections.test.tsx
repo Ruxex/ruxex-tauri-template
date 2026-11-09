@@ -52,7 +52,7 @@ describe("settings and composer selectors", () => {
       colorScheme: "dark",
       theme: { accentColor: "violet" },
       uiFontSize: 12,
-      version: 5,
+      version: 6,
     });
   });
 });

@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { BellIcon } from "@heroicons/react/24/outline";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
 import {
@@ -166,6 +172,7 @@ describe("settings card layout", () => {
         />
         <TypographyCard
           onChatFontSizeChange={vi.fn()}
+          onReset={vi.fn()}
           onUiFontSizeChange={vi.fn()}
           chatFontSize={16}
           uiFontSize={16}
@@ -211,6 +218,23 @@ describe("settings card layout", () => {
     expect(screen.queryByText("apiKeyModelDiscovery")).toBeNull();
   });
 
+  it("provides a font reset action", () => {
+    const onReset = vi.fn();
+    render(
+      <TypographyCard
+        chatFontSize={18}
+        onChatFontSizeChange={vi.fn()}
+        onReset={onReset}
+        onUiFontSizeChange={vi.fn()}
+        uiFontSize={16}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset to default" }));
+
+    expect(onReset).toHaveBeenCalledOnce();
+  });
+
   it("renders language and notification settings in general panels", () => {
     render(
       <>
@@ -251,6 +275,7 @@ describe("settings card layout", () => {
         />
         <TypographyCard
           onChatFontSizeChange={vi.fn()}
+          onReset={vi.fn()}
           onUiFontSizeChange={vi.fn()}
           chatFontSize={16}
           uiFontSize={16}

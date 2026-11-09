@@ -88,7 +88,7 @@ describe("UI preference persistence", () => {
     });
 
     expect(next).toMatchObject({
-      version: 5,
+      version: 6,
       colorScheme: "light",
       theme: { accentColor: "rose" },
     });
@@ -101,7 +101,10 @@ describe("UI preference persistence", () => {
       JSON.stringify({
         ...DEFAULT_UI_PREFERENCES,
         colorScheme: "light",
-        theme: { accentColor: "emerald" },
+        theme: {
+          accentColor: "emerald",
+          colors: { primary: "#123456" },
+        },
       }),
     );
     render(
@@ -111,10 +114,13 @@ describe("UI preference persistence", () => {
     );
 
     expect(screen.getByRole("button").textContent).toBe(
-      "light:emerald:12px:14px",
+      "light:emerald:14px:14px",
     );
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.dataset.accent).toBe("emerald");
+    expect(
+      document.documentElement.style.getPropertyValue("--color-primary"),
+    ).toBe("#123456");
     fireEvent.click(screen.getByRole("button"));
 
     expect(screen.getByRole("button").textContent).toBe(

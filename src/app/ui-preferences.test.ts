@@ -1,15 +1,44 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_CHAT_FONT_SIZE,
   DEFAULT_UI_PREFERENCES,
   parseUiPreferences,
+  UI_THEME_COLOR_KEYS,
   UI_NOTIFICATION_SOUND_OPTIONS,
   updateUiPreferences,
 } from "./ui-preferences";
 
 describe("ui preferences", () => {
+  it("uses a 14px chat font by default", () => {
+    expect(DEFAULT_CHAT_FONT_SIZE).toBe(14);
+  });
+
   it("uses safe defaults when no local preference exists", () => {
     expect(parseUiPreferences(null)).toEqual(DEFAULT_UI_PREFERENCES);
+  });
+
+  it("parses supported DaisyUI color overrides and ignores unknown values", () => {
+    const parsed = parseUiPreferences(
+      JSON.stringify({
+        ...DEFAULT_UI_PREFERENCES,
+        theme: {
+          accentColor: "blue",
+          colors: {
+            primary: "#123456",
+            "base-100": "oklch(98% 0 0)",
+            unknown: "red",
+            warning: "",
+          },
+        },
+      }),
+    );
+
+    expect(UI_THEME_COLOR_KEYS).toContain("primary");
+    expect(parsed.theme.colors).toEqual({
+      primary: "#123456",
+      "base-100": "oklch(98% 0 0)",
+    });
   });
 
   it("rejects a preference record from an unknown version", () => {

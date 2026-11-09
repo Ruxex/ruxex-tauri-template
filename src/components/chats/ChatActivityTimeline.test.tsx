@@ -167,6 +167,7 @@ describe("ChatActivityTimeline", () => {
     expect(screen.getByText("Activity: Command")).toBeTruthy();
     expect(screen.getByText("Pending request: 42")).toBeTruthy();
     const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(timeline.className).toContain("space-y-0.5");
     expect(timeline.className).not.toContain("border");
     expect(timeline.className).not.toContain("rounded-box");
     fireEvent.click(screen.getByRole("button", { name: "Resolve request" }));

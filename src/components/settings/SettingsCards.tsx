@@ -8,4 +8,5 @@ export { RuntimeSummary } from "./RuntimeSummary";
 export { SettingsPanel, SettingRow } from "./SettingsPanel";
 export type { SettingsPanelIcon } from "./SettingsPanel";
 export { TypographyCard } from "./TypographyCard";
+export { ThemeColorsCard } from "./ThemeColorsCard";
 export { UiPreferencesCard } from "./UiPreferencesCard";

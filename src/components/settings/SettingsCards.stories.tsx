@@ -11,6 +11,7 @@ import {
   RuntimeSummary,
   SettingRow,
   SettingsPanel,
+  ThemeColorsCard,
   TypographyCard,
   UiPreferencesCard,
 } from "./SettingsCards";
@@ -101,9 +102,17 @@ export const Interface: Story = () => (
 
 export const Typography: Story = () => (
   <TypographyCard
-    chatFontSize={12}
+    chatFontSize={14}
     onChatFontSizeChange={() => undefined}
+    onReset={() => undefined}
     onUiFontSizeChange={() => undefined}
     uiFontSize={14}
+  />
+);
+
+export const ThemeColors: Story = () => (
+  <ThemeColorsCard
+    colors={{ primary: "oklch(57% 0.22 255)" }}
+    onColorChange={() => undefined}
   />
 );

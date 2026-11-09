@@ -13,11 +13,13 @@ export function TypographyCard({
   chatFontSize,
   uiFontSize,
   onChatFontSizeChange,
+  onReset,
   onUiFontSizeChange,
 }: {
   chatFontSize: UiFontSize;
   uiFontSize: UiFontSize;
   onChatFontSizeChange: (fontSize: UiFontSize) => void;
+  onReset: () => void;
   onUiFontSizeChange: (fontSize: UiFontSize) => void;
 }) {
   return (
@@ -60,6 +62,16 @@ export function TypographyCard({
             value={uiFontSize}
           />
         </FormFieldRow>
+      </div>
+      <div className="flex justify-end px-5 py-3">
+        <button
+          aria-label="Reset to default"
+          className="btn btn-ghost btn-sm"
+          onClick={onReset}
+          type="button"
+        >
+          Reset to default
+        </button>
       </div>
     </SettingsPanel>
   );

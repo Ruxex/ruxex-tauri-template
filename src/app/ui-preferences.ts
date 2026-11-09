@@ -8,7 +8,7 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 5;
+const UI_PREFERENCES_VERSION = 6;
 
 export type UiColorScheme = "system" | "light" | "dark";
 export type UiLanguage = "system" | "en" | "ja";
@@ -20,10 +20,37 @@ export const UI_ACCENT_COLORS = [
   "rose",
 ] as const;
 export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
-export type UiTheme = { accentColor: UiAccentColor };
+export const UI_THEME_COLOR_KEYS = [
+  "base-100",
+  "base-200",
+  "base-300",
+  "base-content",
+  "primary",
+  "primary-content",
+  "secondary",
+  "secondary-content",
+  "accent",
+  "accent-content",
+  "neutral",
+  "neutral-content",
+  "info",
+  "info-content",
+  "success",
+  "success-content",
+  "warning",
+  "warning-content",
+  "error",
+  "error-content",
+] as const;
+export type UiThemeColorKey = (typeof UI_THEME_COLOR_KEYS)[number];
+export type UiThemeColors = Partial<Record<UiThemeColorKey, string>>;
+export type UiTheme = {
+  accentColor: UiAccentColor;
+  colors?: UiThemeColors;
+};
 export const UI_FONT_SIZE_MIN = 10;
 export const UI_FONT_SIZE_MAX = 32;
-export const DEFAULT_CHAT_FONT_SIZE = 12;
+export const DEFAULT_CHAT_FONT_SIZE = 14;
 export const DEFAULT_UI_FONT_SIZE = 14;
 export type UiFontSize = number;
 
@@ -104,6 +131,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.version !== 2 &&
         parsed.version !== 3 &&
         parsed.version !== 4 &&
+        parsed.version !== 5 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
@@ -149,6 +177,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
           UI_ACCENT_COLORS,
           DEFAULT_UI_PREFERENCES.theme.accentColor,
         ),
+        colors: readThemeColors(storedTheme?.colors),
       },
       chatFontSize: readFontSize(
         parsed.chatFontSize,
@@ -191,6 +220,21 @@ function readFontSize(value: unknown, fallback: UiFontSize): UiFontSize {
     : fallback;
 }
 
+function readThemeColors(value: unknown): UiThemeColors {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const colors: UiThemeColors = {};
+  for (const key of UI_THEME_COLOR_KEYS) {
+    const color = value[key];
+    if (typeof color === "string" && color.trim()) {
+      colors[key] = color;
+    }
+  }
+  return colors;
+}
+
 function readStoredPreferences(): UiPreferences {
   if (typeof window === "undefined") {
     return DEFAULT_UI_PREFERENCES;
@@ -209,6 +253,17 @@ function resolvedColorScheme(colorScheme: UiColorScheme): "light" | "dark" {
     : "light";
 }
 
+function applyThemeColors(colors: UiThemeColors | undefined): void {
+  for (const key of UI_THEME_COLOR_KEYS) {
+    const value = colors?.[key]?.trim();
+    if (value) {
+      document.documentElement.style.setProperty(`--color-${key}`, value);
+    } else {
+      document.documentElement.style.removeProperty(`--color-${key}`);
+    }
+  }
+}
+
 function useStoredUiPreferences(): UiPreferencesContextValue {
   const [preferences, setPreferences] = useState(readStoredPreferences);
 
@@ -221,6 +276,7 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
       preferences.colorScheme,
     );
     document.documentElement.dataset.accent = preferences.theme.accentColor;
+    applyThemeColors(preferences.theme.colors);
     document.documentElement.dataset.uiFontSize = String(
       preferences.uiFontSize,
     );

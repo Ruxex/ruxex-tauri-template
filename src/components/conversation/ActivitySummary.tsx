@@ -7,10 +7,7 @@ type ActivitySummaryProps = {
   presentation: ActivityPresentation;
 };
 
-export function ActivitySummary({
-  item,
-  presentation,
-}: ActivitySummaryProps) {
+export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
   const Icon = presentation.icon;
   const metadata = item.metadata;
   const isCommandExecution = item.type === "commandExecution";
@@ -19,9 +16,12 @@ export function ActivitySummary({
     (metadata?.status !== undefined || metadata?.exitCode !== undefined);
   const isInProgress =
     metadata?.status === "inProgress" || metadata?.status === "running";
+  const summaryPadding = isCommandExecution ? "py-1" : "py-3";
 
   return (
-    <summary className="collapse-title flex items-center gap-2 py-3 text-sm font-medium">
+    <summary
+      className={`collapse-title flex items-center gap-2 ${summaryPadding} text-sm font-medium`}
+    >
       <span
         aria-label={presentation.label}
         className="inline-flex size-4 shrink-0 items-center justify-center"
