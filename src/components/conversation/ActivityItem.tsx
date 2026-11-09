@@ -1,7 +1,6 @@
 import { memo, type ComponentType, type SVGProps } from "react";
 
 import {
-  ArrowPathIcon,
   BoltIcon,
   ClipboardDocumentListIcon,
   CommandLineIcon,
@@ -17,11 +16,15 @@ import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
 } from "./conversation-model";
-import { ArtifactPreview } from "./ArtifactPreview";
 import { CommandExecutionView } from "./CommandExecutionView";
+import { ArtifactPreview } from "./ArtifactPreview";
+import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
 import { ImageView } from "./ImageView";
 import { MarkdownContent } from "./MarkdownContent";
-import { openBrowserWindow } from "../../platform/native";
+import {
+  openBrowserWindow,
+  type ArtifactPreviewData,
+} from "../../platform/native";
 
 type ActivityIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -46,10 +49,13 @@ const fallbackPresentation: ActivityPresentation = {
   label: "Activity",
 };
 
-type ActivityItemProps = { item: ConversationViewItem };
+type ActivityItemProps = {
+  item: ConversationViewItem;
+  loadArtifactPreview?: (path: string) => Promise<ArtifactPreviewData>;
+};
 
 export const ActivityItem = memo(
-  function ActivityItem({ item }: ActivityItemProps) {
+  function ActivityItem({ item, loadArtifactPreview }: ActivityItemProps) {
     const presentation =
       activityPresentations[item.type] ?? fallbackPresentation;
     const isInProgress =
@@ -69,25 +75,25 @@ export const ActivityItem = memo(
         <summary className="collapse-title flex items-center gap-2 py-3 text-sm font-medium">
           <span
             aria-label={presentation.label}
-            className="inline-flex shrink-0"
+            className="inline-flex size-4 shrink-0 items-center justify-center"
             role="img"
             title={presentation.label}
           >
             <Icon aria-hidden="true" className="size-4 text-base-content/70" />
-            {isInProgress && (
-              <ArrowPathIcon
-                aria-hidden="true"
-                className="size-3 animate-spin text-primary"
-              />
-            )}
           </span>
           <span>{item.title}</span>
-          <span className="badge badge-ghost badge-sm">{item.type}</span>
+          {isCommandExecution && item.metadata?.status && (
+            <ExecutionStatusIcon status={item.metadata.status} />
+          )}
+          {!isCommandExecution && isInProgress && (
+            <ExecutionStatusIcon status={item.metadata?.status} />
+          )}
           {isInProgress && (
             <span aria-label="Running" className="sr-only" role="status">
               Running
             </span>
           )}
+          <span className="badge badge-ghost badge-sm">{item.type}</span>
         </summary>
         <div className="collapse-content">
           {item.imagePath && <ImageView path={item.imagePath} />}
@@ -105,7 +111,10 @@ export const ActivityItem = memo(
             </button>
           )}
           {item.artifactPath && item.artifactFormat === "xlsx" && (
-            <ArtifactPreview path={item.artifactPath} />
+            <ArtifactPreview
+              loadPreview={loadArtifactPreview}
+              path={item.artifactPath}
+            />
           )}
           {isCommandExecution && command && (
             <CommandExecutionView
@@ -134,5 +143,7 @@ export const ActivityItem = memo(
       </details>
     );
   },
-  (left, right) => areConversationViewItemsEqual(left.item, right.item),
+    (left, right) =>
+      areConversationViewItemsEqual(left.item, right.item) &&
+      left.loadArtifactPreview === right.loadArtifactPreview,
 );

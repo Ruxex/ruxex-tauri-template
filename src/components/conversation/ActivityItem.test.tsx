@@ -59,6 +59,35 @@ describe("ActivityItem", () => {
     expect(screen.getByRole("status", { name: "Running" })).toBeTruthy();
   });
 
+  it("places a command loading icon after the title", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "command-progress-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Command",
+          text: "waiting",
+          metadata: {
+            command: "pnpm test",
+            status: "inProgress",
+          },
+        }}
+      />,
+    );
+
+    const loadingIcon = screen.getAllByRole("img", {
+      name: "Command running",
+    })[0];
+    expect(loadingIcon).toBeTruthy();
+    expect(loadingIcon.className).toContain("items-center");
+    expect(loadingIcon.className).toContain("justify-center");
+    expect(loadingIcon.parentElement?.previousElementSibling?.textContent).toBe(
+      "Command",
+    );
+  });
+
   it("keeps diagnostic metadata visible in a collapsed activity", () => {
     render(
       <ActivityItem
@@ -81,7 +110,8 @@ describe("ActivityItem", () => {
 
     expect(screen.getByText("Command")).toBeTruthy();
     expect(screen.getByText("pnpm test")).toBeTruthy();
-    expect(screen.getByText("0")).toBeTruthy();
+    const diagnostics = screen.getByTestId("command-execution-diagnostics");
+    expect(within(diagnostics).getByRole("img", { name: "Command completed" })).toBeTruthy();
     expect(screen.getByText("done")).toBeTruthy();
   });
 
@@ -118,14 +148,53 @@ describe("ActivityItem", () => {
     expect(result.className).toContain("overflow-y-auto");
     expect(command.className).not.toContain("bg-neutral");
     expect(screen.queryByText("/workspace")).toBeNull();
-    expect(screen.getByText("status")).toBeTruthy();
-    expect(screen.getByText("exit code")).toBeTruthy();
     const diagnostics = screen.getByTestId("command-execution-diagnostics");
-    expect(diagnostics.contains(screen.getByText("status"))).toBe(true);
-    expect(diagnostics.contains(screen.getByText("exit code"))).toBe(true);
+    expect(
+      within(diagnostics).getByRole("img", { name: "Command completed" }),
+    ).toBeTruthy();
+    expect(
+      within(diagnostics).queryByRole("img", {
+        name: "Command exited successfully",
+      }),
+    ).toBeNull();
+    expect(within(diagnostics).getAllByRole("img")).toHaveLength(1);
+    expect(screen.queryByText("status", { exact: true })).toBeNull();
+    expect(screen.queryByText("exit code", { exact: true })).toBeNull();
     expect(diagnostics.className).toContain("flex");
     expect(screen.queryByText("command", { exact: true })).toBeNull();
     expect(screen.queryByText("result", { exact: true })).toBeNull();
+  });
+
+  it("keeps a visible non-zero exit code with an error icon", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "command-failed-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Command",
+          text: "failed",
+          metadata: {
+            command: "pnpm test",
+            status: "failed",
+            exitCode: "1",
+          },
+        }}
+      />,
+    );
+
+    const diagnostics = screen.getByTestId("command-execution-diagnostics");
+    expect(
+      within(diagnostics).getByRole("img", { name: "Command failed" }),
+    ).toBeTruthy();
+    expect(
+      within(diagnostics).getByRole("img", {
+        name: "Command exited with code 1",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Exit code: 1")).toBeTruthy();
+    expect(screen.queryByText("exit code", { exact: true })).toBeNull();
   });
 
   it("renders diff activity using the shared Markdown renderer", () => {
@@ -198,5 +267,38 @@ describe("ActivityItem", () => {
 
     expect(await screen.findByRole("img", { name: "Artifact preview" })).toBeTruthy();
     expect(previewArtifact).toHaveBeenCalledWith("/workspace/report.xlsx");
+  });
+
+  it("accepts an injected artifact preview loader for browser stories", async () => {
+    const loadArtifactPreview = vi.fn().mockResolvedValue({
+      mimeType: "image/svg+xml",
+      dataUrl: "data:image/svg+xml;base64,ladle-preview",
+      format: "xlsx",
+      sheets: 1,
+      rows: 2,
+      columns: 2,
+    });
+
+    render(
+      <ActivityItem
+        item={{
+          id: "artifact-story-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Generate report",
+          text: '{"ok":true}',
+          artifactPath: "/workspace/report.xlsx",
+          artifactFormat: "xlsx",
+          metadata: { status: "completed" },
+        }}
+        loadArtifactPreview={loadArtifactPreview}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("img", { name: "Artifact preview" }),
+    ).toBeTruthy();
+    expect(loadArtifactPreview).toHaveBeenCalledWith("/workspace/report.xlsx");
   });
 });

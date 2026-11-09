@@ -23,6 +23,14 @@ export const EmptyOutput: Story = () => (
   <CommandExecutionView command="git status --short" result="" status="completed" />
 );
 
+export const StatusOnly: Story = () => (
+  <CommandExecutionView
+    command="git diff --check"
+    result="No whitespace errors found."
+    status="completed"
+  />
+);
+
 export const Failed: Story = () => (
   <CommandExecutionView
     command="pnpm test --runInBand"
