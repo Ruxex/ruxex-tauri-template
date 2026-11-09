@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const openBrowserWindow = vi.hoisted(() => vi.fn());
+const previewArtifact = vi.hoisted(() => vi.fn());
 
-vi.mock("../../platform/native", () => ({ openBrowserWindow }));
+vi.mock("../../platform/native", () => ({ openBrowserWindow, previewArtifact }));
 
 import { ActivityItem } from "./ActivityItem";
 
@@ -161,5 +168,35 @@ describe("ActivityItem", () => {
     expect(openBrowserWindow).toHaveBeenCalledWith(
       "https://example.test/session",
     );
+  });
+
+  it("renders an image preview for an explicit XLSX artifact", async () => {
+    previewArtifact.mockResolvedValue({
+      mimeType: "image/svg+xml",
+      dataUrl: "data:image/svg+xml;base64,preview",
+      format: "xlsx",
+      sheets: 1,
+      rows: 4,
+      columns: 2,
+    });
+
+    render(
+      <ActivityItem
+        item={{
+          id: "artifact-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Generate report",
+          text: '{"ok":true}',
+          artifactPath: "/workspace/report.xlsx",
+          artifactFormat: "xlsx",
+          metadata: { status: "completed" },
+        }}
+      />,
+    );
+
+    expect(await screen.findByRole("img", { name: "Artifact preview" })).toBeTruthy();
+    expect(previewArtifact).toHaveBeenCalledWith("/workspace/report.xlsx");
   });
 });

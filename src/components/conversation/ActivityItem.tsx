@@ -17,6 +17,7 @@ import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
 } from "./conversation-model";
+import { ArtifactPreview } from "./ArtifactPreview";
 import { CommandExecutionView } from "./CommandExecutionView";
 import { ImageView } from "./ImageView";
 import { MarkdownContent } from "./MarkdownContent";
@@ -102,6 +103,9 @@ export const ActivityItem = memo(
             >
               Open in browser
             </button>
+          )}
+          {item.artifactPath && item.artifactFormat === "xlsx" && (
+            <ArtifactPreview path={item.artifactPath} />
           )}
           {isCommandExecution && command && (
             <CommandExecutionView

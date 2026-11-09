@@ -61,3 +61,16 @@ export const FileChanges: Story = () => (
     }}
   />
 );
+
+export const Artifact: Story = () => (
+  <ActivityItem
+    item={{
+      ...commandItem,
+      id: "activity-artifact",
+      title: "Generate report",
+      text: '{"ok":true,"format":"xlsx","output":"/workspace/report.xlsx"}',
+      artifactPath: "/workspace/report.xlsx",
+      artifactFormat: "xlsx",
+    }}
+  />
+);
