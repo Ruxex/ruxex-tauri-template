@@ -9,6 +9,8 @@ use rust_xlsxwriter::{Chart, ChartType, Color, Format, FormatAlign, Formula, Tab
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use crate::artifact_pdf::{PdfPageSpec, inspect_pdf_bytes};
+
 #[derive(Debug)]
 struct ArtifactError {
     code: &'static str,
@@ -129,6 +131,13 @@ struct EngineRequest {
     output_path: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct PdfInput {
+    pages: Vec<PdfPageSpec>,
+    #[serde(default)]
+    allowed_roots: Vec<String>,
+}
+
 pub fn run_engine_stdio() -> std::process::ExitCode {
     let mut request_json = String::new();
     if let Err(error) = std::io::stdin().read_to_string(&mut request_json) {
@@ -157,7 +166,10 @@ pub fn run_engine_stdio() -> std::process::ExitCode {
     }
 
     let result = match request.operation.as_str() {
-        "create" => match (request.input_path.as_deref(), request.output_path.as_deref()) {
+        "create" => match (
+            request.input_path.as_deref(),
+            request.output_path.as_deref(),
+        ) {
             (Some(input), Some(output)) => create_xlsx(input, output),
             _ => Err(ArtifactError::new(
                 "invalid_request",
@@ -174,6 +186,28 @@ pub fn run_engine_stdio() -> std::process::ExitCode {
             .as_deref()
             .ok_or_else(|| ArtifactError::new("invalid_request", "validate requires input_path"))
             .and_then(validate_xlsx),
+        "pdf_create" => match (
+            request.input_path.as_deref(),
+            request.output_path.as_deref(),
+        ) {
+            (Some(input), Some(output)) => create_pdf(input, output),
+            _ => Err(ArtifactError::new(
+                "invalid_request",
+                "pdf_create requires input_path and output_path",
+            )),
+        },
+        "pdf_read" => request
+            .input_path
+            .as_deref()
+            .ok_or_else(|| ArtifactError::new("invalid_request", "pdf_read requires input_path"))
+            .and_then(read_pdf),
+        "pdf_validate" => request
+            .input_path
+            .as_deref()
+            .ok_or_else(|| {
+                ArtifactError::new("invalid_request", "pdf_validate requires input_path")
+            })
+            .and_then(validate_pdf),
         operation => Err(ArtifactError::new(
             "invalid_request",
             format!("unknown engine operation: {operation}"),
@@ -234,6 +268,7 @@ fn run(args: Vec<OsString>) -> Result<Value, ArtifactError> {
         Some("xlsx") => run_xlsx(&args[1..]),
         Some("docx") => run_ooxml("docx", &args[1..]),
         Some("pptx") => run_ooxml("pptx", &args[1..]),
+        Some("pdf") => run_pdf(&args[1..]),
         Some(command) => Err(ArtifactError::new(
             "invalid_arguments",
             format!("unknown command: {command}"),
@@ -253,8 +288,127 @@ fn capabilities(args: &[String]) -> Result<Value, ArtifactError> {
             "xlsx": ["create", "read", "validate"],
             "docx": ["create", "read", "validate"],
             "pptx": ["create", "read", "validate"],
+            "pdf": ["create", "read", "validate"],
         },
     }))
+}
+
+fn run_pdf(args: &[String]) -> Result<Value, ArtifactError> {
+    let Some(operation) = args.first().map(String::as_str) else {
+        return Err(ArtifactError::new(
+            "invalid_arguments",
+            "a pdf operation is required",
+        ));
+    };
+    let flags = parse_flags(&args[1..])?;
+    for (flag, _) in &flags {
+        if !matches!(flag.as_str(), "input" | "output" | "--json") {
+            return Err(ArtifactError::new(
+                "invalid_arguments",
+                format!("unknown flag: --{flag}"),
+            ));
+        }
+    }
+    match operation {
+        "create" => create_pdf(
+            required_flag(&flags, "input")?,
+            required_flag(&flags, "output")?,
+        ),
+        "read" => read_pdf(required_flag(&flags, "input")?),
+        "validate" => validate_pdf(required_flag(&flags, "input")?),
+        _ => Err(ArtifactError::new(
+            "invalid_arguments",
+            format!("unknown pdf operation: {operation}"),
+        )),
+    }
+}
+
+fn create_pdf(input_path: &str, output_path: &str) -> Result<Value, ArtifactError> {
+    let input = fs::read_to_string(input_path).map_err(|error| {
+        ArtifactError::new(
+            "pdf_read_error",
+            format!("failed to read PDF input JSON {input_path}: {error}"),
+        )
+    })?;
+    let input: PdfInput = serde_json::from_str(&input)
+        .map_err(|error| ArtifactError::new("invalid_json", error.to_string()))?;
+    let allowed_roots = if input.allowed_roots.is_empty() {
+        vec![
+            Path::new(input_path)
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .canonicalize()
+                .map_err(|error| {
+                    ArtifactError::new(
+                        "pdf_create_error",
+                        format!("failed to resolve PDF asset root: {error}"),
+                    )
+                })?,
+        ]
+    } else {
+        input
+            .allowed_roots
+            .iter()
+            .map(|root| {
+                Path::new(root).canonicalize().map_err(|error| {
+                    ArtifactError::new(
+                        "pdf_create_error",
+                        format!("failed to resolve PDF asset root {root}: {error}"),
+                    )
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?
+    };
+    let bytes = crate::artifact_pdf::create_pdf_bytes_with_roots(&input.pages, &allowed_roots)
+        .map_err(|error| ArtifactError::new("pdf_create_error", error))?;
+    fs::write(output_path, &bytes).map_err(|error| {
+        ArtifactError::new(
+            "pdf_write_error",
+            format!("failed to write PDF {output_path}: {error}"),
+        )
+    })?;
+    Ok(json!({
+        "ok": true,
+        "format": "pdf",
+        "output": output_path,
+        "pages": input.pages.len(),
+        "bytes": bytes.len(),
+    }))
+}
+
+fn read_pdf(input_path: &str) -> Result<Value, ArtifactError> {
+    let bytes = read_pdf_file(input_path)?;
+    let inspection =
+        inspect_pdf_bytes(&bytes).map_err(|error| ArtifactError::new("invalid_pdf", error))?;
+    Ok(json!({
+        "ok": true,
+        "valid": true,
+        "format": "pdf",
+        "pages": inspection.page_count,
+        "text": inspection.text,
+    }))
+}
+
+fn validate_pdf(input_path: &str) -> Result<Value, ArtifactError> {
+    let bytes = read_pdf_file(input_path)?;
+    let inspection =
+        inspect_pdf_bytes(&bytes).map_err(|error| ArtifactError::new("invalid_pdf", error))?;
+    Ok(json!({
+        "ok": true,
+        "valid": true,
+        "format": "pdf",
+        "pages": inspection.page_count,
+        "bytes": bytes.len(),
+    }))
+}
+
+fn read_pdf_file(input_path: &str) -> Result<Vec<u8>, ArtifactError> {
+    fs::read(input_path).map_err(|error| {
+        ArtifactError::new(
+            "pdf_read_error",
+            format!("failed to read PDF {input_path}: {error}"),
+        )
+    })
 }
 
 fn run_xlsx(args: &[String]) -> Result<Value, ArtifactError> {
@@ -331,7 +485,12 @@ fn inspect_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError>
         )
     })?;
     let parts = (0..archive.len())
-        .filter_map(|index| archive.by_index(index).ok().map(|entry| entry.name().to_owned()))
+        .filter_map(|index| {
+            archive
+                .by_index(index)
+                .ok()
+                .map(|entry| entry.name().to_owned())
+        })
         .collect::<Vec<_>>();
     let required = match format {
         "docx" => vec![
@@ -362,7 +521,10 @@ fn inspect_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError>
     if !missing.is_empty() {
         return Err(ArtifactError::new(
             "invalid_ooxml_package",
-            format!("{format} package is missing required parts: {}", missing.join(", ")),
+            format!(
+                "{format} package is missing required parts: {}",
+                missing.join(", ")
+            ),
         ));
     }
     Ok(json!({
@@ -480,7 +642,11 @@ fn parse_cell_reference(reference: &str) -> Result<(u32, u16), ArtifactError> {
 }
 
 fn parse_column_reference(reference: &str) -> Result<u16, ArtifactError> {
-    if reference.is_empty() || !reference.chars().all(|character| character.is_ascii_alphabetic()) {
+    if reference.is_empty()
+        || !reference
+            .chars()
+            .all(|character| character.is_ascii_alphabetic())
+    {
         return Err(ArtifactError::new(
             "invalid_range",
             format!("invalid column: {reference}"),
@@ -490,11 +656,16 @@ fn parse_column_reference(reference: &str) -> Result<u16, ArtifactError> {
     for character in reference.chars() {
         value = value
             .checked_mul(26)
-            .and_then(|value| value.checked_add(character.to_ascii_uppercase() as u32 - 'A' as u32 + 1))
-            .ok_or_else(|| ArtifactError::new("invalid_range", format!("column is too large: {reference}")))?;
+            .and_then(|value| {
+                value.checked_add(character.to_ascii_uppercase() as u32 - 'A' as u32 + 1)
+            })
+            .ok_or_else(|| {
+                ArtifactError::new("invalid_range", format!("column is too large: {reference}"))
+            })?;
     }
-    u16::try_from(value - 1)
-        .map_err(|_| ArtifactError::new("invalid_range", format!("column is too large: {reference}")))
+    u16::try_from(value - 1).map_err(|_| {
+        ArtifactError::new("invalid_range", format!("column is too large: {reference}"))
+    })
 }
 
 fn parse_color(value: &str) -> Result<Color, ArtifactError> {
@@ -570,7 +741,10 @@ fn build_format(input: &FormatInput) -> Result<Format, ArtifactError> {
     }
     if let Some(number_format) = &input.number_format {
         if number_format.is_empty() {
-            return Err(ArtifactError::new("invalid_format", "number format cannot be empty"));
+            return Err(ArtifactError::new(
+                "invalid_format",
+                "number format cannot be empty",
+            ));
         }
         format = format.set_num_format(number_format);
     }
@@ -677,12 +851,7 @@ fn create_xlsx(input_path: &str, output_path: &str) -> Result<Value, ArtifactErr
         let formats = sheet_input
             .formats
             .iter()
-            .map(|input| {
-                Ok((
-                    parse_a1_range(&input.range)?,
-                    build_format(input)?,
-                ))
-            })
+            .map(|input| Ok((parse_a1_range(&input.range)?, build_format(input)?)))
             .collect::<Result<Vec<_>, ArtifactError>>()?;
         let formula_rows = sheet_input.formulas.len();
         if sheet_input
@@ -692,37 +861,50 @@ fn create_xlsx(input_path: &str, output_path: &str) -> Result<Value, ArtifactErr
         {
             return Err(ArtifactError::new(
                 "invalid_formula_matrix",
-                format!("formula matrix exceeds value matrix on sheet {}", sheet_input.name),
+                format!(
+                    "formula matrix exceeds value matrix on sheet {}",
+                    sheet_input.name
+                ),
             ));
         }
         for row_index in 0..sheet_input.rows.len().max(formula_rows) {
             let value_row = sheet_input.rows.get(row_index);
             let formula_row = sheet_input.formulas.get(row_index);
-            let column_count = value_row.map_or(0, Vec::len).max(formula_row.map_or(0, Vec::len));
+            let column_count = value_row
+                .map_or(0, Vec::len)
+                .max(formula_row.map_or(0, Vec::len));
             for column_index in 0..column_count {
                 let formula = formula_at(sheet_input, row_index, column_index);
                 let format = format_at(&formats, row_index as u32, column_index as u16);
                 if let Some(formula) = formula {
                     formula_total += 1;
                     let mut formula_value = Formula::new(formula);
-                    if let Some(result) = formula_result(value_at(sheet_input, row_index, column_index)) {
+                    if let Some(result) =
+                        formula_result(value_at(sheet_input, row_index, column_index))
+                    {
                         formula_value = formula_value.set_result(result);
                         formula_evaluated += 1;
                     } else {
                         formula_unsupported += 1;
                     }
-                    let row = u32::try_from(row_index)
-                        .map_err(|_| ArtifactError::new("invalid_cell", "row index is too large"))?;
-                    let column = u16::try_from(column_index)
-                        .map_err(|_| ArtifactError::new("invalid_cell", "column index is too large"))?;
+                    let row = u32::try_from(row_index).map_err(|_| {
+                        ArtifactError::new("invalid_cell", "row index is too large")
+                    })?;
+                    let column = u16::try_from(column_index).map_err(|_| {
+                        ArtifactError::new("invalid_cell", "column index is too large")
+                    })?;
                     if let Some(format) = format {
                         worksheet
                             .write_formula_with_format(row, column, formula_value, format)
-                            .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))?;
+                            .map_err(|error| {
+                                ArtifactError::new("xlsx_write_error", error.to_string())
+                            })?;
                     } else {
                         worksheet
                             .write_formula(row, column, formula_value)
-                            .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))?;
+                            .map_err(|error| {
+                                ArtifactError::new("xlsx_write_error", error.to_string())
+                            })?;
                     }
                 } else if let Some(cell) = value_at(sheet_input, row_index, column_index) {
                     write_cell(worksheet, row_index, column_index, cell, format)?;
@@ -731,16 +913,21 @@ fn create_xlsx(input_path: &str, output_path: &str) -> Result<Value, ArtifactErr
         }
         for merge in &sheet_input.merges {
             let range = parse_a1_range(&merge.range)?;
-            let text = value_at(sheet_input, range.first_row as usize, range.first_col as usize)
-                .and_then(|value| match value {
-                    Value::String(value) => Some(value.clone()),
-                    Value::Number(value) => Some(value.to_string()),
-                    Value::Bool(value) => Some(value.to_string()),
-                    Value::Null | Value::Array(_) | Value::Object(_) => None,
-                })
-                .unwrap_or_default();
+            let text = value_at(
+                sheet_input,
+                range.first_row as usize,
+                range.first_col as usize,
+            )
+            .and_then(|value| match value {
+                Value::String(value) => Some(value.clone()),
+                Value::Number(value) => Some(value.to_string()),
+                Value::Bool(value) => Some(value.to_string()),
+                Value::Null | Value::Array(_) | Value::Object(_) => None,
+            })
+            .unwrap_or_default();
             let default_format = Format::new();
-            let format = format_at(&formats, range.first_row, range.first_col).unwrap_or(&default_format);
+            let format =
+                format_at(&formats, range.first_row, range.first_col).unwrap_or(&default_format);
             worksheet
                 .merge_range(
                     range.first_row,
@@ -889,25 +1076,20 @@ fn write_cell(
                 Ok(())
             }
         }
-        Value::String(value) => {
-            if let Some(format) = format {
-                worksheet
-                    .write_string_with_format(row, column, value, format)
-            } else {
-                worksheet.write_string(row, column, value)
-            }
-            .map(|_| ())
-            .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+        Value::String(value) => if let Some(format) = format {
+            worksheet.write_string_with_format(row, column, value, format)
+        } else {
+            worksheet.write_string(row, column, value)
         }
-        Value::Bool(value) => {
-            if let Some(format) = format {
-                worksheet.write_boolean_with_format(row, column, *value, format)
-            } else {
-                worksheet.write_boolean(row, column, *value)
-            }
-            .map(|_| ())
-            .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+        .map(|_| ())
+        .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string())),
+        Value::Bool(value) => if let Some(format) = format {
+            worksheet.write_boolean_with_format(row, column, *value, format)
+        } else {
+            worksheet.write_boolean(row, column, *value)
         }
+        .map(|_| ())
+        .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string())),
         Value::Number(value) => {
             let number = value.as_f64().ok_or_else(|| {
                 ArtifactError::new("unsupported_cell_value", "number is not representable")
@@ -917,8 +1099,8 @@ fn write_cell(
             } else {
                 worksheet.write_number(row, column, number)
             }
-                .map(|_| ())
-                .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+            .map(|_| ())
+            .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
         }
         Value::Array(_) | Value::Object(_) => Err(ArtifactError::new(
             "unsupported_cell_value",

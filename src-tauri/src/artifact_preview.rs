@@ -9,6 +9,7 @@ use serde::Serialize;
 use crate::artifact_model::{
     ArtifactDocument, ArtifactElement, ArtifactPreviewPage, ArtifactSection,
 };
+use crate::artifact_pdf::preview_pdf_bytes;
 use crate::desktop::ruxex_home;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
@@ -144,7 +145,7 @@ fn validate_preview_path(requested: &Path, roots: &[&Path]) -> Result<PathBuf, S
         return Err("artifact preview path must be absolute".to_string());
     }
     if preview_format(requested).is_none() {
-        return Err("only xlsx, docx, and pptx artifacts can be previewed".to_string());
+        return Err("only xlsx, docx, pptx, and pdf artifacts can be previewed".to_string());
     }
     let metadata = fs::symlink_metadata(requested)
         .map_err(|error| format!("artifact preview file cannot be opened: {error}"))?;
@@ -177,6 +178,7 @@ fn preview_format(path: &Path) -> Option<&'static str> {
         "xlsx" => Some("xlsx"),
         "docx" => Some("docx"),
         "pptx" => Some("pptx"),
+        "pdf" => Some("pdf"),
         _ => None,
     }
 }
@@ -186,8 +188,39 @@ fn read_preview_sections(path: &Path) -> Result<Vec<PreviewSheet>, String> {
         Some("xlsx") => read_xlsx_sections(path),
         Some("docx") => read_ooxml_sections(path, "docx"),
         Some("pptx") => read_ooxml_sections(path, "pptx"),
+        Some("pdf") => read_pdf_sections(path),
         _ => Err("unsupported artifact preview format".to_string()),
     }
+}
+
+fn read_pdf_sections(path: &Path) -> Result<Vec<PreviewSheet>, String> {
+    let bytes = fs::read(path).map_err(|error| format!("failed to read pdf artifact: {error}"))?;
+    let document = preview_pdf_bytes(&bytes)?;
+    let sections = document
+        .sections
+        .into_iter()
+        .map(|section| PreviewSheet {
+            name: section.label,
+            cells: section
+                .elements
+                .into_iter()
+                .flat_map(|element| match element {
+                    ArtifactElement::Text { value } => vec![vec![value]],
+                    ArtifactElement::Table { rows } => rows,
+                    ArtifactElement::Unsupported { message, .. } => vec![vec![message]],
+                    ArtifactElement::Shape { kind }
+                    | ArtifactElement::Chart { kind }
+                    | ArtifactElement::Image { asset_id: kind } => {
+                        vec![vec![format!("{kind} (preview unavailable)")]]
+                    }
+                })
+                .collect(),
+        })
+        .collect::<Vec<_>>();
+    if sections.is_empty() {
+        return Err("pdf artifact contains no previewable pages".to_string());
+    }
+    Ok(sections)
 }
 
 fn read_xlsx_sections(path: &Path) -> Result<Vec<PreviewSheet>, String> {
@@ -439,6 +472,7 @@ mod tests {
     use super::{
         PreviewSheet, escape_xml, read_preview_sections, render_svg, validate_preview_path,
     };
+    use crate::artifact_pdf::{PdfPageSpec, PdfTextBlock, create_pdf_bytes};
 
     #[test]
     fn svg_escapes_sheet_and_cell_text() {
@@ -474,13 +508,16 @@ mod tests {
         let xlsx = root.join("report.xlsx");
         let docx = root.join("report.docx");
         let pptx = root.join("report.pptx");
+        let pdf = root.join("report.pdf");
         fs::write(&xlsx, b"not a real workbook").unwrap();
         fs::write(&docx, b"document").unwrap();
         fs::write(&pptx, b"presentation").unwrap();
+        fs::write(&pdf, b"pdf").unwrap();
 
         assert!(validate_preview_path(&xlsx, &[root.as_path()]).is_ok());
         assert!(validate_preview_path(&docx, &[root.as_path()]).is_ok());
         assert!(validate_preview_path(&pptx, &[root.as_path()]).is_ok());
+        assert!(validate_preview_path(&pdf, &[root.as_path()]).is_ok());
         assert!(validate_preview_path(&xlsx, &[Path::new("/home")]).is_err());
         assert!(validate_preview_path(Path::new("report.xlsx"), &[root.as_path()]).is_err());
         let _ = fs::remove_dir_all(root);
@@ -566,6 +603,47 @@ mod tests {
         assert_eq!(sheets[0].cells[1][0], "Ada <3");
         assert!(svg.contains("Ada &lt;3"));
         assert!(svg.contains("3"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn extracts_pdf_pages_for_the_image_preview() {
+        let root = std::env::temp_dir().join(format!("ruxex-preview-pdf-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("report.pdf");
+        let bytes = create_pdf_bytes(&[
+            PdfPageSpec {
+                width: 595.0,
+                height: 842.0,
+                blocks: vec![PdfTextBlock {
+                    text: "Quarterly Review".to_string(),
+                    x: 48.0,
+                    y: 780.0,
+                    size: 18.0,
+                }],
+                ..Default::default()
+            },
+            PdfPageSpec {
+                width: 595.0,
+                height: 842.0,
+                blocks: vec![PdfTextBlock {
+                    text: "Next steps".to_string(),
+                    x: 48.0,
+                    y: 780.0,
+                    size: 18.0,
+                }],
+                ..Default::default()
+            },
+        ])
+        .unwrap();
+        fs::write(&path, bytes).unwrap();
+
+        let sections = read_preview_sections(&path).unwrap();
+        assert_eq!(sections.len(), 2);
+        assert_eq!(sections[0].name, "Page 1");
+        assert_eq!(sections[1].cells[0][0], "Next steps");
+        assert!(render_svg(&sections).contains("Quarterly Review"));
         let _ = fs::remove_dir_all(root);
     }
 

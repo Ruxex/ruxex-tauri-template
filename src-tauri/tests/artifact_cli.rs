@@ -2,8 +2,8 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
 use std::process::Stdio;
+use std::process::{Command, Output};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn binary() -> &'static str {
@@ -62,7 +62,9 @@ fn write_ooxml_package(dir: &Path, label: &str, parts: &[&str]) -> PathBuf {
     let mut archive = zip::ZipWriter::new(file);
     let options = zip::write::SimpleFileOptions::default();
     for part in parts {
-        archive.start_file(*part, options).expect("package part starts");
+        archive
+            .start_file(*part, options)
+            .expect("package part starts");
         archive
             .write_all(b"<package-part />")
             .expect("package part is writable");
@@ -87,6 +89,57 @@ fn capabilities_reports_the_supported_artifact_commands() {
     assert_eq!(value["commands"]["pptx"][0], "create");
     assert_eq!(value["commands"]["pptx"][1], "read");
     assert_eq!(value["commands"]["pptx"][2], "validate");
+    assert_eq!(value["commands"]["pdf"][0], "create");
+    assert_eq!(value["commands"]["pdf"][1], "read");
+    assert_eq!(value["commands"]["pdf"][2], "validate");
+}
+
+#[test]
+fn pdf_create_read_and_validate_support_local_text_pages() {
+    let dir = temp_dir("pdf-roundtrip");
+    let input = write_input(
+        &dir,
+        r#"{"pages":[{"width":595,"height":842,"blocks":[{"text":"Page one","x":48,"y":780,"size":18},{"text":"Total 3","x":48,"y":740,"size":12}]},{"width":595,"height":842,"blocks":[{"text":"Page two","x":48,"y":780,"size":18}]}]}"#,
+    );
+    let pdf = dir.join("report.pdf");
+    let created = run(&[
+        "pdf",
+        "create",
+        "--input",
+        input.to_str().unwrap(),
+        "--output",
+        pdf.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(
+        created.status.success(),
+        "{}",
+        String::from_utf8_lossy(&created.stderr)
+    );
+
+    let validated = run(&[
+        "pdf",
+        "validate",
+        "--input",
+        pdf.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(validated.status.success());
+    let validation: serde_json::Value = serde_json::from_slice(&validated.stdout).unwrap();
+    assert_eq!(validation["valid"], true);
+    assert_eq!(validation["pages"], 2);
+
+    let read = run(&["pdf", "read", "--input", pdf.to_str().unwrap(), "--json"]);
+    assert!(read.status.success());
+    let response: serde_json::Value = serde_json::from_slice(&read.stdout).unwrap();
+    assert_eq!(response["pages"], 2);
+    assert!(
+        response["text"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|value| value == "Page two")
+    );
 }
 
 #[test]
@@ -378,7 +431,11 @@ fn engine_creates_rich_xlsx_metadata_and_reports_formula_counts() {
         "--json",
     ]);
 
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let response: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(response["formulas"]["total"], 1);
     assert_eq!(response["formulas"]["evaluated"], 1);

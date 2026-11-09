@@ -4,6 +4,7 @@ import { ArtifactOutput, FileBlob } from "./file-blob.mjs";
 import { PresentationFile } from "./presentation-file.mjs";
 import { SpreadsheetFile } from "./spreadsheet-file.mjs";
 import { Presentation } from "./presentation.mjs";
+import { PdfDocument } from "./pdf.mjs";
 
 export { Workbook } from "./workbook.mjs";
 
@@ -14,5 +15,6 @@ export {
   FileBlob,
   Presentation,
   PresentationFile,
+  PdfDocument,
   SpreadsheetFile,
 };

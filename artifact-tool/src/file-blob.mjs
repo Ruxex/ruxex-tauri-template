@@ -7,6 +7,7 @@ const supportedTypes = new Map([
   [".xlsx", "xlsx"],
   [".docx", "docx"],
   [".pptx", "pptx"],
+  [".pdf", "pdf"],
 ]);
 
 function normalizePath(inputPath, code, message) {
