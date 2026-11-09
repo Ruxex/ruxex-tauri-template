@@ -13,3 +13,8 @@ The file facades are the canonical XLSX/PPTX file boundaries. They currently
 make shallow XLSX/PPTX imports explicit rather than claiming full-fidelity
 editing; the `Workbook` and `Presentation` objects stay focused on in-memory
 editing.
+
+For desktop conversations, printing the JSON result of `ArtifactOutput.save()`
+lets the Tauri client offer a bounded local SVG preview for generated XLSX
+files. Preview rendering is native and does not require Office, Python, Node,
+or a cloud service; it reads scalar worksheet values only.

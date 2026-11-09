@@ -19,7 +19,8 @@ through the managed runtime PATH.
 4. Use the format-specific API to add values, formulas, formatting, merges,
    tables, charts, text, headings, slides, and supported editable shapes.
 5. Call `inspect()` and save the file-facade output to an explicit absolute
-   output path.
+   output path. Keep the returned JSON result available; the desktop preview
+   recognizes its explicit `format` and `output` fields.
 6. Always run the matching `xlsx validate`, `docx validate`, or `pptx validate`
    command on the generated file.
 7. Report the absolute output path and validation result.
@@ -56,7 +57,8 @@ sheet.charts.add({
 const calculation = workbook.recalculate();
 if (!calculation.ok || calculation.unsupported !== 0) throw new Error("formula calculation failed");
 const workbookFile = SpreadsheetFile.exportXlsx(workbook);
-await workbookFile.save("/absolute/path/report.xlsx");
+const saved = await workbookFile.save("/absolute/path/report.xlsx");
+console.log(JSON.stringify(saved));
 
 const existingWorkbook = await SpreadsheetFile.importXlsx(
   await FileBlob.load("/absolute/path/input.xlsx"),
@@ -112,6 +114,12 @@ and vertical alignment, wrapping, number formats, and column widths. Ranges can
 be merged, and worksheets can add tables plus column, bar, line, pie, or doughnut
 charts. These features are serialized by the bundled native engine, so no
 system Excel, Python, Node package, or office runtime is required.
+
+When the builder prints the JSON returned by `ArtifactOutput.save()`, the
+desktop conversation can show an in-app image preview for generated XLSX files.
+The current preview is a bounded SVG rendering of scalar worksheet values; it
+does not execute formulas, macros, external links, or embedded content. DOCX,
+PPTX, and PDF image rendering are separate future renderer phases.
 
 ## Commands
 
