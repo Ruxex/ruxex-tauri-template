@@ -130,9 +130,9 @@
 - Modify: `artifact-tool/tests/fixtures/smoke-builder.mjs`
 - Test: package boundary, fixture, Rust, Node, frontend, and native build suites
 
-- [ ] Document PDF APIs, supported local images, preview diagnostics, and the viewer contract without requiring user installations.
-- [ ] Update stale statements that artifact viewers are out of scope.
-- [ ] Extend smoke fixtures to create and print JSON metadata for all four formats.
-- [ ] Run `make rust-test`, the artifact Node suite, the full Vitest suite, `pnpm typecheck`, `pnpm lint`, `pnpm build`, package tests, and `git diff --check`.
-- [ ] Confirm `git diff --name-only` contains no AppServer/protocol changes.
-- [ ] Commit documentation/fixture updates, inspect the final diff, and push all artifact commits.
+- [x] Document PDF APIs, supported local images, preview diagnostics, and the viewer contract without requiring user installations.
+- [x] Update stale statements that artifact viewers are out of scope.
+- [x] Extend smoke fixtures to create and print JSON metadata for all four formats.
+- [x] Run `make rust-test`, the artifact Node suite, the full Vitest suite, `pnpm typecheck`, `pnpm lint`, `pnpm build`, package tests, and `git diff --check`.
+- [x] Confirm `git diff --name-only` contains no AppServer/protocol changes.
+- [x] Commit documentation/fixture updates, inspect the final diff, and push all artifact commits.

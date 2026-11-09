@@ -131,8 +131,9 @@ for the JS facade resources. The staged `ruxex-path` directory is prepended to
 agent command sessions, so the `ruxex-artifacts` Skill can invoke the helper
 directly. The bundled Node runtime must contain the `docx` and `pptxgenjs`
 packages as well as the Ruxex SDK. The helper can generate and validate local
-XLSX, DOCX, and PPTX artifacts. The staged directory is intentionally ignored
-by Git.
+XLSX, DOCX, PPTX, and PDF artifacts. PDF and preview inspection is handled by
+the bundled Rust engine, while the JavaScript facade remains the agent-facing
+API. The staged directory is intentionally ignored by Git.
 
 ## App Server runtime mode
 
@@ -202,8 +203,11 @@ protocol and platform adapters:
   repository-root, branch, and dirty-removal checks. Dirty removal requires
   an explicit force action.
 
-Artifact viewers and signed Linux/macOS release artifacts remain outside this
-template's scope.
+The local artifact workflow supports bundled, native previews for XLSX, DOCX,
+PPTX, and PDF output. The viewer is bounded, paged, loss-aware, and does not
+require Office, LibreOffice, Python, or a cloud service. It can open the source
+file and save a copy through an explicit OS destination chooser. Signed
+Linux/macOS release artifacts remain outside this template's scope.
 
 ## Development
 

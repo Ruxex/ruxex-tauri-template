@@ -26,7 +26,7 @@ Codex と Claude は、それぞれのデスクトップアプリについて公
 | 複数エージェント・並列作業 | `★★★` 複数エージェントを並列実行し、進捗・結果を1か所で管理。 [Codex要約](./codex-desktop-features.md) | `★★★` Coworkが複雑な作業を分解し、複数の作業ストリームを調整。 [Claude要約](./claude-desktop-features.md) | `★★☆` Activityにagent collaboration、UIにcollaboration-mode inventoryはあるが、並列作業をデスクトップから全面管理する機能としては限定的。 [README](../README.md#workbench-data-boundary) |
 | ブラウザ操作 | `★★★` アプリ内ブラウザで閲覧・注釈し、フロントエンド作業に利用。 [Codex要約](./codex-desktop-features.md) | `★★★` 内蔵ブラウザまたはChromeで開く、読む、クリック、入力、フォーム記入。 [Claude要約](./claude-desktop-features.md) | `★★☆` Browser／Computer Useアダプターと検証済みHTTP(S) URLのオープンはあるが、汎用ブラウザ操作の範囲は公式READMEで限定的に記載。 [README](../README.md#capability-boundary) |
 | Computer Use・画面操作 | `★★★` 画面を見てクリック・入力し、デスクトップアプリを操作。 [Codex要約](./codex-desktop-features.md) | `★★★` コネクタ、ブラウザに続く経路として画面をクリック・入力・移動。 [Claude要約](./claude-desktop-features.md) | `★★☆` Browser／Computer Useを明示したプロトコル・プラットフォーム境界、動的ツール画像、承認経路を実装。 [README](../README.md#capability-boundary) |
-| ファイル・成果物・プレビュー | `★★★` 文書、スプレッドシート、画像などを同じワークスペースで作成・確認。 [Codex要約](./codex-desktop-features.md) | `★★★` 整形済み文書、数式付きスプレッドシート、プレゼンテーションを生成・編集。 [Claude要約](./claude-desktop-features.md) | `★★☆` Attachments、Markdown、コード／差分レンダリング、画像入力はあるが、成果物ビューアは現行テンプレートの範囲外。 [README](../README.md#workbench-data-boundary) |
+| ファイル・成果物・プレビュー | `★★★` 文書、スプレッドシート、画像などを同じワークスペースで作成・確認。 [Codex要約](./codex-desktop-features.md) | `★★★` 整形済み文書、数式付きスプレッドシート、プレゼンテーションを生成・編集。 [Claude要約](./claude-desktop-features.md) | `★★★` Skill経由でXLSX／DOCX／PPTX／PDFを生成・検査し、Tauri側でページ付きSVGプレビュー、診断、ローカルファイルを開く／コピー保存まで提供。 [README](../README.md#workbench-data-boundary) |
 | Plugins・Extensions・Skills・MCP | `★★★` PluginsとSkillsで外部ツール、専門ワークフロー、ドキュメント・デプロイ機能を追加。 [Codex要約](./codex-desktop-features.md) | `★★★` Desktop Extensionsの検証済みディレクトリと、ローカルアプリ・データへの接続。 [Claude要約](./claude-desktop-features.md) | `★★★` MCP status／reload、Skills、Pluginsに加え、App Server経由のGit／ローカルMarketplace、Plugin一覧・導入・更新・削除を実装。Connected appsのOAuth／権限カタログは今後の拡張。 [README](../README.md#capability-boundary) |
 | スケジュール | `★★★` スタンドアロンまたは既存チャット内の繰り返しタスク。 [Codex要約](./codex-desktop-features.md) | `★★★` オンデマンドまたは周期指定のScheduled tasks。 [Claude要約](./claude-desktop-features.md) | `★★★` One-shot、daily、weeklyを永続化し、Threadをstart／resumeできる。 [README](../README.md#capability-boundary) |
 | 音声・画像・画面コンテキスト | `★★★` Desktop CodexのVoice、画像生成、スクリーンショット・画像を使った作業。 [Codex要約](./codex-desktop-features.md) | `★★★` MacのQuick Entryでスクリーンショット、ウィンドウ、音声Dictation。 [Claude要約](./claude-desktop-features.md) | `★☆☆` Image input、動的ツール画像、`imageView` screenshotはあるが、音声やグローバルQuick Entryの記載はない。 [README](../README.md#capability-boundary) |
@@ -51,7 +51,6 @@ Ruxex Tauri Templateは、CodexやClaudeの完成された消費者向けデス�
 
 - Cloud上で端末をまたいで継続する製品管理型の実行環境
 - 音声入力、グローバルなQuick Entry
-- 成果物の専用ビューアや、文書・表計算・スライドの生成フロー
 - Desktop Extensionの検証済みディレクトリ
 - 並列エージェントの全面的なオーケストレーション
 

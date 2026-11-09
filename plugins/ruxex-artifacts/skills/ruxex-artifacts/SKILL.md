@@ -1,6 +1,6 @@
 ---
 name: ruxex-artifacts
-description: Create, inspect, and validate local spreadsheet, document, and presentation artifacts with the bundled Ruxex APIs.
+description: Create, inspect, validate, and preview local spreadsheet, document, presentation, and PDF artifacts with the bundled Ruxex APIs.
 ---
 
 # Ruxex Artifacts
@@ -14,15 +14,15 @@ through the managed runtime PATH.
 
 1. Check support with `ruxex-artifacts capabilities --json`.
 2. Write one `.mjs` builder that imports `@ruxex/artifact-tool`.
-3. Create the requested `Workbook`, `Document`, or `Presentation`, or import
+3. Create the requested `Workbook`, `Document`, `Presentation`, or `PdfDocument`, or import
    an existing workbook/deck with `FileBlob` and the matching file facade.
 4. Use the format-specific API to add values, formulas, formatting, merges,
    tables, charts, text, headings, slides, and supported editable shapes.
 5. Call `inspect()` and save the file-facade output to an explicit absolute
    output path. Keep the returned JSON result available; the desktop preview
    recognizes its explicit `format` and `output` fields.
-6. Always run the matching `xlsx validate`, `docx validate`, or `pptx validate`
-   command on the generated file.
+6. Always run the matching `xlsx validate`, `docx validate`, `pptx validate`, or
+   `pdf validate` command on the generated file.
 7. Report the absolute output path and validation result.
 
 ## API examples
@@ -31,6 +31,7 @@ through the managed runtime PATH.
 import {
   FileBlob,
   Document,
+  PdfDocument,
   Presentation,
   PresentationFile,
   SpreadsheetFile,
@@ -90,16 +91,20 @@ slide.shapes.add({
 await presentation.inspect();
 const presentationFile = PresentationFile.exportPptx(presentation);
 await presentationFile.save("/absolute/path/review.pptx");
+
+const pdf = PdfDocument.create({ title: "Project Review" });
+pdf.addPage({ width: 595, height: 842 }).addText("Generated locally by Ruxex.");
+await pdf.exportPdf("/absolute/path/review.pdf");
 ```
 
-`SpreadsheetFile.importXlsx()` currently imports sheet names and scalar cell
-values. `PresentationFile.importPptx()` is a shallow import for validation and
-source tracking; it does not yet expose existing slide objects for editing.
-Workbook and presentation file I/O is facade-only: use `Workbook` and
-`Presentation` for in-memory editing, then use the matching `*File` facade to
-import or export a file. The Word `Document` facade currently creates new
-documents and performs structural validation; full existing-file editing is
-not yet available.
+`SpreadsheetFile.importXlsx()` preserves bounded values, formulas, formats,
+merges, tables, charts, and media metadata. `Document.load()` and
+`Presentation.load()` reconstruct the supported text, table, and shape model
+and expose explicit loss diagnostics when an imported package contains content
+that cannot be round-tripped. Exporting a lossy import requires
+`{ acceptDiagnostics: true }`. PDF loading is inspection-only; `PdfDocument`
+creates bounded PDFs with text, tables, and local PNG/JPEG images and reports
+text/page metadata when loading an existing PDF.
 
 ## Workbook generation support
 
@@ -116,11 +121,12 @@ charts. These features are serialized by the bundled native engine, so no
 system Office tooling, Node package, or external office runtime is required.
 
 When the builder prints the JSON returned by `ArtifactOutput.save()`, the
-desktop conversation can show an in-app image preview for generated XLSX, DOCX,
-and PPTX files. XLSX previews render bounded scalar worksheet values; DOCX and
-PPTX previews render bounded text/layout snapshots. No preview executes
-formulas, macros, external links, embedded content, or media. PDF image
-rendering remains a separate future renderer phase.
+desktop conversation can show a paged in-app image preview for generated XLSX,
+DOCX, PPTX, and PDF files. The viewer supports page/sheet thumbnails,
+previous/next navigation, keyboard navigation, zoom, opening the source file,
+and saving a user-selected copy. Previews are bounded and never execute
+formulas, macros, external links, embedded content, or media; unsupported
+content is surfaced as diagnostics.
 
 ## Commands
 
@@ -132,6 +138,8 @@ ruxex-artifacts docx read --input /absolute/path/report.docx --json
 ruxex-artifacts docx validate --input /absolute/path/report.docx --json
 ruxex-artifacts pptx read --input /absolute/path/review.pptx --json
 ruxex-artifacts pptx validate --input /absolute/path/review.pptx --json
+ruxex-artifacts pdf read --input /absolute/path/review.pdf --json
+ruxex-artifacts pdf validate --input /absolute/path/review.pdf --json
 ```
 
 Successful commands emit JSON on stdout. Failures emit a structured JSON
