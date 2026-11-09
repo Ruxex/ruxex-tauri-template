@@ -15,6 +15,8 @@ editing; the `Workbook` and `Presentation` objects stay focused on in-memory
 editing.
 
 For desktop conversations, printing the JSON result of `ArtifactOutput.save()`
-lets the Tauri client offer a bounded local SVG preview for generated XLSX
-files. Preview rendering is native and does not require Office, Python, Node,
-or a cloud service; it reads scalar worksheet values only.
+lets the Tauri client offer bounded local SVG previews for generated XLSX, DOCX,
+and PPTX files. XLSX previews read scalar worksheet values, while DOCX/PPTX
+previews read text and layout structure from the OOXML package. Preview
+rendering is native and does not require Office, Python, Node, or a cloud
+service. PDF rendering is a separate future phase.

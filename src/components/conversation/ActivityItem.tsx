@@ -33,6 +33,8 @@ type ActivityPresentation = {
   label: string;
 };
 
+const previewableArtifactFormats = new Set(["xlsx", "docx", "pptx"]);
+
 const activityPresentations: Record<string, ActivityPresentation> = {
   commandExecution: { icon: CommandLineIcon, label: "Command" },
   dynamicToolCall: { icon: WrenchScrewdriverIcon, label: "Tool" },
@@ -110,7 +112,9 @@ export const ActivityItem = memo(
               Open in browser
             </button>
           )}
-          {item.artifactPath && item.artifactFormat === "xlsx" && (
+          {item.artifactPath &&
+            item.artifactFormat &&
+            previewableArtifactFormats.has(item.artifactFormat) && (
             <ArtifactPreview
               loadPreview={loadArtifactPreview}
               path={item.artifactPath}

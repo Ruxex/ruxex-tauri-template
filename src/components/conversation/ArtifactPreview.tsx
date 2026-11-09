@@ -66,7 +66,11 @@ export function ArtifactPreview({
         src={preview.dataUrl}
       />
       <figcaption className="px-2 py-1 text-xs text-base-content/60">
-        {preview.sheets} sheets · {preview.rows} rows · {preview.columns} columns
+        {preview.format === "xlsx"
+          ? `${preview.sheets} sheets · ${preview.rows} rows · ${preview.columns} columns`
+          : preview.format === "pptx"
+            ? `${preview.sheets} slides · ${preview.rows} text lines`
+            : `Document · ${preview.rows} text lines`}
       </figcaption>
     </figure>
   );

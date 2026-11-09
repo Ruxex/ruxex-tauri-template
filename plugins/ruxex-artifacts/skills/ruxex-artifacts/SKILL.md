@@ -116,10 +116,11 @@ charts. These features are serialized by the bundled native engine, so no
 system Office tooling, Node package, or external office runtime is required.
 
 When the builder prints the JSON returned by `ArtifactOutput.save()`, the
-desktop conversation can show an in-app image preview for generated XLSX files.
-The current preview is a bounded SVG rendering of scalar worksheet values; it
-does not execute formulas, macros, external links, or embedded content. DOCX,
-PPTX, and PDF image rendering are separate future renderer phases.
+desktop conversation can show an in-app image preview for generated XLSX, DOCX,
+and PPTX files. XLSX previews render bounded scalar worksheet values; DOCX and
+PPTX previews render bounded text/layout snapshots. No preview executes
+formulas, macros, external links, embedded content, or media. PDF image
+rendering remains a separate future renderer phase.
 
 ## Commands
 

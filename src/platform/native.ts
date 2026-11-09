@@ -8,7 +8,7 @@ export type QuickPanelShortcutSettings = {
 export type ArtifactPreviewData = {
   mimeType: "image/svg+xml";
   dataUrl: string;
-  format: "xlsx";
+  format: "xlsx" | "docx" | "pptx";
   sheets: number;
   rows: number;
   columns: number;

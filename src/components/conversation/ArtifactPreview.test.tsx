@@ -52,4 +52,19 @@ describe("ArtifactPreview", () => {
       "Preview is unavailable.",
     );
   });
+
+  it("describes a presentation preview as slides", async () => {
+    previewArtifact.mockResolvedValue({
+      mimeType: "image/svg+xml",
+      dataUrl: "data:image/svg+xml;base64,preview",
+      format: "pptx",
+      sheets: 3,
+      rows: 8,
+      columns: 1,
+    });
+
+    render(<ArtifactPreview path="/workspace/deck.pptx" />);
+
+    expect(await screen.findByText("3 slides · 8 text lines")).toBeTruthy();
+  });
 });
