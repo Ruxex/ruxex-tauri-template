@@ -6,6 +6,7 @@ import { isMockAppServerRuntime } from "./runtime";
 
 export type AppServerStatus = {
   socketPath: string;
+  homeDataDir?: string;
   appServerVersion: string;
   mode?: "daemon" | "inprocess";
 };

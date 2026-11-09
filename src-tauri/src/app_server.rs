@@ -83,6 +83,7 @@ impl Default for AppServerState {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AppServerStatus {
     socket_path: String,
+    home_data_dir: String,
     app_server_version: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     mode: Option<AppServerMode>,
@@ -359,6 +360,7 @@ async fn connect_daemon_endpoint(
         };
     let status = AppServerStatus {
         socket_path: effective_socket_path.display().to_string(),
+        home_data_dir: home.display().to_string(),
         app_server_version: connected_version
             .or(bootstrapped_version)
             .unwrap_or_else(|| "unknown".to_string()),
@@ -371,7 +373,7 @@ async fn connect_in_process_endpoint(
     arg0_paths: Arg0DispatchPaths,
     desktop_config: &DesktopConfig,
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
-    let _home =
+    let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let (executable, runtime_paths) = resolve_in_process_paths(&arg0_paths)?;
     let loaded_config = Config::load_with_cli_overrides_and_harness_overrides(
@@ -456,6 +458,7 @@ async fn connect_in_process_endpoint(
         .unwrap_or_else(|| "unknown".to_string());
     let status = AppServerStatus {
         socket_path: "in-process".to_string(),
+        home_data_dir: home.display().to_string(),
         app_server_version,
         mode: Some(AppServerMode::InProcess),
     };
@@ -805,6 +808,7 @@ mod tests {
     fn app_server_status_keeps_the_local_bridge_contract() {
         let status = AppServerStatus {
             socket_path: "/tmp/app-server.sock".to_string(),
+            home_data_dir: "/home/test-user/.ruxex_desktop".to_string(),
             app_server_version: "local".to_string(),
             mode: Some(AppServerMode::InProcess),
         };
@@ -812,6 +816,7 @@ mod tests {
             serde_json::to_value(status).unwrap(),
             json!({
                 "socketPath": "/tmp/app-server.sock",
+                "homeDataDir": "/home/test-user/.ruxex_desktop",
                 "appServerVersion": "local",
                 "mode": "inprocess",
             })

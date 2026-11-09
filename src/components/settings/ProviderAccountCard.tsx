@@ -11,12 +11,14 @@ type ProviderAccountCardProps = {
   provider: string;
   authStatus: string;
   account: string;
+  dataDirectory: string;
 };
 
 export function ProviderAccountCard({
   provider,
   authStatus,
   account,
+  dataDirectory,
 }: ProviderAccountCardProps) {
   return (
     <SettingsPanel icon={UserCircleIcon} title="Provider and account">
@@ -35,6 +37,14 @@ export function ProviderAccountCard({
           </StateBadge>
         </SettingRow>
         <SettingRow label="Account">{account}</SettingRow>
+        <SettingRow label="Data directory">
+          <span
+            className="block truncate font-mono text-xs"
+            title={dataDirectory}
+          >
+            {dataDirectory}
+          </span>
+        </SettingRow>
       </dl>
     </SettingsPanel>
   );

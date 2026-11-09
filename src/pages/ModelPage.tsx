@@ -1,5 +1,6 @@
 import {
   useAccount,
+  useAppServerStatus,
   useModelList,
   useModelProvider,
   useModelProviderCapabilities,
@@ -13,6 +14,7 @@ import {
 
 export function ModelPage() {
   const account = useAccount();
+  const appServerStatus = useAppServerStatus();
   const capabilities = useModelProviderCapabilities();
   const models = useModelList();
   const provider = useModelProvider();
@@ -27,6 +29,7 @@ export function ModelPage() {
         }
         authStatus={account.data?.authStatus ?? "Unknown"}
         account={account.data?.displayName ?? "Not signed in"}
+        dataDirectory={appServerStatus.data?.homeDataDir ?? "Unavailable"}
       />
       <CapabilitiesCard capabilities={capabilities.data ?? {}} />
       <RuntimeSummary

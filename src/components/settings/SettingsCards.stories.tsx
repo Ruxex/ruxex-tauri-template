@@ -1,5 +1,5 @@
-import type { Story } from "@ladle/react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import type { Story } from "@ladle/react";
 
 import {
   AppServerCard,
@@ -44,6 +44,7 @@ export const ProviderAccount: Story = () => (
   <ProviderAccountCard
     account="catalog@example.com"
     authStatus="authenticated"
+    dataDirectory="/home/example/.ruxex_desktop"
     provider="Example Provider"
   />
 );
@@ -60,11 +61,7 @@ export const Capabilities: Story = () => (
 );
 
 export const Runtime: Story = () => (
-  <RuntimeSummary
-    modelCount={4}
-    permissionCount={3}
-    rateLimitName="Standard"
-  />
+  <RuntimeSummary modelCount={4} permissionCount={3} rateLimitName="Standard" />
 );
 
 export const Language: Story = () => (

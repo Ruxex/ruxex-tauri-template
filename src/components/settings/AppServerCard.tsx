@@ -158,7 +158,7 @@ export function AppServerCard({
               <SettingRow label="PID">{daemon.pid}</SettingRow>
             )}
             {daemon?.socketPath && (
-              <SettingRow label="Socket">
+              <SettingRow label="UnixSocket">
                 <span
                   className="block max-w-full truncate font-mono text-xs"
                   title={daemon.socketPath}

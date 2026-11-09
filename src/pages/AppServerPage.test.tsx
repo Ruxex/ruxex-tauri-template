@@ -113,6 +113,7 @@ describe("AppServerPage", () => {
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
     expect(screen.getByText("/tmp/ruxex.sock")).toBeTruthy();
+    expect(screen.getByText("UnixSocket")).toBeTruthy();
     expect(screen.getByText("Connected")).toBeTruthy();
     expect(screen.getByText("Synchronized")).toBeTruthy();
 
@@ -121,6 +122,25 @@ describe("AppServerPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
     expect(status.refetch).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the full Unix socket path available on hover", () => {
+    const socketPath =
+      "/home/ada/.ruxex_desktop/runtime/app-server/control.sock";
+    useAppServerDaemon.mockReturnValue(
+      useDaemonResult({
+        status: {
+          ...useDaemonResult().status,
+          data: { ...runningDaemon, socketPath },
+        },
+      }),
+    );
+
+    render(<AppServerPage />);
+
+    const socket = screen.getByText(socketPath);
+    expect(socket.getAttribute("title")).toBe(socketPath);
+    expect(socket.className).toContain("truncate");
   });
 
   it("shows Update when the running and managed versions differ", () => {
