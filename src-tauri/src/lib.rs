@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 mod app_server;
+mod artifact_preview;
 pub mod artifacts;
 mod branding;
 mod desktop;
@@ -145,6 +146,7 @@ pub fn run_with_config(config: DesktopConfig) {
             branding::get_branding,
             app_server::ensure_app_server,
             app_server::app_server_daemon_control,
+            artifact_preview::preview_artifact,
             desktop::read_image_file,
             desktop::read_local_marketplace_asset,
             desktop::read_marketplace_asset,
