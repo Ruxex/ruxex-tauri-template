@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import PptxGenJS from "pptxgenjs";
 
 import { ArtifactToolError } from "./a1-range.mjs";
+import { runEngine } from "./engine-client.mjs";
 
 const supportedShapes = new Set(["rect"]);
 
@@ -166,6 +167,7 @@ export class Presentation {
     this.slides = new SlideCollection(this);
     this.sourcePath = options.sourcePath;
     this.shallowImport = options.shallowImport === true;
+    this.lossDiagnostics = options.lossDiagnostics ? [...options.lossDiagnostics] : [];
   }
 
   static create(options = {}) {
@@ -177,7 +179,19 @@ export class Presentation {
     if (bytes.subarray(0, 2).toString() !== "PK") {
       throw new ArtifactToolError("invalid_ooxml_package", `not a PPTX package: ${inputPath}`);
     }
-    return new Presentation({ sourcePath: inputPath, shallowImport: true });
+    const response = await runEngine({ version: 1, operation: "pptx_read", input_path: inputPath });
+    const presentation = new Presentation({
+      sourcePath: inputPath,
+      shallowImport: false,
+      lossDiagnostics: response.diagnostics ?? [],
+    });
+    for (const slideModel of response.slides ?? []) {
+      const slide = presentation.addSlide();
+      for (const object of slideModel.objects ?? []) {
+        if (object.kind === "text") slide.addText(object.text);
+      }
+    }
+    return presentation;
   }
 
   async inspect() {
@@ -186,17 +200,25 @@ export class Presentation {
       valid: true,
       slides: this.slides.length,
       objects: this.slides.items.reduce((total, slide) => total + slide.objects.length, 0),
+      diagnostics: this.lossDiagnostics,
+      editable: this.lossDiagnostics.length === 0,
       ...(this.sourcePath ? { sourcePath: this.sourcePath } : {}),
     };
   }
 
 }
 
-export async function exportPresentationPptx(presentationModel, outputPath) {
+export async function exportPresentationPptx(presentationModel, outputPath, options = {}) {
   if (presentationModel.shallowImport) {
     throw new ArtifactToolError(
       "unsupported_operation",
       "shallow PPTX imports cannot be exported until slide content is parsed",
+    );
+  }
+  if (presentationModel.lossDiagnostics.length > 0 && options.acceptDiagnostics !== true) {
+    throw new ArtifactToolError(
+      "lossy_import",
+      "loaded PPTX contains unsupported content; pass acceptDiagnostics to export",
     );
   }
   const presentation = new PptxGenJS();

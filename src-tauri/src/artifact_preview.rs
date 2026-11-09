@@ -532,6 +532,7 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
         } else {
             lines.into_iter().map(|line| vec![line]).collect()
         };
+        let annotations = ooxml_preview_annotations(format, &xml);
         sections.push(PreviewSheet {
             name: if format == "docx" {
                 "Document".to_string()
@@ -539,10 +540,41 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
                 format!("Slide {}", index + 1)
             },
             cells,
-            annotations: Vec::new(),
+            annotations,
         });
     }
     Ok(sections)
+}
+
+fn ooxml_preview_annotations(format: &str, xml: &str) -> Vec<String> {
+    let mut annotations = Vec::new();
+    if format == "docx" {
+        let tables = xml.matches("<w:tbl>").count();
+        if tables > 0 {
+            annotations.push(format!("Tables: {tables}"));
+        }
+        let styled_paragraphs = xml.matches("<w:pStyle").count();
+        if styled_paragraphs > 0 {
+            annotations.push(format!("Styled paragraphs: {styled_paragraphs}"));
+        }
+        if xml.contains("w:drawing") || xml.contains("a:blip") {
+            annotations.push("Images: preview-only".to_string());
+        }
+        if xml.contains("w:hyperlink") || xml.contains("w:fldSimple") {
+            annotations.push("Fields or links: preview-only".to_string());
+        }
+    } else {
+        if xml.contains("a:tbl") {
+            annotations.push("Tables: preview-only".to_string());
+        }
+        if xml.contains("c:chart") || xml.contains("p:graphicFrame") {
+            annotations.push("Charts or shapes: preview-only".to_string());
+        }
+        if xml.contains("a:blip") {
+            annotations.push("Images: preview-only".to_string());
+        }
+    }
+    annotations
 }
 
 fn pptx_slide_number(name: &str) -> Option<usize> {

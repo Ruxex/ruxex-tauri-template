@@ -13,6 +13,7 @@ import {
 } from "docx";
 
 import { ArtifactToolError } from "./a1-range.mjs";
+import { runEngine } from "./engine-client.mjs";
 
 function validateCell(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
@@ -75,6 +76,7 @@ export class Document {
     this.title = options.title ?? "";
     this.items = options.items ? [...options.items] : [];
     this.sourcePath = options.sourcePath;
+    this.lossDiagnostics = options.lossDiagnostics ? [...options.lossDiagnostics] : [];
   }
 
   static async create(options = {}) {
@@ -86,7 +88,12 @@ export class Document {
     if (bytes.subarray(0, 2).toString() !== "PK") {
       throw new ArtifactToolError("invalid_ooxml_package", `not a DOCX package: ${inputPath}`);
     }
-    return new Document({ sourcePath: inputPath });
+    const response = await runEngine({ version: 1, operation: "docx_read", input_path: inputPath });
+    return new Document({
+      sourcePath: inputPath,
+      items: response.items ?? [],
+      lossDiagnostics: response.diagnostics ?? [],
+    });
   }
 
   addParagraph(text, _options = {}) {
@@ -119,11 +126,19 @@ export class Document {
       paragraphs: this.items.filter((item) => item.kind === "paragraph" || item.kind === "heading")
         .length,
       tables: this.items.filter((item) => item.kind === "table").length,
+      diagnostics: this.lossDiagnostics,
+      editable: this.lossDiagnostics.length === 0,
       ...(this.sourcePath ? { sourcePath: this.sourcePath } : {}),
     };
   }
 
-  async exportDocx(outputPath) {
+  async exportDocx(outputPath, options = {}) {
+    if (this.lossDiagnostics.length > 0 && options.acceptDiagnostics !== true) {
+      throw new ArtifactToolError(
+        "lossy_import",
+        "loaded DOCX contains unsupported content; pass acceptDiagnostics to export",
+      );
+    }
     const children = this.items.map((item) =>
       item.kind === "table" ? tableFor(item.rows) : paragraphFor(item),
     );

@@ -14,13 +14,13 @@ export class PresentationFile {
     return Presentation.load(path);
   }
 
-  static exportPptx(presentation) {
+  static exportPptx(presentation, options = {}) {
     if (!(presentation instanceof Presentation)) {
       throw new ArtifactToolError(
         "invalid_presentation",
         "PresentationFile.exportPptx requires a Presentation",
       );
     }
-    return ArtifactOutput.fromSaver("pptx", (outputPath) => exportPresentationPptx(presentation, outputPath));
+    return ArtifactOutput.fromSaver("pptx", (outputPath) => exportPresentationPptx(presentation, outputPath, options));
   }
 }

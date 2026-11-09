@@ -73,6 +73,23 @@ fn write_ooxml_package(dir: &Path, label: &str, parts: &[&str]) -> PathBuf {
     path
 }
 
+fn write_zip_parts(dir: &Path, label: &str, parts: &[(&str, &[u8])]) -> PathBuf {
+    let path = dir.join(format!("{label}.zip"));
+    let file = File::create(&path).expect("package is writable");
+    let mut archive = zip::ZipWriter::new(file);
+    let options = zip::write::SimpleFileOptions::default();
+    for (name, contents) in parts {
+        archive
+            .start_file(*name, options)
+            .expect("package part starts");
+        archive
+            .write_all(contents)
+            .expect("package part is writable");
+    }
+    archive.finish().expect("package finishes");
+    path
+}
+
 #[test]
 fn capabilities_reports_the_supported_artifact_commands() {
     let output = run(&["capabilities", "--json"]);
@@ -196,6 +213,76 @@ fn pptx_validate_accepts_a_minimal_editable_package() {
     let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(value["valid"], true);
     assert_eq!(value["format"], "pptx");
+}
+
+#[test]
+fn docx_read_returns_editable_text_tables_and_loss_diagnostics() {
+    let dir = temp_dir("docx-read");
+    let package = write_zip_parts(
+        &dir,
+        "report.docx",
+        &[
+            ("[Content_Types].xml", b"<types />"),
+            ("_rels/.rels", b"<rels />"),
+            ("word/_rels/document.xml.rels", b"<rels />"),
+            ("word/styles.xml", b"<styles />"),
+            (
+                "word/document.xml",
+                br#"<w:document><w:body><w:p><w:pPr><w:pStyle w:val="Heading1" /></w:pPr><w:r><w:t>Quarterly Review</w:t></w:r></w:p><w:tbl><w:tr><w:tc><w:p><w:r><w:t>Name</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Value</w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:p><w:r><w:drawing /></w:r></w:p></w:body></w:document>"#,
+            ),
+        ],
+    );
+    let output = run(&[
+        "docx",
+        "read",
+        "--input",
+        package.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["items"][0]["kind"], "heading");
+    assert_eq!(value["items"][0]["text"], "Quarterly Review");
+    assert_eq!(value["items"][1]["kind"], "table");
+    assert_eq!(value["diagnostics"][0]["code"], "unsupported_images");
+}
+
+#[test]
+fn pptx_read_returns_editable_text_slides_and_loss_diagnostics() {
+    let dir = temp_dir("pptx-read");
+    let package = write_zip_parts(
+        &dir,
+        "review.pptx",
+        &[
+            ("[Content_Types].xml", b"<types />"),
+            ("_rels/.rels", b"<rels />"),
+            ("ppt/_rels/presentation.xml.rels", b"<rels />"),
+            ("ppt/presentation.xml", b"<p:presentation />"),
+            (
+                "ppt/slides/slide1.xml",
+                br#"<p:sld><p:sp><a:t>Quarterly Review</a:t></p:sp><p:graphicFrame /></p:sld>"#,
+            ),
+        ],
+    );
+    let output = run(&[
+        "pptx",
+        "read",
+        "--input",
+        package.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["slides"][0]["objects"][0]["text"], "Quarterly Review");
+    assert_eq!(value["diagnostics"][0]["code"], "unsupported_slide_objects");
 }
 
 #[test]
