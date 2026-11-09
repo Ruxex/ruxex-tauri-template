@@ -218,7 +218,7 @@ describe("settings card layout", () => {
     expect(screen.queryByText("apiKeyModelDiscovery")).toBeNull();
   });
 
-  it("offers the built-in theme presets", () => {
+  it("offers built-in theme presets as a color preview grid", () => {
     const onThemePresetChange = vi.fn();
     render(
       <UiPreferencesCard
@@ -229,9 +229,25 @@ describe("settings card layout", () => {
       />,
     );
 
-    const preset = screen.getByLabelText("Theme preset") as HTMLSelectElement;
-    expect(preset.options).toHaveLength(8);
-    fireEvent.change(preset, { target: { value: "github-dark" } });
+    const presetGrid = screen.getByRole("group", {
+      name: "Theme preset options",
+    });
+    expect(presetGrid.className).toContain("grid-cols-2");
+    expect(within(presetGrid).getAllByRole("button")).toHaveLength(8);
+    expect(
+      within(presetGrid)
+        .getByRole("button", { name: "GitHub Dark" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(within(presetGrid).getByText("GitHub Dark")).toBeTruthy();
+    expect(
+      within(presetGrid)
+        .getByRole("button", { name: "DaisyUI Default" })
+        .querySelectorAll("[data-theme-preview-swatch]"),
+    ).toHaveLength(4);
+    fireEvent.click(
+      within(presetGrid).getByRole("button", { name: "GitHub Dark" }),
+    );
     expect(onThemePresetChange).toHaveBeenCalledWith("github-dark");
   });
 

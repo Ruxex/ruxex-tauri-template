@@ -41,7 +41,9 @@ describe("AppearancePage", () => {
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
     expect(screen.getByText("Advanced theme colors")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
-    expect(screen.getByLabelText("Theme preset")).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "Theme preset options" }),
+    ).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.queryByLabelText("Density")).toBeNull();
@@ -54,9 +56,7 @@ describe("AppearancePage", () => {
       "14",
     );
 
-    fireEvent.change(screen.getByLabelText("Theme preset"), {
-      target: { value: "github-dark" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "GitHub Dark" }));
     expect(update).toHaveBeenCalledWith({
       theme: {
         accentColor: "blue",
