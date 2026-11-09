@@ -43,4 +43,24 @@ describe("slash commands", () => {
       command: "compact",
     });
   });
+
+  it("keeps the message after selecting a skill token", async () => {
+    const { selectSlashSkill } = await import("./slash-command");
+    const skill = { name: "review", path: "/workspace/.agents/skills/review" };
+
+    expect(selectSlashSkill("/review Check the diff", skill)).toEqual({
+      message: "Check the diff",
+      skill,
+    });
+  });
+
+  it("returns an empty message when a skill has no trailing text", async () => {
+    const { selectSlashSkill } = await import("./slash-command");
+    const skill = { name: "review", path: "/workspace/.agents/skills/review" };
+
+    expect(selectSlashSkill("/review", skill)).toEqual({
+      message: "",
+      skill,
+    });
+  });
 });

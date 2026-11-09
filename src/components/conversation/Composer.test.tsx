@@ -20,6 +20,7 @@ const interruptMutation = vi.hoisted(() => vi.fn());
 const goalMutation = vi.hoisted(() => vi.fn());
 const settingsMutation = vi.hoisted(() => vi.fn());
 const useCollaborationModes = vi.hoisted(() => vi.fn());
+const useSkillsList = vi.hoisted(() => vi.fn());
 const assistantBranding = vi.hoisted(() => ({
   appName: "Example App",
   assistantName: "Example Assistant",
@@ -89,6 +90,7 @@ vi.mock("../../app-server/hooks", () => ({
     error: null,
   }),
   useCollaborationModes,
+  useSkillsList,
 }));
 
 describe("Composer", () => {
@@ -104,6 +106,13 @@ describe("Composer", () => {
     interruptMutation.mockReset();
     goalMutation.mockReset();
     settingsMutation.mockReset();
+    useSkillsList.mockReset();
+    useSkillsList.mockReturnValue({
+      data: { data: [] },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
     useCollaborationModes.mockReturnValue({
       data: {
         data: [
@@ -140,6 +149,119 @@ describe("Composer", () => {
     expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
   });
+
+  it("shows a selected skill chip and removes it without losing the message", async () => {
+    const skill = {
+      name: "review",
+      description: "Review the current changes",
+      path: "/workspace/.agents/skills/review",
+      scope: "repo",
+      enabled: true,
+      pluginId: null,
+    };
+    useSkillsList.mockReturnValue({
+      data: { data: [{ cwd: "/workspace", skills: [skill], errors: [] }] },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "/review Explain the changes" },
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
+
+    expect(
+      screen.getByRole("status", { name: "Selected skill: review" }),
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
+    ).toBe("Explain the changes");
+    fireEvent.click(screen.getByRole("button", { name: "Remove skill review" }));
+    expect(screen.queryByRole("status", { name: "Selected skill: review" })).toBeNull();
+    expect(
+      (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
+    ).toBe("Explain the changes");
+  });
+
+  it("clears a selected skill when switching to goal mode", async () => {
+    const skill = {
+      name: "review",
+      description: "Review the current changes",
+      path: "/workspace/.agents/skills/review",
+      scope: "repo",
+      enabled: true,
+      pluginId: null,
+    };
+    useSkillsList.mockReturnValue({
+      data: { data: [{ cwd: "/workspace", skills: [skill], errors: [] }] },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "/review Set the objective" },
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
+    fireEvent.click(screen.getByLabelText("Composer options"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
+
+    expect(screen.queryByRole("status", { name: "Selected skill: review" })).toBeNull();
+  });
+
+  it.each([
+    ["send", "Send", sendMutation, null],
+    ["steer", "Steer", steerMutation, "turn-1"],
+    ["queue", "Queue", queueMutation, "turn-1"],
+  ] as const)(
+    "includes the selected skill in %s input",
+    async (_mode, submitLabel, mutation, activeTurnId) => {
+      const skill = {
+        name: "review",
+        description: "Review the current changes",
+        path: "/workspace/.agents/skills/review",
+        scope: "repo",
+        enabled: true,
+        pluginId: null,
+      };
+      useSkillsList.mockReturnValue({
+        data: { data: [{ cwd: "/workspace", skills: [skill], errors: [] }] },
+        isLoading: false,
+        isError: false,
+        error: null,
+      });
+      const { Composer } = await import("./Composer");
+
+      render(<Composer threadId="thread-1" activeTurnId={activeTurnId} />);
+      fireEvent.change(screen.getByLabelText("Message"), {
+        target: { value: "/review Explain the changes" },
+      });
+      fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
+      if (_mode !== "send") {
+        fireEvent.click(screen.getByLabelText("Submission mode menu"));
+        fireEvent.click(screen.getByRole("menuitem", { name: new RegExp(submitLabel) }));
+      }
+      fireEvent.click(screen.getByRole("button", { name: submitLabel }));
+
+      await waitFor(() => expect(mutation).toHaveBeenCalled());
+      expect(mutation).toHaveBeenCalledWith({
+        threadId: "thread-1",
+        ...(submitLabel === "Steer" ? { expectedTurnId: "turn-1" } : {}),
+        input: [
+          { type: "skill", name: "review", path: "/workspace/.agents/skills/review" },
+          { type: "text", text: "Explain the changes", text_elements: [] },
+        ],
+        ...(submitLabel === "Send"
+          ? { model: "ruxex", effort: "medium", turnTrigger: null }
+          : {}),
+      });
+    },
+  );
 
   it("uses the configured assistant name in the message placeholder", async () => {
     const { Composer } = await import("./Composer");

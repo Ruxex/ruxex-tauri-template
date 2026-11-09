@@ -3,10 +3,20 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { v2 } from "../../protocol";
 import { SlashCommandPalette } from "./SlashCommandPalette";
 
 describe("SlashCommandPalette", () => {
   afterEach(cleanup);
+
+  const skill: v2.SkillMetadata = {
+    name: "review",
+    description: "Review the current changes",
+    path: "/workspace/.agents/skills/review",
+    scope: "repo",
+    enabled: true,
+    pluginId: null,
+  };
 
   it("renders exactly the three supported commands", () => {
     render(<SlashCommandPalette disabled={false} onSelect={vi.fn()} />);
@@ -32,5 +42,73 @@ describe("SlashCommandPalette", () => {
     for (const item of screen.getAllByRole("menuitem")) {
       expect((item as HTMLButtonElement).disabled).toBe(true);
     }
+  });
+
+  it("stacks commands and skills in separate vertical sections", () => {
+    render(
+      <SlashCommandPalette
+        disabled={false}
+        onSelect={vi.fn()}
+        onSelectSkill={vi.fn()}
+        skills={[skill]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Commands" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Skills" })).toBeTruthy();
+    expect(
+      screen.getByRole("menu", { name: "Slash commands" }).querySelector(
+        ".menu-vertical",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("filters commands and skills case-insensitively and reports skill selection", () => {
+    const onSelect = vi.fn();
+    const onSelectSkill = vi.fn();
+    render(
+      <SlashCommandPalette
+        disabled={false}
+        onSelect={onSelect}
+        onSelectSkill={onSelectSkill}
+        query="REV"
+        skills={[skill]}
+      />,
+    );
+
+    expect(screen.queryByRole("menuitem", { name: "Archive" })).toBeNull();
+    const skillItem = screen.getByRole("menuitem", { name: /review/i });
+    expect(skillItem.textContent).toContain("Review the current changes");
+    fireEvent.click(skillItem);
+
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onSelectSkill).toHaveBeenCalledWith(skill);
+  });
+
+  it("shows skill loading, error, and empty states", () => {
+    const { rerender } = render(
+      <SlashCommandPalette
+        disabled={false}
+        onSelect={vi.fn()}
+        skillsLoading
+      />,
+    );
+    expect(screen.getByText("Loading skills…")).toBeTruthy();
+
+    rerender(
+      <SlashCommandPalette
+        disabled={false}
+        onSelect={vi.fn()}
+        skillsError="Skills unavailable"
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Skills unavailable",
+    );
+
+    rerender(
+      <SlashCommandPalette disabled={false} onSelect={vi.fn()} skills={[]} />,
+    );
+    expect(screen.getByText("No skills available.")).toBeTruthy();
   });
 });

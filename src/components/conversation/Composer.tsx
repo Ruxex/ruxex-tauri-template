@@ -11,6 +11,8 @@ import {
   PaperAirplaneIcon,
   QueueListIcon,
   StopIcon,
+  SparklesIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 import { buildImageUserInput } from "./composer-model";
@@ -26,10 +28,12 @@ import { ComposerSettings } from "./ComposerSettings";
 import { SlashCommandPalette } from "./SlashCommandPalette";
 import {
   getSlashCommandInput,
+  selectSlashSkill,
   selectSlashCommand,
   type SlashCommandId,
 } from "./slash-command";
 import type { SubmissionMode } from "./composer-model";
+import type { v2 } from "../../protocol";
 import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 import { useComposerSelection } from "./useComposerSelection";
 import { formatErrorMessage } from "../../app/error-message";
@@ -43,6 +47,7 @@ import {
   useModelList,
   useQueueMessage,
   useSendMessage,
+  useSkillsList,
   useSetThreadGoal,
   useSteerTurn,
   useUpdateThreadSettings,
@@ -71,6 +76,10 @@ export function Composer({
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<{
+    name: string;
+    path: string;
+  } | null>(null);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const {
@@ -83,6 +92,7 @@ export function Composer({
     resetAttachment,
   } = useImageAttachment();
   const models = useModelList();
+  const skills = useSkillsList();
   const collaborationModes = useCollaborationModes();
   const [collaborationModeName, setCollaborationModeName] = useState("");
   const [collaborationMode, setCollaborationMode] = useState<
@@ -110,7 +120,8 @@ export function Composer({
     interrupt.isPending ||
     setGoal.isPending ||
     updateSettings.isPending;
-  const showSlashCommands = getSlashCommandInput(message) !== null && !goalMode;
+  const slashCommandInput = getSlashCommandInput(message);
+  const showSlashCommands = slashCommandInput !== null && !goalMode;
 
   useEffect(() => {
     if (initialMessage !== undefined) {
@@ -205,13 +216,28 @@ export function Composer({
     }
   }
 
+  function handleSlashSkillSelect(skill: { name: string; path: string }) {
+    const selection = selectSlashSkill(message, skill);
+    setSelectedSkill({
+      name: selection.skill.name,
+      path: selection.skill.path,
+    });
+    setMessage(selection.message);
+    textareaRef.current?.focus();
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
     if ((!text && !imageFile) || isPending || (goalMode && !text)) {
       return;
     }
-    const input = text ? [buildUserTextInput(text)] : [];
+    const input: v2.UserInput[] = selectedSkill
+      ? [{ type: "skill", ...selectedSkill }]
+      : [];
+    if (text) {
+      input.push(buildUserTextInput(text));
+    }
     try {
       if (goalMode) {
         await setGoal.mutateAsync({
@@ -224,7 +250,8 @@ export function Composer({
         return;
       }
       if (imageFile) {
-        input.unshift(buildImageUserInput(await readImage(imageFile)));
+        const imageInput = buildImageUserInput(await readImage(imageFile));
+        input.splice(selectedSkill ? 1 : 0, 0, imageInput);
       }
       if (mode === "steer") {
         if (!activeTurnId) {
@@ -248,6 +275,7 @@ export function Composer({
         });
       }
       setMessage("");
+      setSelectedSkill(null);
       resetAttachment();
       onMessageSent?.();
     } catch {
@@ -263,7 +291,14 @@ export function Composer({
       {showSlashCommands && (
         <SlashCommandPalette
           disabled={isPending}
+          onSelectSkill={handleSlashSkillSelect}
           onSelect={(command) => void handleSlashCommandSelect(command)}
+          query={slashCommandInput?.query}
+          skills={skills.data?.data.flatMap((entry) => entry.skills) ?? []}
+          skillsError={
+            skills.isError ? formatErrorMessage(skills.error) : null
+          }
+          skillsLoading={skills.isLoading}
         />
       )}
       <textarea
@@ -296,11 +331,32 @@ export function Composer({
           <ComposerOptions
             disabled={isPending}
             goalMode={goalMode}
-            onGoalModeChange={() => setGoalMode((value) => !value)}
+            onGoalModeChange={() => {
+              setGoalMode((value) => !value);
+              setSelectedSkill(null);
+            }}
             onPlanModeChange={() => setPlanMode((value) => !value)}
             onAttach={() => attachmentInput.current?.click()}
             planMode={planMode}
           />
+          {selectedSkill && (
+            <span
+              aria-label={`Selected skill: ${selectedSkill.name}`}
+              className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
+              role="status"
+            >
+              <SparklesIcon aria-hidden="true" className="size-3.5" />
+              <span className="truncate">{selectedSkill.name}</span>
+              <button
+                aria-label={`Remove skill ${selectedSkill.name}`}
+                className="btn btn-ghost btn-xs btn-circle -mr-1 size-5 min-h-5"
+                type="button"
+                onClick={() => setSelectedSkill(null)}
+              >
+                <XMarkIcon aria-hidden="true" className="size-3" />
+              </button>
+            </span>
+          )}
           {(goalMode || planMode) && (
             <fieldset
               aria-label="Active composer modes"

@@ -1,3 +1,5 @@
+import type { v2 } from "../../protocol";
+
 export const slashCommands = [
   { id: "archive", label: "Archive" },
   { id: "compact", label: "Compact" },
@@ -37,4 +39,15 @@ export function selectSlashCommand(
     commandEnd === -1 ? "" : message.slice(commandEnd + 1).trimStart();
 
   return { kind: "goal", message: goalMessage };
+}
+
+export function selectSlashSkill(
+  message: string,
+  skill: Pick<v2.SkillMetadata, "name" | "path">,
+): { message: string; skill: Pick<v2.SkillMetadata, "name" | "path"> } {
+  const commandEnd = message.slice(1).search(/\s/);
+  const skillMessage =
+    commandEnd === -1 ? "" : message.slice(commandEnd + 1).trimStart();
+
+  return { message: skillMessage, skill };
 }
