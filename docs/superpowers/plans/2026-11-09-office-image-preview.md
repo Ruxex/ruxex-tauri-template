@@ -25,7 +25,7 @@
 - [x] Run focused tests and observe failure.
 - [x] Implement bounded OOXML text extraction for DOCX paragraphs and PPTX slides.
 - [x] Reuse SVG rendering and return the detected format in the preview payload.
-- [ ] Run focused and full Rust tests; commit.
+- [x] Run focused and full Rust tests; commit.
 
 ### Task 2: Extend frontend format support and documentation
 
@@ -34,10 +34,14 @@
 - [x] Add frontend coverage for DOCX/PPTX preview metadata.
 - [x] Extend the format union and render condition.
 - [x] Document the supported image-preview formats and PDF boundary.
-- [ ] Run focused/full frontend and package tests; commit.
+- [x] Run focused/full frontend tests and the package skill contract; the existing
+  package accessibility suite still reports four unrelated story controls, and
+  the standalone SDK suite needs its development dependencies installed.
+- [x] Commit the native and frontend preview changes.
 
 ### Task 3: Final verification and push
 
-- [ ] Run Rust, frontend, Artifact SDK, package boundary, lint, build, and diff checks.
-- [ ] Confirm AppServer/protocol paths are unchanged in this phase.
-- [ ] Commit any documentation-only fix and push.
+- [x] Run Rust, frontend, package boundary, lint, build, and diff checks.
+- [x] Confirm AppServer/protocol paths are unchanged in this phase.
+- [ ] Run the standalone Artifact SDK suite after its development dependencies are available.
+- [ ] Push the preview commits.
