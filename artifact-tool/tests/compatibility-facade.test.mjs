@@ -63,7 +63,7 @@ test("SpreadsheetFile imports from a path or FileBlob and exports a saveable wor
     ["Name", "Count"],
     ["Ada", 3],
   ];
-  await source.exportXlsx(inputPath);
+  await SpreadsheetFile.exportXlsx(source).save(inputPath);
 
   const fromPath = await SpreadsheetFile.importXlsx(inputPath);
   const fromBlob = await SpreadsheetFile.importXlsx(await FileBlob.load(inputPath));
@@ -80,7 +80,7 @@ test("SpreadsheetFile imports from a path or FileBlob and exports a saveable wor
   const output = await SpreadsheetFile.exportXlsx(fromBlob);
   assert.equal(output.format, "xlsx");
   await output.save(outputPath);
-  const validated = await Workbook.load(outputPath);
+  const validated = await SpreadsheetFile.importXlsx(outputPath);
   assert.deepEqual(validated.worksheets.getItem("Summary").getRange("A1:B2").values, [
     ["Name", "Count"],
     ["Ada", 3],
@@ -141,8 +141,8 @@ test("PresentationFile imports paths and FileBlobs as explicit shallow documents
   const directory = await mkdtemp(join(tmpdir(), "ruxex-presentation-import-"));
   const inputPath = join(directory, "source.pptx");
   const source = await Presentation.create();
-  source.addSlide().addText("Source");
-  await source.exportPptx(inputPath);
+  source.slides.add().addText("Source");
+  await PresentationFile.exportPptx(source).save(inputPath);
 
   const fromPath = await PresentationFile.importPptx(inputPath);
   const fromBlob = await PresentationFile.importPptx(await FileBlob.load(inputPath));

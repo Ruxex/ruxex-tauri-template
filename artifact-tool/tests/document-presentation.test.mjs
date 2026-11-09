@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { Document, Presentation } from "../src/index.mjs";
+import { Document, Presentation, PresentationFile } from "../src/index.mjs";
 
 test("Document creates editable paragraphs and tables", async () => {
   const directory = await mkdtemp(join(tmpdir(), "ruxex-document-sdk-"));
@@ -40,8 +40,10 @@ test("Document rejects unsupported table cell values", async () => {
 test("Presentation creates editable slides with text, tables, and shapes", async () => {
   const directory = await mkdtemp(join(tmpdir(), "ruxex-presentation-sdk-"));
   const output = join(directory, "nested", "review.pptx");
-  const presentation = await Presentation.create({ title: "Project Review" });
-  const slide = presentation.addSlide({ layout: "title" });
+  const presentation = Presentation.create({ title: "Project Review" });
+  assert.equal(typeof presentation.addSlide, "undefined");
+  assert.equal(typeof presentation.exportPptx, "undefined");
+  const slide = presentation.slides.add({ layout: "title" });
 
   slide.addText("Project Review", { role: "title" });
   slide.addText("Local artifact generation", { role: "body" });
@@ -54,13 +56,14 @@ test("Presentation creates editable slides with text, tables, and shapes", async
     slides: 1,
     objects: 4,
   });
-  await presentation.exportPptx(output);
+  const presentationFile = PresentationFile.exportPptx(presentation);
+  await presentationFile.save(output);
   assert.equal((await readFile(output)).subarray(0, 2).toString(), "PK");
 });
 
 test("Presentation rejects unsupported shapes", async () => {
-  const presentation = await Presentation.create();
-  const slide = presentation.addSlide();
+  const presentation = Presentation.create();
+  const slide = presentation.slides.add();
 
   assert.throws(
     () => slide.addShape("unsupported-shape"),
