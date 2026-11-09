@@ -1,5 +1,6 @@
 import { ArtifactToolError } from "./a1-range.mjs";
 import { ArtifactOutput, FileBlob } from "./file-blob.mjs";
+import { exportWorkbookXlsx, loadWorkbook, Workbook } from "./workbook.mjs";
 
 async function inputPath(input) {
   if (input instanceof FileBlob) return input.path;
@@ -7,19 +8,13 @@ async function inputPath(input) {
 }
 
 function isWorkbook(value) {
-  return Boolean(
-    value &&
-      typeof value.exportXlsx === "function" &&
-      value.worksheets &&
-      typeof value.worksheets.items !== "undefined",
-  );
+  return value instanceof Workbook;
 }
 
 export class SpreadsheetFile {
   static async importXlsx(input) {
     const path = await inputPath(input);
-    const { Workbook } = await import("./index.mjs");
-    return Workbook.load(path);
+    return loadWorkbook(path);
   }
 
   static exportXlsx(workbook) {
@@ -29,6 +24,6 @@ export class SpreadsheetFile {
         "SpreadsheetFile.exportXlsx requires a Workbook",
       );
     }
-    return ArtifactOutput.fromSaver("xlsx", (outputPath) => workbook.exportXlsx(outputPath));
+    return ArtifactOutput.fromSaver("xlsx", (outputPath) => exportWorkbookXlsx(workbook, outputPath));
   }
 }
