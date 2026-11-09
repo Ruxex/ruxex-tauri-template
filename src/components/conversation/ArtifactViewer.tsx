@@ -14,13 +14,14 @@ const fallbackPage = (preview: ArtifactPreviewData): ArtifactPreviewPage => ({
   dataUrl: preview.dataUrl,
   width: 640,
   height: 480,
-  diagnostics: preview.diagnostics,
+  diagnostics: preview.diagnostics ?? [],
 });
 
 export function ArtifactViewer({ preview }: ArtifactViewerProps) {
+  const rawPages = preview.pages ?? [];
   const pages = useMemo(
-    () => (preview.pages.length > 0 ? preview.pages : [fallbackPage(preview)]),
-    [preview],
+    () => (rawPages.length > 0 ? rawPages : [fallbackPage(preview)]),
+    [preview, rawPages],
   );
   const previewKey = `${preview.dataUrl}:${pages.map((item) => item.dataUrl).join(",")}`;
   const [pageIndex, setPageIndex] = useState(0);
@@ -131,11 +132,14 @@ export function ArtifactViewer({ preview }: ArtifactViewerProps) {
           style={{ width: `${zoom * 100}%` }}
         />
       </div>
-      {(preview.diagnostics.length > 0 || page.diagnostics.length > 0) && (
+      {((preview.diagnostics ?? []).length > 0 ||
+        page.diagnostics.length > 0) && (
         <ul aria-label="Artifact diagnostics" className="text-xs text-warning">
-          {[...preview.diagnostics, ...page.diagnostics].map((diagnostic) => (
-            <li key={`${page.label}-${diagnostic}`}>{diagnostic}</li>
-          ))}
+          {[...(preview.diagnostics ?? []), ...page.diagnostics].map(
+            (diagnostic) => (
+              <li key={`${page.label}-${diagnostic}`}>{diagnostic}</li>
+            ),
+          )}
         </ul>
       )}
     </section>

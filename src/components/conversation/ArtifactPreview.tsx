@@ -68,6 +68,9 @@ export function ArtifactPreview({
     );
   }
 
+  const diagnostics = preview.diagnostics ?? [];
+  const pages = preview.pages ?? [];
+
   const handleSave = async () => {
     setSaveError(null);
     const destination = await save({
@@ -117,12 +120,10 @@ export function ArtifactPreview({
           : preview.format === "pptx"
             ? `${preview.sheets} slides · ${preview.rows} text lines`
             : preview.format === "pdf"
-              ? `${preview.pages.length} pages · ${preview.byteSize} bytes`
+              ? `${pages.length} pages · ${preview.byteSize} bytes`
               : `Document · ${preview.rows} text lines`}
-        {preview.diagnostics.length > 0 && (
-          <span className="ml-2">
-            · {preview.diagnostics.length} diagnostics
-          </span>
+        {diagnostics.length > 0 && (
+          <span className="ml-2">· {diagnostics.length} diagnostics</span>
         )}
       </figcaption>
     </figure>
