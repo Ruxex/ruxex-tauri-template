@@ -289,7 +289,7 @@ class Range {
       for (let column = this.bounds.start.column; column <= this.bounds.end.column; column += 1) {
         const formula = formulas[row - this.bounds.start.row]?.[column - this.bounds.start.column] ?? null;
         this.worksheet.formulaRows[row][column] = formula;
-        if (formula === null) this.worksheet.rows[row][column] = null;
+        this.worksheet.rows[row][column] = null;
       }
     }
   }
