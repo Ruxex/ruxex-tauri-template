@@ -397,6 +397,36 @@ function upsertStructuredItem(
         (item) => item.id === params.item.id && item.turnId === params.turnId,
       );
       if (index === -1) {
+        if (completed && params.item.type === "agentMessage") {
+          let streamedIndex = -1;
+          for (
+            let itemIndex = thread.items.length - 1;
+            itemIndex >= 0;
+            itemIndex -= 1
+          ) {
+            const item = thread.items[itemIndex];
+            if (
+              item.turnId === params.turnId &&
+              item.type === "agentMessage" &&
+              item.raw === undefined
+            ) {
+              streamedIndex = itemIndex;
+              break;
+            }
+          }
+          if (streamedIndex !== -1) {
+            const items = [...thread.items];
+            items[streamedIndex] = {
+              id: params.item.id,
+              threadId: params.threadId,
+              turnId: params.turnId,
+              type: params.item.type,
+              text: params.item.text,
+              raw: params.item,
+            };
+            return { ...thread, items };
+          }
+        }
         const completedWithoutActiveTurn = completed && !thread.activeTurnId;
         return {
           ...thread,
@@ -411,7 +441,10 @@ function upsertStructuredItem(
               threadId: params.threadId,
               turnId: params.turnId,
               type: params.item.type,
-              text: "",
+              text:
+                completed && params.item.type === "agentMessage"
+                  ? params.item.text
+                  : "",
               raw: params.item,
             },
           ],
@@ -423,6 +456,9 @@ function upsertStructuredItem(
         ...items[index],
         raw: params.item,
         type: params.item.type,
+        ...(completed && params.item.type === "agentMessage"
+          ? { text: params.item.text }
+          : {}),
       };
       return { ...thread, items };
     },

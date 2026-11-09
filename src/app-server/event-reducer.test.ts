@@ -713,6 +713,159 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
+  it("replaces a streamed agent message when completion uses a different item ID", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "delta-item",
+          delta: "Hello",
+        },
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/completed",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          completedAtMs: 2,
+          item: {
+            type: "agentMessage",
+            id: "completed-item",
+            text: "Hello world",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toHaveLength(1);
+    expect(state.threads["thread-1"]?.items[0]).toMatchObject({
+      id: "completed-item",
+      turnId: "turn-1",
+      type: "agentMessage",
+      text: "Hello world",
+      raw: {
+        type: "agentMessage",
+        id: "completed-item",
+        text: "Hello world",
+      },
+    });
+  });
+
+  it("uses the completed text when a streamed agent message keeps its item ID", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "item-1",
+          delta: "partial",
+        },
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/completed",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          completedAtMs: 2,
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "complete",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      { id: "item-1", text: "complete", raw: { text: "complete" } },
+    ]);
+  });
+
+  it("inserts completed agent messages without a prior delta", () => {
+    const state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/completed",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          completedAtMs: 2,
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "complete",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      { id: "item-1", turnId: "turn-1", text: "complete" },
+    ]);
+  });
+
+  it("does not replace a streamed agent message from another turn", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "delta-item",
+          delta: "first",
+        },
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/completed",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-2",
+          completedAtMs: 2,
+          item: {
+            type: "agentMessage",
+            id: "completed-item",
+            text: "second",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      { id: "delta-item", turnId: "turn-1", text: "first" },
+      { id: "completed-item", turnId: "turn-2", text: "second" },
+    ]);
+  });
+
   it("clears completed turn metadata when a new turn starts", () => {
     let state = reduceAppServerEvent(
       createInitialEventState(),
