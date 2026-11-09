@@ -126,6 +126,17 @@ body {
   font-size: var(--ruxex-chat-font-size);
 }
 
+.conversation-minimap-track {
+  background-image: radial-gradient(
+    circle,
+    rgb(148 163 184 / 48%) 1px,
+    transparent 1.5px
+  );
+  background-position: center;
+  background-size: 4px 7px;
+  opacity: 0.8;
+}
+
 .workbench-sidebar {
   height: 100%;
   max-height: 100%;

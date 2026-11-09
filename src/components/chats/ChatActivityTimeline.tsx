@@ -9,6 +9,7 @@ import type { v2 } from "../../protocol";
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
 import { ActivityItem } from "../conversation/ActivityItem";
 import { ConversationItem } from "../conversation/ConversationItem";
+import { ConversationMinimap } from "../conversation/ConversationMinimap";
 import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
@@ -89,6 +90,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       className="space-y-4 bg-base-200 p-4"
       ref={timelineRef}
     >
+      <ConversationMinimap items={visibleItems} timelineRef={timelineRef} />
       {visibleItems.length === 0 && showIndicator && (
         <WorkingIndicator active={showActiveIndicator} label={indicatorLabel} />
       )}
