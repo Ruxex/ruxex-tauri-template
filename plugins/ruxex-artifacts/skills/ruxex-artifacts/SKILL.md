@@ -36,11 +36,11 @@ import {
   Workbook,
 } from "@ruxex/artifact-tool";
 
-const workbook = await Workbook.create();
+const workbook = Workbook.create();
 const sheet = workbook.worksheets.add("Summary");
 sheet.getRange("A1:B2").values = [["Name", "Count"], ["Ada", 3]];
 workbook.recalculate();
-const workbookFile = await SpreadsheetFile.exportXlsx(workbook);
+const workbookFile = SpreadsheetFile.exportXlsx(workbook);
 await workbookFile.save("/absolute/path/report.xlsx");
 
 const existingWorkbook = await SpreadsheetFile.importXlsx(
@@ -71,17 +71,18 @@ slide.shapes.add({
   position: { left: 80, top: 400, width: 120, height: 60 },
 });
 await presentation.inspect();
-const presentationFile = await PresentationFile.exportPptx(presentation);
+const presentationFile = PresentationFile.exportPptx(presentation);
 await presentationFile.save("/absolute/path/review.pptx");
 ```
 
 `SpreadsheetFile.importXlsx()` currently imports sheet names and scalar cell
 values. `PresentationFile.importPptx()` is a shallow import for validation and
 source tracking; it does not yet expose existing slide objects for editing.
-Use the direct `Workbook`, `Presentation`, and `Document` methods when a
-compatibility facade is not needed. The Word `Document` facade currently
-creates new documents and performs structural validation; full existing-file
-editing is not yet available.
+Workbook and presentation file I/O is facade-only: use `Workbook` and
+`Presentation` for in-memory editing, then use the matching `*File` facade to
+import or export a file. The Word `Document` facade currently creates new
+documents and performs structural validation; full existing-file editing is
+not yet available.
 
 ## Commands
 

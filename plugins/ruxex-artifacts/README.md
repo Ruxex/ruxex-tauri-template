@@ -9,6 +9,7 @@ workflows. It also provides JSON validation commands for each format.
 The helper is staged under `ruxex-path`, so the existing managed command
 environment exposes it as a normal shell command. The plugin contains the
 workflow contract; the JS API and format engine ship with the desktop runtime.
-The compatibility facades preserve the existing Ruxex methods and currently
+The file facades are the canonical XLSX/PPTX file boundaries. They currently
 make shallow XLSX/PPTX imports explicit rather than claiming full-fidelity
+editing; the `Workbook` and `Presentation` objects stay focused on in-memory
 editing.

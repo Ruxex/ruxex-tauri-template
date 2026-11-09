@@ -13,13 +13,13 @@ const outputIndex = process.argv.indexOf("--output-dir") + 1;
 const outputDirectory = process.argv[outputIndex];
 if (!outputDirectory) throw new Error("--output-dir is required");
 
-const workbook = await Workbook.create();
+const workbook = Workbook.create();
 const sheet = workbook.worksheets.add("Smoke");
 sheet.getRange("A1:B2").values = [["Name", "Count"], ["Ada", 3]];
 workbook.recalculate();
 await workbook.inspect({ kind: "sheet", sheetName: "Smoke" });
 const workbookOutput = join(outputDirectory, "smoke.xlsx");
-const workbookFile = await SpreadsheetFile.exportXlsx(workbook);
+const workbookFile = SpreadsheetFile.exportXlsx(workbook);
 await workbookFile.save(workbookOutput);
 const importedWorkbook = await SpreadsheetFile.importXlsx(await FileBlob.load(workbookOutput));
 await importedWorkbook.inspect({ kind: "sheet", sheetName: "Smoke" });
@@ -53,7 +53,7 @@ slide.shapes.add({
 });
 await presentation.inspect();
 const presentationOutput = join(outputDirectory, "smoke.pptx");
-const presentationFile = await PresentationFile.exportPptx(presentation);
+const presentationFile = PresentationFile.exportPptx(presentation);
 await presentationFile.save(presentationOutput);
 const importedPresentation = await PresentationFile.importPptx(
   await FileBlob.load(presentationOutput),
