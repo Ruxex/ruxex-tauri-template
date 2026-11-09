@@ -233,20 +233,25 @@ describe("settings card layout", () => {
       name: "Theme preset options",
     });
     expect(presetGrid.className).toContain("grid-cols-2");
+    expect(
+      within(presetGrid).getByText(
+        "Theme palettes are inspired by third-party projects. Ruxex is not affiliated with or endorsed by those projects.",
+      ),
+    ).toBeTruthy();
     expect(within(presetGrid).getAllByRole("button")).toHaveLength(8);
     expect(
       within(presetGrid)
-        .getByRole("button", { name: "GitHub Dark" })
+        .getByRole("button", { name: "GH Dark" })
         .getAttribute("aria-pressed"),
     ).toBe("false");
-    expect(within(presetGrid).getByText("GitHub Dark")).toBeTruthy();
+    expect(within(presetGrid).getByText("GH Dark")).toBeTruthy();
     expect(
       within(presetGrid)
         .getByRole("button", { name: "DaisyUI Default" })
         .querySelectorAll("[data-theme-preview-swatch]"),
     ).toHaveLength(4);
     fireEvent.click(
-      within(presetGrid).getByRole("button", { name: "GitHub Dark" }),
+      within(presetGrid).getByRole("button", { name: "GH Dark" }),
     );
     expect(onThemePresetChange).toHaveBeenCalledWith("github-dark");
   });

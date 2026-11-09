@@ -39,9 +39,17 @@ export function UiPreferencesCard({
         <div className="px-5 py-3.5">
           <fieldset
             aria-label="Theme preset options"
+            aria-describedby="theme-preset-attribution"
             className="grid grid-cols-2 gap-2 sm:grid-cols-4"
           >
             <legend className="label-text mb-3 block">Theme preset</legend>
+            <p
+              className="col-span-full -mt-1 mb-1 text-xs leading-relaxed text-base-content/60"
+              id="theme-preset-attribution"
+            >
+              Theme palettes are inspired by third-party projects. Ruxex is not
+              affiliated with or endorsed by those projects.
+            </p>
             {UI_THEME_PRESETS.map((option) => {
               const selected = preset === option.id;
               const previewColors = [

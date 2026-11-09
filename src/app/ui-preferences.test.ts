@@ -47,8 +47,8 @@ describe("ui preferences", () => {
     expect(UI_THEME_PRESETS.map((preset) => preset.label)).toEqual([
       "DaisyUI Default",
       "VS Code Dark+",
-      "GitHub Light",
-      "GitHub Dark",
+      "GH Light",
+      "GH Dark",
       "Dracula",
       "Nord",
       "Solarized Light",

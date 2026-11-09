@@ -136,7 +136,7 @@ export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
   },
   {
     id: "github-light",
-    label: "GitHub Light",
+    label: "GH Light",
     colors: createThemeColors({
       base100: "#ffffff",
       base200: "#f6f8fa",
@@ -155,7 +155,7 @@ export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
   },
   {
     id: "github-dark",
-    label: "GitHub Dark",
+    label: "GH Dark",
     colors: createThemeColors({
       base100: "#0d1117",
       base200: "#161b22",

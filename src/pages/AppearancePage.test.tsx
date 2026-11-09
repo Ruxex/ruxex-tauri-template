@@ -56,7 +56,7 @@ describe("AppearancePage", () => {
       "14",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "GitHub Dark" }));
+    fireEvent.click(screen.getByRole("button", { name: "GH Dark" }));
     expect(update).toHaveBeenCalledWith({
       theme: {
         accentColor: "blue",
