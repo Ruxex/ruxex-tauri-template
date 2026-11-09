@@ -8,10 +8,21 @@ export type QuickPanelShortcutSettings = {
 export type ArtifactPreviewData = {
   mimeType: "image/svg+xml";
   dataUrl: string;
-  format: "xlsx" | "docx" | "pptx";
+  format: "xlsx" | "docx" | "pptx" | "pdf";
   sheets: number;
   rows: number;
   columns: number;
+  byteSize: number;
+  pages: ArtifactPreviewPage[];
+  diagnostics: string[];
+};
+
+export type ArtifactPreviewPage = {
+  label: string;
+  dataUrl: string;
+  width: number;
+  height: number;
+  diagnostics: string[];
 };
 
 export function previewArtifact(path: string): Promise<ArtifactPreviewData> {

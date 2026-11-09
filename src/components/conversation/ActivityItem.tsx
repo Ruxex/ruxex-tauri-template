@@ -33,7 +33,7 @@ type ActivityPresentation = {
   label: string;
 };
 
-const previewableArtifactFormats = new Set(["xlsx", "docx", "pptx"]);
+const previewableArtifactFormats = new Set(["xlsx", "docx", "pptx", "pdf"]);
 
 const activityPresentations: Record<string, ActivityPresentation> = {
   commandExecution: { icon: CommandLineIcon, label: "Command" },

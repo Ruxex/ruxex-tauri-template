@@ -26,6 +26,9 @@ const loadArtifactPreview = async () => ({
   sheets: 1,
   rows: 3,
   columns: 2,
+  byteSize: 128,
+  pages: [],
+  diagnostics: [],
 });
 
 export const Command: Story = () => <ActivityItem item={commandItem} />;

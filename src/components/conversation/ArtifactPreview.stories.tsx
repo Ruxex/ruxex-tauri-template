@@ -10,6 +10,9 @@ const preview = {
   sheets: 1,
   rows: 3,
   columns: 2,
+  byteSize: 128,
+  pages: [],
+  diagnostics: [],
 };
 
 export const GeneratedWorkbook: Story = () => (

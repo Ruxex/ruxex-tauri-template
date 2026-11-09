@@ -6,6 +6,9 @@ use base64::Engine;
 use calamine::{Data, Reader, Xlsx, open_workbook};
 use serde::Serialize;
 
+use crate::artifact_model::{
+    ArtifactDocument, ArtifactElement, ArtifactPreviewPage, ArtifactSection,
+};
 use crate::desktop::ruxex_home;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
@@ -29,6 +32,9 @@ pub(crate) struct ArtifactPreview {
     sheets: usize,
     rows: usize,
     columns: usize,
+    byte_size: u64,
+    pages: Vec<ArtifactPreviewPage>,
+    diagnostics: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -53,27 +59,84 @@ pub(crate) fn preview_artifact(path: String) -> CommandResult<ArtifactPreview> {
     let format = preview_format(&canonical)
         .expect("preview path validation guarantees a supported extension")
         .to_string();
+    let byte_size = fs::metadata(&canonical)
+        .map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Initialization,
+                format!("artifact preview file metadata cannot be read: {error}"),
+            )
+        })?
+        .len();
     let sheets = read_preview_sections(&canonical)
         .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    let document = document_from_preview_sections(&format, byte_size, &sheets);
+    let pages = sheets
+        .iter()
+        .map(|sheet| {
+            let svg = render_svg(std::slice::from_ref(sheet));
+            let (width, height) = svg_dimensions(std::slice::from_ref(sheet));
+            ArtifactPreviewPage {
+                label: sheet.name.clone(),
+                data_url: svg_data_url(&svg),
+                width,
+                height,
+                diagnostics: Vec::new(),
+            }
+        })
+        .collect::<Vec<_>>();
+    let first_page = pages.first().ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "artifact preview contains no pages",
+        )
+    })?;
     let rows = sheets.iter().map(|sheet| sheet.cells.len()).sum();
     let columns = sheets
         .iter()
         .map(|sheet| sheet.cells.iter().map(Vec::len).max().unwrap_or(0))
         .max()
         .unwrap_or(0);
-    let svg = render_svg(&sheets);
-    let data_url = format!(
-        "data:image/svg+xml;base64,{}",
-        base64::engine::general_purpose::STANDARD.encode(svg.as_bytes())
-    );
     Ok(ArtifactPreview {
         mime_type: "image/svg+xml",
-        data_url,
+        data_url: first_page.data_url.clone(),
         format,
         sheets: sheets.len(),
         rows,
         columns,
+        byte_size,
+        pages,
+        diagnostics: document
+            .diagnostics
+            .iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.code, diagnostic.message))
+            .collect(),
     })
+}
+
+fn document_from_preview_sections(
+    format: &str,
+    byte_size: u64,
+    sheets: &[PreviewSheet],
+) -> ArtifactDocument {
+    let sections = sheets
+        .iter()
+        .map(|sheet| {
+            ArtifactSection::new(
+                sheet.name.clone(),
+                vec![ArtifactElement::Table {
+                    rows: sheet.cells.clone(),
+                }],
+            )
+        })
+        .collect();
+    ArtifactDocument::new(format, byte_size, sections, Vec::new())
+}
+
+fn svg_data_url(svg: &str) -> String {
+    format!(
+        "data:image/svg+xml;base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(svg.as_bytes())
+    )
 }
 
 fn validate_preview_path(requested: &Path, roots: &[&Path]) -> Result<PathBuf, String> {
@@ -276,18 +339,14 @@ fn truncate_text(value: &str, limit: usize) -> String {
 }
 
 fn render_svg(sheets: &[PreviewSheet]) -> String {
+    let (width, height) = svg_dimensions(sheets);
     let max_columns = sheets
         .iter()
         .map(|sheet| sheet.cells.iter().map(Vec::len).max().unwrap_or(0).max(1))
         .max()
         .unwrap_or(1)
         .min(PREVIEW_MAX_COLUMNS);
-    let width = PADDING * 2 + max_columns * CELL_WIDTH;
-    let mut height = PADDING;
-    for sheet in sheets {
-        let rows = sheet.cells.len().max(1).min(PREVIEW_MAX_ROWS);
-        height += SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + PADDING;
-    }
+    debug_assert_eq!(width, PADDING * 2 + max_columns * CELL_WIDTH);
 
     let mut svg = format!(
         "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\">"
@@ -344,6 +403,22 @@ fn render_svg(sheets: &[PreviewSheet]) -> String {
     }
     svg.push_str("</svg>");
     svg
+}
+
+fn svg_dimensions(sheets: &[PreviewSheet]) -> (usize, usize) {
+    let max_columns = sheets
+        .iter()
+        .map(|sheet| sheet.cells.iter().map(Vec::len).max().unwrap_or(0).max(1))
+        .max()
+        .unwrap_or(1)
+        .min(PREVIEW_MAX_COLUMNS);
+    let width = PADDING * 2 + max_columns * CELL_WIDTH;
+    let mut height = PADDING;
+    for sheet in sheets {
+        let rows = sheet.cells.len().max(1).min(PREVIEW_MAX_ROWS);
+        height += SHEET_HEADER_HEIGHT + ROW_HEIGHT * rows + PADDING;
+    }
+    (width, height)
 }
 
 fn escape_xml(value: &str) -> String {

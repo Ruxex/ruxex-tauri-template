@@ -70,7 +70,12 @@ export function ArtifactPreview({
           ? `${preview.sheets} sheets · ${preview.rows} rows · ${preview.columns} columns`
           : preview.format === "pptx"
             ? `${preview.sheets} slides · ${preview.rows} text lines`
-            : `Document · ${preview.rows} text lines`}
+            : preview.format === "pdf"
+              ? `${preview.pages.length} pages · ${preview.byteSize} bytes`
+              : `Document · ${preview.rows} text lines`}
+        {preview.diagnostics.length > 0 && (
+          <span className="ml-2">· {preview.diagnostics.length} diagnostics</span>
+        )}
       </figcaption>
     </figure>
   );

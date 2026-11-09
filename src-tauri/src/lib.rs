@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 mod app_server;
+mod artifact_model;
 mod artifact_preview;
 pub mod artifacts;
 mod branding;
