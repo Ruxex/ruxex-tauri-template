@@ -1,9 +1,13 @@
-import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
+import {
+  ArchiveBoxIcon,
+  ArrowUturnLeftIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { formatErrorMessage } from "../app/error-message";
 import {
   useArchivedThreadList,
+  useDeleteAllArchivedThreads,
   useDeleteThread,
   useUnarchiveThread,
 } from "../app-server/hooks";
@@ -21,8 +25,11 @@ export function ArchivePage() {
     name: string;
   } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
   const currentCursor = cursorHistory.at(-1) ?? null;
   const archived = useArchivedThreadList(currentCursor);
+  const deleteAll = useDeleteAllArchivedThreads();
   const deleteThread = useDeleteThread();
   const unarchive = useUnarchiveThread();
   const pageNumber = cursorHistory.length + 1;
@@ -47,13 +54,44 @@ export function ArchivePage() {
       .catch((error: unknown) => setDeleteError(formatErrorMessage(error)));
   }
 
+  function closeDeleteAllDialog() {
+    if (deleteAll.isPending) return;
+    setIsDeleteAllDialogOpen(false);
+    setDeleteAllError(null);
+  }
+
+  function deleteAllArchivedThreads() {
+    setDeleteAllError(null);
+    void deleteAll
+      .mutateAsync()
+      .then(() => setIsDeleteAllDialogOpen(false))
+      .catch((error: unknown) => setDeleteAllError(formatErrorMessage(error)));
+  }
+
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-primary">
-          History
-        </p>
-        <h1 className="text-3xl font-semibold">Archived chats</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-wide text-primary">
+            History
+          </p>
+          <h1 className="text-3xl font-semibold">Archived chats</h1>
+        </div>
+        {archived.data?.data.length ? (
+          <button
+            aria-label="Delete all archived chats"
+            className="btn btn-error btn-outline btn-sm gap-2"
+            disabled={deleteAll.isPending}
+            type="button"
+            onClick={() => {
+              setDeleteAllError(null);
+              setIsDeleteAllDialogOpen(true);
+            }}
+          >
+            <TrashIcon aria-hidden="true" className="size-4" />
+            Delete all
+          </button>
+        ) : null}
       </div>
       {archived.isLoading && <LoadingState />}
       {archived.isError && (
@@ -70,35 +108,32 @@ export function ArchivePage() {
         {archived.data?.data.map((thread) => (
           <ThreadCard
             key={thread.id}
+            showUpdatedAt
             thread={thread}
             actions={
               <>
                 <button
                   aria-label="Restore"
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-ghost btn-sm btn-square text-primary"
+                  title="Restore"
                   type="button"
-                  disabled={unarchive.isPending}
+                  disabled={unarchive.isPending || deleteAll.isPending}
                   onClick={() =>
                     void unarchive.mutateAsync({ threadId: thread.id })
                   }
                 >
-                  Restore
+                  <ArrowUturnLeftIcon aria-hidden="true" className="size-4" />
                 </button>
                 <button
                   aria-label="Delete"
-                  className="btn btn-error btn-outline btn-sm"
+                  className="btn btn-ghost btn-sm btn-square text-error"
+                  title="Delete"
                   disabled={deleteThread.isPending}
                   onClick={() => openDeleteDialog(thread)}
                   type="button"
                 >
-                  Delete
+                  <TrashIcon aria-hidden="true" className="size-4" />
                 </button>
-                <Link
-                  className="btn btn-ghost btn-sm"
-                  to={`/chat/${thread.id}`}
-                >
-                  Open
-                </Link>
               </>
             }
           />
@@ -176,6 +211,58 @@ export function ArchivePage() {
                 type="button"
               >
                 {deleteThread.isPending ? "Deleting…" : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isDeleteAllDialogOpen && (
+        <div
+          aria-labelledby="delete-all-archived-chats-title"
+          aria-modal="true"
+          className="modal modal-open"
+          role="dialog"
+        >
+          <div className="modal-box">
+            <h2
+              className="text-lg font-semibold"
+              id="delete-all-archived-chats-title"
+            >
+              Delete all archived chats?
+            </h2>
+            <p className="py-4 text-sm text-base-content/70">
+              This permanently deletes every archived chat. This cannot be
+              undone.
+            </p>
+            {deleteAllError && (
+              <p className="alert alert-error mb-4" role="alert">
+                Unable to delete archived chats: {deleteAllError}
+              </p>
+            )}
+            <div className="modal-action">
+              <button
+                aria-label="Cancel"
+                className="btn btn-ghost"
+                disabled={deleteAll.isPending}
+                onClick={closeDeleteAllDialog}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                aria-label={
+                  deleteAll.isPending
+                    ? "Deleting all…"
+                    : "Delete all permanently"
+                }
+                className="btn btn-error"
+                disabled={deleteAll.isPending}
+                onClick={deleteAllArchivedThreads}
+                type="button"
+              >
+                {deleteAll.isPending
+                  ? "Deleting all…"
+                  : "Delete all permanently"}
               </button>
             </div>
           </div>

@@ -225,7 +225,7 @@ function WorkingIndicator({
       className={
         empty
           ? "mx-auto flex max-w-md items-center justify-center gap-3 rounded-box border border-dashed border-primary/30 bg-base-100 px-5 py-6 text-center text-sm text-base-content/70 shadow-sm"
-          : "border-t border-base-300 pt-3 text-center text-sm text-base-content/60"
+          : `border-t border-base-300 pt-3 text-sm text-base-content/60 ${active ? "text-center" : "text-left"}`
       }
       role="status"
     >

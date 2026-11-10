@@ -43,7 +43,7 @@ export function useAppServerDaemon() {
       controlAppServerDaemon(action),
     onSuccess: async (output, action) => {
       queryClient.setQueryData(appServerQueryKeys.daemonStatus, output);
-      if (action === "stop") {
+      if (action === "stop" || action === "forceStop") {
         queryClient.setQueryData(appServerQueryKeys.status, null);
         return;
       }

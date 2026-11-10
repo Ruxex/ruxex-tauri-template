@@ -190,6 +190,27 @@ describe("useAppServerDaemon", () => {
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
   });
 
+  it("clears the app-server status after force-stopping", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    client.setQueryData(appServerQueryKeys.status, connectedStatus);
+
+    const { result } = renderHook(() => useAppServerDaemon(), {
+      wrapper: createWrapper(client),
+    });
+
+    await act(async () =>
+      result.current.control.mutateAsync("forceStop" as AppServerDaemonAction),
+    );
+
+    expect(controlAppServerDaemon).toHaveBeenCalledWith("forceStop");
+    expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
+  });
+
   it("updates the managed App Server by stopping before starting", async () => {
     const client = new QueryClient({
       defaultOptions: {

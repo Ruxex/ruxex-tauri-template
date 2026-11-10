@@ -12,6 +12,7 @@ import {
   upsertThreadInListCaches,
 } from "../query-invalidation";
 import { ensureThreadResumed, markThreadStarted } from "../thread-session";
+import { archivedThreadListParams } from "./useThreadQueries";
 
 export function useCreateThread() {
   const queryClient = useQueryClient();
@@ -80,6 +81,37 @@ export function useDeleteThread() {
     mutationFn: async (params: v2.ThreadDeleteParams) => {
       const response = await requestAppServerMethod("thread/delete", params);
       return response.response;
+    },
+    onSuccess: () => invalidateThreadList(queryClient),
+  });
+}
+
+export function useDeleteAllArchivedThreads() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const threadIds: string[] = [];
+      let cursor: string | null = null;
+
+      do {
+        const response: { response: v2.ThreadListResponse } =
+          await requestAppServerMethod(
+            "thread/list",
+            archivedThreadListParams(cursor),
+          );
+        threadIds.push(...response.response.data.map((thread) => thread.id));
+        cursor = response.response.nextCursor;
+      } while (cursor);
+
+      const uniqueThreadIds = [...new Set(threadIds)];
+      await Promise.all(
+        uniqueThreadIds.map((threadId) =>
+          requestAppServerMethod("thread/delete", { threadId }),
+        ),
+      );
+
+      return { deletedCount: uniqueThreadIds.length };
     },
     onSuccess: () => invalidateThreadList(queryClient),
   });

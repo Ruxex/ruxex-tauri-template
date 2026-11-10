@@ -400,7 +400,8 @@ export function Composer({
           {activeTurnId && (
             <button
               aria-label="Stop"
-              className="btn btn-error btn-sm btn-outline"
+              className="btn btn-error btn-sm btn-outline btn-square"
+              title="Stop"
               type="button"
               onClick={() =>
                 void interrupt.mutateAsync({ threadId, turnId: activeTurnId })
@@ -408,7 +409,6 @@ export function Composer({
               disabled={isPending}
             >
               <StopIcon aria-hidden="true" className="size-4" />
-              Stop
             </button>
           )}
           <div className="join">

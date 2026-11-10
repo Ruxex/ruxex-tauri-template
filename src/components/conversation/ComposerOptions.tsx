@@ -1,5 +1,6 @@
 import {
   ClipboardDocumentListIcon,
+  ExclamationTriangleIcon,
   FlagIcon,
   PaperClipIcon,
   PlusIcon,
@@ -126,14 +127,21 @@ export function PermissionMenu({
   onModeChange,
 }: PermissionMenuProps) {
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
+  const isFullAccess = mode === "full-access";
+  const PermissionIcon = isFullAccess
+    ? ExclamationTriangleIcon
+    : ShieldCheckIcon;
 
   return (
     <details className="dropdown dropdown-top" ref={detailsRef}>
       <summary
         aria-label="Permission mode"
-        className="btn btn-ghost btn-sm gap-1"
+        className={`btn btn-sm gap-1 ${isFullAccess ? "btn-warning" : "btn-ghost"}`}
       >
-        <ShieldCheckIcon aria-hidden="true" className="size-4" />
+        <PermissionIcon
+          aria-hidden="true"
+          className={`size-4 ${isFullAccess ? "text-warning-content" : ""}`}
+        />
         <span>{permissionModeLabel(mode)}</span>
       </summary>
       <ul className="menu dropdown-content z-20 mb-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">

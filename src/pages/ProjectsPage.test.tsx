@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
@@ -10,6 +10,10 @@ const open = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({ useCreateProject, useProjectList }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
+
+function LocationProbe() {
+  return <output data-testid="location">{useLocation().pathname}</output>;
+}
 
 describe("ProjectsPage", () => {
   afterEach(cleanup);
@@ -37,12 +41,15 @@ describe("ProjectsPage", () => {
     });
   });
 
-  it("renders projects in a table and keeps the compact creation action", async () => {
+  it("opens a project by clicking its row and keeps the compact creation action", async () => {
     const { ProjectsPage } = await import("./ProjectsPage");
 
     const { container } = render(
-      <MemoryRouter>
-        <ProjectsPage />
+      <MemoryRouter initialEntries={["/projects"]}>
+        <Routes>
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/project-1" element={<LocationProbe />} />
+        </Routes>
       </MemoryRouter>,
     );
 
@@ -60,11 +67,16 @@ describe("ProjectsPage", () => {
     ).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Roots" })).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: /Project Alpha/ }).getAttribute("href"),
-    ).toBe("/projects/project-1");
     expect(screen.getByRole("button", { name: "New project" })).toBeTruthy();
     expect(screen.queryByLabelText("Project name")).toBeNull();
+    const projectRow = screen.getByRole("row", { name: /Project Alpha/ });
+    expect(projectRow.getAttribute("tabindex")).toBe("0");
+    expect(screen.queryByRole("link", { name: /Project Alpha/ })).toBeNull();
+    expect(screen.queryByText("Open")).toBeNull();
+    fireEvent.click(projectRow);
+    expect(screen.getByTestId("location").textContent).toBe(
+      "/projects/project-1",
+    );
   });
 
   it("opens project creation in a modal with visible overflow for metadata popovers", async () => {

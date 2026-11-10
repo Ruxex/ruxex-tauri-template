@@ -69,6 +69,24 @@ describe("ChatListItem", () => {
     expect(screen.queryByText("gpt-5")).toBeNull();
   });
 
+  it("can show the last updated timestamp when requested", () => {
+    render(
+      <MemoryRouter>
+        <ChatListItem
+          showUpdatedAt
+          thread={{
+            id: "thread-1",
+            name: "Archived chat",
+            preview: null,
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/Updated/)).toBeTruthy();
+  });
+
   it.each([
     ["running", "Running"],
     ["completed", "Completed"],

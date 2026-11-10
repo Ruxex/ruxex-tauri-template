@@ -162,6 +162,17 @@ describe("Composer", () => {
     settingsMutation.mockResolvedValue({});
   });
 
+  it("renders the active turn interrupt as an icon-only button", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId="turn-1" />);
+
+    const stop = screen.getByRole("button", { name: "Stop" });
+    expect(stop.className).toContain("btn-square");
+    expect(stop.textContent).not.toContain("Stop");
+    expect(stop.getAttribute("title")).toBe("Stop");
+  });
+
   it("shows slash commands when the message starts with a slash", async () => {
     const { Composer } = await import("./Composer");
 

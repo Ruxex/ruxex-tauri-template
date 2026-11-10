@@ -126,6 +126,44 @@ describe("thread mutation hooks", () => {
     },
   );
 
+  it("deletes every archived thread across pages only once", async () => {
+    requestAppServerMethod.mockImplementation(
+      async (method: string, params: { cursor?: string }) => {
+        if (method === "thread/list") {
+          return {
+            response: params.cursor
+              ? {
+                  data: [{ id: "thread-2" }, { id: "thread-1" }],
+                  nextCursor: null,
+                }
+              : {
+                  data: [{ id: "thread-1" }],
+                  nextCursor: "cursor-next",
+                },
+          };
+        }
+        return { response: {} };
+      },
+    );
+    const { useDeleteAllArchivedThreads } = await import(
+      "./useThreadMutations"
+    );
+    const { result } = renderHook(() => useDeleteAllArchivedThreads(), {
+      wrapper: createWrapper(),
+    });
+
+    await expect(
+      act(async () => result.current.mutateAsync()),
+    ).resolves.toEqual({ deletedCount: 2 });
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/delete", {
+      threadId: "thread-1",
+    });
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/delete", {
+      threadId: "thread-2",
+    });
+  });
+
   it("uses the server response as the mutation result", async () => {
     const response = { thread: { id: "thread-1" } };
     requestAppServerMethod.mockResolvedValueOnce({ response });

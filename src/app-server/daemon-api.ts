@@ -1,6 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 
-export type AppServerDaemonAction = "start" | "restart" | "stop" | "version";
+export type AppServerDaemonAction =
+  | "start"
+  | "restart"
+  | "stop"
+  | "forceStop"
+  | "version";
 
 export type AppServerDaemonStatus =
   | "alreadyRunning"

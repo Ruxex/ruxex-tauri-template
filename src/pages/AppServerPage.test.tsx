@@ -109,7 +109,7 @@ describe("AppServerPage", () => {
     expect(screen.getAllByRole("heading", { name: "App Server" })).toHaveLength(
       2,
     );
-    expect(screen.getByText("running")).toBeTruthy();
+    expect(screen.getByText("Running")).toBeTruthy();
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
     expect(screen.getByText("/tmp/ruxex.sock")).toBeTruthy();

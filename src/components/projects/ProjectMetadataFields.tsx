@@ -5,6 +5,7 @@ import type { ProjectMetadata } from "./project-metadata";
 import {
   PROJECT_COLOR_OPTIONS,
   PROJECT_ICON_OPTIONS,
+  projectColorClassName,
 } from "./project-metadata";
 import { ProjectIcon } from "./ProjectIcon";
 
@@ -78,118 +79,137 @@ export function ProjectMetadataFields({
   }, [openSelector]);
 
   return (
-    <div ref={rootRef} className="grid gap-3 sm:grid-cols-2">
-      <div className="form-control w-full">
-        <div className="relative">
-          <button
-            aria-expanded={openSelector === "icon"}
-            aria-haspopup="menu"
-            aria-label={`Project icon: ${selectedIcon.label}`}
-            className="btn btn-outline min-h-11 w-full justify-center gap-2 font-normal"
-            ref={iconTriggerRef}
-            type="button"
-            onClick={() =>
-              setOpenSelector((current) => (current === "icon" ? null : "icon"))
-            }
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <ProjectIcon
-                aria-hidden="true"
-                className="size-5 shrink-0"
-                icon={selectedIcon.value}
-              />
-            </span>
-            <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
-          </button>
-          {openSelector === "icon" && (
-            <fieldset
-              aria-label="Project icon options"
-              className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
-            >
-              {PROJECT_ICON_OPTIONS.map((option) => {
-                const selected = value.icon === option.value;
-                return (
-                  <button
-                    aria-label={option.label}
-                    aria-pressed={selected}
-                    className={`btn btn-square ${selected ? "btn-primary" : "btn-ghost"}`}
-                    key={option.value}
-                    title={option.label}
-                    type="button"
-                    onClick={() => {
-                      onChange({ ...value, icon: option.value });
-                      setOpenSelector(null);
-                      iconTriggerRef.current?.focus();
-                    }}
-                  >
-                    <ProjectIcon
-                      aria-hidden="true"
-                      className="size-5"
-                      icon={option.value}
-                    />
-                  </button>
-                );
-              })}
-            </fieldset>
-          )}
-        </div>
-      </div>
+    <div
+      ref={rootRef}
+      className="grid gap-3 sm:grid-cols-[minmax(8rem,0.8fr)_minmax(0,1.2fr)]"
+    >
+      <section
+        aria-label="Project preview"
+        className="flex min-h-28 items-center justify-center rounded-xl border border-base-300 bg-base-100 p-4"
+      >
+        <span
+          aria-hidden="true"
+          className={`flex size-16 items-center justify-center rounded-2xl ${projectColorClassName(value.color)}`}
+        >
+          <ProjectIcon className="size-8" icon={selectedIcon.value} />
+        </span>
+      </section>
 
-      <div className="form-control w-full">
-        <div className="relative">
-          <button
-            aria-expanded={openSelector === "color"}
-            aria-haspopup="menu"
-            aria-label={`Project color: ${selectedColor.label}`}
-            className="btn btn-outline min-h-11 w-full justify-center gap-2 font-normal"
-            ref={colorTriggerRef}
-            type="button"
-            onClick={() =>
-              setOpenSelector((current) =>
-                current === "color" ? null : "color",
-              )
-            }
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <span
-                aria-hidden="true"
-                className={`size-3 shrink-0 rounded-full ${PROJECT_COLOR_SWATCH_CLASSES[selectedColor.value]}`}
-              />
-            </span>
-            <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
-          </button>
-          {openSelector === "color" && (
-            <fieldset
-              aria-label="Project color options"
-              className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
+      <section aria-label="Project metadata controls" className="grid gap-3">
+        <div className="form-control w-full">
+          <div className="relative">
+            <button
+              aria-expanded={openSelector === "icon"}
+              aria-haspopup="menu"
+              aria-label={`Project icon: ${selectedIcon.label}`}
+              className="btn min-h-11 w-full justify-center gap-2 border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
+              ref={iconTriggerRef}
+              type="button"
+              onClick={() =>
+                setOpenSelector((current) =>
+                  current === "icon" ? null : "icon",
+                )
+              }
             >
-              {PROJECT_COLOR_OPTIONS.map((option) => {
-                const selected = value.color === option.value;
-                return (
-                  <button
-                    aria-label={option.label}
-                    aria-pressed={selected}
-                    className={`btn btn-square ${selected ? "bg-base-200 ring-2 ring-primary" : "btn-ghost"}`}
-                    key={option.value}
-                    title={option.label}
-                    type="button"
-                    onClick={() => {
-                      onChange({ ...value, color: option.value });
-                      setOpenSelector(null);
-                      colorTriggerRef.current?.focus();
-                    }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`size-3 shrink-0 rounded-full ${PROJECT_COLOR_SWATCH_CLASSES[option.value]}`}
-                    />
-                  </button>
-                );
-              })}
-            </fieldset>
-          )}
+              <span className="flex min-w-0 items-center gap-2">
+                <ProjectIcon
+                  aria-hidden="true"
+                  className="size-5 shrink-0"
+                  icon={selectedIcon.value}
+                />
+              </span>
+              <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
+            </button>
+            {openSelector === "icon" && (
+              <fieldset
+                aria-label="Project icon options"
+                className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
+              >
+                {PROJECT_ICON_OPTIONS.map((option) => {
+                  const selected = value.icon === option.value;
+                  return (
+                    <button
+                      aria-label={option.label}
+                      aria-pressed={selected}
+                      className={`btn btn-square ${selected ? "btn-primary" : "btn-ghost"}`}
+                      key={option.value}
+                      title={option.label}
+                      type="button"
+                      onClick={() => {
+                        onChange({ ...value, icon: option.value });
+                        setOpenSelector(null);
+                        iconTriggerRef.current?.focus();
+                      }}
+                    >
+                      <ProjectIcon
+                        aria-hidden="true"
+                        className="size-5"
+                        icon={option.value}
+                      />
+                    </button>
+                  );
+                })}
+              </fieldset>
+            )}
+          </div>
         </div>
-      </div>
+
+        <div className="form-control w-full">
+          <div className="relative">
+            <button
+              aria-expanded={openSelector === "color"}
+              aria-haspopup="menu"
+              aria-label={`Project color: ${selectedColor.label}`}
+              className="btn min-h-11 w-full justify-center gap-2 border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
+              ref={colorTriggerRef}
+              type="button"
+              onClick={() =>
+                setOpenSelector((current) =>
+                  current === "color" ? null : "color",
+                )
+              }
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className={`size-3 shrink-0 rounded-full ${PROJECT_COLOR_SWATCH_CLASSES[selectedColor.value]}`}
+                />
+              </span>
+              <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
+            </button>
+            {openSelector === "color" && (
+              <fieldset
+                aria-label="Project color options"
+                className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
+              >
+                {PROJECT_COLOR_OPTIONS.map((option) => {
+                  const selected = value.color === option.value;
+                  return (
+                    <button
+                      aria-label={option.label}
+                      aria-pressed={selected}
+                      className={`btn btn-square ${selected ? "bg-base-200 ring-2 ring-primary" : "btn-ghost"}`}
+                      key={option.value}
+                      title={option.label}
+                      type="button"
+                      onClick={() => {
+                        onChange({ ...value, color: option.value });
+                        setOpenSelector(null);
+                        colorTriggerRef.current?.focus();
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`size-3 shrink-0 rounded-full ${PROJECT_COLOR_SWATCH_CLASSES[option.value]}`}
+                      />
+                    </button>
+                  );
+                })}
+              </fieldset>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

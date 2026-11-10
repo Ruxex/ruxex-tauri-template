@@ -32,10 +32,12 @@ export const AppServer: Story = () => (
     isAvailable={false}
     isFetching={false}
     isPending={false}
+    isRefreshing={false}
     isUpdatePending={false}
     mode="inprocess"
     onAction={() => undefined}
     onReconnect={() => undefined}
+    onRefresh={() => undefined}
     onUpdate={() => undefined}
     resynchronizing={false}
   />

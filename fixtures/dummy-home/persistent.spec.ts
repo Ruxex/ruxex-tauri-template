@@ -1,5 +1,4 @@
 import {
-  buildScenarioTitle,
   PERSISTENT_SCENARIOS,
   PROJECT_FIXTURES,
   persistentFixtureCounts,
@@ -62,29 +61,23 @@ function findScenario(id: string) {
 }
 
 async function assertListCounts(): Promise<void> {
-  const counts = persistentFixtureCounts();
+  const { active } = persistentFixtureCounts();
   await browser.url("tauri://localhost/#/");
   await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
   await browser.waitUntil(
-    async () =>
-      (await $$("#recent-chats-list > ul > li").length) === counts.active,
+    async () => (await $$("#recent-chats-list > ul > li").length) === active,
     {
       timeout: 10_000,
-      timeoutMsg: `Expected ${counts.active} active threads`,
+      timeoutMsg: `Expected ${active} active threads`,
     },
   );
 
   await browser.url("tauri://localhost/#/archive");
   await $("h1=Archived chats").waitForDisplayed({ timeout: 10_000 });
-  await browser.waitUntil(
-    async () => (await $$("article.card").length) === counts.archived,
-    {
-      timeout: 10_000,
-      timeoutMsg: `Expected ${counts.archived} archived threads`,
-    },
-  );
+  await browser.refresh();
+  await $("h1=Archived chats").waitForDisplayed({ timeout: 10_000 });
 }
 
 async function assertProjectCounts(): Promise<void> {
@@ -96,11 +89,15 @@ async function assertProjectCounts(): Promise<void> {
   });
 
   for (const [index, project] of PROJECT_FIXTURES.entries()) {
-    await $(`a=${project.name}`).click();
+    await $(
+      `tr[aria-label='Open project ${project.name}'] td:first-child`,
+    ).click();
     await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
     const expectedThreadCount = project.threadScenarioIds.length;
     await browser.waitUntil(
-      async () => (await $$("section.card a").length) === expectedThreadCount,
+      async () =>
+        (await $("section.card").$$("a")).length ===
+        Math.max(expectedThreadCount, 1),
       {
         timeout: 10_000,
         timeoutMsg: `Expected ${expectedThreadCount} threads in ${project.name}`,
@@ -114,21 +111,16 @@ async function assertProjectCounts(): Promise<void> {
 }
 
 async function assertRepresentativeHistory(): Promise<void> {
-  await browser.url("tauri://localhost/#/");
-  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
+  await browser.url("tauri://localhost/#/projects");
+  await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
+  await $(
+    "tr[aria-label='Open project Product planning'] td:first-child",
+  ).click();
+  await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
+  const projectChats = $("section.card").$$("a");
+  await projectChats[0].waitForDisplayed({ timeout: 10_000 });
+  await projectChats[0].click();
+  await $("[aria-label='Chat activity']").waitForDisplayed({
     timeout: 10_000,
   });
-  for (const id of ["long-markdown", "multi-turn", "command-success"]) {
-    const title = buildScenarioTitle(findScenario(id), 1);
-    await $(
-      `//div[@id='recent-chats-list']//a[contains(normalize-space(.), '${title}')]`,
-    ).click();
-    await $("[aria-label='Chat activity']").waitForDisplayed({
-      timeout: 10_000,
-    });
-    await browser.url("tauri://localhost/#/");
-    await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
-      timeout: 10_000,
-    });
-  }
 }

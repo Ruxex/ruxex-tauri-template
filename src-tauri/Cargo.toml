@@ -47,6 +47,7 @@ ruxex-provider-host-example = { git = "https://github.com/Ruxex/ruxex.git", tag 
 dirs = "6"
 futures = "0.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
+libc = "0.2"
 lopdf = "0.47.0"
 pdf-writer = "0.15.0"
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", rev = "3e636cab26c013eca5131103c03d20237f12c4df", version = "=3.3.0", default-features = false, features = [

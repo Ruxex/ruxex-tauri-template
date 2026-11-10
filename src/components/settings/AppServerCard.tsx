@@ -1,4 +1,5 @@
 import {
+  ArrowPathIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
@@ -37,10 +38,12 @@ export function AppServerCard({
   isAvailable,
   isFetching,
   isPending,
+  isRefreshing,
   isUpdatePending,
   mode,
   onAction,
   onReconnect,
+  onRefresh,
   onUpdate,
   resynchronizing,
   updateError,
@@ -56,10 +59,12 @@ export function AppServerCard({
   isAvailable: boolean;
   isFetching: boolean;
   isPending: boolean;
+  isRefreshing: boolean;
   isUpdatePending: boolean;
   mode?: "daemon" | "inprocess";
   onAction: (action: Exclude<AppServerDaemonAction, "version">) => void;
   onReconnect: () => void;
+  onRefresh: () => void;
   onUpdate: () => void;
   resynchronizing: boolean;
   updateError?: unknown;
@@ -82,7 +87,10 @@ export function AppServerCard({
     : appServerReady && appServerError == null
       ? "success"
       : "error";
-  const daemonStatus = daemon?.status ?? "Unavailable";
+  const daemonStatus = daemon?.status ?? "unavailable";
+  const daemonStatusLabel = daemonStatus
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (character) => character.toUpperCase());
   const displayedVersion = appServerVersion ?? daemon?.appServerVersion;
   const needsUpdate = Boolean(
     showDaemonControls &&
@@ -125,10 +133,13 @@ export function AppServerCard({
               <button
                 aria-label={isUpdatePending ? "Updating…" : "Update"}
                 className="btn btn-outline btn-xs"
-                disabled={isUpdatePending || isPending}
+                disabled={isUpdatePending || isPending || isRefreshing || isFetching}
                 onClick={onUpdate}
                 type="button"
               >
+                {isUpdatePending && (
+                  <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+                )}
                 {isUpdatePending ? "Updating…" : "Update"}
               </button>
             )}
@@ -151,7 +162,7 @@ export function AppServerCard({
                 }
                 tone={appServerStatusTone(daemonStatus)}
               >
-                {daemonStatus}
+                {daemonStatusLabel}
               </StateBadge>
             </SettingRow>
             {daemon?.pid !== undefined && (
@@ -177,31 +188,51 @@ export function AppServerCard({
       )}
       <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
         <button
-          aria-label={isFetching ? "Reconnecting…" : "Reconnect"}
+          aria-label="Reconnect"
           className="btn btn-sm btn-outline"
           type="button"
           onClick={onReconnect}
-          disabled={isFetching}
+          disabled={isFetching || isRefreshing || isPending || isUpdatePending}
         >
-          {isFetching ? "Reconnecting…" : "Reconnect"}
+          {isFetching && (
+            <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+          )}
+          Reconnect
+        </button>
+        <button
+          aria-label="Refresh"
+          className="btn btn-sm btn-outline"
+          type="button"
+          onClick={onRefresh}
+          disabled={isFetching || isRefreshing || isPending || isUpdatePending}
+        >
+          {isRefreshing && (
+            <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+          )}
+          <ArrowPathIcon aria-hidden="true" className="size-4" />
+          Refresh
         </button>
         {showDaemonControls &&
           (
             [
-              ["start", "btn-outline btn-success"],
-              ["restart", "btn-outline btn-warning"],
-              ["stop", "btn-outline btn-error"],
+              ["start", "Start", "btn-outline btn-success"],
+              ["restart", "Restart", "btn-outline btn-warning"],
+              ["stop", "Stop", "btn-outline btn-error"],
+              ["forceStop", "Force stop", "btn-outline btn-error"],
             ] as const
-          ).map(([action, variant]) => (
+          ).map(([action, label, variant]) => (
             <button
-              aria-label={action[0].toUpperCase() + action.slice(1)}
+              aria-label={label}
               className={`btn btn-sm ${variant}`}
-              disabled={isPending}
+              disabled={isFetching || isRefreshing || isPending || isUpdatePending}
               key={action}
               onClick={() => onAction(action)}
               type="button"
             >
-              {action[0].toUpperCase() + action.slice(1)}
+              {isPending && (
+                <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+              )}
+              {label}
             </button>
           ))}
       </div>

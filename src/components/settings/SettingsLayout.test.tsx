@@ -32,8 +32,10 @@ describe("settings card layout", () => {
         isAvailable={false}
         isFetching={false}
         isPending={false}
+        isRefreshing={false}
         isUpdatePending={false}
         onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
         onUpdate={vi.fn()}
         resynchronizing={false}
         onAction={vi.fn()}
@@ -71,8 +73,10 @@ describe("settings card layout", () => {
         isAvailable={false}
         isFetching={false}
         isPending={false}
+        isRefreshing={false}
         isUpdatePending={false}
         onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
         onUpdate={vi.fn()}
         resynchronizing={false}
         onAction={vi.fn()}
@@ -104,10 +108,12 @@ describe("settings card layout", () => {
         isAvailable
         isFetching={false}
         isPending={false}
+        isRefreshing={false}
         isUpdatePending={false}
         mode="daemon"
         onAction={vi.fn()}
         onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
         onUpdate={vi.fn()}
         resynchronizing={false}
       />,
@@ -117,8 +123,9 @@ describe("settings card layout", () => {
     const actionRow = reconnect.parentElement;
 
     expect(actionRow?.className).toContain("flex-wrap");
-    expect(actionRow?.querySelectorAll("button")).toHaveLength(4);
+    expect(actionRow?.querySelectorAll("button")).toHaveLength(6);
     expect(reconnect.className).toContain("btn-outline");
+    expect(screen.getByRole("button", { name: "Refresh" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start" }).className).toContain(
       "btn-outline",
     );
@@ -128,6 +135,54 @@ describe("settings card layout", () => {
     expect(screen.getByRole("button", { name: "Stop" }).className).toContain(
       "btn-outline",
     );
+    expect(
+      screen.getByRole("button", { name: "Force stop" }).className,
+    ).toContain("btn-outline");
+    expect(screen.getByText("Running")).toBeTruthy();
+  });
+
+  it("shows progress and disables app server actions while one is running", () => {
+    render(
+      <AppServerCard
+        appServerReady
+        connected
+        daemon={{
+          status: "running",
+          managedRuxexPath: "/tmp/ruxex",
+          socketPath: "/tmp/app.sock",
+        }}
+        isAvailable
+        isFetching={false}
+        isPending
+        isRefreshing={false}
+        isUpdatePending={false}
+        mode="daemon"
+        onAction={vi.fn()}
+        onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
+        onUpdate={vi.fn()}
+        resynchronizing={false}
+      />,
+    );
+
+    for (const name of [
+      "Reconnect",
+      "Refresh",
+      "Start",
+      "Restart",
+      "Stop",
+      "Force stop",
+    ]) {
+      expect(screen.getByRole("button", { name })).toHaveProperty(
+        "disabled",
+        true,
+      );
+    }
+    expect(
+      screen.getByRole("button", { name: "Force stop" }).querySelector(
+        ".loading-spinner",
+      ),
+    ).toBeTruthy();
   });
 
   it("groups runtime summaries into a single panel", () => {
@@ -158,7 +213,7 @@ describe("settings card layout", () => {
     ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
   });
 
-  it("keeps capability rows and preference fields vertically stacked", () => {
+  it("uses a compact responsive key-value grid for capabilities", () => {
     render(
       <>
         <CapabilitiesCard
@@ -175,12 +230,16 @@ describe("settings card layout", () => {
       </>,
     );
 
-    expect(
-      screen
-        .getByRole("heading", { name: "Capabilities" })
-        .closest("section")
-        ?.querySelector("div.grid")?.className,
-    ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
+    const capabilitiesPanel = screen
+      .getByRole("heading", { name: "Capabilities" })
+      .closest("section");
+    const capabilitiesGrid = capabilitiesPanel?.querySelector("dl");
+    expect(capabilitiesGrid?.className).toContain("grid");
+    expect(capabilitiesGrid?.className).toContain("sm:grid-cols-2");
+    expect(capabilitiesGrid?.className).toContain("xl:grid-cols-3");
+    expect(capabilitiesGrid?.firstElementChild?.className).toContain(
+      "grid-cols-[minmax(0,1fr)_auto]",
+    );
     expect(screen.queryByText("Color mode")).toBeNull();
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();

@@ -29,11 +29,13 @@ export function AppServerPage() {
         daemonError={daemon.status.error}
         isAvailable={daemon.isAvailable}
         isFetching={status.isFetching}
+        isRefreshing={daemon.status.isFetching}
         mode={daemon.mode}
         isPending={daemon.control.isPending}
         isUpdatePending={daemon.update.isPending}
         onAction={(action) => daemon.control.mutate(action)}
         onReconnect={() => void status.refetch()}
+        onRefresh={() => void daemon.status.refetch()}
         onUpdate={() => daemon.update.mutate()}
         resynchronizing={events.resynchronizing}
         updateError={daemon.update.error}

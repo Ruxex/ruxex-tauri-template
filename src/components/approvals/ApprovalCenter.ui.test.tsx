@@ -52,7 +52,7 @@ describe("ApprovalCenter", () => {
     const { ApprovalCenter } = await import("./ApprovalCenter");
 
     render(<ApprovalCenter />);
-    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve once" }));
 
     expect(resolveServerRequest).toHaveBeenCalledWith(17, {
       decision: "accept",
@@ -71,7 +71,7 @@ describe("ApprovalCenter", () => {
         .querySelector("svg")
         ?.getAttribute("class"),
     ).toContain("text-warning");
-    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
   });
 
   it("renders an empty state when there are no pending requests", async () => {

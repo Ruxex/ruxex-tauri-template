@@ -22,6 +22,7 @@ type ChatListItemProps = {
   selected?: boolean;
   unread?: boolean;
   showPreview?: boolean;
+  showUpdatedAt?: boolean;
   onClick?: () => void;
   onArchive?: () => void;
   isArchiving?: boolean;
@@ -35,6 +36,7 @@ export function ChatListItem({
   selected = false,
   unread = false,
   showPreview = false,
+  showUpdatedAt = false,
   onClick,
   onArchive,
   isArchiving = false,
@@ -68,10 +70,15 @@ export function ChatListItem({
             {thread.preview}
           </span>
         )}
-        {(projectName || worktreeLabel) && (
+        {(projectName || worktreeLabel || showUpdatedAt) && (
           <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
             {projectName && <span className="truncate">{projectName}</span>}
             {worktreeLabel && <span className="truncate">{worktreeLabel}</span>}
+            {showUpdatedAt && (
+              <span className="truncate">
+                Updated {formatChatTimestamp(thread.updatedAt)}
+              </span>
+            )}
           </span>
         )}
       </Link>
@@ -93,4 +100,11 @@ export function ChatListItem({
       )}
     </div>
   );
+}
+
+function formatChatTimestamp(timestamp: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(timestamp * 1000));
 }

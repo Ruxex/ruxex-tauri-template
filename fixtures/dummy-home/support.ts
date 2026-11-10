@@ -16,7 +16,13 @@ export function scenarioPrompt(
   scenario: PersistentScenario,
   occurrence: number,
 ): string {
-  return buildScenarioMarker(scenario, occurrence);
+  const marker = buildScenarioMarker(scenario, occurrence);
+  const markerStart = marker.lastIndexOf(scenario.providerMarker);
+  if (markerStart === -1) {
+    return marker;
+  }
+
+  return `${marker.slice(0, markerStart)}\`${scenario.providerMarker}\``;
 }
 
 export function scenarioExpectation(
@@ -207,12 +213,21 @@ export async function waitForTurnFinish(): Promise<void> {
 export async function waitForPendingRequest(): Promise<void> {
   await browser.waitUntil(
     async () =>
-      (await $("button[aria-label='Allow']")
-        .isDisplayed()
-        .catch(() => false)) ||
-      (await $("button[aria-label='Deny']")
-        .isDisplayed()
-        .catch(() => false)),
+      (
+        await Promise.all(
+          [
+            "Approve once",
+            "Approve in this chat",
+            "Reject",
+            "Allow",
+            "Deny",
+          ].map(async (label) =>
+            $(`button[aria-label='${label}']`)
+              .isDisplayed()
+              .catch(() => false),
+          ),
+        )
+      ).some(Boolean),
     {
       timeout: 30_000,
       timeoutMsg: "The approval controls should be displayed",
@@ -223,7 +238,7 @@ export async function waitForPendingRequest(): Promise<void> {
 export async function resolveApproval(
   decision: "accept" | "deny",
 ): Promise<void> {
-  const label = decision === "accept" ? "Allow" : "Deny";
+  const label = decision === "accept" ? "Approve once" : "Reject";
   await $(`button[aria-label='${label}']`).click();
 }
 
@@ -257,7 +272,9 @@ export async function openProjectChat(projectName: string): Promise<void> {
       "nav[aria-label='Workspace navigation'] button[aria-label='Projects']",
     ).click();
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
-    await $(`a=${projectName}`).click();
+    await $(
+      `tr[aria-label='Open project ${projectName}'] td:first-child`,
+    ).click();
     await projectHeading.waitForDisplayed({ timeout: 10_000 });
   }
 

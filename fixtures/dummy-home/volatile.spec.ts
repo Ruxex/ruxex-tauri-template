@@ -96,6 +96,9 @@ describe("Volatile DummyProvider event states", () => {
 async function waitForPendingControlsGone(): Promise<void> {
   await browser.waitUntil(
     async () =>
+      !(await $("button[aria-label='Approve once']").isExisting()) &&
+      !(await $("button[aria-label='Approve in this chat']").isExisting()) &&
+      !(await $("button[aria-label='Reject']").isExisting()) &&
       !(await $("button[aria-label='Allow']").isExisting()) &&
       !(await $("button[aria-label='Deny']").isExisting()) &&
       !(await $("button[aria-label='Submit']").isExisting()),

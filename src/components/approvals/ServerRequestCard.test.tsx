@@ -111,7 +111,7 @@ const userInputPending = {
 describe("ServerRequestCard", () => {
   afterEach(cleanup);
 
-  it("shows the server-provided command scope and resolves an approval", () => {
+  it("shows the request summary and resolves a one-time approval", () => {
     const onResolve = vi.fn(async () => undefined);
     render(
       <ServerRequestCard
@@ -124,15 +124,42 @@ describe("ServerRequestCard", () => {
 
     expect(screen.getAllByText("pnpm check")).toHaveLength(2);
     expect(screen.getByText("/workspace")).toBeTruthy();
-    expect(screen.getByText("Request details")).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Request summary" }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Request details")).toBeNull();
+    expect(screen.queryByText("Request 17")).toBeNull();
     expect(
       screen
         .getByRole("heading", { name: "Approval requested" })
         .querySelector("svg"),
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+    expect(screen.getByRole("button", { name: "Approve once" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Approve in this chat" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Approve once" }));
 
     expect(onResolve).toHaveBeenCalledWith({ decision: "accept" });
+  });
+
+  it("resolves a command approval for the current chat", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={pending}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Approve in this chat" }),
+    );
+
+    expect(onResolve).toHaveBeenCalledWith({ decision: "acceptForSession" });
   });
 
   it("does not expose approval actions while disconnected", () => {
@@ -151,8 +178,11 @@ describe("ServerRequestCard", () => {
         .querySelector("svg")
         ?.getAttribute("class"),
     ).toContain("text-warning");
-    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Deny" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Approve in this chat" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
   });
 
   it("shows permission details and resolves an allowed session grant", () => {
@@ -180,13 +210,11 @@ describe("ServerRequestCard", () => {
     expect(screen.getByText("Network access:")).toBeTruthy();
     expect(screen.getByTitle("/workspace/read")).toBeTruthy();
     expect(screen.getByTitle("/workspace/write")).toBeTruthy();
-    expect(
-      (screen.getByRole("radio", { name: "This turn" }) as HTMLInputElement)
-        .checked,
-    ).toBe(true);
-
-    fireEvent.click(screen.getByRole("radio", { name: "This session" }));
-    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+    expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: "This session" })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Approve in this chat" }),
+    );
 
     expect(onResolve).toHaveBeenCalledWith({
       permissions: {
@@ -227,7 +255,7 @@ describe("ServerRequestCard", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Deny" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
 
     expect(onResolve).toHaveBeenCalledWith({
       permissions: {},
@@ -246,8 +274,11 @@ describe("ServerRequestCard", () => {
     );
 
     expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Deny" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Approve in this chat" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
   });
 
   it("renders MCP tool approval elicitation and resolves Allow", () => {

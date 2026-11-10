@@ -49,6 +49,28 @@ describe("NewProjectDialog", () => {
     );
   });
 
+  it("uses the same neutral border treatment for project controls", async () => {
+    const { NewProjectDialog } = await import("./NewProjectDialog");
+
+    render(
+      <MemoryRouter>
+        <NewProjectDialog onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const controls = [
+      screen.getByRole("button", { name: "Select workspace folder" }),
+      screen.getByRole("button", { name: "Project icon: Folder" }),
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    ];
+
+    for (const control of controls) {
+      expect(control.className).toContain("border-base-300");
+      expect(control.className).toContain("bg-base-100");
+      expect(control.className).not.toContain("btn-outline");
+    }
+  });
+
   it("supports restoring a draft with a selected workspace folder", async () => {
     const { NewProjectDialog } = await import("./NewProjectDialog");
 
@@ -63,9 +85,9 @@ describe("NewProjectDialog", () => {
     );
 
     expect(
-      screen.getByRole("textbox", { name: "Project name" }).getAttribute(
-        "value",
-      ),
+      screen
+        .getByRole("textbox", { name: "Project name" })
+        .getAttribute("value"),
     ).toBe("Design system");
     expect(
       screen.getByRole("button", {
@@ -145,9 +167,9 @@ describe("NewProjectDialog", () => {
       "Enter a project name",
     );
     expect(
-      screen.getByRole("textbox", { name: "Project name" }).getAttribute(
-        "aria-invalid",
-      ),
+      screen
+        .getByRole("textbox", { name: "Project name" })
+        .getAttribute("aria-invalid"),
     ).toBe("true");
   });
 

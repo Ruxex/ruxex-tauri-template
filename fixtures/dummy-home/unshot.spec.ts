@@ -9,11 +9,15 @@ async function openRoute(path: string, selector: string): Promise<void> {
   await $(selector).waitForDisplayed({ timeout: 10_000 });
 }
 
-async function openFixtureThread(title: string): Promise<void> {
-  await openRoute("/", "[contenteditable='true'][aria-label='Message']");
+async function openFixtureThread(): Promise<void> {
+  await openRoute("/projects", "h1=Projects");
   await $(
-    `//div[@id='recent-chats-list']//a[contains(normalize-space(.), '${title}')]`,
+    "tr[aria-label='Open project Product planning'] td:first-child",
   ).click();
+  await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
+  const projectChats = $("section.card").$$("a");
+  await projectChats[0].waitForDisplayed({ timeout: 10_000 });
+  await projectChats[0].click();
   await $(`[aria-label='Chat activity']`).waitForDisplayed({ timeout: 10_000 });
 }
 
@@ -21,7 +25,7 @@ describe("DummyProvider unshot UI screenshots", () => {
   it("captures the remaining page and interactive component states", async () => {
     await waitForDesktopReady();
 
-    await openRoute("/settings/account", "h2=Sign in");
+    await openRoute("/settings/account", "h2=Account information");
     await saveFixtureScreenshot("settings-account-login.png");
 
     await openRoute("/quick-panel", "h1=Quick request");
@@ -33,8 +37,8 @@ describe("DummyProvider unshot UI screenshots", () => {
     await openRoute("/capabilities?tab=mcp", "h1=MCP");
     await saveFixtureScreenshot("capabilities-mcp.png");
 
-    await openFixtureThread("Fixture long markdown 01");
-    await saveFixtureScreenshot("chat-completed-long-markdown.png");
+    await openFixtureThread();
+    await saveFixtureScreenshot("chat-completed-basic.png");
 
     await captureComposerStates();
     await captureChatSearch();
@@ -79,20 +83,20 @@ async function captureComposerStates(): Promise<void> {
 
 async function captureChatSearch(): Promise<void> {
   await openRoute("/", "[contenteditable='true'][aria-label='Message']");
-  const searchButton = $("button[aria-label='Search chats']");
-  if (!(await searchButton.isDisplayed().catch(() => false))) {
+  const search = $("input[aria-label='Search chats']");
+  if (!(await search.isDisplayed().catch(() => false))) {
     await $(
       "nav[aria-label='Workspace navigation'] button[aria-label='Home']",
     ).click();
-    await searchButton.waitForDisplayed({ timeout: 10_000 });
   }
-  await searchButton.click();
-  const search = $("input[aria-label='Search chats']");
   await search.waitForDisplayed({ timeout: 10_000 });
   await search.setValue("fixed response");
+  const searchRegion = $(
+    "//input[@aria-label='Search chats']/ancestor::div[contains(@class, 'mb-4')][1]",
+  );
   await browser.waitUntil(
     async () => {
-      const section = $("section[aria-label='Chat search']");
+      const section = searchRegion;
       return (
         (await section
           .$("ul")
@@ -110,9 +114,6 @@ async function captureChatSearch(): Promise<void> {
     },
   );
   await saveFixtureScreenshot("chat-search-results.png");
-  await $(
-    "section[aria-label='Chat search'] button[aria-label='Close']",
-  ).click();
 }
 
 async function captureProjectDialogs(): Promise<void> {
@@ -155,14 +156,14 @@ async function captureAutomationStates(): Promise<void> {
   await saveFixtureScreenshot("automation-create-dialog.png");
 
   await $("dialog .modal-box button[aria-label='Create schedule']").click();
-  await $(
-    "button[aria-label='Edit schedule: Fixture review cadence']",
-  ).waitForDisplayed({
+  await $$(
+    'button[aria-label="Edit schedule: Fixture review cadence"]',
+  )[0].waitForDisplayed({
     timeout: 10_000,
   });
   await saveFixtureScreenshot("automation-schedule-card.png");
 
-  await $("button[aria-label='Run now: Fixture review cadence']").click();
+  await $$('button[aria-label="Run now: Fixture review cadence"]')[0].click();
   await $("h2=Run schedule now?").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("automation-action-dialog.png");
   await $("button[aria-label='Cancel']").click();
@@ -205,13 +206,27 @@ async function captureMcpDialogs(): Promise<void> {
   );
   await saveFixtureScreenshot("mcp-configured-resources.png");
 
-  await $("button[aria-label='Read example-note from fixture-mcp']").click();
+  const resourceButton = $(
+    "button[aria-label='Read example-note from fixture-mcp']",
+  );
+  await resourceButton.scrollIntoView({ block: "center" });
+  await browser.execute(() => {
+    document
+      .querySelector<HTMLButtonElement>(
+        "button[aria-label='Read example-note from fixture-mcp']",
+      )
+      ?.click();
+  });
   await $("[data-testid='mcp-resource-text']").waitForDisplayed({
     timeout: 10_000,
   });
   await saveFixtureScreenshot("mcp-resource-viewer.png");
 
-  await $("button[aria-label='Edit fixture-mcp']").click();
+  await browser.execute(() => {
+    document
+      .querySelector<HTMLButtonElement>("button[aria-label='Edit fixture-mcp']")
+      ?.click();
+  });
   await $("h2=Edit MCP server").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("mcp-edit-dialog.png");
   await $(

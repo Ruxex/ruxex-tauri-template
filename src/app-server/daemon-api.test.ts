@@ -18,4 +18,14 @@ describe("daemon API", () => {
       action: "restart",
     });
   });
+
+  it("supports force-stopping the daemon", async () => {
+    const { controlAppServerDaemon } = await import("./daemon-api");
+
+    await controlAppServerDaemon("forceStop");
+
+    expect(invoke).toHaveBeenCalledWith("app_server_daemon_control", {
+      action: "forceStop",
+    });
+  });
 });

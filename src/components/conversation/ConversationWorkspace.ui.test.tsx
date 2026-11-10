@@ -249,7 +249,7 @@ describe("ConversationWorkspace", () => {
     expect(queue.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["flex", "justify-end"]),
     );
-    expect(screen.getByText("Queued messages")).toBeTruthy();
+    expect(screen.queryByText("Queued messages")).toBeNull();
     expect(screen.getByText("Queued prompt")).toBeTruthy();
   });
 

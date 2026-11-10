@@ -64,7 +64,7 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
   },
   {
     path: "/settings/account",
-    heading: "h2=Sign in",
+    heading: "h2=Account information",
     screenshotName: "settings-account.png",
   },
   {
@@ -94,7 +94,9 @@ describe("DummyProvider page screenshots", () => {
 
     await browser.url("tauri://localhost/#/projects");
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
-    await $("a=Product planning").click();
+    await $(
+      "tr[aria-label='Open project Product planning'] td:first-child",
+    ).click();
     await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
     await closeSidebarPanel();
     await saveFixtureScreenshot("project-product-planning.png");

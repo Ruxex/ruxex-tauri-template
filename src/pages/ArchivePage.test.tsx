@@ -7,11 +7,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useArchivedThreadList = vi.hoisted(() => vi.fn());
 const useUnarchiveThread = vi.hoisted(() => vi.fn());
 const useDeleteThread = vi.hoisted(() => vi.fn());
+const useDeleteAllArchivedThreads = vi.hoisted(() => vi.fn());
 const mutateAsync = vi.hoisted(() => vi.fn());
 const deleteMutateAsync = vi.hoisted(() => vi.fn());
+const deleteAllMutateAsync = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useArchivedThreadList,
+  useDeleteAllArchivedThreads,
   useDeleteThread,
   useUnarchiveThread,
 }));
@@ -19,12 +22,15 @@ vi.mock("../components/common/ThreadCard", () => ({
   ThreadCard: ({
     thread,
     actions,
+    showUpdatedAt,
   }: {
-    thread: { id: string; name?: string | null };
+    thread: { id: string; name?: string | null; updatedAt?: number };
     actions?: React.ReactNode;
+    showUpdatedAt?: boolean;
   }) => (
     <article>
       <span>{thread.name ?? thread.id}</span>
+      {showUpdatedAt && <span>Updated {thread.updatedAt}</span>}
       {actions}
     </article>
   ),
@@ -38,8 +44,14 @@ describe("ArchivePage", () => {
     mutateAsync.mockResolvedValue({});
     deleteMutateAsync.mockReset();
     deleteMutateAsync.mockResolvedValue({});
+    deleteAllMutateAsync.mockReset();
+    deleteAllMutateAsync.mockResolvedValue({});
     useDeleteThread.mockReturnValue({
       mutateAsync: deleteMutateAsync,
+      isPending: false,
+    });
+    useDeleteAllArchivedThreads.mockReturnValue({
+      mutateAsync: deleteAllMutateAsync,
       isPending: false,
     });
     useUnarchiveThread.mockReturnValue({ mutateAsync, isPending: false });
@@ -47,13 +59,15 @@ describe("ArchivePage", () => {
       isLoading: false,
       isError: false,
       data: {
-        data: [{ id: "thread-old", name: "Old chat" }],
+        data: [
+          { id: "thread-old", name: "Old chat", updatedAt: 1_735_689_600 },
+        ],
         nextCursor: null,
       },
     });
   });
 
-  it("renders archived chats with restore and open actions", async () => {
+  it("renders archived chats with icon actions and last updated metadata", async () => {
     const { ArchivePage } = await import("./ArchivePage");
 
     render(
@@ -64,10 +78,40 @@ describe("ArchivePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
 
     expect(screen.getByText("Old chat")).toBeTruthy();
+    expect(screen.getByText("Updated 1735689600")).toBeTruthy();
     expect(mutateAsync).toHaveBeenCalledWith({ threadId: "thread-old" });
+    expect(screen.queryByRole("link", { name: "Open" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Restore" }).textContent).toBe(
+      "",
+    );
+    expect(screen.getByRole("button", { name: "Delete" }).textContent).toBe("");
     expect(
-      screen.getByRole("link", { name: "Open" }).getAttribute("href"),
-    ).toBe("/chat/thread-old");
+      screen.getByRole("button", { name: "Delete all archived chats" }),
+    ).toBeTruthy();
+  });
+
+  it("confirms before deleting every archived chat", async () => {
+    const { ArchivePage } = await import("./ArchivePage");
+
+    render(
+      <MemoryRouter>
+        <ArchivePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete all archived chats" }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Delete all archived chats?" }),
+    ).toBeTruthy();
+    expect(deleteAllMutateAsync).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete all permanently" }),
+    );
+
+    expect(deleteAllMutateAsync).toHaveBeenCalledWith();
   });
 
   it("paginates archived chats with opaque cursors", async () => {

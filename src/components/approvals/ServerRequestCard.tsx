@@ -37,8 +37,6 @@ export function ServerRequestCard({
   onReject,
 }: ServerRequestCardProps) {
   const [answer, setAnswer] = useState("");
-  const [permissionScope, setPermissionScope] =
-    useState<v2.PermissionGrantScope>("turn");
   const request = pending.request;
   const actionable = canResolvePendingRequest(pending, connected);
   const isUserInput = request.method === "item/tool/requestUserInput";
@@ -95,13 +93,11 @@ export function ServerRequestCard({
 
   async function resolve(decision: ApprovalDecision) {
     if (isPermissionsRequest) {
-      if (decision !== "accept" && decision !== "decline") {
-        return;
-      }
+      const permissionDecision = decision === "decline" ? "decline" : "accept";
       const permissionResult = buildPermissionsApprovalResponse(
         request,
-        decision,
-        permissionScope,
+        permissionDecision,
+        decision === "acceptForSession" ? "session" : "turn",
       );
       if (permissionResult) {
         await onResolve(permissionResult);
@@ -136,15 +132,10 @@ export function ServerRequestCard({
     <article className="card border border-warning/50 bg-base-100 shadow-sm">
       <div className="card-body gap-3 p-4">
         <div>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="card-title text-base">
-              <RequestIcon aria-hidden="true" className="size-5" />
-              {title}
-            </h2>
-            <span className="badge badge-ghost badge-sm text-base-content/60">
-              Request {String(request.id)}
-            </span>
-          </div>
+          <h2 className="card-title text-base">
+            <RequestIcon aria-hidden="true" className="size-5" />
+            {title}
+          </h2>
           {requestParams.command && (
             <code className="mt-2 block rounded bg-base-200 p-2 text-sm">
               {requestParams.command}
@@ -247,21 +238,26 @@ export function ServerRequestCard({
               </details>
             </>
           )}
-          <details className="mt-2 text-xs text-base-content/60">
-            <summary className="cursor-pointer text-sm font-medium text-base-content/70">
-              Request details
-            </summary>
-            <dl className="mt-2 grid gap-x-3 gap-y-1 sm:grid-cols-2">
-              {displayScope.map(([key, value]) => (
-                <div className="flex min-w-0 gap-2" key={key}>
-                  <dt className="font-medium">{key}</dt>
-                  <dd className="truncate" title={value}>
-                    {value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </details>
+          {displayScope.length > 0 && (
+            <section
+              aria-label="Request summary"
+              className="mt-2 rounded-box bg-base-200 p-3 text-xs text-base-content/60"
+            >
+              <h3 className="text-sm font-medium text-base-content/70">
+                Request summary
+              </h3>
+              <dl className="mt-2 grid gap-x-3 gap-y-1 sm:grid-cols-2">
+                {displayScope.map(([key, value]) => (
+                  <div className="flex min-w-0 gap-2" key={key}>
+                    <dt className="font-medium">{key}</dt>
+                    <dd className="truncate" title={value}>
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
           {isUserInput && requestParams.questions?.[0] && (
             <label className="form-control mt-2 w-full">
               <span className="label-text">
@@ -275,33 +271,6 @@ export function ServerRequestCard({
                 disabled={!actionable}
               />
             </label>
-          )}
-          {actionable && permissionParams && (
-            <fieldset className="mt-3 flex flex-wrap gap-3 text-sm">
-              <legend className="sr-only">Permission duration</legend>
-              <label className="flex items-center gap-2">
-                <input
-                  aria-label="This turn"
-                  checked={permissionScope === "turn"}
-                  name="permission-scope"
-                  onChange={() => setPermissionScope("turn")}
-                  type="radio"
-                  value="turn"
-                />
-                This turn
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  aria-label="This session"
-                  checked={permissionScope === "session"}
-                  name="permission-scope"
-                  onChange={() => setPermissionScope("session")}
-                  type="radio"
-                  value="session"
-                />
-                This session
-              </label>
-            </fieldset>
           )}
           {!isRequestActionable(request) && (
             <p className="mt-2 text-sm text-error">
@@ -332,22 +301,31 @@ export function ServerRequestCard({
             request.method.includes("requestApproval") && (
               <>
                 <button
-                  aria-label="Allow"
+                  aria-label="Approve once"
                   className="btn btn-success btn-sm"
                   type="button"
                   onClick={() => void resolve("accept")}
                 >
                   <CheckIcon aria-hidden="true" className="size-4" />
-                  Allow
+                  Approve once
                 </button>
                 <button
-                  aria-label="Deny"
+                  aria-label="Approve in this chat"
+                  className="btn btn-success btn-sm btn-outline"
+                  type="button"
+                  onClick={() => void resolve("acceptForSession")}
+                >
+                  <CheckIcon aria-hidden="true" className="size-4" />
+                  Approve in this chat
+                </button>
+                <button
+                  aria-label="Reject"
                   className="btn btn-error btn-sm btn-outline"
                   type="button"
                   onClick={() => void resolve("decline")}
                 >
                   <XMarkIcon aria-hidden="true" className="size-4" />
-                  Deny
+                  Reject
                 </button>
               </>
             )}

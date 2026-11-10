@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard};
@@ -21,7 +22,10 @@ use ruxex::desktop::{
         RemoteAppServerConnectArgs, RemoteAppServerEndpoint,
         provider_init_from_config_with_descriptor,
     },
-    daemon::{HOST_APP_SERVER_DAEMON_MODE_ARG, LifecycleCommand, LifecycleOutput},
+    daemon::{
+        BackendKind, HOST_APP_SERVER_DAEMON_MODE_ARG, LifecycleCommand, LifecycleOutput,
+        LifecycleStatus,
+    },
     protocol::{
         ClientRequest, ClientResponse, ConfigWarningNotification, JSONRPCErrorError, RequestId,
         Result as JsonRpcResult,
@@ -134,12 +138,18 @@ fn resolve_in_process_paths(
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub(crate) enum AppServerDaemonAction {
     Start,
     Restart,
     Stop,
+    ForceStop,
     Version,
+}
+
+#[derive(Deserialize)]
+struct AppServerPidRecord {
+    pid: u32,
 }
 
 impl AppServerDaemonAction {
@@ -149,6 +159,7 @@ impl AppServerDaemonAction {
             Self::Restart => LifecycleCommand::Restart,
             Self::Stop => LifecycleCommand::Stop,
             Self::Version => LifecycleCommand::Version,
+            Self::ForceStop => unreachable!("force stop is not a daemon lifecycle command"),
         }
     }
 }
@@ -491,6 +502,100 @@ async fn connect_local_endpoint(
     }
 }
 
+async fn force_stop_app_server_daemon() -> CommandResult<LifecycleOutput> {
+    let home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let pid_file = [
+        home.join("app-server-daemon/daemon.pid"),
+        home.join("app-server.pid"),
+    ]
+    .into_iter()
+    .find(|path| path.is_file())
+    .ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            "App Server daemon is not running (no PID file was found)",
+        )
+    })?;
+    let pid_contents = tokio::fs::read_to_string(&pid_file)
+        .await
+        .map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Lifecycle,
+                format!("failed to read App Server daemon PID file: {error}"),
+            )
+        })?;
+    let record: AppServerPidRecord = serde_json::from_str(&pid_contents).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to decode App Server daemon PID file: {error}"),
+        )
+    })?;
+    force_terminate_process(record.pid).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to force terminate App Server daemon: {error}"),
+        )
+    })?;
+
+    let socket_path = app_server_control_socket_path(&home).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to resolve App Server socket path: {error}"),
+        )
+    })?;
+    Ok(LifecycleOutput {
+        status: LifecycleStatus::Stopped,
+        backend: Some(BackendKind::Pid),
+        pid: None,
+        managed_ruxex_path: PathBuf::new(),
+        managed_ruxex_version: None,
+        socket_path: socket_path.as_path().to_path_buf(),
+        cli_version: None,
+        app_server_version: None,
+    })
+}
+
+fn force_terminate_process(pid: u32) -> Result<(), String> {
+    if pid == 0 {
+        return Err("PID must be greater than zero".to_string());
+    }
+
+    #[cfg(unix)]
+    {
+        let raw_pid = libc::pid_t::try_from(pid)
+            .map_err(|_| format!("PID {pid} is out of range for this platform"))?;
+        let result = unsafe { libc::kill(raw_pid, libc::SIGKILL) };
+        if result == 0 {
+            return Ok(());
+        }
+        let error = std::io::Error::last_os_error();
+        if error.raw_os_error() == Some(libc::ESRCH) {
+            return Ok(());
+        }
+        return Err(error.to_string());
+    }
+
+    #[cfg(windows)]
+    {
+        let status = std::process::Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/F"])
+            .status()
+            .map_err(|error| error.to_string())?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("taskkill exited with status {status}"))
+        }
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = pid;
+        Err("force termination is unsupported on this platform".to_string())
+    }
+}
+
 #[tauri::command]
 pub(crate) async fn app_server_daemon_control(
     state: State<'_, AppServerState>,
@@ -510,6 +615,10 @@ pub(crate) async fn app_server_daemon_control(
     }
     if action != AppServerDaemonAction::Version {
         clear_connection_state(&state).await;
+    }
+
+    if action == AppServerDaemonAction::ForceStop {
+        return force_stop_app_server_daemon().await;
     }
 
     let command = action.to_lifecycle_command();
@@ -773,6 +882,7 @@ mod tests {
             ("start", AppServerDaemonAction::Start),
             ("restart", AppServerDaemonAction::Restart),
             ("stop", AppServerDaemonAction::Stop),
+            ("forceStop", AppServerDaemonAction::ForceStop),
             ("version", AppServerDaemonAction::Version),
         ] {
             let decoded: AppServerDaemonAction = serde_json::from_value(json!(wire_name)).unwrap();

@@ -1,6 +1,6 @@
 import { FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
 import {
@@ -18,6 +18,7 @@ import {
 
 export function ProjectsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const projects = useProjectList({
     limit: 100,
     sortKey: "position",
@@ -74,9 +75,6 @@ export function ProjectsPage() {
                     <th>Project</th>
                     <th>Workspace</th>
                     <th>Roots</th>
-                    <th>
-                      <span className="sr-only">Actions</span>
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -85,12 +83,21 @@ export function ProjectsPage() {
                       project.metadata,
                     );
                     return (
-                      <tr className="hover" key={project.id}>
+                      <tr
+                        aria-label={`Open project ${project.name}`}
+                        className="cursor-pointer hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                        key={project.id}
+                        tabIndex={0}
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            navigate(`/projects/${project.id}`);
+                          }
+                        }}
+                      >
                         <td>
-                          <Link
-                            className="flex min-w-40 items-center gap-3 font-semibold hover:text-primary"
-                            to={`/projects/${project.id}`}
-                          >
+                          <div className="flex min-w-40 items-center gap-3 font-semibold">
                             <span
                               className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
                             >
@@ -101,7 +108,7 @@ export function ProjectsPage() {
                               />
                             </span>
                             <span className="truncate">{project.name}</span>
-                          </Link>
+                          </div>
                         </td>
                         <td className="max-w-80">
                           <span className="block truncate font-mono text-xs text-base-content/65">
@@ -111,14 +118,6 @@ export function ProjectsPage() {
                         </td>
                         <td className="text-sm text-base-content/70">
                           {project.roots.length}
-                        </td>
-                        <td className="text-right">
-                          <Link
-                            className="btn btn-ghost btn-sm"
-                            to={`/projects/${project.id}`}
-                          >
-                            Open
-                          </Link>
                         </td>
                       </tr>
                     );

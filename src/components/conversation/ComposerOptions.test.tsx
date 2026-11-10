@@ -81,6 +81,23 @@ describe("ComposerOptions", () => {
     ).toBe(false);
   });
 
+  it("highlights full access as a warning in the permission selector", () => {
+    render(
+      <PermissionMenu
+        disabled={false}
+        mode="full-access"
+        onModeChange={vi.fn()}
+      />,
+    );
+
+    const summary = screen.getByLabelText("Permission mode");
+    expect(summary.className).toContain("btn-warning");
+    expect(summary.className).not.toContain("btn-ghost");
+    expect(summary.querySelector("svg")?.getAttribute("class")).toContain(
+      "text-warning-content",
+    );
+  });
+
   it("closes an open menu when clicking outside it", () => {
     render(
       <PermissionMenu disabled={false} mode="ask" onModeChange={vi.fn()} />,

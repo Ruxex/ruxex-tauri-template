@@ -327,6 +327,8 @@ describe("ChatActivityTimeline", () => {
       name: "Worked for 4m 2s",
     });
     expect(worked.textContent).toBe("Worked for 4m 2s");
+    expect(worked.className).toContain("text-left");
+    expect(worked.className).not.toContain("text-center");
     const timeline = screen.getByRole("region", { name: "Chat activity" });
     expect(timeline.children[0]).toBe(worked);
     expect(timeline.children[1]?.getAttribute("data-testid")).toBe(

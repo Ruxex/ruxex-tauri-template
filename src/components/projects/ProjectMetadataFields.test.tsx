@@ -32,6 +32,20 @@ describe("ProjectMetadataFields", () => {
       screen.getByRole("button", { name: "Project color: Blue" }),
     ).toBeTruthy();
     expect(
+      screen.getByRole("region", { name: "Project preview" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Project metadata controls" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Project preview" }).parentElement
+        ?.className,
+    ).toContain("sm:grid-cols-");
+    expect(
+      screen.getByRole("region", { name: "Project metadata controls" })
+        .className,
+    ).toContain("grid");
+    expect(
       screen.queryByRole("group", { name: "Project icon options" }),
     ).toBeNull();
     expect(
