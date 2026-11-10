@@ -44,6 +44,14 @@ describe("AppearancePage", () => {
     expect(
       screen.getByRole("group", { name: "Theme preset options" }),
     ).toBeTruthy();
+    const selector = screen.getByTestId("theme-preset-selector");
+    const selectorSummary = selector.querySelector("summary");
+    const currentPreview = document.querySelector(
+      "[data-current-theme-preview] [data-theme-preview-panel]",
+    );
+    if (!currentPreview) throw new Error("Current theme preview is missing");
+    expect(selectorSummary?.contains(currentPreview)).toBe(false);
+    expect(currentPreview.closest("details")).toBeNull();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.queryByLabelText("Density")).toBeNull();

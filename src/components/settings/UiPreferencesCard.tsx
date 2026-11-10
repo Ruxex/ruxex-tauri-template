@@ -30,12 +30,9 @@ export function UiPreferencesCard({
     <SettingsPanel icon={PaintBrushIcon} title="Interface">
       <div className="text-sm">
         <div className="px-5 py-3.5">
-          <details data-testid="theme-preset-selector" className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-3 transition-colors hover:border-primary/60 hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-              <span className="flex min-w-0 items-center gap-3">
-                <span className="block w-36 shrink-0 overflow-hidden rounded-md border border-black/10 shadow-sm">
-                  <ThemePresetPreview preset={selectedPreset} />
-                </span>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <details data-testid="theme-preset-selector" className="group min-w-0 flex-1">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-3 transition-colors hover:border-primary/60 hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                 <span className="min-w-0">
                   <span className="block text-xs text-base-content/60">
                     Theme preset
@@ -44,64 +41,67 @@ export function UiPreferencesCard({
                     {selectedPreset.label}
                   </span>
                 </span>
-              </span>
-              <ChevronDownIcon
-                aria-hidden="true"
-                className="size-5 shrink-0 transition-transform group-open:rotate-180"
-              />
-            </summary>
-            <div className="mt-3 rounded-box border border-base-300 bg-base-100 p-3">
-              <fieldset
-                aria-label="Theme preset options"
-                aria-describedby="theme-preset-attribution"
-                className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-              >
-                <legend className="sr-only">Theme preset options</legend>
-                <p
-                  className="col-span-full flex items-start gap-1.5 rounded-md border border-base-300 bg-base-200/50 px-2 py-1.5 text-xs leading-relaxed text-base-content/70"
-                  id="theme-preset-attribution"
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className="size-5 shrink-0 transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <div className="mt-3 rounded-box border border-base-300 bg-base-100 p-3">
+                <fieldset
+                  aria-label="Theme preset options"
+                  aria-describedby="theme-preset-attribution"
+                  className="grid grid-cols-2 gap-2 sm:grid-cols-4"
                 >
-                  <InformationCircleIcon
-                    aria-hidden="true"
-                    className="mt-0.5 size-3.5 shrink-0 text-base-content/55"
-                  />
-                  Theme palettes are inspired by third-party projects. Ruxex is
-                  not affiliated with or endorsed by those projects.
-                </p>
-                {UI_THEME_PRESETS.map((option) => {
-                  const selected = preset === option.id;
+                  <legend className="sr-only">Theme preset options</legend>
+                  <p
+                    className="col-span-full flex items-start gap-1.5 rounded-md border border-base-300 bg-base-200/50 px-2 py-1.5 text-xs leading-relaxed text-base-content/70"
+                    id="theme-preset-attribution"
+                  >
+                    <InformationCircleIcon
+                      aria-hidden="true"
+                      className="mt-0.5 size-3.5 shrink-0 text-base-content/55"
+                    />
+                    Theme palettes are inspired by third-party projects. Ruxex is
+                    not affiliated with or endorsed by those projects.
+                  </p>
+                  {UI_THEME_PRESETS.map((option) => {
+                    const selected = preset === option.id;
 
-                  return (
-                    <button
-                      aria-label={option.label}
-                      aria-pressed={selected}
-                      className={`flex min-h-32 flex-col justify-between gap-1.5 rounded-lg border p-2 text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-base-300 bg-base-100 hover:border-primary/60"}`}
-                      key={option.id}
-                      title={option.label}
-                      type="button"
-                      onClick={() => onThemePresetChange(option.id)}
-                    >
-                      <ThemePresetPreview preset={option} />
-                      <span className="flex items-start justify-between gap-2">
-                        <span className="min-w-0 truncate font-medium leading-tight">
-                          {option.label}
-                        </span>
-                        {selected && (
-                          <span
-                            aria-hidden="true"
-                            data-theme-selected
-                            className="flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content"
-                          >
-                            <CheckIcon className="size-3" />
+                    return (
+                      <button
+                        aria-label={option.label}
+                        aria-pressed={selected}
+                        className={`flex min-h-32 flex-col justify-between gap-1.5 rounded-lg border p-2 text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-base-300 bg-base-100 hover:border-primary/60"}`}
+                        key={option.id}
+                        title={option.label}
+                        type="button"
+                        onClick={() => onThemePresetChange(option.id)}
+                      >
+                        <ThemePresetPreview preset={option} />
+                        <span className="flex items-start justify-between gap-2">
+                          <span className="min-w-0 truncate font-medium leading-tight">
+                            {option.label}
                           </span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
-              </fieldset>
+                          {selected && (
+                            <span
+                              aria-hidden="true"
+                              data-theme-selected
+                              className="flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content"
+                            >
+                              <CheckIcon className="size-3" />
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </fieldset>
+              </div>
+            </details>
+            <div className="w-full shrink-0 sm:w-36" data-current-theme-preview>
+              <ThemePresetPreview preset={selectedPreset} />
             </div>
-          </details>
+          </div>
         </div>
       </div>
     </SettingsPanel>

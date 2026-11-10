@@ -2,6 +2,7 @@ import {
   ArrowPathIcon,
   Cog6ToothIcon,
   PlusIcon,
+  PuzzlePieceIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -20,6 +21,7 @@ import {
   useWriteSkillConfig,
 } from "../app-server/hooks";
 import { StateBadge } from "../components/common/StateBadge";
+import { EmptyState } from "../components/common/AsyncState";
 import { PageContainer } from "../components/layout/PageContainer";
 import { McpStatusSummary } from "../components/mcp/McpStatusSummary";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
@@ -67,6 +69,33 @@ function pluginDetailsPath(
   pluginName: string,
 ): string {
   return `/capabilities/plugins/${encodeURIComponent(marketplaceName)}/${encodeURIComponent(pluginName)}`;
+}
+
+const SKILL_DESCRIPTION_MAX_LENGTH = 160;
+
+function skillGroupLabel(entry: v2.SkillsListEntry): string {
+  return entry.skills.length > 0 && entry.skills.every((skill) => skill.scope === "system")
+    ? "Default"
+    : entry.cwd;
+}
+
+function skillDescription(skill: v2.SkillMetadata): {
+  text: string;
+  fullText: string;
+} | null {
+  const fullText =
+    skill.interface?.shortDescription?.trim() ||
+    skill.shortDescription?.trim() ||
+    skill.description?.trim();
+  if (!fullText) return null;
+
+  return {
+    fullText,
+    text:
+      fullText.length > SKILL_DESCRIPTION_MAX_LENGTH
+        ? `${fullText.slice(0, SKILL_DESCRIPTION_MAX_LENGTH - 1).trimEnd()}…`
+        : fullText,
+  };
 }
 
 export function CapabilitiesPage() {
@@ -244,78 +273,97 @@ export function CapabilitiesPage() {
               )}
               <ul className="space-y-2">
                 {skills.data?.data.map((entry) => (
-                  <li className="rounded-box bg-base-200 p-3" key={entry.cwd}>
-                    <p className="text-xs text-base-content/60">{entry.cwd}</p>
-                    {entry.skills.length ? (
-                      <ul className="mt-2 space-y-2">
-                        {entry.skills.map((skill) => {
-                          const pendingPath =
-                            skillMutationPath ??
-                            (writeSkillConfig.isPending
-                              ? writeSkillConfig.variables?.path
-                              : null);
-                          const isPending = pendingPath === skill.path;
-                          const error = skillErrors[skill.path];
-                          return (
-                            <li
-                              className="rounded-box border border-base-300 bg-base-100 p-2"
-                              key={skill.path}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="font-medium">{skill.name}</p>
-                                  {skill.description && (
-                                    <p className="text-sm text-base-content/70">
-                                      {skill.description}
-                                    </p>
-                                  )}
-                                  <p
-                                    className="mt-1 truncate text-xs text-base-content/60"
-                                    title={skill.path}
-                                  >
-                                    {skill.scope} · {skill.path}
-                                  </p>
-                                  {skill.pluginId && (
-                                    <p className="text-xs text-base-content/60">
-                                      {skill.pluginId}
-                                    </p>
-                                  )}
+                  <li key={entry.cwd}>
+                    <details
+                      className="rounded-box bg-base-200 p-3"
+                      data-testid="skills-source-group"
+                      open={entry.skills.length > 0}
+                    >
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium">
+                        <span>{skillGroupLabel(entry)}</span>
+                        <span className="text-xs font-normal text-base-content/60">
+                          {entry.skills.length} skill
+                          {entry.skills.length === 1 ? "" : "s"}
+                        </span>
+                      </summary>
+                      {entry.skills.length ? (
+                        <ul className="mt-2 space-y-2">
+                          {entry.skills.map((skill) => {
+                            const pendingPath =
+                              skillMutationPath ??
+                              (writeSkillConfig.isPending
+                                ? writeSkillConfig.variables?.path
+                                : null);
+                            const isPending = pendingPath === skill.path;
+                            const error = skillErrors[skill.path];
+                            const description = skillDescription(skill);
+                            return (
+                              <li
+                                className="rounded-box border border-base-300 bg-base-100 p-2"
+                                key={skill.path}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="font-medium">{skill.name}</p>
+                                    {description && (
+                                      <p
+                                        className="line-clamp-2 text-sm text-base-content/70"
+                                        title={description.fullText}
+                                      >
+                                        {description.text}
+                                      </p>
+                                    )}
+                                    {skill.scope !== "system" && (
+                                      <p
+                                        className="mt-1 truncate text-xs text-base-content/60"
+                                        title={skill.path}
+                                      >
+                                        {skill.scope} · {skill.path}
+                                      </p>
+                                    )}
+                                    {skill.pluginId && (
+                                      <p className="text-xs text-base-content/60">
+                                        {skill.pluginId}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <label className="flex shrink-0 items-center gap-2 text-sm">
+                                    <span className="sr-only">
+                                      Enable {skill.name}
+                                    </span>
+                                    <input
+                                      aria-label={`Enable ${skill.name}`}
+                                      aria-checked={skill.enabled}
+                                      checked={skill.enabled}
+                                      className="toggle toggle-primary toggle-sm"
+                                      disabled={isPending}
+                                      onChange={() => void toggleSkill(skill)}
+                                      role="switch"
+                                      type="checkbox"
+                                    />
+                                  </label>
                                 </div>
-                                <label className="flex shrink-0 items-center gap-2 text-sm">
-                                  <span className="sr-only">
-                                    Enable {skill.name}
-                                  </span>
-                                  <input
-                                    aria-label={`Enable ${skill.name}`}
-                                    aria-checked={skill.enabled}
-                                    checked={skill.enabled}
-                                    disabled={isPending}
-                                    onChange={() => void toggleSkill(skill)}
-                                    role="switch"
-                                    type="checkbox"
-                                  />
-                                </label>
-                              </div>
-                              {error && (
-                                <p
-                                  className="mt-1 text-xs text-error"
-                                  role="alert"
-                                >
-                                  Unable to update Skill: {error}
-                                </p>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : (
-                      <p className="mt-1 font-medium">No skills</p>
-                    )}
-                    {entry.errors.length > 0 && (
-                      <p className="mt-1 text-xs text-error">
-                        {entry.errors.length} discovery errors
-                      </p>
-                    )}
+                                {error && (
+                                  <p
+                                    className="mt-1 text-xs text-error"
+                                    role="alert"
+                                  >
+                                    Unable to update Skill: {error}
+                                  </p>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <p className="mt-1 font-medium">No skills</p>
+                      )}
+                      {entry.errors.length > 0 && (
+                        <p className="mt-1 text-xs text-error">
+                          {entry.errors.length} discovery errors
+                        </p>
+                      )}
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -333,21 +381,18 @@ export function CapabilitiesPage() {
           {!plugins.isLoading &&
             !plugins.isError &&
             !plugins.data?.marketplaces.length && (
-              <article className="card border border-dashed border-base-300 bg-base-100">
-                <div className="card-body items-start gap-3 sm:p-8">
-                  <h2 className="card-title">No plugin marketplaces yet</h2>
-                  <p className="max-w-xl text-sm text-base-content/70">
-                    No plugin marketplaces available. Add a marketplace to
-                    browse and install plugins.
-                  </p>
-                  <Link
+              <EmptyState
+                action={
+                  <NavLink
                     className="btn btn-primary btn-sm"
                     to="/settings/marketplaces"
                   >
                     Add plugin marketplace
-                  </Link>
-                </div>
-              </article>
+                  </NavLink>
+                }
+                icon={PuzzlePieceIcon}
+                title="No plugin marketplaces yet"
+              />
             )}
           <ul className="space-y-3">
             {plugins.data?.marketplaces.map((marketplace) => (

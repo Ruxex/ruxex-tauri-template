@@ -12,7 +12,7 @@ describe("real plugin marketplace home", () => {
     await waitForMarketplaceDesktopReady();
 
     await openCapabilities();
-    await $("p*=No plugin marketplaces available.").waitForDisplayed({
+    await $("h3=No plugin marketplaces yet").waitForDisplayed({
       timeout: 10_000,
     });
     await saveMarketplaceScreenshot("marketplace-empty.png");

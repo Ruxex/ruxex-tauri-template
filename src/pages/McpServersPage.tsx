@@ -172,6 +172,51 @@ export function McpServersPage() {
     await reloadAfterWrite(draft.name, false);
   }
 
+  async function handleEnabledChange(entry: McpServerEntry, enabled: boolean) {
+    if (!entry.draft) {
+      return;
+    }
+
+    const params: v2.ConfigBatchWriteParams = {
+      edits: [
+        {
+          keyPath: mcpServerKeyPath(entry.name),
+          value: serializeMcpServerDraft(
+            { ...entry.draft, enabled },
+            entry.raw,
+          ),
+          mergeStrategy: "replace",
+        },
+      ],
+      reloadUserConfig: true,
+    };
+    if (globalConfig.data?.version) {
+      params.expectedVersion = globalConfig.data.version;
+    }
+
+    setWriteError(null);
+    setReloadError(null);
+    setHigherLayerNotice(null);
+    setOverrideNotice(null);
+    try {
+      const result = await writeConfig.mutateAsync(params);
+      if (result.status === "okOverridden") {
+        setOverrideNotice(
+          result.overriddenMetadata?.message ??
+            "A higher-priority configuration layer overrides this value.",
+        );
+      }
+    } catch (error) {
+      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
+        void globalConfig.refetch();
+      }
+      setWriteError(formatErrorMessage(error));
+      return;
+    }
+
+    await reloadAfterWrite(entry.name, false);
+  }
+
   async function handleDelete(entry: McpServerEntry) {
     if (
       !window.confirm(
@@ -287,133 +332,182 @@ export function McpServersPage() {
           <ul className="divide-y divide-base-300">
             {entries.map((entry) => {
               const status = statusByName.get(entry.name);
+              const enabled = entry.draft?.enabled ?? false;
               return (
-                <li className="px-5 py-4" key={entry.name}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{entry.name}</p>
-                      {entry.draft ? (
-                        <p className="mt-1 text-xs text-base-content/60">
-                          {entry.draft.transport === "stdio"
-                            ? `stdio · ${entry.draft.command}`
-                            : `Streamable HTTP · ${entry.draft.url}`}
+                <li key={entry.name}>
+                  <details
+                    className="group/mcp"
+                    data-testid={`mcp-server-details-${entry.name}`}
+                  >
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-base-200/50">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium">{entry.name}</p>
+                          <span
+                            className={`badge badge-sm ${enabled ? "badge-success badge-outline" : "badge-ghost"}`}
+                          >
+                            {enabled ? "Enabled" : "Disabled"}
+                          </span>
+                        </div>
+                        <p className="mt-1 truncate text-xs text-base-content/60">
+                          {entry.draft
+                            ? entry.draft.transport === "stdio"
+                              ? `stdio · ${entry.draft.command}`
+                              : `Streamable HTTP · ${entry.draft.url}`
+                            : `Invalid configuration: ${entry.error}`}
                         </p>
-                      ) : (
-                        <p className="mt-1 text-sm text-error">
-                          Invalid configuration: {entry.error}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="text-xs text-base-content/60">
+                          {status
+                            ? status.runtimeStatus === "connected"
+                              ? "Connected"
+                              : "Needs attention"
+                            : "Configured"}
+                        </span>
+                        {entry.draft && (
+                          <label
+                            className="flex items-center"
+                            title={enabled ? "Disable server" : "Enable server"}
+                          >
+                            <span className="sr-only">
+                              {enabled ? "Enabled" : "Disabled"}
+                            </span>
+                            <input
+                              aria-label={`Enable MCP server: ${entry.name}`}
+                              aria-checked={enabled}
+                              checked={enabled}
+                              className="toggle toggle-primary toggle-sm"
+                              disabled={writeConfig.isPending}
+                              onChange={(event) =>
+                                void handleEnabledChange(
+                                  entry,
+                                  event.target.checked,
+                                )
+                              }
+                              onClick={(event) => event.stopPropagation()}
+                              role="switch"
+                              type="checkbox"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </summary>
+                    <div className="space-y-4 border-t border-base-300 px-5 py-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-medium">
+                          {enabled ? "Server enabled" : "Server disabled"}
                         </p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {entry.draft && (
+                            <button
+                              aria-label={`Edit ${entry.name}`}
+                              className="btn btn-ghost btn-xs"
+                              type="button"
+                              onClick={(event) =>
+                                openEditDialog(entry, event.currentTarget)
+                              }
+                            >
+                              Edit {entry.name}
+                            </button>
+                          )}
+                          <button
+                            aria-label={`Delete ${entry.name}`}
+                            className="btn btn-ghost btn-xs text-error"
+                            type="button"
+                            onClick={() => void handleDelete(entry)}
+                          >
+                            Delete {entry.name}
+                          </button>
+                        </div>
+                      </div>
                       {status ? (
                         <McpStatusSummary
                           authStatus={status.authStatus}
                           runtimeStatus={status.runtimeStatus}
                         />
                       ) : (
-                        <span className="text-xs text-base-content/60">
+                        <p className="text-xs text-base-content/60">
                           Connection: Status unavailable
-                        </span>
-                      )}
-                      {entry.draft && (
-                        <button
-                          aria-label={`Edit ${entry.name}`}
-                          className="btn btn-ghost btn-xs"
-                          type="button"
-                          onClick={(event) =>
-                            openEditDialog(entry, event.currentTarget)
-                          }
-                        >
-                          Edit {entry.name}
-                        </button>
-                      )}
-                      <button
-                        aria-label={`Delete ${entry.name}`}
-                        className="btn btn-ghost btn-xs text-error"
-                        type="button"
-                        onClick={() => void handleDelete(entry)}
-                      >
-                        Delete {entry.name}
-                      </button>
-                    </div>
-                  </div>
-                  {status && (
-                    <p className="mt-2 text-xs text-base-content/60">
-                      {Object.keys(status.tools).length} tools
-                    </p>
-                  )}
-                  {status &&
-                    ((status.resources ?? []).length > 0 ||
-                      (status.resourceTemplates ?? []).length > 0) && (
-                      <div className="mt-3 space-y-2 rounded-box bg-base-200 p-3">
-                        <p className="text-sm font-medium">
-                          Resources ({(status.resources ?? []).length})
                         </p>
-                        {(status.resources ?? []).length > 0 && (
-                          <ul className="space-y-1">
-                            {(status.resources ?? []).map((resource) => (
-                              <li
-                                className="flex items-center justify-between gap-2"
-                                key={resource.uri}
-                              >
-                                <div className="min-w-0">
-                                  <p
-                                    className="truncate text-sm"
-                                    title={resource.uri}
-                                  >
-                                    {resource.title ?? resource.name}
-                                  </p>
-                                  <p className="truncate text-xs text-base-content/60">
-                                    {resource.mimeType ?? resource.uri}
-                                  </p>
-                                </div>
-                                <button
-                                  aria-label={`Read ${resource.name} from ${entry.name}`}
-                                  className="btn btn-ghost btn-xs"
-                                  type="button"
-                                  onClick={() =>
-                                    setSelectedResource({
-                                      server: entry.name,
-                                      uri: resource.uri,
-                                    })
-                                  }
-                                >
-                                  Read
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        {(status.resourceTemplates ?? []).length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-base-content/70">
-                              Dynamic resources
+                      )}
+                      {status && (
+                        <p className="text-xs text-base-content/60">
+                          {Object.keys(status.tools).length} tools
+                        </p>
+                      )}
+                      {status &&
+                        ((status.resources ?? []).length > 0 ||
+                          (status.resourceTemplates ?? []).length > 0) && (
+                          <div className="space-y-2 rounded-box bg-base-200 p-3">
+                            <p className="text-sm font-medium">
+                              Resources ({(status.resources ?? []).length})
                             </p>
-                            <ul className="mt-1 space-y-1 text-xs text-base-content/60">
-                              {(status.resourceTemplates ?? []).map(
-                                (template) => (
-                                  <li key={template.uriTemplate}>
-                                    {template.name} · {template.uriTemplate}
+                            {(status.resources ?? []).length > 0 && (
+                              <ul className="space-y-1">
+                                {(status.resources ?? []).map((resource) => (
+                                  <li
+                                    className="flex items-center justify-between gap-2"
+                                    key={resource.uri}
+                                  >
+                                    <div className="min-w-0">
+                                      <p
+                                        className="truncate text-sm"
+                                        title={resource.uri}
+                                      >
+                                        {resource.title ?? resource.name}
+                                      </p>
+                                      <p className="truncate text-xs text-base-content/60">
+                                        {resource.mimeType ?? resource.uri}
+                                      </p>
+                                    </div>
+                                    <button
+                                      aria-label={`Read ${resource.name} from ${entry.name}`}
+                                      className="btn btn-ghost btn-xs"
+                                      type="button"
+                                      onClick={() =>
+                                        setSelectedResource({
+                                          server: entry.name,
+                                          uri: resource.uri,
+                                        })
+                                      }
+                                    >
+                                      Read
+                                    </button>
                                   </li>
-                                ),
-                              )}
-                            </ul>
+                                ))}
+                              </ul>
+                            )}
+                            {(status.resourceTemplates ?? []).length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-base-content/70">
+                                  Dynamic resources
+                                </p>
+                                <ul className="mt-1 space-y-1 text-xs text-base-content/60">
+                                  {(status.resourceTemplates ?? []).map(
+                                    (template) => (
+                                      <li key={template.uriTemplate}>
+                                        {template.name} · {template.uriTemplate}
+                                      </li>
+                                    ),
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+                            {selectedResource?.server === entry.name && (
+                              <McpResourceViewer
+                                error={resourceRead.error}
+                                isLoading={resourceRead.isLoading}
+                                response={resourceRead.data}
+                              />
+                            )}
                           </div>
                         )}
-                        {selectedResource?.server === entry.name && (
-                          <McpResourceViewer
-                            error={resourceRead.error}
-                            isLoading={resourceRead.isLoading}
-                            response={resourceRead.data}
-                          />
-                        )}
-                      </div>
-                    )}
-                  {status?.toolsError && (
-                    <p className="mt-1 text-xs text-error">
-                      {status.toolsError}
-                    </p>
-                  )}
+                      {status?.toolsError && (
+                        <p className="text-xs text-error">{status.toolsError}</p>
+                      )}
+                    </div>
+                  </details>
                 </li>
               );
             })}

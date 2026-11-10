@@ -1,5 +1,6 @@
 import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 import { useState } from "react";
 
 import type { ChatStatus } from "./chat-status";
@@ -23,6 +24,7 @@ type ChatListItemProps = {
   unread?: boolean;
   showPreview?: boolean;
   showUpdatedAt?: boolean;
+  actions?: ReactNode;
   onClick?: () => void;
   onArchive?: () => void;
   isArchiving?: boolean;
@@ -37,6 +39,7 @@ export function ChatListItem({
   unread = false,
   showPreview = false,
   showUpdatedAt = false,
+  actions,
   onClick,
   onArchive,
   isArchiving = false,
@@ -70,30 +73,33 @@ export function ChatListItem({
             {thread.preview}
           </span>
         )}
-        {(projectName || worktreeLabel || showUpdatedAt) && (
+        {(projectName || worktreeLabel) && (
           <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
             {projectName && <span className="truncate">{projectName}</span>}
             {worktreeLabel && <span className="truncate">{worktreeLabel}</span>}
-            {showUpdatedAt && <UpdatedAt timestamp={thread.updatedAt} />}
           </span>
         )}
       </Link>
-      {onArchive && (
-        <button
-          aria-label={`Archive ${title}`}
-          className="btn btn-ghost btn-xs btn-square mt-1 mr-1 shrink-0 opacity-0 transition-opacity group-hover/thread:opacity-100 focus:opacity-100"
-          disabled={isArchiving}
-          title={`Archive ${title}`}
-          type="button"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onArchive();
-          }}
-        >
-          <ArchiveBoxIcon aria-hidden="true" className="size-4" />
-        </button>
-      )}
+      <div className="flex shrink-0 items-center gap-1 px-1 py-1">
+        {showUpdatedAt && <UpdatedAt timestamp={thread.updatedAt} />}
+        {actions}
+        {onArchive && (
+          <button
+            aria-label={`Archive ${title}`}
+            className="btn btn-ghost btn-xs btn-square opacity-0 transition-opacity group-hover/thread:opacity-100 focus:opacity-100"
+            disabled={isArchiving}
+            title={`Archive ${title}`}
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onArchive();
+            }}
+          >
+            <ArchiveBoxIcon aria-hidden="true" className="size-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -102,7 +108,10 @@ function UpdatedAt({ timestamp }: { timestamp: number }) {
   const absoluteTimestamp = formatAbsoluteChatTimestamp(timestamp);
 
   return (
-    <span className="truncate" title={absoluteTimestamp}>
+    <span
+      className="whitespace-nowrap text-right text-xs text-base-content/60"
+      title={absoluteTimestamp}
+    >
       Updated {formatChatTimestamp(timestamp)}
     </span>
   );

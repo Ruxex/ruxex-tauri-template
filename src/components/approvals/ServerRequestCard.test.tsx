@@ -87,6 +87,30 @@ const permissionsPending = {
   },
 } as never as PendingServerRequest;
 
+const mixedPermissionsPending = {
+  ...permissionsPending,
+  request: {
+    ...permissionsPending.request,
+    params: {
+      ...permissionsPending.request.params,
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          entries: [
+            {
+              access: "write",
+              path: { type: "path", path: "/workspace/write" },
+            },
+          ],
+          globScanMaxDepth: 3,
+        },
+      },
+    },
+  },
+} as never as PendingServerRequest;
+
 const userInputPending = {
   requestId: 41,
   kind: "userInput",
@@ -111,7 +135,7 @@ const userInputPending = {
 describe("ServerRequestCard", () => {
   afterEach(cleanup);
 
-  it("shows the request summary and resolves a one-time approval", () => {
+  it("shows the command and approval actions without a generic request summary", () => {
     const onResolve = vi.fn(async () => undefined);
     render(
       <ServerRequestCard
@@ -122,11 +146,8 @@ describe("ServerRequestCard", () => {
       />,
     );
 
-    expect(screen.getAllByText("pnpm check")).toHaveLength(2);
-    expect(screen.getByText("/workspace")).toBeTruthy();
-    expect(
-      screen.getByRole("region", { name: "Request summary" }),
-    ).toBeTruthy();
+    expect(screen.getByText("pnpm check")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
     expect(screen.queryByText("Request details")).toBeNull();
     expect(screen.queryByText("Request 17")).toBeNull();
     expect(
@@ -185,7 +206,7 @@ describe("ServerRequestCard", () => {
     expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
   });
 
-  it("shows permission details and resolves an allowed session grant", () => {
+  it("shows each requested permission once and resolves an allowed session grant", () => {
     const onResolve = vi.fn(async () => undefined);
     render(
       <ServerRequestCard
@@ -205,11 +226,14 @@ describe("ServerRequestCard", () => {
     expect(within(summary).getByText("Network access")).toBeTruthy();
     expect(within(summary).getByText("Read: /workspace/read")).toBeTruthy();
     expect(within(summary).getByText("Write: /workspace/write")).toBeTruthy();
-    expect(screen.getAllByText("Need to inspect the project")).toHaveLength(2);
+    expect(screen.getAllByText("Need to inspect the project")).toHaveLength(1);
     expect(screen.getByText("Requested access")).toBeTruthy();
-    expect(screen.getByText("Network access:")).toBeTruthy();
-    expect(screen.getByTitle("/workspace/read")).toBeTruthy();
-    expect(screen.getByTitle("/workspace/write")).toBeTruthy();
+    expect(screen.queryByText("Network access:")).toBeNull();
+    expect(screen.queryByText("Access details")).toBeNull();
+    expect(screen.getByRole("region", { name: "Requested access" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
+    expect(screen.getByTitle("Read: /workspace/read")).toBeTruthy();
+    expect(screen.getByTitle("Write: /workspace/write")).toBeTruthy();
     expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
     expect(screen.queryByRole("radio", { name: "This session" })).toBeNull();
     fireEvent.click(
@@ -227,6 +251,23 @@ describe("ServerRequestCard", () => {
       },
       scope: "session",
     });
+  });
+
+  it("deduplicates permissions represented by both legacy arrays and entries", () => {
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={vi.fn(async () => undefined)}
+        pending={mixedPermissionsPending}
+      />,
+    );
+
+    const summary = screen.getByRole("region", {
+      name: "Requested access",
+    });
+    expect(within(summary).getAllByText(/^write:/i)).toHaveLength(1);
+    expect(within(summary).queryByText(/type.*path/)).toBeNull();
   });
 
   it("gives user-input answers the full card width", () => {

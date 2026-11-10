@@ -204,6 +204,9 @@ async function captureMcpDialogs(): Promise<void> {
       timeoutMsg: "The HTTP MCP fixture should expose its configured resources",
     },
   );
+  await $(
+    "[data-testid='mcp-server-details-fixture-mcp'] summary",
+  ).click();
   await saveFixtureScreenshot("mcp-configured-resources.png");
 
   const resourceButton = $(

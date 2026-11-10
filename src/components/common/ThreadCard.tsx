@@ -45,6 +45,7 @@ export function ThreadCard({
       <ChatListItem
         showPreview
         showUpdatedAt={showUpdatedAt}
+        actions={actions}
         onArchive={onArchive}
         isArchiving={isArchiving}
         status={chatStatus}
@@ -59,12 +60,12 @@ export function ThreadCard({
         <ChatListItem
           showPreview
           showUpdatedAt={showUpdatedAt}
+          actions={actions}
           onArchive={onArchive}
           isArchiving={isArchiving}
           status={chatStatus}
           thread={thread}
         />
-        {actions && <div className="card-actions justify-end">{actions}</div>}
       </div>
     </article>
   );

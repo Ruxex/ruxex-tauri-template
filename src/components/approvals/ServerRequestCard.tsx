@@ -12,7 +12,6 @@ import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
 import {
   buildApprovalResponse,
-  buildApprovalScope,
   buildMcpElicitationResponse,
   buildPermissionsApprovalResponse,
   buildUserInputResponse,
@@ -72,10 +71,6 @@ export function ServerRequestCard({
   const isMcpToolApproval =
     mcpParams?.mode === "form" &&
     mcpMeta?.ruxex_approval_kind === "mcp_tool_call";
-  const scope = buildApprovalScope(request);
-  const displayScope = Object.entries(scope).filter(
-    ([key]) => !isMcpToolApproval || (key !== "threadId" && key !== "turnId"),
-  );
   const title = isMcpToolApproval
     ? "MCP approval requested"
     : isUserInput
@@ -159,103 +154,23 @@ export function ServerRequestCard({
             </div>
           )}
           {permissionParams && (
-            <>
-              <section
-                aria-label="Requested access"
-                className="mt-2 rounded-box border border-warning/30 bg-warning/5 p-3 text-sm"
-              >
-                <h3 className="font-medium">Requested access</h3>
-                {permissionParams.reason && (
-                  <p className="mt-1 text-base-content/75">
-                    {permissionParams.reason}
-                  </p>
-                )}
-                <ul className="mt-2 space-y-1">
-                  {permissionSummary.map((item) => (
-                    <li className="truncate" key={item} title={item}>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-              <details className="mt-2 text-sm">
-                <summary className="cursor-pointer font-medium text-base-content/80">
-                  Access details
-                </summary>
-                <div className="mt-2 space-y-2">
-                  {permissionParams.reason && <p>{permissionParams.reason}</p>}
-                  {permissionParams.permissions.network && (
-                    <p>
-                      <span className="font-medium">Network access:</span>
-                      <span className="ml-1">
-                        {permissionParams.permissions.network.enabled === true
-                          ? "enabled"
-                          : "requested"}
-                      </span>
-                    </p>
-                  )}
-                  {permissionParams.permissions.fileSystem && (
-                    <div className="space-y-1">
-                      <p className="font-medium">File System access</p>
-                      {permissionParams.permissions.fileSystem.read?.map(
-                        (path) => (
-                          <p
-                            className="truncate text-xs"
-                            key={`read:${path}`}
-                            title={path}
-                          >
-                            Read: {path}
-                          </p>
-                        ),
-                      )}
-                      {permissionParams.permissions.fileSystem.write?.map(
-                        (path) => (
-                          <p
-                            className="truncate text-xs"
-                            key={`write:${path}`}
-                            title={path}
-                          >
-                            Write: {path}
-                          </p>
-                        ),
-                      )}
-                      {permissionParams.permissions.fileSystem.entries?.map(
-                        (entry) => {
-                          const path = formatValue(entry.path);
-                          return (
-                            <p
-                              className="truncate text-xs"
-                              key={`entry:${entry.access}:${path}`}
-                            >
-                              {entry.access}: {path}
-                            </p>
-                          );
-                        },
-                      )}
-                    </div>
-                  )}
-                </div>
-              </details>
-            </>
-          )}
-          {displayScope.length > 0 && (
             <section
-              aria-label="Request summary"
-              className="mt-2 rounded-box bg-base-200 p-3 text-xs text-base-content/60"
+              aria-label="Requested access"
+              className="mt-2 rounded-box border border-warning/30 bg-warning/5 p-3 text-sm"
             >
-              <h3 className="text-sm font-medium text-base-content/70">
-                Request summary
-              </h3>
-              <dl className="mt-2 grid gap-x-3 gap-y-1 sm:grid-cols-2">
-                {displayScope.map(([key, value]) => (
-                  <div className="flex min-w-0 gap-2" key={key}>
-                    <dt className="font-medium">{key}</dt>
-                    <dd className="truncate" title={value}>
-                      {value}
-                    </dd>
-                  </div>
+              <h3 className="font-medium">Requested access</h3>
+              {permissionParams.reason && (
+                <p className="mt-1 text-base-content/75">
+                  {permissionParams.reason}
+                </p>
+              )}
+              <ul className="mt-2 space-y-1">
+                {permissionSummary.map((item) => (
+                  <li className="truncate" key={item} title={item}>
+                    {item}
+                  </li>
                 ))}
-              </dl>
+              </ul>
             </section>
           )}
           {isUserInput && requestParams.questions?.[0] && (
@@ -378,6 +293,17 @@ function buildPermissionSummary(
   params: v2.PermissionsRequestApprovalParams,
 ): string[] {
   const items: string[] = [];
+  const fileSystemItems = new Set<string>();
+
+  function addFileSystemItem(access: string, path: string): void {
+    const key = `${access.toLowerCase()}:${path}`;
+    if (fileSystemItems.has(key)) return;
+    fileSystemItems.add(key);
+    items.push(
+      `${access.charAt(0).toUpperCase()}${access.slice(1)}: ${path}`,
+    );
+  }
+
   if (params.permissions.network) {
     items.push(
       params.permissions.network.enabled === true
@@ -388,13 +314,13 @@ function buildPermissionSummary(
 
   const fileSystem = params.permissions.fileSystem;
   fileSystem?.read?.forEach((path) => {
-    items.push(`Read: ${path}`);
+    addFileSystemItem("read", path);
   });
   fileSystem?.write?.forEach((path) => {
-    items.push(`Write: ${path}`);
+    addFileSystemItem("write", path);
   });
   fileSystem?.entries?.forEach((entry) => {
-    items.push(`${entry.access}: ${formatValue(entry.path)}`);
+    addFileSystemItem(entry.access, formatValue(entry.path));
   });
 
   return items.length > 0 ? items : ["Specific access requested"];
@@ -403,6 +329,12 @@ function buildPermissionSummary(
 function formatValue(value: unknown): string {
   if (typeof value === "string") {
     return value;
+  }
+  if (typeof value === "object" && value !== null && "type" in value) {
+    const typedValue = value as { type?: unknown; path?: unknown };
+    if (typedValue.type === "path" && typeof typedValue.path === "string") {
+      return typedValue.path;
+    }
   }
   try {
     return JSON.stringify(value);

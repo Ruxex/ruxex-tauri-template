@@ -200,6 +200,49 @@ describe("McpServersPage", () => {
     });
   });
 
+  it("groups each configured server in a collapsed disclosure with an enable toggle", () => {
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
+    useAllMcpServerStatus.mockReturnValue(status(["docs"]));
+
+    renderPage();
+
+    const serverDetails = screen.getByTestId("mcp-server-details-docs");
+    expect(serverDetails.tagName).toBe("DETAILS");
+    expect(serverDetails.hasAttribute("open")).toBe(false);
+    expect(
+      screen.getByRole("switch", { name: "Enable MCP server: docs" }),
+    ).toBeTruthy();
+  });
+
+  it("writes the MCP server enabled state from the summary toggle", async () => {
+    const write = vi.fn().mockResolvedValue({ status: "ok" });
+    const reload = vi.fn().mockResolvedValue({});
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
+    useAllMcpServerStatus.mockReturnValue(status(["docs"]));
+    useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
+    useReloadMcpServers.mockReturnValue({
+      mutateAsync: reload,
+      isPending: false,
+    });
+
+    renderPage();
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Enable MCP server: docs" }),
+    );
+
+    await waitFor(() => expect(write).toHaveBeenCalledOnce());
+    expect(write).toHaveBeenCalledWith(
+      expect.objectContaining({
+        edits: [
+          expect.objectContaining({
+            keyPath: 'mcp_servers."docs"',
+            value: expect.objectContaining({ enabled: false }),
+          }),
+        ],
+      }),
+    );
+  });
+
   it("separates unavailable connection state from authentication state", () => {
     useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
     useAllMcpServerStatus.mockReturnValue({

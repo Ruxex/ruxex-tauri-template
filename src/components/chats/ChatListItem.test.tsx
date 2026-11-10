@@ -91,6 +91,35 @@ describe("ChatListItem", () => {
     const updated = screen.getByText("Updated 2 minutes ago");
     expect(updated).toBeTruthy();
     expect(updated.getAttribute("title")).toContain("2025");
+    expect(updated.closest("a")).toBeNull();
+    expect(updated.parentElement?.className).toContain("items-center");
+  });
+
+  it("renders custom trailing actions outside the chat link", () => {
+    const onRestore = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <ChatListItem
+          actions={
+            <button aria-label="Restore" type="button" onClick={onRestore}>
+              Restore
+            </button>
+          }
+          thread={{
+            id: "thread-1",
+            name: "Archived chat",
+            preview: null,
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    const restoreButton = screen.getByRole("button", { name: "Restore" });
+    expect(restoreButton.closest("a")).toBeNull();
+    fireEvent.click(restoreButton);
+    expect(onRestore).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -265,7 +294,7 @@ describe("ChatListItem", () => {
     const archiveButton = screen.getByRole("button", {
       name: "Archive Build the sidebar",
     });
-    const row = archiveButton.parentElement;
+    const row = archiveButton.parentElement?.parentElement;
     expect(row?.className).toContain("group/thread");
     expect(archiveButton.className).toContain("group-hover/thread:opacity-100");
     expect(archiveButton.querySelector("svg")).toBeTruthy();
@@ -324,7 +353,7 @@ describe("ChatListItem", () => {
     const archiveButton = screen.getByRole("button", {
       name: `Archive ${title}`,
     });
-    const row = archiveButton.parentElement;
+    const row = archiveButton.parentElement?.parentElement;
     const chatLink = screen.getByRole("link");
 
     expect(row?.className).toContain("w-full");

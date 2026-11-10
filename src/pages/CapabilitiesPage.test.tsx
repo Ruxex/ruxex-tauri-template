@@ -665,7 +665,13 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/No plugin marketplaces available\./)).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "No plugin marketplaces yet",
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/No plugin marketplaces available\./)).toBeNull();
     expect(
       screen
         .getByRole("link", { name: "Add plugin marketplace" })
@@ -693,16 +699,34 @@ describe("CapabilitiesPage", () => {
   it("renders Skills with enabled state and writes by path", async () => {
     const reviewPath = "/workspace/.agents/skills/review";
     const deployPath = "/workspace/.agents/skills/deploy";
+    const defaultPath = "/home/minato/.ruxex_desktop/skills/default-review";
+    const longDescription =
+      "This is a deliberately long description that should be shortened in the skill list while remaining available as a tooltip.";
     const mutateAsync = vi.fn().mockResolvedValue({ effectiveEnabled: false });
     useSkillsList.mockReturnValue({
       data: {
         data: [
           {
-            cwd: "/workspace",
+            cwd: "/home/minato/.ruxex_desktop/skills",
+            skills: [
+              {
+                name: "default-review",
+                description: "Default long description",
+                shortDescription: "Built-in review skill",
+                path: defaultPath,
+                scope: "system",
+                enabled: true,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+          {
+            cwd: "/workspace/.agents/skills",
             skills: [
               {
                 name: "review",
-                description: "Review project changes",
+                description: longDescription,
                 path: reviewPath,
                 scope: "user",
                 enabled: true,
@@ -740,6 +764,20 @@ describe("CapabilitiesPage", () => {
     const deployToggle = screen.getByRole("switch", { name: "Enable deploy" });
     expect((reviewToggle as HTMLInputElement).checked).toBe(true);
     expect((deployToggle as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText("Default")).toBeTruthy();
+    expect(screen.queryByText("/home/minato/.ruxex_desktop/skills")).toBeNull();
+    expect(screen.getByText("/workspace/.agents/skills")).toBeTruthy();
+    expect(screen.getByText("Built-in review skill")).toBeTruthy();
+    expect(screen.queryByText("Default long description")).toBeNull();
+    const fallbackDescription = screen.getByText(longDescription);
+    expect(fallbackDescription.className).toContain("line-clamp-2");
+    expect(fallbackDescription.getAttribute("title")).toBe(longDescription);
+    expect(reviewToggle.className).toContain("toggle");
+    expect(reviewToggle.className).toContain("toggle-primary");
+    expect(reviewToggle.parentElement?.parentElement?.className).toContain(
+      "items-center",
+    );
+    expect(screen.getAllByTestId("skills-source-group")).toHaveLength(2);
     fireEvent.click(reviewToggle);
 
     expect(mutateAsync).toHaveBeenCalledWith({
