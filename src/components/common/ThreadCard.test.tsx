@@ -38,4 +38,30 @@ describe("ThreadCard", () => {
     fireEvent.click(restoreButton);
     expect(onRestore).toHaveBeenCalledOnce();
   });
+
+  it("gives compact project chats a visible card boundary", async () => {
+    const { ThreadCard } = await import("./ThreadCard");
+
+    render(
+      <MemoryRouter>
+        <ThreadCard
+          compact
+          thread={{
+            id: "thread-1",
+            name: "Project chat",
+            preview: "Project preview",
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    const chatLink = screen.getByRole("link", {
+      name: /Project chatProject preview/,
+    });
+    const card = chatLink.closest("article");
+    expect(card).toBeTruthy();
+    expect(card?.className).toContain("border-base-300");
+    expect(card?.className).toContain("bg-base-100");
+  });
 });

@@ -42,15 +42,19 @@ export function ThreadCard({
 
   if (compact) {
     return (
-      <ChatListItem
-        showPreview
-        showUpdatedAt={showUpdatedAt}
-        actions={actions}
-        onArchive={onArchive}
-        isArchiving={isArchiving}
-        status={chatStatus}
-        thread={thread}
-      />
+      <article className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary">
+        <div className="card-body p-3">
+          <ChatListItem
+            showPreview
+            showUpdatedAt={showUpdatedAt}
+            actions={actions}
+            onArchive={onArchive}
+            isArchiving={isArchiving}
+            status={chatStatus}
+            thread={thread}
+          />
+        </div>
+      </article>
     );
   }
 
