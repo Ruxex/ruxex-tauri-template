@@ -43,7 +43,7 @@ function useDaemonResult(
 function createDaemonResult() {
   return {
     status: {
-      data: runningDaemon,
+      data: runningDaemon as AppServerDaemonOutput | undefined,
       isError: false,
       error: null,
       isLoading: false,
@@ -197,12 +197,13 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    for (const name of ["Start", "Restart", "Stop"]) {
+    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
       expect(screen.getByRole("button", { name })).toHaveProperty(
         "disabled",
         true,
       );
     }
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
   it("shows lifecycle errors inline", () => {
@@ -227,7 +228,7 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    for (const name of ["Start", "Restart", "Stop"]) {
+    for (const name of ["Start", "Restart", "Stop", "Force stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -243,7 +244,7 @@ describe("AppServerPage", () => {
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.queryByText("PID")).toBeNull();
     expect(screen.queryByText("Socket")).toBeNull();
-    for (const name of ["Start", "Restart", "Stop"]) {
+    for (const name of ["Start", "Restart", "Stop", "Force stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -267,6 +268,10 @@ describe("AppServerPage", () => {
   it("shows App Server initialization errors with daemon recovery controls", () => {
     useAppServerDaemon.mockReturnValue(
       useDaemonResult({
+        status: {
+          ...useDaemonResult().status,
+          data: undefined,
+        },
         appServerError: new Error("in-process initialization failed"),
         appServerReady: false,
         isAvailable: true,
@@ -280,11 +285,30 @@ describe("AppServerPage", () => {
     expect(
       screen.getByText("Error: in-process initialization failed"),
     ).toBeTruthy();
-    for (const name of ["Start", "Restart", "Stop"]) {
-      expect(screen.getByRole("button", { name })).toHaveProperty(
-        "disabled",
-        false,
-      );
+    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+  });
+
+  it("shows only Start when the daemon reports notRunning", () => {
+    useAppServerDaemon.mockReturnValue(
+      useDaemonResult({
+        status: {
+          ...useDaemonResult().status,
+          data: { ...runningDaemon, status: "notRunning", pid: undefined },
+        },
+      }),
+    );
+
+    render(<AppServerPage />);
+
+    expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
+    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
 });

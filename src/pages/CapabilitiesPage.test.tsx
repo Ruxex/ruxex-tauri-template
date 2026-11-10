@@ -16,6 +16,7 @@ const useInstallPlugin = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
+const useSetSkillsExtraRoots = vi.hoisted(() => vi.fn());
 const useWriteSkillConfig = vi.hoisted(() => vi.fn());
 const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
 const useMcpOauthLogin = vi.hoisted(() => vi.fn());
@@ -58,6 +59,12 @@ const writeSkillConfig = vi.hoisted(() => ({
   error: null,
   variables: undefined,
 }));
+const setSkillsExtraRoots = vi.hoisted(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+}));
 const uninstallPlugin = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
@@ -71,12 +78,15 @@ vi.mock("../app-server/hooks", () => ({
   usePluginList,
   useReloadMcpServers,
   useSkillsList,
+  useSetSkillsExtraRoots,
   useWriteSkillConfig,
   useUpgradeMarketplace,
   useMcpOauthLogin,
   useUninstallPlugin,
 }));
 
+const open = vi.hoisted(() => vi.fn());
+vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
 vi.mock("../platform/native", () => ({ openBrowserWindow }));
 vi.mock("../platform/skill-policy", () => ({
   filterHiddenSkills,
@@ -95,6 +105,8 @@ describe("CapabilitiesPage", () => {
       vi.fn(() => true),
     );
     openBrowserWindow.mockReset();
+    open.mockReset();
+    open.mockResolvedValue(null);
     getDesktopUiPolicy.mockReset();
     getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: [] });
     oauthLogin.mutateAsync.mockReset();
@@ -139,6 +151,9 @@ describe("CapabilitiesPage", () => {
     writeSkillConfig.mutateAsync.mockReset();
     writeSkillConfig.mutateAsync.mockResolvedValue({ effectiveEnabled: true });
     useWriteSkillConfig.mockReturnValue(writeSkillConfig);
+    setSkillsExtraRoots.mutateAsync.mockReset();
+    setSkillsExtraRoots.mutateAsync.mockResolvedValue({});
+    useSetSkillsExtraRoots.mockReturnValue(setSkillsExtraRoots);
     usePluginList.mockReturnValue({
       data: {
         marketplaces: [
@@ -807,11 +822,49 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    const skillsCard = screen.getByRole("heading", { name: "Skills", level: 2 })
-      .parentElement?.parentElement;
+    const skillsCard = screen
+      .getByRole("heading", { name: "Skills", level: 2 })
+      .closest("article");
     expect(skillsCard?.className).toContain("w-full");
     expect(skillsCard?.parentElement?.className).not.toContain(
       "lg:grid-cols-2",
+    );
+  });
+
+  it("adds a native directory to the Skill extra roots", async () => {
+    open.mockResolvedValueOnce("/tmp/shared-skills");
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Skill directory" }),
+    );
+
+    await waitFor(() =>
+      expect(setSkillsExtraRoots.mutateAsync).toHaveBeenCalledWith({
+        extraRoots: ["/tmp/shared-skills"],
+      }),
+    );
+    expect(open).toHaveBeenCalledWith({
+      directory: true,
+      multiple: false,
+      title: "Select Skill directory",
+    });
+    expect(screen.getByText("/tmp/shared-skills")).toBeTruthy();
+
+    open.mockResolvedValueOnce("/workspace/team-skills");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Skill directory" }),
+    );
+    await waitFor(() =>
+      expect(setSkillsExtraRoots.mutateAsync).toHaveBeenLastCalledWith({
+        extraRoots: ["/tmp/shared-skills", "/workspace/team-skills"],
+      }),
     );
   });
 
@@ -983,6 +1036,10 @@ describe("CapabilitiesPage", () => {
 
     expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
     expect(screen.getByText("docs")).toBeTruthy();
+    const serverDetails = screen.getByTestId("mcp-server-details-docs");
+    expect(serverDetails.tagName).toBe("DETAILS");
+    expect(serverDetails.getAttribute("open")).toBeNull();
+    expect(within(serverDetails).getByText("1 tools")).toBeTruthy();
     expect(screen.queryByText("Official Plugins")).toBeNull();
     expect(screen.queryByText("Collaboration modes")).toBeNull();
   });

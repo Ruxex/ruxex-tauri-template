@@ -1,10 +1,12 @@
 import {
   ArrowPathIcon,
   Cog6ToothIcon,
+  FolderIcon,
   PlusIcon,
   PuzzlePieceIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useSearchParams } from "react-router-dom";
 
@@ -15,6 +17,7 @@ import {
   useMcpServerStatus,
   usePluginList,
   useReloadMcpServers,
+  useSetSkillsExtraRoots,
   useSkillsList,
   useUninstallPlugin,
   useUpgradeMarketplace,
@@ -113,6 +116,8 @@ export function CapabilitiesPage() {
   const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
     () => new Set(),
   );
+  const [skillExtraRoots, setSkillExtraRoots] = useState<string[]>([]);
+  const [skillRootError, setSkillRootError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: CapabilityTab =
@@ -127,6 +132,7 @@ export function CapabilitiesPage() {
   const uninstallPlugin = useUninstallPlugin();
   const upgradeMarketplace = useUpgradeMarketplace();
   const oauthLogin = useMcpOauthLogin();
+  const setSkillsExtraRootsMutation = useSetSkillsExtraRoots();
   const writeSkillConfig = useWriteSkillConfig();
 
   useEffect(() => {
@@ -171,6 +177,41 @@ export function CapabilitiesPage() {
     } finally {
       setSkillMutationPath(null);
     }
+  }
+
+  async function updateSkillExtraRoots(nextRoots: string[]) {
+    setSkillRootError(null);
+    try {
+      await setSkillsExtraRootsMutation.mutateAsync({
+        extraRoots: nextRoots,
+      });
+      setSkillExtraRoots(nextRoots);
+    } catch (error) {
+      setSkillRootError(formatErrorMessage(error));
+    }
+  }
+
+  async function addSkillDirectory() {
+    setSkillRootError(null);
+    try {
+      const selected = await openDialog({
+        directory: true,
+        multiple: false,
+        title: "Select Skill directory",
+      });
+      if (typeof selected !== "string") return;
+      const root = selected.trim();
+      if (!root || skillExtraRoots.includes(root)) return;
+      await updateSkillExtraRoots([...skillExtraRoots, root]);
+    } catch (error) {
+      setSkillRootError(formatErrorMessage(error));
+    }
+  }
+
+  function removeSkillDirectory(root: string) {
+    void updateSkillExtraRoots(
+      skillExtraRoots.filter((candidate) => candidate !== root),
+    );
   }
 
   async function connectMcpServer(name: string) {
@@ -241,42 +282,47 @@ export function CapabilitiesPage() {
               )}
               <ul className="space-y-2">
                 {mcp.data?.data.map((server) => (
-                  <li className="rounded-box bg-base-200 p-3" key={server.name}>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <span className="font-medium">{server.name}</span>
-                      <McpStatusSummary
-                        authStatus={server.authStatus}
-                        runtimeStatus={server.runtimeStatus}
-                      />
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-base-content/60">
-                      <span>{Object.keys(server.tools).length} tools</span>
-                      {(server.authStatus === "notLoggedIn" ||
-                        server.authStatus === "oAuth") && (
-                        <button
-                          aria-label={
-                            oauthLogin.isPending
-                              ? "Connecting…"
-                              : server.authStatus === "notLoggedIn"
-                                ? `Connect ${server.name}`
-                                : `Re-authenticate ${server.name}`
-                          }
-                          className="btn btn-outline btn-xs"
-                          disabled={oauthLogin.isPending}
-                          onClick={() => void connectMcpServer(server.name)}
-                          type="button"
-                        >
-                          {server.authStatus === "notLoggedIn"
-                            ? `Connect ${server.name}`
-                            : `Re-authenticate ${server.name}`}
-                        </button>
+                  <li key={server.name}>
+                    <details
+                      className="rounded-box bg-base-200 p-3"
+                      data-testid={`mcp-server-details-${server.name}`}
+                    >
+                      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 font-medium">
+                        <span>{server.name}</span>
+                        <McpStatusSummary
+                          authStatus={server.authStatus}
+                          runtimeStatus={server.runtimeStatus}
+                        />
+                      </summary>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-base-content/60">
+                        <span>{Object.keys(server.tools).length} tools</span>
+                        {(server.authStatus === "notLoggedIn" ||
+                          server.authStatus === "oAuth") && (
+                          <button
+                            aria-label={
+                              oauthLogin.isPending
+                                ? "Connecting…"
+                                : server.authStatus === "notLoggedIn"
+                                  ? `Connect ${server.name}`
+                                  : `Re-authenticate ${server.name}`
+                            }
+                            className="btn btn-outline btn-xs"
+                            disabled={oauthLogin.isPending}
+                            onClick={() => void connectMcpServer(server.name)}
+                            type="button"
+                          >
+                            {server.authStatus === "notLoggedIn"
+                              ? `Connect ${server.name}`
+                              : `Re-authenticate ${server.name}`}
+                          </button>
+                        )}
+                      </div>
+                      {server.toolsError && (
+                        <p className="mt-1 text-xs text-error">
+                          {server.toolsError}
+                        </p>
                       )}
-                    </div>
-                    {server.toolsError && (
-                      <p className="mt-1 text-xs text-error">
-                        {server.toolsError}
-                      </p>
-                    )}
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -290,7 +336,67 @@ export function CapabilitiesPage() {
             id="skills"
           >
             <div className="card-body">
-              <h2 className="card-title">Skills</h2>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h2 className="card-title">Skills</h2>
+                <button
+                  aria-label="Add Skill directory"
+                  className="btn btn-outline btn-sm"
+                  disabled={setSkillsExtraRootsMutation.isPending}
+                  onClick={() => void addSkillDirectory()}
+                  type="button"
+                >
+                  {setSkillsExtraRootsMutation.isPending ? (
+                    <span
+                      aria-hidden="true"
+                      className="loading loading-spinner loading-xs"
+                    />
+                  ) : (
+                    <FolderIcon aria-hidden="true" className="size-4" />
+                  )}
+                  Add Skill directory
+                </button>
+              </div>
+              <div className="rounded-box border border-base-300 bg-base-200/50 p-3">
+                <p className="text-sm font-medium">
+                  Additional Skill directories
+                </p>
+                <p className="mt-1 text-xs text-base-content/60">
+                  Skills are discovered from these directories for the current
+                  App Server session.
+                </p>
+                {skillExtraRoots.length > 0 ? (
+                  <ul className="mt-2 space-y-1">
+                    {skillExtraRoots.map((root) => (
+                      <li
+                        className="flex min-w-0 items-center justify-between gap-2 text-sm"
+                        key={root}
+                      >
+                        <span className="min-w-0 truncate" title={root}>
+                          {root}
+                        </span>
+                        <button
+                          aria-label={`Remove Skill directory ${root}`}
+                          className="btn btn-ghost btn-xs shrink-0"
+                          disabled={setSkillsExtraRootsMutation.isPending}
+                          onClick={() => removeSkillDirectory(root)}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs text-base-content/60">
+                    No additional directories configured.
+                  </p>
+                )}
+                {skillRootError && (
+                  <p className="mt-2 text-xs text-error" role="alert">
+                    Unable to update Skill directories: {skillRootError}
+                  </p>
+                )}
+              </div>
               {skills.isLoading && <span className="loading loading-spinner" />}
               {skills.isError && (
                 <p className="text-error">

@@ -64,7 +64,7 @@ export const ConversationItem = memo(function ConversationItem({
 
   return (
     <article
-      className={`group chat ${isUser ? "chat-end w-fit max-w-full ms-auto" : "chat-start"}`}
+      className={`group chat ${isUser ? "chat-end w-fit max-w-full ms-auto" : "chat-start w-full"}`}
       data-conversation-item-id={item.id}
     >
       {isEditing ? (
@@ -101,7 +101,11 @@ export const ConversationItem = memo(function ConversationItem({
         </form>
       ) : (
         <div
-          className={`rounded-box border border-base-300 ${isUser ? "px-3 py-1.5" : "px-4 py-2"} ${isUser ? "bg-primary text-primary-content" : "bg-base-100"}`}
+          className={
+            isUser
+              ? "rounded-box border border-base-300 bg-primary px-3 py-1.5 text-primary-content"
+              : "w-full border-0 bg-transparent px-0 py-2"
+          }
         >
           <MarkdownContent text={item.text || "…"} />
         </div>

@@ -162,6 +162,11 @@ describe("ConversationItem", () => {
       ?.parentElement?.parentElement;
     expect(messageSurface?.className).toContain("py-2");
     expect(messageSurface?.className).not.toContain("py-3");
+    expect(messageSurface?.className).toContain("w-full");
+    expect(messageSurface?.className).toContain("border-0");
+    expect(messageSurface?.className).toContain("bg-transparent");
+    expect(messageSurface?.className).not.toContain("rounded-box");
+    expect(screen.getByRole("article").className).toContain("w-full");
     expect(screen.queryByRole("button", { name: "Edit message" })).toBeNull();
   });
 

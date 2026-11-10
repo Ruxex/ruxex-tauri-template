@@ -99,6 +99,11 @@ describe("capability query and mutation hooks", () => {
       "skills/config/write",
       { path: "/workspace/.agents/skills/review", enabled: false },
     ],
+    [
+      "useSetSkillsExtraRoots",
+      "skills/extraRoots/set",
+      { extraRoots: ["/workspace/.agents/skills", "/tmp/shared-skills"] },
+    ],
     ["useStartReview", "review/start", { threadId: "thread-1", target: {} }],
     [
       "useUpdateTurnSettings",

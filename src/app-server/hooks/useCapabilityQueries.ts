@@ -38,6 +38,25 @@ export function useWriteSkillConfig() {
   });
 }
 
+export function useSetSkillsExtraRoots() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: v2.SkillsExtraRootsSetParams) => {
+      const response = await requestAppServerMethod(
+        "skills/extraRoots/set",
+        params,
+      );
+      return response.response;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.skills,
+      });
+    },
+  });
+}
+
 export function useMcpServerStatus(params: v2.ListMcpServerStatusParams = {}) {
   const status = useAppServerStatus();
 

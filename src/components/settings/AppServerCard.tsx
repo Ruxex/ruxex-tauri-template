@@ -17,13 +17,23 @@ import { SettingRow, SettingsPanel } from "./SettingsPanel";
 
 function appServerStatusTone(status: string): StateBadgeTone {
   const normalized = status.toLowerCase();
-  if (normalized === "running" || normalized === "connected") {
+  if (
+    normalized === "running" ||
+    normalized === "connected" ||
+    normalized === "alreadyrunning" ||
+    normalized === "started" ||
+    normalized === "restarted"
+  ) {
     return "success";
   }
   if (normalized === "unavailable" || normalized === "failed") {
     return "error";
   }
   return "warning";
+}
+
+function isDaemonRunningStatus(status: string): boolean {
+  return ["running", "alreadyRunning", "started", "restarted"].includes(status);
 }
 
 export function AppServerCard({
@@ -88,6 +98,8 @@ export function AppServerCard({
       ? "success"
       : "error";
   const daemonStatus = daemon?.status ?? "unavailable";
+  const daemonRunning =
+    showDaemonControls && isDaemonRunningStatus(daemonStatus);
   const daemonStatusLabel = daemonStatus
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (character) => character.toUpperCase());
@@ -214,29 +226,33 @@ export function AppServerCard({
         </p>
       )}
       <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
-        <button
-          aria-label="Reconnect"
-          className="btn btn-sm btn-outline"
-          type="button"
-          onClick={onReconnect}
-          disabled={isFetching || isRefreshing || isPending || isUpdatePending}
-        >
-          {isFetching && (
-            <span
-              aria-hidden="true"
-              className="loading loading-spinner loading-xs"
-            />
-          )}
-          Reconnect
-        </button>
+        {daemonRunning && (
+          <button
+            aria-label="Reconnect"
+            className="btn btn-sm btn-outline"
+            type="button"
+            onClick={onReconnect}
+            disabled={
+              isFetching || isRefreshing || isPending || isUpdatePending
+            }
+          >
+            {isFetching && (
+              <span
+                aria-hidden="true"
+                className="loading loading-spinner loading-xs"
+              />
+            )}
+            Reconnect
+          </button>
+        )}
         {showDaemonControls &&
-          (
-            [
-              ["start", "Start", "btn-outline btn-success"],
-              ["restart", "Restart", "btn-outline btn-warning"],
-              ["stop", "Stop", "btn-outline btn-error"],
-              ["forceStop", "Force stop", "btn-outline btn-error"],
-            ] as const
+          (daemonRunning
+            ? ([
+                ["restart", "Restart", "btn-outline btn-warning"],
+                ["stop", "Stop", "btn-outline btn-error"],
+                ["forceStop", "Force stop", "btn-outline btn-error"],
+              ] as const)
+            : ([["start", "Start", "btn-outline btn-success"]] as const)
           ).map(([action, label, variant]) => (
             <button
               aria-label={label}

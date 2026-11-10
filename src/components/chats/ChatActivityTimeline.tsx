@@ -87,7 +87,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     <section
       aria-busy={isBusy}
       aria-label="Chat activity"
-      className="space-y-0.5 bg-base-200 p-4"
+      className="space-y-0 bg-base-200 p-4"
       ref={timelineRef}
     >
       <ConversationMinimap items={visibleItems} timelineRef={timelineRef} />

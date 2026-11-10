@@ -123,7 +123,7 @@ describe("settings card layout", () => {
     const actionRow = reconnect.parentElement;
 
     expect(actionRow?.className).toContain("flex-wrap");
-    expect(actionRow?.querySelectorAll("button")).toHaveLength(5);
+    expect(actionRow?.querySelectorAll("button")).toHaveLength(4);
     expect(reconnect.className).toContain("btn-outline");
     const refresh = screen.getByRole("button", { name: "Refresh" });
     expect(refresh.textContent).toBe("");
@@ -134,9 +134,6 @@ describe("settings card layout", () => {
           .parentElement as HTMLElement,
       ).getByRole("button", { name: "Refresh" }),
     ).toBe(refresh);
-    expect(screen.getByRole("button", { name: "Start" }).className).toContain(
-      "btn-outline",
-    );
     expect(screen.getByRole("button", { name: "Restart" }).className).toContain(
       "btn-outline",
     );
@@ -147,6 +144,36 @@ describe("settings card layout", () => {
       screen.getByRole("button", { name: "Force stop" }).className,
     ).toContain("btn-outline");
     expect(screen.getByText("Running")).toBeTruthy();
+  });
+
+  it("shows only Start when the daemon is not running", () => {
+    render(
+      <AppServerCard
+        appServerReady
+        connected={false}
+        daemon={{
+          status: "notRunning",
+          managedRuxexPath: "/tmp/ruxex",
+          socketPath: "/tmp/app.sock",
+        }}
+        isAvailable
+        isFetching={false}
+        isPending={false}
+        isRefreshing={false}
+        isUpdatePending={false}
+        mode="daemon"
+        onAction={vi.fn()}
+        onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
+        onUpdate={vi.fn()}
+        resynchronizing={false}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
+    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
   });
 
   it("shows progress and disables app server actions while one is running", () => {
@@ -176,7 +203,6 @@ describe("settings card layout", () => {
     for (const name of [
       "Reconnect",
       "Refresh",
-      "Start",
       "Restart",
       "Stop",
       "Force stop",
