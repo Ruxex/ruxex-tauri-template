@@ -14,7 +14,7 @@
 
 - Use the exact Skill names `documents`, `presentations`, `spreadsheets`, and `pdf`.
 - Keep `ruxex-artifacts` as the shared command/runtime and plugin package.
-- Use `agents/openai.yaml` metadata; icon paths remain optional and are not
+- Use `agents/ruxex.yaml` metadata; icon paths remain optional and are not
   bundled for the four artifact Skills yet.
 - Read local icons through a root-constrained native boundary; never use browser `file:` URLs.
 - Preserve the existing product-hidden Skill filtering and disabled-skill Composer filtering.
@@ -31,7 +31,7 @@
 
 **Files:**
 - Create: `plugins/ruxex-artifacts/skills/{documents,presentations,spreadsheets,pdf}/SKILL.md`
-- Create: `plugins/ruxex-artifacts/skills/{documents,presentations,spreadsheets,pdf}/agents/openai.yaml`
+- Create: `plugins/ruxex-artifacts/skills/{documents,presentations,spreadsheets,pdf}/agents/ruxex.yaml`
 - Modify: `plugins/ruxex-artifacts/tests/skill_contract_test.py`
 - Modify: `plugins/ruxex-artifacts/README.md`
 

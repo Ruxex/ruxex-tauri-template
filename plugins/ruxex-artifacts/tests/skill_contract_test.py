@@ -25,12 +25,13 @@ class ArtifactSkillContractTest(unittest.TestCase):
         for skill_name in SKILL_NAMES:
             skill_dir = SKILLS_ROOT / skill_name
             self.assertTrue((skill_dir / "SKILL.md").is_file())
-            self.assertTrue((skill_dir / "agents/openai.yaml").is_file())
+            self.assertTrue((skill_dir / "agents/ruxex.yaml").is_file())
+            self.assertFalse((skill_dir / "agents/openai.yaml").exists())
 
-    def test_each_skill_has_interface_metadata_without_bundled_icons(self) -> None:
+    def test_each_skill_has_ruxex_interface_metadata_without_bundled_icons(self) -> None:
         for skill_name in SKILL_NAMES:
             skill_dir = SKILLS_ROOT / skill_name
-            metadata = (skill_dir / "agents/openai.yaml").read_text(
+            metadata = (skill_dir / "agents/ruxex.yaml").read_text(
                 encoding="utf-8",
             )
             self.assertIn("interface:", metadata)

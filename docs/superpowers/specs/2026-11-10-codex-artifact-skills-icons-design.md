@@ -11,7 +11,7 @@ Codex and show each Skill's optional interface icon wherever Skills are shown.
   `documents`, `presentations`, `spreadsheets`, and `pdf`.
 - Keep the plugin and bundled `ruxex-artifacts` runtime shared; this is a Skill
   boundary change, not four independent runtimes.
-- Add Codex-compatible `agents/openai.yaml` metadata to each Skill. Icon
+- Add Ruxex-compatible `agents/ruxex.yaml` metadata to each Skill. Icon
   metadata remains optional; the bundled artifact Skills intentionally omit
   icon assets for now.
 - Render `interface.iconSmall` (falling back to `iconLarge`) in the Tauri
@@ -29,12 +29,12 @@ Codex and show each Skill's optional interface icon wherever Skills are shown.
 
 ## Metadata and assets
 
-Each Skill has a `SKILL.md` and `agents/openai.yaml`. The metadata may use
+Each Skill has a `SKILL.md` and `agents/ruxex.yaml`. The metadata may use
 `interface.display_name`, `short_description`, `icon_small`, `icon_large`, and
 `brand_color`; the four bundled artifact Skills currently use only the display
-metadata and rely on the generic fallback icon. Ruxex's legacy
-`agents/ruxex.yaml` remains supported by the upstream loader, but new bundled
-Skills use `openai.yaml`.
+metadata and rely on the generic fallback icon. Ruxex's loader prefers
+`agents/openai.yaml` when both files exist, so these bundled Skills intentionally
+use only the Ruxex-specific `ruxex.yaml`.
 
 ## UI behavior
 
