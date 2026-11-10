@@ -50,6 +50,10 @@ import {
 import { buildUserTextInput } from "./conversation-model";
 import { SlashCommandPalette } from "./SlashCommandPalette";
 import {
+  filterHiddenSkills,
+  getDesktopUiPolicy,
+} from "../../platform/skill-policy";
+import {
   getSlashCommandInput,
   type SlashCommandId,
   selectSlashCommand,
@@ -96,6 +100,9 @@ export function Composer({
   } = useImageAttachment();
   const models = useModelList();
   const skills = useSkillsList();
+  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
+    () => new Set(),
+  );
   const collaborationModes = useCollaborationModes();
   const [collaborationModeName, setCollaborationModeName] = useState("");
   const [collaborationMode, setCollaborationMode] = useState<
@@ -131,6 +138,26 @@ export function Composer({
       setMessage(initialMessage);
     }
   }, [initialMessage]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getDesktopUiPolicy()
+      .then((policy) => {
+        if (!cancelled && policy.hiddenSkills.length > 0) {
+          setHiddenSkills(new Set(policy.hiddenSkills));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleSkills = filterHiddenSkills(
+    skills.data?.data.flatMap((entry) => entry.skills) ?? [],
+    hiddenSkills,
+  ).filter((skill) => skill.enabled);
   const SubmitIcon = isPending
     ? ArrowPathIcon
     : mode === "queue"
@@ -293,7 +320,7 @@ export function Composer({
           onSelectSkill={handleSlashSkillSelect}
           onSelect={(command) => void handleSlashCommandSelect(command)}
           query={slashCommandInput?.query}
-          skills={skills.data?.data.flatMap((entry) => entry.skills) ?? []}
+          skills={visibleSkills}
           skillsError={skills.isError ? formatErrorMessage(skills.error) : null}
           skillsLoading={skills.isLoading}
         />

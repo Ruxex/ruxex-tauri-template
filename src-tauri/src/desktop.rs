@@ -452,22 +452,7 @@ pub(crate) fn open_browser_window(url: String) -> CommandResult<()> {
     })
 }
 
-#[cfg(not(feature = "example"))]
-pub(crate) fn runtime_package_source(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    use tauri::Manager;
-
-    let resource_package = app
-        .path()
-        .resource_dir()
-        .map_err(|error| format!("failed to resolve application resources: {error}"))?
-        .join("ruxex-package");
-    let development_package = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("resources")
-        .join("ruxex-package");
-    select_runtime_package(&resource_package, &development_package)
-}
-
-#[cfg(any(not(feature = "example"), test))]
+#[cfg(test)]
 fn select_runtime_package(
     resource_package: &Path,
     development_package: &Path,

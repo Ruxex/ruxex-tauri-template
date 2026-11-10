@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PERSISTENT_SCENARIOS } from "./catalog";
-import { scenarioExpectation, scenarioPrompt } from "./support";
+import {
+  saveFixtureScreenshot,
+  scenarioExpectation,
+  scenarioPrompt,
+} from "./support";
 
 describe("dummy home WDIO support contracts", () => {
   it("builds a deterministic prompt for every persistent scenario", () => {
@@ -21,6 +25,29 @@ describe("dummy home WDIO support contracts", () => {
 
       expect(expectation.kind).toMatch(/^(text|error|goal)$/);
       expect(expectation.value.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("waits 300ms before and after saving a fixture screenshot", async () => {
+    const pause = vi.fn(async () => undefined);
+    const saveScreenshot = vi.fn(async () => undefined);
+    vi.stubGlobal("browser", { pause, saveScreenshot });
+
+    try {
+      await saveFixtureScreenshot("stability.png");
+
+      expect(pause).toHaveBeenNthCalledWith(1, 300);
+      expect(pause).toHaveBeenNthCalledWith(2, 300);
+      expect(pause).toHaveBeenCalledTimes(2);
+      expect(saveScreenshot).toHaveBeenCalledTimes(1);
+      expect(pause.mock.invocationCallOrder[0]).toBeLessThan(
+        saveScreenshot.mock.invocationCallOrder[0],
+      );
+      expect(pause.mock.invocationCallOrder[1]).toBeGreaterThan(
+        saveScreenshot.mock.invocationCallOrder[0],
+      );
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });

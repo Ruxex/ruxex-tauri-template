@@ -325,7 +325,9 @@ export async function setCurrentGoal(objective: string): Promise<void> {
 export async function saveFixtureScreenshot(name: string): Promise<void> {
   const artifactDirectory = process.env.RUXEX_E2E_ARTIFACTS ?? "artifacts";
   mkdirSync(artifactDirectory, { recursive: true });
+  await browser.pause(300);
   await browser.saveScreenshot(path.join(artifactDirectory, name));
+  await browser.pause(300);
 }
 
 async function chooseProjectMetadata(

@@ -21,6 +21,12 @@ const goalMutation = vi.hoisted(() => vi.fn());
 const settingsMutation = vi.hoisted(() => vi.fn());
 const useCollaborationModes = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
+const getDesktopUiPolicy = vi.hoisted(() => vi.fn());
+const filterHiddenSkills = vi.hoisted(() =>
+  vi.fn((skills: { name: string }[], hiddenSkills: ReadonlySet<string>) =>
+    skills.filter((skill) => !hiddenSkills.has(skill.name)),
+  ),
+);
 const assistantBranding = vi.hoisted(() => ({
   appName: "Example App",
   assistantName: "Example Assistant",
@@ -93,6 +99,11 @@ vi.mock("../../app-server/hooks", () => ({
   useSkillsList,
 }));
 
+vi.mock("../../platform/skill-policy", () => ({
+  filterHiddenSkills,
+  getDesktopUiPolicy,
+}));
+
 vi.mock("./ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
@@ -132,6 +143,8 @@ describe("Composer", () => {
     goalMutation.mockReset();
     settingsMutation.mockReset();
     useSkillsList.mockReset();
+    getDesktopUiPolicy.mockReset();
+    getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: [] });
     useSkillsList.mockReturnValue({
       data: { data: [] },
       isLoading: false,
@@ -184,6 +197,97 @@ describe("Composer", () => {
     expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
+  });
+
+  it("hides product-disabled Skills from the slash palette", async () => {
+    getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: ["imagegen"] });
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace",
+            skills: [
+              {
+                name: "imagegen",
+                description: "Generate images",
+                path: "/workspace/.agents/skills/imagegen",
+                scope: "system",
+                enabled: false,
+                pluginId: null,
+              },
+              {
+                name: "review",
+                description: "Review changes",
+                path: "/workspace/.agents/skills/review",
+                scope: "repo",
+                enabled: true,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "/" },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("menuitem", { name: "imagegen" })).toBeNull();
+      expect(screen.getByRole("menuitem", { name: "review" })).toBeTruthy();
+    });
+  });
+
+  it("hides App Server-disabled Skills from the slash palette", async () => {
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace",
+            skills: [
+              {
+                name: "imagegen",
+                description: "Generate images",
+                path: "/workspace/.agents/skills/imagegen",
+                scope: "system",
+                enabled: false,
+                pluginId: null,
+              },
+              {
+                name: "review",
+                description: "Review changes",
+                path: "/workspace/.agents/skills/review",
+                scope: "repo",
+                enabled: true,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "/" },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("menuitem", { name: "imagegen" })).toBeNull();
+      expect(screen.getByRole("menuitem", { name: "review" })).toBeTruthy();
+    });
   });
 
   it("shows a selected skill chip and removes it without losing the message", async () => {

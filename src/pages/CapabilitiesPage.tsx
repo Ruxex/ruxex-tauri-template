@@ -5,7 +5,7 @@ import {
   PuzzlePieceIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useSearchParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
@@ -26,6 +26,10 @@ import { PageContainer } from "../components/layout/PageContainer";
 import { McpStatusSummary } from "../components/mcp/McpStatusSummary";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { openBrowserWindow } from "../platform/native";
+import {
+  filterHiddenSkills,
+  getDesktopUiPolicy,
+} from "../platform/skill-policy";
 import type { v2 } from "../protocol";
 
 type CapabilityTab = "plugins" | "skills" | "mcp";
@@ -74,7 +78,8 @@ function pluginDetailsPath(
 const SKILL_DESCRIPTION_MAX_LENGTH = 160;
 
 function skillGroupLabel(entry: v2.SkillsListEntry): string {
-  return entry.skills.length > 0 && entry.skills.every((skill) => skill.scope === "system")
+  return entry.skills.length > 0 &&
+    entry.skills.every((skill) => skill.scope === "system")
     ? "Default"
     : entry.cwd;
 }
@@ -104,6 +109,9 @@ export function CapabilitiesPage() {
     null,
   );
   const [skillErrors, setSkillErrors] = useState<Record<string, string>>({});
+  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: CapabilityTab =
@@ -119,6 +127,28 @@ export function CapabilitiesPage() {
   const upgradeMarketplace = useUpgradeMarketplace();
   const oauthLogin = useMcpOauthLogin();
   const writeSkillConfig = useWriteSkillConfig();
+
+  useEffect(() => {
+    let cancelled = false;
+    void getDesktopUiPolicy()
+      .then((policy) => {
+        if (!cancelled && policy.hiddenSkills.length > 0) {
+          setHiddenSkills(new Set(policy.hiddenSkills));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleSkillGroups = (skills.data?.data ?? [])
+    .map((entry) => ({
+      ...entry,
+      skills: filterHiddenSkills(entry.skills, hiddenSkills),
+    }))
+    .filter((entry) => entry.skills.length > 0);
 
   async function toggleSkill(skill: v2.SkillMetadata) {
     setSkillMutationPath(skill.path);
@@ -266,13 +296,13 @@ export function CapabilitiesPage() {
                   Unable to load Skills: {formatErrorMessage(skills.error)}
                 </p>
               )}
-              {!skills.isLoading && !skills.data?.data.length && (
+              {!skills.isLoading && !visibleSkillGroups.length && (
                 <p className="text-sm text-base-content/60">
                   No Skills discovered.
                 </p>
               )}
               <ul className="space-y-2">
-                {skills.data?.data.map((entry) => (
+                {visibleSkillGroups.map((entry) => (
                   <li key={entry.cwd}>
                     <details
                       className="rounded-box bg-base-200 p-3"

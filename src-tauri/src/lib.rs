@@ -16,7 +16,9 @@ mod worktree;
 mod worktree_commands;
 
 pub use crate::branding::Branding;
-pub use crate::desktop_config::{DesktopConfig, DesktopConfigBuilder, default_config};
+pub use crate::desktop_config::{
+    DesktopConfig, DesktopConfigBuilder, DesktopUiPolicy, SkillPolicy, default_config,
+};
 
 const SCHEDULE_POLL_INTERVAL_SECS: u64 = 60;
 
@@ -146,6 +148,7 @@ pub fn run_with_config(config: DesktopConfig) {
         })
         .invoke_handler(tauri::generate_handler![
             branding::get_branding,
+            desktop_config::get_desktop_ui_policy,
             app_server::ensure_app_server,
             app_server::app_server_daemon_control,
             artifact_preview::preview_artifact,

@@ -21,6 +21,12 @@ const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
 const useMcpOauthLogin = vi.hoisted(() => vi.fn());
 const useUninstallPlugin = vi.hoisted(() => vi.fn());
 const openBrowserWindow = vi.hoisted(() => vi.fn());
+const getDesktopUiPolicy = vi.hoisted(() => vi.fn());
+const filterHiddenSkills = vi.hoisted(() =>
+  vi.fn((skills: { name: string }[], hiddenSkills: ReadonlySet<string>) =>
+    skills.filter((skill) => !hiddenSkills.has(skill.name)),
+  ),
+);
 const reloadMcp = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
@@ -72,6 +78,10 @@ vi.mock("../app-server/hooks", () => ({
 }));
 
 vi.mock("../platform/native", () => ({ openBrowserWindow }));
+vi.mock("../platform/skill-policy", () => ({
+  filterHiddenSkills,
+  getDesktopUiPolicy,
+}));
 
 describe("CapabilitiesPage", () => {
   afterEach(() => {
@@ -85,6 +95,8 @@ describe("CapabilitiesPage", () => {
       vi.fn(() => true),
     );
     openBrowserWindow.mockReset();
+    getDesktopUiPolicy.mockReset();
+    getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: [] });
     oauthLogin.mutateAsync.mockReset();
     oauthLogin.mutateAsync.mockResolvedValue({
       authorizationUrl: "https://auth.example.test/start",
@@ -858,6 +870,62 @@ describe("CapabilitiesPage", () => {
         }) as HTMLInputElement
       ).disabled,
     ).toBe(false);
+  });
+
+  it("hides product-disabled Skills and empty source groups from the UI", async () => {
+    getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: ["imagegen"] });
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace",
+            skills: [
+              {
+                name: "imagegen",
+                path: "/workspace/.agents/skills/imagegen",
+                enabled: false,
+                pluginId: null,
+              },
+              {
+                name: "review",
+                path: "/workspace/.agents/skills/review",
+                enabled: true,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+          {
+            cwd: "/workspace/hidden",
+            skills: [
+              {
+                name: "imagegen",
+                path: "/workspace/hidden/.agents/skills/imagegen",
+                enabled: false,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText("imagegen")).toBeNull();
+      expect(screen.getByText("review")).toBeTruthy();
+      expect(screen.getAllByTestId("skills-source-group")).toHaveLength(1);
+    });
+    expect(getDesktopUiPolicy).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the server state after a failed Skill update", async () => {

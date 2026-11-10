@@ -8,10 +8,7 @@ use ruxex::desktop::core::{
     self,
     config::{Config, ConfigOverrides},
 };
-#[cfg(feature = "example")]
 use ruxex::desktop::daemon::run_with_host_executable;
-#[cfg(not(feature = "example"))]
-use ruxex::desktop::daemon::{bootstrap_from_package_with_host_args, run};
 use ruxex::desktop::utils::absolute_path::AbsolutePathBuf;
 use ruxex::desktop::{
     app_server_control_socket_path,
@@ -188,6 +185,44 @@ async fn connect_unix_socket(
     .await
 }
 
+fn desktop_skill_policy_request(
+    name: &str,
+    index: usize,
+) -> Result<ClientRequest, serde_json::Error> {
+    serde_json::from_value(serde_json::json!({
+        "method": "skills/config/write",
+        "id": format!("desktop-skill-policy-{index}"),
+        "params": {"name": name, "enabled": false}
+    }))
+}
+
+fn effective_desktop_skill_policy_state(response: &Value) -> Option<bool> {
+    response.get("effectiveEnabled").and_then(Value::as_bool)
+}
+
+async fn apply_desktop_skill_policy(
+    client: &AppServerClient,
+    config: &DesktopConfig,
+) -> anyhow::Result<()> {
+    for (index, name) in config
+        .skill_policy
+        .ui_policy()
+        .hidden_skills
+        .iter()
+        .enumerate()
+    {
+        let request = desktop_skill_policy_request(name, index)?;
+        let response = client
+            .request_typed::<Value>(request)
+            .await
+            .map_err(|error| anyhow::Error::msg(error.to_string()))?;
+        if effective_desktop_skill_policy_state(&response) != Some(false) {
+            anyhow::bail!("App Server did not apply Skill `{name}` as disabled");
+        }
+    }
+    Ok(())
+}
+
 async fn install_connection(
     app: &AppHandle,
     state: &State<'_, AppServerState>,
@@ -254,7 +289,6 @@ async fn clear_connection_state(state: &AppServerState) {
 }
 
 async fn connect_daemon_endpoint(
-    app: &AppHandle,
     config: &DesktopConfig,
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
     let home =
@@ -274,24 +308,7 @@ async fn connect_daemon_endpoint(
                 )
             }
             Err(_) => {
-                #[cfg(feature = "example")]
-                let _ = app;
-                #[cfg(feature = "example")]
-                {
-                    let executable = std::env::current_exe().map_err(|error| {
-                        command_error(
-                            DesktopAppServerErrorKind::Lifecycle,
-                            format!("failed to resolve the desktop executable: {error}"),
-                        )
-                    })?;
-                    let lifecycle = run_with_host_executable(
-                        LifecycleCommand::Start,
-                        &executable,
-                        &[
-                            OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
-                            OsString::from("--managed-daemon"),
-                        ],
-                    )
+                let lifecycle = run_desktop_app_server_lifecycle(LifecycleCommand::Start)
                     .await
                     .map_err(|error| {
                         command_error(
@@ -302,71 +319,25 @@ async fn connect_daemon_endpoint(
                             ),
                         )
                     })?;
-                    let effective_socket_path =
-                        AbsolutePathBuf::from_absolute_path(lifecycle.socket_path.clone())
-                            .map_err(|error| {
-                                command_error(
-                                    DesktopAppServerErrorKind::Initialization,
-                                    error.to_string(),
-                                )
-                            })?;
-                    let client = connect_unix_socket(effective_socket_path.clone(), config)
-                        .await
-                        .map_err(|error| {
-                            command_error(
-                                DesktopAppServerErrorKind::Initialization,
-                                error.to_string(),
-                            )
-                        })?;
-                    (
-                        AppServerClient::Remote(client),
-                        effective_socket_path,
-                        lifecycle
-                            .app_server_version
-                            .or_else(|| Some("0.4.2".to_string())),
-                        None,
-                    )
-                }
-                #[cfg(not(feature = "example"))]
-                {
-                    let package_source =
-                        crate::desktop::runtime_package_source(app).map_err(|error| {
-                            command_error(DesktopAppServerErrorKind::Lifecycle, error)
-                        })?;
-                    let bootstrap = bootstrap_from_package_with_host_args(
-                        &package_source,
-                        &[
-                            OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
-                            OsString::from("--managed-daemon"),
-                        ],
-                    )
+                let effective_socket_path = AbsolutePathBuf::from_absolute_path(
+                    lifecycle.socket_path.clone(),
+                )
+                .map_err(|error| {
+                    command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
+                })?;
+                let client = connect_unix_socket(effective_socket_path.clone(), config)
                     .await
                     .map_err(|error| {
-                        command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}"))
+                        command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
                     })?;
-                    let effective_socket_path =
-                        AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
-                            .map_err(|error| {
-                                command_error(
-                                    DesktopAppServerErrorKind::Initialization,
-                                    error.to_string(),
-                                )
-                            })?;
-                    let client = connect_unix_socket(effective_socket_path.clone(), config)
-                        .await
-                        .map_err(|error| {
-                            command_error(
-                                DesktopAppServerErrorKind::Initialization,
-                                error.to_string(),
-                            )
-                        })?;
-                    (
-                        AppServerClient::Remote(client),
-                        effective_socket_path,
-                        Some(bootstrap.app_server_version),
-                        None,
-                    )
-                }
+                (
+                    AppServerClient::Remote(client),
+                    effective_socket_path,
+                    lifecycle
+                        .app_server_version
+                        .or_else(|| Some("0.4.2".to_string())),
+                    None,
+                )
             }
         };
     let status = AppServerStatus {
@@ -491,15 +462,37 @@ async fn initialize_in_process_runtime(
     Ok((provider_factory.0)(provider_init))
 }
 
+fn desktop_app_server_daemon_args() -> [OsString; 2] {
+    [
+        OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
+        OsString::from("--managed-daemon"),
+    ]
+}
+
+async fn run_desktop_app_server_lifecycle(
+    command: LifecycleCommand,
+) -> anyhow::Result<LifecycleOutput> {
+    let executable = std::env::current_exe()?;
+    run_with_host_executable(command, &executable, &desktop_app_server_daemon_args()).await
+}
+
 async fn connect_local_endpoint(
-    app: &AppHandle,
     arg0_paths: Arg0DispatchPaths,
     config: &DesktopConfig,
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
-    match configured_app_server_mode()? {
-        AppServerMode::Daemon => connect_daemon_endpoint(app, config).await,
+    let (client, status) = match configured_app_server_mode()? {
+        AppServerMode::Daemon => connect_daemon_endpoint(config).await,
         AppServerMode::InProcess => connect_in_process_endpoint(arg0_paths, config).await,
-    }
+    }?;
+    apply_desktop_skill_policy(&client, config)
+        .await
+        .map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Initialization,
+                format!("failed to apply desktop Skill policy: {error}"),
+            )
+        })?;
+    Ok((client, status))
 }
 
 async fn force_stop_app_server_daemon() -> CommandResult<LifecycleOutput> {
@@ -622,26 +615,7 @@ pub(crate) async fn app_server_daemon_control(
     }
 
     let command = action.to_lifecycle_command();
-    let output = {
-        #[cfg(feature = "example")]
-        {
-            let executable = std::env::current_exe().map_err(|error| {
-                command_error(
-                    DesktopAppServerErrorKind::Lifecycle,
-                    format!("failed to resolve the Desktop executable: {error}"),
-                )
-            })?;
-            let command_args = [
-                OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
-                OsString::from("--managed-daemon"),
-            ];
-            run_with_host_executable(command, &executable, &command_args).await
-        }
-        #[cfg(not(feature = "example"))]
-        {
-            run(command).await
-        }
-    };
+    let output = run_desktop_app_server_lifecycle(command).await;
 
     output.map_err(|error| {
         command_error(
@@ -660,8 +634,7 @@ pub(crate) async fn ensure_app_server(
     if let Some(status) = state.status.lock().await.clone() {
         return Ok(status);
     }
-    let (client, status) =
-        connect_local_endpoint(&app, state.arg0_paths.clone(), &state.config).await?;
+    let (client, status) = connect_local_endpoint(state.arg0_paths.clone(), &state.config).await?;
     install_connection(&app, &state, client, status).await
 }
 
@@ -765,14 +738,32 @@ pub(crate) async fn request_handle(
 
 #[cfg(test)]
 mod tests {
+    use std::ffi::OsString;
+
     use ruxex::arg0::Arg0DispatchPaths;
     use serde_json::json;
 
     use super::{
         AppServerDaemonAction, AppServerMode, AppServerStatus, DESKTOP_EXPERIMENTAL_API,
-        DesktopAppServerEvent, initialize_in_process_runtime, parse_app_server_mode,
-        resolve_in_process_paths,
+        DesktopAppServerEvent, HOST_APP_SERVER_DAEMON_MODE_ARG, desktop_app_server_daemon_args,
+        parse_app_server_mode, resolve_in_process_paths,
     };
+
+    #[cfg(feature = "example")]
+    use super::initialize_in_process_runtime;
+
+    #[test]
+    fn desktop_app_server_daemon_args_use_the_desktop_host_mode() {
+        let args = desktop_app_server_daemon_args();
+        assert_eq!(
+            args.as_slice(),
+            [
+                OsString::from(HOST_APP_SERVER_DAEMON_MODE_ARG),
+                OsString::from("--managed-daemon"),
+            ]
+            .as_slice()
+        );
+    }
 
     #[test]
     fn app_server_mode_defaults_to_daemon() {
@@ -818,6 +809,20 @@ mod tests {
         assert!(DESKTOP_EXPERIMENTAL_API);
     }
 
+    #[test]
+    fn desktop_skill_policy_request_disables_by_name_without_replacing_other_rules() {
+        let request = super::desktop_skill_policy_request("imagegen", 0)
+        .expect("desktop skill policy request should serialize");
+        assert_eq!(
+            serde_json::to_value(request).unwrap(),
+            serde_json::json!({
+                "method": "skills/config/write",
+                "id": "desktop-skill-policy-0",
+                "params": {"path": null, "name": "imagegen", "enabled": false}
+            })
+        );
+    }
+
     #[cfg(feature = "example")]
     #[tokio::test]
     async fn cloudflare_in_process_runtime_uses_the_injected_marker() {
@@ -854,6 +859,25 @@ mod tests {
         .await;
         std::fs::remove_dir_all(&home).expect("test home should be removed");
         result
+    }
+
+    #[test]
+    fn desktop_skill_policy_requires_an_effective_disabled_response() {
+        let response = serde_json::json!({"effectiveEnabled": false});
+        assert_eq!(
+            super::effective_desktop_skill_policy_state(&response),
+            Some(false)
+        );
+
+        let response = serde_json::json!({"effectiveEnabled": true});
+        assert_eq!(
+            super::effective_desktop_skill_policy_state(&response),
+            Some(true)
+        );
+        assert_eq!(
+            super::effective_desktop_skill_policy_state(&serde_json::json!({})),
+            None
+        );
     }
 
     #[test]

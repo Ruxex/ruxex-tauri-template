@@ -1,5 +1,9 @@
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use serde::Serialize;
+use tauri::State;
 
 #[cfg(not(feature = "example"))]
 use ruxex::ModelProviderFactory;
@@ -17,12 +21,42 @@ use crate::branding::Branding;
 pub struct DesktopConfig {
     pub branding: Branding,
     pub provider_factory: ProviderRuntimeFactory,
+    pub skill_policy: SkillPolicy,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct SkillPolicy {
+    disabled_skills: BTreeSet<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopUiPolicy {
+    pub hidden_skills: Vec<String>,
+}
+
+impl SkillPolicy {
+    pub fn disable(mut self, name: impl Into<String>) -> Self {
+        let name = name.into().trim().to_string();
+        if !name.is_empty() {
+            self.disabled_skills.insert(name);
+        }
+        self
+    }
+
+    pub fn ui_policy(&self) -> DesktopUiPolicy {
+        DesktopUiPolicy {
+            hidden_skills: self.disabled_skills.iter().cloned().collect(),
+        }
+    }
+
 }
 
 /// Builder for the Tauri template's runtime composition root.
 pub struct DesktopConfigBuilder {
     branding: Branding,
     provider_factory: ProviderRuntimeFactory,
+    skill_policy: SkillPolicy,
 }
 
 impl DesktopConfig {
@@ -31,6 +65,7 @@ impl DesktopConfig {
         DesktopConfigBuilder {
             branding: Branding::ruxex(),
             provider_factory,
+            skill_policy: SkillPolicy::default(),
         }
     }
 
@@ -107,11 +142,18 @@ impl DesktopConfigBuilder {
         self
     }
 
+    /// Disable and hide a Skill owned by the product composition root.
+    pub fn disable_skill(mut self, name: impl Into<String>) -> Self {
+        self.skill_policy = self.skill_policy.disable(name);
+        self
+    }
+
     /// Finish building the runtime configuration.
     pub fn build(self) -> DesktopConfig {
         DesktopConfig {
             branding: self.branding,
             provider_factory: self.provider_factory,
+            skill_policy: self.skill_policy,
         }
     }
 }
@@ -138,6 +180,13 @@ impl DesktopRuntimeState {
     }
 }
 
+#[tauri::command]
+pub(crate) fn get_desktop_ui_policy(
+    state: State<'_, DesktopRuntimeState>,
+) -> DesktopUiPolicy {
+    state.config().skill_policy.ui_policy()
+}
+
 #[cfg(feature = "example")]
 pub fn default_config() -> DesktopConfig {
     let provider = std::env::var("RUXEX_PROVIDER").ok();
@@ -160,7 +209,8 @@ pub(crate) fn example_provider_config(selector: Option<&str>) -> DesktopConfig {
     let builder = DesktopConfig::builder(
         example_provider_factory(selector)
             .unwrap_or_else(|error| panic!("invalid example provider selection: {error}")),
-    );
+    )
+    .disable_skill("imagegen");
     if selector == Some("cloudflare") {
         builder
             .home_dir_name(".ruxex_desktop_cloudflare")
@@ -184,7 +234,8 @@ pub fn default_config() -> DesktopConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::DesktopConfig;
+    use super::{DesktopConfig, SkillPolicy};
+    use serde_json::json;
 
     #[cfg(not(feature = "example"))]
     use super::default_config;
@@ -208,6 +259,18 @@ mod tests {
             .expect("missing provider selection should use the dummy provider");
 
         assert_eq!(descriptor.provider_kind, "dummy");
+    }
+
+    #[cfg(feature = "example")]
+    #[test]
+    fn example_providers_disable_image_generation_by_default() {
+        for selector in [None, Some("cloudflare")] {
+            let config = super::example_provider_config(selector);
+            assert_eq!(
+                config.skill_policy.ui_policy().hidden_skills,
+                vec!["imagegen".to_string()]
+            );
+        }
     }
 
     #[cfg(feature = "example")]
@@ -251,6 +314,37 @@ mod tests {
         assert_eq!(
             home.as_path(),
             std::path::Path::new("/home/test-user/.ruxex_desktop")
+        );
+    }
+
+    #[test]
+    fn skill_policy_deduplicates_disabled_names_and_exposes_ui_projection() {
+        let policy = SkillPolicy::default()
+            .disable("imagegen")
+            .disable("imagegen")
+            .disable("review");
+
+        assert_eq!(
+            policy.ui_policy(),
+            super::DesktopUiPolicy {
+                hidden_skills: vec!["imagegen".to_string(), "review".to_string()],
+            }
+        );
+        assert_eq!(
+            serde_json::to_value(policy.ui_policy()).unwrap(),
+            json!({"hiddenSkills": ["imagegen", "review"]})
+        );
+    }
+
+    #[test]
+    fn builder_injects_disabled_skill_policy() {
+        let config = DesktopConfig::builder(test_default_config().provider_factory.clone())
+            .disable_skill("imagegen")
+            .build();
+
+        assert_eq!(
+            config.skill_policy.ui_policy().hidden_skills,
+            vec!["imagegen".to_string()]
         );
     }
 
