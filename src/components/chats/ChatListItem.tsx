@@ -74,11 +74,7 @@ export function ChatListItem({
           <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
             {projectName && <span className="truncate">{projectName}</span>}
             {worktreeLabel && <span className="truncate">{worktreeLabel}</span>}
-            {showUpdatedAt && (
-              <span className="truncate">
-                Updated {formatChatTimestamp(thread.updatedAt)}
-              </span>
-            )}
+            {showUpdatedAt && <UpdatedAt timestamp={thread.updatedAt} />}
           </span>
         )}
       </Link>
@@ -102,7 +98,42 @@ export function ChatListItem({
   );
 }
 
+function UpdatedAt({ timestamp }: { timestamp: number }) {
+  const absoluteTimestamp = formatAbsoluteChatTimestamp(timestamp);
+
+  return (
+    <span className="truncate" title={absoluteTimestamp}>
+      Updated {formatChatTimestamp(timestamp)}
+    </span>
+  );
+}
+
 function formatChatTimestamp(timestamp: number): string {
+  const elapsedSeconds = Math.floor(Date.now() / 1000 - timestamp);
+  if (elapsedSeconds < 60) {
+    return "just now";
+  }
+  if (elapsedSeconds < 60 * 60) {
+    return formatRelativeCount(Math.floor(elapsedSeconds / 60), "minute");
+  }
+  if (elapsedSeconds < 60 * 60 * 24) {
+    return formatRelativeCount(Math.floor(elapsedSeconds / (60 * 60)), "hour");
+  }
+  if (elapsedSeconds < 60 * 60 * 24 * 7) {
+    return formatRelativeCount(
+      Math.floor(elapsedSeconds / (60 * 60 * 24)),
+      "day",
+    );
+  }
+
+  return formatAbsoluteChatTimestamp(timestamp);
+}
+
+function formatRelativeCount(value: number, unit: string): string {
+  return `${value} ${unit}${value === 1 ? "" : "s"} ago`;
+}
+
+function formatAbsoluteChatTimestamp(timestamp: number): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",

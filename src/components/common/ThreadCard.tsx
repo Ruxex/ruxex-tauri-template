@@ -19,6 +19,8 @@ type ThreadCardProps = {
   actions?: ReactNode;
   compact?: boolean;
   showUpdatedAt?: boolean;
+  onArchive?: () => void;
+  isArchiving?: boolean;
 };
 
 export function ThreadCard({
@@ -26,6 +28,8 @@ export function ThreadCard({
   actions,
   compact = false,
   showUpdatedAt = false,
+  onArchive,
+  isArchiving = false,
 }: ThreadCardProps) {
   const events = useAppServerEvents();
   const chatStatus = chatStatusFromThreadStatus(
@@ -41,6 +45,8 @@ export function ThreadCard({
       <ChatListItem
         showPreview
         showUpdatedAt={showUpdatedAt}
+        onArchive={onArchive}
+        isArchiving={isArchiving}
         status={chatStatus}
         thread={thread}
       />
@@ -53,6 +59,8 @@ export function ThreadCard({
         <ChatListItem
           showPreview
           showUpdatedAt={showUpdatedAt}
+          onArchive={onArchive}
+          isArchiving={isArchiving}
           status={chatStatus}
           thread={thread}
         />

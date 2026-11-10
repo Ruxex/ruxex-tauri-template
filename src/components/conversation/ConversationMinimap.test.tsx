@@ -32,6 +32,24 @@ describe("ConversationMinimap", () => {
     document.body.innerHTML = "";
   });
 
+  it("keeps the minimap hidden until the layout has room beside the sidebar", () => {
+    const timeline = document.createElement("section");
+    document.body.append(timeline);
+
+    render(
+      <ConversationMinimap
+        items={[message("user-1", "userMessage", "First prompt")]}
+        timelineRef={{ current: timeline }}
+      />,
+    );
+
+    const minimap = screen.getByRole("complementary", {
+      name: "Conversation minimap",
+    });
+    expect(minimap.className).toContain("hidden");
+    expect(minimap.className).toContain("min-[1760px]:flex");
+  });
+
   it("shows dense user-message markers and previews only on hover", () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);

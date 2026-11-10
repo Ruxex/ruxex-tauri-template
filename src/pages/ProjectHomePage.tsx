@@ -14,6 +14,7 @@ import {
   useDeleteProject,
   useProject,
   useProjectThreads,
+  useArchiveThread,
   useUpdateProject,
 } from "../app-server/hooks";
 import {
@@ -38,6 +39,7 @@ export function ProjectHomePage() {
   const navigate = useNavigate();
   const project = useProject(projectId);
   const threads = useProjectThreads(projectId);
+  const archiveThread = useArchiveThread();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -397,7 +399,16 @@ export function ProjectHomePage() {
           )}
           <div className="grid gap-3">
             {threads.data?.data.map((thread) => (
-              <ThreadCard key={thread.id} thread={thread} compact />
+              <ThreadCard
+                compact
+                isArchiving={archiveThread.isPending}
+                onArchive={() =>
+                  void archiveThread.mutateAsync({ threadId: thread.id })
+                }
+                showUpdatedAt
+                key={thread.id}
+                thread={thread}
+              />
             ))}
           </div>
         </div>

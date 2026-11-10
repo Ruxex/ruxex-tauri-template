@@ -11,7 +11,6 @@ export function ErrorState({ children }: { children: ReactNode }) {
 export function EmptyState({
   action,
   compact = false,
-  description,
   icon: Icon,
   title,
 }: {
@@ -34,13 +33,6 @@ export function EmptyState({
       <h3 className={`${compact ? "mt-2 text-sm" : "mt-3"} font-semibold`}>
         {title}
       </h3>
-      {description && (
-        <p
-          className={`${compact ? "text-xs" : "text-sm"} mt-1 text-base-content/60`}
-        >
-          {description}
-        </p>
-      )}
       {action && <div className={compact ? "mt-2" : "mt-4"}>{action}</div>}
     </div>
   );

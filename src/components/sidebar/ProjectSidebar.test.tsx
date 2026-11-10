@@ -256,6 +256,26 @@ describe("ProjectSidebar", () => {
     expect(sidebar.className).toContain("min-h-0");
   });
 
+  it("renders above the conversation minimap when their areas overlap", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("complementary", { name: "Workspace sidebar" })
+        .className,
+    ).toContain("z-40");
+  });
+
   it("keeps only the compact rail when the context panel is disabled", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 

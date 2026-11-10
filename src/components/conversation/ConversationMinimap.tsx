@@ -151,7 +151,7 @@ export function ConversationMinimap({
   return createPortal(
     <aside
       aria-label="Conversation minimap"
-      className="pointer-events-none fixed top-1/2 z-30 hidden -translate-y-1/2 xl:flex"
+      className="pointer-events-none fixed top-1/2 z-30 hidden -translate-y-1/2 min-[1760px]:flex"
       style={{ left: "max(1rem, calc(50% - 520px))" }}
     >
       <div className="pointer-events-auto relative h-[min(60vh,520px)] w-4">

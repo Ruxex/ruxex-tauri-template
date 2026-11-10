@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useParams = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
 const useProjectThreads = vi.hoisted(() => vi.fn());
+const useArchiveThread = vi.hoisted(() => vi.fn());
 const useUpdateProject = vi.hoisted(() => vi.fn());
 const useDeleteProject = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
@@ -26,6 +27,7 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useParams };
 });
 vi.mock("../app-server/hooks", () => ({
+  useArchiveThread,
   useDeleteProject,
   useProject,
   useProjectThreads,
@@ -35,9 +37,23 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
 vi.mock("../components/common/ThreadCard", () => ({
   ThreadCard: ({
     thread,
+    onArchive,
+    showUpdatedAt,
   }: {
     thread: { id: string; name?: string | null };
-  }) => <div data-testid="project-thread">{thread.name ?? thread.id}</div>,
+    onArchive?: () => void;
+    showUpdatedAt?: boolean;
+  }) => (
+    <div data-testid="project-thread">
+      <span>{thread.name ?? thread.id}</span>
+      {showUpdatedAt && <span>Updated 2 minutes ago</span>}
+      {onArchive && (
+        <button type="button" onClick={onArchive}>
+          Archive {thread.name ?? thread.id}
+        </button>
+      )}
+    </div>
+  ),
 }));
 describe("ProjectHomePage", () => {
   afterEach(cleanup);
@@ -60,7 +76,20 @@ describe("ProjectHomePage", () => {
     useProjectThreads.mockReturnValue({
       isLoading: false,
       isError: false,
-      data: { data: [{ id: "thread-1", name: "Project chat" }] },
+      data: {
+        data: [
+          {
+            id: "thread-1",
+            name: "Project chat",
+            preview: "Project chat preview",
+            updatedAt: 1_735_689_600,
+          },
+        ],
+      },
+    });
+    useArchiveThread.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
     });
     useUpdateProject.mockReturnValue({
       isPending: false,
@@ -101,6 +130,25 @@ describe("ProjectHomePage", () => {
     expect(screen.queryByText("Project menu")).toBeNull();
     expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
     expect(screen.queryByTestId("worktree-card")).toBeNull();
+  });
+
+  it("shows friendly update metadata and archives a project chat from the row", async () => {
+    const mutateAsync = vi.fn().mockResolvedValue(undefined);
+    useArchiveThread.mockReturnValue({ isPending: false, mutateAsync });
+    const { ProjectHomePage } = await import("./ProjectHomePage");
+
+    render(
+      <MemoryRouter>
+        <ProjectHomePage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Updated 2 minutes ago")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Archive Project chat" }),
+    );
+
+    expect(mutateAsync).toHaveBeenCalledWith({ threadId: "thread-1" });
   });
 
   it("allows project metadata popovers to extend outside the modal box", async () => {

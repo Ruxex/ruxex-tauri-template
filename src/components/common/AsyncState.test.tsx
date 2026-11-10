@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { EmptyState } from "./AsyncState";
 
 describe("EmptyState", () => {
-  it("renders a consistent title, description, and action layout", () => {
+  it("renders a consistent title and action layout without descriptions", () => {
     render(
       <EmptyState
         action={<button type="button">Create one</button>}
@@ -20,7 +20,7 @@ describe("EmptyState", () => {
     expect(
       screen.getByRole("heading", { name: "No schedules yet" }),
     ).toBeTruthy();
-    expect(screen.getByText("Nothing has been created yet.")).toBeTruthy();
+    expect(screen.queryByText("Nothing has been created yet.")).toBeNull();
     expect(screen.getByRole("button", { name: "Create one" })).toBeTruthy();
   });
 

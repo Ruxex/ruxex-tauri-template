@@ -100,7 +100,29 @@ export function AppServerCard({
   );
 
   return (
-    <SettingsPanel icon={ServerIcon} title="App Server">
+    <SettingsPanel
+      action={
+        <button
+          aria-label="Refresh"
+          className="btn btn-ghost btn-sm btn-square"
+          disabled={isFetching || isRefreshing || isPending || isUpdatePending}
+          title="Refresh App Server status"
+          type="button"
+          onClick={onRefresh}
+        >
+          {isRefreshing ? (
+            <span
+              aria-hidden="true"
+              className="loading loading-spinner loading-xs"
+            />
+          ) : (
+            <ArrowPathIcon aria-hidden="true" className="size-4" />
+          )}
+        </button>
+      }
+      icon={ServerIcon}
+      title="App Server"
+    >
       <dl className="divide-y divide-base-300 text-sm">
         <SettingRow label="Mode">
           <StateBadge
@@ -133,12 +155,17 @@ export function AppServerCard({
               <button
                 aria-label={isUpdatePending ? "Updating…" : "Update"}
                 className="btn btn-outline btn-xs"
-                disabled={isUpdatePending || isPending || isRefreshing || isFetching}
+                disabled={
+                  isUpdatePending || isPending || isRefreshing || isFetching
+                }
                 onClick={onUpdate}
                 type="button"
               >
                 {isUpdatePending && (
-                  <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+                  <span
+                    aria-hidden="true"
+                    className="loading loading-spinner loading-xs"
+                  />
                 )}
                 {isUpdatePending ? "Updating…" : "Update"}
               </button>
@@ -195,22 +222,12 @@ export function AppServerCard({
           disabled={isFetching || isRefreshing || isPending || isUpdatePending}
         >
           {isFetching && (
-            <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+            <span
+              aria-hidden="true"
+              className="loading loading-spinner loading-xs"
+            />
           )}
           Reconnect
-        </button>
-        <button
-          aria-label="Refresh"
-          className="btn btn-sm btn-outline"
-          type="button"
-          onClick={onRefresh}
-          disabled={isFetching || isRefreshing || isPending || isUpdatePending}
-        >
-          {isRefreshing && (
-            <span aria-hidden="true" className="loading loading-spinner loading-xs" />
-          )}
-          <ArrowPathIcon aria-hidden="true" className="size-4" />
-          Refresh
         </button>
         {showDaemonControls &&
           (
@@ -224,13 +241,18 @@ export function AppServerCard({
             <button
               aria-label={label}
               className={`btn btn-sm ${variant}`}
-              disabled={isFetching || isRefreshing || isPending || isUpdatePending}
+              disabled={
+                isFetching || isRefreshing || isPending || isUpdatePending
+              }
               key={action}
               onClick={() => onAction(action)}
               type="button"
             >
               {isPending && (
-                <span aria-hidden="true" className="loading loading-spinner loading-xs" />
+                <span
+                  aria-hidden="true"
+                  className="loading loading-spinner loading-xs"
+                />
               )}
               {label}
             </button>

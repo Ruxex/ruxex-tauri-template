@@ -123,9 +123,17 @@ describe("settings card layout", () => {
     const actionRow = reconnect.parentElement;
 
     expect(actionRow?.className).toContain("flex-wrap");
-    expect(actionRow?.querySelectorAll("button")).toHaveLength(6);
+    expect(actionRow?.querySelectorAll("button")).toHaveLength(5);
     expect(reconnect.className).toContain("btn-outline");
-    expect(screen.getByRole("button", { name: "Refresh" })).toBeTruthy();
+    const refresh = screen.getByRole("button", { name: "Refresh" });
+    expect(refresh.textContent).toBe("");
+    expect(refresh.className).toContain("btn-square");
+    expect(
+      within(
+        screen.getByRole("heading", { name: "App Server" })
+          .parentElement as HTMLElement,
+      ).getByRole("button", { name: "Refresh" }),
+    ).toBe(refresh);
     expect(screen.getByRole("button", { name: "Start" }).className).toContain(
       "btn-outline",
     );
@@ -179,9 +187,9 @@ describe("settings card layout", () => {
       );
     }
     expect(
-      screen.getByRole("button", { name: "Force stop" }).querySelector(
-        ".loading-spinner",
-      ),
+      screen
+        .getByRole("button", { name: "Force stop" })
+        .querySelector(".loading-spinner"),
     ).toBeTruthy();
   });
 
@@ -279,7 +287,16 @@ describe("settings card layout", () => {
       />,
     );
 
-    const presetGrid = screen.getByRole("group", {
+    const presetSelector = screen.getByTestId(
+      "theme-preset-selector",
+    ) as HTMLDetailsElement;
+    expect(presetSelector.open).toBe(false);
+    expect(
+      presetSelector.querySelector("[data-theme-preview-panel]"),
+    ).toBeTruthy();
+    fireEvent.click(presetSelector.querySelector("summary") as HTMLElement);
+
+    const presetGrid = within(presetSelector).getByRole("group", {
       name: "Theme preset options",
     });
     expect(presetGrid.className).toContain("grid-cols-2");

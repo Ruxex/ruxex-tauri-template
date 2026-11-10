@@ -32,6 +32,7 @@ describe("ChatListItem", () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     triggerResize = undefined;
   });
@@ -70,6 +71,9 @@ describe("ChatListItem", () => {
   });
 
   it("can show the last updated timestamp when requested", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-01-01T12:02:00.000Z"));
+
     render(
       <MemoryRouter>
         <ChatListItem
@@ -78,13 +82,15 @@ describe("ChatListItem", () => {
             id: "thread-1",
             name: "Archived chat",
             preview: null,
-            updatedAt: 1_735_689_600,
+            updatedAt: new Date("2025-01-01T12:00:00.000Z").getTime() / 1000,
           }}
         />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Updated/)).toBeTruthy();
+    const updated = screen.getByText("Updated 2 minutes ago");
+    expect(updated).toBeTruthy();
+    expect(updated.getAttribute("title")).toContain("2025");
   });
 
   it.each([
