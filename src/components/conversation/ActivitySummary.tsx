@@ -51,7 +51,9 @@ export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
           Running
         </span>
       )}
-      <span className="badge badge-ghost badge-sm">{item.type}</span>
+      <span className="badge badge-ghost badge-sm">
+        {presentation.typeLabel}
+      </span>
     </summary>
   );
 }

@@ -273,11 +273,27 @@ describe("McpServersPage", () => {
 
     renderPage();
 
-    expect(screen.getByText("Connection", { exact: true })).toBeTruthy();
     expect(screen.getByText("Status unavailable")).toBeTruthy();
     expect(screen.getByText("Authentication", { exact: true })).toBeTruthy();
     expect(screen.getByText("Authentication not configured")).toBeTruthy();
     expect(screen.getByText("Resources (1)")).toBeTruthy();
+  });
+
+  it("does not repeat the configured state inside the expanded server", () => {
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
+    useAllMcpServerStatus.mockReturnValue(status(["docs"]));
+
+    renderPage();
+    const summary = screen
+      .getByTestId("mcp-server-details-docs")
+      .querySelector("summary");
+    if (!summary) throw new Error("MCP server summary is missing");
+    fireEvent.click(summary);
+
+    expect(screen.getByText("Connected")).toBeTruthy();
+    expect(screen.queryByText("Needs attention")).toBeNull();
+    expect(screen.queryByText("Server enabled")).toBeNull();
+    expect(screen.getByText("Authentication")).toBeTruthy();
   });
 
   it("returns focus to the add trigger when the dialog closes", async () => {

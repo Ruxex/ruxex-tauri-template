@@ -52,6 +52,10 @@ describe("AppearancePage", () => {
     if (!currentPreview) throw new Error("Current theme preview is missing");
     expect(selectorSummary?.contains(currentPreview)).toBe(false);
     expect(currentPreview.closest("details")).toBeNull();
+    expect(currentPreview.querySelector("[data-theme-preview-header]")).toBeTruthy();
+    expect(currentPreview.querySelector("[data-theme-preview-message]")).toBeTruthy();
+    expect(currentPreview.querySelector("[data-theme-preview-composer]")).toBeTruthy();
+    expect(currentPreview.querySelector("[data-theme-preview-send]")).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.queryByLabelText("Density")).toBeNull();

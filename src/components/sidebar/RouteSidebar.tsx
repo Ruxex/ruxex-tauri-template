@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 
 import { HomeSidebar } from "./HomeSidebar";
+import { AutomationSidebar } from "./AutomationSidebar";
 import {
   SIDEBAR_PANELS,
   type SidebarPanel,
@@ -29,6 +30,8 @@ export function SidebarContextPanel({
       return <SettingsSidebar onClose={onClose} />;
     case "plugins":
       return <PluginsSidebar onClose={onClose} />;
+    case "automation":
+      return <AutomationSidebar onClose={onClose} />;
     case "settings":
       return <SettingsSidebar onClose={onClose} />;
     default: {

@@ -63,6 +63,11 @@ describe("real plugin marketplace home", () => {
     await $("a[aria-label='View details for Notion']").click();
     await $("h1=Notion").waitForDisplayed({ timeout: 10_000 });
     await $("h2=Information").waitForDisplayed({ timeout: 10_000 });
+    const notionInstall = $("button[aria-label='Install Notion']");
+    await notionInstall.waitForDisplayed({ timeout: 10_000 });
+    if (await notionInstall.isEnabled()) {
+      throw new Error("Remote-only Notion should not be installable here");
+    }
     await saveMarketplaceScreenshot("marketplace-notion-detail.png");
 
     await openCapabilities();
@@ -80,6 +85,14 @@ describe("real plugin marketplace home", () => {
     await buildWebAppsHeading.scrollIntoView({ block: "start" });
     await $("h2=Skills").waitForDisplayed({ timeout: 10_000 });
     await $("h2=Information").waitForDisplayed({ timeout: 10_000 });
+    await $("button[aria-label='Uninstall Build Web Apps']").waitForDisplayed({
+      timeout: 10_000,
+    });
+    if (
+      await $("button[aria-label='Install Build Web Apps']").isDisplayed()
+    ) {
+      throw new Error("Installed plugin should not show its install action");
+    }
     await saveMarketplaceScreenshot("marketplace-build-web-apps-detail.png");
 
     const capabilitiesSidebar = $("aside[aria-label='Capabilities sidebar']");

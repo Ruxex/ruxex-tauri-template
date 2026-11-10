@@ -1,12 +1,19 @@
 import {
   ArrowTopRightOnSquareIcon,
+  PlusIcon,
+  TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
-import { usePluginList, usePluginRead } from "../app-server/hooks";
+import {
+  useInstallPlugin,
+  usePluginList,
+  usePluginRead,
+  useUninstallPlugin,
+} from "../app-server/hooks";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { PluginInformationItem } from "../components/plugins/PluginInformationItem";
@@ -41,6 +48,8 @@ export function PluginDetailPage() {
     pluginName: string;
   }>();
   const plugins = usePluginList();
+  const installPlugin = useInstallPlugin();
+  const uninstallPlugin = useUninstallPlugin();
   const marketplace = plugins.data?.marketplaces.find(
     (entry) => entry.name === marketplaceName,
   );
@@ -67,6 +76,12 @@ export function PluginDetailPage() {
     interfaceData?.longDescription ??
     interfaceData?.shortDescription;
   const pluginSummary = plugin?.summary ?? summary;
+  const isOfficialApp =
+    pluginSummary?.installPolicySource === "IMPLICIT_CANONICAL_APP";
+  const canInstall = Boolean(pluginSummary && !pluginSummary.installed);
+  const canUninstall = Boolean(
+    pluginSummary?.installed && !isOfficialApp && pluginSummary.id,
+  );
   const detailSectionCount = plugin
     ? [
         plugin.skills.length,
@@ -195,7 +210,81 @@ export function PluginDetailPage() {
             </a>
           )}
         </div>
+        {(canInstall || canUninstall) && (
+          <div className="ml-auto flex shrink-0 items-start">
+            {canInstall && (
+              <button
+                aria-label={`Install ${displayName}`}
+                className="btn btn-primary btn-sm"
+                disabled={
+                  installPlugin.isPending || !marketplace.path || isOfficialApp
+                }
+                type="button"
+                title={
+                  isOfficialApp
+                    ? "Official Apps are not supported in Ruxex."
+                    : marketplace.path
+                      ? `Install ${displayName}`
+                      : "Remote marketplace plugins cannot be installed here."
+                }
+                onClick={() => {
+                  if (marketplace.path && !isOfficialApp) {
+                    void installPlugin.mutateAsync({
+                      marketplacePath: marketplace.path,
+                      pluginName,
+                    });
+                  }
+                }}
+              >
+                {installPlugin.isPending ? (
+                  <span
+                    aria-hidden="true"
+                    className="loading loading-spinner loading-xs"
+                  />
+                ) : (
+                  <PlusIcon aria-hidden="true" className="size-4" />
+                )}
+                Install
+              </button>
+            )}
+            {canUninstall && pluginSummary && (
+              <button
+                aria-label={`Uninstall ${displayName}`}
+                className="btn btn-error btn-outline btn-sm"
+                disabled={uninstallPlugin.isPending}
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Uninstall ${displayName}?`)) {
+                    void uninstallPlugin.mutateAsync({
+                      pluginId: pluginSummary.id,
+                    });
+                  }
+                }}
+              >
+                {uninstallPlugin.isPending ? (
+                  <span
+                    aria-hidden="true"
+                    className="loading loading-spinner loading-xs"
+                  />
+                ) : (
+                  <TrashIcon aria-hidden="true" className="size-4" />
+                )}
+                Uninstall
+              </button>
+            )}
+          </div>
+        )}
       </header>
+      {installPlugin.isError && (
+        <p className="text-sm text-error" role="alert">
+          Unable to install plugin: {formatErrorMessage(installPlugin.error)}
+        </p>
+      )}
+      {uninstallPlugin.isError && (
+        <p className="text-sm text-error" role="alert">
+          Unable to uninstall plugin: {formatErrorMessage(uninstallPlugin.error)}
+        </p>
+      )}
       {details.isLoading && (
         <p className="text-sm text-base-content/60">Loading plugin details…</p>
       )}

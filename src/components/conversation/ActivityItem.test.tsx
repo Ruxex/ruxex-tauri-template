@@ -38,6 +38,25 @@ describe("ActivityItem", () => {
     expect(screen.getByLabelText(label)).toBeTruthy();
   });
 
+  it("uses a user-facing activity type label instead of the protocol type", () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "command-label-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Command",
+          text: "done",
+          metadata: { status: "completed" },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Command execution")).toBeTruthy();
+    expect(screen.queryByText("commandExecution")).toBeNull();
+  });
+
   it("does not repeat status or exit code in non-command activity details", () => {
     render(
       <ActivityItem

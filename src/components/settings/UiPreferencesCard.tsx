@@ -148,11 +148,12 @@ function ThemePreviewPanel({
   return (
     <span
       aria-hidden="true"
-      className="block p-1.5"
+      className="block p-2"
       style={{ backgroundColor: colors.background, color: colors.text }}
     >
       <span
-        className="mb-1 flex items-center justify-between rounded-sm px-1.5 py-1"
+        className="mb-1.5 flex items-center justify-between rounded-sm px-1.5 py-1"
+        data-theme-preview-header
         style={{ backgroundColor: colors.surface }}
       >
         <span className="flex items-center gap-1.5">
@@ -175,26 +176,42 @@ function ThemePreviewPanel({
         style={{ backgroundColor: colors.card }}
       >
         <span
-          className="mb-1 block h-1.5 w-3/4 rounded-full opacity-80"
-          style={{ backgroundColor: colors.text }}
-        />
-        <span
-          className="block h-1.5 w-1/2 rounded-full opacity-45"
-          style={{ backgroundColor: colors.muted }}
-        />
-        <span className="mt-1.5 flex items-center justify-between gap-1">
+          className="mb-1.5 flex justify-end"
+          data-theme-preview-message
+        >
           <span
-            className="h-1.5 w-8 rounded-full"
+            className="h-2.5 w-2/3 rounded-md rounded-br-sm"
+            style={{ backgroundColor: colors.primary }}
+          />
+        </span>
+        <span className="mb-1.5 flex" data-theme-preview-message>
+          <span
+            className="h-3.5 w-3/4 rounded-md rounded-bl-sm"
+            style={{ backgroundColor: colors.surface }}
+          />
+        </span>
+        <span
+          className="flex items-center gap-1 rounded-md px-1.5 py-1"
+          data-theme-preview-composer
+          style={{ backgroundColor: colors.surface }}
+        >
+          <span
+            className="size-1.5 rounded-full"
             style={{ backgroundColor: colors.muted }}
           />
           <span
-            className="rounded-sm px-1.5 py-0.5 text-[8px] font-semibold leading-none"
+            className="h-1.5 flex-1 rounded-full opacity-55"
+            style={{ backgroundColor: colors.muted }}
+          />
+          <span
+            className="size-3.5 rounded-sm"
+            data-theme-preview-send
             style={{
               backgroundColor: colors.primary,
               color: colors.primaryContent,
             }}
           >
-            Aa
+            <span className="sr-only">Send</span>
           </span>
         </span>
       </span>

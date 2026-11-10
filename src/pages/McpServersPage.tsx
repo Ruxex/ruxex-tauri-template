@@ -19,6 +19,7 @@ import { getConfigWriteErrorCode } from "../app-server/mcp-config-errors";
 import { PageContainer } from "../components/layout/PageContainer";
 import { McpResourceViewer } from "../components/mcp/McpResourceViewer";
 import { McpStatusSummary } from "../components/mcp/McpStatusSummary";
+import { mcpConnectionStatusLabel } from "../components/mcp/mcp-status-labels";
 import { SettingsPanel } from "../components/settings/SettingsCards";
 import type { v2 } from "../protocol";
 import { McpServerDialog } from "./mcp-servers/McpServerDialog";
@@ -343,11 +344,6 @@ export function McpServersPage() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium">{entry.name}</p>
-                          <span
-                            className={`badge badge-sm ${enabled ? "badge-success badge-outline" : "badge-ghost"}`}
-                          >
-                            {enabled ? "Enabled" : "Disabled"}
-                          </span>
                         </div>
                         <p className="mt-1 truncate text-xs text-base-content/60">
                           {entry.draft
@@ -360,10 +356,8 @@ export function McpServersPage() {
                       <div className="flex shrink-0 items-center gap-3">
                         <span className="text-xs text-base-content/60">
                           {status
-                            ? status.runtimeStatus === "connected"
-                              ? "Connected"
-                              : "Needs attention"
-                            : "Configured"}
+                            ? mcpConnectionStatusLabel(status.runtimeStatus)
+                            : "Status unavailable"}
                         </span>
                         {entry.draft && (
                           <label
@@ -395,9 +389,6 @@ export function McpServersPage() {
                     </summary>
                     <div className="space-y-4 border-t border-base-300 px-5 py-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm font-medium">
-                          {enabled ? "Server enabled" : "Server disabled"}
-                        </p>
                         <div className="flex flex-wrap items-center gap-2">
                           {entry.draft && (
                             <button
@@ -424,6 +415,7 @@ export function McpServersPage() {
                       {status ? (
                         <McpStatusSummary
                           authStatus={status.authStatus}
+                          includeConnection={false}
                           runtimeStatus={status.runtimeStatus}
                         />
                       ) : (
