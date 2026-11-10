@@ -40,7 +40,7 @@ export function ConversationMinimap({
 
   useEffect(() => {
     const timeline = timelineRef.current;
-    if (!timeline || userItems.length === 0) {
+    if (!timeline || userItems.length < 5) {
       return;
     }
 
@@ -124,7 +124,7 @@ export function ConversationMinimap({
     };
   }, [timelineRef, userItems]);
 
-  if (userItems.length === 0 || typeof document === "undefined") {
+  if (userItems.length < 5 || typeof document === "undefined") {
     return null;
   }
 
@@ -164,17 +164,20 @@ export function ConversationMinimap({
           const preview = previewText(item.text);
           const isActive = activeId === item.id;
           const isHovered = hoveredId === item.id;
-          const isAdjacent =
-            hoveredIndex >= 0 && Math.abs(index - hoveredIndex) === 1;
-          const isNear =
-            hoveredIndex >= 0 && Math.abs(index - hoveredIndex) === 2;
+          const hoverDistance =
+            hoveredIndex >= 0 ? Math.abs(index - hoveredIndex) : -1;
+          const isAdjacent = hoverDistance === 1;
+          const isNear = hoverDistance === 2;
+          const isFar = hoverDistance === 3;
           const markerOffsetClass = isHovered
             ? "translate-x-[14px]"
             : isAdjacent
-              ? "translate-x-[8px]"
+              ? "translate-x-[10px]"
               : isNear
-                ? "translate-x-[3px]"
-                : "";
+                ? "translate-x-[5px]"
+                : isFar
+                  ? "translate-x-[2px]"
+                  : "";
           const markerStateClass = isHovered
             ? "scale-200 border-primary bg-primary"
             : isActive
@@ -183,7 +186,9 @@ export function ConversationMinimap({
                 ? "scale-125 border-base-content/30 bg-base-content/45"
                 : isNear
                   ? "scale-110 border-base-content/30 bg-base-content/45"
-                  : "border-base-content/30 bg-base-content/45";
+                  : isFar
+                    ? "scale-105 border-base-content/30 bg-base-content/45"
+                    : "border-base-content/30 bg-base-content/45";
           return (
             <div
               className="absolute left-1/2"

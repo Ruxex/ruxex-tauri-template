@@ -38,7 +38,13 @@ describe("ConversationMinimap", () => {
 
     render(
       <ConversationMinimap
-        items={[message("user-1", "userMessage", "First prompt")]}
+        items={[
+          message("user-1", "userMessage", "First prompt"),
+          message("user-2", "userMessage", "Second prompt"),
+          message("user-3", "userMessage", "Third prompt"),
+          message("user-4", "userMessage", "Fourth prompt"),
+          message("user-5", "userMessage", "Fifth prompt"),
+        ]}
         timelineRef={{ current: timeline }}
       />,
     );
@@ -48,6 +54,42 @@ describe("ConversationMinimap", () => {
     });
     expect(minimap.className).toContain("hidden");
     expect(minimap.className).toContain("min-[1760px]:flex");
+  });
+
+  it("hides the minimap until five user messages are available", () => {
+    const timeline = document.createElement("section");
+    document.body.append(timeline);
+    const fourUserMessages = [
+      message("user-1", "userMessage", "First prompt"),
+      message("assistant-1", "agentMessage", "Assistant reply"),
+      message("user-2", "userMessage", "Second prompt"),
+      message("user-3", "userMessage", "Third prompt"),
+      message("user-4", "userMessage", "Fourth prompt"),
+    ];
+    const { rerender } = render(
+      <ConversationMinimap
+        items={fourUserMessages}
+        timelineRef={{ current: timeline }}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeNull();
+
+    rerender(
+      <ConversationMinimap
+        items={[
+          ...fourUserMessages,
+          message("user-5", "userMessage", "Fifth prompt"),
+        ]}
+        timelineRef={{ current: timeline }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeTruthy();
   });
 
   it("shows dense user-message markers and previews only on hover", () => {
@@ -60,6 +102,9 @@ describe("ConversationMinimap", () => {
           message("user-1", "userMessage", "First prompt"),
           message("assistant-1", "agentMessage", "Assistant reply"),
           message("user-2", "userMessage", "Second prompt"),
+          message("user-3", "userMessage", "Third prompt"),
+          message("user-4", "userMessage", "Fourth prompt"),
+          message("user-5", "userMessage", "Fifth prompt"),
         ]}
         timelineRef={{ current: timeline }}
       />,
@@ -67,7 +112,7 @@ describe("ConversationMinimap", () => {
 
     expect(screen.getByTestId("conversation-minimap-track")).toBeTruthy();
     const markers = screen.getAllByRole("button", { name: /Jump to message/ });
-    expect(markers).toHaveLength(2);
+    expect(markers).toHaveLength(5);
     expect(markers[0]?.className).toContain("size-7");
     expect(screen.queryByRole("tooltip")).toBeNull();
 
@@ -108,7 +153,13 @@ describe("ConversationMinimap", () => {
 
     render(
       <ConversationMinimap
-        items={[message("user-1", "userMessage", "Jump here")]}
+        items={[
+          message("user-1", "userMessage", "Jump here"),
+          message("user-2", "userMessage", "Second prompt"),
+          message("user-3", "userMessage", "Third prompt"),
+          message("user-4", "userMessage", "Fourth prompt"),
+          message("user-5", "userMessage", "Fifth prompt"),
+        ]}
         timelineRef={{ current: timeline }}
       />,
     );
@@ -124,7 +175,13 @@ describe("ConversationMinimap", () => {
   it("selects the newest user message when a new message is added", async () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);
-    const initialItems = [message("user-1", "userMessage", "First prompt")];
+    const initialItems = [
+      message("user-1", "userMessage", "First prompt"),
+      message("user-2", "userMessage", "Second prompt"),
+      message("user-3", "userMessage", "Third prompt"),
+      message("user-4", "userMessage", "Fourth prompt"),
+      message("user-5", "userMessage", "Fifth prompt"),
+    ];
     const { rerender } = render(
       <ConversationMinimap
         items={initialItems}
@@ -136,7 +193,7 @@ describe("ConversationMinimap", () => {
       <ConversationMinimap
         items={[
           ...initialItems,
-          message("user-2", "userMessage", "New prompt"),
+          message("user-6", "userMessage", "New prompt"),
         ]}
         timelineRef={{ current: timeline }}
       />,
@@ -151,51 +208,80 @@ describe("ConversationMinimap", () => {
     );
   });
 
-  it("enlarges the hovered marker and two neighbors on each side", () => {
+  it("enlarges the hovered marker and three neighbors on each side", () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);
-    const items = ["one", "two", "three", "four", "five"].map((id) =>
-      message(`user-${id}`, "userMessage", `Prompt ${id}`),
-    );
+    const items = [
+      "one",
+      "two",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "nine",
+    ].map((id) => message(`user-${id}`, "userMessage", `Prompt ${id}`));
 
     render(
       <ConversationMinimap items={items} timelineRef={{ current: timeline }} />,
     );
 
-    const hoveredMarker = screen.getByRole("button", { name: /Prompt three/ });
+    const hoveredMarker = screen.getByRole("button", { name: /Prompt five/ });
     fireEvent.click(hoveredMarker);
     fireEvent.mouseEnter(hoveredMarker);
 
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-three").className,
+      screen.getByTestId("conversation-minimap-marker-user-five").className,
     ).toEqual(expect.stringContaining("scale-200"));
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-three").className,
+      screen.getByTestId("conversation-minimap-marker-user-five").className,
     ).toContain("translate-x-[14px]");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-two").className,
-    ).toContain("scale-125");
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-two").className,
-    ).toContain("translate-x-[8px]");
-    expect(
       screen.getByTestId("conversation-minimap-marker-user-four").className,
     ).toContain("scale-125");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-four").className,
-    ).toContain("translate-x-[8px]");
+    ).toContain("translate-x-[10px]");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-one").className,
+      screen.getByTestId("conversation-minimap-marker-user-six").className,
+    ).toContain("scale-125");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-six").className,
+    ).toContain("translate-x-[10px]");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-three").className,
     ).toContain("scale-110");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-one").className,
-    ).toContain("translate-x-[3px]");
+      screen.getByTestId("conversation-minimap-marker-user-three").className,
+    ).toContain("translate-x-[5px]");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-five").className,
+      screen.getByTestId("conversation-minimap-marker-user-seven").className,
     ).toContain("scale-110");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-five").className,
-    ).toContain("translate-x-[3px]");
+      screen.getByTestId("conversation-minimap-marker-user-seven").className,
+    ).toContain("translate-x-[5px]");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-two").className,
+    ).toContain("translate-x-[2px]");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-eight").className,
+    ).toContain("translate-x-[2px]");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-two").className,
+    ).toContain("scale-105");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-eight").className,
+    ).toContain("scale-105");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-one").className,
+    ).not.toContain("translate-x-[2px]");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-one").className,
+    ).not.toContain("translate-x-[5px]");
+    expect(
+      screen.getByTestId("conversation-minimap-marker-user-nine").className,
+    ).not.toContain("translate-x-");
   });
 
   it("truncates long hover previews to the fixed character limit", () => {
@@ -205,7 +291,13 @@ describe("ConversationMinimap", () => {
 
     render(
       <ConversationMinimap
-        items={[message("user-long", "userMessage", longPrompt)]}
+        items={[
+          message("user-long", "userMessage", longPrompt),
+          message("user-2", "userMessage", "Second prompt"),
+          message("user-3", "userMessage", "Third prompt"),
+          message("user-4", "userMessage", "Fourth prompt"),
+          message("user-5", "userMessage", "Fifth prompt"),
+        ]}
         timelineRef={{ current: timeline }}
       />,
     );
