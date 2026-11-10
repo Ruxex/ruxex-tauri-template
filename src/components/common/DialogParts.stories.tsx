@@ -17,10 +17,18 @@ export const HeaderAndFooter: Story = () => (
       spacing remain visible.
     </p>
     <DialogFooter>
-      <button className="btn btn-ghost btn-sm" type="button">
+      <button
+        aria-label="Cancel"
+        className="btn btn-ghost btn-sm"
+        type="button"
+      >
         Cancel
       </button>
-      <button className="btn btn-primary btn-sm" type="button">
+      <button
+        aria-label="Save changes"
+        className="btn btn-primary btn-sm"
+        type="button"
+      >
         Save changes
       </button>
     </DialogFooter>

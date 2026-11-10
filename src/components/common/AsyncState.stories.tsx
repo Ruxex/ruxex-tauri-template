@@ -34,7 +34,11 @@ export const EmptyWithAction: Story = () => (
   <Surface>
     <EmptyState
       action={
-        <button className="btn btn-primary btn-sm" type="button">
+        <button
+          aria-label="Create schedule"
+          className="btn btn-primary btn-sm"
+          type="button"
+        >
           <PlusIcon aria-hidden="true" className="size-4" />
           Create schedule
         </button>

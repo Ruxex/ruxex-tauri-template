@@ -1,6 +1,9 @@
 import type { InputHTMLAttributes } from "react";
 
-type PasswordInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
+type PasswordInputProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type"
+> & {
   label: string;
 };
 
@@ -15,6 +18,7 @@ export function PasswordInput({
       <span className="label-text">{label}</span>
       <input
         {...props}
+        aria-label={label}
         className={["input input-bordered w-full", className]
           .filter(Boolean)
           .join(" ")}

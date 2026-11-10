@@ -6,7 +6,7 @@ import { ThreadCard } from "./ThreadCard";
 export const Default: Story = () => (
   <ThreadCard
     actions={
-      <button className="btn btn-ghost btn-sm" type="button">
+      <button aria-label="Open" className="btn btn-ghost btn-sm" type="button">
         Open
       </button>
     }
