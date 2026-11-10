@@ -303,7 +303,8 @@ conversation, project creation pickers, chat search, composer menus and slash
 commands, populated Automation cards/dialogs, and MCP transport dialogs. The
 same pass starts the repository-owned HTTP MCP fixture and captures a
 configured server with its Resource list, Resource content, and edit dialog.
-There are 21 screenshots in this additional group. All screenshots are written
+There are 22 screenshots in this additional group, including the theme preset
+popover with the workspace side panel open. All screenshots are written
 to the ignored `artifacts/e2e/` run directory and the prepared home is
 preserved in `.d/`.
 

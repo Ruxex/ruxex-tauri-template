@@ -28,6 +28,8 @@ describe("DummyProvider unshot UI screenshots", () => {
     await openRoute("/settings/account", "h2=Account information");
     await saveFixtureScreenshot("settings-account-login.png");
 
+    await captureThemePresetPopover();
+
     await openRoute("/quick-panel", "h1=Quick request");
     await saveFixtureScreenshot("quick-panel.png");
 
@@ -49,6 +51,20 @@ describe("DummyProvider unshot UI screenshots", () => {
     await closeSidebarPanel();
   });
 });
+
+async function captureThemePresetPopover(): Promise<void> {
+  await openRoute("/settings/appearance", "h2=Appearance");
+  await $("aside[aria-label='Settings sidebar']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  const selector = $("details[data-testid='theme-preset-selector']");
+  await selector.$("summary").click();
+  await selector
+    .$("fieldset[aria-label='Theme preset options']")
+    .waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("theme-preset-popover-sidebar.png");
+  await selector.$("summary").click();
+}
 
 async function captureComposerStates(): Promise<void> {
   const composer = $("[contenteditable='true'][aria-label='Message']");
@@ -204,9 +220,7 @@ async function captureMcpDialogs(): Promise<void> {
       timeoutMsg: "The HTTP MCP fixture should expose its configured resources",
     },
   );
-  await $(
-    "[data-testid='mcp-server-details-fixture-mcp'] summary",
-  ).click();
+  await $("[data-testid='mcp-server-details-fixture-mcp'] summary").click();
   await saveFixtureScreenshot("mcp-configured-resources.png");
 
   const resourceButton = $(

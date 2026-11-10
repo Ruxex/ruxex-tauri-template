@@ -287,9 +287,15 @@ describe("settings card layout", () => {
       />,
     );
 
+    const interfacePanel = screen
+      .getByRole("heading", { name: "Interface" })
+      .closest("section");
+    expect(interfacePanel?.className).toContain("overflow-visible");
     const presetSelector = screen.getByTestId(
       "theme-preset-selector",
     ) as HTMLDetailsElement;
+    expect(presetSelector.className).toContain("relative");
+    expect(presetSelector.className).toContain("z-50");
     expect(presetSelector.open).toBe(false);
     expect(
       presetSelector.querySelector("[data-theme-preview-panel]"),
@@ -299,6 +305,10 @@ describe("settings card layout", () => {
     const presetGrid = within(presetSelector).getByRole("group", {
       name: "Theme preset options",
     });
+    const presetPopover = presetGrid.parentElement;
+    expect(presetPopover?.className).toContain("absolute");
+    expect(presetPopover?.className).toContain("top-full");
+    expect(presetPopover?.className).toContain("z-[60]");
     expect(presetGrid.className).toContain("grid-cols-2");
     expect(
       within(presetGrid).getByText(
@@ -332,6 +342,7 @@ describe("settings card layout", () => {
       within(presetGrid).getByRole("button", { name: "GitHub Dark" }),
     );
     expect(onThemePresetChange).toHaveBeenCalledWith("github-dark");
+    expect(presetSelector.open).toBe(false);
   });
 
   it("provides a font reset action", () => {

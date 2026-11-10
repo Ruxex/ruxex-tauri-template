@@ -27,11 +27,14 @@ export function UiPreferencesCard({
     UI_THEME_PRESETS[0];
 
   return (
-    <SettingsPanel icon={PaintBrushIcon} title="Interface">
+    <SettingsPanel allowOverflow icon={PaintBrushIcon} title="Interface">
       <div className="text-sm">
         <div className="px-5 py-3.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <details data-testid="theme-preset-selector" className="group min-w-0 flex-1">
+            <details
+              data-testid="theme-preset-selector"
+              className="group relative z-50 min-w-0 flex-1"
+            >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-3 transition-colors hover:border-primary/60 hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                 <span className="min-w-0">
                   <span className="block text-xs text-base-content/60">
@@ -46,7 +49,7 @@ export function UiPreferencesCard({
                   className="size-5 shrink-0 transition-transform group-open:rotate-180"
                 />
               </summary>
-              <div className="mt-3 rounded-box border border-base-300 bg-base-100 p-3">
+              <div className="absolute left-0 right-0 top-full z-[60] mt-3 max-h-[min(70vh,32rem)] overflow-y-auto rounded-box border border-base-300 bg-base-100 p-3 shadow-xl">
                 <fieldset
                   aria-label="Theme preset options"
                   aria-describedby="theme-preset-attribution"
@@ -61,8 +64,8 @@ export function UiPreferencesCard({
                       aria-hidden="true"
                       className="mt-0.5 size-3.5 shrink-0 text-base-content/55"
                     />
-                    Theme palettes are inspired by third-party projects. Ruxex is
-                    not affiliated with or endorsed by those projects.
+                    Theme palettes are inspired by third-party projects. Ruxex
+                    is not affiliated with or endorsed by those projects.
                   </p>
                   {UI_THEME_PRESETS.map((option) => {
                     const selected = preset === option.id;
@@ -75,7 +78,12 @@ export function UiPreferencesCard({
                         key={option.id}
                         title={option.label}
                         type="button"
-                        onClick={() => onThemePresetChange(option.id)}
+                        onClick={(event) => {
+                          onThemePresetChange(option.id);
+                          event.currentTarget
+                            .closest("details")
+                            ?.removeAttribute("open");
+                        }}
                       >
                         <ThemePresetPreview preset={option} />
                         <span className="flex items-start justify-between gap-2">
@@ -175,10 +183,7 @@ function ThemePreviewPanel({
         className="block rounded-sm p-1.5"
         style={{ backgroundColor: colors.card }}
       >
-        <span
-          className="mb-1.5 flex justify-end"
-          data-theme-preview-message
-        >
+        <span className="mb-1.5 flex justify-end" data-theme-preview-message>
           <span
             className="h-2.5 w-2/3 rounded-md rounded-br-sm"
             style={{ backgroundColor: colors.primary }}
