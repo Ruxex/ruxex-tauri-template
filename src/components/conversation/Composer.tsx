@@ -3,7 +3,6 @@ import {
   ArrowUturnRightIcon,
   PaperAirplaneIcon,
   QueueListIcon,
-  SparklesIcon,
   StopIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -29,9 +28,14 @@ import {
   useSteerTurn,
   useUpdateThreadSettings,
 } from "../../app-server/hooks";
+import {
+  filterHiddenSkills,
+  getDesktopUiPolicy,
+} from "../../platform/skill-policy";
 import type { v2 } from "../../protocol";
 import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 import { AttachmentPreview } from "../common/AttachmentPreview";
+import { SkillIcon } from "../common/SkillIcon";
 import { useImageAttachment } from "../common/useImageAttachment";
 import { ComposerMessageInput } from "./ComposerMessageInput";
 import {
@@ -49,10 +53,6 @@ import {
 } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
 import { SlashCommandPalette } from "./SlashCommandPalette";
-import {
-  filterHiddenSkills,
-  getDesktopUiPolicy,
-} from "../../platform/skill-policy";
 import {
   getSlashCommandInput,
   type SlashCommandId,
@@ -83,10 +83,10 @@ export function Composer({
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
-  const [selectedSkill, setSelectedSkill] = useState<{
-    name: string;
-    path: string;
-  } | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<Pick<
+    v2.SkillMetadata,
+    "name" | "path" | "interface"
+  > | null>(null);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
   const editorRef = useRef<HTMLElement>(null);
   const {
@@ -242,11 +242,12 @@ export function Composer({
     }
   }
 
-  function handleSlashSkillSelect(skill: { name: string; path: string }) {
+  function handleSlashSkillSelect(skill: v2.SkillMetadata) {
     const selection = selectSlashSkill(message, skill);
     setSelectedSkill({
       name: selection.skill.name,
       path: selection.skill.path,
+      interface: skill.interface,
     });
     setMessage(selection.message);
     editorRef.current?.focus();
@@ -259,7 +260,13 @@ export function Composer({
       return;
     }
     const input: v2.UserInput[] = selectedSkill
-      ? [{ type: "skill", ...selectedSkill }]
+      ? [
+          {
+            type: "skill",
+            name: selectedSkill.name,
+            path: selectedSkill.path,
+          },
+        ]
       : [];
     if (text) {
       input.push(buildUserTextInput(text));
@@ -369,7 +376,7 @@ export function Composer({
               className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
               role="status"
             >
-              <SparklesIcon aria-hidden="true" className="size-3.5" />
+              <SkillIcon className="size-3.5" skill={selectedSkill} />
               <span className="truncate">{selectedSkill.name}</span>
               <button
                 aria-label={`Remove skill ${selectedSkill.name}`}

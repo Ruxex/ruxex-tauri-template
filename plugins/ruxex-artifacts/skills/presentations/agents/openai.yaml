@@ -1,0 +1,4 @@
+interface:
+  display_name: "Presentations"
+  short_description: "Create and edit presentation files"
+  brand_color: "#D24726"

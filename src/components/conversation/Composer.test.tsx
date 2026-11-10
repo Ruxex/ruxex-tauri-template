@@ -104,6 +104,19 @@ vi.mock("../../platform/skill-policy", () => ({
   getDesktopUiPolicy,
 }));
 
+vi.mock("../common/SkillIcon", () => ({
+  SkillIcon: ({
+    skill,
+  }: {
+    skill: { name: string; interface?: { iconSmall?: string } | null };
+  }) => (
+    <span
+      data-icon-path={skill.interface?.iconSmall ?? ""}
+      data-testid={`skill-icon-${skill.name}`}
+    />
+  ),
+}));
+
 vi.mock("./ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
@@ -298,6 +311,11 @@ describe("Composer", () => {
       scope: "repo",
       enabled: true,
       pluginId: null,
+      interface: {
+        iconSmall: "/workspace/.agents/skills/review/assets/icon.svg",
+        iconSmallUrl: null,
+        iconLargeUrl: null,
+      },
     };
     useSkillsList.mockReturnValue({
       data: { data: [{ cwd: "/workspace", skills: [skill], errors: [] }] },
@@ -316,6 +334,9 @@ describe("Composer", () => {
     expect(
       screen.getByRole("status", { name: "Selected skill: review" }),
     ).toBeTruthy();
+    expect(
+      screen.getByTestId("skill-icon-review").getAttribute("data-icon-path"),
+    ).toBe("/workspace/.agents/skills/review/assets/icon.svg");
     expect(
       (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
     ).toBe("Explain the changes");

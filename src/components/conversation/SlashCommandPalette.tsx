@@ -2,10 +2,10 @@ import {
   ArchiveBoxIcon,
   ArrowsPointingInIcon,
   FlagIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
 import type { v2 } from "../../protocol";
+import { SkillIcon } from "../common/SkillIcon";
 import { type SlashCommandId, slashCommands } from "./slash-command";
 
 type SlashCommandPaletteProps = {
@@ -127,7 +127,7 @@ export function SlashCommandPalette({
                     role="menuitem"
                     type="button"
                   >
-                    <SparklesIcon aria-hidden="true" className="size-4" />
+                    <SkillIcon className="size-5" skill={skill} />
                     <span className="min-w-0 text-left">
                       <span className="block truncate font-medium">
                         {skill.name}

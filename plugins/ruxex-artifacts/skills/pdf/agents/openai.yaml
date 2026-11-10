@@ -1,0 +1,4 @@
+interface:
+  display_name: "PDF"
+  short_description: "Create and inspect PDF files"
+  brand_color: "#B91C1C"

@@ -14,6 +14,7 @@ import {
   usePluginRead,
   useUninstallPlugin,
 } from "../app-server/hooks";
+import { SkillIcon } from "../components/common/SkillIcon";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { PluginInformationItem } from "../components/plugins/PluginInformationItem";
@@ -282,7 +283,8 @@ export function PluginDetailPage() {
       )}
       {uninstallPlugin.isError && (
         <p className="text-sm text-error" role="alert">
-          Unable to uninstall plugin: {formatErrorMessage(uninstallPlugin.error)}
+          Unable to uninstall plugin:{" "}
+          {formatErrorMessage(uninstallPlugin.error)}
         </p>
       )}
       {details.isLoading && (
@@ -313,12 +315,22 @@ export function PluginDetailPage() {
                       type="button"
                       onClick={() => setSelectedSkill(skill)}
                     >
-                      <span className="block font-medium">{skill.name}</span>
-                      {getSkillShortDescription(skill) && (
-                        <span className="mt-1 block text-base-content/70">
-                          {getSkillShortDescription(skill)}
+                      <span className="flex items-start gap-2">
+                        <SkillIcon
+                          className="mt-0.5 size-5 shrink-0"
+                          skill={skill}
+                        />
+                        <span className="min-w-0">
+                          <span className="block font-medium">
+                            {skill.name}
+                          </span>
+                          {getSkillShortDescription(skill) && (
+                            <span className="mt-1 block text-base-content/70">
+                              {getSkillShortDescription(skill)}
+                            </span>
+                          )}
                         </span>
-                      )}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -369,7 +381,11 @@ export function PluginDetailPage() {
         >
           <div className="modal-box w-full max-w-2xl px-5 py-7">
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="font-semibold" id="skill-details-title">
+              <h2
+                className="flex items-center gap-2 font-semibold"
+                id="skill-details-title"
+              >
+                <SkillIcon className="size-5" skill={selectedSkill} />
                 {selectedSkill.name}
               </h2>
               <button

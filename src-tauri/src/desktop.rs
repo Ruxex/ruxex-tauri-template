@@ -131,13 +131,19 @@ pub(crate) fn read_image_file(path: String) -> CommandResult<String> {
     })?;
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let user_home = dirs::home_dir().ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            "failed to resolve user home directory",
+        )
+    })?;
     let workspace = std::env::current_dir().map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Lifecycle,
             format!("failed to resolve workspace root: {error}"),
         )
     })?;
-    let roots = [home, workspace];
+    let roots = [home, user_home, workspace];
     let canonical_roots = roots
         .iter()
         .filter_map(|root| root.canonicalize().ok())
@@ -184,14 +190,23 @@ pub(crate) fn read_local_marketplace_asset(path: String) -> CommandResult<String
     let requested = PathBuf::from(path);
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let user_home = dirs::home_dir().ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            "failed to resolve user home directory",
+        )
+    })?;
     let workspace = std::env::current_dir().map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Lifecycle,
             format!("failed to resolve workspace root: {error}"),
         )
     })?;
-    read_marketplace_asset_file_from_roots(&requested, &[home.as_path(), workspace.as_path()])
-        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))
+    read_marketplace_asset_file_from_roots(
+        &requested,
+        &[home.as_path(), user_home.as_path(), workspace.as_path()],
+    )
+    .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))
 }
 
 fn read_marketplace_asset_file_from_roots(

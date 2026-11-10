@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documents"
+  short_description: "Create and edit document files"
+  brand_color: "#2563EB"

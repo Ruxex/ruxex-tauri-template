@@ -1,11 +1,11 @@
 # Ruxex Artifacts
 
-This plugin provides an agent-facing Skill for the bundled
-`ruxex-artifacts` runtime helper. The helper exposes Ruxex-owned JavaScript
-APIs for XLSX, DOCX, PPTX, and PDF creation and inspection, plus Codex-shaped
-`FileBlob`, `SpreadsheetFile`, `PresentationFile`, and `PdfDocument` facades for
-local file workflows. It also provides JSON read and validation commands for
-each format.
+This plugin provides four agent-facing Skills — `documents`, `presentations`,
+`spreadsheets`, and `pdf` — backed by the shared bundled `ruxex-artifacts`
+runtime helper. The helper exposes Ruxex-owned JavaScript APIs for DOCX, PPTX,
+XLSX, and PDF creation and inspection, plus Codex-shaped `FileBlob`,
+`SpreadsheetFile`, `PresentationFile`, and `PdfDocument` facades for local file
+workflows. It also provides JSON read and validation commands for each format.
 
 The helper is staged under `ruxex-path`, so the existing managed command
 environment exposes it as a normal shell command. The plugin contains the

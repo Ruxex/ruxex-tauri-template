@@ -6,6 +6,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { v2 } from "../../protocol";
 import { SlashCommandPalette } from "./SlashCommandPalette";
 
+vi.mock("../common/SkillIcon", () => ({
+  SkillIcon: ({ skill }: { skill: v2.SkillMetadata }) => (
+    <span data-testid={`skill-icon-${skill.name}`} />
+  ),
+}));
+
 describe("SlashCommandPalette", () => {
   afterEach(cleanup);
 
@@ -57,9 +63,9 @@ describe("SlashCommandPalette", () => {
     expect(screen.getByRole("heading", { name: "Commands" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Skills" })).toBeTruthy();
     expect(
-      screen.getByRole("menu", { name: "Slash commands" }).querySelector(
-        ".menu-vertical",
-      ),
+      screen
+        .getByRole("menu", { name: "Slash commands" })
+        .querySelector(".menu-vertical"),
     ).toBeTruthy();
   });
 
@@ -85,13 +91,31 @@ describe("SlashCommandPalette", () => {
     expect(onSelectSkill).toHaveBeenCalledWith(skill);
   });
 
-  it("shows skill loading, error, and empty states", () => {
-    const { rerender } = render(
+  it("renders the Skill interface icon alongside the candidate", () => {
+    render(
       <SlashCommandPalette
         disabled={false}
         onSelect={vi.fn()}
-        skillsLoading
+        onSelectSkill={vi.fn()}
+        skills={[
+          {
+            ...skill,
+            interface: {
+              iconSmall: "/home/user/.agents/skills/review/assets/icon.svg",
+              iconSmallUrl: null,
+              iconLargeUrl: null,
+            },
+          },
+        ]}
       />,
+    );
+
+    expect(screen.getByTestId("skill-icon-review")).toBeTruthy();
+  });
+
+  it("shows skill loading, error, and empty states", () => {
+    const { rerender } = render(
+      <SlashCommandPalette disabled={false} onSelect={vi.fn()} skillsLoading />,
     );
     expect(screen.getByText("Loading skills…")).toBeTruthy();
 

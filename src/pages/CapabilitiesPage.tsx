@@ -20,8 +20,9 @@ import {
   useUpgradeMarketplace,
   useWriteSkillConfig,
 } from "../app-server/hooks";
-import { StateBadge } from "../components/common/StateBadge";
 import { EmptyState } from "../components/common/AsyncState";
+import { SkillIcon } from "../components/common/SkillIcon";
+import { StateBadge } from "../components/common/StateBadge";
 import { PageContainer } from "../components/layout/PageContainer";
 import { McpStatusSummary } from "../components/mcp/McpStatusSummary";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
@@ -333,29 +334,37 @@ export function CapabilitiesPage() {
                                 key={skill.path}
                               >
                                 <div className="flex items-center justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <p className="font-medium">{skill.name}</p>
-                                    {description && (
-                                      <p
-                                        className="line-clamp-2 text-sm text-base-content/70"
-                                        title={description.fullText}
-                                      >
-                                        {description.text}
+                                  <div className="flex min-w-0 items-start gap-2">
+                                    <SkillIcon
+                                      className="mt-0.5 size-6 shrink-0"
+                                      skill={skill}
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="font-medium">
+                                        {skill.name}
                                       </p>
-                                    )}
-                                    {skill.scope !== "system" && (
-                                      <p
-                                        className="mt-1 truncate text-xs text-base-content/60"
-                                        title={skill.path}
-                                      >
-                                        {skill.scope} · {skill.path}
-                                      </p>
-                                    )}
-                                    {skill.pluginId && (
-                                      <p className="text-xs text-base-content/60">
-                                        {skill.pluginId}
-                                      </p>
-                                    )}
+                                      {description && (
+                                        <p
+                                          className="line-clamp-2 text-sm text-base-content/70"
+                                          title={description.fullText}
+                                        >
+                                          {description.text}
+                                        </p>
+                                      )}
+                                      {skill.scope !== "system" && (
+                                        <p
+                                          className="mt-1 truncate text-xs text-base-content/60"
+                                          title={skill.path}
+                                        >
+                                          {skill.scope} · {skill.path}
+                                        </p>
+                                      )}
+                                      {skill.pluginId && (
+                                        <p className="text-xs text-base-content/60">
+                                          {skill.pluginId}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
                                   <label className="flex shrink-0 items-center gap-2 text-sm">
                                     <span className="sr-only">

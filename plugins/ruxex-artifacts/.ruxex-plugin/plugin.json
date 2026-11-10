@@ -1,11 +1,11 @@
 {
   "name": "ruxex-artifacts",
   "version": "0.1.0",
-  "description": "Create and inspect local spreadsheet artifacts through the bundled Ruxex command.",
+  "description": "Create and inspect local document, presentation, spreadsheet, and PDF artifacts through the bundled Ruxex command.",
   "skills": "./skills",
   "interface": {
     "displayName": "Ruxex Artifacts",
-    "shortDescription": "Create and validate local XLSX files",
+    "shortDescription": "Create and validate local artifact files",
     "category": "Productivity"
   }
 }
