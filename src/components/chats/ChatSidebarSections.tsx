@@ -1,7 +1,6 @@
 import {
   ChevronRightIcon,
   FolderIcon,
-  MagnifyingGlassIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -10,7 +9,7 @@ import { Link } from "react-router-dom";
 import { useProjectList } from "../../app-server/hooks";
 import { EmptyState } from "../common/AsyncState";
 import { ThreadList } from "../sidebar/ThreadList";
-import { ChatSearchDialog } from "./ChatSearchDialog";
+import { ChatSearchBox } from "./ChatSearchBox";
 
 export function ChatSidebarSections({
   onClose,
@@ -19,7 +18,6 @@ export function ChatSidebarSections({
   onClose: () => void;
   selectedThreadId?: string;
 }) {
-  const [searchOpen, setSearchOpen] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<
     Record<string, boolean>
   >({});
@@ -35,25 +33,7 @@ export function ChatSidebarSections({
         <PlusIcon aria-hidden="true" className="size-4" />
         New chat
       </Link>
-      <button
-        aria-label="Search chats"
-        className="btn btn-ghost mb-4 w-full justify-start"
-        type="button"
-        onClick={() => setSearchOpen(true)}
-      >
-        <MagnifyingGlassIcon aria-hidden="true" className="size-4" />
-        Search chats
-      </button>
-      {searchOpen && (
-        <ChatSearchDialog
-          onClose={() => setSearchOpen(false)}
-          onSelect={() => {
-            setSearchOpen(false);
-            onClose();
-          }}
-          open={searchOpen}
-        />
-      )}
+      <ChatSearchBox onSelect={() => onClose()} />
 
       <div className="-mr-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-4">
         <details className="group rounded-box" open>

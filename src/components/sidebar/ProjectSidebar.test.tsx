@@ -15,6 +15,9 @@ const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
 const useThreadReadState = vi.hoisted(() => vi.fn());
 const useArchiveThread = vi.hoisted(() => vi.fn());
+const useThreadSearch = vi.hoisted(() =>
+  vi.fn(() => ({ data: undefined, isError: false, isLoading: false })),
+);
 const usePluginList = vi.hoisted(() => vi.fn());
 const activeThreadListParams = vi.hoisted(() => vi.fn());
 
@@ -23,6 +26,7 @@ vi.mock("../../app-server/hooks", () => ({
   useThreadList,
   useThreadActivity,
   useArchiveThread,
+  useThreadSearch,
   activeThreadListParams,
   usePluginList,
 }));

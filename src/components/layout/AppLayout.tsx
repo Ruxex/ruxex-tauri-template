@@ -22,8 +22,7 @@ export function AppLayout() {
   const isChatRoute = location.pathname.startsWith("/chat/");
   const hidesContextPanel =
     routePanel === "projects" ||
-    location.pathname.startsWith("/approvals") ||
-    location.pathname.startsWith("/login");
+    location.pathname.startsWith("/approvals");
   const chatTitle =
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);

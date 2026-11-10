@@ -10,9 +10,9 @@ async function openRoute(path: string, selector: string): Promise<void> {
 }
 
 async function openFixtureThread(title: string): Promise<void> {
-  await openRoute("/threads", "h1=Threads");
+  await openRoute("/", "[contenteditable='true'][aria-label='Message']");
   await $(
-    `//section[@aria-labelledby]//a[contains(normalize-space(.), '${title}')]`,
+    `//div[@id='recent-chats-list']//a[contains(normalize-space(.), '${title}')]`,
   ).click();
   await $(`[aria-label='Chat activity']`).waitForDisplayed({ timeout: 10_000 });
 }
@@ -21,8 +21,8 @@ describe("DummyProvider unshot UI screenshots", () => {
   it("captures the remaining page and interactive component states", async () => {
     await waitForDesktopReady();
 
-    await openRoute("/login", "h1=Log in");
-    await saveFixtureScreenshot("login-page.png");
+    await openRoute("/settings/account", "h2=Sign in");
+    await saveFixtureScreenshot("settings-account-login.png");
 
     await openRoute("/quick-panel", "h1=Quick request");
     await saveFixtureScreenshot("quick-panel.png");

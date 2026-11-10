@@ -5,14 +5,21 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAccount = vi.hoisted(() => vi.fn());
+const useLogin = vi.hoisted(() => vi.fn());
 const useLogout = vi.hoisted(() => vi.fn());
-vi.mock("../app-server/hooks", () => ({ useAccount, useLogout }));
+vi.mock("../app-server/hooks", () => ({ useAccount, useLogin, useLogout }));
 
 describe("AccountPage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
     useAccount.mockReset();
+    useLogin.mockReturnValue({
+      error: null,
+      isError: false,
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
     useLogout.mockReturnValue({
       isError: false,
       isPending: false,
@@ -34,9 +41,7 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
-    const heading = screen.getByRole("heading", { name: "Account" });
-    expect(heading.className).toContain("text-3xl");
-    expect(heading.className).toContain("tracking-tight");
+    expect(screen.queryByRole("heading", { name: "Account" })).toBeNull();
     expect(
       screen
         .getByText("Authenticated")
@@ -88,15 +93,10 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen
-        .getByText("Authentication required")
-        .querySelector("svg")
-        ?.getAttribute("class"),
-    ).toContain("text-warning");
-    expect(
-      screen.getByRole("link", { name: "Log in" }).getAttribute("href"),
-    ).toBe("/login");
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeTruthy();
+    expect(screen.getByLabelText("API key")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Log in" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Back home" })).toBeNull();
   });
 
   it("renders query errors instead of an empty account", async () => {

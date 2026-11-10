@@ -11,8 +11,8 @@ import { createMemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppProviders } from "../app/providers";
+import { AccountPage } from "../pages/AccountPage";
 import { HomePage } from "../pages/HomePage";
-import { LoginPage } from "../pages/LoginPage";
 import { MockAppServer } from "../test-support/mock-app-server";
 
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
@@ -118,10 +118,9 @@ describe("desktop app-server flow", () => {
   it("logs in with an API key and refreshes account data", async () => {
     const router = createMemoryRouter(
       [
-        { path: "/login", element: <LoginPage /> },
-        { path: "/account", element: <p>Account page</p> },
+        { path: "/settings/account", element: <AccountPage /> },
       ],
-      { initialEntries: ["/login"] },
+      { initialEntries: ["/settings/account"] },
     );
 
     render(<AppProviders router={router} />);
@@ -132,7 +131,7 @@ describe("desktop app-server flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() =>
-      expect(router.state.location.pathname).toBe("/account"),
+      expect(router.state.location.pathname).toBe("/settings/account"),
     );
 
     expect(invoke).toHaveBeenCalledWith("ensure_app_server");

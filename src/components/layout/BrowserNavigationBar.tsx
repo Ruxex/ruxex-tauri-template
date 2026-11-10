@@ -64,9 +64,7 @@ function breadcrumbsForPath(
     "/approvals": "Approvals",
     "/archive": "Archive",
     "/capabilities": "Plugins",
-    "/login": "Login",
     "/schedules": "Automation",
-    "/threads": "Threads",
   };
 
   return [{ label: pageLabels[pathname] ?? "Page" }];

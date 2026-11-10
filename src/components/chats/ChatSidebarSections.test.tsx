@@ -17,6 +17,9 @@ const useThreadReadState = vi.hoisted(() =>
   vi.fn(() => ({ isThreadUnread: () => false })),
 );
 const useArchiveThread = vi.hoisted(() => vi.fn());
+const useThreadSearch = vi.hoisted(() =>
+  vi.fn(() => ({ data: undefined, isError: false, isLoading: false })),
+);
 const activeThreadListParams = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
@@ -24,6 +27,7 @@ vi.mock("../../app-server/hooks", () => ({
   useThreadList,
   useThreadActivity,
   useArchiveThread,
+  useThreadSearch,
   activeThreadListParams,
 }));
 vi.mock("../../app/thread-read-state", () => ({ useThreadReadState }));
@@ -78,7 +82,7 @@ describe("ChatSidebarSections", () => {
     const navigation = screen.getByRole("navigation", {
       name: "Chat navigation",
     });
-    const scrollRegion = navigation.querySelector(".overflow-y-auto");
+    const scrollRegion = navigation.querySelector("div.-mr-4");
     const links = within(navigation).getAllByRole("link");
 
     expect(links[0].textContent?.trim()).toBe("New chat");

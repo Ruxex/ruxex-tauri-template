@@ -63,10 +63,13 @@ function findScenario(id: string) {
 
 async function assertListCounts(): Promise<void> {
   const counts = persistentFixtureCounts();
-  await browser.url("tauri://localhost/#/threads");
-  await $("h1=Threads").waitForDisplayed({ timeout: 10_000 });
+  await browser.url("tauri://localhost/#/");
+  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
+    timeout: 10_000,
+  });
   await browser.waitUntil(
-    async () => (await $$("article.card").length) === counts.active,
+    async () =>
+      (await $$("#recent-chats-list > ul > li").length) === counts.active,
     {
       timeout: 10_000,
       timeoutMsg: `Expected ${counts.active} active threads`,
@@ -111,17 +114,21 @@ async function assertProjectCounts(): Promise<void> {
 }
 
 async function assertRepresentativeHistory(): Promise<void> {
-  await browser.url("tauri://localhost/#/threads");
-  await $("h1=Threads").waitForDisplayed({ timeout: 10_000 });
+  await browser.url("tauri://localhost/#/");
+  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
+    timeout: 10_000,
+  });
   for (const id of ["long-markdown", "multi-turn", "command-success"]) {
     const title = buildScenarioTitle(findScenario(id), 1);
     await $(
-      `//section[@aria-labelledby]//a[contains(normalize-space(.), '${title}')]`,
+      `//div[@id='recent-chats-list']//a[contains(normalize-space(.), '${title}')]`,
     ).click();
     await $("[aria-label='Chat activity']").waitForDisplayed({
       timeout: 10_000,
     });
-    await browser.url("tauri://localhost/#/threads");
-    await $("h1=Threads").waitForDisplayed({ timeout: 10_000 });
+    await browser.url("tauri://localhost/#/");
+    await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
+      timeout: 10_000,
+    });
   }
 }

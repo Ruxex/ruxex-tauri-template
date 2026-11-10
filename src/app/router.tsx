@@ -8,7 +8,6 @@ import { AppServerPage } from "../pages/AppServerPage";
 import { ArchivePage } from "../pages/ArchivePage";
 import { CapabilitiesPage } from "../pages/CapabilitiesPage";
 import { HomePage } from "../pages/HomePage";
-import { LoginPage } from "../pages/LoginPage";
 import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
 import { McpServersPage } from "../pages/McpServersPage";
 import { ModelPage } from "../pages/ModelPage";
@@ -20,7 +19,6 @@ import { SchedulesPage } from "../pages/SchedulesPage";
 import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ThreadPage } from "../pages/ThreadPage";
-import { ThreadsPage } from "../pages/ThreadsPage";
 
 export const router = createHashRouter([
   { path: "/quick-panel", element: <QuickPanelPage /> },
@@ -29,7 +27,6 @@ export const router = createHashRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "login", element: <LoginPage /> },
       {
         path: "account",
         element: <Navigate replace to="/settings/account" />,
@@ -56,7 +53,6 @@ export const router = createHashRouter([
         element: <PluginDetailPage />,
       },
       { path: "archive", element: <ArchivePage /> },
-      { path: "threads", element: <ThreadsPage /> },
       { path: "chat/new", element: <NewChatRedirect /> },
       { path: "chat/:threadId", element: <ThreadPage /> },
       { path: "projects", element: <ProjectsPage /> },

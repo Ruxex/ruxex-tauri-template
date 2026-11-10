@@ -18,11 +18,6 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
     screenshotName: "home-new-chat.png",
   },
   {
-    path: "/threads",
-    heading: "h1=Threads",
-    screenshotName: "threads-list.png",
-  },
-  {
     path: "/archive",
     heading: "h1=Archived chats",
     screenshotName: "archived-chats.png",
@@ -69,7 +64,7 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
   },
   {
     path: "/settings/account",
-    heading: "h1=Account",
+    heading: "h2=Sign in",
     screenshotName: "settings-account.png",
   },
   {
