@@ -1039,6 +1039,12 @@ describe("CapabilitiesPage", () => {
     const serverDetails = screen.getByTestId("mcp-server-details-docs");
     expect(serverDetails.tagName).toBe("DETAILS");
     expect(serverDetails.getAttribute("open")).toBeNull();
+    expect(serverDetails.className).toContain("collapse");
+    expect(serverDetails.className).toContain("collapse-arrow");
+    expect(serverDetails.querySelector("summary")?.className).toContain(
+      "collapse-title",
+    );
+    expect(serverDetails.querySelector(".collapse-content")).not.toBeNull();
     expect(within(serverDetails).getByText("1 tools")).toBeTruthy();
     expect(screen.queryByText("Official Plugins")).toBeNull();
     expect(screen.queryByText("Collaboration modes")).toBeNull();

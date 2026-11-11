@@ -284,44 +284,44 @@ export function CapabilitiesPage() {
                 {mcp.data?.data.map((server) => (
                   <li key={server.name}>
                     <details
-                      className="rounded-box bg-base-200 p-3"
+                      className="collapse collapse-arrow rounded-box border border-base-300 bg-base-100 shadow-sm"
                       data-testid={`mcp-server-details-${server.name}`}
                     >
-                      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 font-medium">
+                      <summary className="collapse-title flex flex-wrap items-center justify-between gap-3 pr-12 font-medium">
                         <span>{server.name}</span>
                         <McpStatusSummary
                           authStatus={server.authStatus}
                           runtimeStatus={server.runtimeStatus}
                         />
                       </summary>
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-base-content/60">
-                        <span>{Object.keys(server.tools).length} tools</span>
-                        {(server.authStatus === "notLoggedIn" ||
-                          server.authStatus === "oAuth") && (
-                          <button
-                            aria-label={
-                              oauthLogin.isPending
-                                ? "Connecting…"
-                                : server.authStatus === "notLoggedIn"
-                                  ? `Connect ${server.name}`
-                                  : `Re-authenticate ${server.name}`
-                            }
-                            className="btn btn-outline btn-xs"
-                            disabled={oauthLogin.isPending}
-                            onClick={() => void connectMcpServer(server.name)}
-                            type="button"
-                          >
-                            {server.authStatus === "notLoggedIn"
-                              ? `Connect ${server.name}`
-                              : `Re-authenticate ${server.name}`}
-                          </button>
+                      <div className="collapse-content space-y-2 px-4 pb-4 pt-0 text-xs text-base-content/60">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span>{Object.keys(server.tools).length} tools</span>
+                          {(server.authStatus === "notLoggedIn" ||
+                            server.authStatus === "oAuth") && (
+                            <button
+                              aria-label={
+                                oauthLogin.isPending
+                                  ? "Connecting…"
+                                  : server.authStatus === "notLoggedIn"
+                                    ? `Connect ${server.name}`
+                                    : `Re-authenticate ${server.name}`
+                              }
+                              className="btn btn-outline btn-xs"
+                              disabled={oauthLogin.isPending}
+                              onClick={() => void connectMcpServer(server.name)}
+                              type="button"
+                            >
+                              {server.authStatus === "notLoggedIn"
+                                ? `Connect ${server.name}`
+                                : `Re-authenticate ${server.name}`}
+                            </button>
+                          )}
+                        </div>
+                        {server.toolsError && (
+                          <p className="text-error">{server.toolsError}</p>
                         )}
                       </div>
-                      {server.toolsError && (
-                        <p className="mt-1 text-xs text-error">
-                          {server.toolsError}
-                        </p>
-                      )}
                     </details>
                   </li>
                 ))}
