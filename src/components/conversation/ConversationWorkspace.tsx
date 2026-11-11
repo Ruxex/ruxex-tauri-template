@@ -20,6 +20,7 @@ import {
   type ConversationViewItem,
   mergeConversationItems,
 } from "./conversation-model";
+import { CurrentGoal } from "./CurrentGoal";
 import { QueuedMessages } from "./QueuedMessages";
 
 const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
@@ -215,6 +216,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         completedTurn={completedTurn}
       />
       <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3 pb-2">
+        <CurrentGoal threadId={threadId} />
         <QueuedMessages threadId={threadId} />
         <Composer
           threadId={threadId}

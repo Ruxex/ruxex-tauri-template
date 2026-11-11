@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
+const useThreadGoal = vi.hoisted(() => vi.fn());
 const useThreadQueue = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
@@ -47,6 +48,7 @@ vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
   useRetainThreadState,
   useThreadConversation,
+  useThreadGoal,
   useThreadQueue,
   useRevertThread,
   useSendMessage,
@@ -112,6 +114,7 @@ describe("ConversationWorkspace", () => {
         nextCursor: null,
       },
     });
+    useThreadGoal.mockReturnValue({ data: { goal: null } });
     revertMutation.mockReset();
     revertMutation.mockResolvedValue({});
     sendMutation.mockReset();
@@ -251,6 +254,37 @@ describe("ConversationWorkspace", () => {
     );
     expect(screen.queryByText("Queued messages")).toBeNull();
     expect(screen.getByText("Queued prompt")).toBeTruthy();
+  });
+
+  it("shows the current goal above the composer on the left", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    useThreadGoal.mockReturnValueOnce({
+      data: {
+        goal: {
+          threadId: "thread-1",
+          objective: "Ship the chat redesign",
+          status: "active",
+          tokenBudget: null,
+          tokensUsed: 0,
+          timeUsedSeconds: 0,
+          createdAt: 0,
+          updatedAt: 0,
+        },
+      },
+    });
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    const goal = screen.getByRole("region", { name: "Current goal" });
+    const composer = screen.getByTestId("composer");
+
+    expect(goal.compareDocumentPosition(composer)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(goal.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["flex", "justify-start"]),
+    );
+    expect(screen.getByText("Ship the chat redesign")).toBeTruthy();
   });
 
   it("does not fetch when a turn completes", async () => {

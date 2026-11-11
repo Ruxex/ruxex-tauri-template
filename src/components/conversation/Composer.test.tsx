@@ -514,7 +514,7 @@ describe("Composer", () => {
     expect(
       (screen.getByLabelText("Message") as HTMLTextAreaElement).value,
     ).toBe("Ship the redesign");
-    fireEvent.click(screen.getByRole("button", { name: "Set goal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() =>
       expect(goalMutation).toHaveBeenCalledWith({
@@ -541,6 +541,31 @@ describe("Composer", () => {
     expect(
       screen.getByRole("status", { name: "Plan mode active" }),
     ).toBeTruthy();
+  });
+
+  it("allows goal mode to be dismissed from its active indicator", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+    fireEvent.click(screen.getByLabelText("Composer options"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
+
+    const activeGoal = screen.getByRole("status", {
+      name: "Goal mode active",
+    });
+    expect(
+      screen.getByRole("button", { name: "Disable goal mode" }),
+    ).toBeTruthy();
+    expect(activeGoal.className).toContain("group");
+    expect(activeGoal.firstElementChild).toBe(
+      screen.getByRole("button", { name: "Disable goal mode" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Disable goal mode" }));
+
+    expect(
+      screen.queryByRole("status", { name: "Goal mode active" }),
+    ).toBeNull();
   });
 
   it("sends a selected image alongside the text input", async () => {
@@ -720,7 +745,7 @@ describe("Composer", () => {
     });
     fireEvent.click(screen.getByLabelText("Composer options"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
-    fireEvent.click(screen.getByRole("button", { name: "Set goal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => expect(goalMutation).toHaveBeenCalled());
     expect(goalMutation).toHaveBeenCalledWith({
@@ -729,6 +754,9 @@ describe("Composer", () => {
       status: "active",
     });
     expect(sendMutation).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("status", { name: "Goal mode active" }),
+    ).toBeNull();
   });
 
   it("uses the first model and medium effort when no selection was saved", async () => {

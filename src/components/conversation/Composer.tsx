@@ -280,6 +280,8 @@ export function Composer({
           status: "active",
         });
         setMessage("");
+        setGoalMode(false);
+        editorRef.current?.focus();
         resetAttachment();
         return;
       }
@@ -399,9 +401,17 @@ export function Composer({
                 {goalMode && (
                   <span
                     aria-label="Goal mode active"
-                    className="badge badge-primary badge-sm"
+                    className="badge badge-primary badge-sm group gap-1"
                     role="status"
                   >
+                    <button
+                      aria-label="Disable goal mode"
+                      className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      onClick={() => setGoalMode(false)}
+                      type="button"
+                    >
+                      <XMarkIcon aria-hidden="true" className="size-3" />
+                    </button>
                     Goal
                   </span>
                 )}
@@ -453,13 +463,11 @@ export function Composer({
                 aria-label={
                   isPending
                     ? "Working…"
-                    : goalMode
-                      ? "Set goal"
-                      : mode === "queue"
-                        ? "Queue"
-                        : mode === "steer"
-                          ? "Steer"
-                          : "Send"
+                    : mode === "queue"
+                      ? "Queue"
+                      : mode === "steer"
+                        ? "Steer"
+                        : "Send"
                 }
                 className="btn btn-primary btn-sm join-item"
                 type="submit"
@@ -471,13 +479,11 @@ export function Composer({
                 />
                 {isPending
                   ? "Working…"
-                  : goalMode
-                    ? "Set goal"
-                    : mode === "queue"
-                      ? "Queue"
-                      : mode === "steer"
-                        ? "Steer"
-                        : "Send"}
+                  : mode === "queue"
+                    ? "Queue"
+                    : mode === "steer"
+                      ? "Steer"
+                      : "Send"}
               </button>
               <SubmissionModeMenu
                 activeTurnId={activeTurnId}
