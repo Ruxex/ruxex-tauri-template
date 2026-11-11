@@ -45,6 +45,24 @@ describe("SkillIcon", () => {
     );
   });
 
+  it("keeps a loaded interface icon inside a fixed non-shrinking frame", async () => {
+    readLocalMarketplaceAsset.mockResolvedValueOnce(
+      "data:image/svg+xml;base64,AA==",
+    );
+
+    render(<SkillIcon className="size-6 shrink-0" skill={skill} />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("img", { name: "documents icon" })).toBeTruthy(),
+    );
+
+    const frame = screen.getByTestId("skill-icon-frame");
+    expect(frame.className).toContain("size-6");
+    expect(frame.className).toContain("shrink-0");
+    expect(frame.className).toContain("overflow-hidden");
+    expect(screen.getByRole("img").className).toContain("size-full");
+  });
+
   it("falls back to the large icon when no small icon is available", async () => {
     readLocalMarketplaceAsset.mockResolvedValueOnce(
       "data:image/svg+xml;base64,AA==",

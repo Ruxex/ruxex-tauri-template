@@ -32,11 +32,16 @@ export function SkillIcon({ skill, className = "size-5" }: SkillIconProps) {
 
   const displayName = interfaceData?.displayName ?? skill.name;
   return (
-    <MarketplaceAssetImage
-      alt={`${displayName} icon`}
-      className={className}
-      localSrc={localSource}
-      src={remoteSource}
-    />
+    <span
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}
+      data-testid="skill-icon-frame"
+    >
+      <MarketplaceAssetImage
+        alt={`${displayName} icon`}
+        className="size-full object-contain"
+        localSrc={localSource}
+        src={remoteSource}
+      />
+    </span>
   );
 }
