@@ -3,6 +3,7 @@ import {
   ArrowsPointingInIcon,
   FlagIcon,
 } from "@heroicons/react/24/outline";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import type { v2 } from "../../protocol";
 import { SkillIcon } from "../common/SkillIcon";
@@ -16,6 +17,7 @@ type SlashCommandPaletteProps = {
   skillsError?: string | null;
   onSelect: (command: SlashCommandId) => void;
   onSelectSkill?: (skill: v2.SkillMetadata) => void;
+  onDismiss?: () => void;
 };
 
 const commandIcons = {
@@ -32,6 +34,7 @@ export function SlashCommandPalette({
   skillsError = null,
   onSelect,
   onSelectSkill,
+  onDismiss,
 }: SlashCommandPaletteProps) {
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCommands = slashCommands.filter((command) =>
@@ -50,12 +53,82 @@ export function SlashCommandPalette({
       .toLowerCase()
       .includes(normalizedQuery),
   );
+  const options: Array<
+    | { kind: "command"; command: (typeof visibleCommands)[number] }
+    | { kind: "skill"; skill: (typeof visibleSkills)[number] }
+  > = [
+    ...visibleCommands.map((command) => ({
+      kind: "command" as const,
+      command,
+    })),
+    ...visibleSkills.map((skill) => ({ kind: "skill" as const, skill })),
+  ];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const highlightedIndex = options.length
+    ? Math.min(activeIndex, options.length - 1)
+    : 0;
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    menuRef.current?.focus();
+  }, []);
+
+  function selectOption(index: number) {
+    const option = options[index];
+    if (disabled || !option) {
+      return;
+    }
+    if (option.kind === "command") {
+      onSelect(option.command.id);
+    } else {
+      onSelectSkill?.(option.skill);
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onDismiss?.();
+      return;
+    }
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    if (!options.length || disabled) {
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex(
+        (current) => (current + direction + options.length) % options.length,
+      );
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      selectOption(highlightedIndex);
+    }
+  }
+
+  function optionProps(index: number) {
+    const active = index === highlightedIndex;
+    return {
+      className: active ? "active" : undefined,
+      "data-active": active ? "true" : undefined,
+      onMouseEnter: () => setActiveIndex(index),
+      tabIndex: -1,
+    };
+  }
 
   return (
     <div
       aria-label="Slash commands"
       className="mb-2 max-h-72 overflow-y-auto rounded-box border border-base-300 bg-base-200/60 p-2"
+      onKeyDown={handleKeyDown}
       role="menu"
+      ref={menuRef}
+      tabIndex={-1}
     >
       <section aria-labelledby="slash-commands-heading">
         <h3
@@ -65,12 +138,13 @@ export function SlashCommandPalette({
           Commands
         </h3>
         <ul className="menu menu-vertical w-full gap-1 p-0">
-          {visibleCommands.map((command) => {
+          {visibleCommands.map((command, index) => {
             const Icon = commandIcons[command.id];
             return (
               <li key={command.id}>
                 <button
                   aria-label={command.label}
+                  {...optionProps(index)}
                   disabled={disabled}
                   onClick={() => onSelect(command.id)}
                   role="menuitem"
@@ -113,15 +187,17 @@ export function SlashCommandPalette({
         )}
         {!skillsLoading && !skillsError && skills.length > 0 && (
           <ul className="menu menu-vertical w-full gap-1 p-0">
-            {visibleSkills.map((skill) => {
+            {visibleSkills.map((skill, skillIndex) => {
               const description =
                 skill.interface?.shortDescription ||
                 skill.shortDescription ||
                 skill.description;
+              const index = visibleCommands.length + skillIndex;
               return (
                 <li key={skill.path}>
                   <button
                     aria-label={skill.name}
+                    {...optionProps(index)}
                     disabled={disabled || !onSelectSkill}
                     onClick={() => onSelectSkill?.(skill)}
                     role="menuitem"

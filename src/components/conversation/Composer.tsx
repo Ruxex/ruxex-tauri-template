@@ -237,6 +237,7 @@ export function Composer({
         await compact.mutateAsync({ threadId });
       }
       setMessage("");
+      editorRef.current?.focus();
     } catch {
       // Mutation state renders the error below the composer.
     }
@@ -317,13 +318,11 @@ export function Composer({
   }
 
   return (
-    <form
-      className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
-      onSubmit={(event) => void handleSubmit(event)}
-    >
+    <div>
       {showSlashCommands && (
         <SlashCommandPalette
           disabled={isPending}
+          onDismiss={() => editorRef.current?.focus()}
           onSelectSkill={handleSlashSkillSelect}
           onSelect={(command) => void handleSlashCommandSelect(command)}
           query={slashCommandInput?.query}
@@ -332,123 +331,145 @@ export function Composer({
           skillsLoading={skills.isLoading}
         />
       )}
-      <ComposerMessageInput
-        disabled={isPending}
-        onChange={setMessage}
-        onEditorReady={(element) => {
-          editorRef.current = element;
-        }}
-        onKeyDown={handleMessageKeyDown}
-        placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
-        value={message}
-      />
-      <input
-        ref={attachmentInput}
-        accept="image/*"
-        className="hidden"
-        onChange={handleAttachmentChange}
-        type="file"
-        aria-label="Image attachment"
-      />
-      {imageFile && (
-        <AttachmentPreview
+      <form
+        className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
+        onSubmit={(event) => void handleSubmit(event)}
+      >
+        <ComposerMessageInput
           disabled={isPending}
-          file={imageFile}
-          onRemove={clearAttachment}
+          onChange={setMessage}
+          onEditorReady={(element) => {
+            editorRef.current = element;
+          }}
+          onKeyDown={handleMessageKeyDown}
+          placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
+          value={message}
         />
-      )}
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <ComposerOptions
+        <input
+          ref={attachmentInput}
+          accept="image/*"
+          className="hidden"
+          onChange={handleAttachmentChange}
+          type="file"
+          aria-label="Image attachment"
+        />
+        {imageFile && (
+          <AttachmentPreview
             disabled={isPending}
-            goalMode={goalMode}
-            onGoalModeChange={() => {
-              setGoalMode((value) => !value);
-              setSelectedSkill(null);
-            }}
-            onPlanModeChange={() => setPlanMode((value) => !value)}
-            onAttach={() => attachmentInput.current?.click()}
-            planMode={planMode}
+            file={imageFile}
+            onRemove={clearAttachment}
           />
-          {selectedSkill && (
-            <span
-              aria-label={`Selected skill: ${selectedSkill.name}`}
-              className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
-              role="status"
-            >
-              <SkillIcon className="size-3.5" skill={selectedSkill} />
-              <span className="truncate">{selectedSkill.name}</span>
-              <button
-                aria-label={`Remove skill ${selectedSkill.name}`}
-                className="btn btn-ghost btn-xs btn-circle -mr-1 size-5 min-h-5"
-                type="button"
-                onClick={() => setSelectedSkill(null)}
-              >
-                <XMarkIcon aria-hidden="true" className="size-3" />
-              </button>
-            </span>
-          )}
-          {(goalMode || planMode) && (
-            <fieldset
-              aria-label="Active composer modes"
-              className="flex flex-wrap items-center gap-1"
-            >
-              {goalMode && (
-                <span
-                  aria-label="Goal mode active"
-                  className="badge badge-primary badge-sm"
-                  role="status"
-                >
-                  Goal
-                </span>
-              )}
-              {planMode && (
-                <span
-                  aria-label="Plan mode active"
-                  className="badge badge-secondary badge-sm"
-                  role="status"
-                >
-                  Plan
-                </span>
-              )}
-            </fieldset>
-          )}
-          <PermissionMenu
-            disabled={isPending}
-            mode={permissionMode}
-            onModeChange={handlePermissionChange}
-          />
-        </div>
-        <div className="ml-auto flex min-w-0 items-center gap-2">
-          <ComposerSettings
-            collaborationModes={collaborationModes.data?.data ?? []}
-            collaborationModeName={collaborationModeName}
-            disabled={isPending}
-            effort={effort}
-            model={model}
-            models={models.data?.data ?? []}
-            onEffortChange={handleEffortChange}
-            onCollaborationModeChange={handleCollaborationModeChange}
-            onModelChange={handleModelChange}
-          />
-          {activeTurnId && (
-            <button
-              aria-label="Stop"
-              className="btn btn-error btn-sm btn-outline btn-square"
-              title="Stop"
-              type="button"
-              onClick={() =>
-                void interrupt.mutateAsync({ threadId, turnId: activeTurnId })
-              }
+        )}
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <ComposerOptions
               disabled={isPending}
-            >
-              <StopIcon aria-hidden="true" className="size-4" />
-            </button>
-          )}
-          <div className="join">
-            <button
-              aria-label={
-                isPending
+              goalMode={goalMode}
+              onGoalModeChange={() => {
+                setGoalMode((value) => !value);
+                setSelectedSkill(null);
+              }}
+              onPlanModeChange={() => setPlanMode((value) => !value)}
+              onAttach={() => attachmentInput.current?.click()}
+              planMode={planMode}
+            />
+            {selectedSkill && (
+              <span
+                aria-label={`Selected skill: ${selectedSkill.name}`}
+                className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
+                role="status"
+              >
+                <SkillIcon className="size-3.5" skill={selectedSkill} />
+                <span className="truncate">{selectedSkill.name}</span>
+                <button
+                  aria-label={`Remove skill ${selectedSkill.name}`}
+                  className="btn btn-ghost btn-xs btn-circle -mr-1 size-5 min-h-5"
+                  type="button"
+                  onClick={() => setSelectedSkill(null)}
+                >
+                  <XMarkIcon aria-hidden="true" className="size-3" />
+                </button>
+              </span>
+            )}
+            {(goalMode || planMode) && (
+              <fieldset
+                aria-label="Active composer modes"
+                className="flex flex-wrap items-center gap-1"
+              >
+                {goalMode && (
+                  <span
+                    aria-label="Goal mode active"
+                    className="badge badge-primary badge-sm"
+                    role="status"
+                  >
+                    Goal
+                  </span>
+                )}
+                {planMode && (
+                  <span
+                    aria-label="Plan mode active"
+                    className="badge badge-secondary badge-sm"
+                    role="status"
+                  >
+                    Plan
+                  </span>
+                )}
+              </fieldset>
+            )}
+            <PermissionMenu
+              disabled={isPending}
+              mode={permissionMode}
+              onModeChange={handlePermissionChange}
+            />
+          </div>
+          <div className="ml-auto flex min-w-0 items-center gap-2">
+            <ComposerSettings
+              collaborationModes={collaborationModes.data?.data ?? []}
+              collaborationModeName={collaborationModeName}
+              disabled={isPending}
+              effort={effort}
+              model={model}
+              models={models.data?.data ?? []}
+              onEffortChange={handleEffortChange}
+              onCollaborationModeChange={handleCollaborationModeChange}
+              onModelChange={handleModelChange}
+            />
+            {activeTurnId && (
+              <button
+                aria-label="Stop"
+                className="btn btn-error btn-sm btn-outline btn-square"
+                title="Stop"
+                type="button"
+                onClick={() =>
+                  void interrupt.mutateAsync({ threadId, turnId: activeTurnId })
+                }
+                disabled={isPending}
+              >
+                <StopIcon aria-hidden="true" className="size-4" />
+              </button>
+            )}
+            <div className="join">
+              <button
+                aria-label={
+                  isPending
+                    ? "Working…"
+                    : goalMode
+                      ? "Set goal"
+                      : mode === "queue"
+                        ? "Queue"
+                        : mode === "steer"
+                          ? "Steer"
+                          : "Send"
+                }
+                className="btn btn-primary btn-sm join-item"
+                type="submit"
+                disabled={isPending || (!message.trim() && !imageFile)}
+              >
+                <SubmitIcon
+                  aria-hidden="true"
+                  className={`size-4 ${isPending ? "animate-spin" : ""}`}
+                />
+                {isPending
                   ? "Working…"
                   : goalMode
                     ? "Set goal"
@@ -456,58 +477,41 @@ export function Composer({
                       ? "Queue"
                       : mode === "steer"
                         ? "Steer"
-                        : "Send"
-              }
-              className="btn btn-primary btn-sm join-item"
-              type="submit"
-              disabled={isPending || (!message.trim() && !imageFile)}
-            >
-              <SubmitIcon
-                aria-hidden="true"
-                className={`size-4 ${isPending ? "animate-spin" : ""}`}
+                        : "Send"}
+              </button>
+              <SubmissionModeMenu
+                activeTurnId={activeTurnId}
+                disabled={isPending}
+                mode={mode}
+                onModeChange={setMode}
               />
-              {isPending
-                ? "Working…"
-                : goalMode
-                  ? "Set goal"
-                  : mode === "queue"
-                    ? "Queue"
-                    : mode === "steer"
-                      ? "Steer"
-                      : "Send"}
-            </button>
-            <SubmissionModeMenu
-              activeTurnId={activeTurnId}
-              disabled={isPending}
-              mode={mode}
-              onModeChange={setMode}
-            />
+            </div>
           </div>
         </div>
-      </div>
-      {(attachmentError ||
-        send.error ||
-        archive.error ||
-        compact.error ||
-        steer.error ||
-        queue.error ||
-        interrupt.error ||
-        setGoal.error ||
-        updateSettings.error) && (
-        <p className="mt-2 text-sm text-error">
-          {attachmentError ||
-            formatErrorMessage(
-              send.error ||
-                archive.error ||
-                compact.error ||
-                steer.error ||
-                queue.error ||
-                interrupt.error ||
-                setGoal.error ||
-                updateSettings.error,
-            )}
-        </p>
-      )}
-    </form>
+        {(attachmentError ||
+          send.error ||
+          archive.error ||
+          compact.error ||
+          steer.error ||
+          queue.error ||
+          interrupt.error ||
+          setGoal.error ||
+          updateSettings.error) && (
+          <p className="mt-2 text-sm text-error">
+            {attachmentError ||
+              formatErrorMessage(
+                send.error ||
+                  archive.error ||
+                  compact.error ||
+                  steer.error ||
+                  queue.error ||
+                  interrupt.error ||
+                  setGoal.error ||
+                  updateSettings.error,
+              )}
+          </p>
+        )}
+      </form>
+    </div>
   );
 }

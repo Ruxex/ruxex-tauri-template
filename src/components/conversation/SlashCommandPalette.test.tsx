@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { v2 } from "../../protocol";
@@ -39,6 +45,22 @@ describe("SlashCommandPalette", () => {
 
     fireEvent.click(screen.getByRole("menuitem", { name: "Compact" }));
 
+    expect(onSelect).toHaveBeenCalledWith("compact");
+  });
+
+  it("focuses the palette and selects the highlighted command with arrow keys", async () => {
+    const onSelect = vi.fn();
+    render(<SlashCommandPalette disabled={false} onSelect={onSelect} />);
+
+    const palette = screen.getByRole("menu", { name: "Slash commands" });
+    await waitFor(() => expect(document.activeElement).toBe(palette));
+
+    fireEvent.keyDown(palette, { key: "ArrowDown" });
+    expect(
+      screen.getByRole("menuitem", { name: "Compact" }).dataset.active,
+    ).toBe("true");
+
+    fireEvent.keyDown(palette, { key: "Enter" });
     expect(onSelect).toHaveBeenCalledWith("compact");
   });
 

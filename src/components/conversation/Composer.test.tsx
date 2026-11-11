@@ -199,7 +199,7 @@ describe("Composer", () => {
     expect(stop.getAttribute("title")).toBe("Stop");
   });
 
-  it("shows slash commands when the message starts with a slash", async () => {
+  it("shows slash commands above and outside the composer form", async () => {
     const { Composer } = await import("./Composer");
 
     render(<Composer threadId="thread-1" activeTurnId={null} />);
@@ -207,9 +207,12 @@ describe("Composer", () => {
       target: { value: "/" },
     });
 
+    const palette = screen.getByRole("menu", { name: "Slash commands" });
+    expect(palette.closest("form")).toBeNull();
     expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(palette));
   });
 
   it("hides product-disabled Skills from the slash palette", async () => {
