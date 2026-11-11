@@ -60,6 +60,7 @@ rust_xlsxwriter = "0.92"
 zip = { version = "7.4.0", default-features = false, features = ["deflate"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha2 = "0.10"
 url = "2"
 tauri = { version = "2.8.0", features = [] }
 # Keep the proc-macro API aligned with the selected Tauri release.

@@ -1,4 +1,6 @@
 use std::ffi::OsString;
+#[cfg(unix)]
+use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -185,6 +187,68 @@ async fn connect_unix_socket(
     .await
 }
 
+#[cfg(unix)]
+fn client_physical_socket_path(data_home: &Path) -> Result<PathBuf, String> {
+    use sha2::Digest;
+    use sha2::Sha256;
+    use std::os::unix::ffi::OsStrExt;
+
+    let logical_path = data_home
+        .join("app-server-control")
+        .join("app-server-control.sock");
+    let parent = logical_path
+        .parent()
+        .ok_or_else(|| "App Server socket path has no parent".to_string())?;
+    let canonical_parent = canonicalize_existing_prefix(parent)?;
+    let canonical_path = canonical_parent.join(
+        logical_path
+            .file_name()
+            .ok_or_else(|| "App Server socket path has no filename".to_string())?,
+    );
+    let hash = Sha256::digest(canonical_path.as_os_str().as_bytes());
+    let temporary_root = std::fs::canonicalize("/tmp")
+        .map_err(|error| format!("failed to resolve temporary directory: {error}"))?;
+    let uid = unsafe { libc::geteuid() };
+    Ok(temporary_root
+        .join(format!("ruxex-daemon-{uid}"))
+        .join(format!("{hash:x}")))
+}
+
+#[cfg(unix)]
+fn canonicalize_existing_prefix(path: &Path) -> Result<PathBuf, String> {
+    let mut current = path.to_path_buf();
+    let mut missing = Vec::<OsString>::new();
+    while !current.exists() {
+        let name = current
+            .file_name()
+            .ok_or_else(|| "App Server socket path has no existing ancestor".to_string())?;
+        missing.push(name.to_os_string());
+        current.pop();
+    }
+
+    let mut canonical = std::fs::canonicalize(&current)
+        .map_err(|error| format!("failed to canonicalize App Server socket path: {error}"))?;
+    for name in missing.iter().rev() {
+        canonical.push(name);
+    }
+    Ok(canonical)
+}
+
+#[cfg(unix)]
+async fn client_socket_peer_pid(socket_path: &Path) -> Result<Option<u32>, String> {
+    let stream = tokio::net::UnixStream::connect(socket_path)
+        .await
+        .map_err(|error| format!("failed to connect to App Server socket: {error}"))?;
+    stream
+        .peer_cred()
+        .map_err(|error| format!("failed to inspect App Server socket owner: {error}"))?
+        .pid()
+        .map(|pid| {
+            u32::try_from(pid).map_err(|_| "App Server socket owner PID is invalid".to_string())
+        })
+        .transpose()
+}
+
 fn desktop_skill_policy_request(
     name: &str,
     index: usize,
@@ -296,6 +360,12 @@ async fn connect_daemon_endpoint(
     let socket_path = app_server_control_socket_path(&home).map_err(|error| {
         command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
     })?;
+    #[cfg(unix)]
+    let physical_socket_path = AbsolutePathBuf::from_absolute_path(
+        client_physical_socket_path(&home)
+            .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?,
+    )
+    .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error.to_string()))?;
     let (client, effective_socket_path, bootstrapped_version, connected_version) =
         match connect_unix_socket(socket_path.clone(), config).await {
             Ok(client) => {
@@ -308,36 +378,65 @@ async fn connect_daemon_endpoint(
                 )
             }
             Err(_) => {
-                let lifecycle = run_desktop_app_server_lifecycle(LifecycleCommand::Start)
-                    .await
-                    .map_err(|error| {
-                        command_error(
-                            DesktopAppServerErrorKind::Lifecycle,
-                            format!(
-                                "failed to start the {} provider app-server: {error:#}",
-                                config.provider_factory.1.provider_kind
-                            ),
-                        )
-                    })?;
-                let effective_socket_path = AbsolutePathBuf::from_absolute_path(
-                    lifecycle.socket_path.clone(),
-                )
-                .map_err(|error| {
-                    command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
-                })?;
-                let client = connect_unix_socket(effective_socket_path.clone(), config)
-                    .await
-                    .map_err(|error| {
-                        command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
-                    })?;
-                (
-                    AppServerClient::Remote(client),
-                    effective_socket_path,
-                    lifecycle
-                        .app_server_version
-                        .or_else(|| Some("0.4.2".to_string())),
-                    None,
-                )
+                #[cfg(unix)]
+                let physical_connection = if physical_socket_path.as_path() != socket_path.as_path()
+                {
+                    connect_unix_socket(physical_socket_path.clone(), config)
+                        .await
+                        .ok()
+                } else {
+                    None
+                };
+                #[cfg(not(unix))]
+                let physical_connection: Option<RemoteAppServerClient> = None;
+                if let Some(client) = physical_connection {
+                    let connected_version = client.server_version().map(str::to_owned);
+                    (
+                        AppServerClient::Remote(client),
+                        #[cfg(unix)]
+                        physical_socket_path,
+                        #[cfg(not(unix))]
+                        socket_path,
+                        None,
+                        connected_version,
+                    )
+                } else {
+                    let lifecycle = run_desktop_app_server_lifecycle(LifecycleCommand::Start)
+                        .await
+                        .map_err(|error| {
+                            command_error(
+                                DesktopAppServerErrorKind::Lifecycle,
+                                format!(
+                                    "failed to start the {} provider app-server: {error:#}",
+                                    config.provider_factory.1.provider_kind
+                                ),
+                            )
+                        })?;
+                    let effective_socket_path =
+                        AbsolutePathBuf::from_absolute_path(lifecycle.socket_path.clone())
+                            .map_err(|error| {
+                                command_error(
+                                    DesktopAppServerErrorKind::Initialization,
+                                    error.to_string(),
+                                )
+                            })?;
+                    let client = connect_unix_socket(effective_socket_path.clone(), config)
+                        .await
+                        .map_err(|error| {
+                            command_error(
+                                DesktopAppServerErrorKind::Initialization,
+                                error.to_string(),
+                            )
+                        })?;
+                    (
+                        AppServerClient::Remote(client),
+                        effective_socket_path,
+                        lifecycle
+                            .app_server_version
+                            .or_else(|| Some("0.4.2".to_string())),
+                        None,
+                    )
+                }
             }
         };
     let status = AppServerStatus {
@@ -498,33 +597,49 @@ async fn connect_local_endpoint(
 async fn force_stop_app_server_daemon() -> CommandResult<LifecycleOutput> {
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-    let pid_file = [
-        home.join("app-server-daemon/daemon.pid"),
-        home.join("app-server.pid"),
-    ]
-    .into_iter()
-    .find(|path| path.is_file())
-    .ok_or_else(|| {
-        command_error(
-            DesktopAppServerErrorKind::Lifecycle,
-            "App Server daemon is not running (no PID file was found)",
-        )
-    })?;
-    let pid_contents = tokio::fs::read_to_string(&pid_file)
-        .await
-        .map_err(|error| {
+    #[cfg(unix)]
+    let physical_socket_path = client_physical_socket_path(&home).ok();
+    #[cfg(unix)]
+    let socket_owner_pid = match physical_socket_path.as_deref() {
+        Some(path) => client_socket_peer_pid(path).await.ok().flatten(),
+        None => None,
+    };
+    #[cfg(not(unix))]
+    let socket_owner_pid = None;
+
+    let pid = if let Some(pid) = socket_owner_pid {
+        pid
+    } else {
+        let pid_file = [
+            home.join("app-server-daemon/daemon.pid"),
+            home.join("app-server.pid"),
+        ]
+        .into_iter()
+        .find(|path| path.is_file())
+        .ok_or_else(|| {
             command_error(
                 DesktopAppServerErrorKind::Lifecycle,
-                format!("failed to read App Server daemon PID file: {error}"),
+                "App Server daemon is not running (no live socket or PID file was found)",
             )
         })?;
-    let record: AppServerPidRecord = serde_json::from_str(&pid_contents).map_err(|error| {
-        command_error(
-            DesktopAppServerErrorKind::Lifecycle,
-            format!("failed to decode App Server daemon PID file: {error}"),
-        )
-    })?;
-    force_terminate_process(record.pid).map_err(|error| {
+        let pid_contents = tokio::fs::read_to_string(&pid_file)
+            .await
+            .map_err(|error| {
+                command_error(
+                    DesktopAppServerErrorKind::Lifecycle,
+                    format!("failed to read App Server daemon PID file: {error}"),
+                )
+            })?;
+        let record: AppServerPidRecord = serde_json::from_str(&pid_contents).map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Lifecycle,
+                format!("failed to decode App Server daemon PID file: {error}"),
+            )
+        })?;
+        record.pid
+    };
+
+    force_terminate_process(pid).map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Lifecycle,
             format!("failed to force terminate App Server daemon: {error}"),
@@ -748,6 +863,34 @@ mod tests {
         DesktopAppServerEvent, HOST_APP_SERVER_DAEMON_MODE_ARG, desktop_app_server_daemon_args,
         parse_app_server_mode, resolve_in_process_paths,
     };
+
+    #[cfg(unix)]
+    #[test]
+    fn client_physical_socket_path_survives_data_home_removal() {
+        let home = std::env::temp_dir().join(format!(
+            "ruxex-client-socket-path-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("test clock should be after the Unix epoch")
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(home.join("app-server-control"))
+            .expect("data home should be created");
+        let before = super::client_physical_socket_path(&home).expect("physical socket path");
+        std::fs::remove_dir_all(&home).expect("data home should be removed");
+        let after = super::client_physical_socket_path(&home).expect("physical socket path");
+
+        assert_eq!(before, after);
+        assert!(!after.starts_with(&home));
+        assert_eq!(
+            after
+                .file_name()
+                .and_then(|name| name.to_str())
+                .map(str::len),
+            Some(64)
+        );
+    }
 
     #[cfg(feature = "example")]
     use super::initialize_in_process_runtime;
