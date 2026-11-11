@@ -4,6 +4,7 @@ build/
 logs/
 artifacts/e2e/
 .local-dev/
+/.wdio/
 /.d/
 /.m/
 target/
