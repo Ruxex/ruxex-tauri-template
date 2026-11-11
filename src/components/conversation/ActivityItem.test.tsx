@@ -38,7 +38,7 @@ describe("ActivityItem", () => {
     expect(screen.getByLabelText(label)).toBeTruthy();
   });
 
-  it("uses a user-facing activity type label instead of the protocol type", () => {
+  it("does not repeat the command activity type beside Command", () => {
     render(
       <ActivityItem
         item={{
@@ -53,7 +53,8 @@ describe("ActivityItem", () => {
       />,
     );
 
-    expect(screen.getByText("Command execution")).toBeTruthy();
+    expect(screen.queryByText("Command execution")).toBeNull();
+    expect(screen.getByText("Command")).toBeTruthy();
     expect(screen.queryByText("commandExecution")).toBeNull();
   });
 
