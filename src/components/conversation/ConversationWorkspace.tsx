@@ -187,7 +187,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     !sendMessage.isPending;
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[980px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
+    <div className="mx-auto flex min-h-full w-full max-w-[800px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
       {turnError && (
         <p className="alert alert-error" role="alert">
           <span>Turn failed: {turnError.message}</span>

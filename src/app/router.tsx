@@ -19,6 +19,7 @@ import { SchedulesPage } from "../pages/SchedulesPage";
 import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ThreadPage } from "../pages/ThreadPage";
+import { VersionPage } from "../pages/VersionPage";
 
 export const router = createHashRouter([
   { path: "/quick-panel", element: <QuickPanelPage /> },
@@ -44,6 +45,7 @@ export const router = createHashRouter([
           { path: "marketplaces", element: <MarketplaceSettingsPage /> },
           { path: "mcp-servers", element: <McpServersPage /> },
           { path: "account", element: <AccountPage /> },
+          { path: "version", element: <VersionPage /> },
         ],
       },
       { path: "schedules", element: <SchedulesPage /> },

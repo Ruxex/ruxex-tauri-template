@@ -53,7 +53,7 @@ export function UiPreferencesCard({
                 <fieldset
                   aria-label="Theme preset options"
                   aria-describedby="theme-preset-attribution"
-                  className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                  className="grid grid-cols-2 gap-2 sm:grid-cols-3"
                 >
                   <legend className="sr-only">Theme preset options</legend>
                   <p

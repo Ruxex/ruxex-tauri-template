@@ -45,11 +45,12 @@ describe("ui preferences", () => {
   });
 
   it("exposes the system and Ruxex built-in theme presets", () => {
-    expect(UI_THEME_PRESETS).toHaveLength(14);
+    expect(UI_THEME_PRESETS).toHaveLength(15);
     expect(UI_THEME_PRESETS.map((preset) => preset.label)).toEqual([
       "System",
       "Ruxex Light",
       "Ruxex Dark",
+      "Ruxex Ink & Mint",
       "VS Code Dark+",
       "GitHub Light",
       "GitHub Dark",
@@ -62,6 +63,17 @@ describe("ui preferences", () => {
       "Gruvbox Dark",
       "One Dark",
     ]);
+  });
+
+  it("exposes the optional Ink & Mint preset as a dark original palette", () => {
+    const inkAndMint = UI_THEME_PRESETS.find(
+      (preset) => preset.id === "ruxex-ink-mint",
+    );
+
+    expect(inkAndMint).toBeTruthy();
+    if (!inkAndMint) throw new Error("Ink & Mint theme preset missing");
+    expect(getUiThemePresetMode("ruxex-ink-mint")).toBe("dark");
+    expect(getUiThemePresetPreview(inkAndMint).primary).toBe("#4fd1c5");
   });
 
   it("keeps the default theme preview independent from the active CSS theme", () => {
@@ -88,6 +100,20 @@ describe("ui preferences", () => {
     expect(getUiThemePresetPreview(dracula).muted).not.toBe(
       getUiThemePresetPreview(dracula).card,
     );
+  });
+
+  it("uses a modern Ruxex palette for the default theme", () => {
+    const system = UI_THEME_PRESETS.find((preset) => preset.id === "system");
+
+    expect(system).toBeTruthy();
+    if (!system) throw new Error("System theme preset missing");
+    const lightPreview = getUiThemePresetPreview(system, "light");
+    expect(lightPreview.primary).toBe("#3b82f6");
+    expect(lightPreview.secondary).toBe("#8b5cf6");
+    expect(lightPreview.accent).toBe("#14b8a6");
+    expect(lightPreview.surface).toBe("#fefefe");
+    expect(lightPreview.primaryContent).toBe("#fefefe");
+    expect(getUiThemePresetPreview(system, "dark").primary).toBe("#60a5fa");
   });
 
   it("rejects a preference record from an unknown version", () => {

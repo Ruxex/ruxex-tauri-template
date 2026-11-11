@@ -17,9 +17,12 @@ type ActivityItemProps = {
 export const ActivityItem = memo(
   function ActivityItem({ item, loadArtifactPreview }: ActivityItemProps) {
     const presentation = getActivityPresentation(item.type);
+    const isCommandExecution = item.type === "commandExecution";
 
     return (
-      <details className="collapse collapse-arrow border border-base-300 bg-base-100">
+      <details
+        className={`collapse collapse-arrow bg-base-100 ${isCommandExecution ? "" : "border border-base-300"}`}
+      >
         <ActivitySummary item={item} presentation={presentation} />
         <div className="collapse-content">
           <ActivityDetails
@@ -30,7 +33,7 @@ export const ActivityItem = memo(
       </details>
     );
   },
-    (left, right) =>
-      areConversationViewItemsEqual(left.item, right.item) &&
-      left.loadArtifactPreview === right.loadArtifactPreview,
+  (left, right) =>
+    areConversationViewItemsEqual(left.item, right.item) &&
+    left.loadArtifactPreview === right.loadArtifactPreview,
 );

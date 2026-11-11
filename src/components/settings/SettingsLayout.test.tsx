@@ -335,13 +335,13 @@ describe("settings card layout", () => {
     expect(presetPopover?.className).toContain("absolute");
     expect(presetPopover?.className).toContain("top-full");
     expect(presetPopover?.className).toContain("z-[60]");
-    expect(presetGrid.className).toContain("grid-cols-2");
+    expect(presetGrid.className).toContain("sm:grid-cols-3");
     expect(
       within(presetGrid).getByText(
         "Theme palettes are inspired by third-party projects. Ruxex is not affiliated with or endorsed by those projects.",
       ),
     ).toBeTruthy();
-    expect(within(presetGrid).getAllByRole("button")).toHaveLength(14);
+    expect(within(presetGrid).getAllByRole("button")).toHaveLength(15);
     expect(
       within(presetGrid)
         .getByRole("button", { name: "GitHub Dark" })

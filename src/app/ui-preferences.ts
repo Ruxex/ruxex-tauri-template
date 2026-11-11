@@ -60,6 +60,7 @@ export const UI_THEME_PRESET_IDS = [
   "system",
   "ruxex-light",
   "ruxex-dark",
+  "ruxex-ink-mint",
   "vscode-dark",
   "github-light",
   "github-dark",
@@ -133,18 +134,19 @@ function createThemeColors({
 }
 
 const RUXEX_LIGHT_COLORS = createThemeColors({
-  base100: "#ffffff",
-  base200: "#f5f7fb",
-  base300: "#dbe3ef",
+  base100: "#fefefe",
+  base200: "#f6f8fc",
+  base300: "#dbe4f0",
   baseContent: "#172033",
-  primary: "#2563eb",
-  secondary: "#7c3aed",
-  accent: "#0d9488",
+  primary: "#3b82f6",
+  secondary: "#8b5cf6",
+  accent: "#14b8a6",
   neutral: "#334155",
-  info: "#0284c7",
-  success: "#16a34a",
-  warning: "#d97706",
-  error: "#dc2626",
+  info: "#0ea5e9",
+  success: "#22c55e",
+  warning: "#f59e0b",
+  error: "#ef4444",
+  coloredContent: "#fefefe",
 });
 
 const RUXEX_DARK_COLORS = createThemeColors({
@@ -163,10 +165,31 @@ const RUXEX_DARK_COLORS = createThemeColors({
   coloredContent: "#0f172a",
 });
 
+const RUXEX_INK_MINT_COLORS = createThemeColors({
+  base100: "#121a18",
+  base200: "#0d1412",
+  base300: "#22312c",
+  baseContent: "#e6efe9",
+  primary: "#4fd1c5",
+  secondary: "#f6ad55",
+  accent: "#fb7185",
+  neutral: "#718096",
+  info: "#63b3ed",
+  success: "#68d391",
+  warning: "#f6e05e",
+  error: "#fc8181",
+  coloredContent: "#13211d",
+});
+
 export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
   { id: "system", label: "System", colors: {} },
   { id: "ruxex-light", label: "Ruxex Light", colors: RUXEX_LIGHT_COLORS },
   { id: "ruxex-dark", label: "Ruxex Dark", colors: RUXEX_DARK_COLORS },
+  {
+    id: "ruxex-ink-mint",
+    label: "Ruxex Ink & Mint",
+    colors: RUXEX_INK_MINT_COLORS,
+  },
   {
     id: "vscode-dark",
     label: "VS Code Dark+",
@@ -376,6 +399,7 @@ export const UI_THEME_PRESETS: readonly UiThemePreset[] = [
 
 const DARK_THEME_PRESET_IDS = new Set<UiThemePresetId>([
   "ruxex-dark",
+  "ruxex-ink-mint",
   "vscode-dark",
   "github-dark",
   "dracula",

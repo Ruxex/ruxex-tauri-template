@@ -177,7 +177,7 @@ describe("ConversationWorkspace", () => {
       expect.arrayContaining([
         "min-h-full",
         "w-full",
-        "max-w-[980px]",
+        "max-w-[800px]",
         "mx-auto",
       ]),
     );

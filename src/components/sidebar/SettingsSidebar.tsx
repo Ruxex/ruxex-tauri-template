@@ -5,6 +5,7 @@ import {
   PuzzlePieceIcon,
   ServerIcon,
   SparklesIcon,
+  TagIcon,
   UserCircleIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
@@ -129,6 +130,19 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               >
                 <WrenchScrewdriverIcon aria-hidden="true" className="size-4" />
                 MCP servers
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/version"
+              >
+                <TagIcon aria-hidden="true" className="size-4" />
+                Version
               </NavLink>
             </li>
             <li>

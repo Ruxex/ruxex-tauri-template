@@ -18,6 +18,12 @@ describe("router", () => {
     expect(matches?.at(-1)?.route.path).toBe("mcp-servers");
   });
 
+  it("resolves the version settings route", () => {
+    const matches = matchRoutes(router.routes, "/settings/version");
+
+    expect(matches?.at(-1)?.route.path).toBe("version");
+  });
+
   it("resolves plugin detail routes", () => {
     const matches = matchRoutes(
       router.routes,

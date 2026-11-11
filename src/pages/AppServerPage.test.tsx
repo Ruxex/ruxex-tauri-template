@@ -342,11 +342,24 @@ describe("SettingsSidebar AppServer navigation", () => {
     expect(screen.getByRole("separator")).toBeTruthy();
     expect(screen.getByRole("link", { name: "General" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Appearance" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Version" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Plugin marketplaces" }),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Models / Engines" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "App Server" })).toBeTruthy();
+  });
+
+  it("links to the Version settings section", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <SettingsSidebar onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Version" }).getAttribute("href"),
+    ).toBe("/settings/version");
   });
 
   it("links to the plugin marketplace settings section", () => {
