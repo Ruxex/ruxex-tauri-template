@@ -26,6 +26,56 @@ describe("app-server event query synchronization", () => {
     requestAppServerMethod.mockReset();
   });
 
+  it("updates the thread goal cache from goal update notifications", () => {
+    const queryClient = createQueryClient();
+    const goal = {
+      threadId: "thread-1",
+      objective: "Ship the redesign",
+      status: "active",
+      tokenBudget: null,
+      tokensUsed: 0,
+      timeUsedSeconds: 0,
+      createdAt: 0,
+      updatedAt: 0,
+    } as never;
+    const event = {
+      type: "serverNotification",
+      data: {
+        method: "thread/goal/updated",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          goal,
+        },
+      },
+    } as AppServerEvent;
+
+    synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
+
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      appServerQueryKeys.threadGoal("thread-1"),
+      { goal },
+    );
+  });
+
+  it("clears the thread goal cache from goal cleared notifications", () => {
+    const queryClient = createQueryClient();
+    const event: AppServerEvent = {
+      type: "serverNotification",
+      data: {
+        method: "thread/goal/cleared",
+        params: { threadId: "thread-1" },
+      },
+    };
+
+    synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
+
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      appServerQueryKeys.threadGoal("thread-1"),
+      { goal: null },
+    );
+  });
+
   it("patches metadata and thread-list caches for status changes", () => {
     const queryClient = createQueryClient();
     const event: AppServerEvent = {

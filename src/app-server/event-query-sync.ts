@@ -73,6 +73,18 @@ export function synchronizeAppServerQueries(
     case "thread/queue/changed":
       invalidateThreadQueue(queryClient, event.data.params.threadId);
       return Promise.resolve();
+    case "thread/goal/updated":
+      queryClient.setQueryData(
+        appServerQueryKeys.threadGoal(event.data.params.threadId),
+        { goal: event.data.params.goal },
+      );
+      return Promise.resolve();
+    case "thread/goal/cleared":
+      queryClient.setQueryData(
+        appServerQueryKeys.threadGoal(event.data.params.threadId),
+        { goal: null },
+      );
+      return Promise.resolve();
     case "turn/completed":
       return refreshThreadPreview(
         queryClient,
