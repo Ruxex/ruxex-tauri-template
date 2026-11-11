@@ -227,6 +227,9 @@ describe("ActivityItem", () => {
     const commandContent = screen.getByTestId("command-execution-content");
     const command = screen.getByTestId("command-execution-command");
     const result = screen.getByTestId("command-execution-result");
+    const collapseContent = commandContent
+      .closest("details")
+      ?.querySelector(".collapse-content");
 
     expect(commandContent.contains(command)).toBe(true);
     expect(commandContent.contains(result)).toBe(true);
@@ -235,6 +238,9 @@ describe("ActivityItem", () => {
     expect(result.className).toContain("border-t");
     expect(result.className).toContain("max-h-96");
     expect(result.className).toContain("overflow-y-auto");
+    expect(collapseContent?.className).toContain("pt-2");
+    expect(collapseContent?.className).toContain("pb-0");
+    expect(commandContent.className).not.toContain("mb-3");
     expect(command.className).not.toContain("bg-neutral");
     expect(screen.queryByText("/workspace")).toBeNull();
     expect(screen.getByRole("img", { name: "Command completed" })).toBeTruthy();

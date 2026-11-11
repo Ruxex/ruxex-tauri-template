@@ -24,7 +24,9 @@ export const ActivityItem = memo(
         className={`collapse collapse-arrow bg-base-100 ${isCommandExecution ? "" : "border border-base-300"}`}
       >
         <ActivitySummary item={item} presentation={presentation} />
-        <div className="collapse-content">
+        <div
+          className={`collapse-content ${isCommandExecution ? "pt-2 pb-0" : ""}`}
+        >
           <ActivityDetails
             item={item}
             loadArtifactPreview={loadArtifactPreview}
