@@ -72,6 +72,7 @@ pub(crate) struct PdfInspection {
     pub(crate) text: Vec<String>,
 }
 
+#[allow(dead_code)]
 pub(crate) fn create_pdf_bytes(pages: &[PdfPageSpec]) -> Result<Vec<u8>, String> {
     create_pdf_bytes_with_roots(pages, &[])
 }

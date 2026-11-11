@@ -31,6 +31,7 @@ impl ArtifactSection {
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
+#[allow(dead_code)]
 pub(crate) enum ArtifactElement {
     Text { value: String },
     Table { rows: Vec<Vec<String>> },
@@ -42,6 +43,7 @@ pub(crate) enum ArtifactElement {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub(crate) struct ArtifactAsset {
     pub(crate) id: String,
     pub(crate) mime_type: String,
