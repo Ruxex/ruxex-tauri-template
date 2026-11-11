@@ -211,6 +211,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         onReject={handleReject}
         onResolve={handleResolve}
         pendingRequests={pendingRequests}
+        turns={turns}
         workingTurnId={workingTurnId}
         workingStartedAt={workingStartedAt}
         completedTurn={completedTurn}

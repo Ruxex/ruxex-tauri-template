@@ -45,6 +45,10 @@ export type VolatileScenarioId =
   | "pending-user-input"
   | "pending-permissions"
   | "slow-stream"
+  | "long-stream-running"
+  | "long-stream-completed"
+  | "completed-turn-details"
+  | "conversation-minimap"
   | "queued-message"
   | "pending-mcp-elicitation"
   | "disconnect-recovery";
@@ -204,6 +208,30 @@ export const VOLATILE_SCENARIOS: readonly VolatileScenario[] = [
     count: 1,
     providerMarker: "example:long-stream:slow",
     screenshotName: "slow-stream.png",
+  },
+  {
+    id: "long-stream-running",
+    count: 1,
+    providerMarker: "example:long-stream:slow",
+    screenshotName: "long-stream-running.png",
+  },
+  {
+    id: "long-stream-completed",
+    count: 1,
+    providerMarker: "example:long-stream",
+    screenshotName: "long-stream-completed.png",
+  },
+  {
+    id: "completed-turn-details",
+    count: 1,
+    providerMarker: "example:workflow",
+    screenshotName: "completed-turn-details-collapsed.png",
+  },
+  {
+    id: "conversation-minimap",
+    count: 1,
+    providerMarker: "example:basic",
+    screenshotName: "conversation-minimap.png",
   },
   {
     id: "queued-message",

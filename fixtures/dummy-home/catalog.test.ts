@@ -46,10 +46,22 @@ describe("dummy home fixture catalog", () => {
     ).toBe(true);
   });
 
-  it("defines six active volatile scenarios and reserves MCP elicitation", () => {
+  it("defines active volatile scenarios and reserves MCP elicitation", () => {
     expect(
       VOLATILE_SCENARIOS.filter((scenario) => scenario.count > 0),
-    ).toHaveLength(6);
+    ).toHaveLength(10);
+    expect(
+      VOLATILE_SCENARIOS.filter((scenario) => scenario.count > 0).map(
+        (scenario) => scenario.id,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "long-stream-running",
+        "long-stream-completed",
+        "completed-turn-details",
+        "conversation-minimap",
+      ]),
+    );
     expect(
       VOLATILE_SCENARIOS.find(
         (scenario) => scenario.id === "pending-mcp-elicitation",

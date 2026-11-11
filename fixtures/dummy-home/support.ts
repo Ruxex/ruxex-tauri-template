@@ -7,6 +7,8 @@ import {
   type ProjectFixture,
 } from "./catalog";
 
+export const MINIMAP_TURN_COUNT = 7;
+
 export type ScenarioExpectation = {
   kind: "text" | "error" | "goal";
   value: string;
@@ -149,6 +151,65 @@ export async function sendComposerPrompt(prompt: string): Promise<void> {
   await message.waitForDisplayed({ timeout: 10_000 });
   await message.setValue(prompt);
   await sendComposerMessage();
+}
+
+export function minimapFixturePrompt(turn: number): string {
+  return `Fixture minimap message ${String(turn).padStart(2, "0")} example:basic`;
+}
+
+export async function sendMinimapConversation(): Promise<void> {
+  const expectation = {
+    kind: "text" as const,
+    value: "This is a fixed response from the dummy provider.",
+  };
+
+  await sendComposerPrompt(minimapFixturePrompt(1));
+  await waitForCompletedTurn(expectation);
+  for (let turn = 2; turn <= MINIMAP_TURN_COUNT; turn += 1) {
+    await sendFollowUp(minimapFixturePrompt(turn));
+    await waitForUserMessageCount(turn);
+    await waitForCompletedTurn(expectation);
+  }
+}
+
+export async function waitForUserMessageCount(count: number): Promise<void> {
+  await browser.waitUntil(
+    async () =>
+      (await $$(`[aria-label='Chat activity'] article.chat-end`)).length >=
+      count,
+    {
+      timeout: 15_000,
+      timeoutMsg: `Expected at least ${count} user messages in the conversation`,
+    },
+  );
+}
+
+export async function expandCompletedTurnDetails(): Promise<void> {
+  const details = $("[aria-label='Chat activity'] > details");
+  const summary = $("[aria-label='Chat activity'] > details > summary");
+  await details.waitForDisplayed({ timeout: 15_000 });
+  await summary.click();
+  await browser.waitUntil(
+    async () => (await details.getAttribute("open")) !== null,
+    {
+      timeout: 5_000,
+      timeoutMsg: "The completed turn details should be expanded",
+    },
+  );
+}
+
+export async function withWindowSize<T>(
+  width: number,
+  height: number,
+  callback: () => Promise<T>,
+): Promise<T> {
+  const original = await browser.getWindowSize();
+  await browser.setWindowSize(width, height);
+  try {
+    return await callback();
+  } finally {
+    await browser.setWindowSize(original.width, original.height);
+  }
 }
 
 export async function selectSubmissionMode(

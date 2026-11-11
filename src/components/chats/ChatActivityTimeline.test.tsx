@@ -6,6 +6,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -24,7 +25,8 @@ vi.mock("../conversation/ActivityItem", () => ({
     activity(props);
     return (
       <div data-instance={instance} data-testid="activity-item">
-        Activity: {props.item.title}
+        <span>Activity: {props.item.title}</span>
+        <span>{props.item.text}</span>
       </div>
     );
   },
@@ -275,7 +277,11 @@ describe("ChatActivityTimeline", () => {
     render(
       <ChatActivityTimeline
         connected
-        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        items={[
+          viewItem("user-1", "userMessage", "Request", "message"),
+          viewItem("activity-1", "commandExecution", "pnpm test", "activity"),
+          viewItem("message-1", "agentMessage", "Reply", "message"),
+        ]}
         liveItems={[]}
         liveStatus="running"
         workingTurnId="turn-1"
@@ -302,6 +308,48 @@ describe("ChatActivityTimeline", () => {
     ).toBeTruthy();
   });
 
+  it("places the active working indicator after the user message", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(43_000));
+    const userMessage = viewItem(
+      "user-1",
+      "userMessage",
+      "Think through this",
+      "message",
+    );
+    const activityItem = viewItem(
+      "activity-1",
+      "commandExecution",
+      "pnpm test",
+      "activity",
+    );
+
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[userMessage, activityItem]}
+        liveItems={[]}
+        liveStatus="running"
+        workingTurnId="turn-1"
+        workingStartedAt={1}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(timeline.children[0]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+    expect(timeline.children[1]).toBe(
+      screen.getByRole("status", { name: "Working for 42s" }),
+    );
+    expect(
+      screen.getByRole("status", { name: "Working for 42s" }).className,
+    ).toContain("text-left");
+  });
+
   it("renders the completed turn duration at the completed turn", () => {
     render(
       <ChatActivityTimeline
@@ -315,7 +363,11 @@ describe("ChatActivityTimeline", () => {
             status: "completed",
           } as never
         }
-        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        items={[
+          viewItem("user-1", "userMessage", "Request", "message"),
+          viewItem("activity-1", "commandExecution", "pnpm test", "activity"),
+          viewItem("message-1", "agentMessage", "Reply", "message"),
+        ]}
         liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
@@ -324,15 +376,15 @@ describe("ChatActivityTimeline", () => {
       />,
     );
 
-    const worked = screen.getByRole("status", {
-      name: "Worked for 4m 2s",
-    });
-    expect(worked.textContent).toBe("Worked for 4m 2s");
-    expect(worked.className).toContain("text-left");
-    expect(worked.className).not.toContain("text-center");
+    const worked = screen.getByText("Worked for 4m 2s");
+    const details = worked.closest("details");
+    expect(details).toBeTruthy();
     const timeline = screen.getByRole("region", { name: "Chat activity" });
-    expect(timeline.children[0]).toBe(worked);
-    expect(timeline.children[1]?.getAttribute("data-testid")).toBe(
+    expect(timeline.children[0]?.getAttribute("data-testid")).toBe(
+      "conversation-item",
+    );
+    expect(timeline.children[1]).toBe(details);
+    expect(timeline.children[2]?.getAttribute("data-testid")).toBe(
       "conversation-item",
     );
   });
@@ -350,7 +402,11 @@ describe("ChatActivityTimeline", () => {
             status: "completed",
           } as never
         }
-        items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
+        items={[
+          viewItem("user-1", "userMessage", "Request", "message"),
+          viewItem("activity-1", "commandExecution", "pnpm test", "activity"),
+          viewItem("message-1", "agentMessage", "Reply", "message"),
+        ]}
         liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
@@ -359,9 +415,144 @@ describe("ChatActivityTimeline", () => {
       />,
     );
 
+    expect(screen.getByText("Worked for 2s")).toBeTruthy();
+  });
+
+  it("collapses completed turn details and keeps its final response visible", () => {
+    const items = [
+      viewItem("user-1", "userMessage", "Original request", "message"),
+      viewItem("reasoning-1", "reasoning", "Thinking", "activity"),
+      viewItem("message-1", "agentMessage", "Intermediate reply", "message"),
+      viewItem("command-1", "commandExecution", "pnpm test", "activity"),
+      viewItem("message-2", "agentMessage", "Final answer", "message"),
+    ];
+
+    render(
+      <ChatActivityTimeline
+        connected
+        completedTurn={
+          {
+            id: "turn-1",
+            startedAt: 1,
+            completedAt: 241,
+            durationMs: 242_000,
+            status: "completed",
+          } as never
+        }
+        items={items}
+        liveItems={[]}
+        liveStatus="completed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    const summary = screen.getByText("Worked for 4m 2s");
+    const details = summary.closest("details");
+    expect(details).toBeTruthy();
+    expect(details?.hasAttribute("open")).toBe(false);
+    expect(screen.getByText("Message: Final answer")).toBeTruthy();
+    expect(within(details as HTMLElement).getByText("Thinking")).toBeTruthy();
     expect(
-      screen.getByRole("status", { name: "Worked for 2s" }).textContent,
-    ).toBe("Worked for 2s");
+      within(details as HTMLElement).getByText("Message: Intermediate reply"),
+    ).toBeTruthy();
+    expect(within(details as HTMLElement).getByText("pnpm test")).toBeTruthy();
+
+    fireEvent.click(summary);
+    expect(details?.hasAttribute("open")).toBe(true);
+  });
+
+  it("collapses completed turns from authoritative conversation history", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        turns={[
+          {
+            id: "turn-1",
+            startedAt: 1,
+            completedAt: 241,
+            durationMs: 242_000,
+            status: "completed",
+          } as never,
+        ]}
+        items={[
+          viewItem("user-1", "userMessage", "Original request", "message"),
+          viewItem("command-1", "commandExecution", "pnpm test", "activity"),
+          viewItem("message-1", "agentMessage", "Final answer", "message"),
+        ]}
+        liveItems={[]}
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    const summary = screen.getByText("Worked for 4m 2s");
+    expect(summary.closest("details")?.hasAttribute("open")).toBe(false);
+    expect(screen.getByText("Message: Final answer")).toBeTruthy();
+    expect(screen.getByText("pnpm test")).toBeTruthy();
+  });
+
+  it("does not create an empty summary when a completed turn has no intermediate items", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        completedTurn={
+          {
+            id: "turn-1",
+            startedAt: 1,
+            completedAt: 2,
+            durationMs: 1_000,
+            status: "completed",
+          } as never
+        }
+        items={[
+          viewItem("user-1", "userMessage", "Original request", "message"),
+          viewItem("message-1", "agentMessage", "Final answer", "message"),
+        ]}
+        liveItems={[]}
+        liveStatus="completed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(screen.queryByText("Worked for 1s")).toBeNull();
+    expect(document.querySelector("details")).toBeNull();
+    expect(screen.getByText("Message: Final answer")).toBeTruthy();
+  });
+
+  it("keeps failed turn activity expanded", () => {
+    render(
+      <ChatActivityTimeline
+        connected
+        completedTurn={
+          {
+            id: "turn-1",
+            startedAt: 1,
+            completedAt: 2,
+            durationMs: 1_000,
+            status: "failed",
+          } as never
+        }
+        items={[
+          viewItem("user-1", "userMessage", "Original request", "message"),
+          viewItem("command-1", "commandExecution", "pnpm test", "activity"),
+          viewItem("message-1", "agentMessage", "Failure details", "message"),
+        ]}
+        liveItems={[]}
+        liveStatus="failed"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(document.querySelector("details")).toBeNull();
+    expect(screen.getByText("Activity: Command")).toBeTruthy();
+    expect(screen.getByText("pnpm test")).toBeTruthy();
   });
 
   it("falls back to Working when the start timestamp is invalid", () => {

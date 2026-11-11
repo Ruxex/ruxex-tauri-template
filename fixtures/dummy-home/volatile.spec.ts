@@ -1,9 +1,11 @@
 import { VOLATILE_SCENARIOS } from "./catalog";
 import {
   closeSidebarPanel,
+  expandCompletedTurnDetails,
   openNewChat,
   resolveApproval,
   saveFixtureScreenshot,
+  sendMinimapConversation,
   selectSubmissionMode,
   sendComposerPrompt,
   sendQueuedPrompt,
@@ -13,6 +15,7 @@ import {
   waitForDesktopReady,
   waitForPendingRequest,
   waitForTurnFinish,
+  withWindowSize,
 } from "./support";
 
 describe("Volatile DummyProvider event states", () => {
@@ -66,6 +69,44 @@ describe("Volatile DummyProvider event states", () => {
           await saveFixtureScreenshot(scenario.screenshotName);
           await $("button[aria-label='Stop']").click();
           await waitForTurnFinish();
+          return;
+        case "long-stream-running":
+          await sendComposerPrompt(prompt);
+          await waitForActiveTurn();
+          await closeSidebarPanel();
+          await saveFixtureScreenshot(scenario.screenshotName);
+          await $("button[aria-label='Stop']").click();
+          await waitForTurnFinish();
+          return;
+        case "long-stream-completed":
+          await sendComposerPrompt(prompt);
+          await waitForCompletedTurn({
+            kind: "text",
+            value: "Long stream fixture",
+          });
+          await closeSidebarPanel();
+          await saveFixtureScreenshot(scenario.screenshotName);
+          return;
+        case "completed-turn-details":
+          await sendComposerPrompt(prompt);
+          await waitForCompletedTurn({
+            kind: "text",
+            value: "The sequential workflow completed.",
+          });
+          await closeSidebarPanel();
+          await saveFixtureScreenshot(scenario.screenshotName);
+          await expandCompletedTurnDetails();
+          await saveFixtureScreenshot("completed-turn-details-expanded.png");
+          return;
+        case "conversation-minimap":
+          await withWindowSize(1920, 800, async () => {
+            await sendMinimapConversation();
+            await closeSidebarPanel();
+            await $("[aria-label='Conversation minimap']").waitForDisplayed({
+              timeout: 10_000,
+            });
+            await saveFixtureScreenshot(scenario.screenshotName);
+          });
           return;
         case "queued-message":
           await sendComposerPrompt(prompt);

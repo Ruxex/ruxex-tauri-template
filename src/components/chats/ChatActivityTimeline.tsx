@@ -34,6 +34,7 @@ type ChatActivityTimelineProps = {
     result: unknown,
   ) => Promise<void>;
   pendingRequests: PendingServerRequest[];
+  turns?: v2.Turn[];
   workingTurnId?: string | null;
   workingStartedAt?: number | null;
   completedTurn?: v2.Turn | null;
@@ -48,6 +49,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   onReject,
   onResolve,
   pendingRequests,
+  turns = [],
   workingTurnId,
   workingStartedAt,
   completedTurn,
@@ -57,9 +59,20 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     items: visibleItems,
     pendingRequests,
   });
+  const turnGroups = groupConversationItems(visibleItems);
+  const completedTurns = new Map(
+    turns
+      .filter((turn) => turn.status === "completed")
+      .map((turn) => [turn.id, turn]),
+  );
+  if (completedTurn?.status === "completed") {
+    completedTurns.set(completedTurn.id, completedTurn);
+  }
   const isBusy = liveStatus === "running" || liveStatus === "resynchronizing";
   const showActiveIndicator = isBusy && pendingRequests.length === 0;
   const showCompletedIndicator = !isBusy && completedTurn != null;
+  const showTerminalIndicator =
+    showCompletedIndicator && completedTurn?.status !== "completed";
   const workingSeconds = useWorkingSeconds(
     showActiveIndicator ? workingStartedAt : null,
   );
@@ -76,12 +89,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   const indicatorTurnId = showActiveIndicator
     ? workingTurnId
     : (completedTurn?.id ?? null);
-  const indicatorItemIndex = indicatorTurnId
-    ? visibleItems.findIndex((item) => item.turnId === indicatorTurnId)
-    : 0;
-  const indicatorInsertionIndex =
-    indicatorItemIndex < 0 ? 0 : indicatorItemIndex;
-  const showIndicator = showActiveIndicator || showCompletedIndicator;
+  const showIndicator = showActiveIndicator || showTerminalIndicator;
 
   return (
     <section
@@ -91,28 +99,55 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       ref={timelineRef}
     >
       <ConversationMinimap items={visibleItems} timelineRef={timelineRef} />
-      {visibleItems.length === 0 && showIndicator && (
-        <WorkingIndicator
-          active={showActiveIndicator}
-          empty
-          label={indicatorLabel}
-        />
-      )}
-      {visibleItems.map((item, index) => (
-        <Fragment key={`item:${item.turnId}:${item.id}`}>
-          {showIndicator && index === indicatorInsertionIndex && (
-            <WorkingIndicator
-              active={showActiveIndicator}
-              label={indicatorLabel}
+      {visibleItems.length === 0 &&
+        (showIndicator || showCompletedIndicator) && (
+          <WorkingIndicator
+            active={showActiveIndicator}
+            empty
+            label={indicatorLabel}
+          />
+        )}
+      {turnGroups.map((group) => {
+        const completedTurnForGroup = completedTurns.get(group.turnId);
+        if (completedTurnForGroup) {
+          return (
+            <CompletedTurnGroup
+              key={`turn:${group.turnId}`}
+              onEdit={onEdit}
+              turn={completedTurnForGroup}
+              items={group.items}
             />
-          )}
-          {item.category === "message" ? (
-            <ConversationItem item={item} onEdit={onEdit} />
-          ) : (
-            <ActivityItem item={item} />
-          )}
-        </Fragment>
-      ))}
+          );
+        }
+
+        const showActiveHere =
+          showActiveIndicator &&
+          group.turnId === (workingTurnId ?? turnGroups[0]?.turnId);
+        const showTerminalHere =
+          showTerminalIndicator && group.turnId === indicatorTurnId;
+        const insertionIndex = showActiveHere
+          ? findWorkingIndicatorInsertionIndex(group.items)
+          : 0;
+
+        return (
+          <Fragment key={`turn:${group.turnId}`}>
+            {showTerminalHere && (
+              <WorkingIndicator active={false} label={indicatorLabel} />
+            )}
+            {showActiveHere && insertionIndex === 0 && (
+              <WorkingIndicator active label={indicatorLabel} />
+            )}
+            {group.items.map((item, index) => (
+              <Fragment key={`item:${item.turnId}:${item.id}`}>
+                {renderConversationItem(item, onEdit)}
+                {showActiveHere && index + 1 === insertionIndex && (
+                  <WorkingIndicator active label={indicatorLabel} />
+                )}
+              </Fragment>
+            ))}
+          </Fragment>
+        );
+      })}
       {pendingRequests.map((pending) => (
         <ServerRequestCard
           connected={connected}
@@ -125,6 +160,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       {visibleItems.length === 0 &&
         pendingRequests.length === 0 &&
         !isBusy &&
+        !showCompletedIndicator &&
         !showIndicator && (
           <p className="py-12 text-center text-base-content/60">
             No activity yet.
@@ -151,9 +187,117 @@ function areChatActivityTimelinePropsEqual(
     left.workingTurnId === right.workingTurnId &&
     left.workingStartedAt === right.workingStartedAt &&
     left.completedTurn === right.completedTurn &&
+    left.turns === right.turns &&
     areConversationItemsEqual(left.items, right.items) &&
     areLiveItemsEqual(left.liveItems, right.liveItems) &&
     arePendingRequestsEqual(left.pendingRequests, right.pendingRequests)
+  );
+}
+
+type ConversationTurnGroup = {
+  turnId: string;
+  items: ConversationViewItem[];
+};
+
+function groupConversationItems(
+  items: ConversationViewItem[],
+): ConversationTurnGroup[] {
+  const groups: ConversationTurnGroup[] = [];
+  for (const item of items) {
+    const current = groups.at(-1);
+    if (current?.turnId === item.turnId) {
+      current.items.push(item);
+    } else {
+      groups.push({ turnId: item.turnId, items: [item] });
+    }
+  }
+  return groups;
+}
+
+function findWorkingIndicatorInsertionIndex(
+  items: ConversationViewItem[],
+): number {
+  const userMessageIndex = findLastIndex(
+    items,
+    (item) => item.type === "userMessage",
+  );
+  return userMessageIndex === -1 ? 0 : userMessageIndex + 1;
+}
+
+function findLastIndex<T>(items: T[], predicate: (item: T) => boolean): number {
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    const item = items[index];
+    if (item !== undefined && predicate(item)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function renderConversationItem(
+  item: ConversationViewItem,
+  onEdit?: ChatActivityTimelineProps["onEdit"],
+) {
+  return item.category === "message" ? (
+    <ConversationItem item={item} onEdit={onEdit} />
+  ) : (
+    <ActivityItem item={item} />
+  );
+}
+
+function CompletedTurnGroup({
+  items,
+  onEdit,
+  turn,
+}: {
+  items: ConversationViewItem[];
+  onEdit?: ChatActivityTimelineProps["onEdit"];
+  turn: v2.Turn;
+}) {
+  const finalAssistantIndex = findLastIndex(
+    items,
+    (item) => item.type === "agentMessage" && item.text.trim().length > 0,
+  );
+  const userItems = items.filter((item) => item.type === "userMessage");
+  const collapsedItems = items.filter(
+    (item, index) =>
+      item.type !== "userMessage" && index !== finalAssistantIndex,
+  );
+  const finalAssistant =
+    finalAssistantIndex === -1 ? null : items[finalAssistantIndex];
+  const workedSeconds = getTurnDurationSeconds(turn);
+  const workedLabel =
+    workedSeconds === null
+      ? "Worked"
+      : `Worked for ${formatDuration(workedSeconds)}`;
+
+  return (
+    <Fragment>
+      {userItems.map((item) => (
+        <Fragment key={`item:${item.turnId}:${item.id}`}>
+          {renderConversationItem(item, onEdit)}
+        </Fragment>
+      ))}
+      {collapsedItems.length > 0 && (
+        <details className="border-t border-base-300 pt-3 text-sm text-base-content/60">
+          <summary className="cursor-pointer select-none text-left">
+            {workedLabel}
+          </summary>
+          <div className="mt-3 space-y-0">
+            {collapsedItems.map((item) => (
+              <Fragment key={`item:${item.turnId}:${item.id}`}>
+                {renderConversationItem(item, onEdit)}
+              </Fragment>
+            ))}
+          </div>
+        </details>
+      )}
+      {finalAssistant && (
+        <Fragment key={`item:${finalAssistant.turnId}:${finalAssistant.id}`}>
+          {renderConversationItem(finalAssistant, onEdit)}
+        </Fragment>
+      )}
+    </Fragment>
   );
 }
 
@@ -225,7 +369,7 @@ function WorkingIndicator({
       className={
         empty
           ? "mx-auto flex max-w-md items-center justify-center gap-3 rounded-box border border-dashed border-primary/30 bg-base-100 px-5 py-6 text-center text-sm text-base-content/70 shadow-sm"
-          : `border-t border-base-300 pt-3 text-sm text-base-content/60 ${active ? "text-center" : "text-left"}`
+          : "border-t border-base-300 pt-3 text-left text-sm text-base-content/60"
       }
       role="status"
     >
