@@ -8,11 +8,6 @@ type ConversationMinimapProps = {
   timelineRef: React.RefObject<HTMLElement | null>;
 };
 
-type MarkerPosition = {
-  id: string;
-  position: number;
-};
-
 export function ConversationMinimap({
   items,
   timelineRef,
@@ -21,7 +16,6 @@ export function ConversationMinimap({
     () => items.filter((item) => item.type === "userMessage"),
     [items],
   );
-  const [positions, setPositions] = useState<MarkerPosition[]>([]);
   const [activeId, setActiveId] = useState<string | null>(
     userItems.at(-1)?.id ?? null,
   );
@@ -52,30 +46,6 @@ export function ConversationMinimap({
         timeline.querySelectorAll<HTMLElement>("[data-conversation-item-id]"),
       ).find((element) => element.dataset.conversationItemId === id);
 
-    const fallbackPosition = (index: number) =>
-      userItems.length === 1 ? 0.5 : index / (userItems.length - 1);
-
-    const measure = () => {
-      const scrollRect = scrollContainer.getBoundingClientRect();
-      const scrollHeight = Math.max(scrollContainer.scrollHeight, 1);
-      const nextPositions = userItems.map<MarkerPosition>((item, index) => {
-        const element = findItemElement(item.id);
-        if (!element) {
-          return { id: item.id, position: fallbackPosition(index) };
-        }
-
-        const rect = element.getBoundingClientRect();
-        const absoluteTop =
-          rect.top - scrollRect.top + scrollContainer.scrollTop;
-        const position = (absoluteTop + rect.height / 2) / scrollHeight;
-        return {
-          id: item.id,
-          position: clamp(position, 0.025, 0.975),
-        };
-      });
-      setPositions(nextPositions);
-    };
-
     const updateActive = () => {
       const viewportCenter =
         scrollContainer.getBoundingClientRect().top +
@@ -104,23 +74,13 @@ export function ConversationMinimap({
       }
     };
 
-    measure();
     updateActive();
     scrollContainer.addEventListener("scroll", updateActive, {
       passive: true,
     });
-    window.addEventListener("resize", measure);
-
-    const resizeObserver =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(measure);
-    resizeObserver?.observe(timeline);
 
     return () => {
       scrollContainer.removeEventListener("scroll", updateActive);
-      window.removeEventListener("resize", measure);
-      resizeObserver?.disconnect();
     };
   }, [timelineRef, userItems]);
 
@@ -128,9 +88,7 @@ export function ConversationMinimap({
     return null;
   }
 
-  const positionFor = (id: string, index: number) =>
-    positions.find((marker) => marker.id === id)?.position ??
-    (userItems.length === 1 ? 0.5 : index / (userItems.length - 1));
+  const positionFor = (index: number) => equalPosition(index, userItems.length);
   const hoveredIndex = hoveredId
     ? userItems.findIndex((item) => item.id === hoveredId)
     : -1;
@@ -194,7 +152,7 @@ export function ConversationMinimap({
               className="absolute left-1/2"
               key={item.id}
               style={{
-                top: `${positionFor(item.id, index) * 100}%`,
+                top: `${positionFor(index) * 100}%`,
               }}
             >
               <button
@@ -240,6 +198,11 @@ function previewText(text: string): string {
     : preview || "…";
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
+function equalPosition(index: number, count: number): number {
+  if (count <= 1) {
+    return 0.5;
+  }
+
+  const edgePadding = 0.025;
+  return edgePadding + (index / (count - 1)) * (1 - edgePadding * 2);
 }

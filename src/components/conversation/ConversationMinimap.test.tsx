@@ -143,6 +143,52 @@ describe("ConversationMinimap", () => {
     ).not.toContain("bg-primary");
   });
 
+  it("places markers at equal intervals regardless of message layout", async () => {
+    const timeline = document.createElement("section");
+    Object.defineProperty(timeline, "scrollHeight", {
+      configurable: true,
+      value: 1000,
+    });
+    vi.spyOn(timeline, "getBoundingClientRect").mockReturnValue({
+      top: 0,
+    } as DOMRect);
+
+    const items = [
+      message("user-1", "userMessage", "First prompt"),
+      message("user-2", "userMessage", "Second prompt"),
+      message("user-3", "userMessage", "Third prompt"),
+      message("user-4", "userMessage", "Fourth prompt"),
+      message("user-5", "userMessage", "Fifth prompt"),
+    ];
+    for (const [index, item] of items.entries()) {
+      const element = document.createElement("article");
+      element.dataset.conversationItemId = item.id;
+      vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+        top: [10, 150, 380, 620, 900][index],
+        height: 40,
+      } as DOMRect);
+      timeline.append(element);
+    }
+    document.body.append(timeline);
+
+    render(<ConversationMinimap items={items} timelineRef={{ current: timeline }} />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("conversation-minimap-marker-user-5").parentElement
+          ?.parentElement?.style.top,
+      ).toBe("97.5%"),
+    );
+
+    expect(
+      items.map(
+        (item) =>
+          screen.getByTestId(`conversation-minimap-marker-${item.id}`)
+            .parentElement?.parentElement?.style.top,
+      ),
+    ).toEqual(["2.5%", "26.25%", "50%", "73.75%", "97.5%"]);
+  });
+
   it("scrolls the matching conversation item when a marker is clicked", () => {
     const timeline = document.createElement("section");
     const target = document.createElement("article");
