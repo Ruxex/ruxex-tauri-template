@@ -11,15 +11,13 @@ export type PersistentScenarioId =
   | "provider-error"
   | "rate-limit"
   | "disconnect"
-  | "goal-only"
-  | "goal-lifecycle";
+  | "goal-only";
 
 export type PersistentScenarioKind =
   | "conversation"
   | "multiTurn"
   | "approval"
-  | "goal"
-  | "goalLifecycle";
+  | "goal";
 
 export type PersistentScenario = {
   readonly id: PersistentScenarioId;
@@ -30,7 +28,6 @@ export type PersistentScenario = {
   readonly errorText?: string;
   readonly turnCount?: number;
   readonly goalText?: string;
-  readonly followUpText?: string;
   readonly archiveOccurrences?: readonly number[];
 };
 
@@ -153,14 +150,6 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     kind: "goal",
     providerMarker: "example:basic",
     goalText: "Prepare the fixture review checklist.",
-  },
-  {
-    id: "goal-lifecycle",
-    count: 1,
-    kind: "goalLifecycle",
-    providerMarker: "example:goal",
-    goalText: "Prepare the fixture review checklist.",
-    followUpText: "The checklist is complete. Please complete the goal.",
   },
 ];
 
