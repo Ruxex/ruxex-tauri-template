@@ -234,7 +234,7 @@ describe("HomePage", () => {
     });
     fireEvent.click(screen.getByLabelText("Composer options"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
-    fireEvent.click(screen.getByRole("button", { name: "Set goal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     const setGoal = useSetThreadGoal.mock.results.at(-1)?.value
       .mutateAsync as ReturnType<typeof vi.fn>;

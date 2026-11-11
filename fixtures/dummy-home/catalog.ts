@@ -11,13 +11,15 @@ export type PersistentScenarioId =
   | "provider-error"
   | "rate-limit"
   | "disconnect"
-  | "goal-only";
+  | "goal-only"
+  | "goal-lifecycle";
 
 export type PersistentScenarioKind =
   | "conversation"
   | "multiTurn"
   | "approval"
-  | "goal";
+  | "goal"
+  | "goalLifecycle";
 
 export type PersistentScenario = {
   readonly id: PersistentScenarioId;
@@ -28,6 +30,7 @@ export type PersistentScenario = {
   readonly errorText?: string;
   readonly turnCount?: number;
   readonly goalText?: string;
+  readonly followUpText?: string;
   readonly archiveOccurrences?: readonly number[];
 };
 
@@ -61,7 +64,7 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     id: "basic",
     count: 2,
     kind: "conversation",
-    providerMarker: "[[example:basic]]",
+    providerMarker: "example:basic",
     completionText: "This is a fixed response from the dummy provider.",
     archiveOccurrences: [2],
   },
@@ -69,14 +72,14 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     id: "long-markdown",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:long-stream]]",
+    providerMarker: "example:long-stream",
     completionText: "Long stream fixture",
   },
   {
     id: "multi-turn",
     count: 1,
     kind: "multiTurn",
-    providerMarker: "[[example:multi]]",
+    providerMarker: "example:multi",
     completionText: "This is the completion turn of the multi-turn test.",
     turnCount: 3,
   },
@@ -84,49 +87,49 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     id: "command-success",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:command]]",
+    providerMarker: "example:command",
     completionText: "The command result was received.",
   },
   {
     id: "command-list",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:command:ls]]",
+    providerMarker: "example:command:ls",
     completionText: "The command result was received.",
   },
   {
     id: "command-large",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:command:large]]",
+    providerMarker: "example:command:large",
     completionText: "The command result was received.",
   },
   {
     id: "command-fail",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:command:fail]]",
+    providerMarker: "example:command:fail",
     errorText: "example-provider stderr",
   },
   {
     id: "approval-accepted",
     count: 1,
     kind: "approval",
-    providerMarker: "[[example:approval]]",
+    providerMarker: "example:approval",
     completionText: "The approved command result was received.",
   },
   {
     id: "approval-denied",
     count: 1,
     kind: "approval",
-    providerMarker: "[[example:approval:deny]]",
+    providerMarker: "example:approval:deny",
     completionText: "The approval was denied by the client.",
   },
   {
     id: "provider-error",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:error]]",
+    providerMarker: "example:error",
     errorText: "example provider transient error",
     archiveOccurrences: [1],
   },
@@ -134,22 +137,30 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     id: "rate-limit",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:rate-limit]]",
+    providerMarker: "example:rate-limit",
     errorText: "rate limit",
   },
   {
     id: "disconnect",
     count: 1,
     kind: "conversation",
-    providerMarker: "[[example:disconnect]]",
+    providerMarker: "example:disconnect",
     errorText: "example provider disconnected after partial output",
   },
   {
     id: "goal-only",
     count: 1,
     kind: "goal",
-    providerMarker: "[[example:basic]]",
+    providerMarker: "example:basic",
     goalText: "Prepare the fixture review checklist.",
+  },
+  {
+    id: "goal-lifecycle",
+    count: 1,
+    kind: "goalLifecycle",
+    providerMarker: "example:goal",
+    goalText: "Prepare the fixture review checklist.",
+    followUpText: "The checklist is complete. Please complete the goal.",
   },
 ];
 
@@ -184,43 +195,43 @@ export const VOLATILE_SCENARIOS: readonly VolatileScenario[] = [
   {
     id: "pending-approval",
     count: 1,
-    providerMarker: "[[example:approval]]",
+    providerMarker: "example:approval",
     screenshotName: "pending-approval.png",
   },
   {
     id: "pending-user-input",
     count: 1,
-    providerMarker: "[[example:user-input]]",
+    providerMarker: "example:user-input",
     screenshotName: "pending-user-input.png",
   },
   {
     id: "pending-permissions",
     count: 1,
-    providerMarker: "[[example:permissions]]",
+    providerMarker: "example:permissions",
     screenshotName: "pending-permissions.png",
   },
   {
     id: "slow-stream",
     count: 1,
-    providerMarker: "[[example:long-stream:slow]]",
+    providerMarker: "example:long-stream:slow",
     screenshotName: "slow-stream.png",
   },
   {
     id: "queued-message",
     count: 1,
-    providerMarker: "[[example:basic:slow]]",
+    providerMarker: "example:basic:slow",
     screenshotName: "queued-message.png",
   },
   {
     id: "pending-mcp-elicitation",
     count: 0,
-    providerMarker: "[[example:mcp]]",
+    providerMarker: "example:mcp",
     screenshotName: "pending-mcp-elicitation.png",
   },
   {
     id: "disconnect-recovery",
     count: 1,
-    providerMarker: "[[example:disconnect]]",
+    providerMarker: "example:disconnect",
     screenshotName: "disconnect-recovery.png",
   },
 ];

@@ -75,6 +75,12 @@ async function captureComposerStates(): Promise<void> {
     timeout: 10_000,
   });
   await saveFixtureScreenshot("composer-options.png");
+  await $("button[aria-label='Goal mode']").click();
+  await $("[role='status'][aria-label='Goal mode active']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  await saveFixtureScreenshot("composer-goal-mode.png");
+  await $("button[aria-label='Disable goal mode']").click();
   await $("summary[aria-label='Composer options']").click();
 
   await $("summary[aria-label='Permission mode']").click();

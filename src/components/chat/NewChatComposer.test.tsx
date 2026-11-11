@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const createThreadMutation = vi.hoisted(() => vi.fn());
 const sendMessageMutation = vi.hoisted(() => vi.fn());
+const setGoalMutation = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
 
 vi.mock("react-router-dom", () => ({
@@ -43,7 +44,7 @@ vi.mock("../../app-server/hooks", () => ({
   useSetThreadGoal: () => ({
     error: null,
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: setGoalMutation,
   }),
 }));
 
@@ -57,7 +58,17 @@ vi.mock("../conversation/useComposerSelection", () => ({
 }));
 
 vi.mock("../conversation/ComposerOptions", () => ({
-  ComposerOptions: () => null,
+  ComposerOptions: ({
+    goalMode,
+    onGoalModeChange,
+  }: {
+    goalMode: boolean;
+    onGoalModeChange: () => void;
+  }) => (
+    <button aria-label="Goal mode" onClick={onGoalModeChange} type="button">
+      {goalMode ? "Goal mode active" : "Goal mode"}
+    </button>
+  ),
   PermissionMenu: () => null,
 }));
 
@@ -117,9 +128,11 @@ describe("NewChatComposer", () => {
   beforeEach(() => {
     createThreadMutation.mockReset();
     sendMessageMutation.mockReset();
+    setGoalMutation.mockReset();
     navigate.mockReset();
     createThreadMutation.mockResolvedValue({ thread: { id: "thread-1" } });
     sendMessageMutation.mockResolvedValue({});
+    setGoalMutation.mockResolvedValue({});
   });
 
   it("submits only with Ctrl+Enter", async () => {
@@ -150,5 +163,27 @@ describe("NewChatComposer", () => {
 
     await waitFor(() => expect(createThreadMutation).toHaveBeenCalled());
     expect(screen.getByRole("textbox")).toBeTruthy();
+  });
+
+  it("keeps Send as the goal-mode action and allows goal mode to be dismissed", async () => {
+    const { NewChatComposer } = await import("./NewChatComposer");
+
+    render(<NewChatComposer />);
+    fireEvent.click(screen.getByRole("button", { name: "Goal mode" }));
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Keep the project healthy" },
+    });
+
+    expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
+    expect(
+      screen.getByRole("status", { name: "Goal mode active" }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Disable goal mode" }));
+
+    expect(
+      screen.queryByRole("status", { name: "Goal mode active" }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
   });
 });

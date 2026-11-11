@@ -71,7 +71,7 @@ describe("Volatile DummyProvider event states", () => {
           await sendComposerPrompt(prompt);
           await waitForActiveTurn();
           await selectSubmissionMode("queue");
-          await sendQueuedPrompt("Fixture queued follow-up [[example:basic]]");
+          await sendQueuedPrompt("Fixture queued follow-up example:basic");
           await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
           await $("button[aria-label='Stop']").click();

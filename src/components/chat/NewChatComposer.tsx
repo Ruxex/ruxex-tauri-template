@@ -1,4 +1,7 @@
-import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import {
+  PaperAirplaneIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBranding } from "../../app/branding-context";
@@ -206,6 +209,23 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 onPlanModeChange={() => setPlanMode((value) => !value)}
                 planMode={planMode}
               />
+              {goalMode && (
+                <span
+                  aria-label="Goal mode active"
+                  className="badge badge-primary badge-sm group gap-1"
+                  role="status"
+                >
+                  <button
+                    aria-label="Disable goal mode"
+                    className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                    onClick={() => setGoalMode(false)}
+                    type="button"
+                  >
+                    <XMarkIcon aria-hidden="true" className="size-3" />
+                  </button>
+                  Goal
+                </span>
+              )}
               <PermissionMenu
                 disabled={isPending}
                 mode={permissionMode}
@@ -233,14 +253,14 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 onModelChange={setModel}
               />
               <button
-                aria-label={goalMode ? "Set goal" : "Send"}
+                aria-label="Send"
                 className="btn btn-primary btn-sm"
                 disabled={isPending || isProjectLoading || !canSubmit}
-                title={goalMode ? "Set goal" : "Send"}
+                title="Send"
                 type="submit"
               >
                 <PaperAirplaneIcon aria-hidden="true" className="size-4" />
-                {goalMode ? "Set goal" : "Send"}
+                Send
               </button>
             </div>
           </div>

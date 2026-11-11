@@ -119,7 +119,7 @@ Expected: all runner unit tests pass.
 
 **Interfaces:**
 - The WDIO spec creates exactly one basic completed chat from the initial
-  composer using the deterministic input `Fixture basic conversation [[example:basic]]`.
+  composer using the deterministic input `Fixture basic conversation example:basic`.
 - The Make target is `prepare-dummy-home` and runs the spec with
   `--dummy-home` after building the debug app. It is headful for now because
   the repository does not yet require an Xvfb dependency.

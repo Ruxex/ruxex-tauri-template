@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {
   buildScenarioMarker,
+  buildScenarioTitle,
   type PersistentScenario,
   type ProjectFixture,
 } from "./catalog";
@@ -16,19 +17,18 @@ export function scenarioPrompt(
   scenario: PersistentScenario,
   occurrence: number,
 ): string {
-  const marker = buildScenarioMarker(scenario, occurrence);
-  const markerStart = marker.lastIndexOf(scenario.providerMarker);
-  if (markerStart === -1) {
-    return marker;
+  if (scenario.kind === "goalLifecycle") {
+    return `${buildScenarioTitle(scenario, occurrence)}. Please set the following as the goal for this conversation: ${requireScenarioText(scenario.goalText)} ${scenario.providerMarker}`;
   }
 
-  return `${marker.slice(0, markerStart)}\`${scenario.providerMarker}\``;
+  const marker = buildScenarioMarker(scenario, occurrence);
+  return marker;
 }
 
 export function scenarioExpectation(
   scenario: PersistentScenario,
 ): ScenarioExpectation {
-  if (scenario.kind === "goal") {
+  if (scenario.kind === "goal" || scenario.kind === "goalLifecycle") {
     return { kind: "goal", value: requireScenarioText(scenario.goalText) };
   }
   if (scenario.errorText) {
@@ -117,10 +117,23 @@ export async function sendScenarioFromCurrentComposer(
         timeoutMsg: "The goal thread should open after it is created",
       },
     );
+    await waitForGoalDisplayed(requireScenarioText(scenario.goalText));
     return;
   }
 
   await sendComposerMessage();
+  if (scenario.kind === "goalLifecycle") {
+    await waitForGoalDisplayed(requireScenarioText(scenario.goalText));
+    await waitForTurnFinish();
+    await sendFollowUp(
+      scenario.followUpText ??
+        "The checklist is complete. Please complete the goal.",
+    );
+    await waitForGoalCleared();
+    await waitForTurnFinish();
+    return;
+  }
+
   if (scenario.kind === "approval") {
     await waitForPendingRequest();
     await resolveApproval(
@@ -132,7 +145,7 @@ export async function sendScenarioFromCurrentComposer(
     await waitForTurnFinish();
     await sendFollowUp("Continue the multi-turn fixture.");
     await waitForTurnFinish();
-    await sendFollowUp("[[example:multi]] next");
+    await sendFollowUp("example:multi next");
   }
 
   await waitForCompletedTurn(scenarioExpectation(scenario));
@@ -206,6 +219,32 @@ export async function waitForTurnFinish(): Promise<void> {
     {
       timeout: 15_000,
       timeoutMsg: "The fixture turn should finish before the helper returns",
+    },
+  );
+}
+
+export async function waitForGoalDisplayed(objective: string): Promise<void> {
+  await browser.waitUntil(
+    async () => {
+      const goal = $("[data-testid='current-goal']");
+      return (
+        (await goal.isDisplayed().catch(() => false)) &&
+        (await goal.getText()).includes(objective)
+      );
+    },
+    {
+      timeout: 30_000,
+      timeoutMsg: `Expected the current goal to be displayed: ${objective}`,
+    },
+  );
+}
+
+export async function waitForGoalCleared(): Promise<void> {
+  await browser.waitUntil(
+    async () => !(await $("[data-testid='current-goal']").isExisting()),
+    {
+      timeout: 30_000,
+      timeoutMsg: "Expected the current goal to be cleared",
     },
   );
 }
@@ -319,7 +358,7 @@ export async function setCurrentGoal(objective: string): Promise<void> {
   }
   const message = $("[contenteditable='true'][aria-label='Message']");
   await message.setValue(objective);
-  await $("button[aria-label='Set goal']").click();
+  await $("button[aria-label='Send']").click();
 }
 
 export async function saveFixtureScreenshot(name: string): Promise<void> {

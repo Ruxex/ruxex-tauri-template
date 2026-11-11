@@ -17,8 +17,8 @@ describe("dummy home fixture catalog", () => {
     expect(ids).toContain("command-list");
     expect(ids).not.toContain("approval-cancelled");
     expect(persistentFixtureCounts()).toEqual({
-      total: 14,
-      active: 12,
+      total: 15,
+      active: 13,
       archived: 2,
     });
   });
@@ -33,7 +33,7 @@ describe("dummy home fixture catalog", () => {
     }
     expect(buildScenarioTitle(scenario, 1)).toBe("Fixture basic 01");
     expect(buildScenarioMarker(scenario, 1)).toBe(
-      "Fixture basic 01 [[example:basic]]",
+      "Fixture basic 01 example:basic",
     );
   });
 
