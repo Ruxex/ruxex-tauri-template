@@ -5,7 +5,7 @@ import { useThreadGoal } from "../../app-server/hooks";
 export function CurrentGoal({ threadId }: { threadId: string }) {
   const goal = useThreadGoal(threadId).data?.goal;
 
-  if (!goal) {
+  if (goal?.status !== "active") {
     return null;
   }
 

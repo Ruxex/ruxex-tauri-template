@@ -44,4 +44,26 @@ describe("CurrentGoal", () => {
 
     expect(screen.queryByRole("region", { name: "Current goal" })).toBeNull();
   });
+
+  it("does not render a completed goal", async () => {
+    useThreadGoal.mockReturnValue({
+      data: {
+        goal: {
+          threadId: "thread-1",
+          objective: "Ship the chat redesign",
+          status: "complete",
+          tokenBudget: null,
+          tokensUsed: 0,
+          timeUsedSeconds: 0,
+          createdAt: 0,
+          updatedAt: 1,
+        },
+      },
+    });
+
+    const { CurrentGoal } = await import("./CurrentGoal");
+    render(<CurrentGoal threadId="thread-1" />);
+
+    expect(screen.queryByRole("region", { name: "Current goal" })).toBeNull();
+  });
 });
