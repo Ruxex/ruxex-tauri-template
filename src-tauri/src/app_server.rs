@@ -1,8 +1,8 @@
 use std::ffi::OsString;
-#[cfg(unix)]
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard};
 use ruxex::desktop::config::LoaderOverrides;
@@ -187,6 +187,22 @@ async fn connect_unix_socket(
     .await
 }
 
+fn client_socket_candidates(data_home: &Path) -> Result<Vec<AbsolutePathBuf>, String> {
+    let logical_socket_path = app_server_control_socket_path(data_home)
+        .map_err(|error| format!("failed to resolve App Server control socket: {error}"))?;
+    let mut socket_paths = vec![logical_socket_path];
+    #[cfg(unix)]
+    {
+        let physical_socket_path =
+            AbsolutePathBuf::from_absolute_path(client_physical_socket_path(data_home)?)
+                .map_err(|error| error.to_string())?;
+        if socket_paths[0] != physical_socket_path {
+            socket_paths.push(physical_socket_path);
+        }
+    }
+    Ok(socket_paths)
+}
+
 #[cfg(unix)]
 fn client_physical_socket_path(data_home: &Path) -> Result<PathBuf, String> {
     use sha2::Digest;
@@ -247,6 +263,55 @@ async fn client_socket_peer_pid(socket_path: &Path) -> Result<Option<u32>, Strin
             u32::try_from(pid).map_err(|_| "App Server socket owner PID is invalid".to_string())
         })
         .transpose()
+}
+
+struct DaemonSocketProbe {
+    socket_path: AbsolutePathBuf,
+    app_server_version: Option<String>,
+    peer_pid: Option<u32>,
+}
+
+async fn probe_daemon_socket(
+    socket_path: AbsolutePathBuf,
+    config: &DesktopConfig,
+) -> Option<DaemonSocketProbe> {
+    let client = connect_unix_socket(socket_path.clone(), config)
+        .await
+        .ok()?;
+    let app_server_version = client.server_version().map(str::to_owned);
+    #[cfg(unix)]
+    let peer_pid = client_socket_peer_pid(socket_path.as_path())
+        .await
+        .ok()
+        .flatten();
+    #[cfg(not(unix))]
+    let peer_pid = None;
+    let _ = client.shutdown().await;
+    Some(DaemonSocketProbe {
+        socket_path,
+        app_server_version,
+        peer_pid,
+    })
+}
+
+async fn probe_physical_residual_daemon(
+    config: &DesktopConfig,
+) -> CommandResult<Option<DaemonSocketProbe>> {
+    let home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let socket_paths = client_socket_candidates(&home)
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    let Some(physical_socket_path) = socket_paths.get(1).cloned() else {
+        return Ok(None);
+    };
+
+    if probe_daemon_socket(socket_paths[0].clone(), config)
+        .await
+        .is_some()
+    {
+        return Ok(None);
+    }
+    Ok(probe_daemon_socket(physical_socket_path, config).await)
 }
 
 fn desktop_skill_policy_request(
@@ -575,6 +640,50 @@ async fn run_desktop_app_server_lifecycle(
     run_with_host_executable(command, &executable, &desktop_app_server_daemon_args()).await
 }
 
+async fn version_from_client(
+    config: &DesktopConfig,
+    lifecycle_error: anyhow::Error,
+) -> CommandResult<LifecycleOutput> {
+    let home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let socket_paths = client_socket_candidates(&home)
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+
+    let mut probe_error = None;
+    for socket_path in socket_paths {
+        match probe_daemon_socket(socket_path.clone(), config).await {
+            Some(probe) => {
+                return Ok(LifecycleOutput {
+                    status: LifecycleStatus::Running,
+                    backend: Some(BackendKind::Pid),
+                    pid: None,
+                    managed_ruxex_path: PathBuf::new(),
+                    managed_ruxex_version: None,
+                    socket_path: probe.socket_path.as_path().to_path_buf(),
+                    cli_version: None,
+                    app_server_version: probe.app_server_version,
+                });
+            }
+            None => {
+                probe_error = Some(format!(
+                    "failed to connect to {}",
+                    socket_path.as_path().display()
+                ))
+            }
+        }
+    }
+
+    Err(command_error(
+        DesktopAppServerErrorKind::Lifecycle,
+        format!(
+            "AppServer daemon Version failed through the lifecycle client: {lifecycle_error:#}; physical socket probe failed: {}",
+            probe_error
+                .map(|error| error.to_string())
+                .unwrap_or_else(|| "no socket candidate was available".to_string())
+        ),
+    ))
+}
+
 async fn connect_local_endpoint(
     arg0_paths: Arg0DispatchPaths,
     config: &DesktopConfig,
@@ -592,6 +701,71 @@ async fn connect_local_endpoint(
             )
         })?;
     Ok((client, status))
+}
+
+fn recovered_daemon_output(status: LifecycleStatus, probe: &DaemonSocketProbe) -> LifecycleOutput {
+    LifecycleOutput {
+        status,
+        backend: Some(BackendKind::Pid),
+        pid: None,
+        managed_ruxex_path: PathBuf::new(),
+        managed_ruxex_version: None,
+        socket_path: probe.socket_path.as_path().to_path_buf(),
+        cli_version: None,
+        app_server_version: probe.app_server_version.clone(),
+    }
+}
+
+#[cfg(unix)]
+async fn recovered_daemon_socket_is_owned_by(probe: &DaemonSocketProbe, pid: u32) -> bool {
+    client_socket_peer_pid(probe.socket_path.as_path())
+        .await
+        .ok()
+        .flatten()
+        == Some(pid)
+}
+
+#[cfg(unix)]
+async fn stop_recovered_daemon(probe: &DaemonSocketProbe) -> CommandResult<()> {
+    let pid = probe.peer_pid.ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            "cannot stop residual App Server daemon: socket owner PID is unavailable",
+        )
+    })?;
+    terminate_process(pid).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to gracefully stop residual App Server daemon: {error}"),
+        )
+    })?;
+
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    while recovered_daemon_socket_is_owned_by(probe, pid).await {
+        if tokio::time::Instant::now() >= deadline {
+            force_terminate_process(pid).map_err(|error| {
+                command_error(
+                    DesktopAppServerErrorKind::Lifecycle,
+                    format!(
+                        "residual App Server daemon did not stop gracefully; force stop failed: {error}"
+                    ),
+                )
+            })?;
+            let force_deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+            while recovered_daemon_socket_is_owned_by(probe, pid).await {
+                if tokio::time::Instant::now() >= force_deadline {
+                    return Err(command_error(
+                        DesktopAppServerErrorKind::Lifecycle,
+                        format!("timed out waiting for residual App Server daemon {pid} to stop"),
+                    ));
+                }
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    Ok(())
 }
 
 async fn force_stop_app_server_daemon() -> CommandResult<LifecycleOutput> {
@@ -704,6 +878,26 @@ fn force_terminate_process(pid: u32) -> Result<(), String> {
     }
 }
 
+#[cfg(unix)]
+fn terminate_process(pid: u32) -> Result<(), String> {
+    if pid == 0 {
+        return Err("PID must be greater than zero".to_string());
+    }
+
+    let raw_pid = libc::pid_t::try_from(pid)
+        .map_err(|_| format!("PID {pid} is out of range for this platform"))?;
+    let result = unsafe { libc::kill(raw_pid, libc::SIGTERM) };
+    if result == 0 {
+        return Ok(());
+    }
+    let error = std::io::Error::last_os_error();
+    if error.raw_os_error() == Some(libc::ESRCH) {
+        Ok(())
+    } else {
+        Err(error.to_string())
+    }
+}
+
 #[tauri::command]
 pub(crate) async fn app_server_daemon_control(
     state: State<'_, AppServerState>,
@@ -727,6 +921,47 @@ pub(crate) async fn app_server_daemon_control(
 
     if action == AppServerDaemonAction::ForceStop {
         return force_stop_app_server_daemon().await;
+    }
+
+    #[cfg(unix)]
+    if matches!(
+        action,
+        AppServerDaemonAction::Start | AppServerDaemonAction::Stop | AppServerDaemonAction::Restart
+    ) {
+        if let Some(probe) = probe_physical_residual_daemon(&state.config).await? {
+            match action {
+                AppServerDaemonAction::Start => {
+                    return Ok(recovered_daemon_output(
+                        LifecycleStatus::AlreadyRunning,
+                        &probe,
+                    ));
+                }
+                AppServerDaemonAction::Stop => {
+                    stop_recovered_daemon(&probe).await?;
+                    return Ok(recovered_daemon_output(LifecycleStatus::Stopped, &probe));
+                }
+                AppServerDaemonAction::Restart => {
+                    stop_recovered_daemon(&probe).await?;
+                    let output = run_desktop_app_server_lifecycle(LifecycleCommand::Start)
+                        .await
+                        .map_err(|error| {
+                            command_error(
+                                DesktopAppServerErrorKind::Lifecycle,
+                                format!("AppServer daemon restart failed: {error:#}"),
+                            )
+                        })?;
+                    return Ok(output);
+                }
+                _ => unreachable!("physical residual probe is limited to lifecycle actions"),
+            }
+        }
+    }
+
+    if action == AppServerDaemonAction::Version {
+        return match run_desktop_app_server_lifecycle(LifecycleCommand::Version).await {
+            Ok(output) => Ok(output),
+            Err(error) => version_from_client(&state.config, error).await,
+        };
     }
 
     let command = action.to_lifecycle_command();
@@ -892,6 +1127,30 @@ mod tests {
         );
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn client_socket_candidates_keep_logical_socket_before_physical_socket() {
+        let home = std::env::temp_dir().join(format!(
+            "ruxex-client-socket-candidates-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("test clock should be after the Unix epoch")
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&home).expect("data home should be created");
+
+        let candidates = super::client_socket_candidates(&home).expect("socket candidates");
+        let logical =
+            ruxex::desktop::app_server_control_socket_path(&home).expect("logical socket path");
+
+        assert_eq!(candidates.first(), Some(&logical));
+        assert_eq!(candidates.len(), 2);
+        assert_ne!(candidates[0], candidates[1]);
+
+        std::fs::remove_dir_all(&home).expect("test home should be removed");
+    }
+
     #[cfg(feature = "example")]
     use super::initialize_in_process_runtime;
 
@@ -955,7 +1214,7 @@ mod tests {
     #[test]
     fn desktop_skill_policy_request_disables_by_name_without_replacing_other_rules() {
         let request = super::desktop_skill_policy_request("imagegen", 0)
-        .expect("desktop skill policy request should serialize");
+            .expect("desktop skill policy request should serialize");
         assert_eq!(
             serde_json::to_value(request).unwrap(),
             serde_json::json!({
