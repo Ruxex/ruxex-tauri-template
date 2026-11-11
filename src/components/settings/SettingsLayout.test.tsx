@@ -140,9 +140,11 @@ describe("settings card layout", () => {
     expect(screen.getByRole("button", { name: "Stop" }).className).toContain(
       "btn-outline",
     );
-    expect(
-      screen.getByRole("button", { name: "Force stop" }).className,
-    ).toContain("btn-outline");
+    expect(screen.queryByRole("button", { name: "Force stop" })).toBeNull();
+    const stopOptions = screen.getByLabelText("Stop options");
+    expect(stopOptions.className).toContain("btn-outline");
+    fireEvent.click(stopOptions);
+    expect(screen.getByRole("menuitem", { name: "Force stop" })).toBeTruthy();
     expect(screen.getByText("Running")).toBeTruthy();
   });
 
@@ -171,7 +173,7 @@ describe("settings card layout", () => {
     );
 
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
-    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+    for (const name of ["Reconnect", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -200,23 +202,15 @@ describe("settings card layout", () => {
       />,
     );
 
-    for (const name of [
-      "Reconnect",
-      "Refresh",
-      "Restart",
-      "Stop",
-      "Force stop",
-    ]) {
+    for (const name of ["Reconnect", "Refresh", "Restart", "Stop"]) {
       expect(screen.getByRole("button", { name })).toHaveProperty(
         "disabled",
         true,
       );
     }
     expect(
-      screen
-        .getByRole("button", { name: "Force stop" })
-        .querySelector(".loading-spinner"),
-    ).toBeTruthy();
+      screen.getByLabelText("Stop options").getAttribute("aria-disabled"),
+    ).toBe("true");
   });
 
   it("groups runtime summaries into a single panel", () => {

@@ -46,7 +46,7 @@ vi.mock("../components/common/ThreadCard", () => ({
   }) => (
     <div data-testid="project-thread">
       <span>{thread.name ?? thread.id}</span>
-      {showUpdatedAt && <span>Updated 2 minutes ago</span>}
+      {showUpdatedAt && <span>2 minutes ago</span>}
       {onArchive && (
         <button type="button" onClick={onArchive}>
           Archive {thread.name ?? thread.id}
@@ -143,7 +143,7 @@ describe("ProjectHomePage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Updated 2 minutes ago")).toBeTruthy();
+    expect(screen.getByText("2 minutes ago")).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: "Archive Project chat" }),
     );

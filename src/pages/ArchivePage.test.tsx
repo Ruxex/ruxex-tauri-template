@@ -30,7 +30,7 @@ vi.mock("../components/common/ThreadCard", () => ({
   }) => (
     <article>
       <span>{thread.name ?? thread.id}</span>
-      {showUpdatedAt && <span>Updated {thread.updatedAt}</span>}
+      {showUpdatedAt && <span>{thread.updatedAt}</span>}
       {actions}
     </article>
   ),
@@ -78,7 +78,7 @@ describe("ArchivePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
 
     expect(screen.getByText("Old chat")).toBeTruthy();
-    expect(screen.getByText("Updated 1735689600")).toBeTruthy();
+    expect(screen.getByText("1735689600")).toBeTruthy();
     expect(mutateAsync).toHaveBeenCalledWith({ threadId: "thread-old" });
     expect(screen.queryByRole("link", { name: "Open" })).toBeNull();
     expect(screen.getByRole("button", { name: "Restore" }).textContent).toBe(

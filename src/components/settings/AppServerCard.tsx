@@ -1,6 +1,7 @@
 import {
   ArrowPathIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ServerIcon,
@@ -110,6 +111,8 @@ export function AppServerCard({
       daemon?.managedRuxexVersion &&
       displayedVersion !== daemon.managedRuxexVersion,
   );
+  const actionDisabled =
+    isFetching || isRefreshing || isPending || isUpdatePending;
 
   return (
     <SettingsPanel
@@ -245,23 +248,13 @@ export function AppServerCard({
             Reconnect
           </button>
         )}
-        {showDaemonControls &&
-          (daemonRunning
-            ? ([
-                ["restart", "Restart", "btn-outline btn-warning"],
-                ["stop", "Stop", "btn-outline btn-error"],
-                ["forceStop", "Force stop", "btn-outline btn-error"],
-              ] as const)
-            : ([["start", "Start", "btn-outline btn-success"]] as const)
-          ).map(([action, label, variant]) => (
+        {showDaemonControls && daemonRunning && (
+          <>
             <button
-              aria-label={label}
-              className={`btn btn-sm ${variant}`}
-              disabled={
-                isFetching || isRefreshing || isPending || isUpdatePending
-              }
-              key={action}
-              onClick={() => onAction(action)}
+              aria-label="Restart"
+              className="btn btn-sm btn-outline btn-warning"
+              disabled={actionDisabled}
+              onClick={() => onAction("restart")}
               type="button"
             >
               {isPending && (
@@ -270,9 +263,77 @@ export function AppServerCard({
                   className="loading loading-spinner loading-xs"
                 />
               )}
-              {label}
+              Restart
             </button>
-          ))}
+            <div className="join">
+              <button
+                aria-label="Stop"
+                className="btn btn-sm join-item btn-outline btn-error"
+                disabled={actionDisabled}
+                onClick={() => onAction("stop")}
+                type="button"
+              >
+                {isPending && (
+                  <span
+                    aria-hidden="true"
+                    className="loading loading-spinner loading-xs"
+                  />
+                )}
+                Stop
+              </button>
+              <details className="dropdown dropdown-end">
+                <summary
+                  aria-disabled={actionDisabled}
+                  aria-label="Stop options"
+                  className={`btn btn-sm join-item list-none btn-outline btn-error ${actionDisabled ? "pointer-events-none" : ""}`}
+                >
+                  <ChevronDownIcon aria-hidden="true" className="size-4" />
+                </summary>
+                <ul className="menu dropdown-content z-20 mt-2 w-36 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+                  <li>
+                    <button
+                      aria-label="Force stop"
+                      disabled={actionDisabled}
+                      onClick={(event) => {
+                        onAction("forceStop");
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open");
+                      }}
+                      role="menuitem"
+                      type="button"
+                    >
+                      {isPending && (
+                        <span
+                          aria-hidden="true"
+                          className="loading loading-spinner loading-xs"
+                        />
+                      )}
+                      Force stop
+                    </button>
+                  </li>
+                </ul>
+              </details>
+            </div>
+          </>
+        )}
+        {showDaemonControls && !daemonRunning && (
+          <button
+            aria-label="Start"
+            className="btn btn-sm btn-outline btn-success"
+            disabled={actionDisabled}
+            onClick={() => onAction("start")}
+            type="button"
+          >
+            {isPending && (
+              <span
+                aria-hidden="true"
+                className="loading loading-spinner loading-xs"
+              />
+            )}
+            Start
+          </button>
+        )}
       </div>
     </SettingsPanel>
   );

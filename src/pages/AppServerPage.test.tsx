@@ -197,12 +197,15 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+    for (const name of ["Reconnect", "Restart", "Stop"]) {
       expect(screen.getByRole("button", { name })).toHaveProperty(
         "disabled",
         true,
       );
     }
+    expect(
+      screen.getByLabelText("Stop options").getAttribute("aria-disabled"),
+    ).toBe("true");
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
@@ -228,7 +231,7 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    for (const name of ["Start", "Restart", "Stop", "Force stop"]) {
+    for (const name of ["Start", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -244,7 +247,7 @@ describe("AppServerPage", () => {
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.queryByText("PID")).toBeNull();
     expect(screen.queryByText("Socket")).toBeNull();
-    for (const name of ["Start", "Restart", "Stop", "Force stop"]) {
+    for (const name of ["Start", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -289,7 +292,7 @@ describe("AppServerPage", () => {
       "disabled",
       false,
     );
-    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+    for (const name of ["Reconnect", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -307,7 +310,7 @@ describe("AppServerPage", () => {
     render(<AppServerPage />);
 
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
-    for (const name of ["Reconnect", "Restart", "Stop", "Force stop"]) {
+    for (const name of ["Reconnect", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });

@@ -11,6 +11,7 @@ export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
   const Icon = presentation.icon;
   const metadata = item.metadata;
   const isCommandExecution = item.type === "commandExecution";
+  const command = isCommandExecution ? metadata?.command : undefined;
   const hasCommandExecutionSummary =
     isCommandExecution &&
     (metadata?.status !== undefined || metadata?.exitCode !== undefined);
@@ -32,7 +33,16 @@ export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
       >
         <Icon aria-hidden="true" className="size-4 text-base-content/70" />
       </span>
-      <span>{item.title}</span>
+      <span className="shrink-0">{item.title}</span>
+      {command && (
+        <span
+          className="min-w-0 flex-1 truncate font-normal text-base-content/70"
+          data-testid="command-execution-summary-command"
+          title={command}
+        >
+          {command}
+        </span>
+      )}
       {hasCommandExecutionSummary && (
         <ExecutionStatusSummary
           exitCode={metadata?.exitCode}

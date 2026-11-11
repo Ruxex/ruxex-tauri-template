@@ -58,7 +58,8 @@ describe("ChatListItem", () => {
     const chatLink = screen.getByRole("link", { name: /Build the sidebar/ });
     expect(chatLink.getAttribute("href")).toBe("/chat/thread-1");
     expect(chatLink.className).toContain("px-2");
-    expect(chatLink.className).toContain("py-1");
+    expect(chatLink.className).toContain("py-0.5");
+    expect(chatLink.className).not.toContain("py-1");
     expect(chatLink.className).not.toContain("p-3");
     expect(
       screen.getByRole("status", { name: "Chat status: Running" }),
@@ -88,8 +89,9 @@ describe("ChatListItem", () => {
       </MemoryRouter>,
     );
 
-    const updated = screen.getByText("Updated 2 minutes ago");
+    const updated = screen.getByText("2 minutes ago");
     expect(updated).toBeTruthy();
+    expect(screen.queryByText(/Updated/)).toBeNull();
     expect(updated.getAttribute("title")).toContain("2025");
     expect(updated.closest("a")).toBeNull();
     expect(updated.parentElement?.className).toContain("items-center");

@@ -58,6 +58,34 @@ describe("ActivityItem", () => {
     expect(screen.queryByText("commandExecution")).toBeNull();
   });
 
+  it("shows the command in the summary with overflow ellipsis styling", () => {
+    const command =
+      "pnpm vitest run src/components/conversation/ActivityItem.test.tsx";
+
+    render(
+      <ActivityItem
+        item={{
+          id: "command-summary-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Command",
+          text: "done",
+          metadata: { command, status: "completed" },
+        }}
+      />,
+    );
+
+    const summary = screen.getByText("Command").closest("summary");
+    const summaryCommand = summary?.querySelector(
+      "[data-testid='command-execution-summary-command']",
+    );
+
+    expect(summaryCommand?.textContent).toBe(command);
+    expect(summaryCommand?.className).toContain("truncate");
+    expect(summaryCommand?.getAttribute("title")).toBe(command);
+  });
+
   it("removes the border from the command execution collapse", () => {
     render(
       <ActivityItem
@@ -120,7 +148,7 @@ describe("ActivityItem", () => {
     expect(screen.getByRole("status", { name: "Running" })).toBeTruthy();
   });
 
-  it("places a command loading icon after the title", () => {
+  it("places a command loading icon after the summary command", () => {
     render(
       <ActivityItem
         item={{
@@ -145,7 +173,7 @@ describe("ActivityItem", () => {
     expect(loadingIcon.className).toContain("items-center");
     expect(loadingIcon.className).toContain("justify-center");
     expect(loadingIcon.parentElement?.previousElementSibling?.textContent).toBe(
-      "Command",
+      "pnpm test",
     );
   });
 
@@ -170,7 +198,7 @@ describe("ActivityItem", () => {
     );
 
     expect(screen.getByText("Command")).toBeTruthy();
-    expect(screen.getByText("pnpm test")).toBeTruthy();
+    expect(screen.getAllByText("pnpm test")).toHaveLength(2);
     expect(screen.getByText("0")).toBeTruthy();
     expect(screen.queryByTestId("command-execution-diagnostics")).toBeNull();
     expect(screen.getByText("done")).toBeTruthy();

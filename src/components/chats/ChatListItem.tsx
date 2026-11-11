@@ -51,7 +51,7 @@ export function ChatListItem({
       className={`group/thread grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden rounded-box border border-transparent p-0 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "border-primary/30 bg-primary/10 ring-1 ring-inset ring-primary/30" : ""}`}
     >
       <Link
-        className="block h-full w-full min-w-0 max-w-full overflow-hidden px-2 py-1"
+        className="block h-full w-full min-w-0 max-w-full overflow-hidden px-2 py-0.5"
         to={`/chat/${thread.id}`}
         onClick={onClick}
         onMouseEnter={() => setIsTitleHovered(true)}
@@ -80,7 +80,7 @@ export function ChatListItem({
           </span>
         )}
       </Link>
-      <div className="flex shrink-0 items-center gap-1 px-1 py-1">
+      <div className="flex shrink-0 items-center gap-1 px-1 py-0.5">
         {showUpdatedAt && <UpdatedAt timestamp={thread.updatedAt} />}
         {actions}
         {onArchive && (
@@ -112,7 +112,7 @@ function UpdatedAt({ timestamp }: { timestamp: number }) {
       className="whitespace-nowrap text-right text-xs text-base-content/60"
       title={absoluteTimestamp}
     >
-      Updated {formatChatTimestamp(timestamp)}
+      {formatChatTimestamp(timestamp)}
     </span>
   );
 }
