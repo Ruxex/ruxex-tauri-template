@@ -127,6 +127,11 @@ describe("McpServersPage", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { name: "MCP servers" })).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "Manage the MCP servers in your global user configuration.",
+      ),
+    ).toBeNull();
     expect(screen.getByText("No global MCP servers configured.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Add MCP server" }));
     expect(

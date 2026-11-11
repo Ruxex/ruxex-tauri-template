@@ -382,21 +382,23 @@ export function ProjectHomePage() {
           {threads.isError && (
             <ErrorState>Unable to load project chats.</ErrorState>
           )}
-          {!threads.isLoading && !threads.data?.data.length && (
-            <EmptyState
-              action={
-                <Link
-                  className="btn btn-sm btn-primary"
-                  to={`/?projectId=${encodeURIComponent(projectId)}`}
-                >
-                  New chat
-                </Link>
-              }
-              description="Start a new chat to keep work for this project together."
-              icon={ChatBubbleLeftRightIcon}
-              title="No chats in this project yet."
-            />
-          )}
+          {!threads.isLoading &&
+            !threads.isFetching &&
+            !threads.data?.data.length && (
+              <EmptyState
+                action={
+                  <Link
+                    className="btn btn-sm btn-primary"
+                    to={`/?projectId=${encodeURIComponent(projectId)}`}
+                  >
+                    New chat
+                  </Link>
+                }
+                description="Start a new chat to keep work for this project together."
+                icon={ChatBubbleLeftRightIcon}
+                title="No chats in this project yet."
+              />
+            )}
           <div className="grid gap-3">
             {threads.data?.data.map((thread) => (
               <ThreadCard

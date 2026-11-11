@@ -85,6 +85,7 @@ describe("ArchivePage", () => {
       "",
     );
     expect(screen.getByRole("button", { name: "Delete" }).textContent).toBe("");
+    expect(screen.queryByText("History")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Delete all archived chats" }),
     ).toBeTruthy();

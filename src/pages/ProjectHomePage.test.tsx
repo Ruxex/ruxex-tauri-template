@@ -132,6 +132,24 @@ describe("ProjectHomePage", () => {
     expect(screen.queryByTestId("worktree-card")).toBeNull();
   });
 
+  it("does not show the empty state while project chats are refetching", async () => {
+    useProjectThreads.mockReturnValue({
+      isLoading: false,
+      isFetching: true,
+      isError: false,
+      data: { data: [] },
+    });
+    const { ProjectHomePage } = await import("./ProjectHomePage");
+
+    render(
+      <MemoryRouter>
+        <ProjectHomePage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("No chats in this project yet.")).toBeNull();
+  });
+
   it("shows friendly update metadata and archives a project chat from the row", async () => {
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
     useArchiveThread.mockReturnValue({ isPending: false, mutateAsync });

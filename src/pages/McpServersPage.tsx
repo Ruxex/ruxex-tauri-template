@@ -277,9 +277,6 @@ export function McpServersPage() {
     <PageContainer>
       <div>
         <h1 className="text-3xl font-semibold">MCP servers</h1>
-        <p className="mt-1 text-sm text-base-content/60">
-          Manage the MCP servers in your global user configuration.
-        </p>
       </div>
 
       {writeError && !dialog && (
@@ -496,7 +493,9 @@ export function McpServersPage() {
                           </div>
                         )}
                       {status?.toolsError && (
-                        <p className="text-xs text-error">{status.toolsError}</p>
+                        <p className="text-xs text-error">
+                          {status.toolsError}
+                        </p>
                       )}
                     </div>
                   </details>

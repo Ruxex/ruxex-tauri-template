@@ -72,9 +72,6 @@ export function ArchivePage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-primary">
-            History
-          </p>
           <h1 className="text-3xl font-semibold">Archived chats</h1>
         </div>
         {archived.data?.data.length ? (

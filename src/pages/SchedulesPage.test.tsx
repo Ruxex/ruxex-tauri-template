@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useSchedules = vi.hoisted(() => vi.fn());
@@ -58,12 +64,21 @@ describe("SchedulesPage", () => {
     expect(container.firstElementChild?.className).toContain("max-w-5xl");
     expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByText("Nightly checks")).toBeTruthy();
-    expect(screen.getByText("Schedule")).toBeTruthy();
-    expect(screen.getByText("Enabled")).toBeTruthy();
+    const card = screen.getByText("Nightly checks").closest("article");
+    expect(card).toBeTruthy();
+    const cardView = within(card as HTMLElement);
+    expect(cardView.queryByText("Automation")).toBeNull();
+    expect(cardView.queryByText("Enabled")).toBeNull();
+    expect(cardView.queryByText("Schedule")).toBeNull();
+    expect(cardView.getByText(/^Next run:/)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Run now: Nightly checks" })
+      cardView.getByRole("button", { name: "Run now: Nightly checks" })
         .textContent,
-    ).toContain("Run now");
+    ).toBe("");
+    expect(
+      cardView.getByRole("button", { name: "Delete: Nightly checks" })
+        .textContent,
+    ).toBe("");
     expect(screen.getByText("Last run failed: offline")).toBeTruthy();
     expect(screen.getByTestId("schedule-grid").className).not.toContain(
       "sm:grid-cols-2",
