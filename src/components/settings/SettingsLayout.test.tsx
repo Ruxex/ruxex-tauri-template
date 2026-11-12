@@ -227,6 +227,35 @@ describe("settings card layout", () => {
     ).toBeTruthy();
   });
 
+  it("expands the model summary to show model information", () => {
+    render(
+      <RuntimeSummary
+        modelCount={1}
+        models={[
+          {
+            id: "model-1",
+            model: "catalog-model",
+            displayName: "Catalog model",
+            description: "A test model",
+            inputModalities: ["text"],
+            supportedReasoningEfforts: [],
+          } as never,
+        ]}
+        permissionCount={0}
+        rateLimitName="Standard"
+      />,
+    );
+
+    const models = screen.getByText("1 available");
+    const modelDetails = models.closest("details");
+    expect(modelDetails?.open).toBe(false);
+    fireEvent.click(models);
+    expect(modelDetails?.open).toBe(true);
+    expect(screen.getByText("Catalog model")).toBeTruthy();
+    expect(screen.getByText("catalog-model")).toBeTruthy();
+    expect(screen.getByText("A test model")).toBeTruthy();
+  });
+
   it("keeps settings summary cards in one vertical column", () => {
     render(
       <RuntimeSummary

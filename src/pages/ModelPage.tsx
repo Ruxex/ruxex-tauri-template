@@ -34,6 +34,7 @@ export function ModelPage() {
       <CapabilitiesCard capabilities={capabilities.data ?? {}} />
       <RuntimeSummary
         modelCount={models.data?.data.length ?? 0}
+        models={models.data?.data}
         permissionCount={permissions.data?.data.length ?? 0}
         rateLimitName={account.data?.usage?.limitName ?? "Unavailable"}
       />
