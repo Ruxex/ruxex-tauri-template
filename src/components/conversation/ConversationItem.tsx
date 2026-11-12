@@ -5,7 +5,7 @@ import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
 } from "./conversation-model";
-import { MarkdownContent } from "./MarkdownContent";
+import { MessageContent } from "./MessageContent";
 
 type ConversationItemProps = {
   item: ConversationViewItem;
@@ -107,7 +107,7 @@ export const ConversationItem = memo(function ConversationItem({
               : "w-full border-0 bg-transparent px-0 py-2"
           }
         >
-          <MarkdownContent text={item.text || "…"} />
+          <MessageContent text={item.text || "…"} />
         </div>
       )}
       {isUser && (
