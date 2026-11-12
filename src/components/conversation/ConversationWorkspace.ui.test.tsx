@@ -160,6 +160,25 @@ describe("ConversationWorkspace", () => {
               additionalDetails: null,
             },
           },
+          tokenUsage: {
+            total: {
+              totalTokens: 1200,
+              inputTokens: 900,
+              cachedInputTokens: 100,
+              cacheWriteInputTokens: 0,
+              outputTokens: 300,
+              reasoningOutputTokens: 50,
+            },
+            last: {
+              totalTokens: 400,
+              inputTokens: 300,
+              cachedInputTokens: 25,
+              cacheWriteInputTokens: 0,
+              outputTokens: 100,
+              reasoningOutputTokens: 10,
+            },
+            modelContextWindow: 8192,
+          },
         },
       },
     });
@@ -174,6 +193,8 @@ describe("ConversationWorkspace", () => {
     render(<ConversationWorkspace threadId="thread-1" />);
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
+    expect(screen.getByText("1,200")).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: "Open Thread Summary" }),
     ).toBeNull();

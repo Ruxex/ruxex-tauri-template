@@ -24,6 +24,80 @@ const serverRequest = (data: unknown): AppServerEvent => ({
 });
 
 describe("reduceAppServerEvent", () => {
+  it("stores token usage per thread", () => {
+    let state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "thread/tokenUsage/updated",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          tokenUsage: {
+            total: {
+              totalTokens: 1200,
+              inputTokens: 900,
+              cachedInputTokens: 100,
+              cacheWriteInputTokens: 0,
+              outputTokens: 300,
+              reasoningOutputTokens: 50,
+            },
+            last: {
+              totalTokens: 400,
+              inputTokens: 300,
+              cachedInputTokens: 25,
+              cacheWriteInputTokens: 0,
+              outputTokens: 100,
+              reasoningOutputTokens: 10,
+            },
+            modelContextWindow: 8192,
+          },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.tokenUsage).toEqual(
+      expect.objectContaining({
+        total: expect.objectContaining({ totalTokens: 1200 }),
+        last: expect.objectContaining({ totalTokens: 400 }),
+        modelContextWindow: 8192,
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "thread/tokenUsage/updated",
+        params: {
+          threadId: "thread-2",
+          turnId: "turn-2",
+          tokenUsage: {
+            total: {
+              totalTokens: 10,
+              inputTokens: 8,
+              cachedInputTokens: 0,
+              cacheWriteInputTokens: 0,
+              outputTokens: 2,
+              reasoningOutputTokens: 0,
+            },
+            last: {
+              totalTokens: 10,
+              inputTokens: 8,
+              cachedInputTokens: 0,
+              cacheWriteInputTokens: 0,
+              outputTokens: 2,
+              reasoningOutputTokens: 0,
+            },
+            modelContextWindow: null,
+          },
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.tokenUsage?.total.totalTokens).toBe(
+      1200,
+    );
+  });
+
   it("clears reconnecting after a fresh server notification", () => {
     let state = reduceAppServerEvent(createInitialEventState(), {
       type: "disconnected",

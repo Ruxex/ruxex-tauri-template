@@ -33,6 +33,7 @@ export type ThreadExecutionState = {
     | "resynchronizing";
   items: LiveConversationItem[];
   completedTurn: v2.Turn | null;
+  tokenUsage?: v2.ThreadTokenUsage | null;
   lastActivityAt: number;
 };
 
@@ -276,6 +277,13 @@ function reduceNotification(
         state,
         notification.params.threadId,
         (thread) => ({ ...thread, queueChangedAt: activityAt }),
+        activityAt,
+      );
+    case "thread/tokenUsage/updated":
+      return updateThread(
+        state,
+        notification.params.threadId,
+        (thread) => ({ ...thread, tokenUsage: notification.params.tokenUsage }),
         activityAt,
       );
     case "turn/started": {
@@ -528,6 +536,7 @@ function updateThread(
     status: "idle" as const,
     items: [],
     completedTurn: null,
+    tokenUsage: null,
     lastActivityAt: activityAt,
   };
   const nextThread = update(current);

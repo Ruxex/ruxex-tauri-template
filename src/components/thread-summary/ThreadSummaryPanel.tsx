@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { SubagentDetail } from "./SubagentDetail";
 import { SubagentsSection } from "./SubagentsSection";
+import { TokenUsageSection } from "./TokenUsageSection";
+import { useAppServerEvents } from "../../app-server/hooks";
 
 type ThreadSummaryPanelProps = {
   threadId: string;
@@ -16,6 +18,8 @@ const TBD_SECTIONS = [
 
 export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const events = useAppServerEvents();
+  const tokenUsage = events.threads[threadId]?.tokenUsage ?? null;
 
   return (
     <aside
@@ -38,6 +42,7 @@ export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
             />
           ) : (
             <div className="space-y-5">
+              <TokenUsageSection usage={tokenUsage} />
               <section aria-labelledby="thread-summary-subagents">
                 <h3
                   className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary"
