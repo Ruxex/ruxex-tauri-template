@@ -4,6 +4,7 @@ import {
   InformationCircleIcon,
   PuzzlePieceIcon,
   ServerIcon,
+  ShieldCheckIcon,
   SparklesIcon,
   TagIcon,
   UserCircleIcon,
@@ -117,6 +118,19 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               >
                 <ServerIcon aria-hidden="true" className="size-4" />
                 App Server
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/hooks"
+              >
+                <ShieldCheckIcon aria-hidden="true" className="size-4" />
+                Hooks
               </NavLink>
             </li>
             <li>

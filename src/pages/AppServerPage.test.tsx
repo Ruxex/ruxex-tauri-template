@@ -351,6 +351,7 @@ describe("SettingsSidebar AppServer navigation", () => {
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Models / Engines" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "App Server" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Hooks" })).toBeTruthy();
   });
 
   it("links to the Version settings section", () => {
@@ -363,6 +364,18 @@ describe("SettingsSidebar AppServer navigation", () => {
     expect(
       screen.getByRole("link", { name: "Version" }).getAttribute("href"),
     ).toBe("/settings/version");
+  });
+
+  it("links to the Hooks settings section", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <SettingsSidebar onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Hooks" }).getAttribute("href"),
+    ).toBe("/settings/hooks");
   });
 
   it("links to the plugin marketplace settings section", () => {
