@@ -9,13 +9,13 @@ import {
   useServerRequests,
   useThreadList,
 } from "../../app-server/hooks";
-import { StateBadge } from "../common/StateBadge";
 import { PendingRequestsSection } from "../approvals/PendingRequestsSection";
+import { StateBadge } from "../common/StateBadge";
 import { ActivityRow } from "./ActivityRow";
 import {
+  type ActivityFilter,
   buildActivityEntries,
   filterActivityEntries,
-  type ActivityFilter,
 } from "./activity-model";
 
 const filters: Array<{ id: ActivityFilter; label: string }> = [
@@ -64,11 +64,8 @@ export function ActivityCenter() {
         </div>
       )}
 
-      <div
-        aria-label="Activity filters"
-        className="flex flex-wrap gap-2"
-        role="group"
-      >
+      <fieldset className="flex flex-wrap gap-2">
+        <legend className="sr-only">Activity filters</legend>
         {filters.map((option) => (
           <button
             aria-pressed={filter === option.id}
@@ -85,7 +82,7 @@ export function ActivityCenter() {
             )}
           </button>
         ))}
-      </div>
+      </fieldset>
 
       {filter === "needsAction" ? (
         <PendingRequestsSection

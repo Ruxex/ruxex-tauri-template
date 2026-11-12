@@ -1,8 +1,7 @@
 import { Fragment } from "react";
-
-import { MarkdownContent } from "./MarkdownContent";
 import { VisualizeFrame } from "../visualize/VisualizeFrame";
 import { parseVisualizeReferences } from "../visualize/visualize-reference";
+import { MarkdownContent } from "./MarkdownContent";
 
 export function MessageContent({ text }: { text: string }) {
   const segments = parseVisualizeReferences(text);
@@ -10,17 +9,26 @@ export function MessageContent({ text }: { text: string }) {
     return <MarkdownContent text={segments[0].text} />;
   }
 
+  const segmentKeys = new Map<string, number>();
   return (
     <div className="space-y-3">
-      {segments.map((segment, index) => (
-        <Fragment key={`${segment.type}-${index}`}>
-          {segment.type === "markdown" ? (
-            <MarkdownContent text={segment.text} />
-          ) : (
-            <VisualizeFrame reference={segment.reference} />
-          )}
-        </Fragment>
-      ))}
+      {segments.map((segment) => {
+        const baseKey =
+          segment.type === "markdown"
+            ? `markdown-${segment.text}`
+            : `visualize-${segment.reference.path}-${segment.reference.mode}`;
+        const occurrence = segmentKeys.get(baseKey) ?? 0;
+        segmentKeys.set(baseKey, occurrence + 1);
+        return (
+          <Fragment key={`${baseKey}-${occurrence}`}>
+            {segment.type === "markdown" ? (
+              <MarkdownContent text={segment.text} />
+            ) : (
+              <VisualizeFrame reference={segment.reference} />
+            )}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }
