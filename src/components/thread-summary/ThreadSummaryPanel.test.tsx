@@ -90,6 +90,7 @@ describe("ThreadSummaryPanel", () => {
     expect(summaryColumn?.className).toContain("top-6");
     expect(summaryColumn?.className).toContain("chat-side-column");
     expect(summaryPanel.className).toContain("rounded-box");
+    expect(summaryPanel.className).toContain("max-w-72");
     expect(summaryColumn?.className).toContain("overflow-hidden");
     expect(summaryPanel.className).not.toContain("overflow-y-auto");
     const summaryScroll = screen.getByTestId("thread-summary-scroll");

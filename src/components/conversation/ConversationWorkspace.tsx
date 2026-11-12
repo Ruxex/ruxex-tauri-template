@@ -16,7 +16,10 @@ import {
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
 import { Composer } from "./Composer";
-import { ConversationMinimap } from "./ConversationMinimap";
+import {
+  ConversationMinimap,
+  MIN_USER_ITEMS_FOR_MINIMAP,
+} from "./ConversationMinimap";
 import { CurrentGoal } from "./CurrentGoal";
 import {
   buildUserTextInput,
@@ -189,24 +192,40 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     liveThread?.status !== "resynchronizing" &&
     !revertThread.isPending &&
     !sendMessage.isPending;
-
-  return (
-    <div
-      className={[
-        "chat-workspace mx-auto grid min-h-full w-full grid-cols-[0_minmax(0,1fr)_0] justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+  const hasMinimap =
+    items.filter((item) => item.type === "userMessage").length >=
+    MIN_USER_ITEMS_FOR_MINIMAP;
+  const chatGridClasses = hasMinimap
+    ? [
+        "grid-cols-[0_minmax(0,1fr)_0]",
         "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
         "@min-[80rem]/chat:grid-cols-[0_minmax(0,53rem)_minmax(0,24rem)]",
         "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,24rem)]",
         "@min-[120rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
-        "chat-workspace--has-minimap",
+      ]
+    : [
+        "grid-cols-[minmax(0,1fr)]",
+        "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
+        "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
+        "@min-[120rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
+      ];
+
+  return (
+    <div
+      className={[
+        "chat-workspace mx-auto grid min-h-full w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+        ...chatGridClasses,
+        ...(hasMinimap ? ["chat-workspace--has-minimap"] : []),
         "chat-workspace--has-summary",
       ]
         .filter(Boolean)
         .join(" ")}
       data-testid="chat-workspace"
     >
+      {hasMinimap && (
         <ConversationMinimap items={items} timelineRef={timelineRef} />
-      <main className="chat-main-column flex min-h-0 w-full min-w-0 max-w-[53rem] justify-self-center flex-col gap-4">
+      )}
+      <main className="chat-main-column flex h-full min-h-0 w-full min-w-0 max-w-[53rem] justify-self-center flex-col gap-4">
         {turnError && (
           <p className="alert alert-error" role="alert">
             <span>Turn failed: {turnError.message}</span>

@@ -307,4 +307,28 @@ describe("AppLayout", () => {
     expect(pane.parentElement?.className).toContain("flex");
     expect(screen.getByRole("button", { name: "Close right pane" })).toBeTruthy();
   });
+
+  it("allows the right pane to expand to 1536 pixels", () => {
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open right pane" }));
+    const pane = screen.getByTestId("right-pane");
+    const handle = screen.getByRole("button", { name: "Resize right pane" });
+
+    for (let index = 0; index < 80; index += 1) {
+      fireEvent.keyDown(handle, { key: "ArrowRight" });
+    }
+
+    expect(handle.getAttribute("data-pane-width")).toBe("1536");
+    expect(pane.style.width).toBe("1536px");
+  });
 });

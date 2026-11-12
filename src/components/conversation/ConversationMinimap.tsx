@@ -4,6 +4,7 @@ import type { ConversationViewItem } from "./conversation-model";
 
 const MAX_MARKER_GAP_PX = 28;
 const MAX_MARKER_SPAN_PX = 360;
+export const MIN_USER_ITEMS_FOR_MINIMAP = 5;
 
 type ConversationMinimapProps = {
   items: ConversationViewItem[];
@@ -36,7 +37,7 @@ export function ConversationMinimap({
 
   useEffect(() => {
     const timeline = timelineRef.current;
-    if (!timeline || userItems.length < 5) {
+    if (!timeline || userItems.length < MIN_USER_ITEMS_FOR_MINIMAP) {
       return;
     }
 
@@ -90,7 +91,7 @@ export function ConversationMinimap({
     return null;
   }
 
-  const hasMarkers = userItems.length >= 5;
+  const hasMarkers = userItems.length >= MIN_USER_ITEMS_FOR_MINIMAP;
   const hoveredIndex = hoveredId
     ? userItems.findIndex((item) => item.id === hoveredId)
     : -1;

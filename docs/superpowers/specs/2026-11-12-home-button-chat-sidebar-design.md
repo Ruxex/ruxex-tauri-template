@@ -33,3 +33,16 @@ replace the chat with the new-chat screen.
 - Run the focused test, the frontend test suite via `make check-tests`, and
   `git diff --check` before reporting completion.
 
+## Review follow-up
+
+The Home-sidebar guard must apply to existing chat routes only. `/chat/new`
+must continue to use its existing Home navigation behavior.
+
+## Left sidebar resizing
+
+The expanded left sidebar can be resized during the current app session. Its
+initial width remains 320px, with a 240px minimum and 480px maximum. The
+collapsed rail remains 64px wide. A drag handle and ArrowLeft/ArrowRight
+keyboard controls are available on the boundary between the sidebar and main
+content. The width is not persisted.
+

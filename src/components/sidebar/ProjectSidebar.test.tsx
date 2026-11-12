@@ -7,7 +7,7 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
@@ -31,6 +31,11 @@ vi.mock("../../app-server/hooks", () => ({
   usePluginList,
 }));
 vi.mock("../../app/thread-read-state", () => ({ useThreadReadState }));
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}</output>;
+}
 
 describe("ProjectSidebar", () => {
   afterEach(cleanup);
@@ -328,6 +333,84 @@ describe("ProjectSidebar", () => {
     ).toBeNull();
     expect(within(rail).getByRole("button", { name: "Home" })).toBeTruthy();
     expect(within(rail).getByRole("button", { name: "Projects" })).toBeTruthy();
+    expect(
+      within(rail).queryByRole("button", { name: "Resize left pane" }),
+    ).toBeNull();
+  });
+
+  it("resizes the expanded sidebar with keyboard controls", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const sidebar = screen.getByRole("complementary", {
+      name: "Workspace sidebar",
+    });
+    const handle = screen.getByRole("button", { name: "Resize left pane" });
+
+    expect(sidebar.style.width).toBe("320px");
+    expect(handle.getAttribute("data-pane-width")).toBe("320");
+
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    expect(handle.getAttribute("data-pane-width")).toBe("304");
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(handle.getAttribute("data-pane-width")).toBe("320");
+  });
+
+  it("lets the chat sidebar fill the expanded pane", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const chatSidebar = screen.getByRole("complementary", {
+      name: "Chat sidebar",
+    });
+
+    expect(chatSidebar.className).toContain("flex-1");
+    expect(chatSidebar.className).toContain("min-w-0");
+    expect(chatSidebar.className).not.toContain("w-72");
+  });
+
+  it("clamps pointer resizing to the sidebar width bounds", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const handle = screen.getByRole("button", { name: "Resize left pane" });
+
+    fireEvent.pointerDown(handle, { clientX: 200 });
+    fireEvent.pointerMove(window, { clientX: -1000 });
+    expect(handle.getAttribute("data-pane-width")).toBe("240");
+    fireEvent.pointerMove(window, { clientX: 1000 });
+    expect(handle.getAttribute("data-pane-width")).toBe("480");
+    fireEvent.pointerUp(window);
   });
 
   it("renders Heroicons in the icon rail", async () => {
@@ -418,6 +501,72 @@ describe("ProjectSidebar", () => {
     fireEvent.click(within(rail).getByRole("button", { name: "Settings" }));
 
     expect(onPanelChange).toHaveBeenCalledWith("settings");
+  });
+
+  it("keeps the chat route when Home opens the sidebar", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed
+          onPanelChange={onPanelChange}
+          onToggle={vi.fn()}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("home");
+    expect(screen.getByTestId("location").textContent).toBe("/chat/thread-1");
+  });
+
+  it("navigates Home normally from the new-chat route", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/chat/new"]}>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed
+          onPanelChange={onPanelChange}
+          onToggle={vi.fn()}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("home");
+    expect(screen.getByTestId("location").textContent).toBe("/");
+  });
+
+  it("navigates to Home from a non-chat route", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <ProjectSidebar
+          activePanel="settings"
+          collapsed
+          onPanelChange={onPanelChange}
+          onToggle={vi.fn()}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("home");
+    expect(screen.getByTestId("location").textContent).toBe("/");
   });
 
   it("shows settings tabs in the settings sidebar panel", async () => {

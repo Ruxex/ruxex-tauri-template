@@ -211,10 +211,21 @@ describe("ConversationWorkspace", () => {
 
     render(<ConversationWorkspace threadId="thread-1" />);
 
+    const workspace = screen.getByTestId("chat-workspace");
+    const mainChat = screen.getByRole("main");
     expect(
       screen.queryByRole("complementary", { name: "Conversation minimap" }),
     ).toBeNull();
     expect(screen.queryByTestId("conversation-minimap-track")).toBeNull();
+    expect(workspace.className).not.toContain("chat-workspace--has-minimap");
+    expect(workspace.className).toContain("grid-cols-[minmax(0,1fr)]");
+    expect(workspace.className).toContain(
+      "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
+    );
+    expect(workspace.className).toContain(
+      "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
+    );
+    expect(mainChat.className).toContain("h-full");
   });
 
   it("uses the responsive chat grid when both supporting columns are available", async () => {
@@ -290,7 +301,7 @@ describe("ConversationWorkspace", () => {
     ).toContain("sticky");
     expect(summaryPanel.parentElement?.className).toContain("sticky");
     const mainChat = screen.getByRole("main");
-    expect(mainChat.className).not.toContain("h-full");
+    expect(mainChat.className).toContain("h-full");
     expect(mainChat.className).toContain("min-h-0");
     const timeline = screen.getByRole("region", { name: "Chat activity" });
     expect(timeline.className).not.toContain("overflow-y-auto");
@@ -322,6 +333,7 @@ describe("ConversationWorkspace", () => {
       expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
     expect(root?.className.split(/\s+/)).not.toContain("h-full");
+    expect(screen.getByRole("main").className).toContain("h-full");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["sticky", "pb-2"]),
     );

@@ -1,6 +1,6 @@
 import {
-  Bars3Icon,
-  Bars3BottomRightIcon,
+  ArrowLeftStartOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
@@ -102,6 +102,12 @@ export function BrowserNavigationBar({
     chatTitle,
     projectTitle,
   );
+  const SidebarToggleIcon = sidebarOpen
+    ? ArrowLeftStartOnRectangleIcon
+    : ArrowRightStartOnRectangleIcon;
+  const RightPaneToggleIcon = rightPaneOpen
+    ? ArrowRightStartOnRectangleIcon
+    : ArrowLeftStartOnRectangleIcon;
 
   return (
     <nav
@@ -138,7 +144,7 @@ export function BrowserNavigationBar({
           title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
           type="button"
         >
-          <Bars3Icon aria-hidden="true" className="size-3.5" />
+          <SidebarToggleIcon aria-hidden="true" className="size-3.5" />
         </button>
       )}
       <nav aria-label="Breadcrumb" className="min-w-0 flex-1 px-2">
@@ -179,7 +185,7 @@ export function BrowserNavigationBar({
           title={rightPaneOpen ? "Close right pane" : "Open right pane"}
           type="button"
         >
-          <Bars3BottomRightIcon aria-hidden="true" className="size-3.5" />
+          <RightPaneToggleIcon aria-hidden="true" className="size-3.5" />
         </button>
       )}
     </nav>

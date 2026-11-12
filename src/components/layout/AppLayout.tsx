@@ -8,6 +8,8 @@ import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
+const MAX_RIGHT_PANE_WIDTH = 1536;
+
 export function AppLayout() {
   const MIN_THREE_COLUMN_WIDTH = 1040;
   const RESIZE_HANDLE_WIDTH = 8;
@@ -81,10 +83,13 @@ export function AppLayout() {
 
   function getRightPaneMaxWidth() {
     const mainWidth = mainContentRef.current?.clientWidth ?? 0;
-    if (mainWidth === 0) return 480;
+    if (mainWidth === 0) return MAX_RIGHT_PANE_WIDTH;
     return Math.max(
       240,
-      Math.min(480, mainWidth + rightPaneWidth - MIN_THREE_COLUMN_WIDTH - RESIZE_HANDLE_WIDTH),
+      Math.min(
+        MAX_RIGHT_PANE_WIDTH,
+        mainWidth + rightPaneWidth - MIN_THREE_COLUMN_WIDTH - RESIZE_HANDLE_WIDTH,
+      ),
     );
   }
 

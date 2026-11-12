@@ -10,7 +10,7 @@ export function HomeSidebar({
   return (
     <aside
       aria-label="Chat sidebar"
-      className="flex h-full min-h-0 w-72 flex-col bg-base-100 p-4"
+      className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-base-100 p-4"
     >
       <ChatSidebarSections
         onClose={onClose}

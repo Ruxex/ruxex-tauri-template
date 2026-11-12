@@ -51,7 +51,7 @@ export function RouteSidebar({
   return (
     <aside
       aria-label={`${panel.label} sidebar`}
-      className="h-full min-h-0 w-72 overflow-y-auto bg-base-100 p-4"
+      className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
     >
       <SidebarHeader label={panel.label} onClose={onClose} />
       <div className="rounded-box bg-base-200 p-4 text-sm text-base-content/70">

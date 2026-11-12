@@ -82,6 +82,64 @@ describe("BrowserNavigationBar", () => {
     expect(onToggleSidebar).toHaveBeenCalledOnce();
   });
 
+  it("uses directional rectangle icons for pane toggles", () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <BrowserNavigationBar
+          onToggleRightPane={vi.fn()}
+          onToggleSidebar={vi.fn()}
+          rightPaneOpen={false}
+          sidebarOpen={false}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen
+        .getByRole("button", { name: "Open sidebar" })
+        .querySelector("path")
+        ?.getAttribute("d"),
+    ).toBe(
+      "M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9",
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Open right pane" })
+        .querySelector("path")
+        ?.getAttribute("d"),
+    ).toBe(
+      "M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15",
+    );
+
+    rerender(
+      <MemoryRouter>
+        <BrowserNavigationBar
+          onToggleRightPane={vi.fn()}
+          onToggleSidebar={vi.fn()}
+          rightPaneOpen
+          sidebarOpen
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen
+        .getByRole("button", { name: "Close sidebar" })
+        .querySelector("path")
+        ?.getAttribute("d"),
+    ).toBe(
+      "M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15",
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Close right pane" })
+        .querySelector("path")
+        ?.getAttribute("d"),
+    ).toBe(
+      "M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9",
+    );
+  });
+
   it("renders breadcrumbs for the current route", () => {
     render(
       <MemoryRouter initialEntries={["/settings/appearance"]}>
