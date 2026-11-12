@@ -122,7 +122,9 @@ describe("ConversationMinimap", () => {
     expect(screen.getByTestId("conversation-minimap-track")).toBeTruthy();
     const markers = screen.getAllByRole("button", { name: /Jump to message/ });
     expect(markers).toHaveLength(5);
-    expect(markers[0]?.className).toContain("size-7");
+    expect(markers[0]?.className).toContain("h-7");
+    expect(markers[0]?.className).toContain("w-10");
+    expect(markers[0]?.className).toContain("-translate-x-[14px]");
     expect(screen.queryByRole("tooltip")).toBeNull();
 
     const firstMarker = screen.getByRole("button", { name: /First prompt/ });
@@ -187,7 +189,7 @@ describe("ConversationMinimap", () => {
     await waitFor(() =>
       expect(
         screen.getByTestId("conversation-minimap-marker-user-5").parentElement
-          ?.parentElement?.style.top,
+          ?.parentElement?.parentElement?.style.top,
       ).toBe("calc(50% + 56px)"),
     );
 
@@ -195,7 +197,7 @@ describe("ConversationMinimap", () => {
       items.map(
         (item) =>
           screen.getByTestId(`conversation-minimap-marker-${item.id}`)
-            .parentElement?.parentElement?.style.top,
+            .parentElement?.parentElement?.parentElement?.style.top,
       ),
     ).toEqual([
       "calc(50% - 56px)",

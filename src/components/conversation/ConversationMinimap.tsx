@@ -161,7 +161,7 @@ export function ConversationMinimap({
                   <button
                     aria-current={isActive ? "location" : undefined}
                     aria-label={`Jump to message: ${preview}`}
-                    className="relative flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                    className="relative flex h-7 w-10 -translate-x-[14px] -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
                     onBlur={() => setHoveredId(null)}
                     onClick={() => jumpTo(item)}
                     onFocus={() => setHoveredId(item.id)}
@@ -169,11 +169,13 @@ export function ConversationMinimap({
                     onMouseLeave={() => setHoveredId(null)}
                     type="button"
                   >
-                    <span
-                      aria-hidden="true"
-                      className={`block size-2 rounded-full border transition-[transform,background-color,box-shadow] duration-200 ease-out ${markerOffsetClass} ${markerStateClass}`}
-                      data-testid={`conversation-minimap-marker-${item.id}`}
-                    />
+                    <span className="absolute left-[10px] top-1/2 -translate-y-1/2">
+                      <span
+                        aria-hidden="true"
+                        className={`block size-2 rounded-full border transition-[transform,background-color,box-shadow] duration-200 ease-out ${markerOffsetClass} ${markerStateClass}`}
+                        data-testid={`conversation-minimap-marker-${item.id}`}
+                      />
+                    </span>
                     {isHovered && (
                       <span
                         className="absolute bottom-1/2 left-10 z-10 w-64 translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
