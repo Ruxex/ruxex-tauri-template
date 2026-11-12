@@ -12,6 +12,7 @@ mod error;
 mod platform;
 mod quick_panel;
 mod schedule_commands;
+mod visualization;
 mod worktree;
 mod worktree_commands;
 
@@ -155,6 +156,7 @@ pub fn run_with_config(config: DesktopConfig) {
             artifact_preview::open_artifact,
             artifact_preview::save_artifact,
             desktop::read_image_file,
+            visualization::read_visualization_file,
             desktop::read_local_marketplace_asset,
             desktop::read_marketplace_asset,
             desktop::open_browser_window,

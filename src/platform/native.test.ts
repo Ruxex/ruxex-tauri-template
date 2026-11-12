@@ -17,6 +17,18 @@ describe("native platform bridge", () => {
     });
   });
 
+  it("reads a visualization through the validated desktop command", async () => {
+    invoke.mockResolvedValueOnce("<div>chart</div>");
+    const { readVisualizationFile } = await import("./native");
+
+    await expect(
+      readVisualizationFile("/workspace/chart.html"),
+    ).resolves.toBe("<div>chart</div>");
+    expect(invoke).toHaveBeenCalledWith("read_visualization_file", {
+      path: "/workspace/chart.html",
+    });
+  });
+
   it("opens only an explicit browser URL command", async () => {
     const { openBrowserWindow } = await import("./native");
 

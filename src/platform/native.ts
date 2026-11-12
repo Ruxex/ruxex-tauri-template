@@ -41,6 +41,10 @@ export function readImageFile(path: string): Promise<string> {
   return invoke<string>("read_image_file", { path });
 }
 
+export function readVisualizationFile(path: string): Promise<string> {
+  return invoke<string>("read_visualization_file", { path });
+}
+
 export function readMarketplaceAsset(url: string): Promise<string> {
   return invoke<string>("read_marketplace_asset", { url });
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { readVisualizationFile } from "../../platform/native";
 import type { VisualizeReference } from "./visualize-reference";
 
 const MAX_HTML_BYTES = 1024 * 1024;
@@ -20,11 +21,7 @@ export function VisualizeFrame({ reference, loadHtml }: VisualizeFrameProps) {
     let cancelled = false;
     setState({ status: "loading" });
 
-    const readHtml =
-      loadHtml ??
-      (async () => {
-        throw new Error("Visualization file loading is unavailable.");
-      });
+    const readHtml = loadHtml ?? readVisualizationFile;
 
     void readHtml(reference.path)
       .then((html) => {
