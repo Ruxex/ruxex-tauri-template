@@ -22,6 +22,7 @@ import {
 } from "./conversation-model";
 import { CurrentGoal } from "./CurrentGoal";
 import { QueuedMessages } from "./QueuedMessages";
+import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
 
 const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 
@@ -29,6 +30,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const branding = useBranding();
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const wasConnected = useRef(events.connected);
   const laggedEventCount =
@@ -188,44 +190,62 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     !sendMessage.isPending;
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[800px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6">
-      {turnError && (
-        <p className="alert alert-error" role="alert">
-          <span>Turn failed: {turnError.message}</span>
-          {turnError.additionalDetails && (
-            <span>{turnError.additionalDetails}</span>
-          )}
-        </p>
-      )}
-      {editError && (
-        <p className="alert alert-error" role="alert">
-          Unable to edit this message: {editError.message}
-        </p>
-      )}
-      <ChatActivityTimeline
-        connected={events.connected ?? true}
-        items={items}
-        liveItems={liveItems}
-        liveStatus={liveStatus}
-        onEdit={canEdit ? handleEdit : undefined}
-        onReject={handleReject}
-        onResolve={handleResolve}
-        pendingRequests={pendingRequests}
-        turns={turns}
-        workingTurnId={workingTurnId}
-        workingStartedAt={workingStartedAt}
-        completedTurn={completedTurn}
-      />
-      <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3 pb-2">
-        <CurrentGoal threadId={threadId} />
-        <QueuedMessages threadId={threadId} />
-        <Composer
-          threadId={threadId}
-          activeTurnId={liveThread?.activeTurnId ?? null}
-          model={conversation.data.thread.model}
-          reasoningEffort={conversation.data.thread.reasoningEffort}
+    <div className="mx-auto flex min-h-full w-full max-w-[1200px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6 lg:flex-row">
+      <main className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex justify-end">
+          <button
+            aria-expanded={summaryOpen}
+            aria-label="Open Thread Summary"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setSummaryOpen(true)}
+            type="button"
+          >
+            Thread Summary
+          </button>
+        </div>
+        {turnError && (
+          <p className="alert alert-error" role="alert">
+            <span>Turn failed: {turnError.message}</span>
+            {turnError.additionalDetails && (
+              <span>{turnError.additionalDetails}</span>
+            )}
+          </p>
+        )}
+        {editError && (
+          <p className="alert alert-error" role="alert">
+            Unable to edit this message: {editError.message}
+          </p>
+        )}
+        <ChatActivityTimeline
+          connected={events.connected ?? true}
+          items={items}
+          liveItems={liveItems}
+          liveStatus={liveStatus}
+          onEdit={canEdit ? handleEdit : undefined}
+          onReject={handleReject}
+          onResolve={handleResolve}
+          pendingRequests={pendingRequests}
+          turns={turns}
+          workingTurnId={workingTurnId}
+          workingStartedAt={workingStartedAt}
+          completedTurn={completedTurn}
         />
-      </div>
+        <div className="sticky bottom-0 z-10 mt-auto shrink-0 bg-base-200 pt-3 pb-2">
+          <CurrentGoal threadId={threadId} />
+          <QueuedMessages threadId={threadId} />
+          <Composer
+            threadId={threadId}
+            activeTurnId={liveThread?.activeTurnId ?? null}
+            model={conversation.data.thread.model}
+            reasoningEffort={conversation.data.thread.reasoningEffort}
+          />
+        </div>
+      </main>
+      <ThreadSummaryPanel
+        onClose={() => setSummaryOpen(false)}
+        open={summaryOpen}
+        threadId={threadId}
+      />
     </div>
   );
 }

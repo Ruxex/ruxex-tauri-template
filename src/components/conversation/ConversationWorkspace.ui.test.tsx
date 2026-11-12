@@ -14,6 +14,8 @@ const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useThreadGoal = vi.hoisted(() => vi.fn());
 const useThreadQueue = vi.hoisted(() => vi.fn());
+const useSubagentThreadList = vi.hoisted(() => vi.fn());
+const useServerRequests = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 const resync = vi.hoisted(() => vi.fn());
@@ -50,6 +52,8 @@ vi.mock("../../app-server/hooks", () => ({
   useThreadConversation,
   useThreadGoal,
   useThreadQueue,
+  useSubagentThreadList,
+  useServerRequests,
   useRevertThread,
   useSendMessage,
 }));
@@ -115,6 +119,12 @@ describe("ConversationWorkspace", () => {
       },
     });
     useThreadGoal.mockReturnValue({ data: { goal: null } });
+    useSubagentThreadList.mockReturnValue({
+      data: { data: [] },
+      isLoading: false,
+      isError: false,
+    });
+    useServerRequests.mockReturnValue([]);
     revertMutation.mockReset();
     revertMutation.mockResolvedValue({});
     sendMutation.mockReset();
@@ -158,6 +168,17 @@ describe("ConversationWorkspace", () => {
     clearThreadLiveItems.mockReset();
   });
 
+  it("opens the thread summary from the chat header", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open Thread Summary" }));
+
+    expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
+  });
+
   it("shows an error when the completed turn fails asynchronously", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
@@ -180,7 +201,7 @@ describe("ConversationWorkspace", () => {
       expect.arrayContaining([
         "min-h-full",
         "w-full",
-        "max-w-[800px]",
+        "max-w-[1200px]",
         "mx-auto",
       ]),
     );
