@@ -2,6 +2,7 @@ import {
   DEFAULT_CHAT_FONT_SIZE,
   DEFAULT_FONT_FAMILY,
   DEFAULT_UI_FONT_SIZE,
+  DEFAULT_UI_ZOOM,
   useUiPreferences,
 } from "../app/ui-preferences";
 import {
@@ -47,12 +48,15 @@ export function AppearancePage() {
             chatFontSize: DEFAULT_CHAT_FONT_SIZE,
             uiFontFamily: DEFAULT_FONT_FAMILY,
             uiFontSize: DEFAULT_UI_FONT_SIZE,
+            uiZoom: DEFAULT_UI_ZOOM,
           })
         }
         onUiFontFamilyChange={(uiFontFamily) => update({ uiFontFamily })}
         onUiFontSizeChange={(uiFontSize) => update({ uiFontSize })}
         uiFontFamily={preferences.uiFontFamily}
         uiFontSize={preferences.uiFontSize}
+        uiZoom={preferences.uiZoom}
+        onUiZoomChange={(uiZoom) => update({ uiZoom })}
       />
     </div>
   );

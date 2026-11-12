@@ -106,8 +106,10 @@ export const Typography: Story = () => (
     onReset={() => undefined}
     onUiFontFamilyChange={() => undefined}
     onUiFontSizeChange={() => undefined}
+    onUiZoomChange={() => undefined}
     uiFontFamily="system-ui"
     uiFontSize={14}
+    uiZoom={100}
   />
 );
 

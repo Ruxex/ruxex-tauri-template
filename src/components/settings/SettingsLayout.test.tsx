@@ -255,9 +255,11 @@ describe("settings card layout", () => {
           onReset={vi.fn()}
           onUiFontFamilyChange={vi.fn()}
           onUiFontSizeChange={vi.fn()}
+          onUiZoomChange={vi.fn()}
           chatFontSize={16}
           uiFontFamily="system-ui"
           uiFontSize={16}
+          uiZoom={100}
         />
       </>,
     );
@@ -380,8 +382,10 @@ describe("settings card layout", () => {
         onReset={onReset}
         onUiFontFamilyChange={vi.fn()}
         onUiFontSizeChange={vi.fn()}
+        onUiZoomChange={vi.fn()}
         uiFontFamily="system-ui"
         uiFontSize={16}
+        uiZoom={100}
       />,
     );
 
@@ -430,9 +434,11 @@ describe("settings card layout", () => {
           onReset={vi.fn()}
           onUiFontFamilyChange={vi.fn()}
           onUiFontSizeChange={vi.fn()}
+          onUiZoomChange={vi.fn()}
           chatFontSize={16}
           uiFontFamily="system-ui"
           uiFontSize={16}
+          uiZoom={100}
         />
       </>,
     );

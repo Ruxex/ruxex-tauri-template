@@ -3,12 +3,15 @@ import { useEffect, useState } from "react";
 
 import {
   clampUiFontSize,
+  clampUiZoom,
   DEFAULT_FONT_FAMILY,
   SYSTEM_FONT_FALLBACKS,
   type UiFontFamily,
   type UiFontSize,
   UI_FONT_SIZE_MAX,
   UI_FONT_SIZE_MIN,
+  UI_ZOOM_MAX,
+  UI_ZOOM_MIN,
 } from "../../app/ui-preferences";
 import { FormFieldRow } from "../common/FormFieldRow";
 import { SettingsPanel } from "./SettingsPanel";
@@ -18,21 +21,25 @@ export function TypographyCard({
   chatFontFamily,
   uiFontSize,
   uiFontFamily,
+  uiZoom,
   onChatFontSizeChange,
   onChatFontFamilyChange,
   onReset,
   onUiFontFamilyChange,
   onUiFontSizeChange,
+  onUiZoomChange,
 }: {
   chatFontSize: UiFontSize;
   chatFontFamily: UiFontFamily;
   uiFontSize: UiFontSize;
   uiFontFamily: UiFontFamily;
+  uiZoom: number;
   onChatFontSizeChange: (fontSize: UiFontSize) => void;
   onChatFontFamilyChange: (fontFamily: UiFontFamily) => void;
   onReset: () => void;
   onUiFontFamilyChange: (fontFamily: UiFontFamily) => void;
   onUiFontSizeChange: (fontSize: UiFontSize) => void;
+  onUiZoomChange: (zoom: number) => void;
 }) {
   const [fontFamilies, setFontFamilies] = useState<string[]>([
     ...SYSTEM_FONT_FALLBACKS,
@@ -149,6 +156,26 @@ export function TypographyCard({
                 {fontFamily === DEFAULT_FONT_FAMILY
                   ? "System default"
                   : fontFamily}
+              </option>
+            ))}
+          </select>
+        </FormFieldRow>
+        <FormFieldRow controlId="settings-ui-zoom" label="Zoom level">
+          <select
+            aria-label="Zoom level"
+            className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
+            id="settings-ui-zoom"
+            value={uiZoom}
+            onChange={(event) =>
+              onUiZoomChange(clampUiZoom(Number(event.target.value)))
+            }
+          >
+            {Array.from(
+              { length: (UI_ZOOM_MAX - UI_ZOOM_MIN) / 5 + 1 },
+              (_, index) => UI_ZOOM_MIN + index * 5,
+            ).map((zoom) => (
+              <option key={zoom} value={zoom}>
+                {zoom}%
               </option>
             ))}
           </select>

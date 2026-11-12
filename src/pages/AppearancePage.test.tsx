@@ -24,6 +24,7 @@ describe("AppearancePage", () => {
         chatFontSize: 12,
         uiFontFamily: "system-ui",
         uiFontSize: 14,
+        uiZoom: 100,
       },
       update,
     });
@@ -70,6 +71,7 @@ describe("AppearancePage", () => {
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.getByLabelText("Chat font")).toBeTruthy();
     expect(screen.getByLabelText("UI font")).toBeTruthy();
+    expect(screen.getByLabelText("Zoom level")).toBeTruthy();
     expect(screen.queryByLabelText("Density")).toBeNull();
     const chatFontSize = screen.getByLabelText("Chat font size");
     expect(chatFontSize.getAttribute("type")).toBe("number");

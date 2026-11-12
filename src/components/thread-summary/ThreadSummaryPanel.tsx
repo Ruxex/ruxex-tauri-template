@@ -20,7 +20,7 @@ export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
   return (
     <aside
       aria-label="Thread Summary"
-      className="chat-thread-summary-column chat-side-column sticky top-6 w-full max-w-96 shrink-0 self-start justify-self-end overflow-visible text-sm"
+      className="chat-thread-summary-column chat-side-column sticky top-6 w-full max-w-96 shrink-0 self-start justify-self-end overflow-visible rounded-box text-sm"
       data-testid="thread-summary-panel"
     >
       <div
@@ -28,7 +28,7 @@ export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
         data-testid="thread-summary-scroll"
       >
         <div
-          className="h-fit bg-base-100 p-4"
+          className="h-fit overflow-hidden rounded-box bg-base-100 p-4"
           data-testid="thread-summary-content"
         >
           {selectedThreadId ? (

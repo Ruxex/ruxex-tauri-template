@@ -96,6 +96,9 @@ describe("ThreadSummaryPanel", () => {
       "chat-side-column",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "rounded-box",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
       "overflow-visible",
     );
     expect(screen.getByTestId("thread-summary-panel").className).not.toContain(

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_UI_PREFERENCES,
+  clampUiZoom,
   parseUiPreferences,
   UI_NOTIFICATION_SOUNDS,
   UI_PREFERENCES_KEY,
@@ -50,6 +51,12 @@ describe("UI preference persistence", () => {
     expect(parseUiPreferences(JSON.stringify({ version: 99 }))).toEqual(
       DEFAULT_UI_PREFERENCES,
     );
+  });
+
+  it("clamps zoom to five-point steps between 75% and 125%", () => {
+    expect(clampUiZoom(74)).toBe(75);
+    expect(clampUiZoom(83)).toBe(85);
+    expect(clampUiZoom(129)).toBe(125);
   });
 
   it("keeps valid values and repairs invalid individual fields", () => {

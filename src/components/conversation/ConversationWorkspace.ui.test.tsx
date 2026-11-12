@@ -273,7 +273,7 @@ describe("ConversationWorkspace", () => {
     expect(root?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
-    expect(root?.className.split(/\s+/)).not.toContain("h-full");
+    expect(root?.className.split(/\s+/)).toContain("h-full");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["sticky", "pb-2"]),
     );

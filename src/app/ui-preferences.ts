@@ -457,6 +457,9 @@ export const UI_FONT_SIZE_MAX = 32;
 export const DEFAULT_CHAT_FONT_SIZE = 14;
 export const DEFAULT_UI_FONT_SIZE = 14;
 export const DEFAULT_FONT_FAMILY = "system-ui";
+export const UI_ZOOM_MIN = 75;
+export const UI_ZOOM_MAX = 125;
+export const DEFAULT_UI_ZOOM = 100;
 export const SYSTEM_FONT_FALLBACKS = [
   "system-ui",
   "Inter",
@@ -475,6 +478,14 @@ export function clampUiFontSize(value: number): UiFontSize {
   return Math.min(
     UI_FONT_SIZE_MAX,
     Math.max(UI_FONT_SIZE_MIN, Math.round(value)),
+  );
+}
+
+export function clampUiZoom(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_UI_ZOOM;
+  return Math.min(
+    UI_ZOOM_MAX,
+    Math.max(UI_ZOOM_MIN, Math.round(value / 5) * 5),
   );
 }
 export const UI_NOTIFICATION_SOUND_OPTIONS = [
@@ -500,6 +511,7 @@ export type UiPreferences = {
   uiFontSize: UiFontSize;
   chatFontFamily: UiFontFamily;
   uiFontFamily: UiFontFamily;
+  uiZoom: number;
 };
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -512,6 +524,7 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   uiFontSize: DEFAULT_UI_FONT_SIZE,
   chatFontFamily: DEFAULT_FONT_FAMILY,
   uiFontFamily: DEFAULT_FONT_FAMILY,
+  uiZoom: DEFAULT_UI_ZOOM,
 };
 
 export type UiPreferencePatch = Partial<Omit<UiPreferences, "version">>;
@@ -631,6 +644,11 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
       uiFontFamily: readFontFamily(
         parsed.uiFontFamily,
         DEFAULT_UI_PREFERENCES.uiFontFamily,
+      ),
+      uiZoom: clampUiZoom(
+        typeof parsed.uiZoom === "number"
+          ? parsed.uiZoom
+          : DEFAULT_UI_PREFERENCES.uiZoom,
       ),
     };
   } catch {
@@ -756,6 +774,7 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
       "--ruxex-chat-font-family",
       preferences.chatFontFamily,
     );
+    document.documentElement.style.zoom = `${preferences.uiZoom}%`;
     document.documentElement.lang =
       preferences.language === "system"
         ? navigator.language.startsWith("ja")
