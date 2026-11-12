@@ -25,7 +25,7 @@ export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
     <div className="chat-thread-summary-column chat-side-column sticky top-6 z-10 w-full min-w-0 justify-self-end self-start overflow-hidden @container/summary">
       <aside
         aria-label="Thread Summary"
-        className="hidden h-full w-full max-w-72 rounded-box text-xs @min-[16rem]/summary:block @min-[120rem]/chat:max-w-none"
+        className="ml-auto hidden h-full w-full max-w-72 rounded-box text-xs @min-[16rem]/summary:block @min-[120rem]/chat:max-w-none"
         data-testid="thread-summary-panel"
       >
         <div
