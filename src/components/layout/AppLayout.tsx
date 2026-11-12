@@ -93,7 +93,7 @@ export function AppLayout() {
         />
         <div className="flex min-w-0 min-h-0 flex-1 flex-col">
           <section
-            className={`workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 ${
+            className={`workbench-main min-h-0 w-full flex-1 ${
               isChatRoute ? "overflow-y-auto p-0" : "overflow-y-auto p-4 sm:p-6"
             }`}
             data-conversation-scroll={isChatRoute ? "true" : undefined}

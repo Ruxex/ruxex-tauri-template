@@ -20,7 +20,7 @@ export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
   return (
     <aside
       aria-label="Thread Summary"
-      className="chat-thread-summary-column sticky top-0 h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] w-full max-w-96 shrink-0 self-start justify-self-end overflow-y-auto border-base-300 lg:border-l"
+      className="chat-thread-summary-column sticky top-4 h-[calc(100dvh-3rem)] max-h-[calc(100dvh-3rem)] w-full max-w-96 shrink-0 self-start justify-self-end overflow-y-auto text-sm"
       data-testid="thread-summary-panel"
     >
       <div

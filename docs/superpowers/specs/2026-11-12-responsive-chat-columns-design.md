@@ -37,12 +37,11 @@ Thread Summary adds a narrow right column. When both are present the main column
 uses `7fr`, leaving the main content at roughly 70% of the current workspace.
 
 The Thread Summary is always rendered; it has no visibility toggle, close
-button, or standalone title. The workspace uses the containing AppLayout's
-1440px limit rather than adding
-another 1200px limit. At the widest layout the grid uses a central main column
-capped at 53rem and equal flexible side columns. The minimap is aligned to the
-left edge of its column and the summary is aligned to the right edge of its
-column. The outer chat section is the shared scroll boundary for all three
+button, or standalone title. The workspace uses the full available AppLayout
+width without an additional 1200px or 1440px cap. At the widest layout the
+grid uses a central main column capped at 53rem and equal flexible side
+columns. The minimap is aligned to the left edge of its column and the summary
+is aligned to the right edge of its column. The outer chat section is the shared scroll boundary for all three
 columns, placing its scrollbar after the Thread Summary. The minimap and
 summary columns are fixed-height sticky columns, so they do not move with the
 shared conversation scroll. Their contained components use their own overflow

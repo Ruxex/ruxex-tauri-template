@@ -270,6 +270,7 @@ describe("AppLayout", () => {
     expect(contentRow?.className).toContain("min-h-0");
     expect(section?.className).toContain("min-h-0");
     expect(section?.className).toContain("overflow-y-auto");
+    expect(section?.className).not.toContain("max-w-[1440px]");
     expect(section?.className).toContain("p-0");
     expect(section?.getAttribute("data-chat-font-size")).toBeNull();
     expect(main.getAttribute("data-conversation-scroll")).toBeNull();

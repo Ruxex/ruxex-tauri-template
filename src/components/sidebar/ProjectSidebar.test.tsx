@@ -113,6 +113,10 @@ describe("ProjectSidebar", () => {
 
     const panel = screen.getByRole("complementary", { name: "Chat sidebar" });
 
+    expect(
+      screen.getByRole("complementary", { name: "Workspace sidebar" })
+        .className,
+    ).toContain("w-[20rem]");
     expect(panel.querySelector('a[href="/"]')).toBeTruthy();
     expect(within(panel).getByText("Recent chats")).toBeTruthy();
     expect(within(panel).getByText("Projects")).toBeTruthy();

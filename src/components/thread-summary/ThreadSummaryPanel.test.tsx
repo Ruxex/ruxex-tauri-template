@@ -90,16 +90,22 @@ describe("ThreadSummaryPanel", () => {
       "sticky",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "top-0",
+      "top-4",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "h-[calc(100dvh-2rem)]",
+      "h-[calc(100dvh-3rem)]",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "max-h-[calc(100dvh-2rem)]",
+      "max-h-[calc(100dvh-3rem)]",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
       "overflow-y-auto",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "text-sm",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).not.toContain(
+      "lg:border-l",
     );
     expect(screen.getByTestId("thread-summary-content").className).toContain(
       "h-fit",

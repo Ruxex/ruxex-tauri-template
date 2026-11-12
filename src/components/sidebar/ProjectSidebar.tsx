@@ -42,7 +42,7 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar z-40 flex h-full min-h-0 shrink-0 ${contextPanelVisible ? "w-[22rem]" : "workbench-sidebar-collapsed"}`}
+      className={`workbench-sidebar z-40 flex h-full min-h-0 shrink-0 ${contextPanelVisible ? "w-[20rem]" : "workbench-sidebar-collapsed"}`}
       aria-label="Workspace sidebar"
     >
       <nav
