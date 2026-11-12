@@ -136,10 +136,7 @@ describe("ChatActivityTimeline", () => {
     const timelineRef = { current: null as HTMLElement | null };
 
     render(
-      <ChatActivityTimeline
-        {...timelineProps([])}
-        timelineRef={timelineRef}
-      />,
+      <ChatActivityTimeline {...timelineProps([])} timelineRef={timelineRef} />,
     );
 
     expect(timelineRef.current).toBe(
@@ -312,7 +309,7 @@ describe("ChatActivityTimeline", () => {
     expect(screen.getByTestId("working-indicator-label").textContent).toBe(
       "Working for 42s",
     );
-    expect(working.querySelector(".loading-dots")).toBeTruthy();
+    expect(screen.getByTestId("working-indicator-dots")).toBeTruthy();
     expect(working.querySelector(".loading-spinner")).toBeNull();
 
     act(() => {
@@ -587,11 +584,7 @@ describe("ChatActivityTimeline", () => {
     expect(screen.getByRole("status", { name: "Working" }).textContent).toBe(
       "Working",
     );
-    expect(
-      screen
-        .getByRole("status", { name: "Working" })
-        .querySelector(".loading-dots"),
-    ).toBeTruthy();
+    expect(screen.getByTestId("working-indicator-dots")).toBeTruthy();
     expect(screen.getByRole("status", { name: "Working" }).className).toContain(
       "max-w-md",
     );

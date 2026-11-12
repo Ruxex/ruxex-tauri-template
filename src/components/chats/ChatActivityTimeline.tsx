@@ -380,8 +380,13 @@ function WorkingIndicator({
         <>
           <span
             aria-hidden="true"
-            className="loading loading-dots loading-sm"
-          />
+            className="working-indicator-dots"
+            data-testid="working-indicator-dots"
+          >
+            <span />
+            <span />
+            <span />
+          </span>
           <span className="ml-2" data-testid="working-indicator-label">
             {label}
           </span>
