@@ -1,5 +1,6 @@
 import { createHashRouter, Navigate } from "react-router-dom";
 import { ApprovalCenter } from "../components/approvals/ApprovalCenter";
+import { ActivityCenter } from "../components/activity/ActivityCenter";
 import { AppLayout } from "../components/layout/AppLayout";
 import { QuickPanelPage } from "../components/quick-panel/QuickPanelPage";
 import { AccountPage } from "../pages/AccountPage";
@@ -33,6 +34,7 @@ export const router = createHashRouter([
         element: <Navigate replace to="/settings/account" />,
       },
       { path: "approvals", element: <ApprovalCenter /> },
+      { path: "activity", element: <ActivityCenter /> },
       {
         path: "settings",
         element: <SettingsPage />,

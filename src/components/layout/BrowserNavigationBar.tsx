@@ -61,6 +61,7 @@ function breadcrumbsForPath(
   }
 
   const pageLabels: Record<string, string> = {
+    "/activity": "Activity",
     "/approvals": "Approvals",
     "/archive": "Archive",
     "/capabilities": "Plugins",

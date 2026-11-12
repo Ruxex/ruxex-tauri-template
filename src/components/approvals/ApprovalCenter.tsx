@@ -3,14 +3,10 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 
-import {
-  rejectServerRequestWithMessage,
-  resolveServerRequest,
-} from "../../app-server/api";
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import { useAppServerEvents, useServerRequests } from "../../app-server/hooks";
 import { StateBadge } from "../common/StateBadge";
-import { ServerRequestCard } from "./ServerRequestCard";
+import { PendingRequestsSection } from "./PendingRequestsSection";
 
 type ApprovalCenterProps = {
   connected?: boolean;
@@ -43,28 +39,10 @@ export function ApprovalCenter({
           <StateBadge tone="warning">Disconnected</StateBadge>
         </div>
       )}
-      {!pending.length && (
-        <div className="card border border-dashed border-base-300 bg-base-100">
-          <div className="card-body items-center text-center">
-            <p>No pending approvals.</p>
-          </div>
-        </div>
-      )}
-      <div className="grid gap-3">
-        {pending.map((request) => (
-          <ServerRequestCard
-            connected={connected}
-            key={String(request.requestId)}
-            pending={request}
-            onResolve={(result) =>
-              resolveServerRequest(request.requestId, result)
-            }
-            onReject={(message) =>
-              rejectServerRequestWithMessage(request.requestId, message)
-            }
-          />
-        ))}
-      </div>
+      <PendingRequestsSection
+        connected={connected}
+        pendingRequests={pending}
+      />
     </div>
   );
 }
