@@ -1,8 +1,15 @@
-import { useParams } from "react-router-dom";
+import { useOutletContext, useParams } from "react-router-dom";
 
+import type { AppOutletContext } from "../app/app-outlet-context";
 import { ConversationWorkspace } from "../components/conversation/ConversationWorkspace";
 
 export function ThreadPage() {
   const { threadId = "" } = useParams<{ threadId: string }>();
-  return <ConversationWorkspace threadId={threadId} />;
+  const outletContext = useOutletContext<AppOutletContext | undefined>();
+  return (
+    <ConversationWorkspace
+      onOpenThreadDiff={outletContext?.openThreadDiff}
+      threadId={threadId}
+    />
+  );
 }

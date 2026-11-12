@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { useThreadReadState } from "../../app/thread-read-state";
 import { useUiPreferences } from "../../app/ui-preferences";
+import type { AppOutletContext } from "../../app/app-outlet-context";
+import type { GitDiffReviewTarget } from "../git-diff/GitDiffReviewPane";
 import { useProject, useThread } from "../../app-server/hooks";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
@@ -13,6 +15,12 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
+
+const GitDiffReviewPane = lazy(() =>
+  import("../git-diff/GitDiffReviewPane").then((module) => ({
+    default: module.GitDiffReviewPane,
+  })),
+);
 
 const MAX_RIGHT_PANE_WIDTH = 1536;
 
@@ -34,8 +42,28 @@ export function AppLayout() {
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
   const [rightPaneOpen, setRightPaneOpen] = useState(false);
+  const [diffSelection, setDiffSelection] = useState<{
+    threadId: string | undefined;
+    target: GitDiffReviewTarget | null;
+  }>({ threadId, target: null });
   const leftPaneRef = usePanelRef();
   const rightPaneRef = usePanelRef();
+  if (diffSelection.threadId !== threadId && diffSelection.target !== null) {
+    setDiffSelection({ threadId, target: null });
+  }
+  const diffTarget =
+    diffSelection.threadId === threadId ? diffSelection.target : null;
+  const activeDiffTarget =
+    isChatRoute && diffTarget?.threadId === threadId ? diffTarget : null;
+
+  const openThreadDiff = useCallback(
+    (target: GitDiffReviewTarget) => {
+      setDiffSelection({ threadId: target.threadId, target });
+      if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
+      setRightPaneOpen(true);
+    },
+    [rightPaneOpen, rightPaneRef],
+  );
 
   useEffect(() => {
     const loadedThread = thread.data?.thread;
@@ -97,7 +125,9 @@ export function AppLayout() {
     <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
       <BrowserNavigationBar
         chatTitle={chatTitle}
-        onToggleSidebar={() => update({ sidebarCollapsed: !preferences.sidebarCollapsed })}
+        onToggleSidebar={() =>
+          update({ sidebarCollapsed: !preferences.sidebarCollapsed })
+        }
         onToggleRightPane={() => setRightPaneOpen((open) => !open)}
         projectTitle={project.data?.project.name}
         rightPaneOpen={rightPaneOpen}
@@ -130,21 +160,20 @@ export function AppLayout() {
           />
         </ResizablePanel>
         <ResizableHandle aria-label="Resize left pane" withHandle />
-        <ResizablePanel
-          className="min-w-0"
-          id="main-content"
-        >
+        <ResizablePanel className="min-w-0" id="main-content">
           <div
             className="flex min-w-0 min-h-0 h-full flex-1 flex-col @container/chat"
             data-testid="chat-content-container"
           >
             <section
               className={`workbench-main min-h-0 w-full flex-1 ${
-                isChatRoute ? "overflow-y-auto p-0" : "overflow-y-auto p-4 sm:p-6"
+                isChatRoute
+                  ? "overflow-y-auto p-0"
+                  : "overflow-y-auto p-4 sm:p-6"
               }`}
               data-conversation-scroll={isChatRoute ? "true" : undefined}
             >
-              <Outlet />
+              <Outlet context={{ openThreadDiff } satisfies AppOutletContext} />
             </section>
           </div>
         </ResizablePanel>
@@ -171,7 +200,26 @@ export function AppLayout() {
             aria-label="Right pane"
             className="h-full overflow-hidden border-l border-base-300 bg-base-100 transition-[width] duration-200 ease-out"
             data-testid="right-pane"
-          />
+          >
+            {activeDiffTarget && (
+              <Suspense
+                fallback={
+                  <div
+                    className="p-4 text-sm text-base-content/60"
+                    role="status"
+                  >
+                    Loading diff viewer…
+                  </div>
+                }
+              >
+                <GitDiffReviewPane
+                  key={`${activeDiffTarget.threadId}:${activeDiffTarget.workspace}`}
+                  isOpen={rightPaneOpen}
+                  target={activeDiffTarget}
+                />
+              </Suspense>
+            )}
+          </aside>
         </ResizablePanel>
       </ResizablePanelGroup>
     </main>

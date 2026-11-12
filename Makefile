@@ -125,6 +125,7 @@ ui-fixtures: mcp-fixture-build e2e-build
 		GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/unshot.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/volatile.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --marketplace-home --spec fixtures/marketplace-home/persistent.spec.ts
+	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/run_git_diff_ui_fixture.py
 
 prepare-dummy-home: e2e-build
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-home --spec fixtures/dummy-home/persistent.spec.ts

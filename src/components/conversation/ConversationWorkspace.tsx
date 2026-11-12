@@ -31,7 +31,13 @@ import { QueuedMessages } from "./QueuedMessages";
 
 const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 
-export function ConversationWorkspace({ threadId }: { threadId: string }) {
+export function ConversationWorkspace({
+  threadId,
+  onOpenThreadDiff,
+}: {
+  threadId: string;
+  onOpenThreadDiff?: (target: { threadId: string; workspace: string }) => void;
+}) {
   const branding = useBranding();
   const timelineRef = useRef<HTMLElement | null>(null);
   const conversation = useThreadConversation(threadId);
@@ -282,7 +288,14 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         </div>
       </main>
       {hasSummary && (
-        <ThreadSummaryPanel tokenUsage={tokenUsage} gitDiff={gitDiff} />
+        <ThreadSummaryPanel
+          gitDiff={gitDiff}
+          onReviewGitDiff={() => {
+            const workspace = conversation.data?.thread.cwd;
+            if (workspace) onOpenThreadDiff?.({ threadId, workspace });
+          }}
+          tokenUsage={tokenUsage}
+        />
       )}
     </div>
   );

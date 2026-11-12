@@ -5,11 +5,13 @@ import type { GitDiffSummary } from "../../platform/git-diff";
 type ThreadSummaryPanelProps = {
   tokenUsage: v2.ThreadTokenUsage | null;
   gitDiff: GitDiffSummary | null;
+  onReviewGitDiff?: () => void;
 };
 
 export function ThreadSummaryPanel({
   tokenUsage,
   gitDiff,
+  onReviewGitDiff,
 }: ThreadSummaryPanelProps) {
   if (!tokenUsage && !gitDiff) {
     return null;
@@ -41,20 +43,27 @@ export function ThreadSummaryPanel({
                 >
                   Code Changes
                 </h3>
-                <dl className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <dt>Added</dt>
-                    <dd className="font-medium tabular-nums text-success">
-                      +{gitDiff.added}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt>Deleted</dt>
-                    <dd className="font-medium tabular-nums text-error">
-                      −{gitDiff.deleted}
-                    </dd>
-                  </div>
-                </dl>
+                <button
+                  aria-label={`Review ${gitDiff.added} additions and ${gitDiff.deleted} deletions`}
+                  className="w-full rounded px-1 text-left transition-colors hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+                  onClick={onReviewGitDiff}
+                  type="button"
+                >
+                  <span className="flex flex-col gap-2">
+                    <span className="flex items-center justify-between gap-3">
+                      <span>Added</span>
+                      <span className="font-medium tabular-nums text-success">
+                        +{gitDiff.added}
+                      </span>
+                    </span>
+                    <span className="flex items-center justify-between gap-3">
+                      <span>Deleted</span>
+                      <span className="font-medium tabular-nums text-error">
+                        −{gitDiff.deleted}
+                      </span>
+                    </span>
+                  </span>
+                </button>
               </section>
             )}
             <TokenUsageSection usage={tokenUsage} />

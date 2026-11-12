@@ -29,6 +29,7 @@
     "@milkdown/crepe": "^7.23.0",
     "@milkdown/kit": "^7.23.0",
     "@milkdown/react": "^7.23.0",
+    "@pierre/diffs": "1.6.4",
     "@streamdown/mermaid": "^1.0.3",
     "@tanstack/react-query": "^5.90.0",
     "@tauri-apps/api": "2.10.1",

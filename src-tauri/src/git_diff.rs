@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Output};
 
 use serde::Serialize;
 
@@ -9,6 +11,17 @@ use serde::Serialize;
 pub struct GitDiffSummary {
     pub added: u64,
     pub deleted: u64,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct GitDiffFile {
+    pub path: String,
+    pub status: String,
+    pub added: u64,
+    pub deleted: u64,
+    pub binary: bool,
+    pub patch: Option<String>,
 }
 
 pub fn summary(workspace: &Path) -> Result<GitDiffSummary, String> {
@@ -64,6 +77,244 @@ pub fn summary(workspace: &Path) -> Result<GitDiffSummary, String> {
         }
     }
     Ok(result)
+}
+
+pub fn details(workspace: &Path) -> Result<Vec<GitDiffFile>, String> {
+    validate_workspace(workspace)?;
+
+    let numstat = git(
+        workspace,
+        &[
+            "diff",
+            "--no-ext-diff",
+            "--no-renames",
+            "--numstat",
+            "-z",
+            "HEAD",
+        ],
+    )?;
+    ensure_success(&numstat)?;
+    let mut files = Vec::<GitDiffFile>::new();
+    let mut tracked_paths = Vec::<OsString>::new();
+    for record in numstat
+        .stdout
+        .split(|byte| *byte == 0)
+        .filter(|record| !record.is_empty())
+    {
+        let mut fields = record.splitn(3, |byte| *byte == b'\t');
+        let added = fields.next().unwrap_or_default();
+        let deleted = fields.next().unwrap_or_default();
+        let path = fields.next().unwrap_or_default();
+        let binary = added == b"-" || deleted == b"-";
+        let path_os = path_from_bytes(path);
+        tracked_paths.push(path_os.clone());
+        files.push(GitDiffFile {
+            path: path_os.to_string_lossy().into_owned(),
+            status: "modified".to_string(),
+            added: parse_numstat(added),
+            deleted: parse_numstat(deleted),
+            binary,
+            patch: None,
+        });
+    }
+
+    if !files.is_empty() {
+        let tracked = tracked_patch(workspace)?;
+        let patches = split_file_patches(&tracked);
+        if patches.len() == files.len() {
+            for (index, file) in files.iter_mut().enumerate() {
+                if !file.binary {
+                    file.patch = patches.get(index).cloned();
+                }
+            }
+        } else {
+            for (path, file) in tracked_paths.iter().zip(files.iter_mut()) {
+                if !file.binary {
+                    file.patch = Some(tracked_file_patch(workspace, path)?);
+                }
+            }
+        }
+    }
+
+    let name_status = git(
+        workspace,
+        &["diff", "--name-status", "--no-renames", "-z", "HEAD"],
+    )?;
+    ensure_success(&name_status)?;
+    let records = name_status
+        .stdout
+        .split(|byte| *byte == 0)
+        .collect::<Vec<_>>();
+    let mut statuses = HashMap::<OsString, String>::new();
+    for record in records.chunks_exact(2) {
+        let status = match record[0].first().copied() {
+            Some(b'A') => "added",
+            Some(b'D') => "deleted",
+            Some(b'T') => "typeChanged",
+            _ => "modified",
+        };
+        statuses.insert(path_from_bytes(record[1]), status.to_string());
+    }
+    for (path, file) in tracked_paths.iter().zip(files.iter_mut()) {
+        if let Some(status) = statuses.get(path) {
+            file.status = status.clone();
+        }
+    }
+
+    let untracked = git(
+        workspace,
+        &["ls-files", "--others", "--exclude-standard", "-z"],
+    )?;
+    ensure_success(&untracked)?;
+    for relative_path in untracked
+        .stdout
+        .split(|byte| *byte == 0)
+        .filter(|path| !path.is_empty())
+    {
+        let path = path_from_bytes(relative_path);
+        let full_path = workspace.join(&path);
+        let metadata = fs::symlink_metadata(&full_path).map_err(|error| error.to_string())?;
+        let (added, binary) = if metadata.file_type().is_symlink() {
+            (1, false)
+        } else if metadata.is_file() {
+            let contents = fs::read(&full_path).map_err(|error| error.to_string())?;
+            if contents.contains(&0) {
+                (0, true)
+            } else {
+                (line_count(&contents), false)
+            }
+        } else {
+            (0, false)
+        };
+        let patch = if binary {
+            None
+        } else {
+            Some(untracked_patch(workspace, &path)?)
+        };
+        let binary = binary
+            || patch.as_deref().is_some_and(|patch| {
+                patch.contains("Binary files ") || patch.contains("GIT binary patch")
+            });
+        let patch = if binary { None } else { patch };
+        files.push(GitDiffFile {
+            path: path.to_string_lossy().into_owned(),
+            status: "added".to_string(),
+            added,
+            deleted: 0,
+            binary,
+            patch,
+        });
+    }
+
+    files.sort_by(|left, right| left.path.cmp(&right.path));
+    Ok(files)
+}
+
+fn validate_workspace(workspace: &Path) -> Result<(), String> {
+    if !workspace.is_absolute() || !workspace.is_dir() {
+        return Err("workspace must be an existing absolute directory".to_string());
+    }
+    Ok(())
+}
+
+fn ensure_success(output: &Output) -> Result<(), String> {
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+    }
+}
+
+fn parse_numstat(value: &[u8]) -> u64 {
+    std::str::from_utf8(value)
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(0)
+}
+
+fn line_count(contents: &[u8]) -> u64 {
+    if contents.is_empty() {
+        return 0;
+    }
+    contents.iter().filter(|byte| **byte == b'\n').count() as u64
+        + if contents.last() != Some(&b'\n') {
+            1
+        } else {
+            0
+        }
+}
+
+fn tracked_patch(workspace: &Path) -> Result<String, String> {
+    let output = Command::new("git")
+        .args([
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--no-color",
+            "--no-renames",
+            "--unified=3",
+            "HEAD",
+        ])
+        .current_dir(workspace)
+        .output()
+        .map_err(|error| format!("failed to execute git: {error}"))?;
+    ensure_success(&output)?;
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+fn tracked_file_patch(workspace: &Path, path: &OsStr) -> Result<String, String> {
+    let output = Command::new("git")
+        .args([
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--no-color",
+            "--no-renames",
+            "--unified=3",
+            "HEAD",
+            "--",
+        ])
+        .arg(path)
+        .current_dir(workspace)
+        .output()
+        .map_err(|error| format!("failed to execute git: {error}"))?;
+    ensure_success(&output)?;
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+fn split_file_patches(patch: &str) -> Vec<String> {
+    let mut files = Vec::<String>::new();
+    for line in patch.split_inclusive('\n') {
+        if line.starts_with("diff --git ") {
+            files.push(String::new());
+        }
+        if let Some(file) = files.last_mut() {
+            file.push_str(line);
+        }
+    }
+    files
+}
+
+fn untracked_patch(workspace: &Path, path: &OsStr) -> Result<String, String> {
+    let output = Command::new("git")
+        .args([
+            "diff",
+            "--no-index",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--no-color",
+            "--unified=3",
+            "--",
+            "/dev/null",
+        ])
+        .arg(path)
+        .current_dir(workspace)
+        .output()
+        .map_err(|error| format!("failed to execute git: {error}"))?;
+    if !output.status.success() && output.status.code() != Some(1) {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
 #[cfg(unix)]

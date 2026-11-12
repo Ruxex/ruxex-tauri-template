@@ -321,6 +321,100 @@ export async function createRootlessProject(
   await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
 }
 
+export async function createWorkspaceProject(
+  name: string,
+  workspace: string,
+): Promise<string> {
+  const response = await browser.execute(
+    async ({ name, workspace }) => {
+      type TauriInternals = {
+        invoke: (
+          command: string,
+          args: Record<string, unknown>,
+        ) => Promise<unknown>;
+      };
+      const internals = (
+        window as unknown as {
+          __TAURI_INTERNALS__?: TauriInternals;
+        }
+      ).__TAURI_INTERNALS__;
+      if (!internals) throw new Error("Tauri invoke API is unavailable");
+      return internals.invoke("app_server_request", {
+        request: {
+          method: "project/create",
+          id: 975310,
+          params: {
+            name,
+            roots: [{ path: workspace }],
+            metadata: { icon: "folder", color: "violet" },
+            idempotencyKey: "ui-fixture-git-diff-workspace",
+          },
+        },
+      });
+    },
+    { name, workspace },
+  );
+
+  const projectId = (
+    response as {
+      response?: { project?: { id?: string } };
+    }
+  ).response?.project?.id;
+  if (!projectId) {
+    throw new Error(`App Server did not return the ${name} project`);
+  }
+  return projectId;
+}
+
+export async function inspectDiffFileControls(): Promise<
+  Array<{ label: string; expanded: string | null }>
+> {
+  return browser.execute(() => {
+    function findButtons(root: Document | ShadowRoot): HTMLButtonElement[] {
+      const descendants = Array.from(root.querySelectorAll("*"));
+      return [
+        ...Array.from(
+          root.querySelectorAll<HTMLButtonElement>(
+            "button[aria-label^='Collapse '], button[aria-label^='Expand ']",
+          ),
+        ),
+        ...descendants.flatMap((element) =>
+          element.shadowRoot ? findButtons(element.shadowRoot) : [],
+        ),
+      ];
+    }
+
+    return findButtons(document).map((button) => ({
+      label: button.getAttribute("aria-label") ?? "",
+      expanded: button.getAttribute("aria-expanded"),
+    }));
+  });
+}
+
+export async function clickDiffFileControl(label: string): Promise<void> {
+  const clicked = await browser.execute((buttonLabel) => {
+    function findButton(root: Document | ShadowRoot): HTMLButtonElement | null {
+      for (const button of root.querySelectorAll<HTMLButtonElement>(
+        "button[aria-label]",
+      )) {
+        if (button.getAttribute("aria-label") === buttonLabel) return button;
+      }
+      for (const element of root.querySelectorAll("*")) {
+        if (element.shadowRoot) {
+          const nested = findButton(element.shadowRoot);
+          if (nested) return nested;
+        }
+      }
+      return null;
+    }
+
+    const button = findButton(document);
+    button?.click();
+    return Boolean(button);
+  }, label);
+  if (!clicked) throw new Error(`Unable to find diff file control: ${label}`);
+}
+
 export async function openProjectChat(projectName: string): Promise<void> {
   const projectHeading = $(`h1=${projectName}`);
   if (!(await projectHeading.isDisplayed().catch(() => false))) {

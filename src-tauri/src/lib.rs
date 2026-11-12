@@ -176,6 +176,7 @@ pub fn run_with_config(config: DesktopConfig) {
             worktree_commands::worktree_remove,
             worktree_commands::worktree_open,
             git_diff_commands::git_diff_summary,
+            git_diff_commands::git_diff_details,
             app_server::app_server_request,
             app_server::app_server_resolve_server_request,
             app_server::app_server_reject_server_request
