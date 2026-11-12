@@ -48,6 +48,11 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
     screenshotName: "settings-runtime.png",
   },
   {
+    path: "/settings/hooks",
+    heading: "h2=Hooks",
+    screenshotName: "settings-hooks.png",
+  },
+  {
     path: "/settings/archive",
     heading: "h1=Archived chats",
     screenshotName: "settings-archive.png",
@@ -76,6 +81,11 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
     path: "/approvals",
     heading: "h1=Approval center",
     screenshotName: "approval-center-empty.png",
+  },
+  {
+    path: "/activity",
+    heading: "h1=Activity",
+    screenshotName: "activity-center-empty.png",
   },
 ];
 

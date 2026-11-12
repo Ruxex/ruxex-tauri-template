@@ -244,7 +244,7 @@ export async function waitForCompletedTurn(
 ): Promise<void> {
   await browser.waitUntil(
     async () => {
-      const text = await $("main").getText();
+      const text = await $(".workbench-main").getText();
       const normalized = text.toLowerCase();
       return normalized.includes(expectation.value.toLowerCase());
     },

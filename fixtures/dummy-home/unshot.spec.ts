@@ -1,7 +1,11 @@
+import path from "node:path";
+
 import {
   closeSidebarPanel,
   saveFixtureScreenshot,
+  sendComposerPrompt,
   waitForDesktopReady,
+  waitForCompletedTurn,
 } from "./support";
 
 async function openRoute(path: string, selector: string): Promise<void> {
@@ -41,6 +45,8 @@ describe("DummyProvider unshot UI screenshots", () => {
 
     await openFixtureThread();
     await saveFixtureScreenshot("chat-completed-basic.png");
+    await captureThreadSummary();
+    await captureVisualizeFrame();
 
     await captureComposerStates();
     await captureChatSearch();
@@ -64,6 +70,31 @@ async function captureThemePresetPopover(): Promise<void> {
     .waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("theme-preset-popover-sidebar.png");
   await selector.$("summary").click();
+}
+
+async function captureThreadSummary(): Promise<void> {
+  await $("button[aria-label='Open Thread Summary']").click();
+  await $("[data-testid='thread-summary-panel']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  await saveFixtureScreenshot("thread-summary.png");
+  await $("button[aria-label='Close Thread Summary']").click();
+}
+
+async function captureVisualizeFrame(): Promise<void> {
+  const visualizationPath = path.resolve(
+    "fixtures/dummy-home/visualization.html",
+  );
+  const reference = `visualize${JSON.stringify({ path: visualizationPath })}`;
+  await sendComposerPrompt(`Render this local visualization ${reference} example:basic`);
+  await waitForCompletedTurn({
+    kind: "text",
+    value: "This is a fixed response from the dummy provider.",
+  });
+  await $("iframe[title='Visualization']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  await saveFixtureScreenshot("visualize-frame.png");
 }
 
 async function captureComposerStates(): Promise<void> {
