@@ -8,6 +8,7 @@ import {
 import { MessageContent } from "./MessageContent";
 
 type ConversationItemProps = {
+  isStreaming?: boolean;
   item: ConversationViewItem;
   onEdit?: (
     item: ConversationViewItem,
@@ -16,6 +17,7 @@ type ConversationItemProps = {
 };
 
 export const ConversationItem = memo(function ConversationItem({
+  isStreaming = false,
   item,
   onEdit,
 }: ConversationItemProps) {
@@ -107,7 +109,7 @@ export const ConversationItem = memo(function ConversationItem({
               : "w-full border-0 bg-transparent px-0 py-2"
           }
         >
-          <MessageContent text={item.text || "…"} />
+          <MessageContent isAnimating={isStreaming} text={item.text || "…"} />
         </div>
       )}
       {isUser && (
@@ -159,6 +161,7 @@ function areConversationItemPropsEqual(
 ): boolean {
   return (
     left.onEdit === right.onEdit &&
+    left.isStreaming === right.isStreaming &&
     areConversationViewItemsEqual(left.item, right.item)
   );
 }

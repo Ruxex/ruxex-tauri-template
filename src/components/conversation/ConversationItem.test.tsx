@@ -27,10 +27,12 @@ describe("ConversationItem", () => {
     render(<ConversationItem item={item} onEdit={onEdit} />);
 
     expect(screen.queryByText("You")).toBeNull();
-    expect(screen.getByText("Inspect").tagName).toBe("STRONG");
+    expect(screen.getByText("Inspect").getAttribute("data-streamdown")).toBe(
+      "strong",
+    );
     const inlineCode = screen.getByText("src");
     expect(inlineCode.tagName).toBe("CODE");
-    expect(inlineCode.className.split(/\s+/)).toContain("text-base-content");
+    expect(inlineCode.getAttribute("data-streamdown")).toBe("inline-code");
     expect(screen.getByRole("article").className).toContain("chat-end");
 
     const messageSurface = screen.getByText("Inspect").closest("p")

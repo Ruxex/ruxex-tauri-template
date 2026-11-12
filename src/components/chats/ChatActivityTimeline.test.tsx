@@ -35,6 +35,7 @@ vi.mock("../conversation/ConversationItem", () => ({
   ConversationItem: (props: {
     item: ConversationViewItem;
     onEdit?: (item: ConversationViewItem) => void;
+    isStreaming?: boolean;
   }) => {
     conversation(props);
     return (
@@ -193,6 +194,30 @@ describe("ChatActivityTimeline", () => {
     expect(conversation).toHaveBeenCalledOnce();
     expect(activity).toHaveBeenCalledOnce();
     expect(serverRequest).toHaveBeenCalledOnce();
+  });
+
+  it("marks only the active assistant message as streaming", () => {
+    conversation.mockClear();
+
+    render(
+      <ChatActivityTimeline
+        connected
+        items={[
+          viewItem("user-1", "userMessage", "Request", "message"),
+          viewItem("agent-1", "agentMessage", "Reply", "message"),
+        ]}
+        liveItems={[]}
+        liveStatus="running"
+        workingTurnId="turn-1"
+        onReject={vi.fn()}
+        onResolve={vi.fn()}
+        pendingRequests={[]}
+      />,
+    );
+
+    expect(conversation.mock.calls.map(([props]) => props.isStreaming)).toEqual(
+      [false, true],
+    );
   });
 
   it("does not render empty agent messages", () => {

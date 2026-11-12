@@ -3,10 +3,16 @@ import { VisualizeFrame } from "../visualize/VisualizeFrame";
 import { parseVisualizeReferences } from "../visualize/visualize-reference";
 import { MarkdownContent } from "./MarkdownContent";
 
-export function MessageContent({ text }: { text: string }) {
+export function MessageContent({
+  isAnimating = false,
+  text,
+}: {
+  isAnimating?: boolean;
+  text: string;
+}) {
   const segments = parseVisualizeReferences(text);
   if (segments.length === 1 && segments[0]?.type === "markdown") {
-    return <MarkdownContent text={segments[0].text} />;
+    return <MarkdownContent isAnimating={isAnimating} text={segments[0].text} />;
   }
 
   const segmentKeys = new Map<string, number>();
@@ -22,7 +28,10 @@ export function MessageContent({ text }: { text: string }) {
         return (
           <Fragment key={`${baseKey}-${occurrence}`}>
             {segment.type === "markdown" ? (
-              <MarkdownContent text={segment.text} />
+              <MarkdownContent
+                isAnimating={isAnimating}
+                text={segment.text}
+              />
             ) : (
               <VisualizeFrame reference={segment.reference} />
             )}

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @plugin "daisyui";
+@import "streamdown/styles.css";
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/mermaid/dist/*.js";
 
 :root {
   --ruxex-scrollbar-thumb: rgb(100 116 139 / 42%);

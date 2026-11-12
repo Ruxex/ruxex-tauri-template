@@ -141,7 +141,11 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
             )}
             {group.items.map((item, index) => (
               <Fragment key={`item:${item.turnId}:${item.id}`}>
-                {renderConversationItem(item, onEdit)}
+                {renderConversationItem(
+                  item,
+                  onEdit,
+                  showActiveHere && item.type === "agentMessage",
+                )}
                 {showActiveHere && index + 1 === insertionIndex && (
                   <WorkingIndicator active label={indicatorLabel} />
                 )}
@@ -240,9 +244,14 @@ function findLastIndex<T>(items: T[], predicate: (item: T) => boolean): number {
 function renderConversationItem(
   item: ConversationViewItem,
   onEdit?: ChatActivityTimelineProps["onEdit"],
+  isStreaming = false,
 ) {
   return item.category === "message" ? (
-    <ConversationItem item={item} onEdit={onEdit} />
+    <ConversationItem
+      isStreaming={isStreaming}
+      item={item}
+      onEdit={onEdit}
+    />
   ) : (
     <ActivityItem item={item} />
   );
