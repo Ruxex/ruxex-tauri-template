@@ -239,7 +239,7 @@ describe("thread query hooks", () => {
 
     expect(activeThreadListParams()).toEqual({
       archived: false,
-      limit: 50,
+      limit: 8,
       sortKey: "recency_at",
       sortDirection: "desc",
     });

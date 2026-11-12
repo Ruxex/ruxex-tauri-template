@@ -16,7 +16,7 @@ describe("project query contracts", () => {
     expect(projectThreadListParams("project-1")).toEqual({
       projectId: "project-1",
       archived: false,
-      limit: 50,
+      limit: 8,
       sortKey: "recency_at",
       sortDirection: "desc",
     });

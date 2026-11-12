@@ -65,7 +65,7 @@ export function ChatSidebarSections({
             />
             <span>Projects</span>
           </summary>
-          <div className="menu w-full gap-1 p-0" id="projects-list">
+          <div className="w-full space-y-1" id="projects-list">
             {projects.isLoading && (
               <span className="loading loading-spinner loading-sm mx-3" />
             )}
@@ -80,7 +80,7 @@ export function ChatSidebarSections({
                   aria-controls={`project-chats-${project.id}`}
                   aria-expanded={Boolean(expandedProjects[project.id])}
                   aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
-                  className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-2"
+                  className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-3"
                   type="button"
                   onClick={() =>
                     setExpandedProjects((current) => ({

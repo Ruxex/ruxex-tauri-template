@@ -82,7 +82,7 @@ export function useArchivedThreadList(cursor: string | null = null) {
 export function activeThreadListParams(): v2.ThreadListParams {
   return {
     archived: false,
-    limit: 50,
+    limit: 8,
     sortKey: "recency_at",
     sortDirection: "desc",
   };

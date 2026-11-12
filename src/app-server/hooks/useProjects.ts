@@ -44,7 +44,7 @@ export function projectThreadListParams(
   return {
     projectId,
     archived: false,
-    limit: 50,
+    limit: 8,
     sortKey: "recency_at",
     sortDirection: "desc",
   };

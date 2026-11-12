@@ -147,6 +147,9 @@ describe("ServerRequestCard", () => {
     );
 
     expect(screen.getByText("pnpm check")).toBeTruthy();
+    const command = screen.getByText("pnpm check");
+    expect(command.className).toContain("max-h-48");
+    expect(command.className).toContain("overflow-y-auto");
     expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
     expect(screen.queryByText("Request details")).toBeNull();
     expect(screen.queryByText("Request 17")).toBeNull();

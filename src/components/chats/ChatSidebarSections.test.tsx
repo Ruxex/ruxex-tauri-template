@@ -100,6 +100,9 @@ describe("ChatSidebarSections", () => {
     expect(
       screen.getByRole("button", { name: "Expand Project Alpha" }),
     ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Expand Project Alpha" }).className,
+    ).toContain("px-3");
     expect(links[1].parentElement?.className).toContain("ring-1");
     expect(links[1].parentElement?.className).toContain("border-primary/30");
     expect(
@@ -281,10 +284,17 @@ describe("ChatSidebarSections", () => {
         .filter((link) => link.getAttribute("href")?.startsWith("/chat/alpha-"))
         .map((link) => link.textContent?.trim()),
     ).toEqual(["Alpha newest", "Alpha older"]);
+    const projectChatList = screen
+      .getByRole("link", { name: "Alpha newest" })
+      .closest("ul");
+    expect(projectChatList?.className).toContain("gap-0");
+    expect(
+      screen.getByRole("link", { name: "Alpha newest" }).closest("button"),
+    ).toBeNull();
     expect(useThreadList).toHaveBeenCalledWith({
       projectId: "project-1",
       archived: false,
-      limit: 50,
+      limit: 8,
       sortKey: "recency_at",
       sortDirection: "desc",
     });

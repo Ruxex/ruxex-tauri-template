@@ -132,7 +132,7 @@ export function ServerRequestCard({
             {title}
           </h2>
           {requestParams.command && (
-            <code className="mt-2 block rounded bg-base-200 p-2 text-sm">
+            <code className="mt-2 block max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded bg-base-200 p-2 text-sm">
               {requestParams.command}
             </code>
           )}
