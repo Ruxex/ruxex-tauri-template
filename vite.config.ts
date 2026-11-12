@@ -5,6 +5,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
+    setupFiles: ["./src/test-setup.ts"],
     exclude: [
       "e2e/**",
       "fixtures/dummy-home/**/*.spec.ts",

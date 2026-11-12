@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -8,10 +7,6 @@ import {
   type SidebarPanelDefinition,
 } from "./navigation";
 import { SidebarContextPanel } from "./RouteSidebar";
-
-const DEFAULT_SIDEBAR_WIDTH = 320;
-const MIN_SIDEBAR_WIDTH = 240;
-const MAX_SIDEBAR_WIDTH = 480;
 
 type ProjectSidebarProps = {
   activePanel: SidebarPanel;
@@ -33,8 +28,6 @@ export function ProjectSidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const contextPanelVisible = showContextPanel && !collapsed;
-  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
-  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
 
   function selectPanel(panel: SidebarPanelDefinition) {
     onPanelChange(panel.id);
@@ -48,51 +41,6 @@ export function ProjectSidebar({
     void navigate(panel.route);
   }
 
-  function resizeSidebar(delta: number) {
-    setSidebarWidth((width) =>
-      Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, width + delta)),
-    );
-  }
-
-  function handleSidebarResizeStart(
-    event: React.PointerEvent<HTMLButtonElement>,
-  ) {
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = sidebarWidth;
-    setIsResizingSidebar(true);
-
-    function handlePointerMove(moveEvent: PointerEvent) {
-      setSidebarWidth(
-        Math.min(
-          MAX_SIDEBAR_WIDTH,
-          Math.max(MIN_SIDEBAR_WIDTH, startWidth + moveEvent.clientX - startX),
-        ),
-      );
-    }
-
-    function handlePointerUp() {
-      setIsResizingSidebar(false);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-    }
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-  }
-
-  function handleSidebarResizeKeyDown(
-    event: React.KeyboardEvent<HTMLButtonElement>,
-  ) {
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      resizeSidebar(-16);
-    } else if (event.key === "ArrowRight") {
-      event.preventDefault();
-      resizeSidebar(16);
-    }
-  }
-
   const primaryPanels = SIDEBAR_PANELS.filter(
     (panel) => panel.id !== "account" && panel.id !== "settings",
   );
@@ -102,9 +50,8 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className={`workbench-sidebar relative flex h-full min-h-0 shrink-0 ${contextPanelVisible ? "w-[20rem]" : "workbench-sidebar-collapsed"}`}
+      className={`workbench-sidebar relative flex h-full min-h-0 shrink-0 ${contextPanelVisible ? "w-full" : "workbench-sidebar-collapsed"}`}
       aria-label="Workspace sidebar"
-      style={{ width: contextPanelVisible ? `${sidebarWidth}px` : undefined }}
     >
       <nav
         aria-label="Workspace navigation"
@@ -141,17 +88,6 @@ export function ProjectSidebar({
           activePanel={activePanel}
           onClose={onToggle}
           selectedThreadId={selectedThreadId}
-        />
-      )}
-      {contextPanelVisible && (
-        <button
-          aria-label="Resize left pane"
-          className={`absolute inset-y-0 right-0 z-10 w-2 cursor-col-resize appearance-none border-0 border-r border-base-300/60 bg-base-300/20 p-0 transition-colors hover:bg-primary/30 ${isResizingSidebar ? "bg-primary/40" : ""}`}
-          data-pane-width={sidebarWidth}
-          onKeyDown={handleSidebarResizeKeyDown}
-          onPointerDown={handleSidebarResizeStart}
-          title="Resize left pane"
-          type="button"
         />
       )}
     </aside>

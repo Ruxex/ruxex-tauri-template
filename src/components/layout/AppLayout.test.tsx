@@ -281,7 +281,7 @@ describe("AppLayout", () => {
     expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
   });
 
-  it("opens an empty right pane beside the main content row", () => {
+  it("opens an empty right pane inside the resizable panel group", () => {
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
       update: vi.fn(),
@@ -293,22 +293,27 @@ describe("AppLayout", () => {
       </MemoryRouter>,
     );
 
+    const group = screen.getByTestId("pane-resizable-group");
+    expect(group.className).toContain("flex");
     const pane = screen.getByTestId("right-pane");
-    expect(pane.style.width).toBe("0px");
     expect(pane.className).toContain("transition");
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
+    ).toBe("false");
     fireEvent.click(screen.getByRole("button", { name: "Open right pane" }));
 
-    expect(pane.style.width).toBe("320px");
-    const handle = screen.getByRole("button", { name: "Resize right pane" });
-    expect(handle.getAttribute("data-pane-width")).toBe("320");
-    fireEvent.keyDown(handle, { key: "ArrowLeft" });
-    expect(handle.getAttribute("data-pane-width")).toBe("304");
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("separator", { name: "Resize right pane" }),
+    ).toBeTruthy();
     expect(pane.textContent).toBe("");
-    expect(pane.parentElement?.className).toContain("flex");
+    expect(group.className).toContain("flex");
     expect(screen.getByRole("button", { name: "Close right pane" })).toBeTruthy();
   });
 
-  it("allows the right pane to expand to 1536 pixels", () => {
+  it("configures the right pane max size at 1536 pixels", () => {
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
       update: vi.fn(),
@@ -321,14 +326,8 @@ describe("AppLayout", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Open right pane" }));
-    const pane = screen.getByTestId("right-pane");
-    const handle = screen.getByRole("button", { name: "Resize right pane" });
-
-    for (let index = 0; index < 80; index += 1) {
-      fireEvent.keyDown(handle, { key: "ArrowRight" });
-    }
-
-    expect(handle.getAttribute("data-pane-width")).toBe("1536");
-    expect(pane.style.width).toBe("1536px");
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-max-size"),
+    ).toBe("1536");
   });
 });

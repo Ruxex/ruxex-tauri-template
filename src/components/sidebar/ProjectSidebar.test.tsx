@@ -121,7 +121,7 @@ describe("ProjectSidebar", () => {
     expect(
       screen.getByRole("complementary", { name: "Workspace sidebar" })
         .className,
-    ).toContain("w-[20rem]");
+    ).toContain("w-full");
     expect(panel.querySelector('a[href="/"]')).toBeTruthy();
     expect(within(panel).getByText("Recent chats")).toBeTruthy();
     expect(within(panel).getByText("Projects")).toBeTruthy();
@@ -333,12 +333,10 @@ describe("ProjectSidebar", () => {
     ).toBeNull();
     expect(within(rail).getByRole("button", { name: "Home" })).toBeTruthy();
     expect(within(rail).getByRole("button", { name: "Projects" })).toBeTruthy();
-    expect(
-      within(rail).queryByRole("button", { name: "Resize left pane" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
   });
 
-  it("resizes the expanded sidebar with keyboard controls", async () => {
+  it("leaves pane resizing to the parent resizable panel group", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
     render(
@@ -352,18 +350,8 @@ describe("ProjectSidebar", () => {
       </MemoryRouter>,
     );
 
-    const sidebar = screen.getByRole("complementary", {
-      name: "Workspace sidebar",
-    });
-    const handle = screen.getByRole("button", { name: "Resize left pane" });
-
-    expect(sidebar.style.width).toBe("320px");
-    expect(handle.getAttribute("data-pane-width")).toBe("320");
-
-    fireEvent.keyDown(handle, { key: "ArrowLeft" });
-    expect(handle.getAttribute("data-pane-width")).toBe("304");
-    fireEvent.keyDown(handle, { key: "ArrowRight" });
-    expect(handle.getAttribute("data-pane-width")).toBe("320");
+    expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
+    expect(screen.queryByRole("separator", { name: "Resize left pane" })).toBeNull();
   });
 
   it("lets the chat sidebar fill the expanded pane", async () => {
@@ -387,30 +375,6 @@ describe("ProjectSidebar", () => {
     expect(chatSidebar.className).toContain("flex-1");
     expect(chatSidebar.className).toContain("min-w-0");
     expect(chatSidebar.className).not.toContain("w-72");
-  });
-
-  it("clamps pointer resizing to the sidebar width bounds", async () => {
-    const { ProjectSidebar } = await import("./ProjectSidebar");
-
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <ProjectSidebar
-          activePanel="home"
-          collapsed={false}
-          onPanelChange={vi.fn()}
-          onToggle={vi.fn()}
-        />
-      </MemoryRouter>,
-    );
-
-    const handle = screen.getByRole("button", { name: "Resize left pane" });
-
-    fireEvent.pointerDown(handle, { clientX: 200 });
-    fireEvent.pointerMove(window, { clientX: -1000 });
-    expect(handle.getAttribute("data-pane-width")).toBe("240");
-    fireEvent.pointerMove(window, { clientX: 1000 });
-    expect(handle.getAttribute("data-pane-width")).toBe("480");
-    fireEvent.pointerUp(window);
   });
 
   it("renders Heroicons in the icon rail", async () => {
