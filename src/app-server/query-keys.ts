@@ -32,6 +32,8 @@ export const appServerQueryKeys = {
   project: (projectId: string) => ["app-server", "project", projectId] as const,
   threadList: (params: v2.ThreadListParams) =>
     ["app-server", "threads", "list", params] as const,
+  subagentThreadList: (parentThreadId: string) =>
+    ["app-server", "threads", "subagents", parentThreadId] as const,
   threadSearch: (params: v2.ThreadSearchParams) =>
     ["app-server", "threads", "search", params] as const,
   thread: (threadId: string) => ["app-server", "thread", threadId] as const,

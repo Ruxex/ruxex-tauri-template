@@ -9,6 +9,7 @@ import { ensureThreadResumed } from "../thread-session";
 
 export type ThreadListOptions = {
   enabled?: boolean;
+  queryKey?: readonly unknown[];
 };
 
 export function useThreadList(
@@ -18,13 +19,29 @@ export function useThreadList(
   const status = useAppServerStatus();
 
   return useQuery({
-    queryKey: appServerQueryKeys.threadList(params),
+    queryKey: options.queryKey ?? appServerQueryKeys.threadList(params),
     queryFn: async () => {
       const response = await requestAppServerMethod("thread/list", params);
       return response.response;
     },
     enabled: Boolean(status.data) && options.enabled !== false,
   });
+}
+
+export function useSubagentThreadList(parentThreadId: string) {
+  return useThreadList(
+    {
+      parentThreadId,
+      archived: false,
+      limit: 100,
+      sortKey: "updated_at",
+      sortDirection: "desc",
+    },
+    {
+      enabled: Boolean(parentThreadId),
+      queryKey: appServerQueryKeys.subagentThreadList(parentThreadId),
+    },
+  );
 }
 
 export function useThreadSearch(searchTerm: string) {

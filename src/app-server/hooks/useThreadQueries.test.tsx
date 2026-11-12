@@ -65,6 +65,25 @@ describe("thread query hooks", () => {
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/list", params);
   });
 
+  it("lists direct child threads with a parent-scoped query", async () => {
+    const { useSubagentThreadList } = await import("./useThreadQueries");
+    const { result } = renderHook(
+      () => useSubagentThreadList("parent-1"),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/list", {
+      parentThreadId: "parent-1",
+      archived: false,
+      limit: 100,
+      sortKey: "updated_at",
+      sortDirection: "desc",
+    });
+    expect(result.current.data?.data).toEqual([]);
+  });
+
   it("does not search when the search term is blank", async () => {
     const { useThreadSearch } = await import("./useThreadQueries");
     renderHook(() => useThreadSearch("   "), { wrapper });
