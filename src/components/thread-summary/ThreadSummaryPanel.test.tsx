@@ -1,13 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-const useAppServerEvents = vi.hoisted(() => vi.fn());
-
-vi.mock("../../app-server/hooks", () => ({
-  useAppServerEvents,
-}));
+import { afterEach, describe, expect, it } from "vitest";
 
 const usage = {
   total: {
@@ -32,16 +26,10 @@ const usage = {
 describe("ThreadSummaryPanel", () => {
   afterEach(cleanup);
 
-  beforeEach(() => {
-    useAppServerEvents.mockReturnValue({
-      threads: { "parent-1": { tokenUsage: usage } },
-    });
-  });
-
   it("renders only token usage in the summary", async () => {
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
-    render(<ThreadSummaryPanel threadId="parent-1" />);
+    render(<ThreadSummaryPanel tokenUsage={usage} gitDiff={null} />);
 
     expect(
       screen.queryByRole("heading", { name: "Thread Summary" }),
@@ -79,11 +67,26 @@ describe("ThreadSummaryPanel", () => {
   });
 
   it("hides the summary when token usage is unavailable", async () => {
-    useAppServerEvents.mockReturnValueOnce({ threads: {} });
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
-    render(<ThreadSummaryPanel threadId="parent-1" />);
+    render(<ThreadSummaryPanel tokenUsage={null} gitDiff={null} />);
 
     expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
+  });
+
+  it("renders code additions and deletions without token usage", async () => {
+    const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
+
+    render(
+      <ThreadSummaryPanel
+        tokenUsage={null}
+        gitDiff={{ added: 12, deleted: 4 }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Code Changes" })).toBeTruthy();
+    expect(screen.getByText("+12")).toBeTruthy();
+    expect(screen.getByText("−4")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Token Usage" })).toBeNull();
   });
 });

@@ -6,6 +6,7 @@ import {
 } from "../../app-server/api";
 import type { LiveConversationItem } from "../../app-server/event-reducer";
 import { clearThreadLiveItems } from "../../app-server/event-store";
+import { useGitDiffSummary } from "../../platform/git-diff";
 import {
   useAppServerEvents,
   useRetainThreadState,
@@ -34,6 +35,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const branding = useBranding();
   const timelineRef = useRef<HTMLElement | null>(null);
   const conversation = useThreadConversation(threadId);
+  const gitDiffQuery = useGitDiffSummary(conversation.data?.thread.cwd ?? null);
   const events = useAppServerEvents();
   const [isRecovering, setIsRecovering] = useState(false);
   const wasConnected = useRef(events.connected);
@@ -196,7 +198,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const hasMinimap =
     items.filter((item) => item.type === "userMessage").length >=
     MIN_USER_ITEMS_FOR_MINIMAP;
-  const hasSummary = tokenUsage !== null;
+  const gitDiff = gitDiffQuery.data ?? null;
+  const hasSummary = tokenUsage !== null || gitDiff !== null;
   const chatGridClasses = hasMinimap
     ? hasSummary
       ? [
@@ -278,7 +281,9 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           />
         </div>
       </main>
-      {hasSummary && <ThreadSummaryPanel threadId={threadId} />}
+      {hasSummary && (
+        <ThreadSummaryPanel tokenUsage={tokenUsage} gitDiff={gitDiff} />
+      )}
     </div>
   );
 }

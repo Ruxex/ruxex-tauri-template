@@ -1,15 +1,17 @@
 import { TokenUsageSection } from "./TokenUsageSection";
-import { useAppServerEvents } from "../../app-server/hooks";
+import type { v2 } from "../../protocol";
+import type { GitDiffSummary } from "../../platform/git-diff";
 
 type ThreadSummaryPanelProps = {
-  threadId: string;
+  tokenUsage: v2.ThreadTokenUsage | null;
+  gitDiff: GitDiffSummary | null;
 };
 
-export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
-  const events = useAppServerEvents();
-  const tokenUsage = events.threads[threadId]?.tokenUsage ?? null;
-
-  if (!tokenUsage) {
+export function ThreadSummaryPanel({
+  tokenUsage,
+  gitDiff,
+}: ThreadSummaryPanelProps) {
+  if (!tokenUsage && !gitDiff) {
     return null;
   }
 
@@ -28,6 +30,33 @@ export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
             className="h-fit overflow-hidden rounded-box bg-base-100 p-4"
             data-testid="thread-summary-content"
           >
+            {gitDiff && (
+              <section
+                aria-labelledby="thread-summary-code-changes"
+                className={tokenUsage ? "mb-5" : ""}
+              >
+                <h3
+                  className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary"
+                  id="thread-summary-code-changes"
+                >
+                  Code Changes
+                </h3>
+                <dl className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <dt>Added</dt>
+                    <dd className="font-medium tabular-nums text-success">
+                      +{gitDiff.added}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <dt>Deleted</dt>
+                    <dd className="font-medium tabular-nums text-error">
+                      −{gitDiff.deleted}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            )}
             <TokenUsageSection usage={tokenUsage} />
           </div>
         </div>

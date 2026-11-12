@@ -1,63 +1,33 @@
 import type { Story } from "@ladle/react";
-
-import { appServerQueryKeys } from "../../app-server/query-keys";
-import {
-  CatalogQueryProvider,
-  CatalogSurface,
-} from "../../../.ladle/support/catalog-providers";
 import { ThreadSummaryPanel } from "./ThreadSummaryPanel";
 
-const childThreads = [
-  {
-    id: "child-api",
-    preview: "Inspect the API client",
-    updatedAt: 200,
-    agentNickname: "API scout",
-    agentRole: "researcher",
-    status: { type: "active", activeFlags: [] },
+const tokenUsage = {
+  total: {
+    totalTokens: 123456,
+    inputTokens: 100000,
+    cachedInputTokens: 12000,
+    cacheWriteInputTokens: 1000,
+    outputTokens: 23456,
+    reasoningOutputTokens: 3456,
   },
-  {
-    id: "child-tests",
-    preview: "Run the test suite",
-    updatedAt: 300,
-    agentNickname: "Test runner",
-    agentRole: null,
-    status: { type: "idle" },
+  last: {
+    totalTokens: 4567,
+    inputTokens: 3000,
+    cachedInputTokens: 400,
+    cacheWriteInputTokens: 100,
+    outputTokens: 1567,
+    reasoningOutputTokens: 200,
   },
-] as never;
+  modelContextWindow: 200000,
+};
 
 export const Loaded: Story = () => (
-  <CatalogQueryProvider
-    seeds={[
-      { queryKey: appServerQueryKeys.status, data: { ready: true } },
-      {
-        queryKey: appServerQueryKeys.subagentThreadList("thread-catalog"),
-        data: { data: childThreads, nextCursor: null, backwardsCursor: null },
-      },
-    ]}
-  >
-    <CatalogSurface>
-      <ThreadSummaryPanel
-        threadId="thread-catalog"
-      />
-    </CatalogSurface>
-  </CatalogQueryProvider>
+  <ThreadSummaryPanel
+    tokenUsage={tokenUsage}
+    gitDiff={{ added: 42, deleted: 18 }}
+  />
 );
 
-export const Empty: Story = () => (
-  <CatalogQueryProvider
-    seeds={[
-      { queryKey: appServerQueryKeys.status, data: { ready: true } },
-      {
-        queryKey: appServerQueryKeys.subagentThreadList("thread-catalog"),
-        data: { data: [], nextCursor: null, backwardsCursor: null },
-      },
-    ]}
-  >
-    <CatalogSurface>
-      <ThreadSummaryPanel
-        threadId="thread-catalog"
-      />
-    </CatalogSurface>
-  </CatalogQueryProvider>
+export const GitOnly: Story = () => (
+  <ThreadSummaryPanel tokenUsage={null} gitDiff={{ added: 42, deleted: 18 }} />
 );

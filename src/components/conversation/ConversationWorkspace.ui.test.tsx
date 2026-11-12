@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
+const useGitDiffSummary = vi.hoisted(() => vi.fn());
 const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useThreadGoal = vi.hoisted(() => vi.fn());
@@ -58,6 +59,7 @@ vi.mock("../../app-server/hooks", () => ({
   useSendMessage,
 }));
 vi.mock("../../app-server/event-store", () => ({ clearThreadLiveItems }));
+vi.mock("../../platform/git-diff", () => ({ useGitDiffSummary }));
 vi.mock("./Composer", () => ({
   Composer: (props: { initialMessage?: string }) => (
     <div data-testid="composer" data-draft={props.initialMessage ?? ""} />
@@ -67,6 +69,7 @@ describe("ConversationWorkspace", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    useGitDiffSummary.mockReturnValue({ data: null });
     useThreadConversation.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -204,6 +207,25 @@ describe("ConversationWorkspace", () => {
     expect(
       screen.queryByRole("heading", { name: "Thread Summary" }),
     ).toBeNull();
+  });
+
+  it("shows the thread summary for Git changes when token usage is unavailable", async () => {
+    useGitDiffSummary.mockReturnValueOnce({ data: { added: 7, deleted: 2 } });
+    useAppServerEvents.mockReturnValueOnce({
+      connected: true,
+      pendingServerRequests: {},
+      resynchronizing: false,
+      skippedEvents: 0,
+      lastError: null,
+      threads: { "thread-1": { items: [], tokenUsage: null } },
+    });
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
+    expect(screen.getByText("+7")).toBeTruthy();
+    expect(screen.getByText("−2")).toBeTruthy();
   });
 
   it("does not render the minimap before five user messages exist", async () => {
