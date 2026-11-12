@@ -6,6 +6,7 @@ import {
   sendComposerPrompt,
   waitForDesktopReady,
   waitForCompletedTurn,
+  withWindowSize,
 } from "./support";
 
 async function openRoute(path: string, selector: string): Promise<void> {
@@ -73,12 +74,14 @@ async function captureThemePresetPopover(): Promise<void> {
 }
 
 async function captureThreadSummary(): Promise<void> {
-  await $("button[aria-label='Open Thread Summary']").click();
-  await $("[data-testid='thread-summary-panel']").waitForDisplayed({
-    timeout: 10_000,
+  await withWindowSize(1920, 800, async () => {
+    await $("button[aria-label='Open Thread Summary']").click();
+    await $("[data-testid='thread-summary-panel']").waitForDisplayed({
+      timeout: 10_000,
+    });
+    await saveFixtureScreenshot("thread-summary.png");
+    await $("button[aria-label='Close Thread Summary']").click();
   });
-  await saveFixtureScreenshot("thread-summary.png");
-  await $("button[aria-label='Close Thread Summary']").click();
 }
 
 async function captureVisualizeFrame(): Promise<void> {

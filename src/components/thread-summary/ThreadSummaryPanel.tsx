@@ -31,7 +31,7 @@ export function ThreadSummaryPanel({
   return (
     <aside
       aria-label="Thread Summary"
-      className="w-full shrink-0 border-base-300 bg-base-100 p-4 lg:w-96 lg:border-l"
+      className="chat-thread-summary-column w-full shrink-0 border-base-300 bg-base-100 p-4 lg:border-l"
       data-testid="thread-summary-panel"
     >
       <header className="mb-5 flex items-center justify-between gap-3">

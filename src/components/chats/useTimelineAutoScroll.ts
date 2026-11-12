@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { type RefObject, useLayoutEffect, useRef } from "react";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { ConversationViewItem } from "../conversation/conversation-model";
@@ -14,13 +14,16 @@ function scrollContainerFor(timeline: HTMLElement): HTMLElement {
 type UseTimelineAutoScrollOptions = {
   items: ConversationViewItem[];
   pendingRequests: PendingServerRequest[];
+  timelineRef?: RefObject<HTMLElement | null>;
 };
 
 export function useTimelineAutoScroll({
   items,
   pendingRequests,
+  timelineRef: suppliedTimelineRef,
 }: UseTimelineAutoScrollOptions) {
-  const timelineRef = useRef<HTMLElement | null>(null);
+  const internalTimelineRef = useRef<HTMLElement | null>(null);
+  const timelineRef = suppliedTimelineRef ?? internalTimelineRef;
   const wasAtBottomRef = useRef(true);
   const previousItemKeysRef = useRef<Set<string> | null>(null);
   const previousContentSignatureRef = useRef<string | null>(null);
@@ -51,7 +54,7 @@ export function useTimelineAutoScroll({
     scrollContainer.addEventListener("scroll", updateBottomState);
     return () =>
       scrollContainer.removeEventListener("scroll", updateBottomState);
-  }, []);
+  }, [timelineRef]);
 
   useLayoutEffect(() => {
     const previousItemKeys = previousItemKeysRef.current;
@@ -89,7 +92,7 @@ export function useTimelineAutoScroll({
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
     wasAtBottomRef.current = true;
-  }, [contentSignature, itemKeys, items]);
+  }, [contentSignature, itemKeys, items, timelineRef]);
 
   return timelineRef;
 }

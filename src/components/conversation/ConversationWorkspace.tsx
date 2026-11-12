@@ -15,6 +15,7 @@ import {
 } from "../../app-server/hooks";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { Composer } from "./Composer";
+import { ConversationMinimap } from "./ConversationMinimap";
 import {
   buildUserTextInput,
   type ConversationViewItem,
@@ -28,6 +29,7 @@ const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 
 export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const branding = useBranding();
+  const timelineRef = useRef<HTMLElement | null>(null);
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -183,6 +185,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
   const editError = revertThread.error ?? sendMessage.error;
+  const hasMinimap =
+    items.filter((item) => item.type === "userMessage").length >= 5;
   const canEdit =
     liveThread?.status !== "running" &&
     liveThread?.status !== "resynchronizing" &&
@@ -190,8 +194,14 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     !sendMessage.isPending;
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[1200px] flex-col gap-4 px-4 pt-4 sm:px-6 sm:pt-6 lg:flex-row">
-      <main className="flex min-w-0 flex-1 flex-col gap-4">
+    <div
+      className={`chat-workspace mx-auto grid min-h-full w-full max-w-[1200px] grid-cols-1 gap-4 px-4 pt-4 sm:px-6 sm:pt-6 ${hasMinimap ? "chat-workspace--has-minimap" : ""} ${summaryOpen ? "chat-workspace--summary-open" : ""}`}
+      data-testid="chat-workspace"
+    >
+      {hasMinimap && (
+        <ConversationMinimap items={items} timelineRef={timelineRef} />
+      )}
+      <main className="chat-main-column flex min-w-0 flex-1 flex-col gap-4">
         <div className="flex justify-end">
           <button
             aria-expanded={summaryOpen}
@@ -225,6 +235,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           onReject={handleReject}
           onResolve={handleResolve}
           pendingRequests={pendingRequests}
+          timelineRef={timelineRef}
           turns={turns}
           workingTurnId={workingTurnId}
           workingStartedAt={workingStartedAt}

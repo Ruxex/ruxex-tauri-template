@@ -53,7 +53,9 @@ describe("ConversationMinimap", () => {
       name: "Conversation minimap",
     });
     expect(minimap.className).toContain("hidden");
-    expect(minimap.className).toContain("min-[1760px]:flex");
+    expect(minimap.className).toContain("chat-minimap-column");
+    expect(minimap.className).toContain("min-[1360px]:flex");
+    expect(minimap.className).not.toContain("fixed");
   });
 
   it("hides the minimap until five user messages are available", () => {

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import type { ConversationViewItem } from "./conversation-model";
 
@@ -106,13 +105,12 @@ export function ConversationMinimap({
     setHoveredId(null);
   }
 
-  return createPortal(
+  return (
     <aside
       aria-label="Conversation minimap"
-      className="pointer-events-none fixed top-1/2 z-30 hidden -translate-y-1/2 min-[1760px]:flex"
-      style={{ left: "max(1rem, calc(50% - 520px))" }}
+      className="chat-minimap-column pointer-events-none sticky top-4 z-10 hidden h-[min(60vh,520px)] self-start pt-4 min-[1360px]:flex"
     >
-      <div className="pointer-events-auto relative h-[min(60vh,520px)] w-4">
+      <div className="pointer-events-auto relative h-full w-4">
         <div
           aria-hidden="true"
           className="conversation-minimap-track absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 rounded-full"
@@ -184,8 +182,7 @@ export function ConversationMinimap({
           );
         })}
       </div>
-    </aside>,
-    document.body,
+    </aside>
   );
 }
 

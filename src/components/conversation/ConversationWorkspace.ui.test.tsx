@@ -179,6 +179,60 @@ describe("ConversationWorkspace", () => {
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
   });
 
+  it("uses the responsive chat grid when both supporting columns are available", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    useThreadConversation.mockReturnValueOnce({
+      isLoading: false,
+      isError: false,
+      resync,
+      data: {
+        thread: {
+          id: "thread-1",
+          name: "Test chat",
+          preview: null,
+          cwd: "/workspace",
+          gitInfo: null,
+          status: { type: "idle" },
+        },
+        turns: { data: [] },
+        items: {
+          data: Array.from({ length: 5 }, (_, index) => ({
+            turnId: `turn-${index + 1}`,
+            item: {
+              type: "userMessage",
+              id: `user-${index + 1}`,
+              clientId: null,
+              content: [
+                {
+                  type: "text",
+                  text: `Prompt ${index + 1}`,
+                  text_elements: [],
+                },
+              ],
+            },
+          })) as never,
+        },
+      },
+    });
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    const workspace = screen.getByTestId("chat-workspace");
+    expect(workspace.className).toContain("chat-workspace");
+    expect(workspace.className).toContain("chat-workspace--has-minimap");
+    expect(workspace.className).not.toContain("chat-workspace--summary-open");
+    expect(
+      screen.getByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Thread Summary" }));
+
+    expect(workspace.className).toContain("chat-workspace--summary-open");
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "chat-thread-summary-column",
+    );
+  });
+
   it("shows an error when the completed turn fails asynchronously", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
@@ -195,7 +249,7 @@ describe("ConversationWorkspace", () => {
     expect(content?.className.split(/\s+/)).toContain("selectable-content");
     expect(screen.queryByRole("heading", { name: "Test chat" })).toBeNull();
     const composer = screen.getByTestId("composer");
-    const root = composer.closest("div.flex");
+    const root = screen.getByTestId("chat-workspace");
     expect(root).not.toBeNull();
     expect(root?.className.split(/\s+/)).toEqual(
       expect.arrayContaining([

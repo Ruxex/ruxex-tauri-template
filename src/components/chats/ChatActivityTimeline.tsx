@@ -1,4 +1,5 @@
 import { Fragment, memo, useEffect, useState } from "react";
+import type { RefObject } from "react";
 
 import type {
   LiveConversationItem,
@@ -9,7 +10,6 @@ import type { v2 } from "../../protocol";
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
 import { ActivityItem } from "../conversation/ActivityItem";
 import { ConversationItem } from "../conversation/ConversationItem";
-import { ConversationMinimap } from "../conversation/ConversationMinimap";
 import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
@@ -34,6 +34,7 @@ type ChatActivityTimelineProps = {
     result: unknown,
   ) => Promise<void>;
   pendingRequests: PendingServerRequest[];
+  timelineRef?: RefObject<HTMLElement | null>;
   turns?: v2.Turn[];
   workingTurnId?: string | null;
   workingStartedAt?: number | null;
@@ -49,6 +50,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   onReject,
   onResolve,
   pendingRequests,
+  timelineRef: suppliedTimelineRef,
   turns = [],
   workingTurnId,
   workingStartedAt,
@@ -58,6 +60,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   const timelineRef = useTimelineAutoScroll({
     items: visibleItems,
     pendingRequests,
+    timelineRef: suppliedTimelineRef,
   });
   const turnGroups = groupConversationItems(visibleItems);
   const completedTurns = new Map(
@@ -98,7 +101,6 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
       className="space-y-0 bg-base-200 p-4"
       ref={timelineRef}
     >
-      <ConversationMinimap items={visibleItems} timelineRef={timelineRef} />
       {visibleItems.length === 0 &&
         (showIndicator || showCompletedIndicator) && (
           <WorkingIndicator
@@ -184,6 +186,7 @@ function areChatActivityTimelinePropsEqual(
     left.onEdit === right.onEdit &&
     left.onReject === right.onReject &&
     left.onResolve === right.onResolve &&
+    left.timelineRef === right.timelineRef &&
     left.workingTurnId === right.workingTurnId &&
     left.workingStartedAt === right.workingStartedAt &&
     left.completedTurn === right.completedTurn &&

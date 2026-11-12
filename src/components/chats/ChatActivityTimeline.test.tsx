@@ -132,6 +132,21 @@ describe("ChatActivityTimeline", () => {
     vi.useRealTimers();
   });
 
+  it("attaches the supplied timeline ref to the chat activity region", () => {
+    const timelineRef = { current: null as HTMLElement | null };
+
+    render(
+      <ChatActivityTimeline
+        {...timelineProps([])}
+        timelineRef={timelineRef}
+      />,
+    );
+
+    expect(timelineRef.current).toBe(
+      screen.getByRole("region", { name: "Chat activity" }),
+    );
+  });
+
   it("renders messages, activities, and actionable pending requests", async () => {
     const onResolve = vi.fn().mockResolvedValue(undefined);
     const onReject = vi.fn().mockResolvedValue(undefined);
