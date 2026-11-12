@@ -49,7 +49,6 @@ impl SkillPolicy {
             hidden_skills: self.disabled_skills.iter().cloned().collect(),
         }
     }
-
 }
 
 /// Builder for the Tauri template's runtime composition root.
@@ -181,9 +180,7 @@ impl DesktopRuntimeState {
 }
 
 #[tauri::command]
-pub(crate) fn get_desktop_ui_policy(
-    state: State<'_, DesktopRuntimeState>,
-) -> DesktopUiPolicy {
+pub(crate) fn get_desktop_ui_policy(state: State<'_, DesktopRuntimeState>) -> DesktopUiPolicy {
     state.config().skill_policy.ui_policy()
 }
 
