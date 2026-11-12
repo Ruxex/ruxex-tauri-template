@@ -39,10 +39,11 @@ class ScreenshotGalleryTests(unittest.TestCase):
             "fixtures/dummy-home/unshot.spec.ts",
             "fixtures/dummy-home/volatile.spec.ts",
             "fixtures/marketplace-home/persistent.spec.ts",
+            "fixtures/dummy-home/git-diff-review.spec.ts",
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            names = ["run-1", "run-2", "run-3", "run-4", "run-5"]
+            names = ["run-1", "run-2", "run-3", "run-4", "run-5", "run-6"]
             for index, (name, spec) in enumerate(zip(names, specs, strict=True), start=1):
                 run = root / name
                 run.mkdir()
@@ -94,12 +95,14 @@ class ScreenshotGalleryTests(unittest.TestCase):
             collection.mkdir()
             (collection / "settings-appearance.png").write_bytes(b"settings")
             (collection / "project-create.png").write_bytes(b"project")
+            (collection / "git-diff-review.png").write_bytes(b"git diff")
 
             document = build_gallery_document(root)
 
             self.assertIn("Settings", document)
             self.assertIn("Projects", document)
-            self.assertEqual(document.count('<img '), 3)
+            self.assertIn("Git Diff Review", document)
+            self.assertEqual(document.count('<img '), 4)
 
     def test_document_generates_grouped_slideshow_triggers_and_controls(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -109,14 +112,16 @@ class ScreenshotGalleryTests(unittest.TestCase):
             (collection / "settings-general.png").write_bytes(b"general")
             (collection / "settings-appearance.png").write_bytes(b"appearance")
             (collection / "project-create.png").write_bytes(b"project")
+            (collection / "git-diff-review.png").write_bytes(b"git diff")
 
             document = build_gallery_document(root)
 
             self.assertNotIn('target="_blank"', document)
-            self.assertEqual(document.count("data-slideshow-index="), 3)
+            self.assertEqual(document.count("data-slideshow-index="), 4)
             self.assertIn('data-slideshow-index="0"', document)
             self.assertIn('data-slideshow-index="1"', document)
             self.assertIn('data-slideshow-index="2"', document)
+            self.assertIn('data-slideshow-index="3"', document)
             self.assertIn('<dialog class="slideshow" id="slideshow-dialog"', document)
             self.assertIn('id="slideshow-previous"', document)
             self.assertIn('id="slideshow-next"', document)

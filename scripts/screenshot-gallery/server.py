@@ -16,12 +16,14 @@ from urllib.parse import quote, urlsplit
 
 
 IMAGE_EXTENSIONS = {".jpeg", ".jpg", ".png", ".webp"}
+HOST = "0.0.0.0"
 UI_FIXTURE_SPECS = (
     "fixtures/dummy-home/persistent.spec.ts",
     "fixtures/dummy-home/pages.spec.ts",
     "fixtures/dummy-home/unshot.spec.ts",
     "fixtures/dummy-home/volatile.spec.ts",
     "fixtures/marketplace-home/persistent.spec.ts",
+    "fixtures/dummy-home/git-diff-review.spec.ts",
 )
 PAGE_GROUPS = (
     ("home", "Home"),
@@ -45,6 +47,7 @@ PAGE_GROUPS = (
     ("marketplace", "Marketplace"),
     ("archived-chats", "Archived Chats"),
     ("contact-sheet", "Contact Sheet"),
+    ("git-diff-review", "Git Diff Review"),
 )
 
 
@@ -431,7 +434,6 @@ def parse_args() -> argparse.Namespace:
         help="directory containing screenshot collections (default: artifacts/e2e)",
     )
     parser.add_argument("--all", action="store_true", help="show every collection instead of only the latest ui-fixtures batch")
-    parser.add_argument("--host", default="0.0.0.0", help="host to bind (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8765, help="port to bind (default: 8765)")
     parser.add_argument("--open", action="store_true", help="open the gallery in the default browser")
     return parser.parse_args()
@@ -451,9 +453,10 @@ def main() -> None:
         collection_label=label,
         collections=tuple(collections),
     )
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    url = f"http://{args.host}:{args.port}/"
+    server = ThreadingHTTPServer((HOST, args.port), handler)
+    url = f"http://127.0.0.1:{args.port}/"
     print(f"Serving {root}")
+    print(f"Listening on {HOST}:{args.port}")
     print(f"Screenshot gallery: {url}")
     if args.open:
         webbrowser.open(url)

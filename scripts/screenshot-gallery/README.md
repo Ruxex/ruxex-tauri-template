@@ -2,7 +2,7 @@
 
 This ignored development tool serves the screenshots under `artifacts/e2e` as a small browser gallery.
 
-By default it shows the newest complete `make ui-fixtures` batch (the five E2E runs that make target executes) and groups the cards by page name. If no complete batch is available, it falls back to the newest screenshot collection. Use `--all` when you need to inspect every historical collection.
+By default it shows the newest complete `make ui-fixtures` batch (the six E2E runs that make target executes, including the Git diff review fixture) and groups the cards by page name. If no complete batch is available, it falls back to the newest screenshot collection. Use `--all` when you need to inspect every historical collection.
 
 Click a screenshot card to open the slideshow at that image. Use the previous
 and next buttons, the left/right arrow keys, or swipe horizontally on the image
@@ -15,7 +15,7 @@ Run it from the repository root:
 python3 scripts/screenshot-gallery/server.py
 ```
 
-Then open <http://127.0.0.1:8765/>. Press `Ctrl-C` to stop the server.
+The server binds to `0.0.0.0` so it is reachable on the host's network interfaces. Open <http://127.0.0.1:8765/> locally. Press `Ctrl-C` to stop the server.
 
 Useful options:
 
