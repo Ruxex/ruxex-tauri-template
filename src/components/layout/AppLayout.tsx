@@ -151,6 +151,8 @@ export function AppLayout() {
         <ResizableHandle
           aria-label="Resize right pane"
           className={rightPaneOpen ? undefined : "hidden"}
+          data-testid="right-pane-resize-handle"
+          withHandle
         />
         <ResizablePanel
           className="min-w-0"

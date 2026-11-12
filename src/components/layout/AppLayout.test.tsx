@@ -308,6 +308,9 @@ describe("AppLayout", () => {
     expect(
       screen.getByRole("separator", { name: "Resize right pane" }),
     ).toBeTruthy();
+    expect(
+      screen.getByTestId("right-pane-resize-handle").querySelector("div"),
+    ).toBeTruthy();
     expect(pane.textContent).toBe("");
     expect(group.className).toContain("flex");
     expect(screen.getByRole("button", { name: "Close right pane" })).toBeTruthy();

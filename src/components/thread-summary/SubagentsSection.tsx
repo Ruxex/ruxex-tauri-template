@@ -93,6 +93,7 @@ function AgentGroup({
         <div className="space-y-2">
           {rows.map((row) => (
             <button
+              aria-label={`Open subagent ${row.label}`}
               aria-pressed={selectedThreadId === row.threadId}
               className="w-full rounded-box border border-base-300 p-3 text-left transition hover:border-primary hover:bg-base-200 aria-pressed:border-primary aria-pressed:bg-base-200"
               key={row.threadId}

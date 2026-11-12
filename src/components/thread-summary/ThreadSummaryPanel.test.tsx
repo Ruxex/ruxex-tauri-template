@@ -1,78 +1,44 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const useSubagentThreadList = vi.hoisted(() => vi.fn());
 const useAppServerEvents = vi.hoisted(() => vi.fn());
-const useServerRequests = vi.hoisted(() => vi.fn());
-const useThreadConversation = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useAppServerEvents,
-  useServerRequests,
-  useSubagentThreadList,
-  useThreadConversation,
-}));
-vi.mock("../conversation/ConversationItem", () => ({
-  ConversationItem: ({ item }: { item: { text: string } }) => (
-    <div data-testid="child-conversation-item">{item.text}</div>
-  ),
 }));
 
-const childThreads = [
-  {
-    id: "child-active",
-    preview: "Inspect the API client",
-    updatedAt: 200,
-    agentNickname: "API scout",
-    agentRole: "researcher",
-    status: { type: "active", activeFlags: [] },
+const usage = {
+  total: {
+    totalTokens: 123456,
+    inputTokens: 100000,
+    cachedInputTokens: 12000,
+    cacheWriteInputTokens: 1000,
+    outputTokens: 23456,
+    reasoningOutputTokens: 3456,
   },
-  {
-    id: "child-done",
-    preview: "Run the test suite",
-    updatedAt: 300,
-    agentNickname: "Test runner",
-    agentRole: null,
-    status: { type: "idle" },
+  last: {
+    totalTokens: 4567,
+    inputTokens: 3000,
+    cachedInputTokens: 400,
+    cacheWriteInputTokens: 100,
+    outputTokens: 1567,
+    reasoningOutputTokens: 200,
   },
-] as never;
+  modelContextWindow: 200000,
+};
 
 describe("ThreadSummaryPanel", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
-    useSubagentThreadList.mockReturnValue({
-      data: { data: childThreads },
-      isLoading: false,
-      isError: false,
-    });
-    useAppServerEvents.mockReturnValue({ threads: {} });
-    useServerRequests.mockReturnValue([]);
-    useThreadConversation.mockReturnValue({
-      isLoading: false,
-      isError: false,
-      data: {
-        items: {
-          data: [
-            {
-              turnId: "turn-1",
-              item: {
-                id: "child-item-1",
-                type: "agentMessage",
-                text: "API scan complete",
-              },
-            },
-          ],
-        },
-        turns: { data: [] },
-        thread: { id: "child-active", name: "API scout" },
-      },
+    useAppServerEvents.mockReturnValue({
+      threads: { "parent-1": { tokenUsage: usage } },
     });
   });
 
-  it("renders the five summary sections and four TBD placeholders", async () => {
+  it("renders only token usage in the summary", async () => {
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
     render(<ThreadSummaryPanel threadId="parent-1" />);
@@ -103,44 +69,21 @@ describe("ThreadSummaryPanel", () => {
     expect(screen.getByTestId("thread-summary-content").className).toContain(
       "h-fit",
     );
-    for (const label of [
-      "Subagents",
-      "Sources / Web Search",
-      "Changes",
-      "Branch details",
-      "Git actions",
-    ]) {
-      expect(screen.getByText(label)).toBeTruthy();
-    }
-    expect(screen.getAllByText("TBD")).toHaveLength(4);
+    expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
+    expect(screen.getByText("Input")).toBeTruthy();
+    expect(screen.getByText("Output")).toBeTruthy();
+    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.queryByText("Subagents")).toBeNull();
+    expect(screen.queryByText("Sources / Web Search")).toBeNull();
+    expect(screen.queryByText("TBD")).toBeNull();
   });
 
-  it("groups child agents and opens a selected child thread", async () => {
+  it("hides the summary when token usage is unavailable", async () => {
+    useAppServerEvents.mockReturnValueOnce({ threads: {} });
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
     render(<ThreadSummaryPanel threadId="parent-1" />);
 
-    expect(screen.getByRole("heading", { name: "Active" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Done" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /API scout/ }));
-
-    expect(screen.getByRole("heading", { name: /API scout/ })).toBeTruthy();
-    expect(screen.getByText("API scan complete")).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Back to subagents" }));
-    expect(screen.getByRole("button", { name: /API scout/ })).toBeTruthy();
-  });
-
-  it("renders an empty state when there are no child agents", async () => {
-    useSubagentThreadList.mockReturnValue({
-      data: { data: [] },
-      isLoading: false,
-      isError: false,
-    });
-    const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
-
-    render(<ThreadSummaryPanel threadId="parent-1" />);
-
-    expect(screen.getByText("No subagents yet.")).toBeTruthy();
+    expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
   });
 });

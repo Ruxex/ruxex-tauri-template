@@ -29,30 +29,22 @@ const usage: v2.ThreadTokenUsage = {
 };
 
 describe("TokenUsageSection", () => {
-  it("shows total, latest, breakdown, and context window token counts", () => {
+  it("shows only input, output, and total token counts", () => {
     render(<TokenUsageSection usage={usage} />);
 
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByText("123,456")).toBeTruthy();
-    expect(screen.getByText("4,567")).toBeTruthy();
     expect(screen.getByText("100,000")).toBeTruthy();
     expect(screen.getByText("23,456")).toBeTruthy();
-    expect(screen.getByText("200,000")).toBeTruthy();
-  });
-
-  it("omits the context window when it is unavailable", () => {
-    render(
-      <TokenUsageSection
-        usage={{ ...usage, modelContextWindow: null }}
-      />,
-    );
-
+    expect(screen.getByText("123,456")).toBeTruthy();
+    expect(screen.queryByText("Latest turn")).toBeNull();
+    expect(screen.queryByText("Reasoning")).toBeNull();
     expect(screen.queryByText("Context window")).toBeNull();
   });
 
-  it("shows an empty state before usage is reported", () => {
+  it("hides the section before usage is reported", () => {
     render(<TokenUsageSection usage={null} />);
 
-    expect(screen.getByText("No token usage yet.")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Token Usage" })).toBeNull();
+    expect(screen.queryByText("No token usage yet.")).toBeNull();
   });
 });

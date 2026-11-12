@@ -68,6 +68,7 @@ export function ActivityCenter() {
         <legend className="sr-only">Activity filters</legend>
         {filters.map((option) => (
           <button
+            aria-label={option.label}
             aria-pressed={filter === option.id}
             className={`btn btn-sm ${filter === option.id ? "btn-primary" : "btn-ghost"}`}
             key={option.id}

@@ -43,6 +43,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const revertThread = useRevertThread();
   const sendMessage = useSendMessage();
   const liveThread = events.threads[threadId];
+  const tokenUsage = liveThread?.tokenUsage ?? null;
   const liveItems = liveThread?.items ?? EMPTY_LIVE_ITEMS;
   const liveItemsRef = useRef(liveItems);
   liveItemsRef.current = liveItems;
@@ -195,20 +196,32 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const hasMinimap =
     items.filter((item) => item.type === "userMessage").length >=
     MIN_USER_ITEMS_FOR_MINIMAP;
+  const hasSummary = tokenUsage !== null;
   const chatGridClasses = hasMinimap
-    ? [
-        "grid-cols-[0_minmax(0,1fr)_0]",
-        "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
-        "@min-[80rem]/chat:grid-cols-[0_minmax(0,53rem)_minmax(0,24rem)]",
-        "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,24rem)]",
-        "@min-[120rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
-      ]
-    : [
-        "grid-cols-[minmax(0,1fr)]",
-        "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
-        "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
-        "@min-[120rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
-      ];
+    ? hasSummary
+      ? [
+          "grid-cols-[minmax(0,1fr)]",
+          "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
+          "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
+          "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
+        ]
+      : [
+          "grid-cols-[minmax(0,1fr)]",
+          "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
+          "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)]",
+          "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
+        ]
+    : hasSummary
+      ? [
+          "grid-cols-[minmax(0,1fr)]",
+          "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
+          "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
+          "@min-[96rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
+        ]
+      : [
+          "grid-cols-[minmax(0,1fr)]",
+          "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
+        ];
 
   return (
     <div
@@ -216,7 +229,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         "chat-workspace mx-auto grid min-h-full w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
         ...chatGridClasses,
         ...(hasMinimap ? ["chat-workspace--has-minimap"] : []),
-        "chat-workspace--has-summary",
+        ...(hasSummary ? ["chat-workspace--has-summary"] : []),
       ]
         .filter(Boolean)
         .join(" ")}
@@ -265,7 +278,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           />
         </div>
       </main>
-      <ThreadSummaryPanel threadId={threadId} />
+      {hasSummary && <ThreadSummaryPanel threadId={threadId} />}
     </div>
   );
 }
