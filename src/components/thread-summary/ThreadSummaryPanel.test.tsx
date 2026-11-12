@@ -75,15 +75,29 @@ describe("ThreadSummaryPanel", () => {
   it("renders the five summary sections and four TBD placeholders", async () => {
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
-    render(
-      <ThreadSummaryPanel
-        onClose={vi.fn()}
-        open
-        threadId="parent-1"
-      />,
-    );
+    render(<ThreadSummaryPanel threadId="parent-1" />);
 
-    expect(screen.getByRole("heading", { name: "Thread Summary" })).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { name: "Thread Summary" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Close Thread Summary" }),
+    ).toBeNull();
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "justify-self-end",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "h-fit",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "max-h-full",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "overflow-y-auto",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).not.toContain(
+      "sticky",
+    );
     for (const label of [
       "Subagents",
       "Sources / Web Search",
@@ -99,13 +113,7 @@ describe("ThreadSummaryPanel", () => {
   it("groups child agents and opens a selected child thread", async () => {
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
-    render(
-      <ThreadSummaryPanel
-        onClose={vi.fn()}
-        open
-        threadId="parent-1"
-      />,
-    );
+    render(<ThreadSummaryPanel threadId="parent-1" />);
 
     expect(screen.getByRole("heading", { name: "Active" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Done" })).toBeTruthy();
@@ -126,28 +134,8 @@ describe("ThreadSummaryPanel", () => {
     });
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
-    render(
-      <ThreadSummaryPanel
-        onClose={vi.fn()}
-        open
-        threadId="parent-1"
-      />,
-    );
+    render(<ThreadSummaryPanel threadId="parent-1" />);
 
     expect(screen.getByText("No subagents yet.")).toBeTruthy();
-  });
-
-  it("does not render when closed", async () => {
-    const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
-
-    render(
-      <ThreadSummaryPanel
-        onClose={vi.fn()}
-        open={false}
-        threadId="parent-1"
-      />,
-    );
-
-    expect(screen.queryByRole("heading", { name: "Thread Summary" })).toBeNull();
   });
 });

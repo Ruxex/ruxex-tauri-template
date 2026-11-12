@@ -21,8 +21,7 @@ export function AppLayout() {
   const routePanel = sidebarPanelForPath(location.pathname);
   const isChatRoute = location.pathname.startsWith("/chat/");
   const hidesContextPanel =
-    routePanel === "projects" ||
-    location.pathname.startsWith("/approvals");
+    routePanel === "projects" || location.pathname.startsWith("/approvals");
   const chatTitle =
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
@@ -95,9 +94,8 @@ export function AppLayout() {
         <div className="flex min-w-0 min-h-0 flex-1 flex-col">
           <section
             className={`workbench-main mx-auto min-h-0 w-full max-w-[1440px] flex-1 ${
-              isChatRoute ? "overflow-y-auto p-0" : "overflow-y-auto p-4 sm:p-6"
+              isChatRoute ? "overflow-hidden p-0" : "overflow-y-auto p-4 sm:p-6"
             }`}
-            data-conversation-scroll={isChatRoute ? "true" : undefined}
           >
             <Outlet />
           </section>

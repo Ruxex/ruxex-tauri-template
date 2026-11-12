@@ -14,16 +14,16 @@ import {
   useThreadConversation,
 } from "../../app-server/hooks";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
+import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
 import { Composer } from "./Composer";
 import { ConversationMinimap } from "./ConversationMinimap";
+import { CurrentGoal } from "./CurrentGoal";
 import {
   buildUserTextInput,
   type ConversationViewItem,
   mergeConversationItems,
 } from "./conversation-model";
-import { CurrentGoal } from "./CurrentGoal";
 import { QueuedMessages } from "./QueuedMessages";
-import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
 
 const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 
@@ -32,7 +32,6 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   const timelineRef = useRef<HTMLElement | null>(null);
   const conversation = useThreadConversation(threadId);
   const events = useAppServerEvents();
-  const [summaryOpen, setSummaryOpen] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const wasConnected = useRef(events.connected);
   const laggedEventCount =
@@ -185,8 +184,6 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
     liveThread?.completedTurn?.error ??
     (latestTurn?.status === "failed" ? latestTurn.error : null);
   const editError = revertThread.error ?? sendMessage.error;
-  const hasMinimap =
-    items.filter((item) => item.type === "userMessage").length >= 5;
   const canEdit =
     liveThread?.status !== "running" &&
     liveThread?.status !== "resynchronizing" &&
@@ -195,24 +192,20 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
 
   return (
     <div
-      className={`chat-workspace mx-auto grid min-h-full w-full max-w-[1200px] grid-cols-1 gap-4 px-4 pt-4 sm:px-6 sm:pt-6 ${hasMinimap ? "chat-workspace--has-minimap" : ""} ${summaryOpen ? "chat-workspace--summary-open" : ""}`}
+      className={[
+        "chat-workspace mx-auto grid h-full min-h-0 min-h-full w-full grid-cols-1 gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+        "chat-workspace--has-minimap",
+        "chat-workspace--has-summary",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-testid="chat-workspace"
     >
-      {hasMinimap && (
-        <ConversationMinimap items={items} timelineRef={timelineRef} />
-      )}
-      <main className="chat-main-column flex min-w-0 flex-1 flex-col gap-4">
-        <div className="flex justify-end">
-          <button
-            aria-expanded={summaryOpen}
-            aria-label="Open Thread Summary"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setSummaryOpen(true)}
-            type="button"
-          >
-            Thread Summary
-          </button>
-        </div>
+      <ConversationMinimap items={items} timelineRef={timelineRef} />
+      <main
+        className="chat-main-column flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto"
+        data-conversation-scroll="true"
+      >
         {turnError && (
           <p className="alert alert-error" role="alert">
             <span>Turn failed: {turnError.message}</span>
@@ -252,11 +245,7 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
           />
         </div>
       </main>
-      <ThreadSummaryPanel
-        onClose={() => setSummaryOpen(false)}
-        open={summaryOpen}
-        threadId={threadId}
-      />
+      <ThreadSummaryPanel threadId={threadId} />
     </div>
   );
 }

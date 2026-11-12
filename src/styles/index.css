@@ -194,6 +194,7 @@ body {
 
 .chat-workspace {
   align-items: start;
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .chat-thread-summary-column {
@@ -207,12 +208,12 @@ body {
 }
 
 @media (min-width: 1680px) {
-  .chat-workspace--summary-open {
-    grid-template-columns: minmax(0, 7fr) 18rem;
+  .chat-workspace--has-summary {
+    grid-template-columns: minmax(0, 1fr) 24rem;
   }
 
-  .chat-workspace--has-minimap.chat-workspace--summary-open {
-    grid-template-columns: 2rem minmax(0, 7fr) 18rem;
+  .chat-workspace--has-minimap.chat-workspace--has-summary {
+    grid-template-columns: minmax(0, 1fr) minmax(40rem, 53rem) minmax(0, 1fr);
   }
 
   .chat-thread-summary-column {

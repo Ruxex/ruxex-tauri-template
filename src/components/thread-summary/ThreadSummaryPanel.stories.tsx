@@ -38,8 +38,6 @@ export const Loaded: Story = () => (
   >
     <CatalogSurface>
       <ThreadSummaryPanel
-        onClose={() => undefined}
-        open
         threadId="thread-catalog"
       />
     </CatalogSurface>
@@ -58,8 +56,6 @@ export const Empty: Story = () => (
   >
     <CatalogSurface>
       <ThreadSummaryPanel
-        onClose={() => undefined}
-        open
         threadId="thread-catalog"
       />
     </CatalogSurface>

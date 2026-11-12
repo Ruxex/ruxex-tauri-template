@@ -248,7 +248,7 @@ describe("AppLayout", () => {
     expect(screen.getByText("Ruxex")).toBeTruthy();
   });
 
-  it("keeps the chat chrome fixed while the content section scrolls", () => {
+  it("keeps the chat content section fixed while its chat child owns scrolling", () => {
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
       update: vi.fn(),
@@ -269,10 +269,10 @@ describe("AppLayout", () => {
     expect(main.className).not.toContain("overflow-y-auto");
     expect(contentRow?.className).toContain("min-h-0");
     expect(section?.className).toContain("min-h-0");
-    expect(section?.className).toContain("overflow-y-auto");
+    expect(section?.className).toContain("overflow-hidden");
     expect(section?.className).toContain("p-0");
     expect(section?.getAttribute("data-chat-font-size")).toBeNull();
     expect(main.getAttribute("data-conversation-scroll")).toBeNull();
-    expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
+    expect(section?.getAttribute("data-conversation-scroll")).toBeNull();
   });
 });

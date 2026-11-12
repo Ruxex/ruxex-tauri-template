@@ -168,15 +168,35 @@ describe("ConversationWorkspace", () => {
     clearThreadLiveItems.mockReset();
   });
 
-  it("opens the thread summary from the chat header", async () => {
+  it("shows the thread summary without display toggles", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
     render(<ConversationWorkspace threadId="thread-1" />);
 
-    expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Open Thread Summary" }));
-
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Open Thread Summary" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Close Thread Summary" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Thread Summary" }),
+    ).toBeNull();
+  });
+
+  it("reserves the minimap column before enough messages exist for markers", async () => {
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    expect(screen.getByTestId("chat-workspace").className).toContain(
+      "chat-workspace--has-minimap",
+    );
+    expect(
+      screen.getByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeTruthy();
+    expect(screen.queryByTestId("conversation-minimap-track")).toBeNull();
   });
 
   it("uses the responsive chat grid when both supporting columns are available", async () => {
@@ -220,17 +240,18 @@ describe("ConversationWorkspace", () => {
     const workspace = screen.getByTestId("chat-workspace");
     expect(workspace.className).toContain("chat-workspace");
     expect(workspace.className).toContain("chat-workspace--has-minimap");
-    expect(workspace.className).not.toContain("chat-workspace--summary-open");
+    expect(workspace.className).toContain("chat-workspace--has-summary");
     expect(
       screen.getByRole("complementary", { name: "Conversation minimap" }),
     ).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Open Thread Summary" }));
-
-    expect(workspace.className).toContain("chat-workspace--summary-open");
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
       "chat-thread-summary-column",
     );
+    const mainChat = screen.getByRole("main");
+    expect(mainChat.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["min-h-0", "overflow-y-auto"]),
+    );
+    expect(mainChat.getAttribute("data-conversation-scroll")).toBe("true");
   });
 
   it("shows an error when the completed turn fails asynchronously", async () => {
@@ -252,14 +273,9 @@ describe("ConversationWorkspace", () => {
     const root = screen.getByTestId("chat-workspace");
     expect(root).not.toBeNull();
     expect(root?.className.split(/\s+/)).toEqual(
-      expect.arrayContaining([
-        "min-h-full",
-        "w-full",
-        "max-w-[1200px]",
-        "mx-auto",
-      ]),
+      expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
-    expect(root?.className.split(/\s+/)).not.toContain("h-full");
+    expect(root?.className.split(/\s+/)).toContain("h-full");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["sticky", "pb-2"]),
     );

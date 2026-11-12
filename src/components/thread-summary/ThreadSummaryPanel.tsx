@@ -1,4 +1,3 @@
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 import { SubagentDetail } from "./SubagentDetail";
@@ -6,8 +5,6 @@ import { SubagentsSection } from "./SubagentsSection";
 
 type ThreadSummaryPanelProps = {
   threadId: string;
-  open: boolean;
-  onClose: () => void;
 };
 
 const TBD_SECTIONS = [
@@ -17,35 +14,15 @@ const TBD_SECTIONS = [
   "Git actions",
 ];
 
-export function ThreadSummaryPanel({
-  threadId,
-  open,
-  onClose,
-}: ThreadSummaryPanelProps) {
+export function ThreadSummaryPanel({ threadId }: ThreadSummaryPanelProps) {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-
-  if (!open) {
-    return null;
-  }
 
   return (
     <aside
       aria-label="Thread Summary"
-      className="chat-thread-summary-column w-full shrink-0 border-base-300 bg-base-100 p-4 lg:border-l"
+      className="chat-thread-summary-column h-fit max-h-full w-full max-w-96 shrink-0 self-start justify-self-end overflow-y-auto border-base-300 bg-base-100 p-4 lg:border-l"
       data-testid="thread-summary-panel"
     >
-      <header className="mb-5 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Thread Summary</h2>
-        <button
-          aria-label="Close Thread Summary"
-          className="btn btn-ghost btn-sm btn-square"
-          onClick={onClose}
-          type="button"
-        >
-          <XMarkIcon aria-hidden="true" className="size-5" />
-        </button>
-      </header>
-
       {selectedThreadId ? (
         <SubagentDetail
           onBack={() => setSelectedThreadId(null)}

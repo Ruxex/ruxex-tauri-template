@@ -55,10 +55,15 @@ describe("ConversationMinimap", () => {
     expect(minimap.className).toContain("hidden");
     expect(minimap.className).toContain("chat-minimap-column");
     expect(minimap.className).toContain("min-[1360px]:flex");
+    expect(minimap.className).toContain("justify-self-start");
+    expect(minimap.className).toContain("h-full");
+    expect(minimap.className).toContain("min-h-0");
+    expect(minimap.className).toContain("overflow-y-auto");
+    expect(minimap.className).not.toContain("sticky");
     expect(minimap.className).not.toContain("fixed");
   });
 
-  it("hides the minimap until five user messages are available", () => {
+  it("keeps the minimap column while hiding markers until five user messages are available", () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);
     const fourUserMessages = [
@@ -76,8 +81,9 @@ describe("ConversationMinimap", () => {
     );
 
     expect(
-      screen.queryByRole("complementary", { name: "Conversation minimap" }),
-    ).toBeNull();
+      screen.getByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeTruthy();
+    expect(screen.queryByTestId("conversation-minimap-track")).toBeNull();
 
     rerender(
       <ConversationMinimap
@@ -92,6 +98,7 @@ describe("ConversationMinimap", () => {
     expect(
       screen.getByRole("complementary", { name: "Conversation minimap" }),
     ).toBeTruthy();
+    expect(screen.getByTestId("conversation-minimap-track")).toBeTruthy();
   });
 
   it("shows dense user-message markers and previews only on hover", () => {
@@ -173,13 +180,15 @@ describe("ConversationMinimap", () => {
     }
     document.body.append(timeline);
 
-    render(<ConversationMinimap items={items} timelineRef={{ current: timeline }} />);
+    render(
+      <ConversationMinimap items={items} timelineRef={{ current: timeline }} />,
+    );
 
     await waitFor(() =>
       expect(
         screen.getByTestId("conversation-minimap-marker-user-5").parentElement
           ?.parentElement?.style.top,
-      ).toBe("97.5%"),
+      ).toBe("calc(50% + 56px)"),
     );
 
     expect(
@@ -188,7 +197,13 @@ describe("ConversationMinimap", () => {
           screen.getByTestId(`conversation-minimap-marker-${item.id}`)
             .parentElement?.parentElement?.style.top,
       ),
-    ).toEqual(["2.5%", "26.25%", "50%", "73.75%", "97.5%"]);
+    ).toEqual([
+      "calc(50% - 56px)",
+      "calc(50% - 28px)",
+      "calc(50% + 0px)",
+      "calc(50% + 28px)",
+      "calc(50% + 56px)",
+    ]);
   });
 
   it("scrolls the matching conversation item when a marker is clicked", () => {

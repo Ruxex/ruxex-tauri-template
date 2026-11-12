@@ -12,17 +12,19 @@
 
 ## Global Constraints
 
-- Preserve the existing summary open/close interaction.
+- Keep the summary permanently rendered when the responsive layout has room.
 - Preserve the existing five-user-message minimap threshold.
 - Do not modify AppServer, protocol, or persistence code.
 - Keep the main column prioritized over supporting columns.
+- Keep the workspace grid row fixed to the chat viewport; let the minimap and
+  summary own their own overflow boundaries while the summary remains content-sized.
 
 ## Review Focus
 
 - Narrow viewport: supporting columns must not consume layout space.
 - Medium viewport: minimap must be an in-flow column and retain marker navigation.
-- Wide viewport with a closed summary: no empty summary column may reduce the main chat.
-- Wide viewport with an open summary: the main column must remain the flexible priority column.
+- Wide viewport: the always-present summary column must remain the flexible priority column's supporting column.
+- Long conversation: scrolling the timeline must not move either supporting column; only their own overflow areas may scroll.
 - Timeline ref sharing: minimap jumps and auto-scroll must target the same timeline.
 
 ---
@@ -52,12 +54,12 @@
 - Modify: `src/styles/index.css`
 
 **Interfaces:**
-- Consumes: `ConversationViewItem[]`, pending request state, and the existing `summaryOpen` state.
+- Consumes: `ConversationViewItem[]` and pending request state.
 - Produces: a grid with optional `chat-minimap-column` and `chat-thread-summary-column` children, plus a shared `timelineRef`.
 
 - [ ] **Step 1: Add an optional external timeline ref to `useTimelineAutoScroll` and `ChatActivityTimeline`.**
 - [ ] **Step 2: Render the minimap in-flow and remove the fixed portal positioning.**
-- [ ] **Step 3: Add workspace grid classes and responsive CSS: one column by default, minimap at 1360px, and summary at 1680px only when open.**
+- [ ] **Step 3: Add workspace grid classes and responsive CSS: one column by default, minimap at 1360px, and summary at 1680px. Give the workspace a fixed viewport-height grid row, move conversation scrolling to the main column, give the minimap its own overflow boundary, and keep the summary content-sized with a grid-height maximum.**
 - [ ] **Step 4: Run the focused tests and verify they pass.**
 - [ ] **Step 5: Run typecheck and lint.**
 
