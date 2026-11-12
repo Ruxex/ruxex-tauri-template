@@ -200,6 +200,7 @@ export function SchedulesPage() {
               isTogglePending={schedules.setEnabled.isPending}
               schedule={schedule}
               onEdit={openEditPanel}
+              onOpen={(target) => window.location.hash = `/schedules/${target.id}`}
               onEnabledChange={(target, enabled) =>
                 schedules.setEnabled.mutate({ id: target.id, enabled })
               }

@@ -18,6 +18,7 @@ import { PluginDetailPage } from "../pages/PluginDetailPage";
 import { ProjectHomePage } from "../pages/ProjectHomePage";
 import { ProjectsPage } from "../pages/ProjectsPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
+import { ScheduleDetailPage } from "../pages/ScheduleDetailPage";
 import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ThreadPage } from "../pages/ThreadPage";
@@ -53,6 +54,7 @@ export const router = createHashRouter([
         ],
       },
       { path: "schedules", element: <SchedulesPage /> },
+      { path: "schedules/:scheduleId", element: <ScheduleDetailPage /> },
       { path: "capabilities", element: <CapabilitiesPage /> },
       {
         path: "capabilities/plugins/:marketplaceName/:pluginName",

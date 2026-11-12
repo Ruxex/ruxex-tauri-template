@@ -106,20 +106,13 @@ impl ScheduleDispatcher for AppServerDispatcher<'_> {
         schedule: ScheduleRecord,
     ) -> impl Future<Output = Result<Option<String>, String>> + Send {
         async move {
-            let thread_id = if let Some(thread_id) = &schedule.thread_id {
-                send_request(self.handle, build_thread_request(Some(thread_id))?).await?;
-                thread_id.clone()
-            } else {
-                let response = send_request(self.handle, build_thread_request(None)?).await?;
-                response
-                    .get("thread")
-                    .and_then(|thread| thread.get("id"))
-                    .and_then(Value::as_str)
-                    .map(str::to_owned)
-                    .ok_or_else(|| {
-                        "thread/start response did not include a thread id".to_string()
-                    })?
-            };
+            let response = send_request(self.handle, build_thread_request(None)?).await?;
+            let thread_id = response
+                .get("thread")
+                .and_then(|thread| thread.get("id"))
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+                .ok_or_else(|| "thread/start response did not include a thread id".to_string())?;
 
             send_request(
                 self.handle,
@@ -271,6 +264,7 @@ mod tests {
             next_run_at: next_run_at.to_string(),
             enabled: true,
             last_run: None,
+            runs: Vec::new(),
         }
     }
 

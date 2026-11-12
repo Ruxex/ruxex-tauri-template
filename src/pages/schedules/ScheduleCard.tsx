@@ -3,6 +3,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   PlayIcon,
+  PencilIcon,
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -38,6 +39,7 @@ export function ScheduleCard({
   isDeletePending,
   onEnabledChange,
   onEdit,
+  onOpen,
   onRequestAction,
 }: {
   schedule: ScheduleRecord;
@@ -46,10 +48,17 @@ export function ScheduleCard({
   isDeletePending: boolean;
   onEnabledChange: (schedule: ScheduleRecord, enabled: boolean) => void;
   onEdit: (schedule: ScheduleRecord) => void;
+  onOpen?: (schedule: ScheduleRecord) => void;
   onRequestAction: (action: "run" | "delete", schedule: ScheduleRecord) => void;
 }) {
   return (
-    <article className="group overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
+    <article
+      className="group cursor-pointer overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+      onClick={() => onOpen?.(schedule)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onOpen?.(schedule);
+      }}
+    >
       <div className="flex items-center justify-between gap-3 p-4 pb-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content">
@@ -68,17 +77,35 @@ export function ScheduleCard({
             className="btn btn-ghost btn-sm btn-square"
             disabled={isRunPending}
             title="Run now"
-            onClick={() => onRequestAction("run", schedule)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRequestAction("run", schedule);
+            }}
             type="button"
           >
             <PlayIcon aria-hidden="true" className="size-4" />
+          </button>
+          <button
+            aria-label={`Edit schedule: ${schedule.name}`}
+            className="btn btn-ghost btn-sm btn-square"
+            title="Edit"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(schedule);
+            }}
+            type="button"
+          >
+            <PencilIcon aria-hidden="true" className="size-4" />
           </button>
           <button
             aria-label={`Delete: ${schedule.name}`}
             className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"
             disabled={isDeletePending}
             title="Delete"
-            onClick={() => onRequestAction("delete", schedule)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRequestAction("delete", schedule);
+            }}
             type="button"
           >
             <TrashIcon aria-hidden="true" className="size-4" />
@@ -97,12 +124,7 @@ export function ScheduleCard({
           </label>
         </div>
       </div>
-      <button
-        aria-label={`Edit schedule: ${schedule.name}`}
-        className="mx-4 block w-[calc(100%-2rem)] rounded-lg border border-base-300 bg-base-200/50 p-3 text-left transition hover:border-primary/40 hover:bg-base-200"
-        type="button"
-        onClick={() => onEdit(schedule)}
-      >
+      <div className="mx-4 block rounded-lg border border-base-300 bg-base-200/50 p-3 text-left">
         <div className="min-w-0">
           <p className="font-medium">
             {scheduleCadenceLabel(schedule.cadence)}
@@ -111,7 +133,7 @@ export function ScheduleCard({
             {schedule.prompt}
           </p>
         </div>
-      </button>
+      </div>
       {(schedule.threadId || schedule.lastRun) && (
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-base-300 px-4 py-3">
           <div className="min-w-0 space-y-1 text-xs text-base-content/60">

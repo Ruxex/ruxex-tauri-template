@@ -122,6 +122,7 @@ fn enabled_by_default() -> bool {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ScheduleRun {
+    pub thread_id: Option<String>,
     pub at: String,
     pub success: bool,
     pub message: String,
@@ -138,6 +139,8 @@ pub struct ScheduleRecord {
     pub next_run_at: String,
     pub enabled: bool,
     pub last_run: Option<ScheduleRun>,
+    #[serde(default)]
+    pub runs: Vec<ScheduleRun>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -468,6 +471,7 @@ pub fn new_record(
         next_run_at: next.to_rfc3339(),
         enabled: input.enabled,
         last_run: None,
+        runs: Vec::new(),
     })
 }
 
@@ -489,6 +493,7 @@ pub fn updated_record(
         next_run_at: next.to_rfc3339(),
         enabled: input.enabled,
         last_run: previous.last_run.clone(),
+        runs: previous.runs.clone(),
     })
 }
 
@@ -506,6 +511,7 @@ pub fn apply_run_result(
 ) -> ScheduleRecord {
     let mut updated = current.clone();
     updated.last_run = Some(ScheduleRun {
+        thread_id: result.as_ref().ok().and_then(Clone::clone),
         at: started_at.to_rfc3339(),
         success: result.is_ok(),
         message: result
@@ -513,6 +519,13 @@ pub fn apply_run_result(
             .map(|_| "dispatched".to_string())
             .unwrap_or_else(|error| error.clone()),
     });
+    if let Some(run) = updated.last_run.clone() {
+        updated.runs.push(run);
+        if updated.runs.len() > 50 {
+            let keep_from = updated.runs.len() - 50;
+            updated.runs.drain(..keep_from);
+        }
+    }
     if updated.thread_id.is_none() {
         if let Ok(Some(thread_id)) = result {
             updated.thread_id = Some(thread_id);

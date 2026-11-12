@@ -20,6 +20,7 @@ export type ScheduleInput = {
 };
 
 export type ScheduleRun = {
+  threadId: string | null;
   at: string;
   success: boolean;
   message: string;
@@ -29,6 +30,7 @@ export type ScheduleRecord = ScheduleInput & {
   id: string;
   nextRunAt: string;
   lastRun: ScheduleRun | null;
+  runs?: ScheduleRun[];
 };
 
 export function listSchedules(): Promise<ScheduleRecord[]> {
