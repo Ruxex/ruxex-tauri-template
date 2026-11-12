@@ -471,7 +471,7 @@ export function Composer({
                 }
                 className="btn btn-primary btn-sm join-item"
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || (!message.trim() && !imageFile)}
               >
                 <SubmitIcon
                   aria-hidden="true"

@@ -10,7 +10,7 @@ const appBinaryPath = path.isAbsolute(configuredBinary)
 
 export const config = {
   hostname: "127.0.0.1",
-  port: 4444,
+  port: Number(process.env.WDIO_TAURI_DRIVER_PORT ?? "4444"),
   path: "/",
   runner: "local",
   specs: ["./fixtures/dummy-home/**/*.spec.ts"],

@@ -87,7 +87,9 @@ async function captureVisualizeFrame(): Promise<void> {
     "fixtures/dummy-home/visualization.html",
   );
   const reference = `visualize${JSON.stringify({ path: visualizationPath })}`;
-  await sendComposerPrompt(`Render this local visualization ${reference} example:basic`);
+  await sendComposerPrompt(
+    `Render this local visualization ${reference} example:basic`,
+  );
   await waitForCompletedTurn({
     kind: "text",
     value: "This is a fixed response from the dummy provider.",

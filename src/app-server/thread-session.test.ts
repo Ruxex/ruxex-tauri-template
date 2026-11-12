@@ -101,6 +101,24 @@ describe("thread session coordinator", () => {
     });
   });
 
+  it("continues when the server lacks both resume history modes", async () => {
+    const unsupported = {
+      code: -32601,
+      message: "list_turns is not supported yet",
+    };
+    requestAppServerMethod
+      .mockRejectedValueOnce(unsupported)
+      .mockRejectedValueOnce(unsupported);
+
+    await expect(ensureThreadResumed("thread-1")).resolves.toBeUndefined();
+
+    expect(requestAppServerMethod).toHaveBeenCalledTimes(2);
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "thread/resume", {
+      threadId: "thread-1",
+      excludeTurns: false,
+    });
+  });
+
   it("does not retry unrelated unsupported resume errors", async () => {
     const error = { code: -32601, message: "thread/resume is not supported" };
     requestAppServerMethod.mockRejectedValueOnce(error);

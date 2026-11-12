@@ -50,6 +50,7 @@ SAFE_ENVIRONMENT_KEYS = frozenset(
         "RUXEX_E2E_LOG_LEVEL",
         "RUXEX_E2E_GIT_DIFF_WORKSPACE",
         "TAURI_DRIVER_PATH",
+        "WDIO_TAURI_DRIVER_PORT",
         "WEBKIT_WEBDRIVER_PATH",
         "XVFB_RUN_PATH",
     }
@@ -232,7 +233,7 @@ def _resolve_executable(
 
 
 def _start_tauri_driver(
-    environment: Mapping[str, str], run_directory: Path
+    environment: dict[str, str], run_directory: Path
 ) -> subprocess.Popen[bytes]:
     executable = _resolve_executable(
         "tauri-driver", environment, "TAURI_DRIVER_PATH"
@@ -240,10 +241,12 @@ def _start_tauri_driver(
     if executable is None:
         raise RuntimeError("tauri-driver was not found in PATH")
 
+    port = _find_tauri_driver_port()
+    environment["WDIO_TAURI_DRIVER_PORT"] = str(port)
     log_path = run_directory / "tauri-driver.log"
     with log_path.open("wb") as log_file:
         process = subprocess.Popen(
-            [executable, "--port", str(TAURI_DRIVER_PORT)],
+            [executable, "--port", str(port)],
             cwd=REPOSITORY_ROOT,
             env=dict(environment),
             stdout=log_file,
@@ -258,7 +261,7 @@ def _start_tauri_driver(
             )
         try:
             with socket.create_connection(
-                ("127.0.0.1", TAURI_DRIVER_PORT), timeout=0.2
+                ("127.0.0.1", port), timeout=0.2
             ):
                 return process
         except OSError:
@@ -266,8 +269,30 @@ def _start_tauri_driver(
 
     process.terminate()
     raise RuntimeError(
-        f"tauri-driver did not become ready on port {TAURI_DRIVER_PORT}; see {log_path}"
+        f"tauri-driver did not become ready on port {port}; see {log_path}"
     )
+
+
+def _find_tauri_driver_port() -> int:
+    """Choose an unused WebDriver port and leave its adjacent WebKit port free."""
+
+    candidates = [TAURI_DRIVER_PORT]
+    for _ in range(20):
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            candidates.append(probe.getsockname()[1])
+
+    for port in candidates:
+        if port >= 65535:
+            continue
+        try:
+            with socket.socket() as webdriver_probe, socket.socket() as webkit_probe:
+                webdriver_probe.bind(("127.0.0.1", port))
+                webkit_probe.bind(("127.0.0.1", port + 1))
+        except OSError:
+            continue
+        return port
+    raise RuntimeError("No available adjacent ports for tauri-driver and WebKitWebDriver")
 
 
 def _stop_tauri_driver(process: subprocess.Popen[bytes]) -> None:

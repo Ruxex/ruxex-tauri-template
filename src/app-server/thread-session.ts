@@ -48,10 +48,16 @@ async function requestThreadResume(threadId: string): Promise<void> {
     if (!isHistoryPaginationUnsupported(error)) {
       throw error;
     }
-    await requestAppServerMethod("thread/resume", {
-      threadId,
-      excludeTurns: false,
-    });
+    try {
+      await requestAppServerMethod("thread/resume", {
+        threadId,
+        excludeTurns: false,
+      });
+    } catch (fallbackError: unknown) {
+      if (!isHistoryPaginationUnsupported(fallbackError)) {
+        throw fallbackError;
+      }
+    }
   }
 }
 

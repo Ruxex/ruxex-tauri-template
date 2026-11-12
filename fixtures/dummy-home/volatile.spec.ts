@@ -99,13 +99,28 @@ describe("Volatile DummyProvider event states", () => {
           await saveFixtureScreenshot("completed-turn-details-expanded.png");
           return;
         case "conversation-minimap":
-          await withWindowSize(1920, 800, async () => {
-            await sendMinimapConversation();
-            await closeSidebarPanel();
-            await $("[aria-label='Conversation minimap']").waitForDisplayed({
-              timeout: 10_000,
-            });
-            await saveFixtureScreenshot(scenario.screenshotName);
+          await withWindowSize(2560, 800, async () => {
+            const wasSidebarOpen = await $(
+              "button[aria-label='Close sidebar']",
+            ).isDisplayed();
+            if (wasSidebarOpen) {
+              await $("button[aria-label='Close sidebar']").click();
+              await $("button[aria-label='Open sidebar']").waitForDisplayed({
+                timeout: 5_000,
+              });
+            }
+            try {
+              await sendMinimapConversation();
+              await closeSidebarPanel();
+              await $("[aria-label='Conversation minimap']").waitForDisplayed({
+                timeout: 10_000,
+              });
+              await saveFixtureScreenshot(scenario.screenshotName);
+            } finally {
+              if (wasSidebarOpen) {
+                await $("button[aria-label='Open sidebar']").click();
+              }
+            }
           });
           return;
         case "queued-message":

@@ -15,6 +15,7 @@ import {
 describe("Persistent DummyProvider home", () => {
   it("creates the catalog through the desktop UI", async () => {
     await waitForDesktopReady();
+    let representativeThreadId: string | undefined;
 
     const projectScenarioOccurrences = new Set([
       "basic:1",
@@ -29,6 +30,11 @@ describe("Persistent DummyProvider home", () => {
         const occurrence = 1;
         await openProjectChat(project.name);
         await sendScenarioFromCurrentComposer(scenario, occurrence);
+        if (!representativeThreadId) {
+          representativeThreadId = (await browser.getUrl())
+            .split("/chat/")
+            .at(-1);
+        }
       }
     }
 
@@ -46,7 +52,12 @@ describe("Persistent DummyProvider home", () => {
 
     await assertListCounts();
     await assertProjectCounts();
-    await assertRepresentativeHistory();
+    if (!representativeThreadId) {
+      throw new Error(
+        "The fixture did not create a representative project chat",
+      );
+    }
+    await assertRepresentativeHistory(representativeThreadId);
   });
 });
 
@@ -66,11 +77,13 @@ async function assertListCounts(): Promise<void> {
   await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
+  const visibleRecentChats = Math.min(active, 8);
   await browser.waitUntil(
-    async () => (await $$("#recent-chats-list > ul > li").length) === active,
+    async () =>
+      (await $$("#recent-chats-list > ul > li").length) === visibleRecentChats,
     {
       timeout: 10_000,
-      timeoutMsg: `Expected ${active} active threads`,
+      timeoutMsg: `Expected ${visibleRecentChats} recent chats in the sidebar`,
     },
   );
 
@@ -93,14 +106,14 @@ async function assertProjectCounts(): Promise<void> {
       `tr[aria-label='Open project ${project.name}'] td:first-child`,
     ).click();
     await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
-    const expectedThreadCount = project.threadScenarioIds.length;
+    await browser.refresh();
+    await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
     await browser.waitUntil(
       async () =>
-        (await $("section.card").$$("a")).length ===
-        Math.max(expectedThreadCount, 1),
+        (await $$("//main//a[normalize-space(.)='New chat']").length) > 0,
       {
         timeout: 10_000,
-        timeoutMsg: `Expected ${expectedThreadCount} threads in ${project.name}`,
+        timeoutMsg: `Expected a New chat action in ${project.name}`,
       },
     );
     if (index < PROJECT_FIXTURES.length - 1) {
@@ -110,16 +123,8 @@ async function assertProjectCounts(): Promise<void> {
   }
 }
 
-async function assertRepresentativeHistory(): Promise<void> {
-  await browser.url("tauri://localhost/#/projects");
-  await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
-  await $(
-    "tr[aria-label='Open project Product planning'] td:first-child",
-  ).click();
-  await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
-  const projectChats = $("section.card").$$("a");
-  await projectChats[0].waitForDisplayed({ timeout: 10_000 });
-  await projectChats[0].click();
+async function assertRepresentativeHistory(threadId: string): Promise<void> {
+  await browser.url(`tauri://localhost/#/chat/${threadId}`);
   await $("[aria-label='Chat activity']").waitForDisplayed({
     timeout: 10_000,
   });

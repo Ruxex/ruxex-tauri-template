@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 
@@ -36,17 +37,26 @@ export function scenarioExpectation(
 
 export async function waitForDesktopReady(): Promise<void> {
   await $("main").waitForDisplayed({ timeout: 10_000 });
+  await $("button[aria-label='Account']").click();
   await browser.waitUntil(
     async () => {
       const text = await $("main").getText();
-      return (
-        text.includes("ModelABC") &&
-        !text.toLowerCase().includes("app-server is not connected")
-      );
+      return text.includes("Authenticated");
     },
     {
       timeout: 30_000,
-      timeoutMsg: "The desktop App Server should be ready",
+      timeoutMsg: "The fixture account should be available in Settings",
+    },
+  );
+  await $("button[aria-label='Home']").click();
+  await browser.waitUntil(
+    async () => {
+      const model = $("select[aria-label='Model']");
+      return (await model.isExisting()) && Boolean(await model.getValue());
+    },
+    {
+      timeout: 30_000,
+      timeoutMsg: "The desktop App Server should provide a model",
     },
   );
 }
@@ -126,30 +136,72 @@ export async function sendScenarioFromCurrentComposer(
   }
 
   if (scenario.kind === "multiTurn") {
-    await waitForTurnFinish();
+    await waitForCompletedTurn({
+      kind: "text",
+      value: "This is turn 2 of the multi-turn test.",
+    });
     await sendFollowUp("Continue the multi-turn fixture.");
-    await waitForTurnFinish();
+    await waitForUserMessageCount(2);
+    await waitForCompletedTurn({
+      kind: "text",
+      value: "This is the completion turn of the multi-turn test.",
+    });
     await sendFollowUp("example:multi next");
+    await waitForUserMessageCount(3);
+    await waitForCompletedTurn({
+      kind: "text",
+      value: "This is the completion turn of the multi-turn test.",
+    });
   }
 
   await waitForCompletedTurn(scenarioExpectation(scenario));
 }
 
 export async function sendFollowUp(text: string): Promise<void> {
+  const previousCount = await $("[aria-label='Chat activity']").$$(
+    "article.chat-end",
+  ).length;
   const message = $("[contenteditable='true'][aria-label='Message']");
   await message.waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(async () => message.isEnabled(), {
     timeout: 15_000,
     timeoutMsg: "The composer should be enabled for the follow-up turn",
   });
-  await message.setValue(text);
+  await fillComposer(message, text);
   await sendComposerMessage();
+  await waitForUserMessageCount(previousCount + 1);
+}
+
+async function fillComposer(
+  message: WebdriverIO.Element,
+  text: string,
+): Promise<void> {
+  await message.setValue(text);
+  await browser.waitUntil(
+    async () => (await message.getText()) === text,
+    {
+      timeout: 5_000,
+      timeoutMsg: "The chat editor should contain the complete prompt",
+    },
+  );
+}
+
+async function waitForAssistantMessageCount(count: number): Promise<void> {
+  await browser.waitUntil(
+    async () =>
+      (await $("[aria-label='Chat activity']").$$("article.chat-start")
+        .length) >= count,
+    {
+      timeout: 45_000,
+      timeoutMsg: `Expected at least ${count} assistant responses`,
+    },
+  );
 }
 
 export async function sendComposerPrompt(prompt: string): Promise<void> {
   const message = $("[contenteditable='true'][aria-label='Message']");
   await message.waitForDisplayed({ timeout: 10_000 });
-  await message.setValue(prompt);
+  await fillComposer(message, prompt);
   await sendComposerMessage();
 }
 
@@ -168,6 +220,8 @@ export async function sendMinimapConversation(): Promise<void> {
   for (let turn = 2; turn <= MINIMAP_TURN_COUNT; turn += 1) {
     await sendFollowUp(minimapFixturePrompt(turn));
     await waitForUserMessageCount(turn);
+    await waitForAssistantMessageCount(turn);
+    await waitForTurnFinish();
     await waitForCompletedTurn(expectation);
   }
 }
@@ -234,9 +288,19 @@ export async function waitForActiveTurn(): Promise<void> {
 }
 
 async function sendComposerMessage(): Promise<void> {
-  await $(
-    "//*[@contenteditable='true' and @aria-label='Message']/ancestor::form[1]//button[@type='submit'][@aria-label='Send']",
-  ).click();
+  const submit = $(
+    "//*[@contenteditable='true' and @aria-label='Message']/ancestor::form[1]//button[@type='submit']",
+  );
+  await browser.waitUntil(
+    async () =>
+      (await submit.getAttribute("aria-label")) === "Send" &&
+      (await submit.isEnabled()),
+    {
+      timeout: 10_000,
+      timeoutMsg: "The composer should be ready to send a new turn",
+    },
+  );
+  await submit.click();
 }
 
 export async function waitForCompletedTurn(
@@ -318,52 +382,74 @@ export async function createRootlessProject(
   await chooseProjectMetadata("icon", project.icon);
   await chooseProjectMetadata("color", project.color);
   await $("dialog button[aria-label='Create project']").click();
-  await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
+  try {
+    await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
+  } catch (error) {
+    const dialogText = await $("dialog")
+      .getText()
+      .catch(() => "<dialog closed>");
+    const pageText = await $("main")
+      .getText()
+      .catch(() => "<main unavailable>");
+    throw new Error(
+      `Project ${project.name} was not opened after creation. Dialog: ${dialogText}. Page: ${pageText}`,
+      { cause: error },
+    );
+  }
 }
 
 export async function createWorkspaceProject(
   name: string,
   workspace: string,
 ): Promise<string> {
-  const response = await browser.execute(
-    async ({ name, workspace }) => {
-      type TauriInternals = {
-        invoke: (
-          command: string,
-          args: Record<string, unknown>,
-        ) => Promise<unknown>;
-      };
-      const internals = (
-        window as unknown as {
-          __TAURI_INTERNALS__?: TauriInternals;
-        }
-      ).__TAURI_INTERNALS__;
-      if (!internals) throw new Error("Tauri invoke API is unavailable");
-      return internals.invoke("app_server_request", {
-        request: {
-          method: "project/create",
-          id: 975310,
-          params: {
-            name,
-            roots: [{ path: workspace }],
-            metadata: { icon: "folder", color: "violet" },
-            idempotencyKey: "ui-fixture-git-diff-workspace",
-          },
-        },
-      });
-    },
-    { name, workspace },
-  );
+  await $(
+    "nav[aria-label='Workspace navigation'] button[aria-label='Projects']",
+  ).click();
+  await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
+  await $("button[aria-label='New project']").click();
+  await $("dialog").waitForDisplayed({ timeout: 10_000 });
+  await $("input[aria-label='Project name']").setValue(name);
 
-  const projectId = (
-    response as {
-      response?: { project?: { id?: string } };
-    }
-  ).response?.project?.id;
-  if (!projectId) {
-    throw new Error(`App Server did not return the ${name} project`);
+  const chooser = spawn("/usr/bin/python3", [
+    "scripts/ui-fixtures/select_workspace_folder.py",
+    workspace,
+  ]);
+  let chooserOutput = "";
+  chooser.stdout.setEncoding("utf8").on("data", (chunk: string) => {
+    chooserOutput += chunk;
+    process.stdout.write(chunk);
+  });
+  chooser.stderr.setEncoding("utf8").on("data", (chunk: string) => {
+    chooserOutput += chunk;
+    process.stderr.write(chunk);
+  });
+  await $("button[aria-label='Select workspace folder']").click();
+  const chooserExitCode = await new Promise<number | null>((resolve, reject) => {
+    chooser.once("error", reject);
+    chooser.once("close", (code) => resolve(code));
+  });
+  if (chooserExitCode !== 0) {
+    throw new Error(
+      `Unable to select workspace folder through accessibility: ${chooserOutput}`,
+    );
   }
-  return projectId;
+  const selectedFolder = $(
+    "button[aria-label^='Selected workspace folder: ']",
+  );
+  await browser.waitUntil(
+    async () =>
+      (await selectedFolder.getAttribute("aria-label")) ===
+      `Selected workspace folder: ${workspace}`,
+    {
+      timeout: 5_000,
+      timeoutMsg: `The selected workspace folder did not match. Expected ${workspace}; dialog: ${await $("dialog").getText().catch(() => "<closed>")}`,
+    },
+  );
+  await $("button[aria-label='Create project']").click();
+  await $(`h1=${name}`).waitForDisplayed({ timeout: 10_000 });
+  const match = (await browser.getUrl()).match(/\/projects\/([^/?#]+)/);
+  if (!match) throw new Error(`Project ${name} was created without opening it`);
+  return match[1];
 }
 
 export async function inspectDiffFileControls(): Promise<
@@ -392,27 +478,7 @@ export async function inspectDiffFileControls(): Promise<
 }
 
 export async function clickDiffFileControl(label: string): Promise<void> {
-  const clicked = await browser.execute((buttonLabel) => {
-    function findButton(root: Document | ShadowRoot): HTMLButtonElement | null {
-      for (const button of root.querySelectorAll<HTMLButtonElement>(
-        "button[aria-label]",
-      )) {
-        if (button.getAttribute("aria-label") === buttonLabel) return button;
-      }
-      for (const element of root.querySelectorAll("*")) {
-        if (element.shadowRoot) {
-          const nested = findButton(element.shadowRoot);
-          if (nested) return nested;
-        }
-      }
-      return null;
-    }
-
-    const button = findButton(document);
-    button?.click();
-    return Boolean(button);
-  }, label);
-  if (!clicked) throw new Error(`Unable to find diff file control: ${label}`);
+  await $(`>>>button[aria-label="${label}"]`).click();
 }
 
 export async function openProjectChat(projectName: string): Promise<void> {
