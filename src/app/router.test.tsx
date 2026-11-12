@@ -24,6 +24,12 @@ describe("router", () => {
     expect(matches?.at(-1)?.route.path).toBe("version");
   });
 
+  it("resolves the hooks settings route", () => {
+    const matches = matchRoutes(router.routes, "/settings/hooks");
+
+    expect(matches?.at(-1)?.route.path).toBe("hooks");
+  });
+
   it("resolves plugin detail routes", () => {
     const matches = matchRoutes(
       router.routes,

@@ -72,6 +72,7 @@ describe("BrowserNavigationBar", () => {
 
   it.each([
     ["/settings/app-server", "App Server"],
+    ["/settings/hooks", "Hooks"],
     ["/settings/marketplaces", "Plugin marketplaces"],
     ["/settings/mcp-servers", "MCP servers"],
   ])("renders the %s settings breadcrumb", (pathname, label) => {

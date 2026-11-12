@@ -19,6 +19,19 @@ export function useSkillsList(params: v2.SkillsListParams = {}) {
   });
 }
 
+export function useHooksList(params: v2.HooksListParams = {}) {
+  const status = useAppServerStatus();
+
+  return useQuery<v2.HooksListResponse>({
+    queryKey: [...appServerQueryKeys.hooks, params],
+    queryFn: async () => {
+      const response = await requestAppServerMethod("hooks/list", params);
+      return response.response;
+    },
+    enabled: Boolean(status.data),
+  });
+}
+
 export function useWriteSkillConfig() {
   const queryClient = useQueryClient();
 

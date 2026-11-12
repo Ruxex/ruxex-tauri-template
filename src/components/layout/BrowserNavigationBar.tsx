@@ -26,6 +26,7 @@ function breadcrumbsForPath(
       appearance: "Appearance",
       archive: "Archived chats",
       "app-server": "App Server",
+      hooks: "Hooks",
       marketplaces: "Plugin marketplaces",
       "mcp-servers": "MCP servers",
       models: "Models",

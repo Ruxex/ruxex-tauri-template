@@ -15,6 +15,7 @@ export const appServerQueryKeys = {
   providerCapabilities: ["app-server", "provider", "capabilities"] as const,
   permissionProfiles: ["app-server", "permission-profiles"] as const,
   skills: ["app-server", "skills"] as const,
+  hooks: ["app-server", "hooks"] as const,
   mcpServers: ["app-server", "mcp-servers"] as const,
   mcpResource: (server: string, uri: string, threadId?: string | null) =>
     ["app-server", "mcp-resource", server, uri, threadId ?? null] as const,

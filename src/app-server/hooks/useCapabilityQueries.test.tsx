@@ -6,10 +6,11 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
+const appServerStatus = vi.hoisted(() => vi.fn());
 
 vi.mock("../api", () => ({ requestAppServerMethod }));
 vi.mock("../queries", () => ({
-  useAppServerStatus: () => ({ data: { appServerVersion: "test" } }),
+  useAppServerStatus: appServerStatus,
 }));
 
 function createWrapper(
@@ -28,10 +29,12 @@ describe("capability query and mutation hooks", () => {
   beforeEach(() => {
     requestAppServerMethod.mockReset();
     requestAppServerMethod.mockResolvedValue({ response: { data: [] } });
+    appServerStatus.mockReturnValue({ data: { appServerVersion: "test" } });
   });
 
   it.each([
     ["useSkillsList", "skills/list", { forceReload: true }],
+    ["useHooksList", "hooks/list", {}],
     ["useMcpServerStatus", "mcpServerStatus/list", { limit: 10 }],
     ["usePluginList", "plugin/list", {}],
     [
@@ -57,6 +60,17 @@ describe("capability query and mutation hooks", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(requestAppServerMethod).toHaveBeenCalledWith(method, params);
+  });
+
+  it("does not request hooks before App Server is ready", async () => {
+    appServerStatus.mockReturnValue({ data: undefined });
+    const hooks = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => hooks.useHooksList(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(requestAppServerMethod).not.toHaveBeenCalled();
   });
 
   it.each([

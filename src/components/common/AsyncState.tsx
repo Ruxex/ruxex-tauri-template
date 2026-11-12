@@ -5,7 +5,11 @@ export function LoadingState({ size = "lg" }: { size?: "sm" | "lg" }) {
 }
 
 export function ErrorState({ children }: { children: ReactNode }) {
-  return <p className="alert alert-error">{children}</p>;
+  return (
+    <p className="alert alert-error" role="alert">
+      {children}
+    </p>
+  );
 }
 
 export function EmptyState({

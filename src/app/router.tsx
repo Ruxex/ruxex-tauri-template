@@ -9,6 +9,7 @@ import { AppServerPage } from "../pages/AppServerPage";
 import { ArchivePage } from "../pages/ArchivePage";
 import { CapabilitiesPage } from "../pages/CapabilitiesPage";
 import { HomePage } from "../pages/HomePage";
+import { HooksPage } from "../pages/HooksPage";
 import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
 import { McpServersPage } from "../pages/McpServersPage";
 import { ModelPage } from "../pages/ModelPage";
@@ -43,6 +44,7 @@ export const router = createHashRouter([
           { path: "appearance", element: <AppearancePage /> },
           { path: "models", element: <ModelPage /> },
           { path: "app-server", element: <AppServerPage /> },
+          { path: "hooks", element: <HooksPage /> },
           { path: "archive", element: <ArchivePage /> },
           { path: "marketplaces", element: <MarketplaceSettingsPage /> },
           { path: "mcp-servers", element: <McpServersPage /> },
