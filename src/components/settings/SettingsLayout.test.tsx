@@ -316,7 +316,8 @@ describe("settings card layout", () => {
     expect(
       screen.getByRole("status", { name: "Disabled" }).className,
     ).not.toContain("badge");
-    expect(screen.getByText("Unsupported").className).not.toContain("badge");
+    expect(screen.getByText("—")).toBeTruthy();
+    expect(screen.getByRole("status", { name: "Unsupported" })).toBeTruthy();
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
   });

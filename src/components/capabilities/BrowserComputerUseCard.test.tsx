@@ -21,7 +21,10 @@ describe("BrowserComputerUseCard", () => {
     );
 
     expect(screen.getByText("Disabled by policy")).toBeTruthy();
-    expect(screen.getAllByText("Unsupported")).toHaveLength(2);
+    expect(screen.getAllByText("—")).toHaveLength(2);
+    expect(screen.getAllByRole("status", { name: "Unsupported" })).toHaveLength(
+      2,
+    );
   });
 
   it("shows configured server-backed Browser and Computer Use", () => {

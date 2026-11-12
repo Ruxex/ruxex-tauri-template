@@ -7,7 +7,6 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   TagIcon,
-  UserCircleIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
@@ -51,19 +50,6 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                     ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
                     : undefined
                 }
-                to="/settings/account"
-              >
-                <UserCircleIcon aria-hidden="true" className="size-4" />
-                Account
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                className={({ isActive }) =>
-                  isActive
-                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
-                    : undefined
-                }
                 to="/settings/appearance"
               >
                 <SparklesIcon aria-hidden="true" className="size-4" />
@@ -81,6 +67,19 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               >
                 <PuzzlePieceIcon aria-hidden="true" className="size-4" />
                 Plugin marketplaces
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
+                    : undefined
+                }
+                to="/settings/archive"
+              >
+                <ArchiveBoxIcon aria-hidden="true" className="size-4" />
+                Archived chats
               </NavLink>
             </li>
           </ul>
@@ -157,19 +156,6 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
               >
                 <TagIcon aria-hidden="true" className="size-4" />
                 Version
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                className={({ isActive }) =>
-                  isActive
-                    ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
-                    : undefined
-                }
-                to="/settings/archive"
-              >
-                <ArchiveBoxIcon aria-hidden="true" className="size-4" />
-                Archived chats
               </NavLink>
             </li>
           </ul>

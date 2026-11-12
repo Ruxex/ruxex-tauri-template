@@ -11,8 +11,12 @@ export function CapabilityStatus({
 }) {
   if (state === "unsupported") {
     return (
-      <span className="text-sm text-base-content/70" role="status">
-        {label}
+      <span
+        aria-label={label}
+        className="text-base-content/50"
+        role="status"
+      >
+        —
       </span>
     );
   }

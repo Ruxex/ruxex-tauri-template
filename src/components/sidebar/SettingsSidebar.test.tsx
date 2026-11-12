@@ -21,6 +21,18 @@ describe("SettingsSidebar", () => {
     ).toBe("/settings/archive");
   });
 
+  it("groups archived chats under Personal", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings/archive"]}>
+        <SettingsSidebar onClose={() => undefined} />
+      </MemoryRouter>,
+    );
+
+    const archivedChats = screen.getByRole("link", { name: "Archived chats" });
+    expect(archivedChats.closest("section")?.querySelector("h3")?.textContent)
+      .toBe("Personal");
+  });
+
   it("links to global MCP server settings", () => {
     render(
       <MemoryRouter initialEntries={["/settings/mcp-servers"]}>
@@ -33,15 +45,13 @@ describe("SettingsSidebar", () => {
     ).toBe("/settings/mcp-servers");
   });
 
-  it("links to the account settings page", () => {
+  it("does not duplicate the account entry in settings navigation", () => {
     render(
       <MemoryRouter initialEntries={["/settings/account"]}>
         <SettingsSidebar onClose={() => undefined} />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Account" }).getAttribute("href"),
-    ).toBe("/settings/account");
+    expect(screen.queryByRole("link", { name: "Account" })).toBeNull();
   });
 });
