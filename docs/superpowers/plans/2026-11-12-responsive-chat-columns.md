@@ -16,15 +16,16 @@
 - Preserve the existing five-user-message minimap threshold.
 - Do not modify AppServer, protocol, or persistence code.
 - Keep the main column prioritized over supporting columns.
-- Keep the workspace grid row fixed to the chat viewport; let the minimap and
-  summary own their own overflow boundaries while the summary remains content-sized.
+- Use one shared scroll boundary for all three columns, with the scrollbar
+  after the summary; keep the minimap and summary columns fixed-height and
+  sticky, and give their contents independent overflow boundaries.
 
 ## Review Focus
 
 - Narrow viewport: supporting columns must not consume layout space.
 - Medium viewport: minimap must be an in-flow column and retain marker navigation.
 - Wide viewport: the always-present summary column must remain the flexible priority column's supporting column.
-- Long conversation: scrolling the timeline must not move either supporting column; only their own overflow areas may scroll.
+- Long conversation: the shared scrollbar must appear after the summary while neither supporting column moves; only overflowing side content may scroll internally.
 - Timeline ref sharing: minimap jumps and auto-scroll must target the same timeline.
 
 ---
@@ -59,7 +60,7 @@
 
 - [ ] **Step 1: Add an optional external timeline ref to `useTimelineAutoScroll` and `ChatActivityTimeline`.**
 - [ ] **Step 2: Render the minimap in-flow and remove the fixed portal positioning.**
-- [ ] **Step 3: Add workspace grid classes and responsive CSS: one column by default, minimap at 1360px, and summary at 1680px. Give the workspace a fixed viewport-height grid row, move conversation scrolling to the main column, give the minimap its own overflow boundary, and keep the summary content-sized with a grid-height maximum.**
+- [ ] **Step 3: Add workspace grid classes and responsive CSS: one column by default, minimap at 1360px, and summary at 1680px. Give the outer chat section a shared scroll boundary, keep both supporting columns fixed-height and sticky, and give their contained components independent overflow boundaries while keeping summary content content-sized.**
 - [ ] **Step 4: Run the focused tests and verify they pass.**
 - [ ] **Step 5: Run typecheck and lint.**
 

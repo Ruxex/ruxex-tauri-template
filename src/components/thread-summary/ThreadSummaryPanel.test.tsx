@@ -87,16 +87,22 @@ describe("ThreadSummaryPanel", () => {
       "justify-self-end",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "h-fit",
+      "sticky",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "max-h-full",
+      "top-0",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "h-[calc(100dvh-2rem)]",
+    );
+    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+      "max-h-[calc(100dvh-2rem)]",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
       "overflow-y-auto",
     );
-    expect(screen.getByTestId("thread-summary-panel").className).not.toContain(
-      "sticky",
+    expect(screen.getByTestId("thread-summary-content").className).toContain(
+      "h-fit",
     );
     for (const label of [
       "Subagents",

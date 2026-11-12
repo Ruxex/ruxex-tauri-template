@@ -111,7 +111,7 @@ export function ConversationMinimap({
   return (
     <aside
       aria-label="Conversation minimap"
-      className="chat-minimap-column pointer-events-none hidden h-full min-h-0 w-full justify-self-start overflow-y-auto min-[1360px]:flex"
+      className="chat-minimap-column pointer-events-none sticky top-0 z-10 hidden h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] w-full justify-self-start self-start overflow-y-auto min-[1360px]:flex"
     >
       <div className="pointer-events-auto relative h-[min(60vh,520px)] w-4 self-center">
         {hasMarkers && (

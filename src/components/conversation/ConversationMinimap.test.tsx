@@ -56,10 +56,11 @@ describe("ConversationMinimap", () => {
     expect(minimap.className).toContain("chat-minimap-column");
     expect(minimap.className).toContain("min-[1360px]:flex");
     expect(minimap.className).toContain("justify-self-start");
-    expect(minimap.className).toContain("h-full");
-    expect(minimap.className).toContain("min-h-0");
+    expect(minimap.className).toContain("sticky");
+    expect(minimap.className).toContain("top-0");
+    expect(minimap.className).toContain("h-[calc(100dvh-2rem)]");
+    expect(minimap.className).toContain("max-h-[calc(100dvh-2rem)]");
     expect(minimap.className).toContain("overflow-y-auto");
-    expect(minimap.className).not.toContain("sticky");
     expect(minimap.className).not.toContain("fixed");
   });
 

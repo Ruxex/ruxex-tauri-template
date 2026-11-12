@@ -248,10 +248,8 @@ describe("ConversationWorkspace", () => {
       "chat-thread-summary-column",
     );
     const mainChat = screen.getByRole("main");
-    expect(mainChat.className.split(/\s+/)).toEqual(
-      expect.arrayContaining(["min-h-0", "overflow-y-auto"]),
-    );
-    expect(mainChat.getAttribute("data-conversation-scroll")).toBe("true");
+    expect(mainChat.className).not.toContain("overflow-y-auto");
+    expect(mainChat.getAttribute("data-conversation-scroll")).toBeNull();
   });
 
   it("shows an error when the completed turn fails asynchronously", async () => {
@@ -275,7 +273,7 @@ describe("ConversationWorkspace", () => {
     expect(root?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
-    expect(root?.className.split(/\s+/)).toContain("h-full");
+    expect(root?.className.split(/\s+/)).not.toContain("h-full");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["sticky", "pb-2"]),
     );

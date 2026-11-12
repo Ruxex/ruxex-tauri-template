@@ -29,8 +29,8 @@ logical columns: a conversation minimap, the main chat, and the Thread Summary.
 ## Approach
 
 The workspace becomes a CSS grid with responsive variants. The minimap moves
-from a fixed portal into the grid so it participates in layout without being
-part of the main conversation's scroll flow.
+from a fixed portal into the grid so it participates in the same scroll
+boundary as the main conversation and Thread Summary.
 The existing auto-scroll ref is shared with the minimap through the timeline
 component. At 1360px the grid adds a narrow minimap column; at 1680px the
 Thread Summary adds a narrow right column. When both are present the main column
@@ -42,10 +42,12 @@ button, or standalone title. The workspace uses the containing AppLayout's
 another 1200px limit. At the widest layout the grid uses a central main column
 capped at 53rem and equal flexible side columns. The minimap is aligned to the
 left edge of its column and the summary is aligned to the right edge of its
-column. The workspace grid row uses the available chat viewport height, while
-the main chat column owns the conversation scroll. The minimap column has a
-fixed grid height and its own overflow boundary; the summary uses only the
-height its content needs and scrolls internally when it exceeds the grid row.
+column. The outer chat section is the shared scroll boundary for all three
+columns, placing its scrollbar after the Thread Summary. The minimap and
+summary columns are fixed-height sticky columns, so they do not move with the
+shared conversation scroll. Their contained components use their own overflow
+boundaries if they exceed the column height; the summary content itself is
+content-sized within that fixed-height column.
 
 ## Acceptance criteria
 
@@ -53,8 +55,8 @@ height its content needs and scrolls internally when it exceeds the grid row.
 - The medium layout adds the minimap column without reducing the main column to
   a fixed width.
 - The wide layout always includes the Thread Summary column.
-- Scrolling the main conversation leaves both supporting columns in place; only
-  their own overflow areas can scroll.
+- The shared three-column scroll boundary places its scrollbar after the Thread
+  Summary while leaving both supporting columns in place.
 - Existing minimap navigation and summary subagent interactions continue to
   work.
 - Existing unit tests, typecheck, lint, and UI fixture capture pass.
