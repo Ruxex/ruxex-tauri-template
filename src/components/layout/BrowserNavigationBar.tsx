@@ -1,4 +1,9 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  Bars3BottomRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 type Breadcrumb = {
@@ -75,9 +80,17 @@ function breadcrumbsForPath(
 export function BrowserNavigationBar({
   chatTitle,
   projectTitle,
+  onToggleSidebar,
+  sidebarOpen = true,
+  onToggleRightPane,
+  rightPaneOpen = false,
 }: {
   chatTitle?: string;
   projectTitle?: string;
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
+  onToggleRightPane?: () => void;
+  rightPaneOpen?: boolean;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -116,6 +129,18 @@ export function BrowserNavigationBar({
           <ChevronRightIcon aria-hidden="true" className="size-3.5" />
         </button>
       </div>
+      {onToggleSidebar && (
+        <button
+          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          aria-pressed={sidebarOpen}
+          className="btn btn-ghost btn-xs btn-square"
+          onClick={onToggleSidebar}
+          title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          type="button"
+        >
+          <Bars3Icon aria-hidden="true" className="size-3.5" />
+        </button>
+      )}
       <nav aria-label="Breadcrumb" className="min-w-0 flex-1 px-2">
         <ol className="flex min-w-0 items-center gap-1 text-xs">
           {breadcrumbs.map((breadcrumb, index) => (
@@ -145,6 +170,18 @@ export function BrowserNavigationBar({
           ))}
         </ol>
       </nav>
+      {onToggleRightPane && (
+        <button
+          aria-label={rightPaneOpen ? "Close right pane" : "Open right pane"}
+          aria-pressed={rightPaneOpen}
+          className="btn btn-ghost btn-xs btn-square"
+          onClick={onToggleRightPane}
+          title={rightPaneOpen ? "Close right pane" : "Open right pane"}
+          type="button"
+        >
+          <Bars3BottomRightIcon aria-hidden="true" className="size-3.5" />
+        </button>
+      )}
     </nav>
   );
 }

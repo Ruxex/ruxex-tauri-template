@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -260,6 +260,10 @@ describe("AppLayout", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByTestId("chat-content-container").className).toContain(
+      "@container/chat",
+    );
+
     const main = screen.getByRole("main");
     const section = main.querySelector("section");
     const contentRow = main.children[1];
@@ -275,5 +279,32 @@ describe("AppLayout", () => {
     expect(section?.getAttribute("data-chat-font-size")).toBeNull();
     expect(main.getAttribute("data-conversation-scroll")).toBeNull();
     expect(section?.getAttribute("data-conversation-scroll")).toBe("true");
+  });
+
+  it("opens an empty right pane beside the main content row", () => {
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppLayout />
+      </MemoryRouter>,
+    );
+
+    const pane = screen.getByTestId("right-pane");
+    expect(pane.style.width).toBe("0px");
+    expect(pane.className).toContain("transition");
+    fireEvent.click(screen.getByRole("button", { name: "Open right pane" }));
+
+    expect(pane.style.width).toBe("320px");
+    const handle = screen.getByRole("button", { name: "Resize right pane" });
+    expect(handle.getAttribute("data-pane-width")).toBe("320");
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    expect(handle.getAttribute("data-pane-width")).toBe("304");
+    expect(pane.textContent).toBe("");
+    expect(pane.parentElement?.className).toContain("flex");
+    expect(screen.getByRole("button", { name: "Close right pane" })).toBeTruthy();
   });
 });

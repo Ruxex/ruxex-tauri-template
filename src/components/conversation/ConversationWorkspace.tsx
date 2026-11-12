@@ -193,7 +193,11 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
   return (
     <div
       className={[
-        "chat-workspace mx-auto grid h-full min-h-full w-full grid-cols-1 gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+        "chat-workspace mx-auto grid min-h-full w-full grid-cols-[0_minmax(0,1fr)_0] justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+        "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
+        "@min-[80rem]/chat:grid-cols-[0_minmax(0,53rem)_minmax(0,24rem)]",
+        "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,24rem)]",
+        "@min-[120rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
         "chat-workspace--has-minimap",
         "chat-workspace--has-summary",
       ]
@@ -201,8 +205,8 @@ export function ConversationWorkspace({ threadId }: { threadId: string }) {
         .join(" ")}
       data-testid="chat-workspace"
     >
-      <ConversationMinimap items={items} timelineRef={timelineRef} />
-      <main className="chat-main-column flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+        <ConversationMinimap items={items} timelineRef={timelineRef} />
+      <main className="chat-main-column flex min-h-0 w-full min-w-0 max-w-[53rem] justify-self-center flex-col gap-4">
         {turnError && (
           <p className="alert alert-error" role="alert">
             <span>Turn failed: {turnError.message}</span>

@@ -148,7 +148,7 @@ describe("ProjectSidebar", () => {
     });
   });
 
-  it("keeps a heading-free close button for the shared chat panel", async () => {
+  it("does not render an in-panel close button for the shared chat panel", async () => {
     const onToggle = vi.fn();
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
@@ -164,12 +164,10 @@ describe("ProjectSidebar", () => {
     );
 
     const panel = screen.getByRole("complementary", { name: "Chat sidebar" });
-    fireEvent.click(
-      within(panel).getByRole("button", { name: "Close sidebar panel" }),
-    );
-
-    expect(within(panel).queryByText("Home")).toBeNull();
-    expect(onToggle).toHaveBeenCalledOnce();
+    expect(
+      within(panel).queryByRole("button", { name: "Close sidebar panel" }),
+    ).toBeNull();
+    expect(onToggle).not.toHaveBeenCalled();
   });
 
   it("renders the shared chat panel for projects", async () => {
@@ -277,7 +275,7 @@ describe("ProjectSidebar", () => {
     expect(
       screen.getByRole("complementary", { name: "Workspace sidebar" })
         .className,
-    ).toContain("z-40");
+    ).not.toContain("z-40");
   });
 
   it("keeps only the compact rail when the context panel is disabled", async () => {

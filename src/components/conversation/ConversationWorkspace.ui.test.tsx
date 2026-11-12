@@ -206,17 +206,14 @@ describe("ConversationWorkspace", () => {
     ).toBeNull();
   });
 
-  it("reserves the minimap column before enough messages exist for markers", async () => {
+  it("does not render the minimap before five user messages exist", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
     render(<ConversationWorkspace threadId="thread-1" />);
 
-    expect(screen.getByTestId("chat-workspace").className).toContain(
-      "chat-workspace--has-minimap",
-    );
     expect(
-      screen.getByRole("complementary", { name: "Conversation minimap" }),
-    ).toBeTruthy();
+      screen.queryByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeNull();
     expect(screen.queryByTestId("conversation-minimap-track")).toBeNull();
   });
 
@@ -262,14 +259,44 @@ describe("ConversationWorkspace", () => {
     expect(workspace.className).toContain("chat-workspace");
     expect(workspace.className).toContain("chat-workspace--has-minimap");
     expect(workspace.className).toContain("chat-workspace--has-summary");
+    expect(workspace.className).not.toContain("overflow-hidden");
+    expect(workspace.className).toContain(
+      "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
+    );
+    expect(workspace.className).toContain(
+      "@min-[80rem]/chat:grid-cols-[0_minmax(0,53rem)_minmax(0,24rem)]",
+    );
+    expect(workspace.className).toContain(
+      "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,24rem)]",
+    );
+    expect(workspace.className).toContain(
+      "@min-[120rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
+    );
+    expect(workspace.className).not.toContain("min-[1360px]");
+    expect(workspace.className).not.toContain("min-[1680px]");
     expect(
       screen.getByRole("complementary", { name: "Conversation minimap" }),
     ).toBeTruthy();
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+    const summaryPanel = screen.getByTestId("thread-summary-panel");
+    expect(summaryPanel.parentElement?.className).toContain(
       "chat-thread-summary-column",
     );
+    expect(summaryPanel.className).not.toMatch(/(?:^| )min-w-(?!0(?:$| ))/);
+    expect(summaryPanel.className).toContain("hidden");
+    expect(summaryPanel.className).toContain("@min-[16rem]/summary:block");
+    expect(
+      screen.getByRole("complementary", { name: "Conversation minimap" })
+        .parentElement?.className,
+    ).toContain("sticky");
+    expect(summaryPanel.parentElement?.className).toContain("sticky");
     const mainChat = screen.getByRole("main");
-    expect(mainChat.className).not.toContain("overflow-y-auto");
+    expect(mainChat.className).not.toContain("h-full");
+    expect(mainChat.className).toContain("min-h-0");
+    const timeline = screen.getByRole("region", { name: "Chat activity" });
+    expect(timeline.className).not.toContain("overflow-y-auto");
+    expect(
+      screen.getByTestId("composer").parentElement?.className.split(/\s+/),
+    ).toEqual(expect.arrayContaining(["shrink-0"]));
     expect(mainChat.getAttribute("data-conversation-scroll")).toBeNull();
   });
 
@@ -294,15 +321,13 @@ describe("ConversationWorkspace", () => {
     expect(root?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
-    expect(root?.className.split(/\s+/)).toContain("h-full");
+    expect(root?.className.split(/\s+/)).not.toContain("h-full");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["sticky", "pb-2"]),
     );
     expect(
-      screen
-        .getByRole("region", { name: "Chat activity" })
-        .className.split(/\s+/),
-    ).not.toEqual(expect.arrayContaining(["flex-1", "overflow-y-auto"]));
+      screen.getByRole("region", { name: "Chat activity" }).className,
+    ).not.toContain("overflow-y-auto");
   });
 
   it("centers the conversation loading indicator", async () => {

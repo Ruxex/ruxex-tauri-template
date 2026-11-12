@@ -83,37 +83,21 @@ describe("ThreadSummaryPanel", () => {
     expect(
       screen.queryByRole("button", { name: "Close Thread Summary" }),
     ).toBeNull();
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "justify-self-end",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "sticky",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "top-6",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "chat-side-column",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "rounded-box",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "overflow-visible",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).not.toContain(
-      "overflow-y-auto",
-    );
+    const summaryPanel = screen.getByTestId("thread-summary-panel");
+    const summaryColumn = summaryPanel.parentElement;
+    expect(summaryColumn?.className).toContain("justify-self-end");
+    expect(summaryColumn?.className).toContain("sticky");
+    expect(summaryColumn?.className).toContain("top-6");
+    expect(summaryColumn?.className).toContain("chat-side-column");
+    expect(summaryPanel.className).toContain("rounded-box");
+    expect(summaryColumn?.className).toContain("overflow-hidden");
+    expect(summaryPanel.className).not.toContain("overflow-y-auto");
     const summaryScroll = screen.getByTestId("thread-summary-scroll");
     expect(summaryScroll.className).toContain("h-full");
     expect(summaryScroll.className).toContain("max-h-full");
     expect(summaryScroll.className).toContain("overflow-y-auto");
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "text-sm",
-    );
-    expect(screen.getByTestId("thread-summary-panel").className).not.toContain(
-      "lg:border-l",
-    );
+    expect(summaryPanel.className).toContain("text-xs");
+    expect(summaryPanel.className).not.toContain("lg:border-l");
     expect(screen.getByTestId("thread-summary-content").className).toContain(
       "h-fit",
     );

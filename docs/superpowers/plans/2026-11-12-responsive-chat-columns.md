@@ -2,74 +2,76 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a responsive three-column chat workspace with a prioritized main chat column, in-flow minimap, and responsive Thread Summary column.
+**Goal:** チャット領域の実効幅に応じて、チャット・ミニマップ・スレッドサマリを優先順位どおりに表示する。
 
-**Architecture:** `ConversationWorkspace` owns the responsive grid and the shared timeline ref. `ChatActivityTimeline` accepts that ref for auto-scroll, while `ConversationMinimap` renders as an in-flow grid item. CSS media queries control the minimap and summary breakpoints without changing AppServer behavior.
+**Architecture:** `AppLayout` のチャット領域を名前付きinline-size containerにし、`ConversationWorkspace` がTailwindのcontainer-query variantで4つの表示状態を切り替える。各列は自身の表示判定を持たず、チャット領域のスクロール境界とコンポジション固定は既存構造を維持する。
 
-**Tech Stack:** React 19, TypeScript, Tailwind CSS v4, Vitest, Testing Library.
+**Tech Stack:** React 19, Tailwind CSS v4, Vitest, WebdriverIO/Tauri E2E.
 
 **Spec:** `docs/superpowers/specs/2026-11-12-responsive-chat-columns-design.md`
 
 ## Global Constraints
 
-- Keep the summary permanently rendered when the responsive layout has room.
-- Preserve the existing five-user-message minimap threshold.
-- Do not modify AppServer, protocol, or persistence code.
-- Keep the main column prioritized over supporting columns.
-- Use one shared scroll boundary for all three columns, with the scrollbar
-  after the summary; keep the minimap and summary columns fixed-height and
-  sticky, and give their contents independent overflow boundaries.
+- 表示判定はviewport幅ではなくチャット領域の実効幅を使う。
+- 表示優先順位はチャット、スレッドサマリ、ミニマップの順とする。
+- チャット列の最大幅は `53rem` 前後とする。
+- スレッドサマリコンポーネント自身に `min-width` を設定しない。
+- レイアウトの新規指定はTailwindを優先し、同じ責務のcustom CSSを追加しない。
+- 左右の補助列が非表示のとき、余白だけを残さない。
 
 ## Review Focus
 
-- Narrow viewport: supporting columns must not consume layout space.
-- Medium viewport: minimap must be an in-flow column and retain marker navigation.
-- Wide viewport: the always-present summary column must remain the flexible priority column's supporting column.
-- Long conversation: the shared scrollbar must appear after the summary while neither supporting column moves; only overflowing side content may scroll internally.
-- Timeline ref sharing: minimap jumps and auto-scroll must target the same timeline.
+- 左ペインや右ペインの開閉でチャット領域幅が変わったとき、表示状態がviewport幅に取り残されないこと。→ WDIOの実効幅で確認。
+- スレッドサマリがミニマップより先に表示されること。→ 4状態のクラス契約テストとWDIOで確認。
+- 3列表示時にチャット列が最大幅を超えず、サマリがworkspace外にはみ出さないこと。→ WDIOで確認。
+- 補助列が非表示のとき内容と余白が残らないこと。→ 列の `w-0`/`overflow-hidden` 契約テストで確認。
+- チャット領域のスクロールと画面下部のコンポジション固定が維持されること。→ AppLayout/ConversationWorkspace既存テストで確認。
 
----
-
-### Task 1: Lock the responsive workspace contract in tests
+### Task 1: Responsive layout contract tests
 
 **Files:**
 - Modify: `src/components/conversation/ConversationWorkspace.ui.test.tsx`
 - Modify: `src/components/conversation/ConversationMinimap.test.tsx`
-- Modify: `src/components/chats/ChatActivityTimeline.test.tsx`
+- Modify: `src/components/thread-summary/ThreadSummaryPanel.test.tsx`
+- Modify: `fixtures/dummy-home/responsive-chat-columns.spec.ts`
 
 **Interfaces:**
-- Consumes: existing workspace, minimap, and timeline render contracts.
-- Produces: assertions for responsive grid classes, in-flow minimap classes, and shared timeline ref behavior.
+- Consumes: Existing workspace and column test fixtures.
+- Produces: Tests that fail until the workspace uses container-based four-state layout classes and the columns have no component-level minimum width.
 
-- [ ] **Step 1: Write failing tests** for the workspace grid variants, the minimap breakpoint class, and the timeline ref prop.
-- [ ] **Step 2: Run the focused Vitest files** and verify the new assertions fail for the missing layout behavior.
+- [ ] **Step 1: Write the failing tests** for the four visual states, container marker, absence of viewport-specific chat grid classes, and no summary component `min-w-*` class.
+- [ ] **Step 2: Run the focused tests** and confirm they fail because the current implementation uses viewport breakpoints and the old class contract.
+- [ ] **Step 3: Update the WDIO expectations** to the approved sequence: chat only, minimap+chat, chat+summary, all columns.
+- [ ] **Step 4: Run the focused tests** again to confirm the tests still express the intended behavior and fail only on production implementation.
 
-### Task 2: Implement the responsive three-column workspace
+### Task 2: Implement effective-width responsive layout
 
 **Files:**
+- Modify: `src/components/layout/AppLayout.tsx`
 - Modify: `src/components/conversation/ConversationWorkspace.tsx`
-- Modify: `src/components/chats/ChatActivityTimeline.tsx`
-- Modify: `src/components/chats/useTimelineAutoScroll.ts`
 - Modify: `src/components/conversation/ConversationMinimap.tsx`
 - Modify: `src/components/thread-summary/ThreadSummaryPanel.tsx`
-- Modify: `src/styles/index.css`
 
 **Interfaces:**
-- Consumes: `ConversationViewItem[]` and pending request state.
-- Produces: a grid with optional `chat-minimap-column` and `chat-thread-summary-column` children, plus a shared `timelineRef`.
+- Consumes: Task 1's four-state layout contract.
+- Produces: A named chat-size container and Tailwind container-query layout that selects the highest-priority fitting visual state.
 
-- [ ] **Step 1: Add an optional external timeline ref to `useTimelineAutoScroll` and `ChatActivityTimeline`.**
-- [ ] **Step 2: Render the minimap in-flow and remove the fixed portal positioning.**
-- [ ] **Step 3: Add workspace grid classes and responsive CSS: one column by default, minimap at 1360px, and summary at 1680px. Give the outer chat section a shared scroll boundary, keep both supporting columns fixed-height and sticky, and give their contained components independent overflow boundaries while keeping summary content content-sized.**
-- [ ] **Step 4: Run the focused tests and verify they pass.**
-- [ ] **Step 5: Run typecheck and lint.**
+- [ ] **Step 1: Add the named inline-size container** to the existing chat content wrapper in `AppLayout` without changing its scroll boundary.
+- [ ] **Step 2: Replace viewport-based workspace grid classes** with Tailwind container-query variants for the four states; keep the chat main at `max-w-[53rem]` and remove forced workspace minimum width.
+- [ ] **Step 3: Keep minimap and summary columns width-safe** with `min-w-0` and `overflow-hidden`, and remove any component-level summary minimum width.
+- [ ] **Step 4: Run the focused unit tests** and confirm the four-state contract passes.
 
-### Task 3: Re-run UI fixtures and integrate
+### Task 3: Visual verification and cleanup
 
 **Files:**
-- Modify: `fixtures/dummy-home/unshot.spec.ts` only if the new responsive DOM requires selector updates.
+- Modify: `src/styles/index.css` only if obsolete chat layout rules remain.
+- Modify: tests only where assertions describe removed viewport layout behavior.
 
-- [ ] **Step 1: Run `make ui-fixtures`.**
-- [ ] **Step 2: Run `git diff --check` and inspect the final worktree.**
-- [ ] **Step 3: Commit the responsive layout changes.**
-- [ ] **Step 4: Push `main` and verify the remote update.**
+**Interfaces:**
+- Consumes: Task 2's responsive implementation.
+- Produces: Verified screenshots and a clean project-wide test/type/lint result.
+
+- [ ] **Step 1: Build the E2E desktop app and run the 12-width WDIO screenshot spec.** Confirm the expected minimap/summary sequence, chat maximum width, and summary containment.
+- [ ] **Step 2: Inspect the captured screenshots** at the state boundaries and confirm no large empty right region, overlap, or column scrolling regression.
+- [ ] **Step 3: Run `npm test -- --run`, `npm run typecheck`, `npm run lint`, and `git diff --check`.**
+- [ ] **Step 4: Re-run the WDIO spec after any cleanup and record the final artifact path.**

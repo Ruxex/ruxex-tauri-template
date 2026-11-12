@@ -32,6 +32,13 @@ export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
   );
 }
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    target.closest("button, input, label, a, select, textarea") !== null
+  );
+}
+
 export function ScheduleCard({
   schedule,
   isTogglePending,
@@ -53,10 +60,19 @@ export function ScheduleCard({
 }) {
   return (
     <article
+      aria-label={onOpen ? `Open schedule: ${schedule.name}` : undefined}
       className="group cursor-pointer overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
-      onClick={() => onOpen?.(schedule)}
+      role={onOpen ? "link" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onClick={(event) => {
+        if (!isInteractiveTarget(event.target)) onOpen?.(schedule);
+      }}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") onOpen?.(schedule);
+        if (isInteractiveTarget(event.target)) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen?.(schedule);
+        }
       }}
     >
       <div className="flex items-center justify-between gap-3 p-4 pb-3">

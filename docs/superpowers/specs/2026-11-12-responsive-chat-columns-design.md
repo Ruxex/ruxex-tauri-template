@@ -2,60 +2,68 @@
 
 ## Intent
 
-Make the chat route easier to scan on wide desktop windows while protecting the
-main conversation area on smaller windows. The chat workspace uses three
-logical columns: a conversation minimap, the main chat, and the Thread Summary.
+チャット画面の利用可能幅に応じて、チャット・ミニマップ・スレッドサマリを最も情報量の多い組み合わせで表示する。viewport幅ではなく、左右ペインを除いたチャット領域の実効幅を基準にすることで、ペインの開閉やアニメーション中も余白と表示状態を一貫させる。
 
 ## Goals
 
-- Keep the main chat column as the highest-priority content.
-- Show the minimap only when the viewport has enough room and the conversation
-  has at least five user messages.
-- Show the Thread Summary from the initial chat render when the viewport has
-  additional room beyond the minimap layout.
-- Center the minimap vertically and keep its markers grouped around the center
-  with a bounded interval rather than stretching them across the full track.
-- Reduce the main column to approximately 70% of the existing chat width when
-  both supporting columns are present.
-- Keep the current AppServer data flow and make the summary column permanent
-  whenever the responsive layout has room for it.
+- 狭い幅ではチャット列だけを表示する。
+- もう少し幅があれば、ミニマップ＋チャット列を表示する。
+- スレッドサマリが成立する幅では、ミニマップより優先してチャット＋スレッドサマリを表示する。
+- さらに幅が広がれば、ミニマップ＋チャット＋スレッドサマリを表示する。
+- チャット列は最大 `53rem` 前後で、それ以上は広がらない。
+- スレッドサマリの最大幅は `24rem` 前後とし、コンポーネント自身には `min-width` を設定しない。
+- 非表示列は余白を残さず、表示領域から除外する。
+- チャット領域のスクロール境界とコンポジション固定を維持する。
 
 ## Non-goals
 
-- No AppServer, protocol, or persistence changes.
-- No redesign of the minimap markers or Thread Summary contents.
-- Supporting columns remain hidden below their responsive breakpoints.
+- 右ペインの機能や内容を変更しない。
+- チャット列のコンテンツ構造やメッセージ描画を変更しない。
+- スレッドサマリの各セクションの内容を変更しない。
 
-## Approach
+## Visual contract
 
-The workspace becomes a CSS grid with responsive variants. The minimap moves
-from a fixed portal into the grid so it participates in the same scroll
-boundary as the main conversation and Thread Summary.
-The existing auto-scroll ref is shared with the minimap through the timeline
-component. At 1360px the grid adds a narrow minimap column; at 1680px the
-Thread Summary adds a narrow right column. When both are present the main column
-uses `7fr`, leaving the main content at roughly 70% of the current workspace.
+狭い順の表示状態は次のとおり。状態は「画面全体の幅」ではなく「チャット領域の幅」で選ぶ。
 
-The Thread Summary is always rendered; it has no visibility toggle, close
-button, or standalone title. The workspace uses the full available AppLayout
-width without an additional 1200px or 1440px cap. At the widest layout the
-grid uses a central main column capped at 53rem and equal flexible side
-columns. The minimap is aligned to the left edge of its column and the summary
-is aligned to the right edge of its column. The outer chat section is the shared scroll boundary for all three
-columns, placing its scrollbar after the Thread Summary. The minimap and
-summary columns are fixed-height sticky columns, so they do not move with the
-shared conversation scroll. Their contained components use their own overflow
-boundaries if they exceed the column height; the summary content itself is
-content-sized within that fixed-height column.
+| State | 表示構成 | 選択理由 |
+| --- | --- | --- |
+| Chat only | チャット | 最小幅でも会話を利用可能にする |
+| Minimap + chat | ミニマップ（1fr）＋チャット（最大幅）＋空き（1fr） | 左右を釣り合わせてチャットを中央に置く |
+| Chat + summary | チャット＋スレッドサマリ | スレッドサマリをミニマップより優先する |
+| All columns | ミニマップ（1fr）＋チャット（最大幅）＋スレッドサマリ（1fr） | 十分な幅では左右を可変幅にして最大情報量にする |
 
-## Acceptance criteria
+状態3では、ミニマップを残して幅不足にするのではなく、ミニマップを除いてスレッドサマリを表示する。状態4でミニマップを再表示する。
 
-- The narrow layout has one main column and no supporting columns.
-- The medium layout adds the minimap column without reducing the main column to
-  a fixed width.
-- The wide layout always includes the Thread Summary column.
-- The shared three-column scroll boundary places its scrollbar after the Thread
-  Summary while leaving both supporting columns in place.
-- Existing minimap navigation and summary subagent interactions continue to
-  work.
-- Existing unit tests, typecheck, lint, and UI fixture capture pass.
+## Architecture
+
+### Width source
+
+`AppLayout` のチャットコンテンツ領域を名前付き inline-size container とし、`ConversationWorkspace` はその container query を使う。これにより、左ペイン・右ペイン・ウィンドウリサイズで実効幅が変わっても、同じ表示規則が適用される。
+
+### Layout ownership
+
+- `AppLayout`: チャット領域を container として提供する。スクロール境界とヘッダの責務は変更しない。
+- `ConversationWorkspace`: 4つの表示状態をTailwindのcontainer-query variantで表現し、3つの意味上の列を配置する。
+- `ConversationMinimap`: 列の表示状態を決めず、親から与えられた列幅に収まる。
+- `ThreadSummaryPanel`: 列の表示状態を決めず、コンポーネント自身に最小幅を持たせない。
+
+### Styling rules
+
+レイアウトの新規指定はTailwindのユーティリティを優先する。viewport breakpointに依存する `min-[...]` のチャット列指定と、同じ責務を持つcustom CSSは削除する。`min-w-0` と `overflow-hidden` は、列が非表示状態になったときの内容のはみ出し防止にだけ使う。
+
+## Approaches considered
+
+1. **Container queryによるTailwind状態切り替え（採用）**
+   - 実効幅を直接入力にでき、React stateやリサイズイベントを増やさない。
+   - 左右ペインのアニメーションにも自然に追従する。
+2. **ResizeObserver + React state**
+   - 状態の単体テストはしやすいが、リサイズ中の再レンダリングと境界付近のちらつきが増える。
+3. **viewport breakpoint（現状）**
+   - 左右ペインを考慮できず、同じviewport幅でも利用可能幅が異なるため今回の要件に適合しない。
+
+## Verification
+
+- ConversationWorkspaceのクラス契約テストで、chat-only、minimap+chat、chat+summary、all-columnsの状態指定を確認する。
+- ミニマップとスレッドサマリにコンポーネント自身の最小幅がないことを確認する。
+- WDIOで800pxから2400pxまでの12幅を撮影し、各幅で表示状態、チャット最大幅、サマリの領域内配置を確認する。
+- ユニットテスト、型検査、Lint、`git diff --check`を実行する。

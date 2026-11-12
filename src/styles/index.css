@@ -239,30 +239,6 @@ body {
   max-height: calc(100dvh - 3.5rem);
 }
 
-.chat-thread-summary-column {
-  display: none;
-}
-
-@media (min-width: 1360px) {
-  .chat-workspace--has-minimap {
-    grid-template-columns: 2rem minmax(0, 1fr);
-  }
-}
-
-@media (min-width: 1680px) {
-  .chat-workspace--has-summary {
-    grid-template-columns: minmax(0, 1fr) 24rem;
-  }
-
-  .chat-workspace--has-minimap.chat-workspace--has-summary {
-    grid-template-columns: minmax(0, 1fr) minmax(40rem, 53rem) minmax(0, 1fr);
-  }
-
-  .chat-thread-summary-column {
-    display: block;
-  }
-}
-
 .workbench-sidebar {
   height: 100%;
   max-height: 100%;
@@ -274,34 +250,6 @@ body {
 .workbench-sidebar-collapsed {
   width: 4rem;
   box-shadow: none;
-}
-
-.workbench-sidebar-backdrop {
-  display: none;
-}
-
-@media (max-width: 1279px) {
-  .workbench-sidebar {
-    position: fixed;
-    z-index: 20;
-    inset-block: 2rem 0;
-    left: 0;
-    overflow: hidden;
-    box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
-  }
-
-  .workbench-sidebar-collapsed {
-    position: static;
-    box-shadow: none;
-  }
-
-  .workbench-sidebar-backdrop {
-    display: block;
-    position: fixed;
-    z-index: 10;
-    inset: 2rem 0 0;
-    background: rgb(0 0 0 / 24%);
-  }
 }
 
 button,

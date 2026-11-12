@@ -146,6 +146,19 @@ describe("SchedulesPage", () => {
     );
   });
 
+  it("opens a schedule from the focused card", async () => {
+    const { SchedulesPage } = await import("./SchedulesPage");
+    window.location.hash = "";
+    render(<SchedulesPage />);
+
+    fireEvent.keyDown(
+      screen.getByRole("link", { name: "Open schedule: Nightly checks" }),
+      { key: "Enter" },
+    );
+
+    expect(window.location.hash).toBe("#/schedules/schedule-1");
+  });
+
   it("updates the enabled state atomically from the edit modal", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
@@ -169,6 +182,7 @@ describe("SchedulesPage", () => {
 
   it("toggles a schedule from the list", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
+    window.location.hash = "";
     render(<SchedulesPage />);
 
     fireEvent.click(
@@ -182,6 +196,7 @@ describe("SchedulesPage", () => {
       id: "schedule-1",
       enabled: false,
     });
+    expect(window.location.hash).toBe("");
   });
 
   it("creates a daily remote-continuation schedule", async () => {

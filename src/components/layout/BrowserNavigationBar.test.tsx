@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
@@ -46,6 +46,40 @@ describe("BrowserNavigationBar", () => {
     expect(screen.getByRole("button", { name: "Back" }).className).toContain(
       "btn-xs",
     );
+  });
+
+  it("toggles the right pane from the global header", () => {
+    const onToggleRightPane = vi.fn();
+    render(
+      <MemoryRouter>
+        <BrowserNavigationBar
+          onToggleRightPane={onToggleRightPane}
+          rightPaneOpen={false}
+        />
+      </MemoryRouter>,
+    );
+
+    const button = screen.getByRole("button", { name: "Open right pane" });
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(button);
+    expect(onToggleRightPane).toHaveBeenCalledOnce();
+  });
+
+  it("toggles the left sidebar from the global header", () => {
+    const onToggleSidebar = vi.fn();
+    render(
+      <MemoryRouter>
+        <BrowserNavigationBar
+          onToggleSidebar={onToggleSidebar}
+          sidebarOpen={false}
+        />
+      </MemoryRouter>,
+    );
+
+    const button = screen.getByRole("button", { name: "Open sidebar" });
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(button);
+    expect(onToggleSidebar).toHaveBeenCalledOnce();
   });
 
   it("renders breadcrumbs for the current route", () => {

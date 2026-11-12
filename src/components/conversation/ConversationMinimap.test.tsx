@@ -52,14 +52,17 @@ describe("ConversationMinimap", () => {
     const minimap = screen.getByRole("complementary", {
       name: "Conversation minimap",
     });
+    const minimapColumn = minimap.parentElement;
+    expect(minimap.className).toContain("w-full");
     expect(minimap.className).toContain("hidden");
-    expect(minimap.className).toContain("chat-minimap-column");
-    expect(minimap.className).toContain("min-[1360px]:flex");
-    expect(minimap.className).toContain("justify-self-start");
-    expect(minimap.className).toContain("sticky");
-    expect(minimap.className).toContain("top-6");
-    expect(minimap.className).toContain("chat-side-column");
-    expect(minimap.className).toContain("overflow-visible");
+    expect(minimap.className).toContain("@min-[4rem]/minimap:block");
+    expect(minimapColumn?.className).toContain("chat-minimap-column");
+    expect(minimapColumn?.className).not.toContain("min-[1360px]");
+    expect(minimapColumn?.className).toContain("justify-self-stretch");
+    expect(minimapColumn?.className).toContain("sticky");
+    expect(minimapColumn?.className).toContain("top-6");
+    expect(minimapColumn?.className).toContain("chat-side-column");
+    expect(minimapColumn?.className).toContain("overflow-hidden");
     expect(minimap.className).not.toContain("overflow-y-auto");
     const minimapScroll = screen.getByTestId("conversation-minimap-scroll");
     expect(minimapScroll.className).toContain("h-full");
@@ -68,7 +71,7 @@ describe("ConversationMinimap", () => {
     expect(minimap.className).not.toContain("fixed");
   });
 
-  it("keeps the minimap column while hiding markers until five user messages are available", () => {
+  it("does not render the minimap before five user messages are available", () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);
     const fourUserMessages = [
@@ -86,9 +89,8 @@ describe("ConversationMinimap", () => {
     );
 
     expect(
-      screen.getByRole("complementary", { name: "Conversation minimap" }),
-    ).toBeTruthy();
-    expect(screen.queryByTestId("conversation-minimap-track")).toBeNull();
+      screen.queryByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeNull();
 
     rerender(
       <ConversationMinimap
