@@ -57,10 +57,14 @@ describe("ConversationMinimap", () => {
     expect(minimap.className).toContain("min-[1360px]:flex");
     expect(minimap.className).toContain("justify-self-start");
     expect(minimap.className).toContain("sticky");
-    expect(minimap.className).toContain("top-0");
-    expect(minimap.className).toContain("h-[calc(100dvh-2rem)]");
-    expect(minimap.className).toContain("max-h-[calc(100dvh-2rem)]");
-    expect(minimap.className).toContain("overflow-y-auto");
+    expect(minimap.className).toContain("top-6");
+    expect(minimap.className).toContain("chat-side-column");
+    expect(minimap.className).toContain("overflow-visible");
+    expect(minimap.className).not.toContain("overflow-y-auto");
+    const minimapScroll = screen.getByTestId("conversation-minimap-scroll");
+    expect(minimapScroll.className).toContain("h-full");
+    expect(minimapScroll.className).toContain("max-h-full");
+    expect(minimapScroll.className).toContain("overflow-y-auto");
     expect(minimap.className).not.toContain("fixed");
   });
 

@@ -196,6 +196,11 @@ body {
   align-items: start;
 }
 
+.chat-side-column {
+  height: calc(100dvh - 3.5rem);
+  max-height: calc(100dvh - 3.5rem);
+}
+
 .chat-thread-summary-column {
   display: none;
 }

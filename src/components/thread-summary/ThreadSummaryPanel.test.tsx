@@ -90,17 +90,21 @@ describe("ThreadSummaryPanel", () => {
       "sticky",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "top-4",
+      "top-6",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "h-[calc(100dvh-3rem)]",
+      "chat-side-column",
     );
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
-      "max-h-[calc(100dvh-3rem)]",
+      "overflow-visible",
     );
-    expect(screen.getByTestId("thread-summary-panel").className).toContain(
+    expect(screen.getByTestId("thread-summary-panel").className).not.toContain(
       "overflow-y-auto",
     );
+    const summaryScroll = screen.getByTestId("thread-summary-scroll");
+    expect(summaryScroll.className).toContain("h-full");
+    expect(summaryScroll.className).toContain("max-h-full");
+    expect(summaryScroll.className).toContain("overflow-y-auto");
     expect(screen.getByTestId("thread-summary-panel").className).toContain(
       "text-sm",
     );

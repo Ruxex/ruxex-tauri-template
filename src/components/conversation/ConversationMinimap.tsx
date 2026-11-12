@@ -111,85 +111,92 @@ export function ConversationMinimap({
   return (
     <aside
       aria-label="Conversation minimap"
-      className="chat-minimap-column pointer-events-none sticky top-0 z-10 hidden h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] w-full justify-self-start self-start overflow-y-auto min-[1360px]:flex"
+      className="chat-minimap-column chat-side-column pointer-events-none sticky top-6 z-10 hidden w-full justify-self-start self-start overflow-visible min-[1360px]:flex"
     >
-      <div className="pointer-events-auto relative h-[min(60vh,520px)] w-4 self-center">
-        {hasMarkers && (
-          <>
-            <div
-              aria-hidden="true"
-              className="conversation-minimap-track absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 rounded-full"
-              data-testid="conversation-minimap-track"
-            />
-            {userItems.map((item, index) => {
-              const preview = previewText(item.text);
-              const isActive = activeId === item.id;
-              const isHovered = hoveredId === item.id;
-              const hoverDistance =
-                hoveredIndex >= 0 ? Math.abs(index - hoveredIndex) : -1;
-              const isAdjacent = hoverDistance === 1;
-              const isNear = hoverDistance === 2;
-              const isFar = hoverDistance === 3;
-              const markerOffsetClass = isHovered
-                ? "translate-x-[14px]"
-                : isAdjacent
-                  ? "translate-x-[10px]"
-                  : isNear
-                    ? "translate-x-[5px]"
-                    : isFar
-                      ? "translate-x-[2px]"
-                      : "";
-              const markerStateClass = isHovered
-                ? "scale-200 border-primary bg-primary"
-                : isActive
-                  ? "scale-150 border-primary bg-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_24%,transparent)]"
+      <div
+        className="pointer-events-auto flex h-full max-h-full w-full items-center overflow-y-auto"
+        data-testid="conversation-minimap-scroll"
+      >
+        <div className="relative h-[min(60vh,520px)] w-4 shrink-0">
+          {hasMarkers && (
+            <>
+              <div
+                aria-hidden="true"
+                className="conversation-minimap-track absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 rounded-full"
+                data-testid="conversation-minimap-track"
+              />
+              {userItems.map((item, index) => {
+                const preview = previewText(item.text);
+                const isActive = activeId === item.id;
+                const isHovered = hoveredId === item.id;
+                const hoverDistance =
+                  hoveredIndex >= 0 ? Math.abs(index - hoveredIndex) : -1;
+                const isAdjacent = hoverDistance === 1;
+                const isNear = hoverDistance === 2;
+                const isFar = hoverDistance === 3;
+                const markerOffsetClass = isHovered
+                  ? "translate-x-[14px]"
                   : isAdjacent
-                    ? "scale-125 border-base-content/30 bg-base-content/45"
+                    ? "translate-x-[10px]"
                     : isNear
-                      ? "scale-110 border-base-content/30 bg-base-content/45"
+                      ? "translate-x-[5px]"
                       : isFar
-                        ? "scale-105 border-base-content/30 bg-base-content/45"
-                        : "border-base-content/30 bg-base-content/45";
-              return (
-                <div
-                  className="absolute left-1/2"
-                  key={item.id}
-                  style={{
-                    top: markerPosition(index, userItems.length),
-                  }}
-                >
-                  <button
-                    aria-current={isActive ? "location" : undefined}
-                    aria-label={`Jump to message: ${preview}`}
-                    className="relative flex h-7 w-10 -translate-x-[14px] -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
-                    onBlur={() => setHoveredId(null)}
-                    onClick={() => jumpTo(item)}
-                    onFocus={() => setHoveredId(item.id)}
-                    onMouseEnter={() => setHoveredId(item.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    type="button"
+                        ? "translate-x-[2px]"
+                        : "";
+                const markerStateClass = isHovered
+                  ? "scale-200 border-primary bg-primary"
+                  : isActive
+                    ? "scale-150 border-primary bg-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_24%,transparent)]"
+                    : isAdjacent
+                      ? "scale-125 border-base-content/30 bg-base-content/45"
+                      : isNear
+                        ? "scale-110 border-base-content/30 bg-base-content/45"
+                        : isFar
+                          ? "scale-105 border-base-content/30 bg-base-content/45"
+                          : "border-base-content/30 bg-base-content/45";
+                return (
+                  <div
+                    className="absolute left-1/2"
+                    key={item.id}
+                    style={{
+                      top: markerPosition(index, userItems.length),
+                    }}
                   >
-                    <span className="absolute left-[10px] top-1/2 -translate-y-1/2">
-                      <span
-                        aria-hidden="true"
-                        className={`block size-2 rounded-full border transition-[transform,background-color,box-shadow] duration-200 ease-out ${markerOffsetClass} ${markerStateClass}`}
-                        data-testid={`conversation-minimap-marker-${item.id}`}
-                      />
-                    </span>
-                    {isHovered && (
-                      <span
-                        className="absolute bottom-1/2 left-10 z-10 w-64 translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
-                        role="tooltip"
-                      >
-                        <span className="block leading-relaxed">{preview}</span>
+                    <button
+                      aria-current={isActive ? "location" : undefined}
+                      aria-label={`Jump to message: ${preview}`}
+                      className="relative flex h-7 w-10 -translate-x-[14px] -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                      onBlur={() => setHoveredId(null)}
+                      onClick={() => jumpTo(item)}
+                      onFocus={() => setHoveredId(item.id)}
+                      onMouseEnter={() => setHoveredId(item.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      type="button"
+                    >
+                      <span className="absolute left-[10px] top-1/2 -translate-y-1/2">
+                        <span
+                          aria-hidden="true"
+                          className={`block size-2 rounded-full border transition-[transform,background-color,box-shadow] duration-200 ease-out ${markerOffsetClass} ${markerStateClass}`}
+                          data-testid={`conversation-minimap-marker-${item.id}`}
+                        />
                       </span>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </>
-        )}
+                      {isHovered && (
+                        <span
+                          className="absolute bottom-1/2 left-10 z-10 w-64 translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
+                          role="tooltip"
+                        >
+                          <span className="block leading-relaxed">
+                            {preview}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
       </div>
     </aside>
   );
