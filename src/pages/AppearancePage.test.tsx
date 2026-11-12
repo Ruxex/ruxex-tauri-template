@@ -20,7 +20,9 @@ describe("AppearancePage", () => {
       preferences: {
         sidebarCollapsed: false,
         theme: { accentColor: "blue", preset: "system" },
+        chatFontFamily: "system-ui",
         chatFontSize: 12,
+        uiFontFamily: "system-ui",
         uiFontSize: 14,
       },
       update,
@@ -52,12 +54,22 @@ describe("AppearancePage", () => {
     if (!currentPreview) throw new Error("Current theme preview is missing");
     expect(selectorSummary?.contains(currentPreview)).toBe(false);
     expect(currentPreview.closest("details")).toBeNull();
-    expect(currentPreview.querySelector("[data-theme-preview-header]")).toBeTruthy();
-    expect(currentPreview.querySelector("[data-theme-preview-message]")).toBeTruthy();
-    expect(currentPreview.querySelector("[data-theme-preview-composer]")).toBeTruthy();
-    expect(currentPreview.querySelector("[data-theme-preview-send]")).toBeTruthy();
+    expect(
+      currentPreview.querySelector("[data-theme-preview-header]"),
+    ).toBeTruthy();
+    expect(
+      currentPreview.querySelector("[data-theme-preview-message]"),
+    ).toBeTruthy();
+    expect(
+      currentPreview.querySelector("[data-theme-preview-composer]"),
+    ).toBeTruthy();
+    expect(
+      currentPreview.querySelector("[data-theme-preview-send]"),
+    ).toBeTruthy();
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
+    expect(screen.getByLabelText("Chat font")).toBeTruthy();
+    expect(screen.getByLabelText("UI font")).toBeTruthy();
     expect(screen.queryByLabelText("Density")).toBeNull();
     const chatFontSize = screen.getByLabelText("Chat font size");
     expect(chatFontSize.getAttribute("type")).toBe("number");

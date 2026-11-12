@@ -1,5 +1,6 @@
 import {
   DEFAULT_CHAT_FONT_SIZE,
+  DEFAULT_FONT_FAMILY,
   DEFAULT_UI_FONT_SIZE,
   useUiPreferences,
 } from "../app/ui-preferences";
@@ -36,15 +37,21 @@ export function AppearancePage() {
         preset={preferences.theme.preset ?? "system"}
       />
       <TypographyCard
+        chatFontFamily={preferences.chatFontFamily}
         chatFontSize={preferences.chatFontSize}
+        onChatFontFamilyChange={(chatFontFamily) => update({ chatFontFamily })}
         onChatFontSizeChange={(chatFontSize) => update({ chatFontSize })}
         onReset={() =>
           update({
+            chatFontFamily: DEFAULT_FONT_FAMILY,
             chatFontSize: DEFAULT_CHAT_FONT_SIZE,
+            uiFontFamily: DEFAULT_FONT_FAMILY,
             uiFontSize: DEFAULT_UI_FONT_SIZE,
           })
         }
+        onUiFontFamilyChange={(uiFontFamily) => update({ uiFontFamily })}
         onUiFontSizeChange={(uiFontSize) => update({ uiFontSize })}
+        uiFontFamily={preferences.uiFontFamily}
         uiFontSize={preferences.uiFontSize}
       />
     </div>

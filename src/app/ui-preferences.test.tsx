@@ -21,13 +21,16 @@ function Probe() {
       onClick={() =>
         update({
           chatFontSize: 24,
+          chatFontFamily: "Inter",
           theme: { accentColor: "violet", preset: "ruxex-dark" },
           uiFontSize: 12,
+          uiFontFamily: "Inter",
         })
       }
     >
       {preferences.theme.preset}:{preferences.theme.accentColor}:
-      {preferences.chatFontSize}px:{preferences.uiFontSize}px
+      {preferences.chatFontSize}px:{preferences.uiFontSize}px:
+      {preferences.chatFontFamily}:{preferences.uiFontFamily}
     </button>
   );
 }
@@ -86,7 +89,7 @@ describe("UI preference persistence", () => {
     });
 
     expect(next).toMatchObject({
-      version: 8,
+      version: 9,
       theme: { accentColor: "rose", preset: "ruxex-light" },
     });
   });
@@ -110,9 +113,17 @@ describe("UI preference persistence", () => {
     );
 
     expect(screen.getByRole("button").textContent).toBe(
-      "ruxex-light:emerald:14px:14px",
+      "ruxex-light:emerald:14px:14px:system-ui:system-ui",
     );
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect(
+      document.documentElement.style.getPropertyValue("--ruxex-ui-font-family"),
+    ).toBe("system-ui");
+    expect(
+      document.documentElement.style.getPropertyValue(
+        "--ruxex-chat-font-family",
+      ),
+    ).toBe("system-ui");
     expect(document.documentElement.dataset.accent).toBeUndefined();
     expect(
       document.documentElement.style.getPropertyValue("--color-primary"),
@@ -120,17 +131,27 @@ describe("UI preference persistence", () => {
     fireEvent.click(screen.getByRole("button"));
 
     expect(screen.getByRole("button").textContent).toBe(
-      "ruxex-dark:violet:24px:12px",
+      "ruxex-dark:violet:24px:12px:Inter:Inter",
     );
     expect(
       JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
     ).toMatchObject({
       theme: { accentColor: "violet" },
       chatFontSize: 24,
+      chatFontFamily: "Inter",
       uiFontSize: 12,
+      uiFontFamily: "Inter",
     });
     expect(document.documentElement.dataset.chatFontSize).toBeUndefined();
     expect(document.documentElement.dataset.uiFontSize).toBe("12");
+    expect(
+      document.documentElement.style.getPropertyValue("--ruxex-ui-font-family"),
+    ).toBe("Inter");
+    expect(
+      document.documentElement.style.getPropertyValue(
+        "--ruxex-chat-font-family",
+      ),
+    ).toBe("Inter");
   });
 
   it("applies a selected theme preset to DaisyUI variables", () => {

@@ -43,14 +43,18 @@ describe("settings and composer selectors", () => {
     expect(
       updateUiPreferences(DEFAULT_UI_PREFERENCES, {
         chatFontSize: 24,
+        chatFontFamily: "Inter",
         theme: { accentColor: "violet", preset: "ruxex-dark" },
         uiFontSize: 12,
+        uiFontFamily: "Inter",
       }),
     ).toMatchObject({
       chatFontSize: 24,
+      chatFontFamily: "Inter",
       theme: { accentColor: "violet", preset: "ruxex-dark" },
       uiFontSize: 12,
-      version: 8,
+      uiFontFamily: "Inter",
+      version: 9,
     });
   });
 });

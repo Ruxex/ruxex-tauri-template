@@ -249,10 +249,14 @@ describe("settings card layout", () => {
         />
         <UiPreferencesCard onThemePresetChange={vi.fn()} preset="system" />
         <TypographyCard
+          chatFontFamily="system-ui"
           onChatFontSizeChange={vi.fn()}
+          onChatFontFamilyChange={vi.fn()}
           onReset={vi.fn()}
+          onUiFontFamilyChange={vi.fn()}
           onUiFontSizeChange={vi.fn()}
           chatFontSize={16}
+          uiFontFamily="system-ui"
           uiFontSize={16}
         />
       </>,
@@ -369,10 +373,14 @@ describe("settings card layout", () => {
     const onReset = vi.fn();
     render(
       <TypographyCard
+        chatFontFamily="system-ui"
         chatFontSize={18}
+        onChatFontFamilyChange={vi.fn()}
         onChatFontSizeChange={vi.fn()}
         onReset={onReset}
+        onUiFontFamilyChange={vi.fn()}
         onUiFontSizeChange={vi.fn()}
+        uiFontFamily="system-ui"
         uiFontSize={16}
       />,
     );
@@ -416,10 +424,14 @@ describe("settings card layout", () => {
         />
         <UiPreferencesCard onThemePresetChange={vi.fn()} preset="system" />
         <TypographyCard
+          chatFontFamily="system-ui"
           onChatFontSizeChange={vi.fn()}
+          onChatFontFamilyChange={vi.fn()}
           onReset={vi.fn()}
+          onUiFontFamilyChange={vi.fn()}
           onUiFontSizeChange={vi.fn()}
           chatFontSize={16}
+          uiFontFamily="system-ui"
           uiFontSize={16}
         />
       </>,

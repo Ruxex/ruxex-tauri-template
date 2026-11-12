@@ -8,7 +8,7 @@ import {
 } from "react";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 8;
+const UI_PREFERENCES_VERSION = 9;
 
 export type UiLanguage = "system" | "en" | "ja";
 export const UI_ACCENT_COLORS = [
@@ -456,6 +456,18 @@ export const UI_FONT_SIZE_MIN = 10;
 export const UI_FONT_SIZE_MAX = 32;
 export const DEFAULT_CHAT_FONT_SIZE = 14;
 export const DEFAULT_UI_FONT_SIZE = 14;
+export const DEFAULT_FONT_FAMILY = "system-ui";
+export const SYSTEM_FONT_FALLBACKS = [
+  "system-ui",
+  "Inter",
+  "Segoe UI",
+  "San Francisco",
+  "Roboto",
+  "Noto Sans",
+  "Arial",
+  "sans-serif",
+] as const;
+export type UiFontFamily = string;
 export type UiFontSize = number;
 
 export function clampUiFontSize(value: number): UiFontSize {
@@ -486,6 +498,8 @@ export type UiPreferences = {
   theme: UiTheme;
   chatFontSize: UiFontSize;
   uiFontSize: UiFontSize;
+  chatFontFamily: UiFontFamily;
+  uiFontFamily: UiFontFamily;
 };
 
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
@@ -496,6 +510,8 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   theme: { accentColor: "blue", preset: "system" },
   chatFontSize: DEFAULT_CHAT_FONT_SIZE,
   uiFontSize: DEFAULT_UI_FONT_SIZE,
+  chatFontFamily: DEFAULT_FONT_FAMILY,
+  uiFontFamily: DEFAULT_FONT_FAMILY,
 };
 
 export type UiPreferencePatch = Partial<Omit<UiPreferences, "version">>;
@@ -536,6 +552,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.version !== 5 &&
         parsed.version !== 6 &&
         parsed.version !== 7 &&
+        parsed.version !== 8 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
@@ -607,6 +624,14 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.uiFontSize,
         DEFAULT_UI_PREFERENCES.uiFontSize,
       ),
+      chatFontFamily: readFontFamily(
+        parsed.chatFontFamily,
+        DEFAULT_UI_PREFERENCES.chatFontFamily,
+      ),
+      uiFontFamily: readFontFamily(
+        parsed.uiFontFamily,
+        DEFAULT_UI_PREFERENCES.uiFontFamily,
+      ),
     };
   } catch {
     return DEFAULT_UI_PREFERENCES;
@@ -647,6 +672,10 @@ function readFontSize(value: unknown, fallback: UiFontSize): UiFontSize {
     value <= UI_FONT_SIZE_MAX
     ? value
     : fallback;
+}
+
+function readFontFamily(value: unknown, fallback: UiFontFamily): UiFontFamily {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
 function readThemeColors(value: unknown): UiThemeColors {
@@ -718,6 +747,14 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
     document.documentElement.style.setProperty(
       "--ruxex-chat-font-size",
       `${preferences.chatFontSize}px`,
+    );
+    document.documentElement.style.setProperty(
+      "--ruxex-ui-font-family",
+      preferences.uiFontFamily,
+    );
+    document.documentElement.style.setProperty(
+      "--ruxex-chat-font-family",
+      preferences.chatFontFamily,
     );
     document.documentElement.lang =
       preferences.language === "system"

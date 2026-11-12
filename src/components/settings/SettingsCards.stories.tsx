@@ -94,18 +94,19 @@ export const QuickPanel: Story = () => (
 );
 
 export const Interface: Story = () => (
-  <UiPreferencesCard
-    onThemePresetChange={() => undefined}
-    preset="system"
-  />
+  <UiPreferencesCard onThemePresetChange={() => undefined} preset="system" />
 );
 
 export const Typography: Story = () => (
   <TypographyCard
+    chatFontFamily="system-ui"
     chatFontSize={14}
+    onChatFontFamilyChange={() => undefined}
     onChatFontSizeChange={() => undefined}
     onReset={() => undefined}
+    onUiFontFamilyChange={() => undefined}
     onUiFontSizeChange={() => undefined}
+    uiFontFamily="system-ui"
     uiFontSize={14}
   />
 );
