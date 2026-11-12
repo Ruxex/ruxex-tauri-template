@@ -471,26 +471,21 @@ export function Composer({
                 }
                 className="btn btn-primary btn-sm join-item"
                 type="submit"
-                disabled={isPending || (!message.trim() && !imageFile)}
+                disabled={isPending}
               >
                 <SubmitIcon
                   aria-hidden="true"
                   className={`size-4 ${isPending ? "animate-spin" : ""}`}
                 />
-                {isPending
-                  ? "Working…"
-                  : mode === "queue"
-                    ? "Queue"
-                    : mode === "steer"
-                      ? "Steer"
-                      : "Send"}
               </button>
-              <SubmissionModeMenu
-                activeTurnId={activeTurnId}
-                disabled={isPending}
-                mode={mode}
-                onModeChange={setMode}
-              />
+              {activeTurnId && (
+                <SubmissionModeMenu
+                  activeTurnId={activeTurnId}
+                  disabled={isPending}
+                  mode={mode}
+                  onModeChange={setMode}
+                />
+              )}
             </div>
           </div>
         </div>

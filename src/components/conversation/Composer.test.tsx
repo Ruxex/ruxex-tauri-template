@@ -449,6 +449,19 @@ describe("Composer", () => {
     );
   });
 
+  it("keeps the send button enabled for empty input and hides submission modes without an active turn", async () => {
+    const { Composer } = await import("./Composer");
+
+    render(<Composer threadId="thread-1" activeTurnId={null} />);
+
+    expect(screen.getByRole("button", { name: "Send" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+    expect(screen.queryByLabelText("Submission mode menu")).toBeNull();
+    expect(screen.getByRole("button", { name: "Send" }).textContent).toBe("");
+  });
+
   it("submits with Ctrl+Enter but keeps Enter and Shift+Enter as newlines", async () => {
     const { Composer } = await import("./Composer");
 
