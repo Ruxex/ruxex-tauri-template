@@ -127,9 +127,9 @@ export function BrowserNavigationBar({
   return (
     <nav
       aria-label="Browser navigation"
-      className="flex h-8 shrink-0 items-center border-b border-base-300/60 bg-base-200/70 px-3 text-base-content/60 sm:px-4"
+      className="flex h-8 shrink-0 items-center border-b border-base-300/60 bg-base-200/70 text-base-content/60"
     >
-      <div className="flex items-center gap-0.5">
+      <div className="flex w-[320px] shrink-0 items-center gap-0.5 border-r border-base-300/60 px-3 sm:px-4">
         <button
           aria-label="Back"
           className="btn btn-ghost btn-xs btn-square"
@@ -149,20 +149,23 @@ export function BrowserNavigationBar({
         >
           <ChevronRightIcon aria-hidden="true" className="size-3.5" />
         </button>
+        {onToggleSidebar && (
+          <button
+            aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+            aria-pressed={sidebarOpen}
+            className="btn btn-ghost btn-xs btn-square"
+            onClick={onToggleSidebar}
+            title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+            type="button"
+          >
+            <SidebarToggleIcon aria-hidden="true" className="size-3.5" />
+          </button>
+        )}
       </div>
-      {onToggleSidebar && (
-        <button
-          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-          aria-pressed={sidebarOpen}
-          className="btn btn-ghost btn-xs btn-square"
-          onClick={onToggleSidebar}
-          title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-          type="button"
-        >
-          <SidebarToggleIcon aria-hidden="true" className="size-3.5" />
-        </button>
-      )}
-      <nav aria-label="Breadcrumb" className="min-w-0 flex-1 px-2">
+      <nav
+        aria-label="Breadcrumb"
+        className="min-w-0 flex-1 px-3 sm:px-4"
+      >
         <ol className="flex min-w-0 items-center gap-1 text-xs">
           {breadcrumbs.map((breadcrumb, index) => (
             <li
@@ -195,7 +198,7 @@ export function BrowserNavigationBar({
         <button
           aria-label={rightPaneOpen ? "Close right pane" : "Open right pane"}
           aria-pressed={rightPaneOpen}
-          className="btn btn-ghost btn-xs btn-square"
+          className="btn btn-ghost btn-xs btn-square mx-3 sm:mx-4"
           onClick={onToggleRightPane}
           title={rightPaneOpen ? "Close right pane" : "Open right pane"}
           type="button"
