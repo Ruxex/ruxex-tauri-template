@@ -317,3 +317,74 @@ pub(crate) fn terminal_close(
 ) -> Result<(), String> {
     state.close(&session_id)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{TerminalEvent, TerminalState, pty_size, resolve_working_directory};
+    use std::sync::mpsc;
+    use std::time::Duration;
+    use tauri::ipc::{Channel, InvokeResponseBody};
+
+    #[test]
+    fn terminal_dimensions_never_fall_below_one_cell() {
+        let size = pty_size(0, 0);
+
+        assert_eq!((size.cols, size.rows), (1, 1));
+    }
+
+    #[test]
+    fn working_directory_requires_an_existing_directory() {
+        let existing = std::env::temp_dir();
+        assert_eq!(
+            resolve_working_directory(Some(existing.to_string_lossy().into_owned())).unwrap(),
+            existing
+        );
+
+        let missing = std::env::temp_dir().join(format!(
+            "ruxex-terminal-path-that-does-not-exist-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&missing);
+        let error =
+            resolve_working_directory(Some(missing.to_string_lossy().into_owned())).unwrap_err();
+        assert!(error.contains("Workspace directory does not exist"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn closing_a_terminal_ends_the_session_and_emits_exit() {
+        let (events_tx, events_rx) = mpsc::channel();
+        let channel = Channel::<TerminalEvent>::new(move |body| {
+            if let InvokeResponseBody::Json(payload) = body {
+                let _ = events_tx.send(payload);
+            }
+            Ok(())
+        });
+        let state = TerminalState::default();
+        let id = state
+            .start(
+                Some(std::env::temp_dir().to_string_lossy().into_owned()),
+                80,
+                24,
+                channel,
+            )
+            .unwrap();
+        state.write(&id, "sleep 30\n").unwrap();
+
+        state.close(&id).unwrap();
+
+        assert_eq!(
+            state.write(&id, "echo closed\n").unwrap_err(),
+            "Terminal session was closed"
+        );
+        let mut saw_exit = false;
+        while let Ok(payload) = events_rx.recv_timeout(Duration::from_secs(5)) {
+            let event: serde_json::Value = serde_json::from_str(&payload).unwrap();
+            if event["type"] == "exited" {
+                saw_exit = true;
+                break;
+            }
+        }
+        assert!(saw_exit, "terminal should emit Exited after it is closed");
+    }
+}

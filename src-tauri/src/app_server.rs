@@ -461,7 +461,7 @@ mod tests {
     }
 
     #[cfg(feature = "example")]
-    use super::initialize_in_process_runtime;
+    use super::connection::initialize_in_process_runtime;
 
     #[test]
     fn desktop_app_server_daemon_args_use_the_desktop_host_mode() {

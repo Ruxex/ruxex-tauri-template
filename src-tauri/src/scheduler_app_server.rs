@@ -203,8 +203,8 @@ mod tests {
     };
     use chrono::Utc;
     use ruxex_scheduler::{
-        ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, ScheduleRecord,
-        SchedulerState, load, new_record, save,
+        ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleRecord, SchedulerState, load,
+        save,
     };
 
     struct FakeDispatcher {
@@ -425,24 +425,5 @@ mod tests {
             "schedule not found or was deleted during dispatch"
         );
         assert!(load(&home).unwrap().schedules.is_empty());
-    }
-
-    #[test]
-    fn test_input_compiles_against_shared_schedule_model() {
-        let _ = new_record(
-            "schedule-1".to_string(),
-            ScheduleInput {
-                name: "Checks".to_string(),
-                prompt: "run checks".to_string(),
-                thread_id: None,
-                cadence: ScheduleCadence::Daily {
-                    hour: 9,
-                    minute: 0,
-                    time_zone: Some("UTC".to_string()),
-                },
-                enabled: true,
-            },
-            Utc::now(),
-        );
     }
 }

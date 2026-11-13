@@ -348,7 +348,7 @@ fn git(workspace: &Path, args: &[&str]) -> Result<std::process::Output, String> 
 
 #[cfg(test)]
 mod tests {
-    use super::summary;
+    use super::{details, summary};
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::Command;
@@ -427,6 +427,86 @@ mod tests {
                 deleted: 0,
                 files: 2
             }
+        );
+    }
+
+    #[test]
+    fn details_report_tracked_and_untracked_changes() {
+        let repo = Repository::new();
+        fs::write(repo.0.join("tracked.txt"), "one\nchanged\n").unwrap();
+        fs::remove_file(repo.0.join(".gitignore")).unwrap();
+        fs::write(repo.0.join("new file.txt"), "first\nsecond\n").unwrap();
+        fs::write(repo.0.join("binary.dat"), [0, 1, 2, 0]).unwrap();
+
+        let files = details(&repo.0).unwrap();
+
+        assert_eq!(
+            files
+                .iter()
+                .map(|file| file.path.as_str())
+                .collect::<Vec<_>>(),
+            [".gitignore", "binary.dat", "new file.txt", "tracked.txt"]
+        );
+        let deleted = files.iter().find(|file| file.path == ".gitignore").unwrap();
+        assert_eq!(deleted.status, "deleted");
+        assert!(
+            deleted
+                .patch
+                .as_deref()
+                .is_some_and(|patch| patch.contains("-ignored.txt"))
+        );
+
+        let binary = files.iter().find(|file| file.path == "binary.dat").unwrap();
+        assert!(binary.binary);
+        assert!(binary.patch.is_none());
+
+        let added = files
+            .iter()
+            .find(|file| file.path == "new file.txt")
+            .unwrap();
+        assert_eq!(added.status, "added");
+        assert_eq!(added.added, 2);
+        assert!(
+            added
+                .patch
+                .as_deref()
+                .is_some_and(|patch| patch.contains("+first"))
+        );
+
+        let modified = files
+            .iter()
+            .find(|file| file.path == "tracked.txt")
+            .unwrap();
+        assert_eq!(modified.status, "modified");
+        assert_eq!((modified.added, modified.deleted), (1, 2));
+        assert!(
+            modified
+                .patch
+                .as_deref()
+                .is_some_and(|patch| patch.contains("+changed"))
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn details_preserve_newlines_in_untracked_paths() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let repo = Repository::new();
+        let path = std::ffi::OsStr::from_bytes(b"new\nfile.txt");
+        fs::write(repo.0.join(path), "content\n").unwrap();
+
+        let files = details(&repo.0).unwrap();
+
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].path, "new\nfile.txt");
+        assert_eq!(files[0].status, "added");
+        assert_eq!(files[0].added, 1);
+        assert!(
+            files[0]
+                .patch
+                .as_deref()
+                .is_some_and(|patch| patch.contains("+content"))
         );
     }
 

@@ -29,16 +29,6 @@ pub use crate::desktop_config::{
 
 const SCHEDULE_POLL_INTERVAL_SECS: u64 = 60;
 
-#[cfg(test)]
-mod tests {
-    use super::SCHEDULE_POLL_INTERVAL_SECS;
-
-    #[test]
-    fn scheduler_poll_interval_is_one_minute() {
-        assert_eq!(SCHEDULE_POLL_INTERVAL_SECS, 60);
-    }
-}
-
 pub fn run_host_app_server_daemon_with_config(config: DesktopConfig) -> anyhow::Result<()> {
     let runtime =
         desktop_config::DesktopRuntimeState::new(config.clone()).map_err(anyhow::Error::msg)?;

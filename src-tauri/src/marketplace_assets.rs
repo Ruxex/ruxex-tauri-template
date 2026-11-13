@@ -118,65 +118,93 @@ pub(crate) async fn read_marketplace_asset(url: String) -> CommandResult<String>
             "marketplace image response is not allowed",
         ));
     }
-    if response
-        .content_length()
-        .is_some_and(|length| length > MARKETPLACE_ASSET_MAX_BYTES as u64)
-    {
+    let content_length = response.content_length();
+    if content_length.is_some_and(|length| length > MARKETPLACE_ASSET_MAX_BYTES as u64) {
         return Err(command_error(
             DesktopAppServerErrorKind::Initialization,
             "marketplace image exceeds the size limit",
         ));
     }
 
-    let declared_mime = response
+    let declared_content_type = response
         .headers()
         .get("content-type")
         .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.split(';').next())
-        .map(str::to_ascii_lowercase);
-    let bytes = response.bytes().await.map_err(|error| {
+        .map(str::to_string);
+    let response_url = response.url().as_str().to_string();
+    let status_success = response.status().is_success();
+    let mut bytes = Vec::new();
+    let mut response = response;
+    while let Some(chunk) = response.chunk().await.map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Initialization,
             format!("failed to read marketplace image: {error}"),
         )
-    })?;
-    if bytes.len() > MARKETPLACE_ASSET_MAX_BYTES {
-        return Err(command_error(
-            DesktopAppServerErrorKind::Initialization,
-            "marketplace image exceeds the size limit",
-        ));
+    })? {
+        append_marketplace_asset_chunk(&mut bytes, &chunk)
+            .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    }
+    validate_marketplace_asset_response(
+        status_success,
+        &response_url,
+        content_length,
+        declared_content_type.as_deref(),
+        &bytes,
+    )
+    .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))
+}
+
+fn validate_marketplace_asset_response(
+    status_success: bool,
+    response_url: &str,
+    content_length: Option<u64>,
+    declared_content_type: Option<&str>,
+    bytes: &[u8],
+) -> Result<String, String> {
+    if !status_success || validate_marketplace_asset_url(response_url).is_none() {
+        return Err("marketplace image response is not allowed".to_string());
+    }
+    if content_length.is_some_and(|length| length > MARKETPLACE_ASSET_MAX_BYTES as u64)
+        || bytes.len() > MARKETPLACE_ASSET_MAX_BYTES
+    {
+        return Err("marketplace image exceeds the size limit".to_string());
     }
 
-    let detected_mime = detect_marketplace_image_mime(&bytes);
+    let declared_mime = declared_content_type
+        .and_then(|value| value.split(';').next())
+        .map(str::trim)
+        .map(str::to_ascii_lowercase);
+    let detected_mime = detect_marketplace_image_mime(bytes);
     let mime = detected_mime.or_else(|| {
         declared_mime
             .as_deref()
             .filter(|mime| is_allowed_marketplace_image_mime(mime))
     });
     let Some(mime) = mime else {
-        return Err(command_error(
-            DesktopAppServerErrorKind::Initialization,
-            "marketplace image type is not supported",
-        ));
+        return Err("marketplace image type is not supported".to_string());
     };
     if let Some(declared_mime) = declared_mime.as_deref()
         && is_allowed_marketplace_image_mime(declared_mime)
         && declared_mime != mime
     {
-        return Err(command_error(
-            DesktopAppServerErrorKind::Initialization,
-            "marketplace image content type is inconsistent",
-        ));
+        return Err("marketplace image content type is inconsistent".to_string());
     }
     if mime == "image/svg+xml" {
-        validate_marketplace_svg(&bytes)
-            .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+        validate_marketplace_svg(bytes)?;
     }
 
     Ok(format!(
         "data:{mime};base64,{}",
         base64::engine::general_purpose::STANDARD.encode(bytes)
     ))
+}
+
+fn append_marketplace_asset_chunk(contents: &mut Vec<u8>, chunk: &[u8]) -> Result<(), String> {
+    if contents.len().saturating_add(chunk.len()) > MARKETPLACE_ASSET_MAX_BYTES {
+        return Err("marketplace image exceeds the size limit".to_string());
+    }
+    contents.extend_from_slice(chunk);
+    Ok(())
 }
 
 pub(super) fn validate_marketplace_asset_url(value: &str) -> Option<Url> {
@@ -277,4 +305,91 @@ pub(super) fn validate_marketplace_svg(bytes: &[u8]) -> Result<(), String> {
         return Err("marketplace SVG contains unsafe content".to_string());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{append_marketplace_asset_chunk, validate_marketplace_asset_response};
+
+    #[test]
+    fn remote_asset_response_requires_success_and_an_allowed_final_url() {
+        let error = validate_marketplace_asset_response(
+            false,
+            "https://raw.githubusercontent.com/acme/plugin/main/logo.png",
+            Some(8),
+            Some("image/png"),
+            b"\x89PNG\r\n\x1a\n",
+        )
+        .unwrap_err();
+        assert!(error.contains("response is not allowed"));
+
+        let error = validate_marketplace_asset_response(
+            true,
+            "https://example.com/logo.png",
+            Some(8),
+            Some("image/png"),
+            b"\x89PNG\r\n\x1a\n",
+        )
+        .unwrap_err();
+        assert!(error.contains("response is not allowed"));
+    }
+
+    #[test]
+    fn remote_asset_response_rejects_size_and_content_type_mismatches() {
+        let final_url = "https://raw.githubusercontent.com/acme/plugin/main/logo.png";
+        let too_large = vec![b'x'; 8 * 1024 * 1024 + 1];
+        let error = validate_marketplace_asset_response(
+            true,
+            final_url,
+            None,
+            Some("image/png"),
+            &too_large,
+        )
+        .unwrap_err();
+        assert!(error.contains("size limit"));
+
+        let error = validate_marketplace_asset_response(
+            true,
+            final_url,
+            Some(8 * 1024 * 1024 + 1),
+            Some("image/png"),
+            b"",
+        )
+        .unwrap_err();
+        assert!(error.contains("size limit"));
+
+        let error = validate_marketplace_asset_response(
+            true,
+            final_url,
+            Some(8),
+            Some("image/jpeg"),
+            b"\x89PNG\r\n\x1a\n",
+        )
+        .unwrap_err();
+        assert!(error.contains("content type is inconsistent"));
+    }
+
+    #[test]
+    fn remote_asset_response_accepts_a_supported_image() {
+        let data_url = validate_marketplace_asset_response(
+            true,
+            "https://raw.githubusercontent.com/acme/plugin/main/logo.png",
+            Some(8),
+            Some("image/png; charset=binary"),
+            b"\x89PNG\r\n\x1a\n",
+        )
+        .unwrap();
+
+        assert_eq!(data_url, "data:image/png;base64,iVBORw0KGgo=");
+    }
+
+    #[test]
+    fn remote_asset_body_stops_at_the_size_limit() {
+        let mut contents = vec![b'x'; 8 * 1024 * 1024];
+
+        let error = append_marketplace_asset_chunk(&mut contents, b"x").unwrap_err();
+
+        assert!(error.contains("size limit"));
+        assert_eq!(contents.len(), 8 * 1024 * 1024);
+    }
 }

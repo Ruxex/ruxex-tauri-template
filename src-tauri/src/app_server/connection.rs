@@ -259,7 +259,7 @@ async fn connect_in_process_endpoint(
     Ok((client, status))
 }
 
-async fn initialize_in_process_runtime(
+pub(super) async fn initialize_in_process_runtime(
     loaded_config: &Config,
     desktop_config: &DesktopConfig,
 ) -> anyhow::Result<ruxex::desktop::client::AppServerRuntime> {
