@@ -33,6 +33,9 @@ export function SchedulesPage() {
   const [pendingAction, setPendingAction] = useState<ScheduleAction | null>(
     null,
   );
+  const [pendingScheduleIds, setPendingScheduleIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const isScheduleModalOpen = isCreatePanelOpen || editingSchedule !== null;
 
   function openCreatePanel() {
@@ -81,6 +84,20 @@ export function SchedulesPage() {
     } else {
       schedules.remove.mutate(pendingAction.schedule.id, { onSuccess });
     }
+  }
+
+  function changeScheduleEnabled(target: ScheduleRecord, enabled: boolean) {
+    setPendingScheduleIds((current) => new Set(current).add(target.id));
+    const finish = () => {
+      setPendingScheduleIds((current) => {
+        const next = new Set(current);
+        next.delete(target.id);
+        return next;
+      });
+    };
+    void schedules.setEnabled
+      .mutateAsync({ id: target.id, enabled })
+      .then(finish, finish);
   }
 
   const savedSchedules = schedules.query.data ?? [];
@@ -195,15 +212,13 @@ export function SchedulesPage() {
               key={schedule.id}
               isDeletePending={schedules.remove.isPending}
               isRunPending={schedules.runNow.isPending}
-              isTogglePending={schedules.setEnabled.isPending}
+              isTogglePending={pendingScheduleIds.has(schedule.id)}
               schedule={schedule}
               onEdit={openEditPanel}
               onOpen={(target) =>
                 (window.location.hash = `/schedules/${target.id}`)
               }
-              onEnabledChange={(target, enabled) =>
-                schedules.setEnabled.mutate({ id: target.id, enabled })
-              }
+              onEnabledChange={changeScheduleEnabled}
               onRequestAction={(kind, target) =>
                 setPendingAction({ kind, schedule: target })
               }

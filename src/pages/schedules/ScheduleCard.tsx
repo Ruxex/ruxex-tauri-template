@@ -7,7 +7,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { EmptyState } from "../../components/common/AsyncState";
 import type { ScheduleRecord } from "../../platform/schedules";
-import { formatDateTime, scheduleCadenceLabel } from "./schedule-format";
+import {
+  formatDateTime,
+  formatRelativeDateTime,
+  scheduleCadenceLabel,
+} from "./schedule-format";
 
 export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
   return (
@@ -59,7 +63,7 @@ export function ScheduleCard({
   return (
     <article
       aria-label={onOpen ? `Open schedule: ${schedule.name}` : undefined}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition-colors duration-200 hover:border-primary/50"
       role={onOpen ? "link" : undefined}
       tabIndex={onOpen ? 0 : undefined}
       onClick={(event) => {
@@ -87,6 +91,18 @@ export function ScheduleCard({
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
+            aria-label={`Edit schedule: ${schedule.name}`}
+            className="btn btn-ghost btn-sm btn-square"
+            title="Edit"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(schedule);
+            }}
+            type="button"
+          >
+            <PencilIcon aria-hidden="true" className="size-4" />
+          </button>
+          <button
             aria-label={`Run now: ${schedule.name}`}
             className="btn btn-ghost btn-sm btn-square"
             disabled={isRunPending}
@@ -100,20 +116,8 @@ export function ScheduleCard({
             <PlayIcon aria-hidden="true" className="size-4" />
           </button>
           <button
-            aria-label={`Edit schedule: ${schedule.name}`}
-            className="btn btn-ghost btn-sm btn-square"
-            title="Edit"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(schedule);
-            }}
-            type="button"
-          >
-            <PencilIcon aria-hidden="true" className="size-4" />
-          </button>
-          <button
             aria-label={`Delete: ${schedule.name}`}
-            className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"
+            className="btn btn-ghost btn-sm btn-square"
             disabled={isDeletePending}
             title="Delete"
             onClick={(event) => {
@@ -138,27 +142,22 @@ export function ScheduleCard({
           </label>
         </div>
       </div>
-      <div className="mx-4 block rounded-lg border border-base-300 bg-base-200/50 p-3 text-left">
+      <div className="mx-4 mb-3 text-sm font-medium text-base-content/70">
+        {scheduleCadenceLabel(schedule.cadence)}
+      </div>
+      <div className="mx-4 mb-4 block rounded-lg border border-base-300 bg-base-200/50 p-3 text-left">
         <div className="min-w-0">
-          <p className="font-medium">
-            {scheduleCadenceLabel(schedule.cadence)}
-          </p>
-          <p className="mt-2 line-clamp-2 text-sm leading-5 text-base-content/70">
+          <p className="line-clamp-2 text-sm leading-5 text-base-content/70">
             {schedule.prompt}
           </p>
         </div>
       </div>
-      {(schedule.threadId || schedule.lastRun) && (
+      {schedule.lastRun && (
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-base-300 px-4 py-3">
           <div className="min-w-0 space-y-1 text-xs text-base-content/60">
-            {schedule.threadId && (
-              <p className="truncate font-mono">Thread: {schedule.threadId}</p>
-            )}
-            {schedule.lastRun && (
-              <p className="truncate">
-                Last run: {formatDateTime(schedule.lastRun.at)}
-              </p>
-            )}
+            <p className="truncate" title={formatDateTime(schedule.lastRun.at)}>
+              Last run: {formatRelativeDateTime(schedule.lastRun.at)}
+            </p>
           </div>
         </div>
       )}

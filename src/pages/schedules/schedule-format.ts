@@ -63,6 +63,32 @@ export function formatDateTime(value: string) {
   }).format(date);
 }
 
+export function formatRelativeDateTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) return value;
+
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((Date.now() - timestamp) / 1000),
+  );
+  if (elapsedSeconds < 60) return "just now";
+  if (elapsedSeconds < 60 * 60) {
+    return relativeCount(Math.floor(elapsedSeconds / 60), "minute");
+  }
+  if (elapsedSeconds < 60 * 60 * 24) {
+    return relativeCount(Math.floor(elapsedSeconds / (60 * 60)), "hour");
+  }
+  if (elapsedSeconds < 60 * 60 * 24 * 7) {
+    return relativeCount(Math.floor(elapsedSeconds / (60 * 60 * 24)), "day");
+  }
+
+  return formatDateTime(value);
+}
+
+function relativeCount(value: number, unit: string) {
+  return `${value} ${unit}${value === 1 ? "" : "s"} ago`;
+}
+
 export function browserTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
