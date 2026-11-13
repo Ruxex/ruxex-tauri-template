@@ -34,7 +34,7 @@ export async function openMarketplaceSettings(): Promise<void> {
 }
 
 export async function openCapabilities(): Promise<void> {
-  await browser.url("tauri://localhost/#/capabilities");
+  await browser.url("tauri://localhost/#/capabilities/plugins");
   await $("h1=Plugins").waitForDisplayed({ timeout: 10_000 });
 }
 

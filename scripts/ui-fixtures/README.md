@@ -9,6 +9,17 @@ UI fixtureは、ユーザーがデスクトップアプリを使うときと同�
 - AppServerプロトコルをfixtureから直接送ること、Tauriの内部コマンドや`invoke`をfixtureから呼ぶことは禁止です。DOMイベントを直接発火して画面操作を迂回する方法も使いません。
 - テスト用ファイルやGitリポジトリなど、アプリ起動前の環境準備はスクリプトで行えます。アプリ内データの作成や変更はGUIまたはアクセシビリティ経由で行ってください。
 
+## 撮影範囲
+
+`make ui-fixtures` はページの中で実データがどう並ぶかを確認するため、空状態だけでなく通常量と大量データの画面も撮影します。部品カタログ単体の撮影は行いません。
+
+- 通常量: active chat 12件、archived chat 2件、project 3件、`Product planning` の chat 2件、schedule 1件、MCP server 1件。
+- 大量データ: active chat 24件、archived chat 60件、project 24件、`Product planning` の chat 12件、schedule 12件、MCP server 12件。
+- Archived chats は1ページ50件の前後を撮影します。Projects、Automation、MCP settings はリストの上端と下端を撮り、project detail は現在の8件表示を確認します。
+- Approval center と Activity の Needs action は、pending approval がある画面を撮影します。
+
+データは各画面のフォームと通常の操作で作成します。生成した `.d/` と画像はコミットしません。
+
 ## 問題が起きたとき
 
 失敗した場合は、操作をまとめて再試行したり、待ち時間を闇雲に増やしたりせず、インタラクティブ実行で落ち着いて切り分けます。

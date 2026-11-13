@@ -37,13 +37,22 @@ class ScreenshotGalleryTests(unittest.TestCase):
             "fixtures/dummy-home/persistent.spec.ts",
             "fixtures/dummy-home/pages.spec.ts",
             "fixtures/dummy-home/unshot.spec.ts",
+            "fixtures/dummy-home/large-data.spec.ts",
             "fixtures/dummy-home/volatile.spec.ts",
             "fixtures/marketplace-home/persistent.spec.ts",
             "fixtures/dummy-home/git-diff-review.spec.ts",
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            names = ["run-1", "run-2", "run-3", "run-4", "run-5", "run-6"]
+            names = [
+                "run-1",
+                "run-2",
+                "run-3",
+                "run-4",
+                "run-5",
+                "run-6",
+                "run-7",
+            ]
             for index, (name, spec) in enumerate(zip(names, specs, strict=True), start=1):
                 run = root / name
                 run.mkdir()

@@ -36,6 +36,20 @@ describe("Volatile DummyProvider event states", () => {
           await waitForPendingRequest();
           await closeSidebarPanel();
           await saveFixtureScreenshot(scenario.screenshotName);
+          await browser.url("tauri://localhost/#/approvals");
+          await $("h1=Approval center").waitForDisplayed({ timeout: 10_000 });
+          await $("button[aria-label='Approve once']").waitForDisplayed({
+            timeout: 10_000,
+          });
+          await saveFixtureScreenshot("approval-center-pending.png");
+
+          await browser.url("tauri://localhost/#/activity");
+          await $("h1=Activity").waitForDisplayed({ timeout: 10_000 });
+          await $("button[aria-label='Needs action']").click();
+          await $("button[aria-label='Approve once']").waitForDisplayed({
+            timeout: 10_000,
+          });
+          await saveFixtureScreenshot("activity-center-needs-action.png");
           await resolveApproval("deny");
           await waitForPendingControlsGone();
           return;

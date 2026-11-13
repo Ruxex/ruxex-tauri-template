@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { PAGE_DENSITY_COUNTS } from "./catalog";
 import {
   closeSidebarPanel,
   saveFixtureScreenshot,
@@ -30,19 +31,12 @@ describe("DummyProvider unshot UI screenshots", () => {
   it("captures the remaining page and interactive component states", async () => {
     await waitForDesktopReady();
 
-    await openRoute("/settings/account", "h2=Account information");
-    await saveFixtureScreenshot("settings-account-login.png");
+    await captureAccountStates();
 
     await captureThemePresetPopover();
 
     await openRoute("/quick-panel", "h1=Quick request");
     await saveFixtureScreenshot("quick-panel.png");
-
-    await openRoute("/capabilities?tab=skills", "h1=Skills");
-    await saveFixtureScreenshot("capabilities-skills.png");
-
-    await openRoute("/capabilities?tab=mcp", "h1=MCP");
-    await saveFixtureScreenshot("capabilities-mcp.png");
 
     await openFixtureThread();
     await saveFixtureScreenshot("chat-completed-basic.png");
@@ -61,6 +55,10 @@ describe("DummyProvider unshot UI screenshots", () => {
 
 async function captureThemePresetPopover(): Promise<void> {
   await openRoute("/settings/appearance", "h2=Appearance");
+  const settingsSidebar = $("aside[aria-label='Settings sidebar']");
+  if (!(await settingsSidebar.isDisplayed().catch(() => false))) {
+    await $("button[aria-label='Open sidebar']").click();
+  }
   await $("aside[aria-label='Settings sidebar']").waitForDisplayed({
     timeout: 10_000,
   });
@@ -71,6 +69,30 @@ async function captureThemePresetPopover(): Promise<void> {
     .waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("theme-preset-popover-sidebar.png");
   await selector.$("summary").click();
+}
+
+async function captureAccountStates(): Promise<void> {
+  await openRoute("/settings/account", "h2=Account");
+  await $$("button[aria-label='Log out']")[0].waitForDisplayed({
+    timeout: 10_000,
+  });
+  await saveFixtureScreenshot("settings-account-ordinary.png");
+
+  await $("button[aria-label='Log out']").click();
+  await $("button[aria-label='Log in']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  await saveFixtureScreenshot("settings-account-login.png");
+
+  await $("input[aria-label='API key']").setValue("ruxex-e2e-dummy");
+  await $("button[aria-label='Log in']").click();
+  await browser.waitUntil(
+    async () => (await $("main").getText()).includes("Authenticated"),
+    {
+      timeout: 10_000,
+      timeoutMsg: "The dummy account should be authenticated again",
+    },
+  );
 }
 
 async function captureThreadSummary(): Promise<void> {
@@ -94,7 +116,7 @@ async function captureVisualizeFrame(): Promise<void> {
     kind: "text",
     value: "This is a fixed response from the dummy provider.",
   });
-  await $("iframe[title='Visualization']").waitForDisplayed({
+  await $$('iframe[title="Visualization"]')[0].waitForDisplayed({
     timeout: 10_000,
   });
   await saveFixtureScreenshot("visualize-frame.png");
@@ -217,7 +239,28 @@ async function captureAutomationStates(): Promise<void> {
   )[0].waitForDisplayed({
     timeout: 10_000,
   });
-  await saveFixtureScreenshot("automation-schedule-card.png");
+  await browser.waitUntil(
+    async () =>
+      (await $$('article[aria-label^="Open schedule:"]').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.schedules,
+    {
+      timeout: 10_000,
+      timeoutMsg: "The ordinary Automation list should show its schedule card",
+    },
+  );
+  await saveFixtureScreenshot("automation-ordinary.png");
+
+  await $("article[aria-label='Open schedule: Fixture review cadence']").click();
+  await $("h1=Fixture review cadence").waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("automation-detail-ordinary.png");
+  await $("button[aria-label='Edit schedule: Fixture review cadence']").click();
+  await $("h2=Edit schedule").waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("automation-edit-dialog.png");
+  await $(
+    "dialog[aria-labelledby='schedule-dialog-title'] .modal-box button[aria-label='Close schedule dialog']",
+  ).click();
+
+  await openRoute("/schedules", "h1=Automation");
 
   await $$('button[aria-label="Run now: Fixture review cadence"]')[0].click();
   await $("h2=Run schedule now?").waitForDisplayed({ timeout: 10_000 });
@@ -260,6 +303,16 @@ async function captureMcpDialogs(): Promise<void> {
       timeoutMsg: "The HTTP MCP fixture should expose its configured resources",
     },
   );
+  await browser.waitUntil(
+    async () =>
+      (await $$('details[data-testid^="mcp-server-details-"]').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.mcpServers,
+    {
+      timeout: 10_000,
+      timeoutMsg: "The ordinary MCP settings list should show one server",
+    },
+  );
+  await saveFixtureScreenshot("mcp-servers-ordinary.png");
   await $("[data-testid='mcp-server-details-fixture-mcp'] summary").click();
   await saveFixtureScreenshot("mcp-configured-resources.png");
 
@@ -267,26 +320,26 @@ async function captureMcpDialogs(): Promise<void> {
     "button[aria-label='Read example-note from fixture-mcp']",
   );
   await resourceButton.scrollIntoView({ block: "center" });
-  await browser.execute(() => {
-    document
-      .querySelector<HTMLButtonElement>(
-        "button[aria-label='Read example-note from fixture-mcp']",
-      )
-      ?.click();
-  });
+  await resourceButton.click();
   await $("[data-testid='mcp-resource-text']").waitForDisplayed({
     timeout: 10_000,
   });
   await saveFixtureScreenshot("mcp-resource-viewer.png");
 
-  await browser.execute(() => {
-    document
-      .querySelector<HTMLButtonElement>("button[aria-label='Edit fixture-mcp']")
-      ?.click();
-  });
+  await $("button[aria-label='Edit fixture-mcp']").click();
   await $("h2=Edit MCP server").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("mcp-edit-dialog.png");
   await $(
     "dialog .modal-box button[aria-label='Close MCP server dialog']",
   ).click();
+
+  await openRoute("/capabilities/mcp", "h1=MCP");
+  await browser.waitUntil(
+    async () => (await $("main").getText()).includes("fixture-mcp"),
+    {
+      timeout: 30_000,
+      timeoutMsg: "The MCP capabilities page should show the configured server",
+    },
+  );
+  await saveFixtureScreenshot("capabilities-mcp-ordinary.png");
 }

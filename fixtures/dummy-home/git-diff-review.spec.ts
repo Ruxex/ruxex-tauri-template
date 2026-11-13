@@ -28,13 +28,22 @@ describe("Git diff review right pane", () => {
       timeout: 10_000,
     });
     await browser.waitUntil(
-      async () =>
-        (await $("select[aria-label='Project']").getValue()) === projectId,
+      async () => (await browser.getUrl()).includes(`?projectId=${projectId}`),
       {
         timeout: 15_000,
         timeoutMsg: "The new chat should load the selected workspace project",
       },
     );
+    await $("summary[aria-label='Project']").waitForDisplayed({
+      timeout: 10_000,
+    });
+    await $("summary[aria-label='Project']").click();
+    const projectSearch = $("input[aria-label='Search projects']");
+    await projectSearch.waitForDisplayed({ timeout: 10_000 });
+    await projectSearch.setValue("Git diff review fixture");
+    const projectOption = `button[id$='-project-${projectId}']`;
+    await $(projectOption).waitForDisplayed({ timeout: 10_000 });
+    await $(projectOption).click();
 
     await sendComposerPrompt("example:basic");
     await waitForCompletedTurn({
@@ -43,11 +52,13 @@ describe("Git diff review right pane", () => {
     });
 
     const reviewButton = $(
-      "button[aria-label='Review 4 additions and 2 deletions']",
+      "button[aria-label='Review 4 additions and 2 deletions across 2 files']",
     );
     await reviewButton.waitForDisplayed({ timeout: 15_000 });
     await reviewButton.click();
-    await $("section[aria-label='Code changes']").waitForDisplayed({
+    await $(
+      "[role='tabpanel'] section[aria-label='Code changes']",
+    ).waitForDisplayed({
       timeout: 10_000,
     });
 

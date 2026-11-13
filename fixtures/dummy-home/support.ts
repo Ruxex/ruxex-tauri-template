@@ -398,6 +398,38 @@ export async function createRootlessProject(
   }
 }
 
+export async function createFixtureSchedule(name: string): Promise<void> {
+  await $("button[aria-label='New schedule']").click();
+  await $("h2=Create a schedule").waitForDisplayed({ timeout: 10_000 });
+  await $("input[aria-label='Schedule name']").setValue(name);
+  await $("textarea[aria-label='Instructions']").setValue(
+    `Review the fixture page density for ${name}.`,
+  );
+  await $("select[aria-label='Cadence']").selectByAttribute(
+    "value",
+    "weekly",
+  );
+  const monday = $("button[aria-label='Monday']");
+  if ((await monday.getAttribute("aria-pressed")) !== "true") {
+    await monday.click();
+  }
+  await $("button[aria-label='Create schedule']").click();
+  try {
+    await $(`button[aria-label='Edit schedule: ${name}']`).waitForDisplayed({
+      timeout: 10_000,
+    });
+  } catch (error) {
+    const dialogText = await $("dialog[aria-labelledby='schedule-dialog-title']")
+      .getText()
+      .catch(() => "<dialog closed>");
+    const pageText = await $("main").getText().catch(() => "<main unavailable>");
+    throw new Error(
+      `Schedule ${name} was not listed after creation. Dialog: ${dialogText}. Page: ${pageText}`,
+      { cause: error },
+    );
+  }
+}
+
 export async function createWorkspaceProject(
   name: string,
   workspace: string,

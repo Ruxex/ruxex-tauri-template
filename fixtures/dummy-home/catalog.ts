@@ -60,6 +60,34 @@ export type VolatileScenario = {
   readonly screenshotName: string;
 };
 
+export const PAGE_DENSITY_COUNTS = {
+  ordinary: {
+    activeThreads: 12,
+    archivedThreads: 2,
+    projects: 3,
+    projectThreads: 2,
+    schedules: 1,
+    mcpServers: 1,
+  },
+  large: {
+    activeThreads: 24,
+    archivedThreads: 60,
+    projects: 24,
+    projectThreads: 12,
+    schedules: 12,
+    mcpServers: 12,
+  },
+} as const;
+
+export const LARGE_DATA_ADDITIONS = {
+  activeThreads: 12,
+  archivedThreads: 58,
+  projectThreads: 10,
+  projects: 21,
+  schedules: 11,
+  mcpServers: 11,
+} as const;
+
 export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
   {
     id: "basic",

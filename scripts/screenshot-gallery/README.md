@@ -2,7 +2,11 @@
 
 This ignored development tool serves the screenshots under `artifacts/e2e` as a small browser gallery.
 
-By default it shows the newest complete `make ui-fixtures` batch (the six E2E runs that make target executes, including the Git diff review fixture) and groups the cards by page name. If no complete batch is available, it falls back to the newest screenshot collection. Use `--all` when you need to inspect every historical collection.
+By default it shows the newest complete `make ui-fixtures` batch (the seven E2E runs that make target executes, including the large-data and Git diff review fixtures) and groups the cards by page name. If no complete batch is available, it falls back to the newest screenshot collection. Use `--all` when you need to inspect every historical collection.
+
+Page-density captures use `ordinary` and `many` in their filenames. Long lists
+may have separate `top`, `bottom`, or page-number screenshots so the gallery
+shows both page layout and overflow behavior.
 
 Click a screenshot card to open the slideshow at that image. Use the previous
 and next buttons, the left/right arrow keys, or swipe horizontally on the image

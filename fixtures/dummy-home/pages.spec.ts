@@ -1,3 +1,4 @@
+import { PAGE_DENSITY_COUNTS } from "./catalog";
 import {
   closeSidebarPanel,
   saveFixtureScreenshot,
@@ -15,17 +16,17 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
   {
     path: "/",
     heading: "[contenteditable='true'][aria-label='Message']",
-    screenshotName: "home-new-chat.png",
+    screenshotName: "home-ordinary.png",
   },
   {
     path: "/archive",
     heading: "h1=Archived chats",
-    screenshotName: "archived-chats.png",
+    screenshotName: "archive-ordinary.png",
   },
   {
     path: "/projects",
     heading: "h1=Projects",
-    screenshotName: "projects-list.png",
+    screenshotName: "projects-ordinary.png",
   },
   {
     path: "/settings",
@@ -38,8 +39,8 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
     screenshotName: "settings-appearance.png",
   },
   {
-    path: "/settings/models",
-    heading: "h2=Models",
+    path: "/settings/provider",
+    heading: "h2=Provider",
     screenshotName: "settings-models.png",
   },
   {
@@ -69,8 +70,13 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
   },
   {
     path: "/settings/account",
-    heading: "h2=Account information",
+    heading: "h2=Account",
     screenshotName: "settings-account.png",
+  },
+  {
+    path: "/settings/version",
+    heading: "h2=Version",
+    screenshotName: "settings-version.png",
   },
   {
     path: "/schedules",
@@ -87,6 +93,21 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
     heading: "h1=Activity",
     screenshotName: "activity-center-empty.png",
   },
+  {
+    path: "/capabilities/plugins",
+    heading: "h1=Plugins",
+    screenshotName: "capabilities-plugins-no-marketplace.png",
+  },
+  {
+    path: "/capabilities/skills",
+    heading: "h1=Skills",
+    screenshotName: "capabilities-skills-ordinary.png",
+  },
+  {
+    path: "/capabilities/mcp",
+    heading: "h1=MCP",
+    screenshotName: "capabilities-mcp-no-servers.png",
+  },
 ];
 
 describe("DummyProvider page screenshots", () => {
@@ -96,8 +117,9 @@ describe("DummyProvider page screenshots", () => {
     for (const page of PAGE_FIXTURES) {
       await browser.url(`tauri://localhost/#${page.path}`);
       await $(page.heading).waitForDisplayed({ timeout: 10_000 });
-      if (page.path === "/") {
-        await waitForHomeReady();
+      await waitForPageContent(page.path);
+      if (page.path === "/archive") {
+        await saveArchiveDialogScreenshots();
       }
       await saveFixtureScreenshot(page.screenshotName);
     }
@@ -109,6 +131,150 @@ describe("DummyProvider page screenshots", () => {
     ).click();
     await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
     await closeSidebarPanel();
-    await saveFixtureScreenshot("project-product-planning.png");
+    await browser.waitUntil(
+      async () =>
+        (await $$('section.card a').length) >=
+        PAGE_DENSITY_COUNTS.ordinary.projectThreads,
+      {
+        timeout: 10_000,
+        timeoutMsg: "Ordinary project chats should be visible",
+      },
+    );
+    await saveFixtureScreenshot("project-detail-ordinary.png");
+    await saveProjectDialogScreenshots();
   });
 });
+
+async function waitForPageContent(path: string): Promise<void> {
+  if (path === "/") {
+    await waitForHomeReady();
+    await browser.waitUntil(
+      async () =>
+        (await $$("#recent-chats-list > ul > li").length) ===
+        Math.min(PAGE_DENSITY_COUNTS.ordinary.activeThreads, 8),
+      {
+        timeout: 10_000,
+        timeoutMsg: "The ordinary chat sidebar should show its first page",
+      },
+    );
+    return;
+  }
+
+  if (path === "/archive") {
+    await browser.waitUntil(
+      async () =>
+        (await $$('main a[href*="/chat/"]').length) >= 2 ||
+        (await $("main").getText()).includes("Unable to load archived chats."),
+      {
+        timeout: 10_000,
+        timeoutMsg: "Ordinary archived chats should finish loading",
+      },
+    );
+    return;
+  }
+
+  if (path === "/projects") {
+    await browser.waitUntil(
+      async () =>
+        (await $$('table[aria-label="Projects"] tbody tr').length) ===
+          PAGE_DENSITY_COUNTS.ordinary.projects ||
+        (await $("main").getText()).includes("Unable to load projects."),
+      {
+        timeout: 10_000,
+        timeoutMsg: "Ordinary projects should finish loading",
+      },
+    );
+    return;
+  }
+
+  const loadedStates: Record<string, () => Promise<boolean>> = {
+    "/settings/provider": async () =>
+      (await $("main").getText()).includes("Data directory"),
+    "/settings/hooks": async () =>
+      (await $("main").getText()).includes("No hooks configured.") ||
+      (await $("main").getText()).includes("No hooks in this directory.") ||
+      (await $("main").getText()).includes("Unable to load hooks") ||
+      (await $$('button[aria-label^="PreToolUse"]').length) > 0,
+    "/settings/marketplaces": async () => {
+      const text = await $("main").getText();
+      return (
+        text.includes("No plugin marketplaces configured.") ||
+        text.includes("Unable to load marketplaces:") ||
+        (await $$('button[aria-label^="Update "], button[aria-label^="Remove "]')
+          .length) > 0
+      );
+    },
+    "/settings/mcp-servers": async () => {
+      const text = await $("main").getText();
+      return (
+        text.includes("No global MCP servers configured.") ||
+        text.includes("Unable to load global MCP servers:") ||
+        text.includes("Unable to load MCP runtime status:") ||
+        (await $$('details[data-testid^="mcp-server-details-"]').length) > 0
+      );
+    },
+    "/settings/account": async () =>
+      (await $("main").getText()).includes("Authenticated") ||
+      (await $("button[aria-label='Log in']").isExisting()),
+    "/schedules": async () => {
+      const text = await $("main").getText();
+      return (
+        text.includes("No schedules yet") ||
+        text.includes("Unable to load schedules:") ||
+        (await $$('article[aria-label^="Open schedule:"]').length) > 0
+      );
+    },
+    "/approvals": async () =>
+      (await $("main").getText()).includes("No pending approvals.") ||
+      (await $("main").getText()).includes("Approve once"),
+    "/activity": async () =>
+      (await $("main").getText()).includes("Fixture basic 01") ||
+      (await $("main").getText()).includes("No activity yet.") ||
+      (await $("[aria-label='Activity entries']").isExisting()),
+    "/capabilities/plugins": async () =>
+      (await $("main").getText()).includes("No plugin marketplaces yet") ||
+      (await $("main").getText()).includes("Unable to load Plugins:") ||
+      (await $$('[data-testid="plugin-marketplace"]').length) > 0,
+    "/capabilities/skills": async () =>
+      (await $$('[data-testid="skills-source-group"]').length) > 0 ||
+      (await $("main").getText()).includes("No Skills discovered.") ||
+      (await $("main").getText()).includes("Unable to load Skills:"),
+    "/capabilities/mcp": async () =>
+      (await $("main").getText()).includes("No MCP servers configured.") ||
+      (await $$('[data-testid^="mcp-server-details-"]').length) > 0 ||
+      (await $("main").getText()).includes("Unable to load MCP servers:"),
+  };
+  const isLoaded = loadedStates[path];
+  if (isLoaded) {
+    await browser.waitUntil(isLoaded, {
+      timeout: 15_000,
+      timeoutMsg: `The ${path} page data should finish loading`,
+    });
+  }
+}
+
+async function saveArchiveDialogScreenshots(): Promise<void> {
+  await $$('button[aria-label="Delete"]')[0].click();
+  await $("h2=Delete chat?").waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("archive-delete-dialog.png");
+  await $("button[aria-label='Cancel']").click();
+
+  await $("button[aria-label='Delete all archived chats']").click();
+  await $("h2=Delete all archived chats?").waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("archive-delete-all-dialog.png");
+  await $("button[aria-label='Cancel']").click();
+}
+
+async function saveProjectDialogScreenshots(): Promise<void> {
+  await $("button[aria-label='Edit project']").click();
+  await $("h2=Edit project").waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("project-edit-dialog.png");
+  await $(
+    "dialog[aria-labelledby='edit-project-title'] .modal-box button[aria-label='Close edit project dialog']",
+  ).click();
+
+  await $("button[aria-label='Delete project']").click();
+  await $("h2=Delete project?").waitForDisplayed({ timeout: 10_000 });
+  await saveFixtureScreenshot("project-delete-dialog.png");
+  await $("button[aria-label='Cancel']").click();
+}

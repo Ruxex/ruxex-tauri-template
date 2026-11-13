@@ -283,30 +283,29 @@ Marketplace states:
 make ui-fixtures
 ```
 
-The generated home is `.d/` and is intentionally not committed. The default
-persistent catalog contains 14 threads: 12 active and 2 archived, across
-three rootless projects with 2, 1, and 0 project threads. Re-running the
-command resets and rebuilds that catalog, so its counts remain deterministic.
+The generated home is `.d/` and is intentionally not committed. The ordinary
+baseline contains 14 threads: 12 active and 2 archived, across three rootless
+projects with 2, 1, and 0 project threads. Re-running the command resets the
+home before rebuilding both ordinary and large data, so the screenshots remain
+deterministic.
 
-This headful run captures six screenshots: pending approval, pending user
-input, pending permissions, slow streaming, queued message, and disconnect
-recovery. Pending request cards and in-progress streams live only in memory;
-they are recreated by this WDIO operation set and are not restored from the
-database. The complete target intentionally leaves those volatile conversations
-in `.d/` for manual UI inspection after the run.
+The stable page pass captures every routed page, ordinary page-level data, and
+reachable dialogs and menus in their real page context. The ordinary home has
+12 active chats, 2 archived chats, and 3 projects; `Product planning` has 2
+chats. The Automation and MCP settings pages each receive one configured
+record before their populated screenshots are captured.
 
-This captures 15 stable page screenshots covering the home,
-thread/archive/project pages, all settings sections, Automation, Approval
-center, and one project detail page. It then captures the remaining page and
-interactive states: login, Quick request, Skills/MCP tabs, a completed
-conversation, project creation pickers, chat search, composer menus and slash
-commands, populated Automation cards/dialogs, and MCP transport dialogs. The
-same pass starts the repository-owned HTTP MCP fixture and captures a
-configured server with its Resource list, Resource content, and edit dialog.
-There are 22 screenshots in this additional group, including the theme preset
-popover with the workspace side panel open. All screenshots are written
-to the ignored `artifacts/e2e/` run directory and the prepared home is
-preserved in `.d/`.
+The large-data pass extends the same home through the visible UI and captures
+24 active chats, 60 archived chats, 24 projects, 12 chats in `Product
+planning`, 12 schedules, and 12 configured MCP servers. It captures the first
+and second archive pages, the full top and bottom of long lists, and the
+project detail view where the current eight-chat limit is visible. The
+volatile pass also captures pending requests inside Approval center and the
+Activity page's Needs action view, along with pending user input, permissions,
+streaming, queued message, and disconnect recovery. The marketplace and Git
+diff review fixtures remain part of the same target. Screenshots are written
+to ignored `artifacts/e2e/` run directories; the prepared homes remain
+ignored.
 
 ### Real plugin marketplace fixture home
 
@@ -326,8 +325,8 @@ is still performed by the App Server into the generated home, matching the
 real application flow.
 
 The run covers the empty Marketplace state, the real `openai-curated` list,
-an uninstalled Notion detail page, and an installed Build Web Apps state. The
-five screenshots are saved under the ignored `artifacts/e2e/` run directory:
+an uninstalled Notion detail page, and an installed Build Web Apps state. Its
+screenshots are saved under the ignored `artifacts/e2e/` run directory:
 `marketplace-empty.png`, `marketplace-list.png`,
 `marketplace-notion-detail.png`, `marketplace-installed-list.png`, and
 `marketplace-build-web-apps-detail.png`.
