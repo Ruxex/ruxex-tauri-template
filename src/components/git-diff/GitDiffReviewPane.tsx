@@ -131,7 +131,7 @@ export function GitDiffReviewPane({
       )}
       {query.data && query.data.length > 0 && (
         <CodeView
-          className="min-h-0 flex-1"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
           items={items}
           renderCustomHeader={(item) => {
             const file = fileByPath.get(item.id);

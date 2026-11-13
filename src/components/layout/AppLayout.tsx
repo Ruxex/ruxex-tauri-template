@@ -1,6 +1,5 @@
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -12,26 +11,19 @@ import type { AppOutletContext } from "../../app/app-outlet-context";
 import { useThreadReadState } from "../../app/thread-read-state";
 import { useUiPreferences } from "../../app/ui-preferences";
 import { useProject, useThread } from "../../app-server/hooks";
-import type { GitDiffReviewTarget } from "../git-diff/GitDiffReviewPane";
+import {
+  GitDiffReviewPane,
+  type GitDiffReviewTarget,
+} from "../git-diff/GitDiffReviewPane";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
+import { TerminalPane } from "../terminal/TerminalPane";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
-
-const GitDiffReviewPane = lazy(() =>
-  import("../git-diff/GitDiffReviewPane").then((module) => ({
-    default: module.GitDiffReviewPane,
-  })),
-);
-const TerminalPane = lazy(() =>
-  import("../terminal/TerminalPane").then((module) => ({
-    default: module.TerminalPane,
-  })),
-);
 
 const MAX_RIGHT_PANE_WIDTH = 1536;
 
@@ -294,18 +286,18 @@ export function AppLayout() {
                     const selected = tab.id === activeRightPaneTabId;
                     return (
                       <div
-                        className="flex shrink-0 items-center"
+                        className={`flex shrink-0 items-center rounded-t-md ${
+                          selected
+                            ? "bg-base-100 text-base-content"
+                            : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
+                        }`}
                         key={tab.id}
                         role="presentation"
                       >
                         <button
                           aria-controls={`right-pane-content-${tab.id}`}
                           aria-selected={selected}
-                          className={`max-w-52 truncate rounded-t-md px-3 py-2 text-xs ${
-                            selected
-                              ? "bg-base-100 text-base-content"
-                              : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
-                          }`}
+                          className="max-w-52 truncate px-3 py-2 text-xs"
                           id={`right-pane-tab-${tab.id}`}
                           onClick={() => setActiveRightPaneTabId(tab.id)}
                           role="tab"
@@ -315,11 +307,11 @@ export function AppLayout() {
                         </button>
                         <button
                           aria-label={`Close ${label} tab`}
-                          className="rounded p-1 text-base-content/50 hover:bg-base-200 hover:text-base-content"
+                          className="mr-1 rounded p-1 text-base-content/50 hover:bg-base-300 hover:text-base-content"
                           onClick={() => closeRightPaneTab(tab.id)}
                           type="button"
                         >
-                          <span aria-hidden="true">×</span>
+                          <XMarkIcon aria-hidden="true" className="size-3.5" />
                         </button>
                       </div>
                     );
@@ -330,45 +322,23 @@ export function AppLayout() {
                   return (
                     <div
                       aria-labelledby={`right-pane-tab-${tab.id}`}
-                      className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+                      className="min-h-0 flex-1 overflow-hidden"
                       hidden={!selected}
                       id={`right-pane-content-${tab.id}`}
                       key={tab.id}
                       role="tabpanel"
                     >
                       {tab.kind === "git-diff" && (
-                        <Suspense
-                          fallback={
-                            <div
-                              className="p-4 text-sm text-base-content/60"
-                              role="status"
-                            >
-                              Loading diff viewer…
-                            </div>
-                          }
-                        >
-                          <GitDiffReviewPane
-                            isOpen={rightPaneOpen && selected}
-                            target={tab.target}
-                          />
-                        </Suspense>
+                        <GitDiffReviewPane
+                          isOpen={rightPaneOpen && selected}
+                          target={tab.target}
+                        />
                       )}
                       {tab.kind === "terminal" && (
-                        <Suspense
-                          fallback={
-                            <div
-                              className="p-4 text-sm text-base-content/60"
-                              role="status"
-                            >
-                              Loading terminal…
-                            </div>
-                          }
-                        >
-                          <TerminalPane
-                            cwd={tab.cwd}
-                            isOpen={rightPaneOpen && selected}
-                          />
-                        </Suspense>
+                        <TerminalPane
+                          cwd={tab.cwd}
+                          isOpen={rightPaneOpen && selected}
+                        />
                       )}
                     </div>
                   );
