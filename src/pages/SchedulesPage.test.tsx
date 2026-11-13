@@ -79,7 +79,7 @@ describe("SchedulesPage", () => {
       cardView.getByRole("button", { name: "Delete: Nightly checks" })
         .textContent,
     ).toBe("");
-    expect(screen.getByText("Last run failed: offline")).toBeTruthy();
+    expect(cardView.getByText(/^Last run:/)).toBeTruthy();
     expect(screen.getByTestId("schedule-grid").className).not.toContain(
       "sm:grid-cols-2",
     );

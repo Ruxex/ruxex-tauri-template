@@ -100,7 +100,7 @@ export function SchedulesPage() {
 
   return (
     <PageContainer>
-      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-base-300 pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-5 pb-6">
         <h1 className="text-3xl font-semibold tracking-tight">Automation</h1>
         <button
           aria-expanded={isScheduleModalOpen}
@@ -157,16 +157,14 @@ export function SchedulesPage() {
       )}
 
       <section aria-labelledby="schedule-list-heading">
-        <div className="flex items-end justify-between gap-4 border-b border-base-300 pb-3">
-          <div>
-            <h2 className="text-lg font-semibold" id="schedule-list-heading">
-              Your schedules
-            </h2>
-            <p className="mt-1 text-sm text-base-content/60">
-              {savedSchedules.length} schedule
-              {savedSchedules.length === 1 ? "" : "s"}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-4 pb-3">
+          <h2 className="text-lg font-semibold" id="schedule-list-heading">
+            Your schedules
+          </h2>
+          <p className="text-sm text-base-content/60">
+            {savedSchedules.length} schedule
+            {savedSchedules.length === 1 ? "" : "s"}
+          </p>
         </div>
         {actionError && (
           <p className="mt-4 text-sm text-error" role="alert">
@@ -200,7 +198,9 @@ export function SchedulesPage() {
               isTogglePending={schedules.setEnabled.isPending}
               schedule={schedule}
               onEdit={openEditPanel}
-              onOpen={(target) => window.location.hash = `/schedules/${target.id}`}
+              onOpen={(target) =>
+                (window.location.hash = `/schedules/${target.id}`)
+              }
               onEnabledChange={(target, enabled) =>
                 schedules.setEnabled.mutate({ id: target.id, enabled })
               }

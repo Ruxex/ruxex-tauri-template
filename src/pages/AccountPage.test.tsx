@@ -41,7 +41,7 @@ describe("AccountPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole("heading", { name: "Account" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Account" })).toBeTruthy();
     expect(
       screen
         .getByText("Authenticated")
@@ -50,9 +50,8 @@ describe("AccountPage", () => {
     ).toContain("text-success");
     expect(screen.getByText("API key")).toBeTruthy();
     expect(
-      screen
-        .getByRole("heading", { name: "Account information" })
-        .closest("section")?.className,
+      screen.getByRole("heading", { name: "Information" }).closest("section")
+        ?.className,
     ).toContain("overflow-hidden");
     expect(screen.queryByRole("link", { name: "Log in" })).toBeNull();
   });
@@ -95,6 +94,9 @@ describe("AccountPage", () => {
 
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeTruthy();
     expect(screen.getByLabelText("API key")).toBeTruthy();
+    expect(
+      screen.queryByText("API key", { selector: ".label-text" }),
+    ).toBeNull();
     expect(screen.getByRole("button", { name: "Log in" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Back home" })).toBeNull();
   });

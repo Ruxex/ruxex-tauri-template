@@ -94,22 +94,22 @@ export function projectMetadataToRecord(
 
 export function projectColorClassName(color: ProjectColor): string {
   const classes: Record<ProjectColor, string> = {
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300",
-    violet: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
-    fuchsia: "bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300",
-    pink: "bg-pink-500/10 text-pink-600 dark:text-pink-300",
-    red: "bg-red-500/10 text-red-600 dark:text-red-300",
-    rose: "bg-rose-500/10 text-rose-600 dark:text-rose-300",
-    orange: "bg-orange-500/10 text-orange-600 dark:text-orange-300",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
-    yellow: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-300",
-    lime: "bg-lime-500/10 text-lime-600 dark:text-lime-300",
-    green: "bg-green-500/10 text-green-600 dark:text-green-300",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    teal: "bg-teal-500/10 text-teal-600 dark:text-teal-300",
-    cyan: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-300",
-    slate: "bg-slate-500/10 text-slate-600 dark:text-slate-300",
+    blue: "project-icon-tile project-icon-blue",
+    indigo: "project-icon-tile project-icon-indigo",
+    violet: "project-icon-tile project-icon-violet",
+    fuchsia: "project-icon-tile project-icon-fuchsia",
+    pink: "project-icon-tile project-icon-pink",
+    red: "project-icon-tile project-icon-red",
+    rose: "project-icon-tile project-icon-rose",
+    orange: "project-icon-tile project-icon-orange",
+    amber: "project-icon-tile project-icon-amber",
+    yellow: "project-icon-tile project-icon-yellow",
+    lime: "project-icon-tile project-icon-lime",
+    green: "project-icon-tile project-icon-green",
+    emerald: "project-icon-tile project-icon-emerald",
+    teal: "project-icon-tile project-icon-teal",
+    cyan: "project-icon-tile project-icon-cyan",
+    slate: "project-icon-tile project-icon-slate",
   };
   return classes[color] ?? classes[DEFAULT_PROJECT_METADATA.color];
 }

@@ -243,13 +243,7 @@ export function HooksPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-3xl font-semibold tracking-tight">Hooks</h2>
-        <p className="mt-2 text-sm text-base-content/60">
-          Read-only view of lifecycle hooks discovered by the App Server. Review
-          or edit the source configuration outside the desktop app.
-        </p>
-      </div>
+      <h2 className="text-3xl font-semibold tracking-tight">Hooks</h2>
       {hooks.isLoading && (
         <div
           aria-label="Loading hooks"

@@ -212,10 +212,11 @@ describe("AppLayout", () => {
     },
   );
 
-  it("keeps the settings context panel visible on the account page", () => {
+  it("closes the sidebar and hides its context panel on the account page", () => {
+    const update = vi.fn();
     useUiPreferences.mockReturnValue({
       preferences: { sidebarCollapsed: false },
-      update: vi.fn(),
+      update,
     });
 
     render(
@@ -225,8 +226,9 @@ describe("AppLayout", () => {
     );
 
     expect(projectSidebarProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ showContextPanel: true }),
+      expect.objectContaining({ showContextPanel: false }),
     );
+    expect(update).toHaveBeenCalledWith({ sidebarCollapsed: true });
   });
 
   it("uses the selected thread title in the shared navigation bar", () => {

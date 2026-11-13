@@ -155,10 +155,10 @@ describe("HooksPage", () => {
     expect(screen.getByText("Hook configuration warning")).toBeTruthy();
     expect(screen.getByText("Hook configuration error")).toBeTruthy();
     expect(
-      screen.getByText(
+      screen.queryByText(
         /Review or edit the source configuration outside the desktop app/,
       ),
-    ).toBeTruthy();
+    ).toBeNull();
     expect(document.querySelectorAll("details")[0]?.open).toBe(false);
 
     const summaries = Array.from(document.querySelectorAll("summary"));

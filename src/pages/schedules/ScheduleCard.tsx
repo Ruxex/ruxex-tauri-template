@@ -1,7 +1,5 @@
 import {
   CalendarDaysIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
   PlayIcon,
   PencilIcon,
   PlusIcon,
@@ -157,25 +155,8 @@ export function ScheduleCard({
               <p className="truncate font-mono">Thread: {schedule.threadId}</p>
             )}
             {schedule.lastRun && (
-              <p
-                className={`flex items-center gap-1.5 text-xs ${schedule.lastRun.success ? "text-success" : "text-error"}`}
-              >
-                {schedule.lastRun.success ? (
-                  <CheckCircleIcon
-                    aria-hidden="true"
-                    className="size-4 shrink-0"
-                  />
-                ) : (
-                  <ExclamationCircleIcon
-                    aria-hidden="true"
-                    className="size-4 shrink-0"
-                  />
-                )}
-                <span className="truncate">
-                  {schedule.lastRun.success
-                    ? "Last run succeeded"
-                    : `Last run failed: ${schedule.lastRun.message}`}
-                </span>
+              <p className="truncate">
+                Last run: {formatDateTime(schedule.lastRun.at)}
               </p>
             )}
           </div>

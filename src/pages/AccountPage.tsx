@@ -2,7 +2,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { formatErrorMessage } from "../app/error-message";
 import { useAccount, useLogin, useLogout } from "../app-server/hooks";
 import { PasswordInput } from "../components/common/PasswordInput";
@@ -19,12 +19,18 @@ export function AccountPage() {
   const [apiKey, setApiKey] = useState("");
 
   if (account.isLoading) {
-    return <span className="loading loading-spinner loading-lg" />;
+    return (
+      <AccountPageLayout>
+        <span className="loading loading-spinner loading-lg" />
+      </AccountPageLayout>
+    );
   }
 
   if (account.isError) {
     return (
-      <p className="alert alert-error">{formatErrorMessage(account.error)}</p>
+      <AccountPageLayout>
+        <p className="alert alert-error">{formatErrorMessage(account.error)}</p>
+      </AccountPageLayout>
     );
   }
 
@@ -32,10 +38,10 @@ export function AccountPage() {
 
   if (data?.authStatus !== "authenticated") {
     return (
-      <div className="space-y-5">
+      <AccountPageLayout>
         <SettingsPanel title="Sign in">
           <form
-            className="space-y-5 p-5"
+            className="grid gap-5 p-5"
             onSubmit={(event) => {
               event.preventDefault();
               void handleLogin();
@@ -43,6 +49,7 @@ export function AccountPage() {
           >
             <PasswordInput
               autoComplete="current-password"
+              hideLabel
               id="account-api-key"
               label="API key"
               placeholder="Enter your API key"
@@ -65,13 +72,13 @@ export function AccountPage() {
             </div>
           </form>
         </SettingsPanel>
-      </div>
+      </AccountPageLayout>
     );
   }
 
   return (
-    <div className="space-y-5">
-      <SettingsPanel title="Account information">
+    <AccountPageLayout>
+      <SettingsPanel title="Information">
         <dl className="divide-y divide-base-300 text-sm">
           <SettingRow label="Status">
             <StateBadge
@@ -110,7 +117,7 @@ export function AccountPage() {
           </p>
         )}
       </SettingsPanel>
-    </div>
+    </AccountPageLayout>
   );
 
   async function handleLogin() {
@@ -121,6 +128,15 @@ export function AccountPage() {
       // The mutation state renders the error next to the form.
     }
   }
+}
+
+function AccountPageLayout({ children }: { children: ReactNode }) {
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-6">
+      <h2 className="text-3xl font-semibold tracking-tight">Account</h2>
+      {children}
+    </div>
+  );
 }
 
 function formatAccountType(type: string | undefined): string {

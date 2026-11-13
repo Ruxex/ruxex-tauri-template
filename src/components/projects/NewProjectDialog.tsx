@@ -97,9 +97,6 @@ export function NewProjectDialog({
     >
       <form className="grid w-full gap-4" noValidate onSubmit={handleSubmit}>
         <div className="form-control w-full">
-          <label className="label" htmlFor="new-project-name">
-            <span className="label-text text-sm font-medium">Project name</span>
-          </label>
           <input
             aria-label="Project name"
             aria-invalid={nameValidationError || undefined}
@@ -123,10 +120,7 @@ export function NewProjectDialog({
         </div>
 
         <div className="form-control w-full">
-          <span className="label-text text-sm font-medium">
-            Workspace folder
-          </span>
-          <div className="mt-1 flex min-w-0 w-full gap-2">
+          <div className="flex min-w-0 w-full gap-2">
             <button
               aria-label={
                 root

@@ -67,7 +67,9 @@ export function AppLayout() {
   const routePanel = sidebarPanelForPath(location.pathname);
   const isChatRoute = location.pathname.startsWith("/chat/");
   const hidesContextPanel =
-    routePanel === "projects" || location.pathname.startsWith("/approvals");
+    routePanel === "projects" ||
+    routePanel === "account" ||
+    location.pathname.startsWith("/approvals");
   const chatTitle =
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
@@ -140,8 +142,10 @@ export function AppLayout() {
     setActivePanel(routePanel);
     const enteredProjects =
       routePanel === "projects" && previousRoutePanel.current !== "projects";
+    const enteredAccount =
+      routePanel === "account" && previousRoutePanel.current !== "account";
     previousRoutePanel.current = routePanel;
-    if (enteredProjects && !preferences.sidebarCollapsed) {
+    if ((enteredProjects || enteredAccount) && !preferences.sidebarCollapsed) {
       update({ sidebarCollapsed: true });
     }
   }, [preferences.sidebarCollapsed, routePanel, update]);

@@ -24,6 +24,10 @@ function breadcrumbsForPath(
     return [{ label: "Settings", to: "/settings" }, { label: "General" }];
   }
 
+  if (pathname === "/settings/account") {
+    return [{ label: "Account" }];
+  }
+
   if (pathname.startsWith("/settings/")) {
     const section = pathname.split("/")[2];
     const labels: Record<string, string> = {

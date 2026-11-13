@@ -39,7 +39,7 @@ describe("ThreadCard", () => {
     expect(onRestore).toHaveBeenCalledOnce();
   });
 
-  it("gives compact project chats a visible card boundary", async () => {
+  it("renders compact project chats as a single bordered row", async () => {
     const { ThreadCard } = await import("./ThreadCard");
 
     render(
@@ -59,9 +59,10 @@ describe("ThreadCard", () => {
     const chatLink = screen.getByRole("link", {
       name: /Project chatProject preview/,
     });
-    const card = chatLink.closest("article");
-    expect(card).toBeTruthy();
-    expect(card?.className).toContain("border-base-300");
-    expect(card?.className).toContain("bg-base-100");
+    const row = chatLink.parentElement;
+    expect(row).toBeTruthy();
+    expect(row?.className).toContain("border-base-300");
+    expect(row?.className).toContain("bg-base-100");
+    expect(chatLink.closest("article")).toBeNull();
   });
 });

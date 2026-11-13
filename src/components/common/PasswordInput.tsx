@@ -5,17 +5,19 @@ type PasswordInputProps = Omit<
   "type"
 > & {
   label: string;
+  hideLabel?: boolean;
 };
 
 export function PasswordInput({
   className,
+  hideLabel = false,
   id,
   label,
   ...props
 }: PasswordInputProps) {
   return (
     <label className="form-control w-full gap-2" htmlFor={id}>
-      <span className="label-text">{label}</span>
+      <span className={hideLabel ? "sr-only" : "label-text"}>{label}</span>
       <input
         {...props}
         aria-label={label}

@@ -31,20 +31,18 @@ describe("ProjectMetadataFields", () => {
     expect(
       screen.getByRole("button", { name: "Project color: Blue" }),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("region", { name: "Project preview" }),
-    ).toBeTruthy();
+    const preview = screen.getByRole("img", { name: "Project preview" });
+    expect(preview.className).toContain("size-11");
     expect(
       screen.getByRole("region", { name: "Project metadata controls" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("region", { name: "Project preview" }).parentElement
-        ?.className,
-    ).toContain("sm:grid-cols-");
-    expect(
       screen.getByRole("region", { name: "Project metadata controls" })
         .className,
-    ).toContain("grid");
+    ).toContain("grid-cols-2");
+    expect(preview.parentElement?.className).toContain(
+      "grid-cols-[2.75rem_minmax(0,1fr)]",
+    );
     expect(
       screen.queryByRole("group", { name: "Project icon options" }),
     ).toBeNull();
@@ -164,6 +162,14 @@ describe("ProjectMetadataFields", () => {
     fireEvent.pointerDown(document.body);
     expect(
       screen.queryByRole("group", { name: "Project icon options" }),
+    ).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Project color: Blue" }),
+    );
+    fireEvent.pointerDown(document.body);
+    expect(
+      screen.queryByRole("group", { name: "Project color options" }),
     ).toBeNull();
 
     fireEvent.click(

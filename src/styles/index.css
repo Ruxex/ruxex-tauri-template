@@ -4,6 +4,15 @@
 @source "../../node_modules/streamdown/dist/*.js";
 @source "../../node_modules/@streamdown/mermaid/dist/*.js";
 
+.input:focus,
+.input:focus-within,
+.select:focus,
+.select:focus-within,
+.select:open {
+  outline: none;
+  outline-offset: 0;
+}
+
 :root {
   --ruxex-scrollbar-thumb: rgb(100 116 139 / 42%);
   --ruxex-scrollbar-thumb-hover: rgb(71 85 105 / 62%);
@@ -12,6 +21,80 @@
 :root[data-theme="dark"] {
   --ruxex-scrollbar-thumb: rgb(148 163 184 / 42%);
   --ruxex-scrollbar-thumb-hover: rgb(203 213 225 / 62%);
+}
+
+.project-icon-tile {
+  background-color: color-mix(in srgb, white, var(--project-icon-color) 18%);
+  color: color-mix(in srgb, var(--project-icon-color) 78%, #0f172a);
+}
+
+:root[data-theme="dark"] .project-icon-tile {
+  background-color: color-mix(in srgb, black, var(--project-icon-color) 24%);
+  color: color-mix(in srgb, var(--project-icon-color) 65%, white);
+}
+
+.project-icon-blue {
+  --project-icon-color: var(--color-blue-500);
+}
+
+.project-icon-indigo {
+  --project-icon-color: var(--color-indigo-500);
+}
+
+.project-icon-violet {
+  --project-icon-color: var(--color-violet-500);
+}
+
+.project-icon-fuchsia {
+  --project-icon-color: var(--color-fuchsia-500);
+}
+
+.project-icon-pink {
+  --project-icon-color: var(--color-pink-500);
+}
+
+.project-icon-red {
+  --project-icon-color: var(--color-red-500);
+}
+
+.project-icon-rose {
+  --project-icon-color: var(--color-rose-500);
+}
+
+.project-icon-orange {
+  --project-icon-color: var(--color-orange-500);
+}
+
+.project-icon-amber {
+  --project-icon-color: var(--color-amber-500);
+}
+
+.project-icon-yellow {
+  --project-icon-color: var(--color-yellow-500);
+}
+
+.project-icon-lime {
+  --project-icon-color: var(--color-lime-500);
+}
+
+.project-icon-green {
+  --project-icon-color: var(--color-green-500);
+}
+
+.project-icon-emerald {
+  --project-icon-color: var(--color-emerald-500);
+}
+
+.project-icon-teal {
+  --project-icon-color: var(--color-teal-500);
+}
+
+.project-icon-cyan {
+  --project-icon-color: var(--color-cyan-500);
+}
+
+.project-icon-slate {
+  --project-icon-color: var(--color-slate-500);
 }
 
 * {

@@ -26,7 +26,7 @@ export function ProjectsPage() {
   });
   return (
     <PageContainer>
-      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-base-300 pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-5 pb-6">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
         </div>

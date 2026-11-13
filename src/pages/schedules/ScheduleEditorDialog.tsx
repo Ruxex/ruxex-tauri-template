@@ -72,7 +72,7 @@ export function ScheduleEditorDialog({
               value={form.prompt}
             />
           </label>
-          <div className="grid gap-3">
+          <div className="grid grid-cols-2 items-start gap-3">
             <label className="form-control">
               <select
                 aria-label="Cadence"
@@ -86,13 +86,49 @@ export function ScheduleEditorDialog({
                 }
                 value={form.cadenceKind}
               >
+                {isEditing && form.cadenceKind === "once" && (
+                  <option value="once">One time</option>
+                )}
                 <option value="daily">Every day</option>
                 <option value="weekly">Every week</option>
-                <option value="once">One time</option>
               </select>
             </label>
+            <label className="form-control">
+              {form.cadenceKind === "once" ? (
+                <input
+                  aria-label="Run at"
+                  className="input input-bordered mt-1 w-full"
+                  onChange={(event) =>
+                    dispatch({
+                      type: "onceAtChanged",
+                      value: event.target.value,
+                    })
+                  }
+                  type="datetime-local"
+                  value={form.onceAt}
+                />
+              ) : (
+                <select
+                  aria-label="Run time"
+                  className="select select-bordered mt-1 w-full"
+                  onChange={(event) =>
+                    dispatch({
+                      type: "runAtTimeChanged",
+                      value: event.target.value,
+                    })
+                  }
+                  value={form.runAtTime}
+                >
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </label>
             {form.cadenceKind === "weekly" && (
-              <fieldset className="form-control">
+              <fieldset className="form-control col-span-2">
                 <legend className="text-sm">Weekdays</legend>
                 <div className="mt-2 grid grid-cols-7 gap-2 rounded-lg border border-base-300 p-2">
                   {WEEKDAYS.map((day, index) => (
@@ -122,62 +158,6 @@ export function ScheduleEditorDialog({
                 </div>
               </fieldset>
             )}
-          </div>
-          {form.cadenceKind === "once" ? (
-            <label className="form-control">
-              <input
-                aria-label="Run at"
-                className="input input-bordered mt-1 w-full"
-                onChange={(event) =>
-                  dispatch({ type: "onceAtChanged", value: event.target.value })
-                }
-                type="datetime-local"
-                value={form.onceAt}
-              />
-            </label>
-          ) : (
-            <label className="form-control">
-              <select
-                aria-label="Run time"
-                className="select select-bordered mt-1 w-full"
-                onChange={(event) =>
-                  dispatch({
-                    type: "runAtTimeChanged",
-                    value: event.target.value,
-                  })
-                }
-                value={form.runAtTime}
-              >
-                {TIME_OPTIONS.map((time) => (
-                  <option key={time} value={time}>
-                    {time}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-base-300 px-3 py-3">
-            <div>
-              <p className="text-sm font-medium">Schedule status</p>
-              <p className="text-xs text-base-content/60">
-                {form.enabled ? "Runs automatically" : "Paused until enabled"}
-              </p>
-            </div>
-            <label className="flex shrink-0 items-center gap-2 text-sm">
-              <span>{form.enabled ? "Enabled" : "Disabled"}</span>
-              <input
-                aria-label="Enable schedule"
-                checked={form.enabled}
-                className="toggle toggle-primary toggle-sm"
-                onChange={(event) =>
-                  dispatch({
-                    type: "enabledChanged",
-                    value: event.target.checked,
-                  })
-                }
-                type="checkbox"
-              />
-            </label>
           </div>
           <div
             aria-live="polite"

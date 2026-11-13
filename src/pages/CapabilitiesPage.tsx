@@ -4,6 +4,7 @@ import {
   FolderIcon,
   PlusIcon,
   PuzzlePieceIcon,
+  ServerIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
@@ -265,69 +266,72 @@ export function CapabilitiesPage() {
         </p>
       )}
       {activeTab === "mcp" ? (
-        <section className="grid gap-4 lg:grid-cols-2">
-          <article className="card border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title">MCP servers</h2>
-              {mcp.isLoading && <span className="loading loading-spinner" />}
-              {mcp.isError && (
-                <p className="text-error">
-                  Unable to load MCP servers: {formatErrorMessage(mcp.error)}
-                </p>
-              )}
-              {!mcp.isLoading && !mcp.data?.data.length && (
-                <p className="text-sm text-base-content/60">
-                  No MCP servers configured.
-                </p>
-              )}
-              <ul className="space-y-2">
-                {mcp.data?.data.map((server) => (
-                  <li key={server.name}>
-                    <details
-                      className="collapse collapse-arrow rounded-box border border-base-300 bg-base-100 shadow-sm"
-                      data-testid={`mcp-server-details-${server.name}`}
-                    >
-                      <summary className="collapse-title flex flex-wrap items-center justify-between gap-3 pr-12 font-medium">
-                        <span>{server.name}</span>
-                        <McpStatusSummary
-                          authStatus={server.authStatus}
-                          runtimeStatus={server.runtimeStatus}
-                        />
-                      </summary>
-                      <div className="collapse-content space-y-2 px-4 pb-4 pt-0 text-xs text-base-content/60">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span>{Object.keys(server.tools).length} tools</span>
-                          {(server.authStatus === "notLoggedIn" ||
-                            server.authStatus === "oAuth") && (
-                            <button
-                              aria-label={
-                                oauthLogin.isPending
-                                  ? "Connecting…"
-                                  : server.authStatus === "notLoggedIn"
-                                    ? `Connect ${server.name}`
-                                    : `Re-authenticate ${server.name}`
-                              }
-                              className="btn btn-outline btn-xs"
-                              disabled={oauthLogin.isPending}
-                              onClick={() => void connectMcpServer(server.name)}
-                              type="button"
-                            >
-                              {server.authStatus === "notLoggedIn"
-                                ? `Connect ${server.name}`
-                                : `Re-authenticate ${server.name}`}
-                            </button>
+        <section className="grid gap-4">
+          {!mcp.isLoading && !mcp.isError && !mcp.data?.data.length ? (
+            <EmptyState icon={ServerIcon} title="No MCP servers configured." />
+          ) : (
+            <article className="card w-full border border-base-300 bg-base-100 shadow-sm">
+              <div className="card-body">
+                <h2 className="card-title">MCP servers</h2>
+                {mcp.isLoading && <span className="loading loading-spinner" />}
+                {mcp.isError && (
+                  <p className="text-error">
+                    Unable to load MCP servers: {formatErrorMessage(mcp.error)}
+                  </p>
+                )}
+                <ul className="space-y-2">
+                  {mcp.data?.data.map((server) => (
+                    <li key={server.name}>
+                      <details
+                        className="collapse collapse-arrow rounded-box border border-base-300 bg-base-100 shadow-sm"
+                        data-testid={`mcp-server-details-${server.name}`}
+                      >
+                        <summary className="collapse-title flex flex-wrap items-center justify-between gap-3 pr-12 font-medium">
+                          <span>{server.name}</span>
+                          <McpStatusSummary
+                            authStatus={server.authStatus}
+                            runtimeStatus={server.runtimeStatus}
+                          />
+                        </summary>
+                        <div className="collapse-content space-y-2 px-4 pb-4 pt-0 text-xs text-base-content/60">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span>
+                              {Object.keys(server.tools).length} tools
+                            </span>
+                            {(server.authStatus === "notLoggedIn" ||
+                              server.authStatus === "oAuth") && (
+                              <button
+                                aria-label={
+                                  oauthLogin.isPending
+                                    ? "Connecting…"
+                                    : server.authStatus === "notLoggedIn"
+                                      ? `Connect ${server.name}`
+                                      : `Re-authenticate ${server.name}`
+                                }
+                                className="btn btn-outline btn-xs"
+                                disabled={oauthLogin.isPending}
+                                onClick={() =>
+                                  void connectMcpServer(server.name)
+                                }
+                                type="button"
+                              >
+                                {server.authStatus === "notLoggedIn"
+                                  ? `Connect ${server.name}`
+                                  : `Re-authenticate ${server.name}`}
+                              </button>
+                            )}
+                          </div>
+                          {server.toolsError && (
+                            <p className="text-error">{server.toolsError}</p>
                           )}
                         </div>
-                        {server.toolsError && (
-                          <p className="text-error">{server.toolsError}</p>
-                        )}
-                      </div>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </article>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+          )}
         </section>
       ) : activeTab === "skills" ? (
         <section className="grid gap-4">

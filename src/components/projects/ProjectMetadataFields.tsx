@@ -16,6 +16,10 @@ type ProjectMetadataFieldsProps = {
 
 type OpenSelector = "icon" | "color" | null;
 
+type ProjectIconPreviewProps = {
+  value: ProjectMetadata;
+};
+
 const PROJECT_COLOR_SWATCH_CLASSES: Record<ProjectMetadata["color"], string> = {
   blue: "bg-blue-500",
   indigo: "bg-indigo-500",
@@ -40,7 +44,8 @@ export function ProjectMetadataFields({
   onChange,
 }: ProjectMetadataFieldsProps) {
   const [openSelector, setOpenSelector] = useState<OpenSelector>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const iconSelectorRef = useRef<HTMLDivElement>(null);
+  const colorSelectorRef = useRef<HTMLDivElement>(null);
   const iconTriggerRef = useRef<HTMLButtonElement>(null);
   const colorTriggerRef = useRef<HTMLButtonElement>(null);
   const selectedIcon =
@@ -54,7 +59,9 @@ export function ProjectMetadataFields({
     if (!openSelector) return;
 
     function handlePointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const activeSelectorRef =
+        openSelector === "icon" ? iconSelectorRef : colorSelectorRef;
+      if (!activeSelectorRef.current?.contains(event.target as Node)) {
         setOpenSelector(null);
       }
     }
@@ -79,24 +86,13 @@ export function ProjectMetadataFields({
   }, [openSelector]);
 
   return (
-    <div
-      ref={rootRef}
-      className="grid gap-3 sm:grid-cols-[minmax(8rem,0.8fr)_minmax(0,1.2fr)]"
-    >
+    <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
+      <ProjectIconPreview value={value} selectedIcon={selectedIcon.value} />
       <section
-        aria-label="Project preview"
-        className="flex min-h-28 items-center justify-center rounded-xl border border-base-300 bg-base-100 p-4"
+        aria-label="Project metadata controls"
+        className="grid grid-cols-2 gap-3"
       >
-        <span
-          aria-hidden="true"
-          className={`flex size-16 items-center justify-center rounded-2xl ${projectColorClassName(value.color)}`}
-        >
-          <ProjectIcon className="size-8" icon={selectedIcon.value} />
-        </span>
-      </section>
-
-      <section aria-label="Project metadata controls" className="grid gap-3">
-        <div className="form-control w-full">
+        <div className="form-control w-full" ref={iconSelectorRef}>
           <div className="relative">
             <button
               aria-expanded={openSelector === "icon"}
@@ -154,7 +150,7 @@ export function ProjectMetadataFields({
           </div>
         </div>
 
-        <div className="form-control w-full">
+        <div className="form-control w-full" ref={colorSelectorRef}>
           <div className="relative">
             <button
               aria-expanded={openSelector === "color"}
@@ -211,5 +207,20 @@ export function ProjectMetadataFields({
         </div>
       </section>
     </div>
+  );
+}
+
+function ProjectIconPreview({
+  value,
+  selectedIcon,
+}: ProjectIconPreviewProps & { selectedIcon: ProjectMetadata["icon"] }) {
+  return (
+    <span
+      aria-label="Project preview"
+      className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${projectColorClassName(value.color)}`}
+      role="img"
+    >
+      <ProjectIcon aria-hidden="true" className="size-6" icon={selectedIcon} />
+    </span>
   );
 }
