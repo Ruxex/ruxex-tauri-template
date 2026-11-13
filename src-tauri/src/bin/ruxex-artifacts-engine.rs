@@ -7,8 +7,11 @@ mod artifact_model;
 #[path = "../artifact_pdf.rs"]
 mod artifact_pdf;
 #[allow(dead_code)]
-#[path = "../artifacts.rs"]
+#[path = "../artifacts/mod.rs"]
 mod artifacts;
+#[allow(dead_code)]
+#[path = "../ooxml.rs"]
+mod ooxml;
 
 fn main() -> std::process::ExitCode {
     artifacts::run_engine_stdio()

@@ -11,6 +11,7 @@ mod desktop_config;
 mod error;
 mod git_diff;
 mod git_diff_commands;
+mod marketplace_assets;
 mod ooxml;
 mod platform;
 mod quick_panel;
@@ -163,8 +164,8 @@ pub fn run_with_config(config: DesktopConfig) {
             artifact_preview::save_artifact,
             desktop::read_image_file,
             visualization::read_visualization_file,
-            desktop::read_local_marketplace_asset,
-            desktop::read_marketplace_asset,
+            marketplace_assets::read_local_marketplace_asset,
+            marketplace_assets::read_marketplace_asset,
             desktop::open_browser_window,
             quick_panel::close_quick_panel,
             quick_panel::quick_panel_shortcut_read,

@@ -75,6 +75,53 @@ pub(crate) fn decode_entities(value: &str) -> String {
         .replace("&amp;", "&")
 }
 
+pub(crate) fn blocks(xml: &str, tag: &str) -> Vec<String> {
+    let opening = format!("<{tag}");
+    let closing = format!("</{tag}>");
+    let mut cursor = 0;
+    let mut blocks = Vec::new();
+    while let Some(offset) = xml[cursor..].find(&opening) {
+        let start = cursor + offset;
+        let suffix = xml[start + opening.len()..].chars().next();
+        let valid_suffix = match suffix {
+            Some('>') | Some('/') => true,
+            Some(character) => character.is_ascii_whitespace(),
+            None => false,
+        };
+        if !valid_suffix {
+            cursor = start + opening.len();
+            continue;
+        }
+        let Some(open_end_offset) = xml[start..].find('>') else {
+            break;
+        };
+        let content_start = start + open_end_offset + 1;
+        let Some(close_offset) = xml[content_start..].find(&closing) else {
+            break;
+        };
+        let end = content_start + close_offset;
+        blocks.push(xml[start..end + closing.len()].to_string());
+        cursor = end + closing.len();
+    }
+    blocks
+}
+
+pub(crate) fn text_values(xml: &str, tag: &str) -> Vec<String> {
+    let opening = format!("<{tag}");
+    let closing = format!("</{tag}>");
+    blocks(xml, tag)
+        .into_iter()
+        .map(|block| {
+            let start = block
+                .find('>')
+                .map(|index| index + 1)
+                .unwrap_or(opening.len());
+            block[start..block.len().saturating_sub(closing.len())].to_string()
+        })
+        .map(|value| decode_entities(&value))
+        .collect()
+}
+
 pub(crate) fn slide_number(name: &str) -> Option<usize> {
     name.strip_prefix("ppt/slides/slide")?
         .strip_suffix(".xml")?

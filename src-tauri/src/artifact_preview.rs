@@ -527,7 +527,10 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
         if xml.len() as u64 > PREVIEW_MAX_XML_BYTES {
             return Err(format!("{entry_name} exceeds the preview text limit"));
         }
-        let lines = extract_xml_text(&xml, tag);
+        let lines = ooxml::text_values(&xml, tag)
+            .into_iter()
+            .map(|line| truncate_text(&line, 80))
+            .collect::<Vec<_>>();
         let cells = if lines.is_empty() {
             vec![vec!["(no text found)".to_string()]]
         } else {
@@ -576,40 +579,6 @@ fn ooxml_preview_annotations(format: &str, xml: &str) -> Vec<String> {
         }
     }
     annotations
-}
-
-fn extract_xml_text(xml: &str, tag: &str) -> Vec<String> {
-    let opening = format!("<{tag}");
-    let closing = format!("</{tag}>");
-    let mut cursor = 0;
-    let mut values = Vec::new();
-    while let Some(open_start) = xml[cursor..].find(&opening) {
-        let open_start = cursor + open_start;
-        let tag_suffix = xml[open_start + opening.len()..].chars().next();
-        let valid_tag_suffix = match tag_suffix {
-            Some('>') => true,
-            Some(char) => char.is_ascii_whitespace(),
-            None => false,
-        };
-        if !valid_tag_suffix {
-            cursor = open_start + opening.len();
-            continue;
-        }
-        let Some(open_end_offset) = xml[open_start..].find('>') else {
-            break;
-        };
-        let content_start = open_start + open_end_offset + 1;
-        let Some(close_offset) = xml[content_start..].find(&closing) else {
-            break;
-        };
-        let content_end = content_start + close_offset;
-        values.push(truncate_text(
-            &ooxml::decode_entities(&xml[content_start..content_end]),
-            80,
-        ));
-        cursor = content_end + closing.len();
-    }
-    values
 }
 
 fn display_cell(value: &Data) -> String {
