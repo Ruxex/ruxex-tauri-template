@@ -10,6 +10,7 @@ import type { SyntheticEvent } from "react";
 
 import {
   availableSubmissionModes,
+  type PermissionMode,
   type SubmissionMode,
 } from "./composer-model";
 import { useCloseDropdownOnOutsidePointerDown } from "./useCloseDropdown";
@@ -18,7 +19,7 @@ function closeDropdown(event: SyntheticEvent<HTMLElement>) {
   event.currentTarget.closest("details")?.removeAttribute("open");
 }
 
-export type PermissionMode = "ask" | "read-only" | "full-access";
+export type { PermissionMode } from "./composer-model";
 
 type ComposerOptionsProps = {
   disabled: boolean;

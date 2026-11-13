@@ -15,18 +15,7 @@ import {
 } from "react";
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
-import {
-  useArchiveThread,
-  useCollaborationModes,
-  useCompactThread,
-  useInterruptTurn,
-  useModelList,
-  useQueueMessage,
-  useSendMessage,
-  useSetThreadGoal,
-  useSteerTurn,
-  useUpdateThreadSettings,
-} from "../../app-server/hooks";
+import { useCollaborationModes, useModelList } from "../../app-server/hooks";
 import type { v2 } from "../../protocol";
 import { useImageAttachment } from "../common/useImageAttachment";
 import {
@@ -40,8 +29,10 @@ import { ComposerTextInput } from "./ComposerTextInput";
 import { planCollaborationMode } from "./collaboration-model";
 import type { SubmissionMode } from "./composer-model";
 import {
+  buildComposerSubmission,
   buildImageUserInput,
   isComposerSubmitShortcut,
+  permissionModeSettings,
 } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
 import { SlashCommandPalette } from "./SlashCommandPalette";
@@ -52,6 +43,7 @@ import {
   selectSlashSkill,
 } from "./slash-command";
 import { useComposerSelection } from "./useComposerSelection";
+import { useComposerActions } from "./useComposerActions";
 import { SelectedComposerSkill } from "./SelectedComposerSkill";
 import { useComposerSkills } from "./useComposerSkills";
 
@@ -105,23 +97,8 @@ export function Composer({
     model,
     effort,
   );
-  const send = useSendMessage();
-  const archive = useArchiveThread();
-  const compact = useCompactThread();
-  const steer = useSteerTurn();
-  const queue = useQueueMessage();
-  const interrupt = useInterruptTurn();
-  const setGoal = useSetThreadGoal();
-  const updateSettings = useUpdateThreadSettings();
-  const isPending =
-    send.isPending ||
-    archive.isPending ||
-    compact.isPending ||
-    steer.isPending ||
-    queue.isPending ||
-    interrupt.isPending ||
-    setGoal.isPending ||
-    updateSettings.isPending;
+  const actions = useComposerActions(threadId);
+  const { isPending } = actions;
   const slashCommandInput = getSlashCommandInput(message);
   const showSlashCommands = slashCommandInput !== null && !goalMode;
 
@@ -141,36 +118,22 @@ export function Composer({
 
   function handleModelChange(value: string) {
     setModel(value);
-    void updateSettings
-      .mutateAsync({ threadId, model: value || null })
+    void actions
+      .updateSettings({ threadId, model: value || null })
       .catch(() => undefined);
   }
 
   function handleEffortChange(value: string) {
     setEffort(value);
-    void updateSettings
-      .mutateAsync({ threadId, effort: value || null })
+    void actions
+      .updateSettings({ threadId, effort: value || null })
       .catch(() => undefined);
   }
 
   function handlePermissionChange(value: PermissionMode) {
     setPermissionMode(value);
-    const settings = {
-      ask: {
-        approvalPolicy: "on-request" as const,
-        sandboxPolicy: null,
-      },
-      "read-only": {
-        approvalPolicy: "on-request" as const,
-        sandboxPolicy: { type: "readOnly" as const, networkAccess: false },
-      },
-      "full-access": {
-        approvalPolicy: "never" as const,
-        sandboxPolicy: { type: "dangerFullAccess" as const },
-      },
-    }[value];
-    void updateSettings
-      .mutateAsync({ threadId, ...settings })
+    void actions
+      .updateSettings({ threadId, ...permissionModeSettings(value) })
       .catch(() => undefined);
   }
 
@@ -197,9 +160,9 @@ export function Composer({
 
     try {
       if (selection.command === "archive") {
-        await archive.mutateAsync({ threadId });
+        await actions.archive();
       } else {
-        await compact.mutateAsync({ threadId });
+        await actions.compact();
       }
       setMessage("");
       editorRef.current?.focus();
@@ -239,11 +202,19 @@ export function Composer({
     }
     try {
       if (goalMode) {
-        await setGoal.mutateAsync({
+        const submission = buildComposerSubmission({
           threadId,
-          objective: text,
-          status: "active",
+          input,
+          mode,
+          activeTurnId,
+          model,
+          effort,
+          planMode,
+          collaborationMode: planModeRequest,
+          goal: text,
         });
+        if (submission?.kind !== "goal") return;
+        await actions.submit(submission);
         setMessage("");
         setGoalMode(false);
         editorRef.current?.focus();
@@ -254,26 +225,18 @@ export function Composer({
         const imageInput = buildImageUserInput(await readImage(imageFile));
         input.splice(selectedSkill ? 1 : 0, 0, imageInput);
       }
-      if (mode === "steer") {
-        if (!activeTurnId) {
-          return;
-        }
-        await steer.mutateAsync({
-          threadId,
-          expectedTurnId: activeTurnId,
-          input,
-        });
-      } else if (mode === "queue") {
-        await queue.mutateAsync({ threadId, input });
-      } else {
-        await send.mutateAsync({
-          threadId,
-          input,
-          model: model || null,
-          effort: effort || null,
-          ...(planMode ? { collaborationMode: planModeRequest } : {}),
-        });
-      }
+      const submission = buildComposerSubmission({
+        threadId,
+        input,
+        mode,
+        activeTurnId,
+        model,
+        effort,
+        planMode,
+        collaborationMode: planModeRequest,
+      });
+      if (!submission) return;
+      await actions.submit(submission);
       setMessage("");
       setSelectedSkill(null);
       resetAttachment();
@@ -390,9 +353,7 @@ export function Composer({
                 className="btn btn-error btn-sm btn-outline btn-square"
                 title="Stop"
                 type="button"
-                onClick={() =>
-                  void interrupt.mutateAsync({ threadId, turnId: activeTurnId })
-                }
+                onClick={() => void actions.interrupt(activeTurnId)}
                 disabled={isPending}
               >
                 <StopIcon aria-hidden="true" className="size-4" />
@@ -429,27 +390,9 @@ export function Composer({
             </div>
           </div>
         </div>
-        {(attachmentError ||
-          send.error ||
-          archive.error ||
-          compact.error ||
-          steer.error ||
-          queue.error ||
-          interrupt.error ||
-          setGoal.error ||
-          updateSettings.error) && (
+        {(attachmentError || actions.error) && (
           <p className="mt-2 text-sm text-error">
-            {attachmentError ||
-              formatErrorMessage(
-                send.error ||
-                  archive.error ||
-                  compact.error ||
-                  steer.error ||
-                  queue.error ||
-                  interrupt.error ||
-                  setGoal.error ||
-                  updateSettings.error,
-              )}
+            {attachmentError || formatErrorMessage(actions.error)}
           </p>
         )}
       </form>

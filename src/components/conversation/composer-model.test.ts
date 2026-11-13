@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   availableSubmissionModes,
   buildImageUserInput,
+  buildComposerSubmission,
   isComposerSubmitShortcut,
+  permissionModeSettings,
   submissionModeLabel,
 } from "./composer-model";
 
@@ -42,6 +44,114 @@ describe("composer model", () => {
     expect(buildImageUserInput("data:image/png;base64,AA==")).toEqual({
       type: "image",
       url: "data:image/png;base64,AA==",
+    });
+  });
+
+  it("builds the requested mutation plan for send, queue, steer, and goals", () => {
+    const input = [{ type: "text" as const, text: "hello", text_elements: [] }];
+    const collaborationMode = {
+      mode: "plan" as const,
+      settings: {
+        model: "model-a",
+        reasoning_effort: "high",
+        developer_instructions: null,
+      },
+    };
+
+    expect(
+      buildComposerSubmission({
+        threadId: "thread-1",
+        input: [...input],
+        mode: "send",
+        activeTurnId: null,
+        model: "model-a",
+        effort: "high",
+        planMode: true,
+        collaborationMode,
+      }),
+    ).toEqual({
+      kind: "send",
+      params: {
+        threadId: "thread-1",
+        input: [...input],
+        model: "model-a",
+        effort: "high",
+        collaborationMode,
+      },
+    });
+    expect(
+      buildComposerSubmission({
+        threadId: "thread-1",
+        input: [...input],
+        mode: "queue",
+        activeTurnId: "turn-1",
+        model: "model-a",
+        effort: "high",
+        planMode: true,
+        collaborationMode,
+      }),
+    ).toEqual({
+      kind: "queue",
+      params: { threadId: "thread-1", input: [...input] },
+    });
+    expect(
+      buildComposerSubmission({
+        threadId: "thread-1",
+        input: [...input],
+        mode: "steer",
+        activeTurnId: "turn-1",
+        model: "model-a",
+        effort: "high",
+        planMode: false,
+        collaborationMode: null,
+      }),
+    ).toEqual({
+      kind: "steer",
+      params: {
+        threadId: "thread-1",
+        expectedTurnId: "turn-1",
+        input: [...input],
+      },
+    });
+    expect(
+      buildComposerSubmission({
+        threadId: "thread-1",
+        input: [...input],
+        mode: "steer",
+        activeTurnId: null,
+        model: "model-a",
+        effort: "high",
+        planMode: false,
+        collaborationMode: null,
+      }),
+    ).toBeNull();
+    expect(
+      buildComposerSubmission({
+        threadId: "thread-1",
+        input: [...input],
+        mode: "send",
+        activeTurnId: null,
+        model: "model-a",
+        effort: "high",
+        planMode: true,
+        collaborationMode,
+        goal: "ship this",
+      }),
+    ).toEqual({ kind: "goal", threadId: "thread-1", objective: "ship this" });
+  });
+
+  it("maps each permission mode to its server settings", () => {
+    expect(permissionModeSettings("ask")).toEqual({
+      approvalPolicy: "on-request",
+      sandboxPolicy: null,
+    });
+    expect(permissionModeSettings("read-only")).toEqual({
+      approvalPolicy: "on-request",
+      sandboxPolicy: { type: "readOnly", networkAccess: false },
+    });
+    expect(permissionModeSettings("full-access")).toEqual({
+      approvalPolicy: "never",
+      sandboxPolicy: { type: "dangerFullAccess" },
     });
   });
 });
