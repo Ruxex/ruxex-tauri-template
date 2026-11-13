@@ -7,12 +7,14 @@ import {
   ServerIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 import { formatErrorMessage } from "../../app/error-message";
 import type {
   AppServerDaemonAction,
   AppServerDaemonOutput,
 } from "../../app-server/daemon-api";
+import { DialogFooter, DialogHeader } from "../common/DialogParts";
 import { StateBadge, type StateBadgeTone } from "../common/StateBadge";
 import { SettingRow, SettingsPanel } from "./SettingsPanel";
 
@@ -80,6 +82,10 @@ export function AppServerCard({
   resynchronizing: boolean;
   updateError?: unknown;
 }) {
+  const [stopAction, setStopAction] = useState<"stop" | "forceStop">("stop");
+  const [confirmationAction, setConfirmationAction] = useState<
+    "restart" | "stop" | "forceStop" | null
+  >(null);
   const inProcess = mode === "inprocess";
   const error =
     connectionError ??
@@ -116,6 +122,7 @@ export function AppServerCard({
 
   return (
     <SettingsPanel
+      allowOverflow
       action={
         <button
           aria-label="Refresh"
@@ -254,7 +261,7 @@ export function AppServerCard({
               aria-label="Restart"
               className="btn btn-sm btn-outline btn-warning"
               disabled={actionDisabled}
-              onClick={() => onAction("restart")}
+              onClick={() => setConfirmationAction("restart")}
               type="button"
             >
               {isPending && (
@@ -267,10 +274,10 @@ export function AppServerCard({
             </button>
             <div className="join">
               <button
-                aria-label="Stop"
+                aria-label={stopAction === "stop" ? "Stop" : "Force stop"}
                 className="btn btn-sm join-item btn-outline btn-error"
                 disabled={actionDisabled}
-                onClick={() => onAction("stop")}
+                onClick={() => setConfirmationAction(stopAction)}
                 type="button"
               >
                 {isPending && (
@@ -279,7 +286,7 @@ export function AppServerCard({
                     className="loading loading-spinner loading-xs"
                   />
                 )}
-                Stop
+                {stopAction === "stop" ? "Stop" : "Force stop"}
               </button>
               <details className="dropdown dropdown-end">
                 <summary
@@ -290,25 +297,37 @@ export function AppServerCard({
                   <ChevronDownIcon aria-hidden="true" className="size-4" />
                 </summary>
                 <ul className="menu dropdown-content z-20 mt-2 w-36 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
-                  <li>
+                  <li className={stopAction === "stop" ? "menu-active" : ""}>
                     <button
-                      aria-label="Force stop"
+                      aria-checked={stopAction === "stop"}
                       disabled={actionDisabled}
                       onClick={(event) => {
-                        onAction("forceStop");
+                        setStopAction("stop");
                         event.currentTarget
                           .closest("details")
                           ?.removeAttribute("open");
                       }}
-                      role="menuitem"
+                      role="menuitemradio"
                       type="button"
                     >
-                      {isPending && (
-                        <span
-                          aria-hidden="true"
-                          className="loading loading-spinner loading-xs"
-                        />
-                      )}
+                      Stop
+                    </button>
+                  </li>
+                  <li
+                    className={stopAction === "forceStop" ? "menu-active" : ""}
+                  >
+                    <button
+                      aria-checked={stopAction === "forceStop"}
+                      disabled={actionDisabled}
+                      onClick={(event) => {
+                        setStopAction("forceStop");
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open");
+                      }}
+                      role="menuitemradio"
+                      type="button"
+                    >
                       Force stop
                     </button>
                   </li>
@@ -335,6 +354,72 @@ export function AppServerCard({
           </button>
         )}
       </div>
+      {confirmationAction !== null && (
+        <dialog
+          aria-labelledby="app-server-action-title"
+          aria-modal="true"
+          className="modal"
+          open
+          onCancel={(event) => {
+            event.preventDefault();
+            setConfirmationAction(null);
+          }}
+        >
+          <div className="modal-box w-full max-w-md px-5 py-6">
+            <DialogHeader
+              icon={ExclamationTriangleIcon}
+              titleId="app-server-action-title"
+              title={
+                confirmationAction === "restart"
+                  ? "Restart App Server?"
+                  : confirmationAction === "forceStop"
+                    ? "Force stop App Server?"
+                    : "Stop App Server?"
+              }
+            />
+            <p className="-mt-2 text-sm text-base-content/70">
+              {confirmationAction === "restart"
+                ? "Restarting will briefly interrupt active connections."
+                : confirmationAction === "forceStop"
+                  ? "Force stopping will immediately terminate the App Server."
+                  : "Stopping will interrupt active connections."}
+            </p>
+            <DialogFooter>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={() => setConfirmationAction(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className={`btn ${confirmationAction === "restart" ? "btn-warning" : "btn-error"}`}
+                disabled={actionDisabled}
+                type="button"
+                onClick={() => {
+                  onAction(confirmationAction);
+                  setConfirmationAction(null);
+                }}
+              >
+                {confirmationAction === "restart"
+                  ? "Restart"
+                  : confirmationAction === "forceStop"
+                    ? "Force stop"
+                    : "Stop"}
+              </button>
+            </DialogFooter>
+          </div>
+          <form className="modal-backdrop" method="dialog">
+            <button
+              aria-label="Close confirmation"
+              type="button"
+              onClick={() => setConfirmationAction(null)}
+            >
+              Close
+            </button>
+          </form>
+        </dialog>
+      )}
     </SettingsPanel>
   );
 }

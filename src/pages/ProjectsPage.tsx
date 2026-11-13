@@ -85,7 +85,7 @@ export function ProjectsPage() {
                     return (
                       <tr
                         aria-label={`Open project ${project.name}`}
-                        className="cursor-pointer hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                        className="cursor-pointer transition-colors hover:bg-base-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
                         key={project.id}
                         tabIndex={0}
                         onClick={() => navigate(`/projects/${project.id}`)}

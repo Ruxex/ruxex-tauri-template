@@ -32,7 +32,7 @@ export const SIDEBAR_PANELS: readonly SidebarPanelDefinition[] = [
     id: "plugins",
     label: "Plugins",
     icon: PuzzlePieceIcon,
-    route: "/capabilities",
+    route: "/capabilities/plugins",
   },
   {
     id: "automation",
@@ -58,7 +58,7 @@ export function sidebarPanelForPath(pathname: string): SidebarPanel {
   if (pathname.startsWith("/settings/account")) return "account";
   if (pathname.startsWith("/settings")) return "settings";
   if (pathname.startsWith("/projects")) return "projects";
-  if (pathname.startsWith("/capabilities")) return "plugins";
+  if (pathname.startsWith("/capabilities/")) return "plugins";
   if (pathname.startsWith("/schedules")) return "automation";
   return "home";
 }

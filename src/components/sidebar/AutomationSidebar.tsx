@@ -21,7 +21,7 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
   return (
     <aside
       aria-label="Automation sidebar"
-      className="flex h-full min-h-0 w-72 flex-col overflow-y-auto bg-base-100 p-4"
+      className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-base-100 p-4"
     >
       <SidebarHeader label="Automation" onClose={onClose} />
       <h3 className="text-xs font-semibold uppercase tracking-wide text-base-content/55">

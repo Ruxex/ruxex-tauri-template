@@ -27,7 +27,7 @@ describe("PluginsSidebar", () => {
 
     const { PluginsSidebar } = await import("./PluginsSidebar");
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <PluginsSidebar onClose={() => undefined} />
       </MemoryRouter>,
     );

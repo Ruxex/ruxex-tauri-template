@@ -4,7 +4,7 @@ import {
   ServerIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { usePluginList } from "../../app-server/hooks";
 import { MarketplaceAssetImage } from "../plugins/MarketplaceAssetImage";
@@ -13,7 +13,6 @@ import { SidebarHeader } from "./SidebarHeader";
 export function PluginsSidebar({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const plugins = usePluginList();
   const installedPlugins =
     plugins.data?.marketplaces
@@ -21,17 +20,15 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
       .filter((plugin) => plugin.installed) ?? [];
   const activeTab = location.pathname.startsWith("/capabilities/plugins")
     ? "plugins"
-    : searchParams.get("tab") === "skills"
+    : location.pathname === "/capabilities/skills"
       ? "skills"
-      : searchParams.get("tab") === "mcp"
-        ? "mcp"
-        : "plugins";
+      : "mcp";
 
   function selectTab(tab: "plugins" | "skills" | "mcp") {
     const paths = {
-      plugins: "/capabilities",
-      skills: "/capabilities?tab=skills",
-      mcp: "/capabilities?tab=mcp",
+      plugins: "/capabilities/plugins",
+      skills: "/capabilities/skills",
+      mcp: "/capabilities/mcp",
     } as const;
     void navigate(paths[tab]);
   }
@@ -39,7 +36,7 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
   return (
     <aside
       aria-label="Capabilities sidebar"
-      className="h-full min-h-0 w-72 overflow-y-auto bg-base-100 p-4"
+      className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
     >
       <SidebarHeader label="Capabilities" onClose={onClose} />
       <nav aria-label="Capability sections" className="menu w-full gap-1 p-0">

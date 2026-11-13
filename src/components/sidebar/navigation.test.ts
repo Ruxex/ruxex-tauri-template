@@ -7,7 +7,7 @@ describe("sidebarPanelForPath", () => {
     ["/", "home"],
     ["/projects", "projects"],
     ["/projects/p1", "projects"],
-    ["/capabilities", "plugins"],
+    ["/capabilities/plugins", "plugins"],
     ["/schedules", "automation"],
     ["/settings", "settings"],
     ["/settings/appearance", "settings"],

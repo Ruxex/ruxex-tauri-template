@@ -710,7 +710,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -782,7 +782,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -817,7 +817,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -836,7 +836,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -904,7 +904,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -968,7 +968,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -1012,7 +1012,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=skills"]}>
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -1029,7 +1029,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -1054,7 +1054,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -1067,7 +1067,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -1089,7 +1089,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
@@ -1135,7 +1135,7 @@ describe("CapabilitiesPage", () => {
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
     render(
-      <MemoryRouter initialEntries={["/capabilities?tab=mcp"]}>
+      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
         <CapabilitiesPage />
       </MemoryRouter>,
     );

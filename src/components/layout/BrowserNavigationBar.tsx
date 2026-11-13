@@ -67,14 +67,25 @@ function breadcrumbsForPath(
     } catch {
       // Keep the route segment as-is when it is not valid URI encoding.
     }
-    return [{ label: "Plugins", to: "/capabilities" }, { label }];
+    return [{ label: "Plugins", to: "/capabilities/plugins" }, { label }];
+  }
+
+  if (pathname === "/capabilities/plugins") {
+    return [{ label: "Plugins" }];
+  }
+
+  if (pathname === "/capabilities/skills") {
+    return [{ label: "Skills" }];
+  }
+
+  if (pathname === "/capabilities/mcp") {
+    return [{ label: "MCP" }];
   }
 
   const pageLabels: Record<string, string> = {
     "/activity": "Activity",
     "/approvals": "Approvals",
     "/archive": "Archive",
-    "/capabilities": "Plugins",
     "/schedules": "Automation",
   };
 

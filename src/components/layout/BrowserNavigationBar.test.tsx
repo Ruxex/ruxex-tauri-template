@@ -213,7 +213,7 @@ describe("BrowserNavigationBar", () => {
 
     expect(
       screen.getByRole("link", { name: "Plugins" }).getAttribute("href"),
-    ).toBe("/capabilities");
+    ).toBe("/capabilities/plugins");
     expect(screen.getByText("calendar")).toBeTruthy();
   });
 });

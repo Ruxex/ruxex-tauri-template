@@ -17,7 +17,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
   return (
     <aside
       aria-label="Settings sidebar"
-      className="h-full min-h-0 w-72 overflow-y-auto bg-base-100 p-4"
+      className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
     >
       <SidebarHeader label="Settings" onClose={onClose} />
       <nav aria-label="Settings sections" className="space-y-3">

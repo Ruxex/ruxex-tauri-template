@@ -140,6 +140,9 @@ export function AppLayout() {
 
   useEffect(() => {
     setActivePanel(routePanel);
+  }, [routePanel]);
+
+  useEffect(() => {
     const enteredProjects =
       routePanel === "projects" && previousRoutePanel.current !== "projects";
     const enteredAccount =
@@ -192,8 +195,11 @@ export function AppLayout() {
     <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
       <BrowserNavigationBar
         chatTitle={chatTitle}
-        onToggleSidebar={() =>
-          update({ sidebarCollapsed: !preferences.sidebarCollapsed })
+        onToggleSidebar={
+          hidesContextPanel
+            ? undefined
+            : () =>
+                update({ sidebarCollapsed: !preferences.sidebarCollapsed })
         }
         onToggleRightPane={() => setRightPaneOpen((open) => !open)}
         projectTitle={project.data?.project.name}

@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
-import { Link, NavLink, useSearchParams } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
 import {
@@ -119,12 +119,13 @@ export function CapabilitiesPage() {
   );
   const [skillExtraRoots, setSkillExtraRoots] = useState<string[]>([]);
   const [skillRootError, setSkillRootError] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
-  const requestedTab = searchParams.get("tab");
+  const location = useLocation();
   const activeTab: CapabilityTab =
-    requestedTab === "skills" || requestedTab === "mcp"
-      ? requestedTab
-      : "plugins";
+    location.pathname === "/capabilities/skills"
+      ? "skills"
+      : location.pathname === "/capabilities/mcp"
+        ? "mcp"
+        : "plugins";
   const mcp = useMcpServerStatus({ detail: "full" });
   const skills = useSkillsList();
   const plugins = usePluginList();

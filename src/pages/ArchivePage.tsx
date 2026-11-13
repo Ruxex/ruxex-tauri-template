@@ -105,6 +105,7 @@ export function ArchivePage() {
         {archived.data?.data.map((thread) => (
           <ThreadCard
             key={thread.id}
+            compact
             showUpdatedAt
             thread={thread}
             actions={
