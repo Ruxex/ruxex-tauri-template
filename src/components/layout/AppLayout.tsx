@@ -1,12 +1,11 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
 import { Outlet, useLocation, useParams } from "react-router-dom";
-
+import type { AppOutletContext } from "../../app/app-outlet-context";
 import { useThreadReadState } from "../../app/thread-read-state";
 import { useUiPreferences } from "../../app/ui-preferences";
-import type { AppOutletContext } from "../../app/app-outlet-context";
-import type { GitDiffReviewTarget } from "../git-diff/GitDiffReviewPane";
 import { useProject, useThread } from "../../app-server/hooks";
+import type { GitDiffReviewTarget } from "../git-diff/GitDiffReviewPane";
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import {
@@ -23,6 +22,22 @@ const GitDiffReviewPane = lazy(() =>
 );
 
 const MAX_RIGHT_PANE_WIDTH = 1536;
+
+type RightPaneTab = {
+  id: string;
+  kind: "git-diff";
+  target: GitDiffReviewTarget;
+};
+
+function gitDiffTabId(target: GitDiffReviewTarget) {
+  return `git-diff:${encodeURIComponent(target.threadId)}:${encodeURIComponent(target.workspace)}`;
+}
+
+function gitDiffTabLabel(target: GitDiffReviewTarget) {
+  const workspaceName =
+    target.workspace.split(/[\\/]/).filter(Boolean).at(-1) || target.workspace;
+  return `Git Diff — ${workspaceName}`;
+}
 
 export function AppLayout() {
   const location = useLocation();
@@ -42,27 +57,42 @@ export function AppLayout() {
     thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
   const [rightPaneOpen, setRightPaneOpen] = useState(false);
-  const [diffSelection, setDiffSelection] = useState<{
-    threadId: string | undefined;
-    target: GitDiffReviewTarget | null;
-  }>({ threadId, target: null });
+  const [rightPaneTabs, setRightPaneTabs] = useState<RightPaneTab[]>([]);
+  const [activeRightPaneTabId, setActiveRightPaneTabId] = useState<
+    string | null
+  >(null);
   const leftPaneRef = usePanelRef();
   const rightPaneRef = usePanelRef();
-  if (diffSelection.threadId !== threadId && diffSelection.target !== null) {
-    setDiffSelection({ threadId, target: null });
-  }
-  const diffTarget =
-    diffSelection.threadId === threadId ? diffSelection.target : null;
-  const activeDiffTarget =
-    isChatRoute && diffTarget?.threadId === threadId ? diffTarget : null;
-
   const openThreadDiff = useCallback(
     (target: GitDiffReviewTarget) => {
-      setDiffSelection({ threadId: target.threadId, target });
+      const id = gitDiffTabId(target);
+      if (!rightPaneTabs.some((tab) => tab.id === id)) {
+        setRightPaneTabs((tabs) => [...tabs, { id, kind: "git-diff", target }]);
+      }
+      setActiveRightPaneTabId(id);
       if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
       setRightPaneOpen(true);
     },
-    [rightPaneOpen, rightPaneRef],
+    [rightPaneOpen, rightPaneRef, rightPaneTabs],
+  );
+
+  const closeRightPaneTab = useCallback(
+    (tabId: string) => {
+      const tabIndex = rightPaneTabs.findIndex((tab) => tab.id === tabId);
+      if (tabIndex === -1) return;
+
+      const remainingTabs = rightPaneTabs.filter((tab) => tab.id !== tabId);
+      setRightPaneTabs(remainingTabs);
+      if (remainingTabs.length === 0) {
+        setActiveRightPaneTabId(null);
+        setRightPaneOpen(false);
+      } else if (activeRightPaneTabId === tabId) {
+        setActiveRightPaneTabId(
+          remainingTabs[Math.max(0, tabIndex - 1)]?.id ?? remainingTabs[0].id,
+        );
+      }
+    },
+    [activeRightPaneTabId, rightPaneTabs],
   );
 
   useEffect(() => {
@@ -201,23 +231,81 @@ export function AppLayout() {
             className="h-full overflow-hidden border-l border-base-300 bg-base-100 transition-[width] duration-200 ease-out"
             data-testid="right-pane"
           >
-            {activeDiffTarget && (
-              <Suspense
-                fallback={
-                  <div
-                    className="p-4 text-sm text-base-content/60"
-                    role="status"
-                  >
-                    Loading diff viewer…
-                  </div>
-                }
-              >
-                <GitDiffReviewPane
-                  key={`${activeDiffTarget.threadId}:${activeDiffTarget.workspace}`}
-                  isOpen={rightPaneOpen}
-                  target={activeDiffTarget}
-                />
-              </Suspense>
+            {rightPaneTabs.length > 0 && (
+              <div className="flex h-full min-h-0 flex-col">
+                <div
+                  aria-label="Right pane tabs"
+                  className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-base-300 px-2 pt-2"
+                  role="tablist"
+                >
+                  {rightPaneTabs.map((tab) => {
+                    const label = gitDiffTabLabel(tab.target);
+                    const selected = tab.id === activeRightPaneTabId;
+                    return (
+                      <div
+                        className="flex shrink-0 items-center"
+                        key={tab.id}
+                        role="presentation"
+                      >
+                        <button
+                          aria-controls={`right-pane-content-${tab.id}`}
+                          aria-selected={selected}
+                          className={`max-w-52 truncate rounded-t-md px-3 py-2 text-xs ${
+                            selected
+                              ? "bg-base-100 text-base-content"
+                              : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
+                          }`}
+                          id={`right-pane-tab-${tab.id}`}
+                          onClick={() => setActiveRightPaneTabId(tab.id)}
+                          role="tab"
+                          type="button"
+                        >
+                          {label}
+                        </button>
+                        <button
+                          aria-label={`Close ${label} tab`}
+                          className="rounded p-1 text-base-content/50 hover:bg-base-200 hover:text-base-content"
+                          onClick={() => closeRightPaneTab(tab.id)}
+                          type="button"
+                        >
+                          <span aria-hidden="true">×</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                {rightPaneTabs.map((tab) => {
+                  const selected = tab.id === activeRightPaneTabId;
+                  return (
+                    <div
+                      aria-labelledby={`right-pane-tab-${tab.id}`}
+                      className="min-h-0 flex-1"
+                      hidden={!selected}
+                      id={`right-pane-content-${tab.id}`}
+                      key={tab.id}
+                      role="tabpanel"
+                    >
+                      {tab.kind === "git-diff" && (
+                        <Suspense
+                          fallback={
+                            <div
+                              className="p-4 text-sm text-base-content/60"
+                              role="status"
+                            >
+                              Loading diff viewer…
+                            </div>
+                          }
+                        >
+                          <GitDiffReviewPane
+                            isOpen={rightPaneOpen && selected}
+                            target={tab.target}
+                          />
+                        </Suspense>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </aside>
         </ResizablePanel>

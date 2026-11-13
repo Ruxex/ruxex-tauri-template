@@ -1,7 +1,18 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useOutletContext,
+} from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useUiPreferences = vi.hoisted(() => vi.fn());
@@ -20,8 +31,61 @@ vi.mock("../sidebar/ProjectSidebar", () => ({
     return <aside data-testid="project-sidebar" />;
   },
 }));
+vi.mock("../git-diff/GitDiffReviewPane", () => ({
+  GitDiffReviewPane: ({
+    target,
+  }: {
+    target: { threadId: string; workspace: string };
+  }) => (
+    <div data-testid="git-diff-target">
+      {target.threadId}|{target.workspace}
+    </div>
+  ),
+}));
 
+import type { AppOutletContext } from "../../app/app-outlet-context";
 import { AppLayout } from "./AppLayout";
+
+function DiffActions() {
+  const { openThreadDiff } = useOutletContext<AppOutletContext>();
+  return (
+    <div>
+      <button
+        onClick={() =>
+          openThreadDiff({ threadId: "thread-1", workspace: "/repo-one" })
+        }
+        type="button"
+      >
+        Open first diff
+      </button>
+      <button
+        onClick={() =>
+          openThreadDiff({ threadId: "thread-2", workspace: "/repo-two" })
+        }
+        type="button"
+      >
+        Open second diff
+      </button>
+    </div>
+  );
+}
+
+function renderWithDiffActions() {
+  useUiPreferences.mockReturnValue({
+    preferences: { sidebarCollapsed: false },
+    update: vi.fn(),
+  });
+
+  return render(
+    <MemoryRouter initialEntries={["/"]}>
+      <Routes>
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<DiffActions />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+  );
+}
 
 describe("AppLayout", () => {
   afterEach(cleanup);
@@ -313,7 +377,9 @@ describe("AppLayout", () => {
     ).toBeTruthy();
     expect(pane.textContent).toBe("");
     expect(group.className).toContain("flex");
-    expect(screen.getByRole("button", { name: "Close right pane" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Close right pane" }),
+    ).toBeTruthy();
   });
 
   it("configures the right pane max size at 1536 pixels", () => {
@@ -332,5 +398,110 @@ describe("AppLayout", () => {
     expect(
       screen.getByTestId("right-pane-panel").getAttribute("data-max-size"),
     ).toBe("1536");
+  });
+
+  it("opens a Git diff tab in the right pane", async () => {
+    renderWithDiffActions();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("tab", { name: "Git Diff — repo-one" }),
+    ).toBeTruthy();
+    expect(await screen.findByText("thread-1|/repo-one")).toBeTruthy();
+  });
+
+  it("reuses an existing tab for the same thread and workspace", () => {
+    renderWithDiffActions();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open second diff" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+
+    expect(screen.getAllByRole("tab")).toHaveLength(2);
+    expect(
+      screen
+        .getByRole("tab", { name: "Git Diff — repo-one" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(
+      within(
+        screen.getByRole("tabpanel", { name: "Git Diff — repo-one" }),
+      ).getByTestId("git-diff-target").textContent,
+    ).toBe("thread-1|/repo-one");
+  });
+
+  it("selects the remaining tab when the active tab closes", async () => {
+    renderWithDiffActions();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open second diff" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close Git Diff — repo-two tab" }),
+    );
+
+    expect(screen.getAllByRole("tab")).toHaveLength(1);
+    expect(
+      screen
+        .getByRole("tab", { name: "Git Diff — repo-one" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(
+      within(
+        screen.getByRole("tabpanel", { name: "Git Diff — repo-one" }),
+      ).getByTestId("git-diff-target").textContent,
+    ).toBe("thread-1|/repo-one");
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
+    ).toBe("true");
+  });
+
+  it("keeps the active tab when an inactive tab closes", () => {
+    renderWithDiffActions();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open second diff" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close Git Diff — repo-one tab" }),
+    );
+
+    expect(screen.getAllByRole("tab")).toHaveLength(1);
+    expect(
+      screen
+        .getByRole("tab", { name: "Git Diff — repo-two" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+  });
+
+  it("closes the right pane when its last tab closes", () => {
+    renderWithDiffActions();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close Git Diff — repo-one tab" }),
+    );
+
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
+    ).toBe("false");
+  });
+
+  it("preserves tabs when the right pane is hidden and reopened", () => {
+    renderWithDiffActions();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close right pane" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open right pane" }));
+
+    expect(
+      screen.getByRole("tab", { name: "Git Diff — repo-one" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
+    ).toBe("true");
   });
 });
