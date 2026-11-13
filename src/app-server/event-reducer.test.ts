@@ -93,9 +93,7 @@ describe("reduceAppServerEvent", () => {
       }),
     );
 
-    expect(state.threads["thread-1"]?.tokenUsage?.total.totalTokens).toBe(
-      1200,
-    );
+    expect(state.threads["thread-1"]?.tokenUsage?.total.totalTokens).toBe(1200);
   });
 
   it("clears reconnecting after a fresh server notification", () => {
@@ -746,6 +744,31 @@ describe("reduceAppServerEvent", () => {
     });
   });
 
+  it("initializes thread metadata from thread/started", () => {
+    const state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "thread/started",
+        params: {
+          thread: {
+            id: "thread-started",
+            name: "New thread",
+            status: { type: "idle" },
+          },
+        },
+      }),
+      1234,
+    );
+
+    expect(state.threads["thread-started"]).toMatchObject({
+      threadId: "thread-started",
+      threadStatus: { type: "idle" },
+      threadName: "New thread",
+      archived: false,
+      lastActivityAt: 1234,
+    });
+  });
+
   it("updates a structured item in place when its completion arrives", () => {
     let state = reduceAppServerEvent(
       createInitialEventState(),
@@ -785,6 +808,163 @@ describe("reduceAppServerEvent", () => {
       type: "fileChange",
       status: "completed",
     });
+  });
+
+  it("applies file patches only to the matching live file-change item", () => {
+    let state = createInitialEventState();
+    for (const item of [
+      {
+        threadId: "thread-1",
+        turnId: "turn-1",
+        id: "change-1",
+        path: "src/one.ts",
+      },
+      {
+        threadId: "thread-1",
+        turnId: "turn-1",
+        id: "change-2",
+        path: "src/two.ts",
+      },
+      {
+        threadId: "thread-1",
+        turnId: "turn-2",
+        id: "change-1",
+        path: "src/other-turn.ts",
+      },
+      {
+        threadId: "thread-2",
+        turnId: "turn-1",
+        id: "change-1",
+        path: "src/other-thread.ts",
+      },
+    ]) {
+      state = reduceAppServerEvent(
+        state,
+        notification({
+          method: "item/started",
+          params: {
+            threadId: item.threadId,
+            turnId: item.turnId,
+            item: {
+              type: "fileChange",
+              id: item.id,
+              changes: [
+                { path: item.path, kind: { type: "add" }, diff: "before" },
+              ],
+              status: "inProgress",
+            },
+          },
+        }),
+      );
+    }
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/agentMessage/delta",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "message-1",
+          delta: "message text",
+        },
+      }),
+    );
+
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/fileChange/patchUpdated",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "change-1",
+          changes: [
+            {
+              path: "src/one.ts",
+              kind: { type: "update", move_path: null },
+              diff: "after",
+            },
+          ],
+        },
+      }),
+    );
+    state = reduceAppServerEvent(
+      state,
+      notification({
+        method: "item/fileChange/patchUpdated",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          itemId: "message-1",
+          changes: [
+            {
+              path: "src/message.ts",
+              kind: { type: "update", move_path: null },
+              diff: "wrong item type",
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(state.threads["thread-1"]?.items).toMatchObject([
+      {
+        id: "change-1",
+        raw: {
+          type: "fileChange",
+          changes: [
+            {
+              path: "src/one.ts",
+              kind: { type: "update", move_path: null },
+              diff: "after",
+            },
+          ],
+        },
+      },
+      {
+        id: "change-2",
+        raw: {
+          type: "fileChange",
+          changes: [
+            { path: "src/two.ts", kind: { type: "add" }, diff: "before" },
+          ],
+        },
+      },
+      {
+        id: "change-1",
+        turnId: "turn-2",
+        raw: {
+          type: "fileChange",
+          changes: [
+            {
+              path: "src/other-turn.ts",
+              kind: { type: "add" },
+              diff: "before",
+            },
+          ],
+        },
+      },
+      { id: "message-1", type: "agentMessage", text: "message text" },
+    ]);
+    expect(
+      state.threads["thread-1"]?.items.find((item) => item.id === "message-1"),
+    ).not.toHaveProperty("raw");
+    expect(state.threads["thread-2"]?.items).toMatchObject([
+      {
+        id: "change-1",
+        turnId: "turn-1",
+        raw: {
+          type: "fileChange",
+          changes: [
+            {
+              path: "src/other-thread.ts",
+              kind: { type: "add" },
+              diff: "before",
+            },
+          ],
+        },
+      },
+    ]);
   });
 
   it("replaces a streamed agent message when completion uses a different item ID", () => {

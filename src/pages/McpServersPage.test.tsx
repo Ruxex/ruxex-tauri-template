@@ -402,8 +402,11 @@ describe("McpServersPage", () => {
 
   it("confirms deletion and warns when another layer remains active", async () => {
     const write = vi.fn().mockResolvedValue({ status: "ok" });
+    const refetch = vi.fn().mockResolvedValue({
+      data: { data: [{ name: "docs" }] },
+    });
     useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
-    useAllMcpServerStatus.mockReturnValue(status(["docs"]));
+    useAllMcpServerStatus.mockReturnValue({ ...status(["docs"]), refetch });
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
     renderPage();
 
@@ -417,6 +420,7 @@ describe("McpServersPage", () => {
         mergeStrategy: "replace",
       },
     ]);
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
     expect(
       screen.getByText(/another configuration source is still active/i),
     ).toBeTruthy();

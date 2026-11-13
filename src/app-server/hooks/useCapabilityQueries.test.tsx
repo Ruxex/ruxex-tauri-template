@@ -74,6 +74,29 @@ describe("capability query and mutation hooks", () => {
   });
 
   it.each([
+    ["useConfig", {}],
+    ["useMcpServerStatus", {}],
+    ["usePluginList", {}],
+    ["useCollaborationModes", undefined],
+    ["useSkillsList", {}],
+  ] as const)(
+    "does not query capability data before App Server is ready for %s",
+    async (hookName, params) => {
+      appServerStatus.mockReturnValue({ data: undefined });
+      const hooks = await import("./useCapabilityQueries");
+      const hook = hooks[hookName] as (value?: never) => {
+        fetchStatus: string;
+      };
+      const { result } = renderHook(() => hook(params as never), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe("idle");
+      expect(requestAppServerMethod).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
     [
       "useCallMcpTool",
       "mcpServer/tool/call",
@@ -330,6 +353,32 @@ describe("capability query and mutation hooks", () => {
     });
   });
 
+  it("does not invalidate plugins after a failed marketplace mutation", async () => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    requestAppServerMethod.mockRejectedValueOnce(
+      new Error("marketplace unavailable"),
+    );
+    const { useAddMarketplace } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useAddMarketplace(), {
+      wrapper: createWrapper(client),
+    });
+
+    await expect(
+      act(async () =>
+        result.current.mutateAsync({
+          source: "https://example.com/marketplace.git",
+        }),
+      ),
+    ).rejects.toThrow("marketplace unavailable");
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
   it("invalidates related capability queries after plugin uninstall", async () => {
     const client = new QueryClient({
       defaultOptions: {
@@ -382,6 +431,41 @@ describe("capability query and mutation hooks", () => {
       queryKey: ["app-server", "skills"],
     });
   });
+
+  it.each([
+    [
+      "useMcpOauthLogin",
+      { name: "docs", scopes: ["read"] },
+      ["app-server", "mcp-servers"],
+    ],
+    [
+      "useSetSkillsExtraRoots",
+      { extraRoots: ["/workspace/.agents/skills"] },
+      ["app-server", "skills"],
+    ],
+  ] as const)(
+    "invalidates the related query after %s succeeds",
+    async (hookName, params, queryKey) => {
+      const client = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+      const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+      const hooks = await import("./useCapabilityQueries");
+      const hook = hooks[hookName] as () => {
+        mutateAsync: (value: never) => Promise<unknown>;
+      };
+      const { result } = renderHook(() => hook(), {
+        wrapper: createWrapper(client),
+      });
+
+      await act(async () => result.current.mutateAsync(params as never));
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey });
+    },
+  );
 
   it("invalidates config after marketplace mutations succeed", async () => {
     const client = new QueryClient({
