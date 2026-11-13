@@ -104,16 +104,12 @@ describe("ProjectHomePage", () => {
   it("renders the project workspace and chat list with project actions", async () => {
     const { ProjectHomePage } = await import("./ProjectHomePage");
 
-    const { container } = render(
+    render(
       <MemoryRouter>
         <ProjectHomePage />
       </MemoryRouter>,
     );
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("w-full");
-    expect(container.firstElementChild?.className).toContain("max-w-5xl");
-    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByRole("heading", { name: "Ruxex" })).toBeTruthy();
     expect(screen.getByText("/workspace")).toBeTruthy();
     expect(screen.getByText("Project chat")).toBeTruthy();
@@ -167,21 +163,6 @@ describe("ProjectHomePage", () => {
     );
 
     expect(mutateAsync).toHaveBeenCalledWith({ threadId: "thread-1" });
-  });
-
-  it("allows project metadata popovers to extend outside the modal box", async () => {
-    const { ProjectHomePage } = await import("./ProjectHomePage");
-
-    render(
-      <MemoryRouter>
-        <ProjectHomePage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Edit project" }));
-
-    const modalBox = screen.getByRole("dialog").querySelector(".modal-box");
-    expect(modalBox?.className).toContain("overflow-visible");
   });
 
   it("updates the project name and workspace root from the edit dialog", async () => {

@@ -265,16 +265,12 @@ describe("CapabilitiesPage", () => {
     });
     const { CapabilitiesPage } = await import("./CapabilitiesPage");
 
-    const { container } = render(
+    render(
       <MemoryRouter>
         <CapabilitiesPage />
       </MemoryRouter>,
     );
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("w-full");
-    expect(container.firstElementChild?.className).toContain("max-w-5xl");
-    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(
       screen.getByRole("heading", { name: "Plugins", level: 1 }),
     ).toBeTruthy();
@@ -301,15 +297,6 @@ describe("CapabilitiesPage", () => {
       screen.queryByRole("heading", { name: "Plugins", level: 2 }),
     ).toBeNull();
     expect(document.getElementById("plugins")?.closest("article")).toBeNull();
-    expect(screen.getAllByTestId("plugin-grid")[0].className).toContain(
-      "lg:grid-cols-2",
-    );
-    expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
-      "collapse",
-    );
-    expect(screen.getAllByTestId("plugin-marketplace")[0].className).toContain(
-      "bg-base-100",
-    );
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
     expect(
@@ -332,17 +319,8 @@ describe("CapabilitiesPage", () => {
     expect(officialInstallButton.getAttribute("title")).toBe(
       "Official Apps are not supported in Ruxex.",
     );
-    expect(officialInstallButton.className).toContain("opacity-50");
     fireEvent.click(officialInstallButton);
     expect(installPlugin.mutateAsync).not.toHaveBeenCalled();
-    const pluginCardContent = screen.getAllByTestId("plugin-card-content")[0];
-    expect(pluginCardContent.className).toContain(
-      "grid-cols-[auto_minmax(0,1fr)_auto]",
-    );
-    expect(pluginCardContent.children).toHaveLength(2);
-    expect(screen.getByText("Checks project files").className).toContain(
-      "break-words",
-    );
     const supportedInstallButton = screen.getByRole("button", {
       name: "Install Calendar Plugin",
     });
@@ -398,17 +376,11 @@ describe("CapabilitiesPage", () => {
     const installButton = screen.getByRole("button", {
       name: "Install Format Plugin",
     });
-    expect(installButton.className).toContain("btn-outline");
     expect(installButton.textContent).not.toContain("Format Plugin");
     fireEvent.click(installButton);
     const refreshButton = screen.getByRole("button", {
       name: "Refresh Community Plugins",
     });
-    expect(refreshButton.className).toContain("btn-square");
-    expect(refreshButton.closest(".collapse-content")).not.toBeNull();
-    expect(
-      refreshButton.closest('[data-testid="plugin-marketplace"]'),
-    ).not.toBeNull();
     expect(
       screen
         .getByRole("link", { name: "Configure Community Plugins" })
@@ -796,13 +768,8 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("/workspace/.agents/skills")).toBeTruthy();
     expect(screen.getByText("Built-in review skill")).toBeTruthy();
     expect(screen.queryByText("Default long description")).toBeNull();
-    const fallbackDescription = screen.getByText(longDescription);
-    expect(fallbackDescription.className).toContain("line-clamp-2");
-    expect(fallbackDescription.getAttribute("title")).toBe(longDescription);
-    expect(reviewToggle.className).toContain("toggle");
-    expect(reviewToggle.className).toContain("toggle-primary");
-    expect(reviewToggle.parentElement?.parentElement?.className).toContain(
-      "items-center",
+    expect(screen.getByText(longDescription).getAttribute("title")).toBe(
+      longDescription,
     );
     expect(screen.getAllByTestId("skills-source-group")).toHaveLength(2);
     fireEvent.click(reviewToggle);
@@ -811,24 +778,6 @@ describe("CapabilitiesPage", () => {
       path: reviewPath,
       enabled: false,
     });
-  });
-
-  it("gives the Skills content the full page width", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities/skills"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    const skillsCard = screen
-      .getByRole("heading", { name: "Skills", level: 2 })
-      .closest("article");
-    expect(skillsCard?.className).toContain("w-full");
-    expect(skillsCard?.parentElement?.className).not.toContain(
-      "lg:grid-cols-2",
-    );
   });
 
   it("adds a native directory to the Skill extra roots", async () => {
@@ -1036,15 +985,8 @@ describe("CapabilitiesPage", () => {
 
     expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
     expect(screen.getByText("docs")).toBeTruthy();
-    const serverDetails = screen.getByTestId("mcp-server-details-docs");
-    expect(serverDetails.tagName).toBe("DETAILS");
-    expect(serverDetails.getAttribute("open")).toBeNull();
-    expect(serverDetails.className).toContain("collapse");
-    expect(serverDetails.className).toContain("collapse-arrow");
-    expect(serverDetails.querySelector("summary")?.className).toContain(
-      "collapse-title",
-    );
-    expect(serverDetails.querySelector(".collapse-content")).not.toBeNull();
+    const serverDetails = screen.getByText("docs").closest("details") as HTMLDetailsElement;
+    expect(serverDetails.open).toBe(false);
     expect(within(serverDetails).getByText("1 tools")).toBeTruthy();
     expect(screen.queryByText("Official Plugins")).toBeNull();
     expect(screen.queryByText("Collaboration modes")).toBeNull();

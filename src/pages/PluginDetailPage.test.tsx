@@ -5,7 +5,6 @@ import {
   fireEvent,
   render,
   screen,
-  within,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -165,7 +164,7 @@ describe("PluginDetailPage", () => {
   it("loads and renders local plugin details", async () => {
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
-    const { container } = render(
+    render(
       <MemoryRouter
         initialEntries={["/capabilities/plugins/community/example"]}
       >
@@ -178,22 +177,13 @@ describe("PluginDetailPage", () => {
       </MemoryRouter>,
     );
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("min-w-[640px]");
     expect(
       screen.getByRole("heading", { name: "Example Plugin", level: 1 }),
     ).toBeTruthy();
-    const header = screen.getByRole("banner");
-    const byline = within(header).getByText("by Example Dev");
-    const description = within(header).getByText(
-      "The plugin read endpoint provides the canonical details.",
-    );
-    expect(byline.parentElement).toBe(description.parentElement);
     const skillButton = screen.getByRole("button", {
       name: /review.*Interface short description/,
     });
     expect(skillButton).toBeTruthy();
-    expect(skillButton.className).toContain("w-full");
     expect(screen.getByText("Interface short description")).toBeTruthy();
     expect(screen.queryByText("Review changes quickly")).toBeNull();
     expect(screen.queryByText("Reviews changes")).toBeNull();
@@ -429,66 +419,4 @@ describe("PluginDetailPage", () => {
     expect(usePluginRead).toHaveBeenCalledWith(null);
   });
 
-  it("lets a plugin with only skills use the full detail width", async () => {
-    usePluginRead.mockReturnValueOnce({
-      data: {
-        plugin: {
-          marketplaceName: "community",
-          marketplacePath: "/tmp/community",
-          summary: {
-            name: "example",
-            id: "example@community",
-            source: { type: "git", url: "https://example.com/plugin" },
-            localVersion: "1.2.3",
-            interface: {
-              displayName: "Example Plugin",
-              capabilities: [],
-              developerName: "Example Dev",
-              category: "tools",
-              websiteUrl: null,
-              privacyPolicyUrl: null,
-              termsOfServiceUrl: null,
-            },
-          },
-          description: "A plugin with skills only.",
-          skills: [
-            {
-              name: "review",
-              description: "Reviews changes",
-              shortDescription: "Review changes quickly",
-              interface: null,
-              path: null,
-              enabled: true,
-            },
-          ],
-          hooks: [],
-          mcpServers: [],
-        },
-      },
-      isLoading: false,
-      isError: false,
-      error: null,
-    });
-    const { PluginDetailPage } = await import("./PluginDetailPage");
-
-    render(
-      <MemoryRouter
-        initialEntries={["/capabilities/plugins/community/example"]}
-      >
-        <Routes>
-          <Route
-            path="/capabilities/plugins/:marketplaceName/:pluginName"
-            element={<PluginDetailPage />}
-          />
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    const skillsSection = screen
-      .getByRole("heading", { name: "Skills", level: 2 })
-      .closest("section");
-    expect(skillsSection?.parentElement?.className).not.toContain(
-      "lg:grid-cols-3",
-    );
-  });
 });

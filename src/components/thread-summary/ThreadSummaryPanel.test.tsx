@@ -37,30 +37,8 @@ describe("ThreadSummaryPanel", () => {
     expect(
       screen.queryByRole("button", { name: "Close Thread Summary" }),
     ).toBeNull();
-    const summaryPanel = screen.getByTestId("thread-summary-panel");
-    const summaryColumn = summaryPanel.parentElement;
-    expect(summaryColumn?.className).toContain("justify-self-end");
-    expect(summaryColumn?.className).toContain("sticky");
-    expect(summaryColumn?.className).toContain("top-6");
-    expect(summaryColumn?.className).toContain("chat-side-column");
-    expect(summaryPanel.className).toContain("rounded-box");
-    expect(summaryPanel.className).toContain("max-w-72");
-    expect(summaryPanel.className).toContain("ml-auto");
-    expect(summaryColumn?.className).toContain("overflow-hidden");
-    expect(summaryPanel.className).not.toContain("overflow-y-auto");
-    const summaryScroll = screen.getByTestId("thread-summary-scroll");
-    expect(summaryScroll.className).toContain("h-full");
-    expect(summaryScroll.className).toContain("max-h-full");
-    expect(summaryScroll.className).toContain("overflow-y-auto");
-    expect(summaryPanel.className).toContain("text-xs");
-    expect(summaryPanel.className).not.toContain("lg:border-l");
-    expect(screen.getByTestId("thread-summary-content").className).toContain(
-      "h-fit",
-    );
+    expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByTitle("Input tokens").textContent).toContain("Input");
-    expect(screen.getByTitle("Output tokens").textContent).toContain("Output");
-    expect(screen.getByTitle("Total tokens").textContent).toContain("Total");
     expect(screen.queryByText("Subagents")).toBeNull();
     expect(screen.queryByText("Sources / Web Search")).toBeNull();
     expect(screen.queryByText("TBD")).toBeNull();

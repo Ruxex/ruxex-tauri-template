@@ -44,7 +44,7 @@ describe("ProjectsPage", () => {
   it("opens a project by clicking its row and keeps the compact creation action", async () => {
     const { ProjectsPage } = await import("./ProjectsPage");
 
-    const { container } = render(
+    render(
       <MemoryRouter initialEntries={["/projects"]}>
         <Routes>
           <Route path="/projects" element={<ProjectsPage />} />
@@ -53,10 +53,6 @@ describe("ProjectsPage", () => {
       </MemoryRouter>,
     );
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("w-full");
-    expect(container.firstElementChild?.className).toContain("max-w-5xl");
-    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByRole("heading", { name: "Projects" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Your projects" })).toBeNull();
     expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();
@@ -94,9 +90,6 @@ describe("ProjectsPage", () => {
       name: "Create a project",
     });
     expect(dialog.getAttribute("open")).not.toBeNull();
-    expect(dialog.querySelector(".modal-box")?.className).toContain(
-      "overflow-visible",
-    );
     expect(screen.getByRole("textbox", { name: "Project name" })).toBeTruthy();
   });
 

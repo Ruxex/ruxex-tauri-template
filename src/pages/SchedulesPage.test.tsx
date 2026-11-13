@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,6 +48,7 @@ describe("SchedulesPage", () => {
       update: { mutate: vi.fn(), isPending: false },
       setEnabled: {
         mutate: vi.fn(),
+        mutateAsync: vi.fn().mockResolvedValue({}),
         isPending: false,
         isError: false,
       },
@@ -57,12 +59,8 @@ describe("SchedulesPage", () => {
 
   it("shows persisted schedules and confirms run-now/delete actions", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
-    const { container } = render(<SchedulesPage />);
+    render(<SchedulesPage />);
 
-    expect(container.firstElementChild?.className).toContain("mx-auto");
-    expect(container.firstElementChild?.className).toContain("w-full");
-    expect(container.firstElementChild?.className).toContain("max-w-5xl");
-    expect(container.firstElementChild?.className).toContain("space-y-6");
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     const card = screen.getByText("Nightly checks").closest("article");
     expect(card).toBeTruthy();
@@ -80,9 +78,6 @@ describe("SchedulesPage", () => {
         .textContent,
     ).toBe("");
     expect(cardView.getByText(/^Last run:/)).toBeTruthy();
-    expect(screen.getByTestId("schedule-grid").className).not.toContain(
-      "sm:grid-cols-2",
-    );
     fireEvent.click(
       screen.getByRole("button", { name: "Run now: Nightly checks" }),
     );
@@ -191,10 +186,12 @@ describe("SchedulesPage", () => {
     );
 
     const schedule = useSchedules.mock.results[0]?.value;
-    expect(schedule.setEnabled.mutate).toHaveBeenCalledWith({
-      id: "schedule-1",
-      enabled: false,
-    });
+    await waitFor(() =>
+      expect(schedule.setEnabled.mutateAsync).toHaveBeenCalledWith({
+        id: "schedule-1",
+        enabled: false,
+      }),
+    );
     expect(window.location.hash).toBe("");
   });
 

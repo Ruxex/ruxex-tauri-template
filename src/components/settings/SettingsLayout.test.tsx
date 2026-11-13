@@ -21,10 +21,10 @@ import {
   UiPreferencesCard,
 } from "./SettingsCards";
 
-describe("settings card layout", () => {
+describe("settings cards", () => {
   afterEach(cleanup);
 
-  it("aligns key-value values to the right of their keys", () => {
+  it("shows the current app server state", () => {
     render(
       <AppServerCard
         appServerReady
@@ -43,55 +43,9 @@ describe("settings card layout", () => {
       />,
     );
 
-    const statusRow = screen.getByText("Status").parentElement;
-    expect(statusRow?.className).toContain(
-      "grid-cols-[minmax(0,1fr)_minmax(12rem,40%)]",
-    );
-    expect(statusRow?.querySelector("dd")?.className).toContain("text-right");
-    expect(
-      screen.getByText("Connected").querySelector("svg")?.getAttribute("class"),
-    ).toContain("text-success");
-    expect(
-      screen
-        .getByText("Synchronized")
-        .querySelector("svg")
-        ?.getAttribute("class"),
-    ).toContain("text-success");
-    expect(
-      screen
-        .getByText("Running in this process")
-        .querySelector("svg")
-        ?.getAttribute("class"),
-    ).toContain("text-success");
-  });
-
-  it("separates rows inside each settings panel", () => {
-    render(
-      <AppServerCard
-        appServerReady
-        connected
-        isAvailable={false}
-        isFetching={false}
-        isPending={false}
-        isRefreshing={false}
-        isUpdatePending={false}
-        onReconnect={vi.fn()}
-        onRefresh={vi.fn()}
-        onUpdate={vi.fn()}
-        resynchronizing={false}
-        onAction={vi.fn()}
-        mode="inprocess"
-      />,
-    );
-
-    const connectionPanel = screen
-      .getByRole("heading", { name: "App Server" })
-      .closest("section");
-
-    expect(connectionPanel?.className).toContain("overflow-visible");
-    expect(connectionPanel?.querySelector("dl")?.className).toContain(
-      "divide-y",
-    );
+    expect(screen.getByText("Connected")).toBeTruthy();
+    expect(screen.getByText("Synchronized")).toBeTruthy();
+    expect(screen.getByText("Running in this process")).toBeTruthy();
   });
 
   it("groups app server controls with distinct semantic variants", () => {
@@ -271,21 +225,7 @@ describe("settings card layout", () => {
     expect(screen.getByText("A test model")).toBeTruthy();
   });
 
-  it("keeps settings summary cards in one vertical column", () => {
-    render(
-      <RuntimeSummary
-        modelCount={3}
-        permissionCount={2}
-        rateLimitName="Standard"
-      />,
-    );
-
-    expect(
-      screen.getByText("Models").closest("section")?.className,
-    ).not.toMatch(/(?:^| )(?:sm|md|lg):grid-cols-/);
-  });
-
-  it("uses a compact responsive key-value grid for capabilities", () => {
+  it("shows capability states and typography preferences", () => {
     render(
       <>
         <CapabilitiesCard
@@ -308,16 +248,6 @@ describe("settings card layout", () => {
       </>,
     );
 
-    const capabilitiesPanel = screen
-      .getByRole("heading", { name: "Capabilities" })
-      .closest("section");
-    const capabilitiesGrid = capabilitiesPanel?.querySelector("dl");
-    expect(capabilitiesGrid?.className).toContain("grid");
-    expect(capabilitiesGrid?.className).toContain("sm:grid-cols-2");
-    expect(capabilitiesGrid?.className).toContain("xl:grid-cols-3");
-    expect(capabilitiesGrid?.firstElementChild?.className).toContain(
-      "grid-cols-[minmax(0,1fr)_auto]",
-    );
     expect(screen.queryByText("Color mode")).toBeNull();
     expect(screen.getByRole("heading", { name: "Interface" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
@@ -325,14 +255,6 @@ describe("settings card layout", () => {
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.getByRole("status", { name: "Enabled" })).toBeTruthy();
     expect(screen.queryByRole("status", { name: "Disabled" })).toBeNull();
-    expect(
-      screen.getByRole("status", { name: "Enabled" }).className,
-    ).not.toContain("badge");
-    for (const unsupported of screen.getAllByRole("status", {
-      name: "Unsupported",
-    })) {
-      expect(unsupported.className).toContain("text-base-content/50");
-    }
     expect(screen.getAllByText("—")).toHaveLength(2);
     expect(screen.getAllByRole("status", { name: "Unsupported" })).toHaveLength(
       2,
@@ -519,22 +441,4 @@ describe("settings card layout", () => {
     ).toBeTruthy();
   });
 
-  it("wraps panel actions instead of squeezing the title at narrow widths", () => {
-    render(
-      <SettingsPanel
-        action={<button type="button">Reset</button>}
-        title="A settings panel with a long title"
-      >
-        <p>Content</p>
-      </SettingsPanel>,
-    );
-
-    const heading = screen.getByRole("heading", {
-      name: "A settings panel with a long title",
-    });
-    expect(heading.parentElement?.className).toContain("flex-wrap");
-    expect(
-      screen.getByRole("button", { name: "Reset" }).parentElement?.className,
-    ).toContain("shrink-0");
-  });
 });

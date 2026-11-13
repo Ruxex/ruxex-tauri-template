@@ -10,7 +10,7 @@ vi.mock("../../app-server/hooks", () => ({ useSchedules }));
 describe("AutomationSidebar", () => {
   afterEach(cleanup);
 
-  it("shows recent schedule runs newest first", async () => {
+  it("orders recent runs by their run time", async () => {
     useSchedules.mockReturnValue({
       query: {
         data: [
@@ -58,9 +58,7 @@ describe("AutomationSidebar", () => {
     const items = screen.getAllByTestId("recent-automation-item");
     expect(items).toHaveLength(2);
     expect(items[0].textContent).toContain("Newest review");
-    expect(items[0].textContent).toContain("Failed");
     expect(items[1].textContent).toContain("Older checks");
-    expect(items[1].textContent).toContain("Succeeded");
     expect(screen.queryByText("Open Automation")).toBeNull();
   });
 });

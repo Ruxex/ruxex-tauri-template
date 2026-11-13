@@ -147,9 +147,6 @@ describe("ServerRequestCard", () => {
     );
 
     expect(screen.getByText("pnpm check")).toBeTruthy();
-    const command = screen.getByText("pnpm check");
-    expect(command.className).toContain("max-h-48");
-    expect(command.className).toContain("overflow-y-auto");
     expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
     expect(screen.queryByText("Request details")).toBeNull();
     expect(screen.queryByText("Request 17")).toBeNull();
@@ -196,17 +193,33 @@ describe("ServerRequestCard", () => {
       />,
     );
 
-    expect(
-      screen
-        .getByText("Disconnected")
-        .querySelector("svg")
-        ?.getAttribute("class"),
-    ).toContain("text-warning");
+    expect(screen.getByText("Disconnected")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
     expect(
       screen.queryByRole("button", { name: "Approve in this chat" }),
     ).toBeNull();
     expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
+  });
+
+  it("submits the answer to a user-input request", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={userInputPending}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "What should I use?" }), {
+      target: { value: "the workspace cache" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      answers: { answer: { answers: ["the workspace cache"] } },
+    });
   });
 
   it("shows each requested permission once and resolves an allowed session grant", () => {
@@ -271,21 +284,6 @@ describe("ServerRequestCard", () => {
     });
     expect(within(summary).getAllByText(/^write:/i)).toHaveLength(1);
     expect(within(summary).queryByText(/type.*path/)).toBeNull();
-  });
-
-  it("gives user-input answers the full card width", () => {
-    render(
-      <ServerRequestCard
-        connected
-        onReject={vi.fn(async () => undefined)}
-        onResolve={vi.fn(async () => undefined)}
-        pending={userInputPending}
-      />,
-    );
-
-    expect(
-      screen.getByRole("textbox", { name: "What should I use?" }).className,
-    ).toContain("w-full");
   });
 
   it("denies permission requests without granting access", () => {

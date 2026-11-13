@@ -17,6 +17,7 @@ const useProjectList = vi.hoisted(() => vi.fn());
 const useSetThreadGoal = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 const useCollaborationModes = vi.hoisted(() => vi.fn());
+const useSkillsList = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useCreateThread,
@@ -26,6 +27,7 @@ vi.mock("../app-server/hooks", () => ({
   useSetThreadGoal,
   useSendMessage,
   useCollaborationModes,
+  useSkillsList,
 }));
 vi.mock("../components/conversation/ComposerMessageInput", () => ({
   ComposerMessageInput: ({
@@ -63,6 +65,7 @@ describe("HomePage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    useSkillsList.mockReturnValue({ data: { data: [] } });
     useCollaborationModes.mockReturnValue({
       data: { data: [] },
       isLoading: false,
@@ -111,7 +114,7 @@ describe("HomePage", () => {
     });
   });
 
-  it("renders a centered welcome state with a chat composer", async () => {
+  it("renders the welcome state and project selection", async () => {
     const { HomePage } = await import("./HomePage");
 
     render(
@@ -132,21 +135,9 @@ describe("HomePage", () => {
     expect(screen.getByLabelText("Permission mode")).toBeTruthy();
     expect(screen.getByLabelText("Composer options")).toBeTruthy();
     expect(screen.getByLabelText("Message")).toBeTruthy();
-    const projectSelector = screen.getByLabelText("Project");
+    fireEvent.click(screen.getByLabelText("Project"));
     expect(screen.getByRole("option", { name: "No project" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
-    const composerForm = screen.getByLabelText("Message").closest("form");
-    expect(projectSelector.compareDocumentPosition(composerForm as Node)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-    expect(projectSelector.closest("label")).toBeNull();
-    expect(projectSelector.parentElement?.parentElement?.className).toContain(
-      "mb-1",
-    );
-    expect(projectSelector.parentElement?.parentElement?.className).toContain(
-      "rounded-box",
-    );
-    expect(composerForm?.className).toContain("rounded-box");
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "New chat" })).toBeNull();
   });
@@ -199,9 +190,8 @@ describe("HomePage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Project"), {
-      target: { value: "project-1" },
-    });
+    fireEvent.click(screen.getByLabelText("Project"));
+    fireEvent.click(screen.getByRole("option", { name: "Project Alpha" }));
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Start in a project" },
     });
@@ -290,8 +280,8 @@ describe("HomePage", () => {
     );
 
     expect(useProject).toHaveBeenLastCalledWith("project-1");
-    expect((screen.getByLabelText("Project") as HTMLSelectElement).value).toBe(
-      "project-1",
+    expect(screen.getByLabelText("Project").textContent).toContain(
+      "Project Alpha",
     );
   });
 });

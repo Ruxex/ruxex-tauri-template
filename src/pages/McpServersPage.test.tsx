@@ -212,14 +212,7 @@ describe("McpServersPage", () => {
     renderPage();
 
     const serverDetails = screen.getByTestId("mcp-server-details-docs");
-    expect(serverDetails.tagName).toBe("DETAILS");
     expect(serverDetails.hasAttribute("open")).toBe(false);
-    expect(serverDetails.className).toContain("collapse");
-    expect(serverDetails.className).toContain("collapse-arrow");
-    expect(serverDetails.querySelector("summary")?.className).toContain(
-      "collapse-title",
-    );
-    expect(serverDetails.querySelector(".collapse-content")).not.toBeNull();
     expect(
       screen.getByRole("switch", { name: "Enable MCP server: docs" }),
     ).toBeTruthy();

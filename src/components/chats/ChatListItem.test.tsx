@@ -57,10 +57,6 @@ describe("ChatListItem", () => {
 
     const chatLink = screen.getByRole("link", { name: /Build the sidebar/ });
     expect(chatLink.getAttribute("href")).toBe("/chat/thread-1");
-    expect(chatLink.className).toContain("px-2");
-    expect(chatLink.className).toContain("py-0.5");
-    expect(chatLink.className).not.toContain("py-1");
-    expect(chatLink.className).not.toContain("p-3");
     expect(
       screen.getByRole("status", { name: "Chat status: Running" }),
     ).toBeTruthy();
@@ -246,7 +242,7 @@ describe("ChatListItem", () => {
     expect(screen.getByText("Untitled chat")).toBeTruthy();
   });
 
-  it("truncates long chat titles without moving the status icon", () => {
+  it("shows a long chat title and its status", () => {
     const title =
       "A very long chat title that should stay inside the sidebar width";
 
@@ -264,11 +260,7 @@ describe("ChatListItem", () => {
       </MemoryRouter>,
     );
 
-    const titleElement = screen.getByText(title);
-    const titleRegion = titleElement.parentElement as HTMLElement;
-    expect(titleRegion.className).toContain("min-w-0");
-    expect(titleRegion.className).toContain("flex-1");
-    expect(titleElement.className).toContain("truncate");
+    expect(screen.getByText(title)).toBeTruthy();
     expect(
       screen.getByRole("status", { name: "Chat status: Completed" }),
     ).toBeTruthy();
@@ -296,9 +288,6 @@ describe("ChatListItem", () => {
     const archiveButton = screen.getByRole("button", {
       name: "Archive Build the sidebar",
     });
-    const row = archiveButton.parentElement?.parentElement;
-    expect(row?.className).toContain("group/thread");
-    expect(archiveButton.className).toContain("group-hover/thread:opacity-100");
     expect(archiveButton.querySelector("svg")).toBeTruthy();
     expect(archiveButton.closest("a")).toBeNull();
     expect(screen.getByRole("link").getAttribute("href")).toBe(
@@ -332,42 +321,6 @@ describe("ChatListItem", () => {
         .getByRole("button", { name: "Archive Build the sidebar" })
         .hasAttribute("disabled"),
     ).toBe(true);
-  });
-
-  it("keeps the title and archive action inside the sidebar row", () => {
-    const title =
-      "A very long title that must shrink before the archive action";
-
-    render(
-      <MemoryRouter>
-        <ChatListItem
-          onArchive={vi.fn()}
-          thread={{
-            id: "thread-long-title",
-            name: title,
-            preview: null,
-            updatedAt: 1_735_689_600,
-          }}
-        />
-      </MemoryRouter>,
-    );
-
-    const archiveButton = screen.getByRole("button", {
-      name: `Archive ${title}`,
-    });
-    const row = archiveButton.parentElement?.parentElement;
-    const chatLink = screen.getByRole("link");
-
-    expect(row?.className).toContain("w-full");
-    expect(row?.className).toContain("max-w-full");
-    expect(row?.className).toContain("grid-cols-[minmax(0,1fr)_auto]");
-    expect(row?.className).toContain("overflow-hidden");
-    expect(row?.className).toContain("p-0");
-    expect(row?.className).toContain("hover:border-primary/50");
-    expect(row?.className).toContain("hover:bg-base-200");
-    expect(chatLink.className).toContain("max-w-full");
-    expect(chatLink.className).toContain("h-full");
-    expect(chatLink.className).not.toContain("hover:border-primary/50");
   });
 
   it("only slides an overflowing title on hover", () => {

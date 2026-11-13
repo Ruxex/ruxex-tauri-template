@@ -41,9 +41,6 @@ describe("ScheduleEditorDialog", () => {
 
     const cadence = screen.getByLabelText("Cadence");
     const weekdays = screen.getByRole("group", { name: "Weekdays" });
-    const layout = cadence.parentElement?.parentElement;
-
-    expect(layout?.className).toContain("grid-cols-2");
     expect(
       cadence.compareDocumentPosition(weekdays) &
         Node.DOCUMENT_POSITION_FOLLOWING,

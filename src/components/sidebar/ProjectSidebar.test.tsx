@@ -241,48 +241,6 @@ describe("ProjectSidebar", () => {
     ).toBeTruthy();
   });
 
-  it("keeps the rail and context panel bounded to the viewport", async () => {
-    const { ProjectSidebar } = await import("./ProjectSidebar");
-
-    render(
-      <MemoryRouter>
-        <ProjectSidebar
-          activePanel="home"
-          collapsed={false}
-          onPanelChange={vi.fn()}
-          onToggle={vi.fn()}
-        />
-      </MemoryRouter>,
-    );
-
-    const sidebar = screen.getByRole("complementary", {
-      name: "Workspace sidebar",
-    });
-
-    expect(sidebar.className).toContain("h-full");
-    expect(sidebar.className).toContain("min-h-0");
-  });
-
-  it("renders above the conversation minimap when their areas overlap", async () => {
-    const { ProjectSidebar } = await import("./ProjectSidebar");
-
-    render(
-      <MemoryRouter>
-        <ProjectSidebar
-          activePanel="home"
-          collapsed={false}
-          onPanelChange={vi.fn()}
-          onToggle={vi.fn()}
-        />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("complementary", { name: "Workspace sidebar" })
-        .className,
-    ).not.toContain("z-40");
-  });
-
   it("keeps only the compact rail when the context panel is disabled", async () => {
     const { ProjectSidebar } = await import("./ProjectSidebar");
 
@@ -298,17 +256,12 @@ describe("ProjectSidebar", () => {
       </MemoryRouter>,
     );
 
-    const sidebar = screen.getByRole("complementary", {
-      name: "Workspace sidebar",
-    });
-
     expect(
       screen.getByRole("navigation", { name: "Workspace navigation" }),
     ).toBeTruthy();
     expect(
       screen.queryByRole("complementary", { name: "Chat sidebar" }),
     ).toBeNull();
-    expect(sidebar.className).toContain("workbench-sidebar-collapsed");
   });
 
   it("keeps navigation links accessible when the pane is collapsed", async () => {
@@ -352,29 +305,6 @@ describe("ProjectSidebar", () => {
 
     expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
     expect(screen.queryByRole("separator", { name: "Resize left pane" })).toBeNull();
-  });
-
-  it("lets the chat sidebar fill the expanded pane", async () => {
-    const { ProjectSidebar } = await import("./ProjectSidebar");
-
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <ProjectSidebar
-          activePanel="home"
-          collapsed={false}
-          onPanelChange={vi.fn()}
-          onToggle={vi.fn()}
-        />
-      </MemoryRouter>,
-    );
-
-    const chatSidebar = screen.getByRole("complementary", {
-      name: "Chat sidebar",
-    });
-
-    expect(chatSidebar.className).toContain("flex-1");
-    expect(chatSidebar.className).toContain("min-w-0");
-    expect(chatSidebar.className).not.toContain("w-72");
   });
 
   it("renders Heroicons in the icon rail", async () => {

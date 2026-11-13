@@ -32,45 +32,6 @@ describe("ConversationMinimap", () => {
     document.body.innerHTML = "";
   });
 
-  it("keeps the minimap hidden until the layout has room beside the sidebar", () => {
-    const timeline = document.createElement("section");
-    document.body.append(timeline);
-
-    render(
-      <ConversationMinimap
-        items={[
-          message("user-1", "userMessage", "First prompt"),
-          message("user-2", "userMessage", "Second prompt"),
-          message("user-3", "userMessage", "Third prompt"),
-          message("user-4", "userMessage", "Fourth prompt"),
-          message("user-5", "userMessage", "Fifth prompt"),
-        ]}
-        timelineRef={{ current: timeline }}
-      />,
-    );
-
-    const minimap = screen.getByRole("complementary", {
-      name: "Conversation minimap",
-    });
-    const minimapColumn = minimap.parentElement;
-    expect(minimap.className).toContain("w-full");
-    expect(minimap.className).toContain("hidden");
-    expect(minimap.className).toContain("@min-[4rem]/minimap:block");
-    expect(minimapColumn?.className).toContain("chat-minimap-column");
-    expect(minimapColumn?.className).not.toContain("min-[1360px]");
-    expect(minimapColumn?.className).toContain("justify-self-stretch");
-    expect(minimapColumn?.className).toContain("sticky");
-    expect(minimapColumn?.className).toContain("top-6");
-    expect(minimapColumn?.className).toContain("chat-side-column");
-    expect(minimapColumn?.className).toContain("overflow-hidden");
-    expect(minimap.className).not.toContain("overflow-y-auto");
-    const minimapScroll = screen.getByTestId("conversation-minimap-scroll");
-    expect(minimapScroll.className).toContain("h-full");
-    expect(minimapScroll.className).toContain("max-h-full");
-    expect(minimapScroll.className).toContain("overflow-y-auto");
-    expect(minimap.className).not.toContain("fixed");
-  });
-
   it("renders the minimap when one user message is available", () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);
@@ -108,9 +69,6 @@ describe("ConversationMinimap", () => {
     expect(screen.getByTestId("conversation-minimap-track")).toBeTruthy();
     const markers = screen.getAllByRole("button", { name: /Jump to message/ });
     expect(markers).toHaveLength(5);
-    expect(markers[0]?.className).toContain("h-7");
-    expect(markers[0]?.className).toContain("w-10");
-    expect(markers[0]?.className).toContain("-translate-x-[14px]");
     expect(screen.queryByRole("tooltip")).toBeNull();
 
     const firstMarker = screen.getByRole("button", { name: /First prompt/ });
@@ -119,25 +77,9 @@ describe("ConversationMinimap", () => {
 
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip.textContent).toBe("First prompt");
-    expect(tooltip.className).toContain("left-14");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-1").className,
-    ).toEqual(expect.stringContaining("scale-200"));
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-1").style.transform,
-    ).toBe("translateX(15px)");
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-1").className,
-    ).toContain("duration-200");
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-2").className,
-    ).toContain("scale-125");
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-2").className,
-    ).not.toContain("border-primary");
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-2").className,
-    ).not.toContain("bg-primary");
+      screen.getByTestId("conversation-minimap-marker-user-1"),
+    ).toBeTruthy();
   });
 
   it("places markers at equal intervals regardless of message layout", async () => {

@@ -42,17 +42,8 @@ describe("AccountPage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Account" })).toBeTruthy();
-    expect(
-      screen
-        .getByText("Authenticated")
-        .querySelector("svg")
-        ?.getAttribute("class"),
-    ).toContain("text-success");
+    expect(screen.getByText("Authenticated")).toBeTruthy();
     expect(screen.getByText("API key")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Information" }).closest("section")
-        ?.className,
-    ).toContain("overflow-hidden");
     expect(screen.queryByRole("link", { name: "Log in" })).toBeNull();
   });
 

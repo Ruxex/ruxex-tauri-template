@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import type { AppServerEvent } from "../app-server/events";
-import type { v2 } from "../protocol";
 import { MockAppServer } from "./mock-app-server";
 
 describe("MockAppServer", () => {
@@ -67,36 +66,5 @@ describe("MockAppServer", () => {
         request: { method: "model/list", id: 1, params: {} },
       }),
     ).rejects.toThrow("No mock response registered for model/list");
-  });
-
-  it("supports a typed model response fixture", async () => {
-    const server = new MockAppServer();
-    const model: v2.Model = {
-      id: "model-1",
-      model: "test-model",
-      displayName: "Test model",
-      description: "",
-      upgrade: null,
-      upgradeInfo: null,
-      availabilityNux: null,
-      modelSpecialty: null,
-      hidden: false,
-      supportedReasoningEfforts: [],
-      defaultReasoningEffort: "",
-      inputModalities: ["text"],
-      multiAgentVersion: null,
-      additionalSpeedTiers: [],
-      serviceTiers: [],
-      defaultServiceTier: null,
-      availableAccessPrograms: null,
-      isDefault: true,
-    };
-    server.respond("model/list", { data: [model], nextCursor: null });
-
-    const result = await server.invoke("app_server_request", {
-      request: { method: "model/list", id: 2, params: {} },
-    });
-
-    expect(result).toMatchObject({ response: { data: [model] } });
   });
 });

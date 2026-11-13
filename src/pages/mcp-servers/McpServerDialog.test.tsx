@@ -45,9 +45,6 @@ describe("McpServerDialog", () => {
     expect(
       screen.getByRole("heading", { name: "Add MCP server" }),
     ).toBeTruthy();
-    expect(screen.getByText("Arguments").closest("label")?.className).toContain(
-      "sm:col-span-2",
-    );
     fireEvent.change(screen.getByRole("textbox", { name: "Server name" }), {
       target: { value: "docs" },
     });
