@@ -54,7 +54,7 @@ describe("ModelPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: "Models" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Provider" })).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "Provider and account" }),
     ).toBeTruthy();

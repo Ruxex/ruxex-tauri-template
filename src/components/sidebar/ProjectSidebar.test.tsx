@@ -557,7 +557,7 @@ describe("ProjectSidebar", () => {
       within(panel).getByRole("link", { name: "Appearance" }),
     ).toBeTruthy();
     expect(
-      within(panel).getByRole("link", { name: "Models / Engines" }),
+      within(panel).getByRole("link", { name: "Provider" }),
     ).toBeTruthy();
     expect(within(panel).queryByRole("link", { name: "Account" })).toBeNull();
   });

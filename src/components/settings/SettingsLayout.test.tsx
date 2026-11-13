@@ -88,13 +88,14 @@ describe("settings card layout", () => {
       .getByRole("heading", { name: "App Server" })
       .closest("section");
 
-    expect(connectionPanel?.className).toContain("overflow-hidden");
+    expect(connectionPanel?.className).toContain("overflow-visible");
     expect(connectionPanel?.querySelector("dl")?.className).toContain(
       "divide-y",
     );
   });
 
   it("groups app server controls with distinct semantic variants", () => {
+    const onAction = vi.fn();
     render(
       <AppServerCard
         appServerReady
@@ -111,7 +112,7 @@ describe("settings card layout", () => {
         isRefreshing={false}
         isUpdatePending={false}
         mode="daemon"
-        onAction={vi.fn()}
+        onAction={onAction}
         onReconnect={vi.fn()}
         onRefresh={vi.fn()}
         onUpdate={vi.fn()}
@@ -123,7 +124,7 @@ describe("settings card layout", () => {
     const actionRow = reconnect.parentElement;
 
     expect(actionRow?.className).toContain("flex-wrap");
-    expect(actionRow?.querySelectorAll("button")).toHaveLength(4);
+    expect(actionRow?.querySelectorAll("button")).toHaveLength(5);
     expect(reconnect.className).toContain("btn-outline");
     const refresh = screen.getByRole("button", { name: "Refresh" });
     expect(refresh.textContent).toBe("");
@@ -144,7 +145,21 @@ describe("settings card layout", () => {
     const stopOptions = screen.getByLabelText("Stop options");
     expect(stopOptions.className).toContain("btn-outline");
     fireEvent.click(stopOptions);
-    expect(screen.getByRole("menuitem", { name: "Force stop" })).toBeTruthy();
+    const forceStopOption = screen.getByRole("menuitemradio", {
+      name: "Force stop",
+    });
+    fireEvent.click(forceStopOption);
+    expect(onAction).not.toHaveBeenCalled();
+    const forceStopButton = screen.getByRole("button", { name: "Force stop" });
+    fireEvent.click(forceStopButton);
+    expect(onAction).not.toHaveBeenCalled();
+    const confirmation = screen.getByRole("dialog", {
+      name: "Force stop App Server?",
+    });
+    fireEvent.click(
+      within(confirmation).getByRole("button", { name: "Force stop" }),
+    );
+    expect(onAction).toHaveBeenCalledWith("forceStop");
     expect(screen.getByText("Running")).toBeTruthy();
   });
 

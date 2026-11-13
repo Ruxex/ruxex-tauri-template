@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -118,6 +124,13 @@ describe("AppServerPage", () => {
     expect(screen.getByText("Synchronized")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    const confirmation = screen.getByRole("dialog", {
+      name: "Restart App Server?",
+    });
+    expect(daemon.control.mutate).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(confirmation).getByRole("button", { name: "Restart" }),
+    );
     expect(daemon.control.mutate).toHaveBeenCalledWith("restart");
 
     fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
@@ -349,7 +362,7 @@ describe("SettingsSidebar AppServer navigation", () => {
     expect(
       screen.getByRole("link", { name: "Plugin marketplaces" }),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Models / Engines" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Provider" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "App Server" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Hooks" })).toBeTruthy();
   });

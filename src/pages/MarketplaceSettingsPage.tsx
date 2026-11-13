@@ -167,8 +167,8 @@ export function MarketplaceSettingsPage() {
 
       <SettingsPanel icon={PuzzlePieceIcon} title="Add marketplace">
         <form onSubmit={handleSubmit}>
-          <div className="divide-y divide-base-300 text-sm">
-            <FormFieldRow label="Source" controlId="marketplace-source">
+          <div className="text-sm">
+            <FormFieldRow compact label="Source" controlId="marketplace-source">
               <input
                 aria-label="Source"
                 id="marketplace-source"
@@ -179,6 +179,7 @@ export function MarketplaceSettingsPage() {
               />
             </FormFieldRow>
             <FormFieldRow
+              compact
               label="Git ref (optional)"
               controlId="marketplace-ref"
             >
@@ -192,6 +193,7 @@ export function MarketplaceSettingsPage() {
               />
             </FormFieldRow>
             <FormFieldRow
+              compact
               label="Sparse paths (optional)"
               controlId="marketplace-sparse-paths"
             >

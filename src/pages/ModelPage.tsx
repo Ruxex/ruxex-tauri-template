@@ -22,7 +22,7 @@ export function ModelPage() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-3xl font-semibold tracking-tight">Models</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">Provider</h2>
       <ProviderAccountCard
         provider={
           provider.data?.name ?? account.data?.providerId ?? "Unavailable"

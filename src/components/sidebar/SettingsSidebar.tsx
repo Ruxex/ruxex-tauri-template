@@ -1,6 +1,6 @@
 import {
   ArchiveBoxIcon,
-  DocumentTextIcon,
+  CpuChipIcon,
   InformationCircleIcon,
   PuzzlePieceIcon,
   ServerIcon,
@@ -140,10 +140,10 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                     ? "bg-primary/15 font-medium text-base-content hover:bg-primary/20"
                     : undefined
                 }
-                to="/settings/models"
+                to="/settings/provider"
               >
-                <DocumentTextIcon aria-hidden="true" className="size-4" />
-                Models / Engines
+                <CpuChipIcon aria-hidden="true" className="size-4" />
+                Provider
               </NavLink>
             </li>
             <li>
