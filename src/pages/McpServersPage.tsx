@@ -12,6 +12,7 @@ import {
 import {
   type McpServerDraft,
   type McpServerEntry,
+  type McpServerJsonImportEntry,
   mcpServerKeyPath,
   serializeMcpServerDraft,
 } from "../app-server/mcp-config";
@@ -171,6 +172,44 @@ export function McpServersPage() {
     setDialog(null);
     focusDialogTrigger();
     await reloadAfterWrite(draft.name, false);
+  }
+
+  async function handleImportJson(entries: McpServerJsonImportEntry[]) {
+    const params: v2.ConfigBatchWriteParams = {
+      edits: entries.map((entry) => ({
+        keyPath: mcpServerKeyPath(entry.name),
+        value: entry.value,
+        mergeStrategy: "replace",
+      })),
+      reloadUserConfig: true,
+    };
+    if (globalConfig.data?.version) {
+      params.expectedVersion = globalConfig.data.version;
+    }
+
+    setWriteError(null);
+    setReloadError(null);
+    setHigherLayerNotice(null);
+    setOverrideNotice(null);
+    try {
+      const result = await writeConfig.mutateAsync(params);
+      if (result.status === "okOverridden") {
+        setOverrideNotice(
+          result.overriddenMetadata?.message ??
+            "A higher-priority configuration layer overrides this value.",
+        );
+      }
+    } catch (error) {
+      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
+        void globalConfig.refetch();
+      }
+      setWriteError(formatErrorMessage(error));
+      return;
+    }
+
+    setDialog(null);
+    focusDialogTrigger();
+    await reloadAfterWrite(entries[0].name, false);
   }
 
   async function handleEnabledChange(entry: McpServerEntry, enabled: boolean) {
@@ -547,6 +586,7 @@ export function McpServersPage() {
           error={writeError}
           originalName={dialog.originalName}
           onClose={closeDialog}
+          onImportJson={(entries) => void handleImportJson(entries)}
           onSubmit={(draft) => void handleSave(draft)}
         />
       )}

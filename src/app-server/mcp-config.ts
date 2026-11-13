@@ -291,6 +291,70 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
   };
 }
 
+export type McpServerJsonImportEntry = {
+  name: string;
+  value: JsonObject;
+};
+
+export function parseMcpServerDictionaryJson(value: string): {
+  entries: McpServerJsonImportEntry[];
+  error: string | null;
+} {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch (error) {
+    return {
+      entries: [],
+      error: error instanceof Error ? error.message : "Invalid JSON.",
+    };
+  }
+
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { entries: [], error: "MCP server dictionary must be an object." };
+  }
+
+  const entries: McpServerJsonImportEntry[] = [];
+  for (const [name, value] of Object.entries(parsed)) {
+    if (!name.trim() || name !== name.trim()) {
+      return { entries: [], error: "Server names cannot be empty or padded." };
+    }
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+      return {
+        entries: [],
+        error: `Configuration for “${name}” must be an object.`,
+      };
+    }
+
+    const config = value as JsonObject;
+    const entry = normalizeEntry(name, config);
+    if (!entry.draft) {
+      return {
+        entries: [],
+        error: `Configuration for “${name}” is invalid: ${entry.error}.`,
+      };
+    }
+    if (entry.draft.transport === "stdio" && !entry.draft.command.trim()) {
+      return {
+        entries: [],
+        error: `Configuration for “${name}” needs a command.`,
+      };
+    }
+    if (entry.draft.transport === "streamableHttp" && !entry.draft.url.trim()) {
+      return {
+        entries: [],
+        error: `Configuration for “${name}” needs a URL.`,
+      };
+    }
+    entries.push({ name, value: config });
+  }
+
+  if (entries.length === 0) {
+    return { entries: [], error: "Add at least one MCP server." };
+  }
+  return { entries, error: null };
+}
+
 export function extractGlobalMcpConfig(
   response: v2.ConfigReadResponse,
 ): GlobalMcpConfig {

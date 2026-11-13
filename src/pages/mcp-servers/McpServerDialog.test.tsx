@@ -37,6 +37,7 @@ describe("McpServerDialog", () => {
         isPending={false}
         error={null}
         onClose={vi.fn()}
+        onImportJson={vi.fn()}
         onSubmit={onSubmit}
       />,
     );
@@ -44,9 +45,9 @@ describe("McpServerDialog", () => {
     expect(
       screen.getByRole("heading", { name: "Add MCP server" }),
     ).toBeTruthy();
-    expect(
-      screen.getByText("Arguments").closest("label")?.className,
-    ).not.toContain("sm:col-span-2");
+    expect(screen.getByText("Arguments").closest("label")?.className).toContain(
+      "sm:col-span-2",
+    );
     fireEvent.change(screen.getByRole("textbox", { name: "Server name" }), {
       target: { value: "docs" },
     });
@@ -72,6 +73,7 @@ describe("McpServerDialog", () => {
         isPending={false}
         error="The server configuration is invalid."
         onClose={vi.fn()}
+        onImportJson={vi.fn()}
         onSubmit={vi.fn()}
       />,
     );
@@ -102,6 +104,7 @@ describe("McpServerDialog", () => {
         isPending
         error={null}
         onClose={onClose}
+        onImportJson={vi.fn()}
         onSubmit={vi.fn()}
       />,
     );

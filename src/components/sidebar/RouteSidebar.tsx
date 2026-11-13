@@ -26,8 +26,6 @@ export function SidebarContextPanel({
       return (
         <HomeSidebar onClose={onClose} selectedThreadId={selectedThreadId} />
       );
-    case "account":
-      return <SettingsSidebar onClose={onClose} />;
     case "plugins":
       return <PluginsSidebar onClose={onClose} />;
     case "automation":

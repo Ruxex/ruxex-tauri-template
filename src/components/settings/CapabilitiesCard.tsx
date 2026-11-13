@@ -44,13 +44,15 @@ export function CapabilitiesCard({
           >
             <dt className="min-w-0 leading-snug">{capabilityLabel(name)}</dt>
             <dd className="justify-self-end text-right">
-              {typeof enabled === "boolean" ? (
-                <CapabilityStatus
-                  label={enabled ? "Enabled" : "Disabled"}
-                  state={enabled ? "enabled" : "disabled"}
-                />
+              {enabled === true ? (
+                <CapabilityStatus label="Enabled" state="enabled" />
               ) : (
-                <CapabilityStatus state="unsupported" label={String(enabled)} />
+                <CapabilityStatus
+                  state="unsupported"
+                  label={
+                    typeof enabled === "boolean" ? "Unsupported" : String(enabled)
+                  }
+                />
               )}
             </dd>
           </div>
