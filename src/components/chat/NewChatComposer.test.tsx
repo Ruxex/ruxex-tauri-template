@@ -36,6 +36,11 @@ vi.mock("../../app-server/hooks", () => ({
     isLoading: false,
     isError: false,
   }),
+  useSkillsList: () => ({
+    data: { data: [] },
+    isLoading: false,
+    isError: false,
+  }),
   useSendMessage: () => ({
     error: null,
     isPending: false,

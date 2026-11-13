@@ -4,32 +4,23 @@ import type { v2 } from "../../protocol";
 import { useCloseDropdownOnOutsidePointerDown } from "./useCloseDropdown";
 
 type ComposerSettingsProps = {
-  collaborationModes?: v2.CollaborationModeMask[];
-  collaborationModeName?: string;
   disabled: boolean;
   effort: string;
   model: string;
   models: v2.Model[];
   onEffortChange: (effort: string) => void;
-  onCollaborationModeChange?: (modeName: string) => void;
   onModelChange: (model: string) => void;
 };
 
 export function ComposerSettings({
-  collaborationModes = [],
-  collaborationModeName = "",
   disabled,
   effort,
   model,
   models,
   onEffortChange,
-  onCollaborationModeChange,
   onModelChange,
 }: ComposerSettingsProps) {
   const visibleModels = models.filter((item) => !item.hidden);
-  const selectableCollaborationModes = collaborationModes.filter(
-    (option) => option.mode !== "plan",
-  );
   const selectedModel =
     visibleModels.find((item) => item.model === model) ??
     visibleModels.find((item) => item.isDefault);
@@ -111,34 +102,6 @@ export function ComposerSettings({
             )}
           </select>
         </label>
-        {selectableCollaborationModes.length > 0 &&
-          onCollaborationModeChange && (
-            <label className="form-control mt-3">
-              <span className="label-text text-xs font-medium">
-                Collaboration mode
-              </span>
-              <select
-                aria-label="Collaboration mode"
-                className="select select-bordered select-sm mt-1"
-                disabled={disabled}
-                onChange={(event) => {
-                  onCollaborationModeChange(event.target.value);
-                  event.currentTarget
-                    .closest("details")
-                    ?.removeAttribute("open");
-                }}
-                value={collaborationModeName}
-              >
-                <option value="">Default</option>
-                {selectableCollaborationModes.map((option) => (
-                  <option key={option.name} value={option.name}>
-                    {option.name}
-                    {(!option.mode || !option.model) && " (server default)"}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
       </div>
     </details>
   );

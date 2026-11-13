@@ -1,5 +1,11 @@
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FormEvent, type KeyboardEvent, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
@@ -11,11 +17,16 @@ import {
   useProjectList,
   useSendMessage,
   useSetThreadGoal,
+  useSkillsList,
 } from "../../app-server/hooks";
 import type { v2 } from "../../protocol";
-import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
+import {
+  filterHiddenSkills,
+  getDesktopUiPolicy,
+} from "../../platform/skill-policy";
 import { ProjectSelector } from "../chats/ProjectSelector";
 import { AttachmentPreview } from "../common/AttachmentPreview";
+import { SkillIcon } from "../common/SkillIcon";
 import { useImageAttachment } from "../common/useImageAttachment";
 import { ComposerMessageInput } from "../conversation/ComposerMessageInput";
 import {
@@ -24,12 +35,17 @@ import {
   type PermissionMode,
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
-import {
-  collaborationModeFromMask,
-  planCollaborationMode,
-} from "../conversation/collaboration-model";
+import { planCollaborationMode } from "../conversation/collaboration-model";
 import { isComposerSubmitShortcut } from "../conversation/composer-model";
+import { SlashCommandPalette } from "../conversation/SlashCommandPalette";
+import {
+  getSlashCommandInput,
+  type SlashCommandId,
+  selectSlashCommand,
+  selectSlashSkill,
+} from "../conversation/slash-command";
 import { useComposerSelection } from "../conversation/useComposerSelection";
+import { NewProjectDialog } from "../projects/NewProjectDialog";
 
 type NewChatComposerProps = {
   projectId?: string;
@@ -39,9 +55,27 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const branding = useBranding();
   const navigate = useNavigate();
   const models = useModelList();
+  const skills = useSkillsList();
   const collaborationModes = useCollaborationModes();
-  const projects = useProjectList();
+  const projects = useProjectList({
+    limit: 100,
+    sortKey: "position",
+    sortDirection: "asc",
+  });
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
+  const [message, setMessage] = useState("");
+  const [goalMode, setGoalMode] = useState(false);
+  const [planMode, setPlanMode] = useState(false);
+  const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
+  const [selectedSkill, setSelectedSkill] = useState<Pick<
+    v2.SkillMetadata,
+    "name" | "path" | "interface"
+  > | null>(null);
+  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const editorRef = useRef<HTMLElement>(null);
   const project = useProject(selectedProjectId);
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
@@ -54,14 +88,28 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
     model,
     effort,
   );
-  const [message, setMessage] = useState("");
-  const [goalMode, setGoalMode] = useState(false);
-  const [planMode, setPlanMode] = useState(false);
-  const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
-  const [collaborationModeName, setCollaborationModeName] = useState("");
-  const [collaborationMode, setCollaborationMode] = useState<
-    CollaborationMode | null | undefined
-  >(undefined);
+  const slashCommandInput = getSlashCommandInput(message);
+  const showSlashCommands = slashCommandInput !== null && !goalMode;
+
+  useEffect(() => {
+    let cancelled = false;
+    void getDesktopUiPolicy()
+      .then((policy) => {
+        if (!cancelled && policy.hiddenSkills.length > 0) {
+          setHiddenSkills(new Set(policy.hiddenSkills));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleSkills = filterHiddenSkills(
+    skills.data?.data.flatMap((entry) => entry.skills) ?? [],
+    hiddenSkills,
+  ).filter((skill) => skill.enabled);
   const {
     attachmentError,
     attachmentInput,
@@ -117,9 +165,18 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           status: "active",
         });
       } else {
-        const input: v2.UserInput[] = text
-          ? [{ type: "text", text, text_elements: [] }]
+        const input: v2.UserInput[] = selectedSkill
+          ? [
+              {
+                type: "skill",
+                name: selectedSkill.name,
+                path: selectedSkill.path,
+              },
+            ]
           : [];
+        if (text) {
+          input.push({ type: "text", text, text_elements: [] });
+        }
         if (imageFile) {
           const dataUrl = await readImage(imageFile);
           input.unshift({ type: "image", url: dataUrl });
@@ -127,16 +184,11 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         await sendMessage.mutateAsync({
           threadId: thread.thread.id,
           input,
-          ...((planMode ? planModeRequest : collaborationMode) !== undefined
-            ? {
-                collaborationMode: planMode
-                  ? planModeRequest
-                  : collaborationMode,
-              }
-            : {}),
+          ...(planMode ? { collaborationMode: planModeRequest } : {}),
         });
       }
       setMessage("");
+      setSelectedSkill(null);
       resetAttachment();
       navigate(`/chat/${thread.thread.id}`);
     } catch (submitError) {
@@ -157,6 +209,28 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
     event.currentTarget.closest("form")?.requestSubmit();
   }
 
+  function handleSlashCommandSelect(command: SlashCommandId) {
+    const selection = selectSlashCommand(message, command);
+    if (selection.kind !== "goal") {
+      return;
+    }
+    setGoalMode(true);
+    setSelectedSkill(null);
+    setMessage(selection.message);
+    editorRef.current?.focus();
+  }
+
+  function handleSlashSkillSelect(skill: v2.SkillMetadata) {
+    const selection = selectSlashSkill(message, skill);
+    setSelectedSkill({
+      name: selection.skill.name,
+      path: selection.skill.path,
+      interface: skill.interface,
+    });
+    setMessage(selection.message);
+    editorRef.current?.focus();
+  }
+
   const isPending =
     createThread.isPending || sendMessage.isPending || setGoal.isPending;
   const isProjectLoading = Boolean(selectedProjectId && project.isLoading);
@@ -173,16 +247,32 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         </h1>
       </div>
       <div className="mx-auto w-full max-w-3xl">
-        <div className="mb-1 rounded-box border border-base-300 bg-base-100 px-2 py-1.5">
+        <div className="mb-1 w-fit max-w-full rounded-box border border-base-300 bg-base-100 px-2 py-1.5">
           <ProjectSelector
             disabled={isPending}
             isError={projects.isError}
             isLoading={projects.isLoading}
             onChange={setSelectedProjectId}
+            onCreateProject={() => setShowNewProjectDialog(true)}
             projects={projects.data?.data ?? []}
             value={selectedProjectId}
           />
         </div>
+        {showSlashCommands && (
+          <SlashCommandPalette
+            commands={["goal"]}
+            disabled={isPending}
+            onDismiss={() => editorRef.current?.focus()}
+            onSelect={handleSlashCommandSelect}
+            onSelectSkill={handleSlashSkillSelect}
+            query={slashCommandInput?.query}
+            skills={visibleSkills}
+            skillsError={
+              skills.isError ? formatErrorMessage(skills.error) : null
+            }
+            skillsLoading={skills.isLoading}
+          />
+        )}
         <form
           className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
           onSubmit={(event) => void handleSubmit(event)}
@@ -190,6 +280,9 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           <ComposerMessageInput
             disabled={isPending}
             onChange={setMessage}
+            onEditorReady={(element) => {
+              editorRef.current = element;
+            }}
             onKeyDown={handleMessageKeyDown}
             placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
             value={message}
@@ -215,11 +308,32 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 disabled={isPending}
                 goalMode={goalMode}
                 onAttach={() => attachmentInput.current?.click()}
-                onGoalModeChange={() => setGoalMode((value) => !value)}
+                onGoalModeChange={() => {
+                  setGoalMode((value) => !value);
+                  setSelectedSkill(null);
+                }}
                 onPlanModeChange={() => setPlanMode((value) => !value)}
                 planModeDisabled={!planModeRequest}
                 planMode={planMode}
               />
+              {selectedSkill && (
+                <span
+                  aria-label={`Selected skill: ${selectedSkill.name}`}
+                  className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
+                  role="status"
+                >
+                  <SkillIcon className="size-3.5" skill={selectedSkill} />
+                  <span className="truncate">{selectedSkill.name}</span>
+                  <button
+                    aria-label={`Remove skill ${selectedSkill.name}`}
+                    className="btn btn-ghost btn-xs btn-circle -mr-1 size-5 min-h-5"
+                    onClick={() => setSelectedSkill(null)}
+                    type="button"
+                  >
+                    <XMarkIcon aria-hidden="true" className="size-3" />
+                  </button>
+                </span>
+              )}
               {goalMode && (
                 <span
                   aria-label="Goal mode active"
@@ -262,25 +376,11 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
             </div>
             <div className="ml-auto flex min-w-0 items-center gap-2">
               <ComposerSettings
-                collaborationModes={collaborationModes.data?.data ?? []}
-                collaborationModeName={collaborationModeName}
                 disabled={isPending}
                 effort={effort}
                 model={model}
                 models={models.data?.data ?? []}
                 onEffortChange={setEffort}
-                onCollaborationModeChange={(modeName) => {
-                  const mask = collaborationModes.data?.data.find(
-                    (option) => option.name === modeName,
-                  );
-                  setPlanMode(false);
-                  setCollaborationModeName(modeName);
-                  setCollaborationMode(
-                    mask
-                      ? collaborationModeFromMask(mask, model, effort)
-                      : null,
-                  );
-                }}
                 onModelChange={setModel}
               />
               <button
@@ -302,6 +402,12 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           )}
         </form>
       </div>
+      {showNewProjectDialog && (
+        <NewProjectDialog
+          onClose={() => setShowNewProjectDialog(false)}
+          onCreated={setSelectedProjectId}
+        />
+      )}
     </div>
   );
 }

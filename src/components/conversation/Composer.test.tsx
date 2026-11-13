@@ -168,10 +168,16 @@ describe("Composer", () => {
       data: {
         data: [
           {
-            name: "parallel-review",
+            name: "Plan",
+            mode: "plan",
+            model: null,
+            reasoning_effort: "medium",
+          },
+          {
+            name: "Default",
             mode: "default",
-            model: "ruxex",
-            reasoning_effort: "high",
+            model: null,
+            reasoning_effort: null,
           },
         ],
       },
@@ -862,84 +868,4 @@ describe("Composer", () => {
     });
   });
 
-  it("sends the selected collaboration preset with a valid protocol shape", async () => {
-    const { Composer } = await import("./Composer");
-
-    render(<Composer threadId="thread-1" activeTurnId={null} />);
-    fireEvent.click(screen.getByLabelText("Model and effort"));
-    fireEvent.change(screen.getByLabelText("Collaboration mode"), {
-      target: { value: "parallel-review" },
-    });
-    fireEvent.change(screen.getByLabelText("Message"), {
-      target: { value: "Coordinate this" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-
-    await waitFor(() => expect(sendMutation).toHaveBeenCalled());
-    expect(settingsMutation).toHaveBeenCalledWith({
-      threadId: "thread-1",
-      collaborationMode: {
-        mode: "default",
-        settings: {
-          model: "ruxex",
-          reasoning_effort: "high",
-          developer_instructions: null,
-        },
-      },
-    });
-    expect(sendMutation).toHaveBeenCalledWith({
-      threadId: "thread-1",
-      input: [{ type: "text", text: "Coordinate this", text_elements: [] }],
-      model: "ruxex",
-      effort: "medium",
-      collaborationMode: {
-        mode: "default",
-        settings: {
-          model: "ruxex",
-          reasoning_effort: "high",
-          developer_instructions: null,
-        },
-      },
-    });
-  });
-
-  it("renders incomplete presets without sending malformed collaboration data", async () => {
-    useCollaborationModes.mockReturnValue({
-      data: {
-        data: [
-          {
-            name: "server-default",
-            mode: null,
-            model: null,
-            reasoning_effort: null,
-          },
-        ],
-      },
-      isLoading: false,
-      isError: false,
-    });
-    const { Composer } = await import("./Composer");
-
-    render(<Composer threadId="thread-1" activeTurnId={null} />);
-    fireEvent.click(screen.getByLabelText("Model and effort"));
-    expect(
-      screen.getByRole("option", { name: "server-default (server default)" }),
-    ).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Collaboration mode"), {
-      target: { value: "server-default" },
-    });
-    fireEvent.change(screen.getByLabelText("Message"), {
-      target: { value: "Use the server default" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-
-    await waitFor(() => expect(sendMutation).toHaveBeenCalled());
-    expect(settingsMutation).toHaveBeenCalledWith({
-      threadId: "thread-1",
-      collaborationMode: null,
-    });
-    expect(sendMutation).toHaveBeenCalledWith(
-      expect.objectContaining({ collaborationMode: null }),
-    );
-  });
 });

@@ -33,7 +33,6 @@ import {
   getDesktopUiPolicy,
 } from "../../platform/skill-policy";
 import type { v2 } from "../../protocol";
-import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 import { AttachmentPreview } from "../common/AttachmentPreview";
 import { SkillIcon } from "../common/SkillIcon";
 import { useImageAttachment } from "../common/useImageAttachment";
@@ -46,7 +45,6 @@ import {
 } from "./ComposerOptions";
 import { ComposerSettings } from "./ComposerSettings";
 import {
-  collaborationModeFromMask,
   planCollaborationMode,
 } from "./collaboration-model";
 import type { SubmissionMode } from "./composer-model";
@@ -107,10 +105,6 @@ export function Composer({
     () => new Set(),
   );
   const collaborationModes = useCollaborationModes();
-  const [collaborationModeName, setCollaborationModeName] = useState("");
-  const [collaborationMode, setCollaborationMode] = useState<
-    CollaborationMode | null | undefined
-  >(undefined);
   const { effort, model, setEffort, setModel } = useComposerSelection(
     models.data?.data ?? [],
     initialModel,
@@ -206,21 +200,6 @@ export function Composer({
     }[value];
     void updateSettings
       .mutateAsync({ threadId, ...settings })
-      .catch(() => undefined);
-  }
-
-  function handleCollaborationModeChange(modeName: string) {
-    const mask = collaborationModes.data?.data.find(
-      (option) => option.name === modeName,
-    );
-    const nextMode = mask
-      ? collaborationModeFromMask(mask, model, effort)
-      : null;
-    setPlanMode(false);
-    setCollaborationModeName(modeName);
-    setCollaborationMode(nextMode);
-    void updateSettings
-      .mutateAsync({ threadId, collaborationMode: nextMode })
       .catch(() => undefined);
   }
 
@@ -321,13 +300,7 @@ export function Composer({
           input,
           model: model || null,
           effort: effort || null,
-          ...((planMode ? planModeRequest : collaborationMode) !== undefined
-            ? {
-                collaborationMode: planMode
-                  ? planModeRequest
-                  : collaborationMode,
-              }
-            : {}),
+          ...(planMode ? { collaborationMode: planModeRequest } : {}),
         });
       }
       setMessage("");
@@ -456,14 +429,11 @@ export function Composer({
           </div>
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <ComposerSettings
-              collaborationModes={collaborationModes.data?.data ?? []}
-              collaborationModeName={collaborationModeName}
               disabled={isPending}
               effort={effort}
               model={model}
               models={models.data?.data ?? []}
               onEffortChange={handleEffortChange}
-              onCollaborationModeChange={handleCollaborationModeChange}
               onModelChange={handleModelChange}
             />
             {activeTurnId && (

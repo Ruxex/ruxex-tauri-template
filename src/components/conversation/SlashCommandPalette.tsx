@@ -10,6 +10,7 @@ import { SkillIcon } from "../common/SkillIcon";
 import { type SlashCommandId, slashCommands } from "./slash-command";
 
 type SlashCommandPaletteProps = {
+  commands?: readonly SlashCommandId[];
   disabled: boolean;
   query?: string;
   skills?: v2.SkillMetadata[];
@@ -27,6 +28,7 @@ const commandIcons = {
 };
 
 export function SlashCommandPalette({
+  commands = slashCommands.map((command) => command.id),
   disabled,
   query = "",
   skills = [],
@@ -37,8 +39,10 @@ export function SlashCommandPalette({
   onDismiss,
 }: SlashCommandPaletteProps) {
   const normalizedQuery = query.trim().toLowerCase();
-  const visibleCommands = slashCommands.filter((command) =>
-    `${command.id} ${command.label}`.toLowerCase().includes(normalizedQuery),
+  const visibleCommands = slashCommands.filter(
+    (command) =>
+      commands.includes(command.id) &&
+      `${command.id} ${command.label}`.toLowerCase().includes(normalizedQuery),
   );
   const visibleSkills = skills.filter((skill) =>
     [

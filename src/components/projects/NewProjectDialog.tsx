@@ -18,6 +18,7 @@ type NewProjectDialogProps = {
   initialName?: string;
   initialRoot?: string;
   onClose: () => void;
+  onCreated?: (projectId: string) => void;
   open?: boolean;
 };
 
@@ -29,6 +30,7 @@ export function NewProjectDialog({
   initialName = "",
   initialRoot = "",
   onClose,
+  onCreated,
   open = true,
 }: NewProjectDialogProps) {
   const navigate = useNavigate();
@@ -80,7 +82,11 @@ export function NewProjectDialog({
       {
         onSuccess: (data) => {
           onClose();
-          navigate(`/projects/${data.project.id}`);
+          if (onCreated) {
+            onCreated(data.project.id);
+          } else {
+            navigate(`/projects/${data.project.id}`);
+          }
         },
       },
     );

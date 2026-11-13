@@ -8,7 +8,7 @@ import { ProjectSelector } from "./ProjectSelector";
 describe("ProjectSelector", () => {
   afterEach(cleanup);
 
-  it("allows no project or one of the available projects", () => {
+  it("searches projects and allows selecting no project or an available project", () => {
     const onChange = vi.fn();
 
     render(
@@ -24,15 +24,14 @@ describe("ProjectSelector", () => {
       />,
     );
 
-    const selector = screen.getByLabelText("Project");
-    expect(screen.queryByText("Project", { selector: "span" })).toBeNull();
-    expect(selector.className).toContain("select-sm");
-    expect(selector.className).toContain("min-h-8");
-    expect(selector.className).toContain("w-48");
+    fireEvent.click(screen.getByLabelText("Project"));
+    const selector = screen.getByRole("combobox", { name: "Search projects" });
     expect(screen.getByRole("option", { name: "No project" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
 
-    fireEvent.change(selector, { target: { value: "project-2" } });
+    fireEvent.change(selector, { target: { value: "beta" } });
+    expect(screen.queryByRole("option", { name: "Project Alpha" })).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: "Project Beta" }));
 
     expect(onChange).toHaveBeenCalledWith("project-2");
   });
@@ -48,6 +47,7 @@ describe("ProjectSelector", () => {
       />,
     );
 
+    fireEvent.click(screen.getByLabelText("Project"));
     expect(screen.getByText("Loading projects…")).toBeTruthy();
 
     rerender(
@@ -60,10 +60,11 @@ describe("ProjectSelector", () => {
       />,
     );
 
+    fireEvent.click(screen.getByLabelText("Project"));
     expect(screen.getByText("Unable to load projects.")).toBeTruthy();
   });
 
-  it("keeps the selector compact without a label", () => {
+  it("shows no project when the project list is empty", () => {
     render(
       <ProjectSelector
         isError={false}
@@ -74,7 +75,8 @@ describe("ProjectSelector", () => {
       />,
     );
 
-    expect(screen.queryByText("Project", { selector: "span" })).toBeNull();
-    expect(screen.getByLabelText("Project").className).toContain("select-sm");
+    fireEvent.click(screen.getByLabelText("Project"));
+    expect(screen.getByText("No projects yet.")).toBeTruthy();
+    expect(screen.getByRole("option", { name: "No project" })).toBeTruthy();
   });
 });
