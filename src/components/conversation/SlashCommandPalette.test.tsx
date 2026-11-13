@@ -48,19 +48,19 @@ describe("SlashCommandPalette", () => {
     expect(onSelect).toHaveBeenCalledWith("compact");
   });
 
-  it("focuses the palette and selects the highlighted command with arrow keys", async () => {
+  it("focuses command items and moves focus with arrow keys", async () => {
     const onSelect = vi.fn();
     render(<SlashCommandPalette disabled={false} onSelect={onSelect} />);
 
-    const palette = screen.getByRole("menu", { name: "Slash commands" });
-    await waitFor(() => expect(document.activeElement).toBe(palette));
+    const archive = screen.getByRole("menuitem", { name: "Archive" });
+    await waitFor(() => expect(document.activeElement).toBe(archive));
 
-    fireEvent.keyDown(palette, { key: "ArrowDown" });
-    expect(
-      screen.getByRole("menuitem", { name: "Compact" }).dataset.active,
-    ).toBe("true");
+    fireEvent.keyDown(archive, { key: "ArrowDown" });
+    const compact = screen.getByRole("menuitem", { name: "Compact" });
+    expect(compact.dataset.active).toBe("true");
+    expect(document.activeElement).toBe(compact);
 
-    fireEvent.keyDown(palette, { key: "Enter" });
+    fireEvent.keyDown(compact, { key: "Enter" });
     expect(onSelect).toHaveBeenCalledWith("compact");
   });
 

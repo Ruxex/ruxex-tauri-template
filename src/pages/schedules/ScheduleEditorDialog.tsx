@@ -93,7 +93,7 @@ export function ScheduleEditorDialog({
                 <option value="weekly">Every week</option>
               </select>
             </label>
-            <label className="form-control">
+            <div className="form-control">
               {form.cadenceKind === "once" ? (
                 <input
                   aria-label="Run at"
@@ -126,7 +126,7 @@ export function ScheduleEditorDialog({
                   ))}
                 </select>
               )}
-            </label>
+            </div>
             {form.cadenceKind === "weekly" && (
               <fieldset className="form-control col-span-2">
                 <legend className="text-sm">Weekdays</legend>

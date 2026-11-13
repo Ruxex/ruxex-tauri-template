@@ -26,6 +26,7 @@ type ComposerOptionsProps = {
   onAttach: () => void;
   onGoalModeChange: () => void;
   onPlanModeChange: () => void;
+  planModeDisabled?: boolean;
   planMode: boolean;
 };
 
@@ -35,6 +36,7 @@ export function ComposerOptions({
   onAttach,
   onGoalModeChange,
   onPlanModeChange,
+  planModeDisabled = false,
   planMode,
 }: ComposerOptionsProps) {
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
@@ -85,7 +87,7 @@ export function ComposerOptions({
             aria-current={planMode ? "true" : undefined}
             aria-label="Plan mode"
             className={planMode ? "active" : undefined}
-            disabled={disabled}
+            disabled={disabled || planModeDisabled}
             onClick={(event) => {
               onPlanModeChange();
               closeDropdown(event);
@@ -136,11 +138,11 @@ export function PermissionMenu({
     <details className="dropdown dropdown-top" ref={detailsRef}>
       <summary
         aria-label="Permission mode"
-        className={`btn btn-sm gap-1 ${isFullAccess ? "btn-warning" : "btn-ghost"}`}
+        className="btn btn-ghost btn-sm gap-1"
       >
         <PermissionIcon
           aria-hidden="true"
-          className={`size-4 ${isFullAccess ? "text-warning-content" : ""}`}
+          className={`size-4 ${isFullAccess ? "text-warning" : ""}`}
         />
         <span>{permissionModeLabel(mode)}</span>
       </summary>

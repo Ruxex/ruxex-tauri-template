@@ -342,7 +342,7 @@ describe("SettingsSidebar AppServer navigation", () => {
 
     expect(screen.getByRole("heading", { name: "Personal" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "System" })).toBeTruthy();
-    expect(screen.getByRole("separator")).toBeTruthy();
+    expect(screen.getAllByRole("separator")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "General" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Appearance" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Version" })).toBeTruthy();

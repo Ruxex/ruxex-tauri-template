@@ -81,7 +81,7 @@ describe("ComposerOptions", () => {
     ).toBe(false);
   });
 
-  it("highlights full access as a warning in the permission selector", () => {
+  it("keeps full access ghost-styled with a warning icon", () => {
     render(
       <PermissionMenu
         disabled={false}
@@ -91,10 +91,10 @@ describe("ComposerOptions", () => {
     );
 
     const summary = screen.getByLabelText("Permission mode");
-    expect(summary.className).toContain("btn-warning");
-    expect(summary.className).not.toContain("btn-ghost");
+    expect(summary.className).toContain("btn-ghost");
+    expect(summary.className).not.toContain("btn-warning");
     expect(summary.querySelector("svg")?.getAttribute("class")).toContain(
-      "text-warning-content",
+      "text-warning",
     );
   });
 

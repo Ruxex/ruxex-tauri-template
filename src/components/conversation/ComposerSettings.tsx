@@ -27,6 +27,9 @@ export function ComposerSettings({
   onModelChange,
 }: ComposerSettingsProps) {
   const visibleModels = models.filter((item) => !item.hidden);
+  const selectableCollaborationModes = collaborationModes.filter(
+    (option) => option.mode !== "plan",
+  );
   const selectedModel =
     visibleModels.find((item) => item.model === model) ??
     visibleModels.find((item) => item.isDefault);
@@ -52,9 +55,7 @@ export function ComposerSettings({
             <span aria-hidden="true" className="text-base-content/50">
               ·
             </span>
-            <span className="truncate text-base-content/70">
-              {effortLabel}
-            </span>
+            <span className="truncate text-base-content/70">{effortLabel}</span>
           </>
         )}
       </summary>
@@ -110,31 +111,34 @@ export function ComposerSettings({
             )}
           </select>
         </label>
-        {collaborationModes.length > 0 && onCollaborationModeChange && (
-          <label className="form-control mt-3">
-            <span className="label-text text-xs font-medium">
-              Collaboration mode
-            </span>
-            <select
-              aria-label="Collaboration mode"
-              className="select select-bordered select-sm mt-1"
-              disabled={disabled}
-              onChange={(event) => {
-                onCollaborationModeChange(event.target.value);
-                event.currentTarget.closest("details")?.removeAttribute("open");
-              }}
-              value={collaborationModeName}
-            >
-              <option value="">Default</option>
-              {collaborationModes.map((option) => (
-                <option key={option.name} value={option.name}>
-                  {option.name}
-                  {(!option.mode || !option.model) && " (server default)"}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        {selectableCollaborationModes.length > 0 &&
+          onCollaborationModeChange && (
+            <label className="form-control mt-3">
+              <span className="label-text text-xs font-medium">
+                Collaboration mode
+              </span>
+              <select
+                aria-label="Collaboration mode"
+                className="select select-bordered select-sm mt-1"
+                disabled={disabled}
+                onChange={(event) => {
+                  onCollaborationModeChange(event.target.value);
+                  event.currentTarget
+                    .closest("details")
+                    ?.removeAttribute("open");
+                }}
+                value={collaborationModeName}
+              >
+                <option value="">Default</option>
+                {selectableCollaborationModes.map((option) => (
+                  <option key={option.name} value={option.name}>
+                    {option.name}
+                    {(!option.mode || !option.model) && " (server default)"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
       </div>
     </details>
   );

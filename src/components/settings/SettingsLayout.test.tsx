@@ -309,15 +309,19 @@ describe("settings card layout", () => {
     expect(screen.getByLabelText("Chat font size")).toBeTruthy();
     expect(screen.getByLabelText("UI font size")).toBeTruthy();
     expect(screen.getByRole("status", { name: "Enabled" })).toBeTruthy();
-    expect(screen.getByRole("status", { name: "Disabled" })).toBeTruthy();
+    expect(screen.queryByRole("status", { name: "Disabled" })).toBeNull();
     expect(
       screen.getByRole("status", { name: "Enabled" }).className,
     ).not.toContain("badge");
-    expect(
-      screen.getByRole("status", { name: "Disabled" }).className,
-    ).not.toContain("badge");
-    expect(screen.getByText("—")).toBeTruthy();
-    expect(screen.getByRole("status", { name: "Unsupported" })).toBeTruthy();
+    for (const unsupported of screen.getAllByRole("status", {
+      name: "Unsupported",
+    })) {
+      expect(unsupported.className).toContain("text-base-content/50");
+    }
+    expect(screen.getAllByText("—")).toHaveLength(2);
+    expect(screen.getAllByRole("status", { name: "Unsupported" })).toHaveLength(
+      2,
+    );
     expect(screen.queryByText("Show project sidebar")).toBeNull();
     expect(screen.queryByText("Show context drawer")).toBeNull();
   });

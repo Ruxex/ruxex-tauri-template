@@ -45,7 +45,10 @@ import {
   SubmissionModeMenu,
 } from "./ComposerOptions";
 import { ComposerSettings } from "./ComposerSettings";
-import { collaborationModeFromMask } from "./collaboration-model";
+import {
+  collaborationModeFromMask,
+  planCollaborationMode,
+} from "./collaboration-model";
 import type { SubmissionMode } from "./composer-model";
 import {
   buildImageUserInput,
@@ -112,6 +115,11 @@ export function Composer({
     models.data?.data ?? [],
     initialModel,
     initialEffort,
+  );
+  const planModeRequest = planCollaborationMode(
+    collaborationModes.data?.data ?? [],
+    model,
+    effort,
   );
   const send = useSendMessage();
   const archive = useArchiveThread();
@@ -205,12 +213,19 @@ export function Composer({
     const mask = collaborationModes.data?.data.find(
       (option) => option.name === modeName,
     );
-    const nextMode = mask ? collaborationModeFromMask(mask) : null;
+    const nextMode = mask
+      ? collaborationModeFromMask(mask, model, effort)
+      : null;
+    setPlanMode(false);
     setCollaborationModeName(modeName);
     setCollaborationMode(nextMode);
     void updateSettings
       .mutateAsync({ threadId, collaborationMode: nextMode })
       .catch(() => undefined);
+  }
+
+  function handlePlanModeChange() {
+    setPlanMode((value) => !value);
   }
 
   function handleMessageKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -306,8 +321,13 @@ export function Composer({
           input,
           model: model || null,
           effort: effort || null,
-          turnTrigger: planMode ? "plan" : null,
-          ...(collaborationMode !== undefined ? { collaborationMode } : {}),
+          ...((planMode ? planModeRequest : collaborationMode) !== undefined
+            ? {
+                collaborationMode: planMode
+                  ? planModeRequest
+                  : collaborationMode,
+              }
+            : {}),
         });
       }
       setMessage("");
@@ -371,7 +391,8 @@ export function Composer({
                 setGoalMode((value) => !value);
                 setSelectedSkill(null);
               }}
-              onPlanModeChange={() => setPlanMode((value) => !value)}
+              onPlanModeChange={handlePlanModeChange}
+              planModeDisabled={!planModeRequest}
               onAttach={() => attachmentInput.current?.click()}
               planMode={planMode}
             />
@@ -393,44 +414,45 @@ export function Composer({
                 </button>
               </span>
             )}
-            {(goalMode || planMode) && (
-              <fieldset
-                aria-label="Active composer modes"
-                className="flex flex-wrap items-center gap-1"
-              >
-                {goalMode && (
-                  <span
-                    aria-label="Goal mode active"
-                    className="badge badge-primary badge-sm group gap-1"
-                    role="status"
-                  >
-                    <button
-                      aria-label="Disable goal mode"
-                      className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                      onClick={() => setGoalMode(false)}
-                      type="button"
-                    >
-                      <XMarkIcon aria-hidden="true" className="size-3" />
-                    </button>
-                    Goal
-                  </span>
-                )}
-                {planMode && (
-                  <span
-                    aria-label="Plan mode active"
-                    className="badge badge-secondary badge-sm"
-                    role="status"
-                  >
-                    Plan
-                  </span>
-                )}
-              </fieldset>
-            )}
             <PermissionMenu
               disabled={isPending}
               mode={permissionMode}
               onModeChange={handlePermissionChange}
             />
+            {planMode && (
+              <span
+                aria-label="Plan mode active"
+                className="badge badge-secondary badge-sm gap-1"
+                role="status"
+              >
+                <button
+                  aria-label="Disable plan mode"
+                  className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 text-secondary-content hover:bg-secondary-content/10"
+                  onClick={handlePlanModeChange}
+                  type="button"
+                >
+                  <XMarkIcon aria-hidden="true" className="size-3" />
+                </button>
+                Plan
+              </span>
+            )}
+            {goalMode && (
+              <span
+                aria-label="Goal mode active"
+                className="badge badge-primary badge-sm gap-1"
+                role="status"
+              >
+                <button
+                  aria-label="Disable goal mode"
+                  className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 text-primary-content hover:bg-primary-content/10"
+                  onClick={() => setGoalMode(false)}
+                  type="button"
+                >
+                  <XMarkIcon aria-hidden="true" className="size-3" />
+                </button>
+                Goal
+              </span>
+            )}
           </div>
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <ComposerSettings

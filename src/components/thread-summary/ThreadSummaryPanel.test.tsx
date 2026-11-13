@@ -58,9 +58,9 @@ describe("ThreadSummaryPanel", () => {
       "h-fit",
     );
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByText("Input")).toBeTruthy();
-    expect(screen.getByText("Output")).toBeTruthy();
-    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.getByTitle("Input tokens").textContent).toContain("Input");
+    expect(screen.getByTitle("Output tokens").textContent).toContain("Output");
+    expect(screen.getByTitle("Total tokens").textContent).toContain("Total");
     expect(screen.queryByText("Subagents")).toBeNull();
     expect(screen.queryByText("Sources / Web Search")).toBeNull();
     expect(screen.queryByText("TBD")).toBeNull();

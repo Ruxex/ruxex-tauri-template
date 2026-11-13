@@ -212,7 +212,9 @@ describe("Composer", () => {
     expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
-    await waitFor(() => expect(document.activeElement).toBe(palette));
+    const archive = screen.getByRole("menuitem", { name: "Archive" });
+    await waitFor(() => expect(document.activeElement).toBe(archive));
+    expect(archive.dataset.active).toBe("true");
   });
 
   it("hides product-disabled Skills from the slash palette", async () => {
@@ -432,9 +434,7 @@ describe("Composer", () => {
           },
           { type: "text", text: "Explain the changes", text_elements: [] },
         ],
-        ...(submitLabel === "Send"
-          ? { model: "ruxex", effort: "medium", turnTrigger: null }
-          : {}),
+        ...(submitLabel === "Send" ? { model: "ruxex", effort: "medium" } : {}),
       });
     },
   );
@@ -566,13 +566,16 @@ describe("Composer", () => {
     const activeGoal = screen.getByRole("status", {
       name: "Goal mode active",
     });
+    const disableButton = screen.getByRole("button", {
+      name: "Disable goal mode",
+    });
+    expect(disableButton.className).not.toContain("opacity-0");
+    expect(activeGoal.firstElementChild).toBe(disableButton);
+    const permission = screen.getByLabelText("Permission mode");
     expect(
-      screen.getByRole("button", { name: "Disable goal mode" }),
+      permission.compareDocumentPosition(activeGoal) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(activeGoal.className).toContain("group");
-    expect(activeGoal.firstElementChild).toBe(
-      screen.getByRole("button", { name: "Disable goal mode" }),
-    );
 
     fireEvent.click(screen.getByRole("button", { name: "Disable goal mode" }));
 
@@ -610,7 +613,6 @@ describe("Composer", () => {
       ],
       model: "ruxex",
       effort: "medium",
-      turnTrigger: null,
     });
     expect(screen.queryByTestId("selected-image")).toBeNull();
   });
@@ -671,7 +673,6 @@ describe("Composer", () => {
       input: [{ type: "text", text: "Do the work", text_elements: [] }],
       model: "ruxex",
       effort: "medium",
-      turnTrigger: null,
     });
   });
 
@@ -745,7 +746,6 @@ describe("Composer", () => {
       ],
       model: "ruxex",
       effort: "medium",
-      turnTrigger: null,
     });
   });
 
@@ -892,7 +892,6 @@ describe("Composer", () => {
       input: [{ type: "text", text: "Coordinate this", text_elements: [] }],
       model: "ruxex",
       effort: "medium",
-      turnTrigger: null,
       collaborationMode: {
         mode: "default",
         settings: {

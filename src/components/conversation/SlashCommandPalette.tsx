@@ -68,10 +68,15 @@ export function SlashCommandPalette({
     ? Math.min(activeIndex, options.length - 1)
     : 0;
   const menuRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    menuRef.current?.focus();
-  }, []);
+    if (options.length === 0) {
+      menuRef.current?.focus();
+      return;
+    }
+    optionRefs.current[highlightedIndex]?.focus();
+  }, [highlightedIndex, options.length]);
 
   function selectOption(index: number) {
     const option = options[index];
@@ -89,9 +94,6 @@ export function SlashCommandPalette({
     if (event.key === "Escape") {
       event.preventDefault();
       onDismiss?.();
-      return;
-    }
-    if (event.target !== event.currentTarget) {
       return;
     }
     if (!options.length || disabled) {
@@ -114,9 +116,14 @@ export function SlashCommandPalette({
   function optionProps(index: number) {
     const active = index === highlightedIndex;
     return {
-      className: active ? "active" : undefined,
+      className: active
+        ? "active bg-primary/20 font-semibold text-base-content"
+        : undefined,
       "data-active": active ? "true" : undefined,
       onMouseEnter: () => setActiveIndex(index),
+      ref: (element: HTMLButtonElement | null) => {
+        optionRefs.current[index] = element;
+      },
       tabIndex: -1,
     };
   }

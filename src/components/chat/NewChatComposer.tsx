@@ -1,7 +1,4 @@
-import {
-  PaperAirplaneIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBranding } from "../../app/branding-context";
@@ -27,7 +24,10 @@ import {
   type PermissionMode,
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
-import { collaborationModeFromMask } from "../conversation/collaboration-model";
+import {
+  collaborationModeFromMask,
+  planCollaborationMode,
+} from "../conversation/collaboration-model";
 import { isComposerSubmitShortcut } from "../conversation/composer-model";
 import { useComposerSelection } from "../conversation/useComposerSelection";
 
@@ -48,6 +48,11 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const setGoal = useSetThreadGoal();
   const { effort, model, setEffort, setModel } = useComposerSelection(
     models.data?.data ?? [],
+  );
+  const planModeRequest = planCollaborationMode(
+    collaborationModes.data?.data ?? [],
+    model,
+    effort,
   );
   const [message, setMessage] = useState("");
   const [goalMode, setGoalMode] = useState(false);
@@ -122,8 +127,13 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         await sendMessage.mutateAsync({
           threadId: thread.thread.id,
           input,
-          turnTrigger: planMode ? "plan" : null,
-          ...(collaborationMode !== undefined ? { collaborationMode } : {}),
+          ...((planMode ? planModeRequest : collaborationMode) !== undefined
+            ? {
+                collaborationMode: planMode
+                  ? planModeRequest
+                  : collaborationMode,
+              }
+            : {}),
         });
       }
       setMessage("");
@@ -207,6 +217,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 onAttach={() => attachmentInput.current?.click()}
                 onGoalModeChange={() => setGoalMode((value) => !value)}
                 onPlanModeChange={() => setPlanMode((value) => !value)}
+                planModeDisabled={!planModeRequest}
                 planMode={planMode}
               />
               {goalMode && (
@@ -231,6 +242,23 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 mode={permissionMode}
                 onModeChange={setPermissionMode}
               />
+              {planMode && (
+                <span
+                  aria-label="Plan mode active"
+                  className="badge badge-secondary badge-sm gap-1"
+                  role="status"
+                >
+                  <button
+                    aria-label="Disable plan mode"
+                    className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 text-secondary-content hover:bg-secondary-content/10"
+                    onClick={() => setPlanMode(false)}
+                    type="button"
+                  >
+                    <XMarkIcon aria-hidden="true" className="size-3" />
+                  </button>
+                  Plan
+                </span>
+              )}
             </div>
             <div className="ml-auto flex min-w-0 items-center gap-2">
               <ComposerSettings
@@ -245,9 +273,12 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                   const mask = collaborationModes.data?.data.find(
                     (option) => option.name === modeName,
                   );
+                  setPlanMode(false);
                   setCollaborationModeName(modeName);
                   setCollaborationMode(
-                    mask ? collaborationModeFromMask(mask) : null,
+                    mask
+                      ? collaborationModeFromMask(mask, model, effort)
+                      : null,
                   );
                 }}
                 onModelChange={setModel}

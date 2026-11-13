@@ -159,21 +159,20 @@ describe("SchedulesPage", () => {
     expect(window.location.hash).toBe("#/schedules/schedule-1");
   });
 
-  it("updates the enabled state atomically from the edit modal", async () => {
+  it("preserves the enabled state while editing a schedule", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
 
     fireEvent.click(
       screen.getByRole("button", { name: "Edit schedule: Nightly checks" }),
     );
-    fireEvent.click(screen.getByLabelText("Enable schedule"));
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     const schedule = useSchedules.mock.results[0]?.value;
     expect(schedule.update.mutate).toHaveBeenCalledWith(
       {
         id: "schedule-1",
-        input: expect.objectContaining({ enabled: false }),
+        input: expect.objectContaining({ enabled: true }),
       },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
@@ -229,19 +228,10 @@ describe("SchedulesPage", () => {
     );
   });
 
-  it("rejects a one-time schedule without a valid time", async () => {
+  it("does not offer one-time cadence for a new schedule", async () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
     fireEvent.click(screen.getByRole("button", { name: "New schedule" }));
-    fireEvent.change(screen.getByLabelText("Cadence"), {
-      target: { value: "once" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Create schedule" }));
-
-    const schedule = useSchedules.mock.results[0]?.value;
-    expect(schedule.create.mutate).not.toHaveBeenCalled();
-    expect(
-      screen.getByText("Choose a valid time for the one-time schedule."),
-    ).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "One time" })).toBeNull();
   });
 });

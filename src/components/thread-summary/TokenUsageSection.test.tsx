@@ -33,9 +33,9 @@ describe("TokenUsageSection", () => {
     render(<TokenUsageSection usage={usage} />);
 
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByText("100,000")).toBeTruthy();
-    expect(screen.getByText("23,456")).toBeTruthy();
-    expect(screen.getByText("123,456")).toBeTruthy();
+    expect(screen.getByTitle("Input tokens").textContent).toContain("100,000");
+    expect(screen.getByTitle("Output tokens").textContent).toContain("23,456");
+    expect(screen.getByTitle("Total tokens").textContent).toContain("123,456");
     expect(screen.queryByText("Latest turn")).toBeNull();
     expect(screen.queryByText("Reasoning")).toBeNull();
     expect(screen.queryByText("Context window")).toBeNull();

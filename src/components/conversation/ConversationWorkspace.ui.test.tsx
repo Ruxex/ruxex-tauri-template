@@ -197,7 +197,7 @@ describe("ConversationWorkspace", () => {
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByText("1,200")).toBeTruthy();
+    expect(screen.getByTitle("Total tokens").textContent).toContain("1,200");
     expect(
       screen.queryByRole("button", { name: "Open Thread Summary" }),
     ).toBeNull();
@@ -230,7 +230,7 @@ describe("ConversationWorkspace", () => {
     expect(screen.getByText("−2")).toBeTruthy();
   });
 
-  it("does not render the minimap before five user messages exist", async () => {
+  it("renders the minimap when user messages exist", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
     render(<ConversationWorkspace threadId="thread-1" />);
@@ -238,17 +238,10 @@ describe("ConversationWorkspace", () => {
     const workspace = screen.getByTestId("chat-workspace");
     const mainChat = screen.getByRole("main");
     expect(
-      screen.queryByRole("complementary", { name: "Conversation minimap" }),
-    ).toBeNull();
-    expect(screen.queryByTestId("conversation-minimap-track")).toBeNull();
-    expect(workspace.className).not.toContain("chat-workspace--has-minimap");
-    expect(workspace.className).toContain("grid-cols-[minmax(0,1fr)]");
-    expect(workspace.className).toContain(
-      "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
-    );
-    expect(workspace.className).toContain(
-      "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
-    );
+      screen.getByRole("complementary", { name: "Conversation minimap" }),
+    ).toBeTruthy();
+    expect(screen.getByTestId("conversation-minimap-track")).toBeTruthy();
+    expect(workspace.className).toContain("chat-workspace--has-minimap");
     expect(mainChat.className).toContain("h-full");
   });
 
@@ -277,9 +270,10 @@ describe("ConversationWorkspace", () => {
     const workspace = screen.getByTestId("chat-workspace");
     expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
     expect(workspace.className).not.toContain("chat-workspace--has-summary");
+    expect(workspace.className).toContain("chat-workspace--has-minimap");
     expect(workspace.className).toContain("grid-cols-[minmax(0,1fr)]");
     expect(workspace.className).toContain(
-      "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
+      "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
     );
   });
 

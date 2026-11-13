@@ -178,7 +178,6 @@ describe("HomePage", () => {
     expect(sendMessage).toHaveBeenCalledWith({
       threadId: "thread-new",
       input: [{ type: "text", text: "Start from home", text_elements: [] }],
-      turnTrigger: null,
     });
   });
 
@@ -249,7 +248,7 @@ describe("HomePage", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("uses the plan trigger when plan mode is selected", async () => {
+  it("uses the App Server Plan collaboration mode when Plan mode is selected", async () => {
     const { HomePage } = await import("./HomePage");
 
     render(
@@ -270,7 +269,14 @@ describe("HomePage", () => {
     expect(sendMessage).toHaveBeenCalledWith({
       threadId: "thread-new",
       input: [{ type: "text", text: "Plan the migration", text_elements: [] }],
-      turnTrigger: "plan",
+      collaborationMode: {
+        mode: "plan",
+        settings: {
+          model: "ruxex",
+          reasoning_effort: "medium",
+          developer_instructions: null,
+        },
+      },
     });
   });
 
