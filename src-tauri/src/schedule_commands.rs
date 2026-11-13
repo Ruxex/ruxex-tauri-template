@@ -1,4 +1,4 @@
-use ruxex_scheduler::{AppServerDispatcher, ScheduleInput, ScheduleRecord};
+use ruxex_scheduler::{ScheduleInput, ScheduleRecord};
 use tauri::{AppHandle, Manager, State};
 
 use crate::app_server::{AppServerState, request_handle};
@@ -6,6 +6,7 @@ use crate::desktop::ruxex_home;
 use crate::error::{
     CommandResult, DesktopAppServerError, DesktopAppServerErrorKind, command_error,
 };
+use crate::scheduler_app_server::AppServerDispatcher;
 
 pub(crate) use ruxex_scheduler::SchedulerState as ScheduleState;
 

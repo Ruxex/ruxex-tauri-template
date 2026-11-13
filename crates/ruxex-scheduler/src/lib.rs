@@ -1,21 +1,54 @@
 use std::collections::HashSet;
 use std::fs;
+use std::future::Future;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use chrono::{DateTime, Datelike, Duration, Local, LocalResult, NaiveDate, TimeZone, Utc};
 use chrono_tz::Tz;
 use serde::{Deserialize, Deserializer, Serialize};
-use tokio::sync::Mutex;
+use tokio::sync::Mutex as AsyncMutex;
 
-mod app_server;
-pub use app_server::{
-    AppServerDispatcher, AppServerLogDirection, ScheduleDispatcher, build_thread_request,
-    build_turn_request, format_app_server_log, log_app_server_io,
-};
+pub trait ScheduleDispatcher {
+    fn dispatch(
+        &self,
+        schedule: ScheduleRecord,
+    ) -> impl Future<Output = Result<Option<String>, String>> + Send;
+}
 
-#[derive(Default)]
 pub struct SchedulerState {
-    in_flight: Mutex<HashSet<String>>,
+    in_flight: Arc<Mutex<HashSet<String>>>,
+    operations: AsyncMutex<()>,
+}
+
+impl Default for SchedulerState {
+    fn default() -> Self {
+        Self {
+            in_flight: Arc::new(Mutex::new(HashSet::new())),
+            operations: AsyncMutex::new(()),
+        }
+    }
+}
+
+struct InFlightGuard {
+    in_flight: Arc<Mutex<HashSet<String>>>,
+    id: String,
+}
+
+impl Drop for InFlightGuard {
+    fn drop(&mut self) {
+        lock(&self.in_flight).remove(&self.id);
+    }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(|error| error.into_inner())
+}
+
+impl SchedulerState {
+    fn lock_in_flight(&self) -> MutexGuard<'_, HashSet<String>> {
+        lock(&self.in_flight)
+    }
 }
 
 const SCHEDULES_FILE: &str = "schedules.json";
@@ -166,7 +199,7 @@ pub fn file_path(home: &Path) -> PathBuf {
 
 impl SchedulerState {
     pub async fn list(&self, home: &Path) -> Result<Vec<ScheduleRecord>, String> {
-        let _guard = self.in_flight.lock().await;
+        let _guard = self.operations.lock().await;
         Ok(load(home)?.schedules)
     }
 
@@ -175,7 +208,7 @@ impl SchedulerState {
         home: &Path,
         input: ScheduleInput,
     ) -> Result<ScheduleRecord, String> {
-        let _guard = self.in_flight.lock().await;
+        let _guard = self.operations.lock().await;
         let mut file = load(home)?;
         let id = format!(
             "schedule-{}-{}",
@@ -194,7 +227,7 @@ impl SchedulerState {
         id: &str,
         input: ScheduleInput,
     ) -> Result<ScheduleRecord, String> {
-        let _guard = self.in_flight.lock().await;
+        let _guard = self.operations.lock().await;
         let mut file = load(home)?;
         let index = file
             .schedules
@@ -213,7 +246,7 @@ impl SchedulerState {
         id: &str,
         enabled: bool,
     ) -> Result<ScheduleRecord, String> {
-        let _guard = self.in_flight.lock().await;
+        let _guard = self.operations.lock().await;
         let mut file = load(home)?;
         let index = file
             .schedules
@@ -227,7 +260,7 @@ impl SchedulerState {
     }
 
     pub async fn delete(&self, home: &Path, id: &str) -> Result<(), String> {
-        let _guard = self.in_flight.lock().await;
+        let _guard = self.operations.lock().await;
         let mut file = load(home)?;
         let before = file.schedules.len();
         file.schedules.retain(|schedule| schedule.id != id);
@@ -262,7 +295,7 @@ impl SchedulerState {
     ) -> Result<(), String> {
         let now = Utc::now();
         let due_ids = {
-            let _guard = self.in_flight.lock().await;
+            let _guard = self.operations.lock().await;
             load(home)?
                 .schedules
                 .into_iter()
@@ -285,8 +318,8 @@ impl SchedulerState {
         mode: RunMode,
         dispatcher: Option<&D>,
     ) -> Result<RunScheduleOutcome, String> {
-        let snapshot = {
-            let mut guard = self.in_flight.lock().await;
+        let (snapshot, _run_guard) = {
+            let _operation = self.operations.lock().await;
             let Some(snapshot) = load(home)?
                 .schedules
                 .into_iter()
@@ -299,10 +332,16 @@ impl SchedulerState {
             {
                 return Ok(RunScheduleOutcome::Skipped);
             }
-            if !guard.insert(id.to_string()) {
+            if !self.lock_in_flight().insert(id.to_string()) {
                 return Ok(RunScheduleOutcome::Skipped);
             }
-            snapshot
+            (
+                snapshot,
+                InFlightGuard {
+                    in_flight: Arc::clone(&self.in_flight),
+                    id: id.to_string(),
+                },
+            )
         };
         let started_at = Utc::now();
         let result = match dispatcher {
@@ -310,7 +349,7 @@ impl SchedulerState {
             None => Err("app server unavailable".to_string()),
         };
 
-        let mut guard = self.in_flight.lock().await;
+        let _guard = self.operations.lock().await;
         let finalization = (|| {
             let mut file = load(home)?;
             let Some(index) = file.schedules.iter().position(|schedule| schedule.id == id) else {
@@ -321,7 +360,6 @@ impl SchedulerState {
             save(home, &file)?;
             Ok(RunScheduleOutcome::Completed(Box::new(record)))
         })();
-        guard.remove(id);
         finalization
     }
 }

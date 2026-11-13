@@ -10,6 +10,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::artifact_pdf::{PdfPageSpec, inspect_pdf_bytes};
+use crate::ooxml;
 
 #[derive(Debug)]
 struct ArtifactError {
@@ -607,9 +608,9 @@ fn read_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError> {
                     .ok()
                     .map(|entry| entry.name().to_string())
             })
-            .filter(|name| pptx_slide_number_for_artifacts(name).is_some())
+            .filter(|name| ooxml::slide_number(name).is_some())
             .collect::<Vec<_>>();
-        slide_names.sort_by_key(|name| pptx_slide_number_for_artifacts(name).unwrap_or(usize::MAX));
+        slide_names.sort_by_key(|name| ooxml::slide_number(name).unwrap_or(usize::MAX));
         let mut slides = Vec::new();
         let mut diagnostics = Vec::new();
         for (index, name) in slide_names.iter().enumerate() {
@@ -694,7 +695,7 @@ fn docx_items(xml: &str) -> Vec<Value> {
         if text.trim().is_empty() {
             continue;
         }
-        let style = ooxml_attribute_values(&paragraph, "w:pStyle", "w:val")
+        let style = ooxml::attribute_values(&paragraph, "w:pStyle", "w:val")
             .first()
             .cloned();
         let item = if let Some(style) = style
@@ -726,13 +727,6 @@ fn docx_items(xml: &str) -> Vec<Value> {
         }
     }
     items
-}
-
-fn pptx_slide_number_for_artifacts(name: &str) -> Option<usize> {
-    name.strip_prefix("ppt/slides/slide")?
-        .strip_suffix(".xml")?
-        .parse()
-        .ok()
 }
 
 fn ooxml_blocks(xml: &str, tag: &str) -> Vec<String> {
@@ -778,39 +772,8 @@ fn ooxml_text_values(xml: &str, tag: &str) -> Vec<String> {
                 .unwrap_or(opening.len());
             value[start..value.len().saturating_sub(closing.len())].to_string()
         })
-        .map(|value| decode_xml_entities_artifacts(&value))
+        .map(|value| ooxml::decode_entities(&value))
         .collect()
-}
-
-fn ooxml_attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
-    let marker = format!("<{tag}");
-    let mut values = Vec::new();
-    let mut cursor = 0;
-    while let Some(offset) = xml[cursor..].find(&marker) {
-        let start = cursor + offset;
-        let Some(end_offset) = xml[start..].find('>') else {
-            break;
-        };
-        let tag_text = &xml[start..start + end_offset];
-        let marker = format!("{attribute}=\"");
-        if let Some(value_start) = tag_text.find(&marker) {
-            let value_start = value_start + marker.len();
-            if let Some(value_end) = tag_text[value_start..].find('"') {
-                values.push(tag_text[value_start..value_start + value_end].to_string());
-            }
-        }
-        cursor = start + end_offset + 1;
-    }
-    values
-}
-
-fn decode_xml_entities_artifacts(value: &str) -> String {
-    value
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&apos;", "'")
-        .replace("&amp;", "&")
 }
 
 fn parse_flags(args: &[String]) -> Result<Vec<(String, Option<String>)>, ArtifactError> {
@@ -1483,10 +1446,10 @@ fn read_xlsx_sheet_metadata(
     let sheet_path = format!("xl/worksheets/sheet{}.xml", sheet_index + 1);
     let sheet_xml = read_xlsx_zip_text(input_path, &sheet_path)?.unwrap_or_default();
     let mut metadata = XlsxSheetMetadata::default();
-    for reference in xlsx_xml_attribute_values(&sheet_xml, "mergeCell", "ref") {
+    for reference in ooxml::attribute_values(&sheet_xml, "mergeCell", "ref") {
         metadata.merges.push(json!({"range": reference}));
     }
-    for attributes in xlsx_xml_elements(&sheet_xml, "col") {
+    for attributes in ooxml::elements(&sheet_xml, "col") {
         if let (Some(min), Some(max), Some(width)) = (
             attributes.get("min"),
             attributes.get("max"),
@@ -1496,12 +1459,12 @@ fn read_xlsx_sheet_metadata(
             let last = max.parse::<u32>().unwrap_or(first);
             let width = width.parse::<f64>().unwrap_or_default();
             metadata.column_widths.push(json!({
-                "column": format!("{}:{}", xlsx_column_label(first), xlsx_column_label(last)),
+                "column": format!("{}:{}", ooxml::column_label(first), ooxml::column_label(last)),
                 "width": width,
             }));
         }
     }
-    for attributes in xlsx_xml_elements(&sheet_xml, "c ") {
+    for attributes in ooxml::elements(&sheet_xml, "c ") {
         if let (Some(cell), Some(style_index)) = (attributes.get("r"), attributes.get("s")) {
             metadata.formats.push(
                 json!({"range": cell, "styleIndex": style_index.parse::<u32>().unwrap_or(0)}),
@@ -1511,12 +1474,12 @@ fn read_xlsx_sheet_metadata(
 
     let relationships_path = format!("xl/worksheets/_rels/sheet{}.xml.rels", sheet_index + 1);
     let relationships = read_xlsx_zip_text(input_path, &relationships_path)?.unwrap_or_default();
-    for relation in xlsx_xml_elements(&relationships, "Relationship") {
+    for relation in ooxml::elements(&relationships, "Relationship") {
         let target = relation.get("Target").cloned().unwrap_or_default();
         if target.contains("table") {
-            let table_path = xlsx_normalize_target(&target, "xl/worksheets");
+            let table_path = ooxml::normalize_target(&target, "xl/worksheets");
             if let Some(table_xml) = read_xlsx_zip_text(input_path, &table_path)? {
-                if let Some(table) = xlsx_xml_elements(&table_xml, "table").first() {
+                if let Some(table) = ooxml::elements(&table_xml, "table").first() {
                     metadata.tables.push(json!({
                         "name": table.get("name").cloned().unwrap_or_else(|| "Table".to_string()),
                         "range": table.get("ref").cloned().unwrap_or_default(),
@@ -1525,7 +1488,7 @@ fn read_xlsx_sheet_metadata(
                 }
             }
         } else if target.contains("drawing") {
-            let drawing_path = xlsx_normalize_target(&target, "xl/worksheets");
+            let drawing_path = ooxml::normalize_target(&target, "xl/worksheets");
             let drawing_relationships_path = format!(
                 "{}/_rels/{}.rels",
                 Path::new(&drawing_path)
@@ -1539,12 +1502,12 @@ fn read_xlsx_sheet_metadata(
             );
             let drawing_relationships =
                 read_xlsx_zip_text(input_path, &drawing_relationships_path)?.unwrap_or_default();
-            for drawing_relation in xlsx_xml_elements(&drawing_relationships, "Relationship") {
+            for drawing_relation in ooxml::elements(&drawing_relationships, "Relationship") {
                 let drawing_target = drawing_relation.get("Target").cloned().unwrap_or_default();
                 if !drawing_target.contains("chart") {
                     continue;
                 }
-                let chart_path = xlsx_normalize_target(
+                let chart_path = ooxml::normalize_target(
                     &drawing_target,
                     &Path::new(&drawing_path)
                         .parent()
@@ -1623,7 +1586,7 @@ fn read_xlsx_formulas(
             break;
         };
         let tag_end = start + tag_end_offset;
-        let attributes = xlsx_parse_attributes(&xml[start + 3..tag_end]);
+        let attributes = ooxml::parse_attributes(&xml[start + 3..tag_end]);
         let Some(cell) = attributes.get("r") else {
             cursor = tag_end + 1;
             continue;
@@ -1679,85 +1642,6 @@ fn read_xlsx_zip_text(input_path: &str, part_path: &str) -> Result<Option<String
         ));
     }
     Ok(Some(String::from_utf8_lossy(&contents).into_owned()))
-}
-
-fn xlsx_normalize_target(target: &str, base: &str) -> String {
-    let mut parts = base.split('/').collect::<Vec<_>>();
-    for part in target.split('/') {
-        match part {
-            ".." => {
-                parts.pop();
-            }
-            "." | "" => {}
-            value => parts.push(value),
-        }
-    }
-    parts.join("/")
-}
-
-fn xlsx_xml_attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
-    xlsx_xml_elements(xml, tag)
-        .into_iter()
-        .filter_map(|attributes| attributes.get(attribute).cloned())
-        .collect()
-}
-
-fn xlsx_xml_elements(xml: &str, tag: &str) -> Vec<std::collections::HashMap<String, String>> {
-    let marker = format!("<{tag}");
-    let mut cursor = 0;
-    let mut elements = Vec::new();
-    while let Some(offset) = xml[cursor..].find(&marker) {
-        let start = cursor + offset;
-        let Some(end_offset) = xml[start..].find('>') else {
-            break;
-        };
-        let tag_contents = &xml[start + marker.len()..start + end_offset];
-        if !tag.ends_with(' ')
-            && tag_contents.chars().next().is_some_and(|character| {
-                character.is_ascii_alphanumeric() || character == ':' || character == '_'
-            })
-        {
-            cursor = start + marker.len();
-            continue;
-        }
-        elements.push(xlsx_parse_attributes(tag_contents));
-        cursor = start + end_offset + 1;
-    }
-    elements
-}
-
-fn xlsx_parse_attributes(value: &str) -> std::collections::HashMap<String, String> {
-    let mut attributes = std::collections::HashMap::new();
-    let mut rest = value;
-    while let Some(equal) = rest.find('=') {
-        let name = rest[..equal].split_whitespace().last().unwrap_or_default();
-        let quoted = rest[equal + 1..].trim_start();
-        let Some(quote) = quoted.chars().next() else {
-            break;
-        };
-        if quote != '"' && quote != '\'' {
-            break;
-        }
-        let Some(close) = quoted[1..].find(quote) else {
-            break;
-        };
-        attributes.insert(name.to_string(), quoted[1..close + 1].to_string());
-        rest = &quoted[close + 2..];
-    }
-    attributes
-}
-
-fn xlsx_column_label(number: u32) -> String {
-    let mut index = number.saturating_sub(1);
-    let mut result = String::new();
-    loop {
-        result.insert(0, (b'A' + (index % 26) as u8) as char);
-        if index < 26 {
-            break;
-        }
-        index = index / 26 - 1;
-    }
-    result
 }
 
 fn data_to_json(cell: Option<&Data>) -> Value {

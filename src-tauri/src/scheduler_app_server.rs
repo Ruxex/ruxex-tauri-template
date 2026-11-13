@@ -9,7 +9,7 @@ use ruxex::desktop::protocol::ClientRequest;
 use serde::Serialize;
 use serde_json::{Value, json};
 
-use crate::ScheduleRecord;
+use ruxex_scheduler::{ScheduleDispatcher, ScheduleRecord};
 
 static NEXT_REQUEST_ID: AtomicI64 = AtomicI64::new(10_000_000);
 
@@ -81,13 +81,6 @@ pub fn log_app_server_io<T: Serialize>(direction: AppServerLogDirection, payload
 
     #[cfg(not(debug_assertions))]
     let _ = (direction, payload);
-}
-
-pub trait ScheduleDispatcher {
-    fn dispatch(
-        &self,
-        schedule: ScheduleRecord,
-    ) -> impl Future<Output = Result<Option<String>, String>> + Send;
 }
 
 pub struct AppServerDispatcher<'a> {
@@ -204,12 +197,15 @@ async fn send_request(
 mod tests {
     use std::sync::{Arc, Mutex};
 
-    use super::{AppServerLogDirection, format_app_server_log, write_app_server_log};
-    use crate::{
-        ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, ScheduleRecord,
-        SchedulerState, build_thread_request, build_turn_request, load, new_record, save,
+    use super::{
+        AppServerLogDirection, build_thread_request, build_turn_request, format_app_server_log,
+        write_app_server_log,
     };
     use chrono::Utc;
+    use ruxex_scheduler::{
+        ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, ScheduleRecord,
+        SchedulerState, load, new_record, save,
+    };
 
     struct FakeDispatcher {
         result: Mutex<Result<Option<String>, String>>,

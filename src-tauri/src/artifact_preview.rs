@@ -12,6 +12,7 @@ use crate::artifact_model::{
 use crate::artifact_pdf::preview_pdf_bytes;
 use crate::desktop::ruxex_home;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
+use crate::ooxml;
 use crate::platform;
 
 const PREVIEW_MAX_BYTES: u64 = 16 * 1024 * 1024;
@@ -352,10 +353,10 @@ fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>
     }
 
     let mut annotations = Vec::new();
-    for reference in xml_attribute_values(&xml, "mergeCell", "ref") {
+    for reference in ooxml::attribute_values(&xml, "mergeCell", "ref") {
         annotations.push(format!("Merged: {reference}"));
     }
-    for attributes in xml_elements(&xml, "col") {
+    for attributes in ooxml::elements(&xml, "col") {
         if let (Some(min), Some(max), Some(width)) = (
             attributes.get("min"),
             attributes.get("max"),
@@ -363,13 +364,13 @@ fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>
         ) {
             annotations.push(format!(
                 "Column width: {}-{} = {}",
-                column_label_from_number(min.parse().unwrap_or(1)),
-                column_label_from_number(max.parse().unwrap_or(1)),
+                ooxml::column_label(min.parse().unwrap_or(1)),
+                ooxml::column_label(max.parse().unwrap_or(1)),
                 width
             ));
         }
     }
-    for attributes in xml_elements(&xml, "c ") {
+    for attributes in ooxml::elements(&xml, "c ") {
         if let (Some(cell), Some(style)) = (attributes.get("r"), attributes.get("s")) {
             annotations.push(format!("Styled cell: {cell} (style {style})"));
         }
@@ -386,17 +387,17 @@ fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>
         });
     let mut drawing_target = None;
     if let Some(relationships) = relationship_xml.as_deref() {
-        for attributes in xml_elements(relationships, "Relationship") {
+        for attributes in ooxml::elements(relationships, "Relationship") {
             let target = attributes.get("Target").cloned().unwrap_or_default();
             if target.contains("table") {
-                let table_path = normalize_xlsx_target(&target, "xl/worksheets");
+                let table_path = ooxml::normalize_target(&target, "xl/worksheets");
                 if let Ok(table_xml) = read_zip_text(&mut archive, &table_path) {
-                    let name = xml_elements(&table_xml, "table")
+                    let name = ooxml::elements(&table_xml, "table")
                         .first()
                         .and_then(|attributes| attributes.get("name"))
                         .cloned()
                         .unwrap_or_else(|| "unnamed".to_string());
-                    let range = xml_elements(&table_xml, "table")
+                    let range = ooxml::elements(&table_xml, "table")
                         .first()
                         .and_then(|attributes| attributes.get("ref"))
                         .cloned()
@@ -404,7 +405,7 @@ fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>
                     annotations.push(format!("Table: {name} ({range})"));
                 }
             } else if target.contains("drawing") {
-                drawing_target = Some(normalize_xlsx_target(&target, "xl/worksheets"));
+                drawing_target = Some(ooxml::normalize_target(&target, "xl/worksheets"));
             }
         }
     }
@@ -416,11 +417,11 @@ fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>
                 .and_then(|name| name.to_str())
                 .unwrap_or("drawing1.xml");
             let drawing_rels = format!("{}/_rels/{}.rels", drawing_parent.display(), drawing_file);
-            let chart_ids = xml_attribute_values(&drawing_xml, "chart", "id");
+            let chart_ids = ooxml::attribute_values(&drawing_xml, "chart", "id");
             let mut chart_count = 0;
             for chart_id in chart_ids {
                 if let Ok(rels_xml) = read_zip_text(&mut archive, &drawing_rels) {
-                    if let Some(target) = xml_elements(&rels_xml, "Relationship")
+                    if let Some(target) = ooxml::elements(&rels_xml, "Relationship")
                         .into_iter()
                         .find_map(|attributes| {
                             (attributes.get("Id") == Some(&chart_id))
@@ -428,7 +429,7 @@ fn xlsx_sheet_annotations(path: &Path, sheet_index: usize) -> Result<Vec<String>
                                 .flatten()
                         })
                     {
-                        let chart_path = normalize_xlsx_target(
+                        let chart_path = ooxml::normalize_target(
                             &target,
                             &Path::new(&drawing_path)
                                 .parent()
@@ -486,85 +487,6 @@ fn read_zip_text<R: std::io::Read + std::io::Seek>(
     Ok(contents)
 }
 
-fn normalize_xlsx_target(target: &str, base: &str) -> String {
-    let mut parts = base.split('/').collect::<Vec<_>>();
-    for part in target.split('/') {
-        match part {
-            ".." => {
-                parts.pop();
-            }
-            "." | "" => {}
-            value => parts.push(value),
-        }
-    }
-    parts.join("/")
-}
-
-fn xml_attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
-    xml_elements(xml, tag)
-        .into_iter()
-        .filter_map(|attributes| attributes.get(attribute).cloned())
-        .collect()
-}
-
-fn xml_elements(xml: &str, tag: &str) -> Vec<std::collections::HashMap<String, String>> {
-    let marker = format!("<{tag}");
-    let mut cursor = 0;
-    let mut elements = Vec::new();
-    while let Some(offset) = xml[cursor..].find(&marker) {
-        let start = cursor + offset;
-        let Some(end_offset) = xml[start..].find('>') else {
-            break;
-        };
-        let tag_contents = &xml[start + marker.len()..start + end_offset];
-        if !tag.ends_with(' ')
-            && tag_contents.chars().next().is_some_and(|character| {
-                character.is_ascii_alphanumeric() || character == ':' || character == '_'
-            })
-        {
-            cursor = start + marker.len();
-            continue;
-        }
-        let mut attributes = std::collections::HashMap::new();
-        let mut rest = tag_contents;
-        while let Some(equal) = rest.find('=') {
-            let name = rest[..equal].split_whitespace().last().unwrap_or_default();
-            let quoted = rest[equal + 1..].trim_start();
-            let Some(quote) = quoted.chars().next() else {
-                break;
-            };
-            if quote != '"' && quote != '\'' {
-                break;
-            }
-            let value_start = 1;
-            let Some(close) = quoted[value_start..].find(quote) else {
-                break;
-            };
-            attributes.insert(
-                name.to_string(),
-                quoted[value_start..value_start + close].to_string(),
-            );
-            rest = &quoted[value_start + close + 1..];
-        }
-        elements.push(attributes);
-        cursor = start + end_offset + 1;
-    }
-    elements
-}
-
-fn column_label_from_number(number: u32) -> String {
-    let mut index = number.saturating_sub(1);
-    let mut result = String::new();
-    loop {
-        result.insert(0, (b'A' + (index % 26) as u8) as char);
-        if index < 26 {
-            break;
-        }
-        index = index / 26 - 1;
-    }
-    result
-}
-
 fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, String> {
     let file = fs::File::open(path)
         .map_err(|error| format!("failed to open {format} artifact: {error}"))?;
@@ -580,9 +502,9 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
                     .ok()
                     .map(|entry| entry.name().to_string())
             })
-            .filter(|name| pptx_slide_number(name).is_some())
+            .filter(|name| ooxml::slide_number(name).is_some())
             .collect::<Vec<_>>();
-        entries.sort_by_key(|name| pptx_slide_number(name).unwrap_or(usize::MAX));
+        entries.sort_by_key(|name| ooxml::slide_number(name).unwrap_or(usize::MAX));
         entries.truncate(PREVIEW_MAX_SHEETS);
         entries
     };
@@ -656,13 +578,6 @@ fn ooxml_preview_annotations(format: &str, xml: &str) -> Vec<String> {
     annotations
 }
 
-fn pptx_slide_number(name: &str) -> Option<usize> {
-    name.strip_prefix("ppt/slides/slide")?
-        .strip_suffix(".xml")?
-        .parse()
-        .ok()
-}
-
 fn extract_xml_text(xml: &str, tag: &str) -> Vec<String> {
     let opening = format!("<{tag}");
     let closing = format!("</{tag}>");
@@ -689,21 +604,12 @@ fn extract_xml_text(xml: &str, tag: &str) -> Vec<String> {
         };
         let content_end = content_start + close_offset;
         values.push(truncate_text(
-            &decode_xml_entities(&xml[content_start..content_end]),
+            &ooxml::decode_entities(&xml[content_start..content_end]),
             80,
         ));
         cursor = content_end + closing.len();
     }
     values
-}
-
-fn decode_xml_entities(value: &str) -> String {
-    value
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&apos;", "'")
-        .replace("&amp;", "&")
 }
 
 fn display_cell(value: &Data) -> String {
