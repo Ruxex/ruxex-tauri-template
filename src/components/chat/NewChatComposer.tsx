@@ -1,11 +1,5 @@
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import {
-  type FormEvent,
-  type KeyboardEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
@@ -17,18 +11,10 @@ import {
   useProjectList,
   useSendMessage,
   useSetThreadGoal,
-  useSkillsList,
 } from "../../app-server/hooks";
 import type { v2 } from "../../protocol";
-import {
-  filterHiddenSkills,
-  getDesktopUiPolicy,
-} from "../../platform/skill-policy";
 import { ProjectSelector } from "../chats/ProjectSelector";
-import { AttachmentPreview } from "../common/AttachmentPreview";
-import { SkillIcon } from "../common/SkillIcon";
 import { useImageAttachment } from "../common/useImageAttachment";
-import { ComposerMessageInput } from "../conversation/ComposerMessageInput";
 import {
   ComposerOptions,
   PermissionMenu,
@@ -37,6 +23,8 @@ import {
 import { ComposerSettings } from "../conversation/ComposerSettings";
 import { planCollaborationMode } from "../conversation/collaboration-model";
 import { isComposerSubmitShortcut } from "../conversation/composer-model";
+import { ComposerTextInput } from "../conversation/ComposerTextInput";
+import { SelectedComposerSkill } from "../conversation/SelectedComposerSkill";
 import { SlashCommandPalette } from "../conversation/SlashCommandPalette";
 import {
   getSlashCommandInput,
@@ -45,6 +33,7 @@ import {
   selectSlashSkill,
 } from "../conversation/slash-command";
 import { useComposerSelection } from "../conversation/useComposerSelection";
+import { useComposerSkills } from "../conversation/useComposerSkills";
 import { NewProjectDialog } from "../projects/NewProjectDialog";
 
 type NewChatComposerProps = {
@@ -55,7 +44,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const branding = useBranding();
   const navigate = useNavigate();
   const models = useModelList();
-  const skills = useSkillsList();
+  const { skills, visibleSkills } = useComposerSkills();
   const collaborationModes = useCollaborationModes();
   const projects = useProjectList({
     limit: 100,
@@ -71,9 +60,6 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
     v2.SkillMetadata,
     "name" | "path" | "interface"
   > | null>(null);
-  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
-    () => new Set(),
-  );
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const editorRef = useRef<HTMLElement>(null);
   const project = useProject(selectedProjectId);
@@ -91,25 +77,6 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const slashCommandInput = getSlashCommandInput(message);
   const showSlashCommands = slashCommandInput !== null && !goalMode;
 
-  useEffect(() => {
-    let cancelled = false;
-    void getDesktopUiPolicy()
-      .then((policy) => {
-        if (!cancelled && policy.hiddenSkills.length > 0) {
-          setHiddenSkills(new Set(policy.hiddenSkills));
-        }
-      })
-      .catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const visibleSkills = filterHiddenSkills(
-    skills.data?.data.flatMap((entry) => entry.skills) ?? [],
-    hiddenSkills,
-  ).filter((skill) => skill.enabled);
   const {
     attachmentError,
     attachmentInput,
@@ -277,31 +244,20 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
           onSubmit={(event) => void handleSubmit(event)}
         >
-          <ComposerMessageInput
+          <ComposerTextInput
+            attachmentInput={attachmentInput}
             disabled={isPending}
+            handleAttachmentChange={handleAttachmentChange}
+            imageFile={imageFile}
             onChange={setMessage}
             onEditorReady={(element) => {
               editorRef.current = element;
             }}
             onKeyDown={handleMessageKeyDown}
+            onRemoveImage={clearAttachment}
             placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
             value={message}
           />
-          <input
-            ref={attachmentInput}
-            accept="image/*"
-            aria-label="Image attachment"
-            className="hidden"
-            onChange={handleAttachmentChange}
-            type="file"
-          />
-          {imageFile && (
-            <AttachmentPreview
-              disabled={isPending}
-              file={imageFile}
-              onRemove={clearAttachment}
-            />
-          )}
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <ComposerOptions
@@ -317,22 +273,10 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 planMode={planMode}
               />
               {selectedSkill && (
-                <span
-                  aria-label={`Selected skill: ${selectedSkill.name}`}
-                  className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
-                  role="status"
-                >
-                  <SkillIcon className="size-3.5" skill={selectedSkill} />
-                  <span className="truncate">{selectedSkill.name}</span>
-                  <button
-                    aria-label={`Remove skill ${selectedSkill.name}`}
-                    className="btn btn-ghost btn-xs btn-circle -mr-1 size-5 min-h-5"
-                    onClick={() => setSelectedSkill(null)}
-                    type="button"
-                  >
-                    <XMarkIcon aria-hidden="true" className="size-3" />
-                  </button>
-                </span>
+                <SelectedComposerSkill
+                  onRemove={() => setSelectedSkill(null)}
+                  skill={selectedSkill}
+                />
               )}
               {goalMode && (
                 <span

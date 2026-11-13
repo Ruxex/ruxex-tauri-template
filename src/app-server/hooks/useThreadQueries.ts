@@ -211,21 +211,22 @@ export type ThreadConversationOptions = {
 const EMPTY_TURNS_PARAMS: NonNullable<ThreadConversationOptions["turns"]> = {};
 const EMPTY_ITEMS_PARAMS: NonNullable<ThreadConversationOptions["items"]> = {};
 
-async function fetchAllThreadTurns(
-  threadId: string,
-  params: Omit<v2.ThreadTurnsListParams, "threadId">,
-): Promise<v2.ThreadTurnsListResponse> {
-  await ensureThreadResumed(threadId, { consumeStarted: false });
-  const pages: v2.ThreadTurnsListResponse[] = [];
-  let cursor = params.cursor ?? null;
+type ThreadPage<T> = {
+  data: T[];
+  nextCursor: string | null;
+  backwardsCursor: string | null;
+};
+
+async function fetchAllPages<T>(
+  initialCursor: string | null,
+  fetchPage: (cursor: string | null) => Promise<ThreadPage<T>>,
+): Promise<ThreadPage<T>> {
+  const pages: ThreadPage<T>[] = [];
+  let cursor = initialCursor;
   do {
-    const response = await requestAppServerMethod("thread/turns/list", {
-      ...params,
-      threadId,
-      ...(cursor === null ? {} : { cursor }),
-    });
-    pages.push(response.response);
-    cursor = response.response.nextCursor;
+    const page = await fetchPage(cursor);
+    pages.push(page);
+    cursor = page.nextCursor;
   } while (cursor !== null);
 
   return {
@@ -235,28 +236,34 @@ async function fetchAllThreadTurns(
   };
 }
 
+async function fetchAllThreadTurns(
+  threadId: string,
+  params: Omit<v2.ThreadTurnsListParams, "threadId">,
+): Promise<v2.ThreadTurnsListResponse> {
+  await ensureThreadResumed(threadId, { consumeStarted: false });
+  return fetchAllPages(params.cursor ?? null, async (cursor) => {
+    const response = await requestAppServerMethod("thread/turns/list", {
+      ...params,
+      threadId,
+      ...(cursor === null ? {} : { cursor }),
+    });
+    return response.response;
+  });
+}
+
 async function fetchAllThreadItems(
   threadId: string,
   params: Omit<v2.ThreadItemsListParams, "threadId">,
 ): Promise<v2.ThreadItemsListResponse> {
   await ensureThreadResumed(threadId, { consumeStarted: false });
-  const pages: v2.ThreadItemsListResponse[] = [];
-  let cursor = params.cursor ?? null;
-  do {
+  return fetchAllPages(params.cursor ?? null, async (cursor) => {
     const response = await requestAppServerMethod("thread/items/list", {
       ...params,
       threadId,
       ...(cursor === null ? {} : { cursor }),
     });
-    pages.push(response.response);
-    cursor = response.response.nextCursor;
-  } while (cursor !== null);
-
-  return {
-    data: pages.flatMap((page) => page.data),
-    nextCursor: null,
-    backwardsCursor: pages[0]?.backwardsCursor ?? null,
-  };
+    return response.response;
+  });
 }
 
 export function useThreadConversation(

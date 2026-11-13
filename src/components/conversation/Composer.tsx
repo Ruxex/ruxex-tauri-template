@@ -24,19 +24,11 @@ import {
   useQueueMessage,
   useSendMessage,
   useSetThreadGoal,
-  useSkillsList,
   useSteerTurn,
   useUpdateThreadSettings,
 } from "../../app-server/hooks";
-import {
-  filterHiddenSkills,
-  getDesktopUiPolicy,
-} from "../../platform/skill-policy";
 import type { v2 } from "../../protocol";
-import { AttachmentPreview } from "../common/AttachmentPreview";
-import { SkillIcon } from "../common/SkillIcon";
 import { useImageAttachment } from "../common/useImageAttachment";
-import { ComposerMessageInput } from "./ComposerMessageInput";
 import {
   ComposerOptions,
   PermissionMenu,
@@ -44,9 +36,8 @@ import {
   SubmissionModeMenu,
 } from "./ComposerOptions";
 import { ComposerSettings } from "./ComposerSettings";
-import {
-  planCollaborationMode,
-} from "./collaboration-model";
+import { ComposerTextInput } from "./ComposerTextInput";
+import { planCollaborationMode } from "./collaboration-model";
 import type { SubmissionMode } from "./composer-model";
 import {
   buildImageUserInput,
@@ -61,6 +52,8 @@ import {
   selectSlashSkill,
 } from "./slash-command";
 import { useComposerSelection } from "./useComposerSelection";
+import { SelectedComposerSkill } from "./SelectedComposerSkill";
+import { useComposerSkills } from "./useComposerSkills";
 
 type ComposerProps = {
   threadId: string;
@@ -100,10 +93,7 @@ export function Composer({
     resetAttachment,
   } = useImageAttachment();
   const models = useModelList();
-  const skills = useSkillsList();
-  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const { skills, visibleSkills } = useComposerSkills();
   const collaborationModes = useCollaborationModes();
   const { effort, model, setEffort, setModel } = useComposerSelection(
     models.data?.data ?? [],
@@ -141,25 +131,6 @@ export function Composer({
     }
   }, [initialMessage]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void getDesktopUiPolicy()
-      .then((policy) => {
-        if (!cancelled && policy.hiddenSkills.length > 0) {
-          setHiddenSkills(new Set(policy.hiddenSkills));
-        }
-      })
-      .catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const visibleSkills = filterHiddenSkills(
-    skills.data?.data.flatMap((entry) => entry.skills) ?? [],
-    hiddenSkills,
-  ).filter((skill) => skill.enabled);
   const SubmitIcon = isPending
     ? ArrowPathIcon
     : mode === "queue"
@@ -330,31 +301,20 @@ export function Composer({
         className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
         onSubmit={(event) => void handleSubmit(event)}
       >
-        <ComposerMessageInput
+        <ComposerTextInput
+          attachmentInput={attachmentInput}
           disabled={isPending}
+          handleAttachmentChange={handleAttachmentChange}
+          imageFile={imageFile}
           onChange={setMessage}
           onEditorReady={(element) => {
             editorRef.current = element;
           }}
           onKeyDown={handleMessageKeyDown}
+          onRemoveImage={clearAttachment}
           placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
           value={message}
         />
-        <input
-          ref={attachmentInput}
-          accept="image/*"
-          className="hidden"
-          onChange={handleAttachmentChange}
-          type="file"
-          aria-label="Image attachment"
-        />
-        {imageFile && (
-          <AttachmentPreview
-            disabled={isPending}
-            file={imageFile}
-            onRemove={clearAttachment}
-          />
-        )}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <ComposerOptions
@@ -370,22 +330,10 @@ export function Composer({
               planMode={planMode}
             />
             {selectedSkill && (
-              <span
-                aria-label={`Selected skill: ${selectedSkill.name}`}
-                className="badge badge-primary badge-outline max-w-56 gap-1 py-3"
-                role="status"
-              >
-                <SkillIcon className="size-3.5" skill={selectedSkill} />
-                <span className="truncate">{selectedSkill.name}</span>
-                <button
-                  aria-label={`Remove skill ${selectedSkill.name}`}
-                  className="btn btn-ghost btn-xs btn-circle -mr-1 size-5 min-h-5"
-                  type="button"
-                  onClick={() => setSelectedSkill(null)}
-                >
-                  <XMarkIcon aria-hidden="true" className="size-3" />
-                </button>
-              </span>
+              <SelectedComposerSkill
+                onRemove={() => setSelectedSkill(null)}
+                skill={selectedSkill}
+              />
             )}
             <PermissionMenu
               disabled={isPending}

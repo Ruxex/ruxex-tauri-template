@@ -18,6 +18,7 @@ import { SkillIcon } from "../components/common/SkillIcon";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { PluginInformationItem } from "../components/plugins/PluginInformationItem";
+import { getPluginActionPolicy } from "../components/plugins/plugin-policy";
 import type { v2 } from "../protocol";
 
 function isHttpUrl(value: string | null | undefined): value is string {
@@ -77,11 +78,9 @@ export function PluginDetailPage() {
     interfaceData?.longDescription ??
     interfaceData?.shortDescription;
   const pluginSummary = plugin?.summary ?? summary;
-  const isOfficialApp =
-    pluginSummary?.installPolicySource === "IMPLICIT_CANONICAL_APP";
-  const canInstall = Boolean(pluginSummary && !pluginSummary.installed);
-  const canUninstall = Boolean(
-    pluginSummary?.installed && !isOfficialApp && pluginSummary.id,
+  const actionPolicy = getPluginActionPolicy(
+    pluginSummary ?? null,
+    marketplace?.path ?? null,
   );
   const detailSectionCount = plugin
     ? [
@@ -211,25 +210,19 @@ export function PluginDetailPage() {
             </a>
           )}
         </div>
-        {(canInstall || canUninstall) && (
+        {(actionPolicy.canInstall || actionPolicy.canUninstall) && (
           <div className="ml-auto flex shrink-0 items-start">
-            {canInstall && (
+            {actionPolicy.canInstall && (
               <button
                 aria-label={`Install ${displayName}`}
                 className="btn btn-primary btn-sm"
                 disabled={
-                  installPlugin.isPending || !marketplace.path || isOfficialApp
+                  installPlugin.isPending || actionPolicy.installDisabled
                 }
                 type="button"
-                title={
-                  isOfficialApp
-                    ? "Official Apps are not supported in Ruxex."
-                    : marketplace.path
-                      ? `Install ${displayName}`
-                      : "Remote marketplace plugins cannot be installed here."
-                }
+                title={actionPolicy.installTitle ?? `Install ${displayName}`}
                 onClick={() => {
-                  if (marketplace.path && !isOfficialApp) {
+                  if (marketplace.path && !actionPolicy.official) {
                     void installPlugin.mutateAsync({
                       marketplacePath: marketplace.path,
                       pluginName,
@@ -248,7 +241,7 @@ export function PluginDetailPage() {
                 Install
               </button>
             )}
-            {canUninstall && pluginSummary && (
+            {actionPolicy.canUninstall && pluginSummary && (
               <button
                 aria-label={`Uninstall ${displayName}`}
                 className="btn btn-error btn-outline btn-sm"

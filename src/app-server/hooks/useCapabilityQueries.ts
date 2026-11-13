@@ -6,7 +6,10 @@ import { extractGlobalMcpConfig, type GlobalMcpConfig } from "../mcp-config";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
 
-export function useSkillsList(params: v2.SkillsListParams = {}) {
+export function useSkillsList(
+  params: v2.SkillsListParams = {},
+  enabled = true,
+) {
   const status = useAppServerStatus();
 
   return useQuery<v2.SkillsListResponse>({
@@ -15,7 +18,7 @@ export function useSkillsList(params: v2.SkillsListParams = {}) {
       const response = await requestAppServerMethod("skills/list", params);
       return response.response;
     },
-    enabled: Boolean(status.data),
+    enabled: Boolean(status.data && enabled),
   });
 }
 
@@ -70,7 +73,10 @@ export function useSetSkillsExtraRoots() {
   });
 }
 
-export function useMcpServerStatus(params: v2.ListMcpServerStatusParams = {}) {
+export function useMcpServerStatus(
+  params: v2.ListMcpServerStatusParams = {},
+  enabled = true,
+) {
   const status = useAppServerStatus();
 
   return useQuery<v2.ListMcpServerStatusResponse>({
@@ -82,7 +88,7 @@ export function useMcpServerStatus(params: v2.ListMcpServerStatusParams = {}) {
       );
       return response.response;
     },
-    enabled: Boolean(status.data),
+    enabled: Boolean(status.data && enabled),
   });
 }
 
@@ -143,7 +149,10 @@ export function useMcpResource(params: v2.McpResourceReadParams | null) {
   });
 }
 
-export function usePluginList(params: v2.PluginListParams = {}) {
+export function usePluginList(
+  params: v2.PluginListParams = {},
+  enabled = true,
+) {
   const status = useAppServerStatus();
 
   return useQuery<v2.PluginListResponse>({
@@ -152,7 +161,7 @@ export function usePluginList(params: v2.PluginListParams = {}) {
       const response = await requestAppServerMethod("plugin/list", params);
       return response.response;
     },
-    enabled: Boolean(status.data),
+    enabled: Boolean(status.data && enabled),
   });
 }
 
@@ -174,46 +183,18 @@ export function usePluginRead(params: v2.PluginReadParams | null) {
   });
 }
 
-type PluginMutationParams =
-  | v2.MarketplaceAddParams
-  | v2.MarketplaceRemoveParams
-  | v2.MarketplaceUpgradeParams
-  | v2.PluginInstallParams
-  | v2.PluginUninstallParams;
-
-function usePluginMutation<TParams extends PluginMutationParams, TResponse>(
-  method:
-    | "marketplace/add"
-    | "marketplace/remove"
-    | "marketplace/upgrade"
-    | "plugin/install"
-    | "plugin/uninstall",
+function usePluginMutation<TParams, TResponse>(
+  mutationFn: (params: TParams) => Promise<TResponse>,
+  invalidates: readonly (readonly unknown[])[],
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: TParams) => {
-      const response = await requestAppServerMethod(
-        method,
-        params as PluginMutationParams,
-      );
-      return response.response as TResponse;
-    },
+    mutationFn,
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: appServerQueryKeys.plugins,
-      });
-      if (method === "plugin/uninstall") {
+      for (const queryKey of invalidates) {
         void queryClient.invalidateQueries({
-          queryKey: appServerQueryKeys.skills,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: appServerQueryKeys.mcpServers,
-        });
-      }
-      if (method.startsWith("marketplace/")) {
-        void queryClient.invalidateQueries({
-          queryKey: appServerQueryKeys.configRoot,
+          queryKey,
         });
       }
     },
@@ -221,36 +202,47 @@ function usePluginMutation<TParams extends PluginMutationParams, TResponse>(
 }
 
 export function useAddMarketplace() {
-  return usePluginMutation<v2.MarketplaceAddParams, v2.MarketplaceAddResponse>(
-    "marketplace/add",
+  return usePluginMutation(
+    async (params: v2.MarketplaceAddParams) =>
+      (await requestAppServerMethod("marketplace/add", params)).response,
+    [appServerQueryKeys.plugins, appServerQueryKeys.configRoot],
   );
 }
 
 export function useUpgradeMarketplace() {
-  return usePluginMutation<
-    v2.MarketplaceUpgradeParams,
-    v2.MarketplaceUpgradeResponse
-  >("marketplace/upgrade");
+  return usePluginMutation(
+    async (params: v2.MarketplaceUpgradeParams) =>
+      (await requestAppServerMethod("marketplace/upgrade", params)).response,
+    [appServerQueryKeys.plugins, appServerQueryKeys.configRoot],
+  );
 }
 
 export function useRemoveMarketplace() {
-  return usePluginMutation<
-    v2.MarketplaceRemoveParams,
-    v2.MarketplaceRemoveResponse
-  >("marketplace/remove");
+  return usePluginMutation(
+    async (params: v2.MarketplaceRemoveParams) =>
+      (await requestAppServerMethod("marketplace/remove", params)).response,
+    [appServerQueryKeys.plugins, appServerQueryKeys.configRoot],
+  );
 }
 
 export function useInstallPlugin() {
-  return usePluginMutation<v2.PluginInstallParams, v2.PluginInstallResponse>(
-    "plugin/install",
+  return usePluginMutation(
+    async (params: v2.PluginInstallParams) =>
+      (await requestAppServerMethod("plugin/install", params)).response,
+    [appServerQueryKeys.plugins],
   );
 }
 
 export function useUninstallPlugin() {
-  return usePluginMutation<
-    v2.PluginUninstallParams,
-    v2.PluginUninstallResponse
-  >("plugin/uninstall");
+  return usePluginMutation(
+    async (params: v2.PluginUninstallParams) =>
+      (await requestAppServerMethod("plugin/uninstall", params)).response,
+    [
+      appServerQueryKeys.plugins,
+      appServerQueryKeys.skills,
+      appServerQueryKeys.mcpServers,
+    ],
+  );
 }
 
 export function useCollaborationModes() {

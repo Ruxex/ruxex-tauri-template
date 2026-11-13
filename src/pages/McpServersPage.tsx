@@ -124,23 +124,7 @@ export function McpServersPage() {
     }
   }
 
-  async function handleSave(draft: McpServerDraft) {
-    const entry = dialog?.entry;
-    const edits: v2.ConfigEdit[] = [
-      {
-        keyPath: mcpServerKeyPath(draft.name),
-        value: serializeMcpServerDraft(draft, entry?.raw),
-        mergeStrategy: "replace",
-      },
-    ];
-    if (entry && entry.name !== draft.name) {
-      edits.push({
-        keyPath: mcpServerKeyPath(entry.name),
-        value: null,
-        mergeStrategy: "replace",
-      });
-    }
-
+  async function writeEdits(edits: v2.ConfigEdit[]): Promise<boolean> {
     const params: v2.ConfigBatchWriteParams = {
       edits,
       reloadUserConfig: true,
@@ -161,13 +145,34 @@ export function McpServersPage() {
             "A higher-priority configuration layer overrides this value.",
         );
       }
+      return true;
     } catch (error) {
       if (getConfigWriteErrorCode(error) === "configVersionConflict") {
         void globalConfig.refetch();
       }
       setWriteError(formatErrorMessage(error));
-      return;
+      return false;
     }
+  }
+
+  async function handleSave(draft: McpServerDraft) {
+    const entry = dialog?.entry;
+    const edits: v2.ConfigEdit[] = [
+      {
+        keyPath: mcpServerKeyPath(draft.name),
+        value: serializeMcpServerDraft(draft, entry?.raw),
+        mergeStrategy: "replace",
+      },
+    ];
+    if (entry && entry.name !== draft.name) {
+      edits.push({
+        keyPath: mcpServerKeyPath(entry.name),
+        value: null,
+        mergeStrategy: "replace",
+      });
+    }
+
+    if (!(await writeEdits(edits))) return;
 
     setDialog(null);
     focusDialogTrigger();
@@ -175,37 +180,12 @@ export function McpServersPage() {
   }
 
   async function handleImportJson(entries: McpServerJsonImportEntry[]) {
-    const params: v2.ConfigBatchWriteParams = {
-      edits: entries.map((entry) => ({
-        keyPath: mcpServerKeyPath(entry.name),
-        value: entry.value,
-        mergeStrategy: "replace",
-      })),
-      reloadUserConfig: true,
-    };
-    if (globalConfig.data?.version) {
-      params.expectedVersion = globalConfig.data.version;
-    }
-
-    setWriteError(null);
-    setReloadError(null);
-    setHigherLayerNotice(null);
-    setOverrideNotice(null);
-    try {
-      const result = await writeConfig.mutateAsync(params);
-      if (result.status === "okOverridden") {
-        setOverrideNotice(
-          result.overriddenMetadata?.message ??
-            "A higher-priority configuration layer overrides this value.",
-        );
-      }
-    } catch (error) {
-      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
-        void globalConfig.refetch();
-      }
-      setWriteError(formatErrorMessage(error));
-      return;
-    }
+    const edits: v2.ConfigEdit[] = entries.map((entry) => ({
+      keyPath: mcpServerKeyPath(entry.name),
+      value: entry.value,
+      mergeStrategy: "replace",
+    }));
+    if (!(await writeEdits(edits))) return;
 
     setDialog(null);
     focusDialogTrigger();
@@ -217,42 +197,14 @@ export function McpServersPage() {
       return;
     }
 
-    const params: v2.ConfigBatchWriteParams = {
-      edits: [
-        {
-          keyPath: mcpServerKeyPath(entry.name),
-          value: serializeMcpServerDraft(
-            { ...entry.draft, enabled },
-            entry.raw,
-          ),
-          mergeStrategy: "replace",
-        },
-      ],
-      reloadUserConfig: true,
-    };
-    if (globalConfig.data?.version) {
-      params.expectedVersion = globalConfig.data.version;
-    }
-
-    setWriteError(null);
-    setReloadError(null);
-    setHigherLayerNotice(null);
-    setOverrideNotice(null);
-    try {
-      const result = await writeConfig.mutateAsync(params);
-      if (result.status === "okOverridden") {
-        setOverrideNotice(
-          result.overriddenMetadata?.message ??
-            "A higher-priority configuration layer overrides this value.",
-        );
-      }
-    } catch (error) {
-      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
-        void globalConfig.refetch();
-      }
-      setWriteError(formatErrorMessage(error));
-      return;
-    }
+    const edits: v2.ConfigEdit[] = [
+      {
+        keyPath: mcpServerKeyPath(entry.name),
+        value: serializeMcpServerDraft({ ...entry.draft, enabled }, entry.raw),
+        mergeStrategy: "replace",
+      },
+    ];
+    if (!(await writeEdits(edits))) return;
 
     await reloadAfterWrite(entry.name, false);
   }
@@ -266,39 +218,14 @@ export function McpServersPage() {
       return;
     }
 
-    const params: v2.ConfigBatchWriteParams = {
-      edits: [
-        {
-          keyPath: mcpServerKeyPath(entry.name),
-          value: null,
-          mergeStrategy: "replace",
-        },
-      ],
-      reloadUserConfig: true,
-    };
-    if (globalConfig.data?.version) {
-      params.expectedVersion = globalConfig.data.version;
-    }
-
-    setWriteError(null);
-    setReloadError(null);
-    setHigherLayerNotice(null);
-    setOverrideNotice(null);
-    try {
-      const result = await writeConfig.mutateAsync(params);
-      if (result.status === "okOverridden") {
-        setOverrideNotice(
-          result.overriddenMetadata?.message ??
-            "A higher-priority configuration layer overrides this value.",
-        );
-      }
-    } catch (error) {
-      if (getConfigWriteErrorCode(error) === "configVersionConflict") {
-        void globalConfig.refetch();
-      }
-      setWriteError(formatErrorMessage(error));
-      return;
-    }
+    const edits: v2.ConfigEdit[] = [
+      {
+        keyPath: mcpServerKeyPath(entry.name),
+        value: null,
+        mergeStrategy: "replace",
+      },
+    ];
+    if (!(await writeEdits(edits))) return;
 
     await reloadAfterWrite(entry.name, true);
   }
