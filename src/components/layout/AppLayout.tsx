@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePanelRef } from "react-resizable-panels";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 import type { AppOutletContext } from "../../app/app-outlet-context";
@@ -63,6 +70,7 @@ export function AppLayout() {
   >(null);
   const leftPaneRef = usePanelRef();
   const rightPaneRef = usePanelRef();
+  const previousRoutePanel = useRef<SidebarPanel | null>(null);
   const openThreadDiff = useCallback(
     (target: GitDiffReviewTarget) => {
       const id = gitDiffTabId(target);
@@ -111,7 +119,13 @@ export function AppLayout() {
 
   useEffect(() => {
     setActivePanel(routePanel);
-  }, [routePanel]);
+    const enteredProjects =
+      routePanel === "projects" && previousRoutePanel.current !== "projects";
+    previousRoutePanel.current = routePanel;
+    if (enteredProjects && !preferences.sidebarCollapsed) {
+      update({ sidebarCollapsed: true });
+    }
+  }, [preferences.sidebarCollapsed, routePanel, update]);
 
   useEffect(() => {
     if (preferences.sidebarCollapsed) return;
