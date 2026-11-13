@@ -210,7 +210,9 @@ describe("ConversationWorkspace", () => {
   });
 
   it("shows the thread summary for Git changes when token usage is unavailable", async () => {
-    useGitDiffSummary.mockReturnValueOnce({ data: { added: 7, deleted: 2 } });
+    useGitDiffSummary.mockReturnValueOnce({
+      data: { added: 7, deleted: 2, files: 1 },
+    });
     useAppServerEvents.mockReturnValueOnce({
       connected: true,
       pendingServerRequests: {},

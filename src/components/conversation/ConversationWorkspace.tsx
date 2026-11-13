@@ -6,7 +6,6 @@ import {
 } from "../../app-server/api";
 import type { LiveConversationItem } from "../../app-server/event-reducer";
 import { clearThreadLiveItems } from "../../app-server/event-store";
-import { useGitDiffSummary } from "../../platform/git-diff";
 import {
   useAppServerEvents,
   useRetainThreadState,
@@ -14,13 +13,11 @@ import {
   useSendMessage,
   useThreadConversation,
 } from "../../app-server/hooks";
+import { useGitDiffSummary } from "../../platform/git-diff";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
 import { Composer } from "./Composer";
-import {
-  ConversationMinimap,
-  MIN_USER_ITEMS_FOR_MINIMAP,
-} from "./ConversationMinimap";
+import { ConversationMinimap } from "./ConversationMinimap";
 import { CurrentGoal } from "./CurrentGoal";
 import {
   buildUserTextInput,
@@ -34,9 +31,14 @@ const EMPTY_LIVE_ITEMS: LiveConversationItem[] = [];
 export function ConversationWorkspace({
   threadId,
   onOpenThreadDiff,
+  onOpenThreadTerminal,
 }: {
   threadId: string;
   onOpenThreadDiff?: (target: { threadId: string; workspace: string }) => void;
+  onOpenThreadTerminal?: (target: {
+    threadId: string;
+    cwd: string | null;
+  }) => void;
 }) {
   const branding = useBranding();
   const timelineRef = useRef<HTMLElement | null>(null);
@@ -201,9 +203,7 @@ export function ConversationWorkspace({
     liveThread?.status !== "resynchronizing" &&
     !revertThread.isPending &&
     !sendMessage.isPending;
-  const hasMinimap =
-    items.filter((item) => item.type === "userMessage").length >=
-    MIN_USER_ITEMS_FOR_MINIMAP;
+  const hasMinimap = items.some((item) => item.type === "userMessage");
   const gitDiff = gitDiffQuery.data ?? null;
   const hasSummary = tokenUsage !== null || gitDiff !== null;
   const chatGridClasses = hasMinimap
@@ -294,6 +294,12 @@ export function ConversationWorkspace({
             const workspace = conversation.data?.thread.cwd;
             if (workspace) onOpenThreadDiff?.({ threadId, workspace });
           }}
+          onOpenTerminal={() =>
+            onOpenThreadTerminal?.({
+              threadId,
+              cwd: conversation.data?.thread.cwd ?? null,
+            })
+          }
           tokenUsage={tokenUsage}
         />
       )}

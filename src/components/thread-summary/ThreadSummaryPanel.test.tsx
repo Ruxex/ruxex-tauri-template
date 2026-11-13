@@ -80,13 +80,14 @@ describe("ThreadSummaryPanel", () => {
     render(
       <ThreadSummaryPanel
         tokenUsage={null}
-        gitDiff={{ added: 12, deleted: 4 }}
+        gitDiff={{ added: 12, deleted: 4, files: 3 }}
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Code Changes" })).toBeTruthy();
+    expect(screen.getByText("Changes")).toBeTruthy();
     expect(screen.getByText("+12")).toBeTruthy();
     expect(screen.getByText("−4")).toBeTruthy();
+    expect(screen.getByText("(3)")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Token Usage" })).toBeNull();
   });
 });

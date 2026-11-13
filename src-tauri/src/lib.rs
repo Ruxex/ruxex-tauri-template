@@ -14,6 +14,7 @@ mod git_diff_commands;
 mod platform;
 mod quick_panel;
 mod schedule_commands;
+mod terminal;
 mod visualization;
 mod worktree;
 mod worktree_commands;
@@ -122,6 +123,7 @@ pub fn run_with_config(config: DesktopConfig) {
         ))
         .manage(runtime)
         .manage(schedule_commands::ScheduleState::default())
+        .manage(terminal::TerminalState::default())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 window
@@ -171,6 +173,10 @@ pub fn run_with_config(config: DesktopConfig) {
             schedule_commands::schedule_set_enabled,
             schedule_commands::schedule_delete,
             schedule_commands::schedule_run_now,
+            terminal::terminal_start,
+            terminal::terminal_write,
+            terminal::terminal_resize,
+            terminal::terminal_close,
             worktree_commands::worktree_list,
             worktree_commands::worktree_create,
             worktree_commands::worktree_remove,

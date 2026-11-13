@@ -9,6 +9,7 @@ export function ThreadPage() {
   return (
     <ConversationWorkspace
       onOpenThreadDiff={outletContext?.openThreadDiff}
+      onOpenThreadTerminal={outletContext?.openThreadTerminal}
       threadId={threadId}
     />
   );

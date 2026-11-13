@@ -11,6 +11,7 @@ use serde::Serialize;
 pub struct GitDiffSummary {
     pub added: u64,
     pub deleted: u64,
+    pub files: u64,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -32,6 +33,7 @@ pub fn summary(workspace: &Path) -> Result<GitDiffSummary, String> {
     let mut result = GitDiffSummary {
         added: 0,
         deleted: 0,
+        files: 0,
     };
     let diff = git(
         workspace,
@@ -43,6 +45,7 @@ pub fn summary(workspace: &Path) -> Result<GitDiffSummary, String> {
     for line in String::from_utf8_lossy(&diff.stdout).lines() {
         let mut fields = line.splitn(3, '\t');
         if let (Some(added), Some(deleted)) = (fields.next(), fields.next()) {
+            result.files += 1;
             result.added += added.parse::<u64>().unwrap_or(0);
             result.deleted += deleted.parse::<u64>().unwrap_or(0);
         }
@@ -65,8 +68,10 @@ pub fn summary(workspace: &Path) -> Result<GitDiffSummary, String> {
         let path = workspace.join(path_from_bytes(relative_path));
         let metadata = fs::symlink_metadata(&path).map_err(|error| error.to_string())?;
         if metadata.file_type().is_symlink() {
+            result.files += 1;
             result.added += 1;
         } else if metadata.is_file() {
+            result.files += 1;
             let contents = fs::read(path).map_err(|error| error.to_string())?;
             if !contents.contains(&0) && !contents.is_empty() {
                 result.added += contents.iter().filter(|byte| **byte == b'\n').count() as u64;
@@ -402,7 +407,8 @@ mod tests {
             summary(&repo.0).unwrap(),
             super::GitDiffSummary {
                 added: 2,
-                deleted: 2
+                deleted: 2,
+                files: 1
             }
         );
     }
@@ -418,7 +424,8 @@ mod tests {
             summary(&repo.0).unwrap(),
             super::GitDiffSummary {
                 added: 2,
-                deleted: 0
+                deleted: 0,
+                files: 2
             }
         );
     }

@@ -1,10 +1,11 @@
-import { invoke } from "@tauri-apps/api/core";
 import { useQuery } from "@tanstack/react-query";
+import { invoke } from "@tauri-apps/api/core";
 import { isDesktopRuntime } from "../app-server/runtime";
 
 export type GitDiffSummary = {
   added: number;
   deleted: number;
+  files: number;
 };
 
 export type GitDiffFile = {

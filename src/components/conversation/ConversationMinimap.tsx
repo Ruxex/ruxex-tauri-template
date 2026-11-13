@@ -4,7 +4,8 @@ import type { ConversationViewItem } from "./conversation-model";
 
 const MAX_MARKER_GAP_PX = 28;
 const MAX_MARKER_SPAN_PX = 360;
-export const MIN_USER_ITEMS_FOR_MINIMAP = 5;
+const MAX_HOVER_OFFSET_PX = 15;
+const HOVER_OFFSET_RADIUS = 3;
 
 type ConversationMinimapProps = {
   items: ConversationViewItem[];
@@ -37,7 +38,7 @@ export function ConversationMinimap({
 
   useEffect(() => {
     const timeline = timelineRef.current;
-    if (!timeline || userItems.length < MIN_USER_ITEMS_FOR_MINIMAP) {
+    if (!timeline || userItems.length === 0) {
       return;
     }
 
@@ -91,7 +92,7 @@ export function ConversationMinimap({
     return null;
   }
 
-  const hasMarkers = userItems.length >= MIN_USER_ITEMS_FOR_MINIMAP;
+  const hasMarkers = userItems.length > 0;
   const hoveredIndex = hoveredId
     ? userItems.findIndex((item) => item.id === hoveredId)
     : -1;
@@ -138,15 +139,7 @@ export function ConversationMinimap({
               const isAdjacent = hoverDistance === 1;
               const isNear = hoverDistance === 2;
               const isFar = hoverDistance === 3;
-              const markerOffsetClass = isHovered
-                ? "translate-x-[14px]"
-                : isAdjacent
-                  ? "translate-x-[10px]"
-                  : isNear
-                    ? "translate-x-[5px]"
-                    : isFar
-                      ? "translate-x-[2px]"
-                      : "";
+              const markerOffsetPx = markerOffsetForDistance(hoverDistance);
               const markerStateClass = isHovered
                 ? "scale-200 border-primary bg-primary"
                 : isActive
@@ -180,13 +173,14 @@ export function ConversationMinimap({
                     <span className="absolute left-[10px] top-1/2 -translate-y-1/2">
                       <span
                         aria-hidden="true"
-                        className={`block size-2 rounded-full border transition-[transform,background-color,box-shadow] duration-200 ease-out ${markerOffsetClass} ${markerStateClass}`}
+                        className={`block size-2 rounded-full border transition-[transform,background-color,box-shadow] duration-200 ease-out ${markerStateClass}`}
                         data-testid={`conversation-minimap-marker-${item.id}`}
+                        style={{ transform: `translateX(${markerOffsetPx}px)` }}
                       />
                     </span>
                     {isHovered && (
                       <span
-                        className="absolute bottom-1/2 left-10 z-10 w-64 translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
+                        className="absolute bottom-1/2 left-14 z-10 w-64 translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
                         role="tooltip"
                       >
                         <span className="block leading-relaxed">{preview}</span>
@@ -218,4 +212,13 @@ function markerPosition(index: number, count: number): string {
   const centerIndex = (count - 1) / 2;
   const offset = (index - centerIndex) * gap;
   return `calc(50% + ${offset}px)`;
+}
+
+function markerOffsetForDistance(distance: number): number {
+  if (distance < 0 || distance >= HOVER_OFFSET_RADIUS) {
+    return 0;
+  }
+  return Math.round(
+    MAX_HOVER_OFFSET_PX * (1 - distance / HOVER_OFFSET_RADIUS),
+  );
 }

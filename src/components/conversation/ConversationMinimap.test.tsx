@@ -71,33 +71,12 @@ describe("ConversationMinimap", () => {
     expect(minimap.className).not.toContain("fixed");
   });
 
-  it("does not render the minimap before five user messages are available", () => {
+  it("renders the minimap when one user message is available", () => {
     const timeline = document.createElement("section");
     document.body.append(timeline);
-    const fourUserMessages = [
-      message("user-1", "userMessage", "First prompt"),
-      message("assistant-1", "agentMessage", "Assistant reply"),
-      message("user-2", "userMessage", "Second prompt"),
-      message("user-3", "userMessage", "Third prompt"),
-      message("user-4", "userMessage", "Fourth prompt"),
-    ];
-    const { rerender } = render(
+    render(
       <ConversationMinimap
-        items={fourUserMessages}
-        timelineRef={{ current: timeline }}
-      />,
-    );
-
-    expect(
-      screen.queryByRole("complementary", { name: "Conversation minimap" }),
-    ).toBeNull();
-
-    rerender(
-      <ConversationMinimap
-        items={[
-          ...fourUserMessages,
-          message("user-5", "userMessage", "Fifth prompt"),
-        ]}
+        items={[message("user-1", "userMessage", "First prompt")]}
         timelineRef={{ current: timeline }}
       />,
     );
@@ -140,13 +119,13 @@ describe("ConversationMinimap", () => {
 
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip.textContent).toBe("First prompt");
-    expect(tooltip.className).toContain("left-10");
+    expect(tooltip.className).toContain("left-14");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-1").className,
     ).toEqual(expect.stringContaining("scale-200"));
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-1").className,
-    ).toContain("translate-x-[14px]");
+      screen.getByTestId("conversation-minimap-marker-user-1").style.transform,
+    ).toBe("translateX(15px)");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-1").className,
     ).toContain("duration-200");
@@ -307,38 +286,38 @@ describe("ConversationMinimap", () => {
       screen.getByTestId("conversation-minimap-marker-user-five").className,
     ).toEqual(expect.stringContaining("scale-200"));
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-five").className,
-    ).toContain("translate-x-[14px]");
+      screen.getByTestId("conversation-minimap-marker-user-five").style.transform,
+    ).toBe("translateX(15px)");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-four").className,
     ).toContain("scale-125");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-four").className,
-    ).toContain("translate-x-[10px]");
+      screen.getByTestId("conversation-minimap-marker-user-four").style.transform,
+    ).toBe("translateX(10px)");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-six").className,
     ).toContain("scale-125");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-six").className,
-    ).toContain("translate-x-[10px]");
+      screen.getByTestId("conversation-minimap-marker-user-six").style.transform,
+    ).toBe("translateX(10px)");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-three").className,
     ).toContain("scale-110");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-three").className,
-    ).toContain("translate-x-[5px]");
+      screen.getByTestId("conversation-minimap-marker-user-three").style.transform,
+    ).toBe("translateX(5px)");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-seven").className,
     ).toContain("scale-110");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-seven").className,
-    ).toContain("translate-x-[5px]");
+      screen.getByTestId("conversation-minimap-marker-user-seven").style.transform,
+    ).toBe("translateX(5px)");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-two").className,
-    ).toContain("translate-x-[2px]");
+      screen.getByTestId("conversation-minimap-marker-user-two").style.transform,
+    ).toBe("translateX(0px)");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-eight").className,
-    ).toContain("translate-x-[2px]");
+      screen.getByTestId("conversation-minimap-marker-user-eight").style.transform,
+    ).toBe("translateX(0px)");
     expect(
       screen.getByTestId("conversation-minimap-marker-user-two").className,
     ).toContain("scale-105");
@@ -346,14 +325,11 @@ describe("ConversationMinimap", () => {
       screen.getByTestId("conversation-minimap-marker-user-eight").className,
     ).toContain("scale-105");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-one").className,
-    ).not.toContain("translate-x-[2px]");
+      screen.getByTestId("conversation-minimap-marker-user-one").style.transform,
+    ).toBe("translateX(0px)");
     expect(
-      screen.getByTestId("conversation-minimap-marker-user-one").className,
-    ).not.toContain("translate-x-[5px]");
-    expect(
-      screen.getByTestId("conversation-minimap-marker-user-nine").className,
-    ).not.toContain("translate-x-");
+      screen.getByTestId("conversation-minimap-marker-user-nine").style.transform,
+    ).toBe("translateX(0px)");
   });
 
   it("truncates long hover previews to the fixed character limit", () => {

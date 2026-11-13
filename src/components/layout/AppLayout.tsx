@@ -27,14 +27,25 @@ const GitDiffReviewPane = lazy(() =>
     default: module.GitDiffReviewPane,
   })),
 );
+const TerminalPane = lazy(() =>
+  import("../terminal/TerminalPane").then((module) => ({
+    default: module.TerminalPane,
+  })),
+);
 
 const MAX_RIGHT_PANE_WIDTH = 1536;
 
-type RightPaneTab = {
-  id: string;
-  kind: "git-diff";
-  target: GitDiffReviewTarget;
-};
+type RightPaneTab =
+  | {
+      id: string;
+      kind: "git-diff";
+      target: GitDiffReviewTarget;
+    }
+  | {
+      id: string;
+      kind: "terminal";
+      cwd: string | null;
+    };
 
 function gitDiffTabId(target: GitDiffReviewTarget) {
   return `git-diff:${encodeURIComponent(target.threadId)}:${encodeURIComponent(target.workspace)}`;
@@ -44,6 +55,11 @@ function gitDiffTabLabel(target: GitDiffReviewTarget) {
   const workspaceName =
     target.workspace.split(/[\\/]/).filter(Boolean).at(-1) || target.workspace;
   return `Git Diff — ${workspaceName}`;
+}
+
+function terminalTabLabel(cwd: string | null) {
+  const workingDirectory = cwd?.split(/[\\/]/).filter(Boolean).at(-1) || "Home";
+  return `Terminal — ${workingDirectory}`;
 }
 
 export function AppLayout() {
@@ -82,6 +98,17 @@ export function AppLayout() {
       setRightPaneOpen(true);
     },
     [rightPaneOpen, rightPaneRef, rightPaneTabs],
+  );
+
+  const openThreadTerminal = useCallback(
+    ({ cwd }: { threadId: string; cwd: string | null }) => {
+      const id = `terminal-tab-${crypto.randomUUID()}`;
+      setRightPaneTabs((tabs) => [...tabs, { id, kind: "terminal", cwd }]);
+      setActiveRightPaneTabId(id);
+      if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
+      setRightPaneOpen(true);
+    },
+    [rightPaneOpen, rightPaneRef],
   );
 
   const closeRightPaneTab = useCallback(
@@ -217,7 +244,14 @@ export function AppLayout() {
               }`}
               data-conversation-scroll={isChatRoute ? "true" : undefined}
             >
-              <Outlet context={{ openThreadDiff } satisfies AppOutletContext} />
+              <Outlet
+                context={
+                  {
+                    openThreadDiff,
+                    openThreadTerminal,
+                  } satisfies AppOutletContext
+                }
+              />
             </section>
           </div>
         </ResizablePanel>
@@ -253,7 +287,10 @@ export function AppLayout() {
                   role="tablist"
                 >
                   {rightPaneTabs.map((tab) => {
-                    const label = gitDiffTabLabel(tab.target);
+                    const label =
+                      tab.kind === "git-diff"
+                        ? gitDiffTabLabel(tab.target)
+                        : terminalTabLabel(tab.cwd);
                     const selected = tab.id === activeRightPaneTabId;
                     return (
                       <div
@@ -293,7 +330,7 @@ export function AppLayout() {
                   return (
                     <div
                       aria-labelledby={`right-pane-tab-${tab.id}`}
-                      className="min-h-0 flex-1"
+                      className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
                       hidden={!selected}
                       id={`right-pane-content-${tab.id}`}
                       key={tab.id}
@@ -313,6 +350,23 @@ export function AppLayout() {
                           <GitDiffReviewPane
                             isOpen={rightPaneOpen && selected}
                             target={tab.target}
+                          />
+                        </Suspense>
+                      )}
+                      {tab.kind === "terminal" && (
+                        <Suspense
+                          fallback={
+                            <div
+                              className="p-4 text-sm text-base-content/60"
+                              role="status"
+                            >
+                              Loading terminal…
+                            </div>
+                          }
+                        >
+                          <TerminalPane
+                            cwd={tab.cwd}
+                            isOpen={rightPaneOpen && selected}
                           />
                         </Suspense>
                       )}

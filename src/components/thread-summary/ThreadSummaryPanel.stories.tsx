@@ -24,10 +24,13 @@ const tokenUsage = {
 export const Loaded: Story = () => (
   <ThreadSummaryPanel
     tokenUsage={tokenUsage}
-    gitDiff={{ added: 42, deleted: 18 }}
+    gitDiff={{ added: 42, deleted: 18, files: 2 }}
   />
 );
 
 export const GitOnly: Story = () => (
-  <ThreadSummaryPanel tokenUsage={null} gitDiff={{ added: 42, deleted: 18 }} />
+  <ThreadSummaryPanel
+    tokenUsage={null}
+    gitDiff={{ added: 42, deleted: 18, files: 2 }}
+  />
 );

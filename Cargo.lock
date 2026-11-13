@@ -10219,6 +10219,7 @@ dependencies = [
  "libc",
  "lopdf",
  "pdf-writer",
+ "portable-pty",
  "rmcp",
  "rust_xlsxwriter",
  "ruxex",
