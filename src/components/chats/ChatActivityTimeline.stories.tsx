@@ -7,7 +7,6 @@ export const Empty: Story = () => (
   <ChatActivityTimeline
     connected
     items={[]}
-    liveItems={[]}
     onReject={noopAsync}
     onResolve={noopAsync}
     pendingRequests={[]}
@@ -18,7 +17,6 @@ export const Working: Story = () => (
   <ChatActivityTimeline
     connected
     items={[]}
-    liveItems={[]}
     liveStatus="running"
     onReject={noopAsync}
     onResolve={noopAsync}

@@ -264,7 +264,6 @@ export function ConversationWorkspace({
         <ChatActivityTimeline
           connected={events.connected ?? true}
           items={items}
-          liveItems={liveItems}
           liveStatus={liveStatus}
           onEdit={canEdit ? handleEdit : undefined}
           onReject={handleReject}

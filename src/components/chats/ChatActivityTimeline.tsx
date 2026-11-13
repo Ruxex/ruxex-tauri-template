@@ -1,25 +1,34 @@
-import { Fragment, memo, useEffect, useState } from "react";
+import { Fragment, memo } from "react";
 import type { RefObject } from "react";
 
 import type {
-  LiveConversationItem,
   PendingServerRequest,
   ThreadExecutionState,
 } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
 import { ServerRequestCard } from "../approvals/ServerRequestCard";
-import { ActivityItem } from "../conversation/ActivityItem";
-import { ConversationItem } from "../conversation/ConversationItem";
 import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
 } from "../conversation/conversation-model";
 import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
+import {
+  findWorkingIndicatorInsertionIndex,
+  formatDuration,
+  getTurnDurationSeconds,
+  groupConversationItems,
+  isVisibleTimelineItem,
+} from "./chat-activity-timeline-model";
+import {
+  CompletedTurnGroup,
+  TimelineItem,
+  WorkingIndicator,
+} from "./TimelineActivityParts";
+import { useWorkingSeconds } from "./useWorkingSeconds";
 
 type ChatActivityTimelineProps = {
   connected: boolean;
   items: ConversationViewItem[];
-  liveItems: LiveConversationItem[];
   liveStatus?: ThreadExecutionState["status"];
   onEdit?: (
     item: ConversationViewItem,
@@ -44,7 +53,6 @@ type ChatActivityTimelineProps = {
 export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   connected,
   items,
-  liveItems: _liveItems,
   liveStatus,
   onEdit,
   onReject,
@@ -141,11 +149,11 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
             )}
             {group.items.map((item, index) => (
               <Fragment key={`item:${item.turnId}:${item.id}`}>
-                {renderConversationItem(
-                  item,
-                  onEdit,
-                  showActiveHere && item.type === "agentMessage",
-                )}
+                <TimelineItem
+                  item={item}
+                  isStreaming={showActiveHere && item.type === "agentMessage"}
+                  onEdit={onEdit}
+                />
                 {showActiveHere && index + 1 === insertionIndex && (
                   <WorkingIndicator active label={indicatorLabel} />
                 )}
@@ -176,10 +184,6 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   );
 }, areChatActivityTimelinePropsEqual);
 
-function isVisibleTimelineItem(item: ConversationViewItem): boolean {
-  return item.type !== "agentMessage" || item.text.trim().length > 0;
-}
-
 function areChatActivityTimelinePropsEqual(
   left: ChatActivityTimelineProps,
   right: ChatActivityTimelineProps,
@@ -196,214 +200,7 @@ function areChatActivityTimelinePropsEqual(
     left.completedTurn === right.completedTurn &&
     left.turns === right.turns &&
     areConversationItemsEqual(left.items, right.items) &&
-    areLiveItemsEqual(left.liveItems, right.liveItems) &&
     arePendingRequestsEqual(left.pendingRequests, right.pendingRequests)
-  );
-}
-
-type ConversationTurnGroup = {
-  turnId: string;
-  items: ConversationViewItem[];
-};
-
-function groupConversationItems(
-  items: ConversationViewItem[],
-): ConversationTurnGroup[] {
-  const groups: ConversationTurnGroup[] = [];
-  for (const item of items) {
-    const current = groups.at(-1);
-    if (current?.turnId === item.turnId) {
-      current.items.push(item);
-    } else {
-      groups.push({ turnId: item.turnId, items: [item] });
-    }
-  }
-  return groups;
-}
-
-function findWorkingIndicatorInsertionIndex(
-  items: ConversationViewItem[],
-): number {
-  const userMessageIndex = findLastIndex(
-    items,
-    (item) => item.type === "userMessage",
-  );
-  return userMessageIndex === -1 ? 0 : userMessageIndex + 1;
-}
-
-function findLastIndex<T>(items: T[], predicate: (item: T) => boolean): number {
-  for (let index = items.length - 1; index >= 0; index -= 1) {
-    const item = items[index];
-    if (item !== undefined && predicate(item)) {
-      return index;
-    }
-  }
-  return -1;
-}
-
-function renderConversationItem(
-  item: ConversationViewItem,
-  onEdit?: ChatActivityTimelineProps["onEdit"],
-  isStreaming = false,
-) {
-  return item.category === "message" ? (
-    <ConversationItem
-      isStreaming={isStreaming}
-      item={item}
-      onEdit={onEdit}
-    />
-  ) : (
-    <ActivityItem item={item} />
-  );
-}
-
-function CompletedTurnGroup({
-  items,
-  onEdit,
-  turn,
-}: {
-  items: ConversationViewItem[];
-  onEdit?: ChatActivityTimelineProps["onEdit"];
-  turn: v2.Turn;
-}) {
-  const finalAssistantIndex = findLastIndex(
-    items,
-    (item) => item.type === "agentMessage" && item.text.trim().length > 0,
-  );
-  const userItems = items.filter((item) => item.type === "userMessage");
-  const collapsedItems = items.filter(
-    (item, index) =>
-      item.type !== "userMessage" && index !== finalAssistantIndex,
-  );
-  const finalAssistant =
-    finalAssistantIndex === -1 ? null : items[finalAssistantIndex];
-  const workedSeconds = getTurnDurationSeconds(turn);
-  const workedLabel =
-    workedSeconds === null
-      ? "Worked"
-      : `Worked for ${formatDuration(workedSeconds)}`;
-
-  return (
-    <Fragment>
-      {userItems.map((item) => (
-        <Fragment key={`item:${item.turnId}:${item.id}`}>
-          {renderConversationItem(item, onEdit)}
-        </Fragment>
-      ))}
-      {collapsedItems.length > 0 && (
-        <details className="border-t border-base-300 pt-3 text-sm text-base-content/60">
-          <summary className="cursor-pointer select-none text-left">
-            {workedLabel}
-          </summary>
-          <div className="mt-3 space-y-0">
-            {collapsedItems.map((item) => (
-              <Fragment key={`item:${item.turnId}:${item.id}`}>
-                {renderConversationItem(item, onEdit)}
-              </Fragment>
-            ))}
-          </div>
-        </details>
-      )}
-      {finalAssistant && (
-        <Fragment key={`item:${finalAssistant.turnId}:${finalAssistant.id}`}>
-          {renderConversationItem(finalAssistant, onEdit)}
-        </Fragment>
-      )}
-    </Fragment>
-  );
-}
-
-function useWorkingSeconds(
-  startedAt: number | null | undefined,
-): number | null {
-  const [now, setNow] = useState(() => Date.now());
-  const hasValidStart = startedAt !== null && Number.isFinite(startedAt);
-
-  useEffect(() => {
-    if (!hasValidStart) {
-      return;
-    }
-
-    const updateNow = () => setNow(Date.now());
-    updateNow();
-    const intervalId = window.setInterval(updateNow, 1_000);
-    return () => window.clearInterval(intervalId);
-  }, [hasValidStart]);
-
-  if (!hasValidStart || startedAt === undefined) {
-    return null;
-  }
-
-  return Math.max(0, Math.floor(now / 1_000 - startedAt));
-}
-
-function getTurnDurationSeconds(turn: v2.Turn): number | null {
-  if (turn.durationMs !== null && Number.isFinite(turn.durationMs)) {
-    return Math.max(0, Math.floor(turn.durationMs / 1_000));
-  }
-  if (
-    turn.startedAt !== null &&
-    turn.completedAt !== null &&
-    Number.isFinite(turn.startedAt) &&
-    Number.isFinite(turn.completedAt)
-  ) {
-    return Math.max(0, Math.floor(turn.completedAt - turn.startedAt));
-  }
-  return null;
-}
-
-function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3_600);
-  const minutes = Math.floor((seconds % 3_600) / 60);
-  const remainingSeconds = seconds % 60;
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${remainingSeconds}s`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-  return `${remainingSeconds}s`;
-}
-
-function WorkingIndicator({
-  active = false,
-  empty = false,
-  label,
-}: {
-  active?: boolean;
-  empty?: boolean;
-  label: string;
-}) {
-  return (
-    <div
-      aria-label={label}
-      aria-live="polite"
-      className={
-        empty
-          ? "mx-auto flex max-w-md items-center justify-center gap-3 rounded-box border border-dashed border-primary/30 bg-base-100 px-5 py-6 text-center text-sm text-base-content/70 shadow-sm"
-          : "border-t border-base-300 pt-3 text-left text-sm text-base-content/60"
-      }
-      role="status"
-    >
-      {active ? (
-        <>
-          <span
-            aria-hidden="true"
-            className="working-indicator-dots"
-            data-testid="working-indicator-dots"
-          >
-            <span />
-            <span />
-            <span />
-          </span>
-          <span className="ml-2" data-testid="working-indicator-label">
-            {label}
-          </span>
-        </>
-      ) : (
-        <span data-testid="working-indicator-label">{label}</span>
-      )}
-    </div>
   );
 }
 
@@ -418,28 +215,6 @@ function areConversationItemsEqual(
         const other = right[index];
         return (
           other !== undefined && areConversationViewItemsEqual(item, other)
-        );
-      }))
-  );
-}
-
-function areLiveItemsEqual(
-  left: LiveConversationItem[],
-  right: LiveConversationItem[],
-): boolean {
-  return (
-    left === right ||
-    (left.length === right.length &&
-      left.every((item, index) => {
-        const other = right[index];
-        return (
-          other !== undefined &&
-          item.id === other.id &&
-          item.threadId === other.threadId &&
-          item.turnId === other.turnId &&
-          item.type === other.type &&
-          item.text === other.text &&
-          item.raw === other.raw
         );
       }))
   );

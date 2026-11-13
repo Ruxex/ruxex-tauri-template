@@ -3,67 +3,36 @@ import { type FormEvent, useMemo, useState } from "react";
 
 import { formatErrorMessage } from "../app/error-message";
 import {
-  addDisabledMarketplace,
-  readMarketplacePreferences,
-  removeDisabledMarketplace,
-  writeMarketplacePreferences,
-  type MarketplaceDefinition,
-} from "../app/marketplace-preferences";
-import {
-  useAddMarketplace,
   useConfig,
   usePluginList,
-  useRemoveMarketplace,
   useUpgradeMarketplace,
 } from "../app-server/hooks";
 import { SettingsPanel } from "../components/settings/SettingsCards";
 import { FormFieldRow } from "../components/common/FormFieldRow";
+import { useMarketplaceSettingsActions } from "./useMarketplaceSettingsActions";
 
 export function MarketplaceSettingsPage() {
   const [source, setSource] = useState("");
   const [refName, setRefName] = useState("");
   const [sparsePaths, setSparsePaths] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const [marketplacePreferences, setMarketplacePreferences] = useState(
-    readMarketplacePreferences,
-  );
-  const [recentDefinitions, setRecentDefinitions] = useState<
-    Record<string, MarketplaceDefinition>
-  >({});
   const config = useConfig();
   const plugins = usePluginList();
-  const addMarketplace = useAddMarketplace();
+  const actions = useMarketplaceSettingsActions(config.data?.config);
   const upgradeMarketplace = useUpgradeMarketplace();
-  const removeMarketplace = useRemoveMarketplace();
   const activeMarketplaces = plugins.data?.marketplaces ?? [];
   const activeMarketplaceNames = useMemo(
     () => new Set(activeMarketplaces.map((marketplace) => marketplace.name)),
     [activeMarketplaces],
   );
   const disabledMarketplaces = Object.entries(
-    marketplacePreferences.disabled,
+    actions.marketplacePreferences.disabled,
   ).filter(([name]) => !activeMarketplaceNames.has(name));
   const isBusy =
-    pendingAction !== null ||
-    addMarketplace.isPending ||
+    actions.pendingAction !== null ||
+    actions.addMarketplace.isPending ||
     upgradeMarketplace.isPending ||
-    removeMarketplace.isPending;
-
-  function updateMarketplacePreferences(next: typeof marketplacePreferences) {
-    setMarketplacePreferences(next);
-    writeMarketplacePreferences(next);
-  }
-
-  function definitionForMarketplace(
-    marketplaceName: string,
-  ): MarketplaceDefinition | null {
-    return (
-      recentDefinitions[marketplaceName] ??
-      readMarketplaceDefinition(config.data?.config, marketplaceName)
-    );
-  }
+    actions.removeMarketplace.isPending;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,89 +43,24 @@ export function MarketplaceSettingsPage() {
     }
 
     setFormError(null);
-    setActionError(null);
     const parsedSparsePaths = sparsePaths
       .split(",")
       .map((path) => path.trim())
       .filter(Boolean);
-    const definition: MarketplaceDefinition = {
+    const definition = {
       source: trimmedSource,
       refName: refName.trim() || undefined,
       sparsePaths: parsedSparsePaths.length ? parsedSparsePaths : undefined,
     };
 
     try {
-      const response = await addMarketplace.mutateAsync({
-        source: definition.source,
-        refName: definition.refName,
-        sparsePaths: definition.sparsePaths,
-      });
-      if (response?.marketplaceName) {
-        setRecentDefinitions((current) => ({
-          ...current,
-          [response.marketplaceName]: definition,
-        }));
-        updateMarketplacePreferences(
-          removeDisabledMarketplace(
-            marketplacePreferences,
-            response.marketplaceName,
-          ),
-        );
-      }
+      await actions.add(definition);
       setSource("");
       setRefName("");
       setSparsePaths("");
     } catch (error) {
       setFormError(formatErrorMessage(error));
     }
-  }
-
-  async function handleDisable(
-    marketplaceName: string,
-    definition: MarketplaceDefinition,
-  ) {
-    const previous = marketplacePreferences;
-    setActionError(null);
-    setPendingAction(marketplaceName);
-    updateMarketplacePreferences(
-      addDisabledMarketplace(previous, marketplaceName, definition),
-    );
-    try {
-      await removeMarketplace.mutateAsync({ marketplaceName });
-    } catch (error) {
-      updateMarketplacePreferences(previous);
-      setActionError(formatErrorMessage(error));
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
-  async function handleEnable(
-    marketplaceName: string,
-    definition: MarketplaceDefinition,
-  ) {
-    setActionError(null);
-    setPendingAction(marketplaceName);
-    try {
-      await addMarketplace.mutateAsync({
-        source: definition.source,
-        refName: definition.refName,
-        sparsePaths: definition.sparsePaths,
-      });
-      updateMarketplacePreferences(
-        removeDisabledMarketplace(marketplacePreferences, marketplaceName),
-      );
-    } catch (error) {
-      setActionError(formatErrorMessage(error));
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
-  function handleForget(marketplaceName: string) {
-    updateMarketplacePreferences(
-      removeDisabledMarketplace(marketplacePreferences, marketplaceName),
-    );
   }
 
   return (
@@ -210,22 +114,22 @@ export function MarketplaceSettingsPage() {
           {formError && (
             <p className="px-5 pt-4 text-sm text-error">{formError}</p>
           )}
-          {addMarketplace.isError && !formError && (
+          {actions.addMarketplace.isError && !formError && (
             <p className="px-5 pt-4 text-sm text-error">
               Unable to add marketplace:{" "}
-              {formatErrorMessage(addMarketplace.error)}
+              {formatErrorMessage(actions.addMarketplace.error)}
             </p>
           )}
           <div className="flex justify-end px-5 py-4">
             <button
               aria-label={
-                addMarketplace.isPending ? "Adding…" : "Add marketplace"
+                actions.addMarketplace.isPending ? "Adding…" : "Add marketplace"
               }
               className="btn btn-primary btn-sm"
               type="submit"
               disabled={isBusy}
             >
-              {addMarketplace.isPending ? "Adding…" : "Add marketplace"}
+              {actions.addMarketplace.isPending ? "Adding…" : "Add marketplace"}
             </button>
           </div>
         </form>
@@ -255,8 +159,10 @@ export function MarketplaceSettingsPage() {
             {activeMarketplaces.map((marketplace) => {
               const displayName =
                 marketplace.interface?.displayName ?? marketplace.name;
-              const definition = definitionForMarketplace(marketplace.name);
-              const isPending = pendingAction === marketplace.name;
+              const definition = actions.definitionForMarketplace(
+                marketplace.name,
+              );
+              const isPending = actions.pendingAction === marketplace.name;
 
               return (
                 <li
@@ -300,7 +206,7 @@ export function MarketplaceSettingsPage() {
                         type="button"
                         disabled={isBusy}
                         onClick={() =>
-                          void handleDisable(marketplace.name, definition)
+                          void actions.disable(marketplace.name, definition)
                         }
                       >
                         {isPending
@@ -315,7 +221,7 @@ export function MarketplaceSettingsPage() {
                       disabled={isBusy}
                       onClick={() => {
                         if (globalThis.confirm(`Remove ${marketplace.name}?`)) {
-                          void removeMarketplace.mutateAsync({
+                          void actions.removeMarketplace.mutateAsync({
                             marketplaceName: marketplace.name,
                           });
                         }
@@ -336,7 +242,7 @@ export function MarketplaceSettingsPage() {
             </div>
             <ul className="divide-y divide-base-300 text-sm">
               {disabledMarketplaces.map(([name, definition]) => {
-                const isPending = pendingAction === name;
+                const isPending = actions.pendingAction === name;
                 return (
                   <li
                     className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
@@ -352,7 +258,7 @@ export function MarketplaceSettingsPage() {
                         className="btn btn-primary btn-sm"
                         type="button"
                         disabled={isBusy}
-                        onClick={() => void handleEnable(name, definition)}
+                        onClick={() => void actions.enable(name, definition)}
                       >
                         {isPending ? "Enabling…" : `Enable ${name}`}
                       </button>
@@ -361,7 +267,7 @@ export function MarketplaceSettingsPage() {
                         className="btn btn-outline btn-error btn-sm"
                         type="button"
                         disabled={isBusy}
-                        onClick={() => handleForget(name)}
+                        onClick={() => actions.forget(name)}
                       >
                         Forget {name}
                       </button>
@@ -372,9 +278,9 @@ export function MarketplaceSettingsPage() {
             </ul>
           </div>
         )}
-        {actionError && (
+        {actions.actionError && (
           <p className="px-5 pt-4 text-sm text-error">
-            Unable to change marketplace state: {actionError}
+            Unable to change marketplace state: {actions.actionError}
           </p>
         )}
         {upgradeMarketplace.isError && (
@@ -383,10 +289,10 @@ export function MarketplaceSettingsPage() {
             {formatErrorMessage(upgradeMarketplace.error)}
           </p>
         )}
-        {removeMarketplace.isError && (
+        {actions.removeMarketplace.isError && (
           <p className="px-5 pt-4 text-sm text-error">
             Unable to remove marketplace:{" "}
-            {formatErrorMessage(removeMarketplace.error)}
+            {formatErrorMessage(actions.removeMarketplace.error)}
           </p>
         )}
         {plugins.data?.marketplaceLoadErrors.length ? (
@@ -405,31 +311,4 @@ export function MarketplaceSettingsPage() {
       </SettingsPanel>
     </div>
   );
-}
-function readMarketplaceDefinition(
-  config: unknown,
-  marketplaceName: string,
-): MarketplaceDefinition | null {
-  if (!isRecord(config) || !isRecord(config.marketplaces)) return null;
-  const entry = config.marketplaces[marketplaceName];
-  if (!isRecord(entry) || typeof entry.source !== "string") return null;
-
-  const refName =
-    typeof entry.refName === "string"
-      ? entry.refName
-      : typeof entry.ref === "string"
-        ? entry.ref
-        : undefined;
-  const sparsePathsValue = entry.sparsePaths ?? entry.sparse_paths;
-  const sparsePaths = Array.isArray(sparsePathsValue)
-    ? sparsePathsValue.filter(
-        (path): path is string => typeof path === "string",
-      )
-    : undefined;
-
-  return { source: entry.source, refName, sparsePaths };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

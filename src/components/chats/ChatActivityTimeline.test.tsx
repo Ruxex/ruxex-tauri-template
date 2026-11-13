@@ -171,7 +171,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={items}
-        liveItems={[]}
         onReject={onReject}
         onResolve={onResolve}
         pendingRequests={[pendingRequest("thread-1")]}
@@ -201,7 +200,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("user-1", "userMessage", "Request", "message"),
           viewItem("agent-1", "agentMessage", "Reply", "message"),
         ]}
-        liveItems={[]}
         liveStatus="running"
         workingTurnId="turn-1"
         onReject={vi.fn()}
@@ -241,7 +239,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={[viewItem("message-1", "agentMessage", "Reply", "message")]}
-        liveItems={[]}
         onReject={vi.fn()}
         onResolve={vi.fn()}
         pendingRequests={[pendingRequest("thread-1")]}
@@ -269,15 +266,6 @@ describe("ChatActivityTimeline", () => {
             turnId: "turn-0",
           },
           viewItem("message-1", "agentMessage", "Reply", "message"),
-        ]}
-        liveItems={[
-          {
-            id: "live-1",
-            threadId: "thread-1",
-            turnId: "turn-1",
-            type: "agentMessage",
-            text: "Streaming",
-          },
         ]}
         liveStatus="running"
         workingTurnId="turn-1"
@@ -314,7 +302,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("activity-1", "commandExecution", "pnpm test", "activity"),
           viewItem("message-1", "agentMessage", "Reply", "message"),
         ]}
-        liveItems={[]}
         liveStatus="running"
         workingTurnId="turn-1"
         workingStartedAt={1}
@@ -360,7 +347,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={[userMessage, activityItem]}
-        liveItems={[]}
         liveStatus="running"
         workingTurnId="turn-1"
         workingStartedAt={1}
@@ -397,7 +383,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("activity-1", "commandExecution", "pnpm test", "activity"),
           viewItem("message-1", "agentMessage", "Reply", "message"),
         ]}
-        liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -436,7 +421,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("activity-1", "commandExecution", "pnpm test", "activity"),
           viewItem("message-1", "agentMessage", "Reply", "message"),
         ]}
-        liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -469,7 +453,6 @@ describe("ChatActivityTimeline", () => {
           } as never
         }
         items={items}
-        liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -510,7 +493,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("command-1", "commandExecution", "pnpm test", "activity"),
           viewItem("message-1", "agentMessage", "Final answer", "message"),
         ]}
-        liveItems={[]}
         onReject={vi.fn()}
         onResolve={vi.fn()}
         pendingRequests={[]}
@@ -540,7 +522,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("user-1", "userMessage", "Original request", "message"),
           viewItem("message-1", "agentMessage", "Final answer", "message"),
         ]}
-        liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -571,7 +552,6 @@ describe("ChatActivityTimeline", () => {
           viewItem("command-1", "commandExecution", "pnpm test", "activity"),
           viewItem("message-1", "agentMessage", "Failure details", "message"),
         ]}
-        liveItems={[]}
         liveStatus="failed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -589,7 +569,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={[]}
-        liveItems={[]}
         liveStatus="running"
         workingStartedAt={Number.NaN}
         onReject={vi.fn()}
@@ -612,7 +591,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={[]}
-        liveItems={[]}
         liveStatus="completed"
         workingStartedAt={1}
         onReject={vi.fn()}
@@ -638,7 +616,6 @@ describe("ChatActivityTimeline", () => {
           } as never
         }
         items={[]}
-        liveItems={[]}
         liveStatus="completed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -655,7 +632,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={[]}
-        liveItems={[]}
         onReject={vi.fn()}
         onResolve={vi.fn()}
         pendingRequests={[]}
@@ -685,15 +661,6 @@ describe("ChatActivityTimeline", () => {
       <ChatActivityTimeline
         connected
         items={[]}
-        liveItems={[
-          {
-            id: "live-1",
-            threadId: "thread-1",
-            turnId: "turn-1",
-            type: "agentMessage",
-            text: "Done",
-          },
-        ]}
         liveStatus="completed"
         onReject={vi.fn()}
         onResolve={vi.fn()}
@@ -861,7 +828,6 @@ describe("ChatActivityTimeline", () => {
     const props = {
       connected: true,
       items: [baseItem],
-      liveItems: [],
       onReject: vi.fn(),
       onResolve: vi.fn(),
       pendingRequests: [],
@@ -895,7 +861,6 @@ describe("ChatActivityTimeline", () => {
     const onResolve = vi.fn();
     const props = {
       connected: true,
-      liveItems: [],
       onEdit,
       onReject,
       onResolve,
