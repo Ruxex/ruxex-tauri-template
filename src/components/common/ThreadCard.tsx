@@ -16,6 +16,7 @@ type ThreadSummary = {
 
 type ThreadCardProps = {
   thread: ThreadSummary;
+  projectName?: string;
   actions?: ReactNode;
   compact?: boolean;
   showUpdatedAt?: boolean;
@@ -25,6 +26,7 @@ type ThreadCardProps = {
 
 export function ThreadCard({
   thread,
+  projectName,
   actions,
   compact = false,
   showUpdatedAt = false,
@@ -46,6 +48,7 @@ export function ThreadCard({
         showCardBoundary
         showPreview
         showUpdatedAt={showUpdatedAt}
+        projectName={projectName}
         actions={actions}
         onArchive={onArchive}
         isArchiving={isArchiving}
@@ -61,6 +64,7 @@ export function ThreadCard({
         <ChatListItem
           showPreview
           showUpdatedAt={showUpdatedAt}
+          projectName={projectName}
           actions={actions}
           onArchive={onArchive}
           isArchiving={isArchiving}

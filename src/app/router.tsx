@@ -8,6 +8,7 @@ import { AppearancePage } from "../pages/AppearancePage";
 import { AppServerPage } from "../pages/AppServerPage";
 import { ArchivePage } from "../pages/ArchivePage";
 import { CapabilitiesPage } from "../pages/CapabilitiesPage";
+import { ChatsPage } from "../pages/ChatsPage";
 import { HomePage } from "../pages/HomePage";
 import { HooksPage } from "../pages/HooksPage";
 import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
@@ -37,6 +38,7 @@ export const router = createHashRouter([
       },
       { path: "approvals", element: <ApprovalCenter /> },
       { path: "activity", element: <ActivityCenter /> },
+      { path: "chats", element: <ChatsPage /> },
       {
         path: "settings",
         element: <SettingsPage />,

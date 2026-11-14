@@ -291,15 +291,18 @@ deterministic.
 
 The stable page pass captures every routed page, ordinary page-level data, and
 reachable dialogs and menus in their real page context. The ordinary home has
-12 active chats, 2 archived chats, and 3 projects; `Product planning` has 2
-chats. The Automation and MCP settings pages each receive one configured
-record before their populated screenshots are captured.
+12 active chats (9 unassigned and 3 project-assigned), 2 archived chats, and 3
+projects. The Chats index captures both tabs, tab-scoped search, the global
+sidebar-search handoff, and `Product planning` has 2 chats. The Automation and
+MCP settings pages each receive one configured record before their populated
+screenshots are captured.
 
 The large-data pass extends the same home through the visible UI and captures
-24 active chats, 60 archived chats, 24 projects, 12 chats in `Product
-planning`, 12 schedules, and 12 configured MCP servers. It captures the first
-and second archive pages, the full top and bottom of long lists, and the
-project detail view where the current eight-chat limit is visible. The
+24 active chats (11 unassigned and 13 project-assigned), 60 archived chats, 24
+projects, 12 chats in `Product planning`, 12 schedules, and 12 configured MCP
+servers. It captures the first and second archive pages, the top and bottom of
+both Chats tabs and other long lists, and the project detail view where the
+current eight-chat limit is visible. The
 volatile pass also captures pending requests inside Approval center and the
 Activity page's Needs action view, along with pending user input, permissions,
 streaming, queued message, and disconnect recovery. The marketplace and Git

@@ -23,6 +23,34 @@ export function useProjectList(params: v2.ProjectListParams = {}) {
   });
 }
 
+export function useAllProjectList(
+  params: Omit<v2.ProjectListParams, "cursor"> = {},
+) {
+  const status = useAppServerStatus();
+
+  return useQuery<v2.ProjectListResponse>({
+    queryKey: [...appServerQueryKeys.projects, "list", "all", params],
+    queryFn: async () => {
+      const data: v2.Project[] = [];
+      let cursor: string | null = null;
+
+      do {
+        const page: v2.ProjectListResponse = (
+          await requestAppServerMethod("project/list", {
+            ...params,
+            ...(cursor === null ? {} : { cursor }),
+          })
+        ).response;
+        data.push(...page.data);
+        cursor = page.nextCursor;
+      } while (cursor !== null);
+
+      return { data, nextCursor: null };
+    },
+    enabled: Boolean(status.data),
+  });
+}
+
 export function useProject(projectId: string) {
   const status = useAppServerStatus();
 

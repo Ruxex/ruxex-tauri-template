@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import {
   CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
   FolderIcon,
   HomeIcon,
@@ -10,6 +11,7 @@ import {
 
 export type SidebarPanel =
   | "home"
+  | "chats"
   | "projects"
   | "plugins"
   | "automation"
@@ -27,6 +29,12 @@ export type SidebarPanelDefinition = {
 
 export const SIDEBAR_PANELS: readonly SidebarPanelDefinition[] = [
   { id: "home", label: "Home", icon: HomeIcon, route: "/" },
+  {
+    id: "chats",
+    label: "Chats",
+    icon: ChatBubbleLeftRightIcon,
+    route: "/chats",
+  },
   { id: "projects", label: "Projects", icon: FolderIcon, route: "/projects" },
   {
     id: "plugins",
@@ -57,6 +65,7 @@ export const SIDEBAR_PANELS: readonly SidebarPanelDefinition[] = [
 export function sidebarPanelForPath(pathname: string): SidebarPanel {
   if (pathname.startsWith("/settings/account")) return "account";
   if (pathname.startsWith("/settings")) return "settings";
+  if (pathname.startsWith("/chats")) return "chats";
   if (pathname.startsWith("/projects")) return "projects";
   if (pathname.startsWith("/capabilities/")) return "plugins";
   if (pathname.startsWith("/schedules")) return "automation";

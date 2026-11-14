@@ -28,6 +28,26 @@ export function useThreadList(
   });
 }
 
+export function useAllThreadList(
+  params: Omit<v2.ThreadListParams, "cursor"> = {},
+  enabled = true,
+) {
+  const status = useAppServerStatus();
+
+  return useQuery({
+    queryKey: [...appServerQueryKeys.threadListRoot, "all", params],
+    queryFn: () =>
+      fetchAllPages(null, async (cursor) => {
+        const response = await requestAppServerMethod("thread/list", {
+          ...params,
+          ...(cursor === null ? {} : { cursor }),
+        });
+        return response.response;
+      }),
+    enabled: Boolean(status.data && enabled),
+  });
+}
+
 export function useSubagentThreadList(parentThreadId: string) {
   return useThreadList(
     {
@@ -44,14 +64,30 @@ export function useSubagentThreadList(parentThreadId: string) {
   );
 }
 
-export function useThreadSearch(searchTerm: string) {
-  const status = useAppServerStatus();
-  const params: v2.ThreadSearchParams = {
+export type ThreadSearchOptions = Omit<
+  v2.ThreadSearchParams,
+  "cursor" | "searchTerm"
+>;
+
+function threadSearchParams(
+  searchTerm: string,
+  options: ThreadSearchOptions,
+): v2.ThreadSearchParams {
+  return {
+    ...options,
     searchTerm,
-    limit: 50,
-    sortKey: "recency_at",
-    sortDirection: "desc",
+    limit: options.limit ?? 50,
+    sortKey: options.sortKey ?? "recency_at",
+    sortDirection: options.sortDirection ?? "desc",
   };
+}
+
+export function useThreadSearch(
+  searchTerm: string,
+  options: ThreadSearchOptions = {},
+) {
+  const status = useAppServerStatus();
+  const params = threadSearchParams(searchTerm, options);
 
   return useQuery({
     queryKey: appServerQueryKeys.threadSearch(params),
@@ -60,6 +96,28 @@ export function useThreadSearch(searchTerm: string) {
       return response.response;
     },
     enabled: Boolean(status.data && searchTerm.trim()),
+  });
+}
+
+export function useAllThreadSearch(
+  searchTerm: string,
+  options: ThreadSearchOptions = {},
+  enabled = true,
+) {
+  const status = useAppServerStatus();
+  const params = threadSearchParams(searchTerm, options);
+
+  return useQuery({
+    queryKey: [...appServerQueryKeys.threadSearchRoot, "all", params],
+    queryFn: () =>
+      fetchAllPages(null, async (cursor) => {
+        const response = await requestAppServerMethod("thread/search", {
+          ...params,
+          ...(cursor === null ? {} : { cursor }),
+        });
+        return response.response;
+      }),
+    enabled: Boolean(status.data && enabled && searchTerm.trim()),
   });
 }
 

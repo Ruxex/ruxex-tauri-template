@@ -36,6 +36,7 @@ describe("Large page-density screenshots", () => {
     await createLargeMcpServerList();
 
     await captureLargeHome();
+    await captureLargeChats();
     await captureLargeProjects();
     await captureLargeProjectDetail();
     await captureLargeArchive();
@@ -43,6 +44,41 @@ describe("Large page-density screenshots", () => {
     await captureLargeMcpServers();
   });
 });
+
+async function captureLargeChats(): Promise<void> {
+  await browser.url("tauri://localhost/#/chats");
+  await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.large.unassignedThreads,
+    {
+      timeout: 20_000,
+      timeoutMsg: "The Unassigned tab should load every unassigned thread",
+    },
+  );
+  await saveFixtureScreenshot("chats-unassigned-many-top.png");
+  await $('main ul[aria-label="Chats"] > li:last-child').scrollIntoView({
+    block: "center",
+  });
+  await saveFixtureScreenshot("chats-unassigned-many-bottom.png");
+
+  await $("button=In projects").click();
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.large.projectAssignedThreads,
+    {
+      timeout: 20_000,
+      timeoutMsg: "The In projects tab should load every assigned thread",
+    },
+  );
+  await saveFixtureScreenshot("chats-projects-many-top.png");
+  await $('main ul[aria-label="Chats"] > li:last-child').scrollIntoView({
+    block: "center",
+  });
+  await saveFixtureScreenshot("chats-projects-many-bottom.png");
+}
 
 async function createLargeProjects(): Promise<void> {
   for (let index = 1; index <= LARGE_DATA_ADDITIONS.projects; index += 1) {
@@ -85,9 +121,10 @@ async function createLargeThreadCatalog(
     );
   }
 
-  const activeStart = FIRST_PROJECT_THREAD_OCCURRENCE +
-    LARGE_DATA_ADDITIONS.projectThreads;
-  const activeEnd = activeStart +
+  const activeStart =
+    FIRST_PROJECT_THREAD_OCCURRENCE + LARGE_DATA_ADDITIONS.projectThreads;
+  const activeEnd =
+    activeStart +
     LARGE_DATA_ADDITIONS.activeThreads -
     LARGE_DATA_ADDITIONS.projectThreads;
   for (let occurrence = activeStart; occurrence < activeEnd; occurrence += 1) {
@@ -98,15 +135,25 @@ async function createLargeThreadCatalog(
 async function createLargeSchedules(): Promise<void> {
   await browser.url("tauri://localhost/#/schedules");
   await $("h1=Automation").waitForDisplayed({ timeout: 10_000 });
-  for (let index = 2; index <= PAGE_DENSITY_COUNTS.large.schedules; index += 1) {
-    await createFixtureSchedule(`Fixture schedule ${String(index).padStart(2, "0")}`);
+  for (
+    let index = 2;
+    index <= PAGE_DENSITY_COUNTS.large.schedules;
+    index += 1
+  ) {
+    await createFixtureSchedule(
+      `Fixture schedule ${String(index).padStart(2, "0")}`,
+    );
   }
 }
 
 async function createLargeMcpServerList(): Promise<void> {
   await browser.url("tauri://localhost/#/settings/mcp-servers");
   await $("h1=MCP servers").waitForDisplayed({ timeout: 10_000 });
-  for (let index = 2; index <= PAGE_DENSITY_COUNTS.large.mcpServers; index += 1) {
+  for (
+    let index = 2;
+    index <= PAGE_DENSITY_COUNTS.large.mcpServers;
+    index += 1
+  ) {
     const name = `fixture-mcp-${String(index).padStart(2, "0")}`;
     await $("button[aria-label='Add MCP server']").click();
     await $("h2=Add MCP server").waitForDisplayed({ timeout: 10_000 });
@@ -115,11 +162,11 @@ async function createLargeMcpServerList(): Promise<void> {
       "value",
       "streamableHttp",
     );
-    await $("input[aria-label='URL']").setValue(
-      "http://127.0.0.1:3920/mcp",
-    );
+    await $("input[aria-label='URL']").setValue("http://127.0.0.1:3920/mcp");
     await $("dialog .modal-box button[aria-label='Add MCP server']").click();
-    await $(`details[data-testid='mcp-server-details-${name}']`).waitForDisplayed({
+    await $(
+      `details[data-testid='mcp-server-details-${name}']`,
+    ).waitForDisplayed({
       timeout: 10_000,
     });
   }
@@ -157,7 +204,9 @@ async function captureLargeProjects(): Promise<void> {
 async function captureLargeProjectDetail(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
-  await $("tr[aria-label='Open project Product planning'] td:first-child").click();
+  await $(
+    "tr[aria-label='Open project Product planning'] td:first-child",
+  ).click();
   await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
     async () => (await $$("section.card a").length) === 8,
@@ -177,9 +226,7 @@ async function captureLargeArchive(): Promise<void> {
   await saveFixtureScreenshot("archive-many-page-1.png");
   await $("button[aria-label='Next']").click();
   await $("span=Page 2").waitForDisplayed({ timeout: 10_000 });
-  await waitForArchivedCount(
-    PAGE_DENSITY_COUNTS.large.archivedThreads - 50,
-  );
+  await waitForArchivedCount(PAGE_DENSITY_COUNTS.large.archivedThreads - 50);
   await saveFixtureScreenshot("archive-many-page-2.png");
 }
 

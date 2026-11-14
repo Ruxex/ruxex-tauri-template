@@ -22,6 +22,7 @@ export function SidebarContextPanel({
 }) {
   switch (activePanel) {
     case "home":
+    case "chats":
     case "projects":
       return (
         <HomeSidebar onClose={onClose} selectedThreadId={selectedThreadId} />

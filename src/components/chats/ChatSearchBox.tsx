@@ -1,5 +1,6 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { formatErrorMessage } from "../../app/error-message";
 import { useThreadSearch } from "../../app-server/hooks";
@@ -19,7 +20,10 @@ export function ChatSearchBox({
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [debouncedSearchTerm, setDebouncedSearchTerm] =
     useState(initialSearchTerm);
-  const results = useThreadSearch(debouncedSearchTerm);
+  const results = useThreadSearch(debouncedSearchTerm, {
+    archived: false,
+    limit: 8,
+  });
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -66,7 +70,7 @@ export function ChatSearchBox({
           )}
         {!isDebouncing && rows.length > 0 && (
           <ul className="menu w-full gap-1 p-0">
-            {rows.map(({ thread }) => (
+            {rows.slice(0, 8).map(({ thread }) => (
               <li key={thread.id}>
                 <ChatListItem
                   showPreview
@@ -78,6 +82,17 @@ export function ChatSearchBox({
           </ul>
         )}
       </div>
+      {!isDebouncing &&
+        hasSearchTerm &&
+        rows.length > 0 &&
+        results.data?.nextCursor && (
+          <Link
+            className="btn btn-ghost btn-sm mt-2 w-full justify-start"
+            to={`/chats?q=${encodeURIComponent(debouncedSearchTerm.trim())}&scope=all`}
+          >
+            View all results
+          </Link>
+        )}
     </div>
   );
 }

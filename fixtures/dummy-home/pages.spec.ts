@@ -24,6 +24,11 @@ const PAGE_FIXTURES: readonly PageFixture[] = [
     screenshotName: "archive-ordinary.png",
   },
   {
+    path: "/chats",
+    heading: "h1=Chats",
+    screenshotName: "chats-ordinary.png",
+  },
+  {
     path: "/projects",
     heading: "h1=Projects",
     screenshotName: "projects-ordinary.png",
@@ -124,6 +129,10 @@ describe("DummyProvider page screenshots", () => {
       await saveFixtureScreenshot(page.screenshotName);
     }
 
+    await captureChatTabs();
+    await captureChatScopedSearch();
+    await captureChatSearchOverflow();
+
     await browser.url("tauri://localhost/#/projects");
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
     await $(
@@ -133,7 +142,7 @@ describe("DummyProvider page screenshots", () => {
     await closeSidebarPanel();
     await browser.waitUntil(
       async () =>
-        (await $$('section.card a').length) >=
+        (await $$("section.card a").length) >=
         PAGE_DENSITY_COUNTS.ordinary.projectThreads,
       {
         timeout: 10_000,
@@ -144,6 +153,116 @@ describe("DummyProvider page screenshots", () => {
     await saveProjectDialogScreenshots();
   });
 });
+
+async function captureChatTabs(): Promise<void> {
+  await browser.url("tauri://localhost/#/chats");
+  await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+  const selectedTab = $('button[role="tab"][aria-selected="true"]');
+  await browser.waitUntil(
+    async () => (await selectedTab.getText()) === "Unassigned",
+    {
+      timeout: 10_000,
+      timeoutMsg: "Unassigned should be the default Chats tab",
+    },
+  );
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
+    {
+      timeout: 10_000,
+      timeoutMsg: "The Unassigned tab should show only unassigned chats",
+    },
+  );
+
+  await $("button=In projects").click();
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.projectAssignedThreads,
+    {
+      timeout: 10_000,
+      timeoutMsg: "The In projects tab should show only project chats",
+    },
+  );
+  await saveFixtureScreenshot("chats-projects-ordinary.png");
+}
+
+async function captureChatScopedSearch(): Promise<void> {
+  await browser.url("tauri://localhost/#/chats");
+  await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+  await $("button=Unassigned").click();
+  const search = $('section.workbench-main input[aria-label="Search chats"]');
+  await search.setValue("Fixture");
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
+    {
+      timeout: 15_000,
+      timeoutMsg: "Page search should stay scoped to Unassigned",
+    },
+  );
+  await saveFixtureScreenshot("chats-search-unassigned-ordinary.png");
+
+  await $("button=In projects").click();
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.projectAssignedThreads,
+    {
+      timeout: 15_000,
+      timeoutMsg: "Page search should follow the selected tab",
+    },
+  );
+  await saveFixtureScreenshot("chats-search-projects-ordinary.png");
+}
+
+async function captureChatSearchOverflow(): Promise<void> {
+  await browser.url("tauri://localhost/#/chats");
+  await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+  const openSidebar = $("button[aria-label='Open sidebar']");
+  if (await openSidebar.isDisplayed().catch(() => false)) {
+    await openSidebar.click();
+  }
+
+  const sidebarSearch = $(
+    'aside[aria-label="Chat sidebar"] input[aria-label="Search chats"]',
+  );
+  await sidebarSearch.waitForDisplayed({ timeout: 10_000 });
+  await sidebarSearch.setValue("Fixture");
+  const viewAll = $("a=View all results");
+  await viewAll.waitForDisplayed({ timeout: 15_000 });
+  await saveFixtureScreenshot("chats-sidebar-search-overflow.png");
+  await viewAll.click();
+  await browser.waitUntil(
+    async () => (await browser.getUrl()).includes("scope=all"),
+    {
+      timeout: 10_000,
+      timeoutMsg: "Sidebar search should open global Chats results",
+    },
+  );
+  await browser.waitUntil(
+    async () =>
+      (await $(
+        'section.workbench-main input[aria-label="Search chats"]',
+      ).getValue()) === "Fixture",
+    {
+      timeout: 10_000,
+      timeoutMsg: "The Chats page should restore the sidebar search term",
+    },
+  );
+  await browser.waitUntil(
+    async () =>
+      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.activeThreads,
+    {
+      timeout: 15_000,
+      timeoutMsg: "Global Chats results should include both tabs",
+    },
+  );
+  await saveFixtureScreenshot("chats-search-ordinary.png");
+}
 
 async function waitForPageContent(path: string): Promise<void> {
   if (path === "/") {
@@ -187,6 +306,20 @@ async function waitForPageContent(path: string): Promise<void> {
     return;
   }
 
+  if (path === "/chats") {
+    await browser.waitUntil(
+      async () =>
+        (await $$('main ul[aria-label="Chats"] > li').length) ===
+          PAGE_DENSITY_COUNTS.ordinary.unassignedThreads ||
+        (await $("main").getText()).includes("Unable to load chats"),
+      {
+        timeout: 15_000,
+        timeoutMsg: "Ordinary active chats should finish loading",
+      },
+    );
+    return;
+  }
+
   const loadedStates: Record<string, () => Promise<boolean>> = {
     "/settings/provider": async () =>
       (await $("main").getText()).includes("Data directory"),
@@ -200,8 +333,9 @@ async function waitForPageContent(path: string): Promise<void> {
       return (
         text.includes("No plugin marketplaces configured.") ||
         text.includes("Unable to load marketplaces:") ||
-        (await $$('button[aria-label^="Update "], button[aria-label^="Remove "]')
-          .length) > 0
+        (await $$(
+          'button[aria-label^="Update "], button[aria-label^="Remove "]',
+        ).length) > 0
       );
     },
     "/settings/mcp-servers": async () => {
@@ -260,7 +394,9 @@ async function saveArchiveDialogScreenshots(): Promise<void> {
   await $("button[aria-label='Cancel']").click();
 
   await $("button[aria-label='Delete all archived chats']").click();
-  await $("h2=Delete all archived chats?").waitForDisplayed({ timeout: 10_000 });
+  await $("h2=Delete all archived chats?").waitForDisplayed({
+    timeout: 10_000,
+  });
   await saveFixtureScreenshot("archive-delete-all-dialog.png");
   await $("button[aria-label='Cancel']").click();
 }
