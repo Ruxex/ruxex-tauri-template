@@ -113,15 +113,33 @@ export function ChatsPage() {
 
   return (
     <PageContainer>
-      <header className="flex flex-wrap items-end justify-between gap-5 pb-2">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Chats</h1>
-          <p className="mt-2 text-sm text-base-content/65">
-            Browse active chats that are not in projects, or switch to project
-            chats.
-          </p>
-        </div>
-        <label className="select select-bordered select-sm min-w-52">
+      <header className="pb-2">
+        <h1 className="text-3xl font-semibold tracking-tight">Chats</h1>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="input input-bordered flex min-h-11 min-w-56 flex-1 items-center gap-2">
+          <MagnifyingGlassIcon aria-hidden="true" className="size-4 shrink-0" />
+          <input
+            aria-label="Search chats"
+            className="min-w-0 grow bg-transparent outline-none"
+            placeholder="Search chats"
+            type="search"
+            value={urlSearchTerm}
+            onChange={(event) => {
+              const next = new URLSearchParams(searchParams);
+              const value = event.target.value;
+              if (value.trim()) next.set("q", value);
+              else {
+                next.delete("q");
+                next.delete("scope");
+                setScope("unassigned");
+              }
+              setSearchParams(next, { replace: true });
+            }}
+          />
+        </label>
+        <label className="select select-bordered min-h-11 min-w-52">
           <span className="sr-only">Sort chats</span>
           <select
             aria-label="Sort chats"
@@ -135,29 +153,7 @@ export function ChatsPage() {
             ))}
           </select>
         </label>
-      </header>
-
-      <label className="input input-bordered flex w-full items-center gap-2">
-        <MagnifyingGlassIcon aria-hidden="true" className="size-4 shrink-0" />
-        <input
-          aria-label="Search chats"
-          className="min-w-0 grow bg-transparent outline-none"
-          placeholder="Search chats"
-          type="search"
-          value={urlSearchTerm}
-          onChange={(event) => {
-            const next = new URLSearchParams(searchParams);
-            const value = event.target.value;
-            if (value.trim()) next.set("q", value);
-            else {
-              next.delete("q");
-              next.delete("scope");
-              setScope("unassigned");
-            }
-            setSearchParams(next, { replace: true });
-          }}
-        />
-      </label>
+      </div>
 
       {hasSearchTerm && isGlobalSearch && (
         <p className="text-sm text-base-content/65">
@@ -177,7 +173,7 @@ export function ChatsPage() {
           role="tab"
           type="button"
         >
-          Unassigned
+          No project
         </button>
         <button
           aria-selected={scope === "projects"}

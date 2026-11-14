@@ -129,7 +129,9 @@ export function BrowserNavigationBar({
       aria-label="Browser navigation"
       className="flex h-8 shrink-0 items-center border-b border-base-300/60 bg-base-200/70 text-base-content/60"
     >
-      <div className="flex w-[320px] shrink-0 items-center gap-0.5 border-r border-base-300/60 px-3 sm:px-4">
+      <div
+        className={`flex shrink-0 items-center gap-0.5 border-r border-base-300/60 ${sidebarOpen ? "w-[320px] px-3 sm:px-4" : "w-auto px-1.5"}`}
+      >
         <button
           aria-label="Back"
           className="btn btn-ghost btn-xs btn-square"
@@ -164,7 +166,7 @@ export function BrowserNavigationBar({
       </div>
       <nav
         aria-label="Breadcrumb"
-        className="min-w-0 flex-1 px-3 sm:px-4"
+        className={`min-w-0 flex-1 ${sidebarOpen ? "px-3 sm:px-4" : "pl-0 pr-3 sm:pr-4"}`}
       >
         <ol className="flex min-w-0 items-center gap-1 text-xs">
           {breadcrumbs.map((breadcrumb, index) => (

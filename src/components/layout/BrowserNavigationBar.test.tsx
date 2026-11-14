@@ -82,6 +82,18 @@ describe("BrowserNavigationBar", () => {
     expect(onToggleSidebar).toHaveBeenCalledOnce();
   });
 
+  it("removes the sidebar-sized gap before breadcrumbs while collapsed", () => {
+    render(
+      <MemoryRouter>
+        <BrowserNavigationBar onToggleSidebar={vi.fn()} sidebarOpen={false} />
+      </MemoryRouter>,
+    );
+
+    const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(breadcrumb.className).toContain("pl-0");
+    expect(breadcrumb.previousElementSibling?.className).toContain("w-auto");
+  });
+
   it("uses directional rectangle icons for pane toggles", () => {
     const { rerender } = render(
       <MemoryRouter>
