@@ -49,6 +49,8 @@ describe("reduceAppServerEvent", () => {
               outputTokens: 100,
               reasoningOutputTokens: 10,
             },
+            totalAmount: 0.56,
+            lastAmount: 0.03,
             modelContextWindow: 8192,
           },
         },
@@ -59,6 +61,8 @@ describe("reduceAppServerEvent", () => {
       expect.objectContaining({
         total: expect.objectContaining({ totalTokens: 1200 }),
         last: expect.objectContaining({ totalTokens: 400 }),
+        totalAmount: 0.56,
+        lastAmount: 0.03,
         modelContextWindow: 8192,
       }),
     );
@@ -87,6 +91,8 @@ describe("reduceAppServerEvent", () => {
               outputTokens: 2,
               reasoningOutputTokens: 0,
             },
+            totalAmount: null,
+            lastAmount: null,
             modelContextWindow: null,
           },
         },

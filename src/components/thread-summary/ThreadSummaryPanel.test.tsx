@@ -20,6 +20,8 @@ const usage = {
     outputTokens: 1567,
     reasoningOutputTokens: 200,
   },
+  totalAmount: 0.42,
+  lastAmount: 0.03,
   modelContextWindow: 200000,
 };
 

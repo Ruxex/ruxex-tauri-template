@@ -25,17 +25,28 @@ const usage: v2.ThreadTokenUsage = {
     outputTokens: 1567,
     reasoningOutputTokens: 200,
   },
+  totalAmount: 1234.56789,
+  lastAmount: 0.42,
   modelContextWindow: 200000,
 };
 
 describe("TokenUsageSection", () => {
-  it("shows only input, output, and total token counts", () => {
+  it("shows compact token counts with the exact value on hover", () => {
     render(<TokenUsageSection usage={usage} />);
 
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByTitle("Input tokens").textContent).toContain("100,000");
-    expect(screen.getByTitle("Output tokens").textContent).toContain("23,456");
-    expect(screen.getByTitle("Total tokens").textContent).toContain("123,456");
+    expect(screen.getByTitle("Input tokens: 100,000").textContent).toContain(
+      "100k",
+    );
+    expect(screen.getByTitle("Output tokens: 23,456").textContent).toContain(
+      "23.5k",
+    );
+    expect(screen.getByTitle("Total tokens: 123,456").textContent).toContain(
+      "123.5k",
+    );
+    expect(
+      screen.getByTitle("Total amount: 1,234.56789").textContent,
+    ).toContain("1.23k");
     expect(screen.queryByText("Latest turn")).toBeNull();
     expect(screen.queryByText("Reasoning")).toBeNull();
     expect(screen.queryByText("Context window")).toBeNull();

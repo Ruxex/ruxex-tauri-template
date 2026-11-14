@@ -6,5 +6,13 @@ import type { TokenUsageBreakdown } from "./TokenUsageBreakdown";
 export type ThreadTokenUsage = {
   total: TokenUsageBreakdown;
   last: TokenUsageBreakdown;
+  /**
+   * Sum of provider-reported amounts across the thread.
+   */
+  totalAmount: number | null;
+  /**
+   * Provider-reported amount for the latest API response.
+   */
+  lastAmount: number | null;
   modelContextWindow: number | null;
 };

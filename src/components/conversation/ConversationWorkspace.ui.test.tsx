@@ -180,6 +180,8 @@ describe("ConversationWorkspace", () => {
               outputTokens: 100,
               reasoningOutputTokens: 10,
             },
+            totalAmount: 0.56,
+            lastAmount: 0.03,
             modelContextWindow: 8192,
           },
         },
@@ -197,7 +199,12 @@ describe("ConversationWorkspace", () => {
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByTitle("Total tokens").textContent).toContain("1,200");
+    expect(screen.getByTitle("Total tokens: 1,200").textContent).toContain(
+      "1.2k",
+    );
+    expect(screen.getByTitle("Total amount: 0.56").textContent).toContain(
+      "0.56",
+    );
     expect(
       screen.queryByRole("button", { name: "Open Thread Summary" }),
     ).toBeNull();
