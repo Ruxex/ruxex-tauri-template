@@ -42,8 +42,8 @@ base64 = "0.22"
 calamine = "0.31"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
 # Pin runtime and example-provider dependencies to the published Ruxex release.
-ruxex = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.6.2", version = "0.6.2", default-features = false, features = ["desktop"] }
-ruxex-provider-host-example = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.6.2", package = "ruxex-provider-host-example", version = "0.6.2", features = ["dummy-provider", "cloudflare-provider"], optional = true }
+ruxex = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.7.1", version = "0.7.1", default-features = false, features = ["desktop"] }
+ruxex-provider-host-example = { git = "https://github.com/Ruxex/ruxex.git", tag = "v0.7.1", package = "ruxex-provider-host-example", version = "0.7.1", features = ["dummy-provider", "cloudflare-provider"], optional = true }
 dirs = "6"
 futures = "0.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }

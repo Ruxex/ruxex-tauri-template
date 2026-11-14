@@ -2,14 +2,16 @@ import {
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
   FolderIcon,
+  MagnifyingGlassIcon,
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { open } from "@tauri-apps/plugin-dialog";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
+import type { v2 } from "../protocol";
 import {
   useDeleteProject,
   useProject,
@@ -34,11 +36,40 @@ import {
   projectMetadataToRecord,
 } from "../components/projects/project-metadata";
 
+type ProjectChatSortKey = NonNullable<v2.ThreadListParams["sortKey"]>;
+
+const PROJECT_CHAT_SORT_OPTIONS: {
+  label: string;
+  value: ProjectChatSortKey;
+}[] = [
+  { label: "Most recently active", value: "recency_at" },
+  { label: "Recently updated", value: "updated_at" },
+  { label: "Newest first", value: "created_at" },
+];
+
 export function ProjectHomePage() {
   const { projectId = "" } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [sortKey, setSortKey] = useState<ProjectChatSortKey>("recency_at");
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setDebouncedSearchTerm(searchTerm),
+      300,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [searchTerm]);
+
+  const trimmedSearchTerm = debouncedSearchTerm.trim();
+  const isSearchPending = searchTerm.trim() !== trimmedSearchTerm;
   const project = useProject(projectId);
-  const threads = useProjectThreads(projectId);
+  const threads = useProjectThreads(projectId, {
+    searchTerm: trimmedSearchTerm || undefined,
+    sortKey,
+    sortDirection: "desc",
+  });
   const archiveThread = useArchiveThread();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -377,26 +408,79 @@ export function ProjectHomePage() {
       )}
       <section className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body">
-          <h2 className="card-title">Chats</h2>
-          {threads.isLoading && <LoadingState size="sm" />}
-          {threads.isError && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="card-title">Chats</h2>
+            <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2">
+              <label className="input input-bordered input-sm flex min-w-48 flex-1 items-center gap-2 sm:max-w-72">
+                <MagnifyingGlassIcon
+                  aria-hidden="true"
+                  className="size-4 shrink-0"
+                />
+                <input
+                  aria-label="Search project chats"
+                  className="min-w-0 grow bg-transparent outline-none"
+                  placeholder="Search project chats"
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </label>
+              <label className="select select-bordered select-sm min-w-48">
+                <span className="sr-only">Sort project chats</span>
+                <select
+                  aria-label="Sort project chats"
+                  value={sortKey}
+                  onChange={(event) =>
+                    setSortKey(event.target.value as ProjectChatSortKey)
+                  }
+                >
+                  {PROJECT_CHAT_SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+          {(threads.isLoading || isSearchPending) && <LoadingState size="sm" />}
+          {!isSearchPending && threads.isError && (
             <ErrorState>Unable to load project chats.</ErrorState>
           )}
           {!threads.isLoading &&
+            !isSearchPending &&
             !threads.isFetching &&
             !threads.data?.data.length && (
               <EmptyState
                 action={
-                  <Link
-                    className="btn btn-sm btn-primary"
-                    to={`/?projectId=${encodeURIComponent(projectId)}`}
-                  >
-                    New chat
-                  </Link>
+                  trimmedSearchTerm ? (
+                    <button
+                      className="btn btn-sm btn-ghost"
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                    >
+                      Clear search
+                    </button>
+                  ) : (
+                    <Link
+                      className="btn btn-sm btn-primary"
+                      to={`/?projectId=${encodeURIComponent(projectId)}`}
+                    >
+                      New chat
+                    </Link>
+                  )
                 }
-                description="Start a new chat to keep work for this project together."
+                description={
+                  trimmedSearchTerm
+                    ? "Try a different title."
+                    : "Start a new chat to keep work for this project together."
+                }
                 icon={ChatBubbleLeftRightIcon}
-                title="No chats in this project yet."
+                title={
+                  trimmedSearchTerm
+                    ? "No matching chats in this project."
+                    : "No chats in this project yet."
+                }
               />
             )}
           <div className="grid gap-3">

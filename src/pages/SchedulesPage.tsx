@@ -173,16 +173,7 @@ export function SchedulesPage() {
         />
       )}
 
-      <section aria-labelledby="schedule-list-heading">
-        <div className="flex items-center justify-between gap-4 pb-3">
-          <h2 className="text-lg font-semibold" id="schedule-list-heading">
-            Your schedules
-          </h2>
-          <p className="text-sm text-base-content/60">
-            {savedSchedules.length} schedule
-            {savedSchedules.length === 1 ? "" : "s"}
-          </p>
-        </div>
+      <section>
         {actionError && (
           <p className="mt-4 text-sm text-error" role="alert">
             {actionError}

@@ -76,8 +76,8 @@ allows the two suites to evolve independently.
 
 ## Persistent catalog
 
-The initial catalog contains 14 threads. Two of them are archived after their
-history is created, leaving 12 active threads for the normal Threads view.
+The catalog contains 19 threads. Two of them are archived after their
+history is created, leaving 17 active threads for the normal Chats view.
 
 | Scenario ID | Count | Durable state | Main UI purpose |
 | --- | ---: | --- | --- |
@@ -94,6 +94,11 @@ history is created, leaving 12 active threads for the normal Threads view.
 | `rate-limit` | 1 | Failed turn from a rate-limit response | Retry/error presentation |
 | `disconnect` | 1 | Partial response followed by transport failure | Recovery/error presentation and partial content |
 | `goal-only` | 1 | Persistent thread goal without a normal turn | Goal-related persisted state |
+| `plan` | 1 | Completed `update_plan` tool activity | Plan activity and completion rendering |
+| `reasoning` | 1 | Reasoning summary followed by a fixed answer | Reasoning activity, usage, and answer rendering |
+| `markdown` | 1 | Completed rich Markdown response | Markdown, code, table, task list, and Mermaid rendering |
+| `subagent` | 1 | Completed single `spawn_agent` activity | Agent collaboration activity and completion rendering |
+| `parallel-subagents` | 1 | Completed parallel `spawn_agent` activities | Parallel agent activity and completion rendering |
 
 The `approval-*` scenarios resolve the request during preparation so the final
 home is restartable. The current standard approval UI exposes Allow and Deny,
@@ -108,7 +113,7 @@ extra duplicate threads:
 
 - Archive the second `basic` thread and the `provider-error` thread: 2 archived
   threads.
-- Keep the remaining 12 threads active.
+- Keep the remaining 17 threads active.
 - Create 3 rootless projects with distinct metadata:
   - `Product planning`: blue / briefcase, 2 assigned threads.
   - `Design review`: violet / globe, 1 assigned thread.
@@ -176,11 +181,12 @@ for a local headful run while covering the major UI surfaces.
 After a successful persistent run, verify through the UI and, only for
 diagnostics, read-only inspection that:
 
-- active Threads contains 12 records;
+- active Chats contains 17 records;
 - Archived chats contains 2 records;
 - Projects contains 3 records, with project thread counts 2, 1, and 0;
 - the persistent goal exists for the goal-only thread;
-- representative Markdown, command, failed, and multi-turn threads render
+- representative Example provider Markdown, reasoning, plan, subagent,
+  command, failed, and multi-turn threads render
   after a fresh app start;
 - no generated files appear as Git changes because `/.d/` remains ignored.
 

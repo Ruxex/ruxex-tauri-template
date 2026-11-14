@@ -17,8 +17,8 @@ describe("dummy home fixture catalog", () => {
     expect(ids).toContain("command-list");
     expect(ids).not.toContain("approval-cancelled");
     expect(persistentFixtureCounts()).toEqual({
-      total: 14,
-      active: 12,
+      total: 19,
+      active: 17,
       archived: 2,
     });
   });

@@ -11,7 +11,12 @@ export type PersistentScenarioId =
   | "provider-error"
   | "rate-limit"
   | "disconnect"
-  | "goal-only";
+  | "goal-only"
+  | "plan"
+  | "reasoning"
+  | "markdown"
+  | "subagent"
+  | "parallel-subagents";
 
 export type PersistentScenarioKind =
   | "conversation"
@@ -25,6 +30,7 @@ export type PersistentScenario = {
   readonly kind: PersistentScenarioKind;
   readonly providerMarker: string;
   readonly completionText?: string;
+  readonly alternateCompletionTexts?: readonly string[];
   readonly errorText?: string;
   readonly turnCount?: number;
   readonly goalText?: string;
@@ -62,8 +68,8 @@ export type VolatileScenario = {
 
 export const PAGE_DENSITY_COUNTS = {
   ordinary: {
-    activeThreads: 12,
-    unassignedThreads: 9,
+    activeThreads: 17,
+    unassignedThreads: 14,
     projectAssignedThreads: 3,
     archivedThreads: 2,
     projects: 3,
@@ -72,22 +78,22 @@ export const PAGE_DENSITY_COUNTS = {
     mcpServers: 1,
   },
   large: {
-    activeThreads: 24,
-    unassignedThreads: 11,
-    projectAssignedThreads: 13,
+    activeThreads: 77,
+    unassignedThreads: 16,
+    projectAssignedThreads: 61,
     archivedThreads: 60,
-    projects: 24,
-    projectThreads: 12,
+    projects: 120,
+    projectThreads: 60,
     schedules: 12,
     mcpServers: 12,
   },
 } as const;
 
 export const LARGE_DATA_ADDITIONS = {
-  activeThreads: 12,
+  activeThreads: 60,
   archivedThreads: 58,
-  projectThreads: 10,
-  projects: 21,
+  projectThreads: 58,
+  projects: 117,
   schedules: 11,
   mcpServers: 11,
 } as const;
@@ -186,6 +192,50 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     kind: "goal",
     providerMarker: "example:basic",
     goalText: "Prepare the fixture review checklist.",
+  },
+  {
+    id: "plan",
+    count: 1,
+    kind: "conversation",
+    providerMarker: "example:plan",
+    completionText: "The fixed plan fixture is complete.",
+    alternateCompletionTexts: [
+      "The update_plan tool is unavailable in this request.",
+    ],
+  },
+  {
+    id: "reasoning",
+    count: 1,
+    kind: "conversation",
+    providerMarker: "example:reasoning",
+    completionText: "This response follows the fixed reasoning summary.",
+  },
+  {
+    id: "markdown",
+    count: 1,
+    kind: "conversation",
+    providerMarker: "example:markdown",
+    completionText: "Markdown rendering fixture",
+  },
+  {
+    id: "subagent",
+    count: 1,
+    kind: "conversation",
+    providerMarker: "example:subagent",
+    completionText: "The Example subagent fixture is complete.",
+    alternateCompletionTexts: [
+      "The spawn_agent tool is unavailable in this request.",
+    ],
+  },
+  {
+    id: "parallel-subagents",
+    count: 1,
+    kind: "conversation",
+    providerMarker: "example:parallel-subagents",
+    completionText: "The Example parallel subagent fixture is complete.",
+    alternateCompletionTexts: [
+      "The spawn_agent tool is unavailable in this request.",
+    ],
   },
 ];
 

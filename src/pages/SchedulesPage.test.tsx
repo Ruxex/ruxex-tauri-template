@@ -25,6 +25,8 @@ describe("SchedulesPage", () => {
             id: "schedule-1",
             name: "Nightly checks",
             prompt: "run checks",
+            icon: "calendar",
+            color: "blue",
             threadId: "thread-1",
             cadence: {
               kind: "daily",
@@ -61,6 +63,9 @@ describe("SchedulesPage", () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
 
+    expect(
+      screen.queryByRole("heading", { name: "Your schedules" }),
+    ).toBeNull();
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     const card = screen.getByText("Nightly checks").closest("article");
     expect(card).toBeTruthy();
@@ -127,6 +132,8 @@ describe("SchedulesPage", () => {
         input: {
           name: "Morning checks",
           prompt: "run checks",
+          icon: "calendar",
+          color: "blue",
           threadId: null,
           cadence: {
             kind: "daily",
@@ -212,6 +219,8 @@ describe("SchedulesPage", () => {
       {
         name: "Remote checks",
         prompt: "run remote checks",
+        icon: "folder",
+        color: "blue",
         threadId: null,
         cadence: {
           kind: "daily",

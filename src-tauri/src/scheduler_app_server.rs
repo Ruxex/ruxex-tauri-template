@@ -251,6 +251,8 @@ mod tests {
             id: id.to_string(),
             name: "Checks".to_string(),
             prompt: "run checks".to_string(),
+            icon: "calendar".to_string(),
+            color: "blue".to_string(),
             thread_id: None,
             cadence: ScheduleCadence::Daily {
                 hour: 9,

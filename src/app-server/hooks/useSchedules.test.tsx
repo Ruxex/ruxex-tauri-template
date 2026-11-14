@@ -52,6 +52,8 @@ describe("useSchedules", () => {
       await result.current.create.mutateAsync({
         name: "Checks",
         prompt: "run checks",
+        icon: "calendar",
+        color: "blue",
         threadId: null,
         cadence: {
           kind: "daily",

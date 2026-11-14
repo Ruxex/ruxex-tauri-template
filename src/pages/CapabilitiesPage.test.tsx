@@ -690,6 +690,13 @@ describe("CapabilitiesPage", () => {
     expect(
       screen.getByRole("heading", { name: "Skills", level: 1 }),
     ).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { name: "Skills", level: 2 }),
+    ).toBeNull();
+    expect(screen.queryByText("Additional Skill directories")).toBeNull();
+    expect(
+      screen.queryByText(/Skills are discovered from these directories/),
+    ).toBeNull();
     expect(screen.getByText("review")).toBeTruthy();
     expect(screen.queryByText("official")).toBeNull();
     expect(screen.queryByText("docs")).toBeNull();
@@ -985,7 +992,9 @@ describe("CapabilitiesPage", () => {
 
     expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
     expect(screen.getByText("docs")).toBeTruthy();
-    const serverDetails = screen.getByText("docs").closest("details") as HTMLDetailsElement;
+    const serverDetails = screen
+      .getByText("docs")
+      .closest("details") as HTMLDetailsElement;
     expect(serverDetails.open).toBe(false);
     expect(within(serverDetails).getByText("1 tools")).toBeTruthy();
     expect(screen.queryByText("Official Plugins")).toBeNull();

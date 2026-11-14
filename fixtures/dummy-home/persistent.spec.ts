@@ -13,7 +13,8 @@ import {
 } from "./support";
 
 describe("Persistent DummyProvider home", () => {
-  it("creates the catalog through the desktop UI", async () => {
+  it("creates the catalog through the desktop UI", async function () {
+    this.timeout(3 * 60_000);
     await waitForDesktopReady();
     let representativeThreadId: string | undefined;
 
@@ -77,6 +78,10 @@ async function assertListCounts(): Promise<void> {
   await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
+  const openSidebar = $("button[aria-label='Open sidebar']");
+  if (await openSidebar.isDisplayed().catch(() => false)) {
+    await openSidebar.click();
+  }
   const visibleRecentChats = Math.min(active, 8);
   await browser.waitUntil(
     async () =>

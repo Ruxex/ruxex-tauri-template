@@ -3,10 +3,15 @@ import type {
   ScheduleInput,
   ScheduleRecord,
 } from "../../platform/schedules";
+import {
+  DEFAULT_PROJECT_METADATA,
+  type ProjectMetadata,
+} from "../../components/projects/project-metadata";
 
 export type ScheduleFormState = {
   name: string;
   prompt: string;
+  metadata: ProjectMetadata;
   cadenceKind: ScheduleCadence["kind"];
   runAtTime: string;
   weekdays: string[];
@@ -18,6 +23,7 @@ export type ScheduleFormAction =
   | { type: "reset"; schedule?: ScheduleRecord }
   | { type: "nameChanged"; value: string }
   | { type: "promptChanged"; value: string }
+  | { type: "metadataChanged"; value: ProjectMetadata }
   | { type: "cadenceChanged"; value: ScheduleCadence["kind"] }
   | { type: "runAtTimeChanged"; value: string }
   | { type: "weekdaysChanged"; value: string[] }
@@ -35,6 +41,7 @@ export function createScheduleFormState(
     return {
       name: "",
       prompt: "",
+      metadata: DEFAULT_PROJECT_METADATA,
       cadenceKind: "daily",
       runAtTime: "09:00",
       weekdays: ["1"],
@@ -47,6 +54,7 @@ export function createScheduleFormState(
     return {
       name: schedule.name,
       prompt: schedule.prompt,
+      metadata: { icon: schedule.icon, color: schedule.color },
       cadenceKind: "once",
       runAtTime: "09:00",
       weekdays: ["1"],
@@ -58,6 +66,7 @@ export function createScheduleFormState(
   return {
     name: schedule.name,
     prompt: schedule.prompt,
+    metadata: { icon: schedule.icon, color: schedule.color },
     cadenceKind: schedule.cadence.kind,
     runAtTime: `${pad(schedule.cadence.hour)}:${pad(schedule.cadence.minute)}`,
     weekdays:
@@ -80,6 +89,8 @@ export function scheduleFormReducer(
       return { ...state, name: action.value };
     case "promptChanged":
       return { ...state, prompt: action.value };
+    case "metadataChanged":
+      return { ...state, metadata: action.value };
     case "cadenceChanged":
       return { ...state, cadenceKind: action.value };
     case "runAtTimeChanged":
@@ -131,6 +142,8 @@ export function scheduleInputFromForm(
     input: {
       name: state.name.trim(),
       prompt: state.prompt.trim(),
+      icon: state.metadata.icon,
+      color: state.metadata.color,
       threadId: null,
       cadence,
       enabled: state.enabled,

@@ -6,6 +6,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { EmptyState } from "../../components/common/AsyncState";
+import { ProjectIcon } from "../../components/projects/ProjectIcon";
+import { projectColorClassName } from "../../components/projects/project-metadata";
 import type { ScheduleRecord } from "../../platform/schedules";
 import {
   formatDateTime,
@@ -60,10 +62,12 @@ export function ScheduleCard({
   onOpen?: (schedule: ScheduleRecord) => void;
   onRequestAction: (action: "run" | "delete", schedule: ScheduleRecord) => void;
 }) {
+  const enabledTone = schedule.enabled;
+
   return (
     <article
       aria-label={onOpen ? `Open schedule: ${schedule.name}` : undefined}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition-colors duration-200 hover:border-primary/50"
+      className={`group cursor-pointer overflow-hidden rounded-xl border border-base-300 shadow-sm transition-colors duration-200 ${enabledTone ? "bg-base-100 hover:border-primary/50" : "bg-base-200/40 text-base-content/65 hover:border-base-300"}`}
       role={onOpen ? "link" : undefined}
       tabIndex={onOpen ? 0 : undefined}
       onClick={(event) => {
@@ -79,12 +83,24 @@ export function ScheduleCard({
     >
       <div className="flex items-center justify-between gap-3 p-4 pb-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content">
-            <CalendarDaysIcon aria-hidden="true" className="size-5" />
+          <div
+            className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${enabledTone ? projectColorClassName(schedule.color) : "bg-base-200 text-base-content/45"}`}
+          >
+            <ProjectIcon
+              aria-hidden="true"
+              className="size-5"
+              icon={schedule.icon}
+            />
           </div>
           <div className="min-w-0">
-            <h3 className="truncate font-semibold">{schedule.name}</h3>
-            <p className="mt-1 truncate text-xs text-base-content/60">
+            <h3
+              className={`truncate font-semibold ${enabledTone ? "text-base-content" : "text-base-content/60"}`}
+            >
+              {schedule.name}
+            </h3>
+            <p
+              className={`mt-1 truncate text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}
+            >
               Next run: {formatDateTime(schedule.nextRunAt)}
             </p>
           </div>
@@ -142,19 +158,25 @@ export function ScheduleCard({
           </label>
         </div>
       </div>
-      <div className="mx-4 mb-3 text-sm font-medium text-base-content/70">
+      <div
+        className={`mx-4 mb-3 text-sm font-medium ${enabledTone ? "text-base-content/70" : "text-base-content/50"}`}
+      >
         {scheduleCadenceLabel(schedule.cadence)}
       </div>
       <div className="mx-4 mb-4 block rounded-lg border border-base-300 bg-base-200/50 p-3 text-left">
         <div className="min-w-0">
-          <p className="line-clamp-2 text-sm leading-5 text-base-content/70">
+          <p
+            className={`line-clamp-2 text-sm leading-5 ${enabledTone ? "text-base-content/70" : "text-base-content/50"}`}
+          >
             {schedule.prompt}
           </p>
         </div>
       </div>
       {schedule.lastRun && (
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-base-300 px-4 py-3">
-          <div className="min-w-0 space-y-1 text-xs text-base-content/60">
+          <div
+            className={`min-w-0 space-y-1 text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}
+          >
             <p className="truncate" title={formatDateTime(schedule.lastRun.at)}>
               Last run: {formatRelativeDateTime(schedule.lastRun.at)}
             </p>

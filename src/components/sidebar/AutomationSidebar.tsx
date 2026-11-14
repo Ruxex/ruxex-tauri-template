@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 
 import { useSchedules } from "../../app-server/hooks";
 import { formatErrorMessage } from "../../app/error-message";
+import { ProjectIcon } from "../projects/ProjectIcon";
+import { projectColorClassName } from "../projects/project-metadata";
 import {
   formatDateTime,
   formatRelativeDateTime,
@@ -35,7 +37,8 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
       )}
       {schedules.query.isError && (
         <p className="pt-4 text-sm text-error">
-          Unable to load recent runs: {formatErrorMessage(schedules.query.error)}
+          Unable to load recent runs:{" "}
+          {formatErrorMessage(schedules.query.error)}
         </p>
       )}
       {!schedules.query.isLoading && !schedules.query.isError && (
@@ -44,6 +47,24 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
             const lastRun = schedule.lastRun;
             if (!lastRun) return null;
             const threadId = lastRun.threadId ?? schedule.threadId;
+            const iconTileClassName = schedule.enabled
+              ? projectColorClassName(schedule.color)
+              : "bg-base-200 text-base-content/45";
+            const content = (
+              <div className="flex min-w-0 items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${iconTileClassName}`}
+                >
+                  <ProjectIcon className="size-4" icon={schedule.icon} />
+                </span>
+                <RecentRunText
+                  at={lastRun.at}
+                  disabled={!schedule.enabled}
+                  title={schedule.name}
+                />
+              </div>
+            );
 
             return (
               <li
@@ -56,11 +77,11 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
                     className="block rounded-box border border-base-300 bg-base-200/35 px-3 py-2.5 transition-colors hover:border-primary/50 hover:bg-base-200"
                     to={`/chat/${threadId}`}
                   >
-                    <RecentRunText at={lastRun.at} title={schedule.name} />
+                    {content}
                   </Link>
                 ) : (
                   <div className="rounded-box border border-base-300 bg-base-200/35 px-3 py-2.5">
-                    <RecentRunText at={lastRun.at} title={schedule.name} />
+                    {content}
                   </div>
                 )}
               </li>
@@ -72,12 +93,24 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
   );
 }
 
-function RecentRunText({ title, at }: { title: string; at: string }) {
+function RecentRunText({
+  title,
+  at,
+  disabled,
+}: {
+  title: string;
+  at: string;
+  disabled: boolean;
+}) {
   return (
     <div className="min-w-0">
-      <p className="truncate text-sm font-medium">{title}</p>
+      <p
+        className={`truncate text-sm font-medium ${disabled ? "text-base-content/60" : ""}`}
+      >
+        {title}
+      </p>
       <time
-        className="mt-1 block truncate text-xs text-base-content/55"
+        className={`mt-1 block truncate text-xs ${disabled ? "text-base-content/40" : "text-base-content/55"}`}
         dateTime={at}
         title={formatDateTime(at)}
       >

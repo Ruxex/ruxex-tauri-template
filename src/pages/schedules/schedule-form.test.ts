@@ -11,6 +11,8 @@ const record = (overrides: Partial<ScheduleRecord> = {}): ScheduleRecord => ({
   id: "schedule-1",
   name: "Nightly checks",
   prompt: "run checks",
+  icon: "calendar",
+  color: "blue",
   threadId: "thread-1",
   cadence: {
     kind: "daily",
@@ -29,6 +31,7 @@ describe("schedule form model", () => {
     expect(createScheduleFormState()).toEqual({
       name: "",
       prompt: "",
+      metadata: { icon: "folder", color: "blue" },
       cadenceKind: "daily",
       runAtTime: "09:00",
       weekdays: ["1"],
@@ -39,6 +42,7 @@ describe("schedule form model", () => {
     expect(createScheduleFormState(record())).toMatchObject({
       name: "Nightly checks",
       prompt: "run checks",
+      metadata: { icon: "calendar", color: "blue" },
       cadenceKind: "daily",
       runAtTime: "02:30",
       weekdays: ["1"],
@@ -101,6 +105,8 @@ describe("schedule form model", () => {
       input: {
         name: "Daily checks",
         prompt: "run checks",
+        icon: "folder",
+        color: "blue",
         threadId: null,
         cadence: {
           kind: "daily",

@@ -19,6 +19,8 @@ describe("schedule native bridge", () => {
     const input = {
       name: "Checks",
       prompt: "run checks",
+      icon: "calendar" as const,
+      color: "blue" as const,
       threadId: null,
       cadence: {
         kind: "daily",

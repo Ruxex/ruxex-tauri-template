@@ -155,7 +155,7 @@ async function createLargeMcpServerList(): Promise<void> {
     index += 1
   ) {
     const name = `fixture-mcp-${String(index).padStart(2, "0")}`;
-    await $("button[aria-label='Add MCP server']").click();
+    await $$("button[aria-label='Add MCP server']")[0].click();
     await $("h2=Add MCP server").waitForDisplayed({ timeout: 10_000 });
     await $("input[aria-label='Server name']").setValue(name);
     await $("select[aria-label='Transport']").selectByAttribute(
@@ -195,10 +195,28 @@ async function captureLargeProjects(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
   await saveFixtureScreenshot("projects-many-top.png");
-  await $("tr[aria-label='Open project Large project 21']").scrollIntoView({
+  await $("tr[aria-label='Open project Large project 117']").scrollIntoView({
     block: "center",
   });
   await saveFixtureScreenshot("projects-many-bottom.png");
+
+  await $("select[aria-label='Sort projects']").selectByAttribute(
+    "value",
+    "recencyAt",
+  );
+  await browser.waitUntil(
+    async () =>
+      (await $$('table[aria-label="Projects"] tbody tr').length) ===
+      PAGE_DENSITY_COUNTS.large.projects,
+    {
+      timeout: 20_000,
+      timeoutMsg: "All projects should remain visible when sorted by activity",
+    },
+  );
+  await $("table[aria-label='Projects'] tbody tr:first-child").scrollIntoView({
+    block: "center",
+  });
+  await saveFixtureScreenshot("projects-many-recent.png");
 }
 
 async function captureLargeProjectDetail(): Promise<void> {
@@ -209,14 +227,22 @@ async function captureLargeProjectDetail(): Promise<void> {
   ).click();
   await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
-    async () => (await $$("section.card a").length) === 8,
+    async () =>
+      (await $$("section.card a").length) ===
+      PAGE_DENSITY_COUNTS.large.projectThreads,
     {
-      timeout: 10_000,
-      timeoutMsg: "The project detail should show its eight-thread page limit",
+      timeout: 20_000,
+      timeoutMsg: "The project detail should load every project chat",
     },
   );
   await closeSidebarPanel();
-  await saveFixtureScreenshot("project-detail-many.png");
+  await saveFixtureScreenshot("project-detail-many-top.png");
+  const projectChats = await $$("section.card a");
+  const projectChatCount = await projectChats.length;
+  await projectChats[projectChatCount - 1].scrollIntoView({
+    block: "center",
+  });
+  await saveFixtureScreenshot("project-detail-many-bottom.png");
 }
 
 async function captureLargeArchive(): Promise<void> {

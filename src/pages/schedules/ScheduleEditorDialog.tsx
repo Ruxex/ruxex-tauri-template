@@ -5,6 +5,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "../../components/common/DialogParts";
+import { ProjectMetadataFields } from "../../components/projects/ProjectMetadataFields";
 import type { ScheduleFormAction, ScheduleFormState } from "./schedule-form";
 import {
   cadenceLabel,
@@ -72,6 +73,13 @@ export function ScheduleEditorDialog({
               value={form.prompt}
             />
           </label>
+          <ProjectMetadataFields
+            entityLabel="Automation"
+            value={form.metadata}
+            onChange={(metadata) =>
+              dispatch({ type: "metadataChanged", value: metadata })
+            }
+          />
           <div className="grid grid-cols-2 items-start gap-3">
             <label className="form-control">
               <select

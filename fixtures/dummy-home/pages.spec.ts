@@ -132,6 +132,7 @@ describe("DummyProvider page screenshots", () => {
     await captureChatTabs();
     await captureChatScopedSearch();
     await captureChatSearchOverflow();
+    await captureProjectSort();
 
     await browser.url("tauri://localhost/#/projects");
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
@@ -151,6 +152,7 @@ describe("DummyProvider page screenshots", () => {
     );
     await saveFixtureScreenshot("project-detail-ordinary.png");
     await saveProjectDialogScreenshots();
+    await captureProjectChatSearch();
   });
 });
 
@@ -264,6 +266,53 @@ async function captureChatSearchOverflow(): Promise<void> {
   await saveFixtureScreenshot("chats-search-ordinary.png");
 }
 
+async function captureProjectSort(): Promise<void> {
+  await browser.url("tauri://localhost/#/projects");
+  await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
+  await $("select[aria-label='Sort projects']").selectByAttribute(
+    "value",
+    "recencyAt",
+  );
+  await browser.waitUntil(
+    async () =>
+      (await $$('table[aria-label="Projects"] tbody tr').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.projects,
+    {
+      timeout: 15_000,
+      timeoutMsg: "Project sorting should preserve the complete list",
+    },
+  );
+  await saveFixtureScreenshot("projects-recent-ordinary.png");
+}
+
+async function captureProjectChatSearch(): Promise<void> {
+  await $("select[aria-label='Sort project chats']").selectByAttribute(
+    "value",
+    "updated_at",
+  );
+  await browser.waitUntil(
+    async () =>
+      (await $$('section.card a[href*="/chat/"]').length) ===
+      PAGE_DENSITY_COUNTS.ordinary.projectThreads,
+    {
+      timeout: 15_000,
+      timeoutMsg: "Project chat sorting should preserve all matching chats",
+    },
+  );
+  await saveFixtureScreenshot("project-detail-updated-ordinary.png");
+
+  const search = $('section.card input[aria-label="Search project chats"]');
+  await search.setValue("Fixture basic 01");
+  await browser.waitUntil(
+    async () => (await $$('section.card a[href*="/chat/"]').length) === 1,
+    {
+      timeout: 15_000,
+      timeoutMsg: "Project chat title search should filter to a matching chat",
+    },
+  );
+  await saveFixtureScreenshot("project-detail-search-ordinary.png");
+}
+
 async function waitForPageContent(path: string): Promise<void> {
   if (path === "/") {
     await waitForHomeReady();
@@ -315,6 +364,20 @@ async function waitForPageContent(path: string): Promise<void> {
       {
         timeout: 15_000,
         timeoutMsg: "Ordinary active chats should finish loading",
+      },
+    );
+    return;
+  }
+
+  if (path === "/projects") {
+    await browser.waitUntil(
+      async () =>
+        (await $$('table[aria-label="Projects"] tbody tr').length) ===
+          PAGE_DENSITY_COUNTS.ordinary.projects ||
+        (await $("main").getText()).includes("Unable to load projects."),
+      {
+        timeout: 15_000,
+        timeoutMsg: "Ordinary projects should finish loading",
       },
     );
     return;

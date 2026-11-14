@@ -1,4 +1,4 @@
-import { FolderIcon } from "@heroicons/react/24/outline";
+import { FolderIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 
@@ -110,186 +110,166 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
   }
 
   return active ? (
-    <section className="grid gap-4">
-      <article
-        className="card w-full border border-base-300 bg-base-100 shadow-sm"
-        id="skills"
-      >
-        <div className="card-body">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="card-title">Skills</h2>
-            <button
-              aria-label="Add Skill directory"
-              className="btn btn-outline btn-sm"
-              disabled={setSkillsExtraRootsMutation.isPending}
-              onClick={() => void addSkillDirectory()}
-              type="button"
+    <section className="grid gap-4" id="skills">
+      <div className="flex justify-end">
+        <button
+          aria-label="Add Skill directory"
+          className="btn btn-outline btn-sm"
+          disabled={setSkillsExtraRootsMutation.isPending}
+          onClick={() => void addSkillDirectory()}
+          type="button"
+        >
+          {setSkillsExtraRootsMutation.isPending ? (
+            <span
+              aria-hidden="true"
+              className="loading loading-spinner loading-xs"
+            />
+          ) : (
+            <FolderIcon aria-hidden="true" className="size-4" />
+          )}
+          Add Skill directory
+        </button>
+      </div>
+      {skillExtraRoots.length > 0 && (
+        <ul aria-label="Added Skill directories" className="grid gap-1">
+          {skillExtraRoots.map((root) => (
+            <li
+              className="flex min-w-0 items-center justify-between gap-2 rounded-box bg-base-200/40 px-3 py-2 text-sm"
+              key={root}
             >
-              {setSkillsExtraRootsMutation.isPending ? (
-                <span
+              <span className="flex min-w-0 items-center gap-2">
+                <FolderIcon
                   aria-hidden="true"
-                  className="loading loading-spinner loading-xs"
+                  className="size-4 shrink-0 text-base-content/55"
                 />
-              ) : (
-                <FolderIcon aria-hidden="true" className="size-4" />
-              )}
-              Add Skill directory
-            </button>
-          </div>
-          <div className="rounded-box border border-base-300 bg-base-200/50 p-3">
-            <p className="text-sm font-medium">Additional Skill directories</p>
-            <p className="mt-1 text-xs text-base-content/60">
-              Skills are discovered from these directories for the current App
-              Server session.
-            </p>
-            {skillExtraRoots.length > 0 ? (
-              <ul className="mt-2 space-y-1">
-                {skillExtraRoots.map((root) => (
-                  <li
-                    className="flex min-w-0 items-center justify-between gap-2 text-sm"
-                    key={root}
-                  >
-                    <span className="min-w-0 truncate" title={root}>
-                      {root}
-                    </span>
-                    <button
-                      aria-label={`Remove Skill directory ${root}`}
-                      className="btn btn-ghost btn-xs shrink-0"
-                      disabled={setSkillsExtraRootsMutation.isPending}
-                      onClick={() => removeSkillDirectory(root)}
-                      type="button"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-2 text-xs text-base-content/60">
-                No additional directories configured.
-              </p>
-            )}
-            {skillRootError && (
-              <p className="mt-2 text-xs text-error" role="alert">
-                Unable to update Skill directories: {skillRootError}
-              </p>
-            )}
-          </div>
-          {skills.isLoading && <span className="loading loading-spinner" />}
-          {skills.isError && (
-            <p className="text-error">
-              Unable to load Skills: {formatErrorMessage(skills.error)}
-            </p>
-          )}
-          {!skills.isLoading && !visibleSkillGroups.length && (
-            <p className="text-sm text-base-content/60">
-              No Skills discovered.
-            </p>
-          )}
-          <ul className="space-y-2">
-            {visibleSkillGroups.map((entry) => (
-              <li key={entry.cwd}>
-                <details
-                  className="rounded-box bg-base-200 p-3"
-                  data-testid="skills-source-group"
-                  open={entry.skills.length > 0}
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium">
-                    <span>{skillGroupLabel(entry)}</span>
-                    <span className="text-xs font-normal text-base-content/60">
-                      {entry.skills.length} skill
-                      {entry.skills.length === 1 ? "" : "s"}
-                    </span>
-                  </summary>
-                  {entry.skills.length ? (
-                    <ul className="mt-2 space-y-2">
-                      {entry.skills.map((skill) => {
-                        const pendingPath =
-                          skillMutationPath ??
-                          (writeSkillConfig.isPending
-                            ? writeSkillConfig.variables?.path
-                            : null);
-                        const isPending = pendingPath === skill.path;
-                        const error = skillErrors[skill.path];
-                        const description = skillDescription(skill);
-                        return (
-                          <li
-                            className="rounded-box border border-base-300 bg-base-100 p-2"
-                            key={skill.path}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex min-w-0 items-start gap-2">
-                                <SkillIcon
-                                  className="mt-0.5 size-6 shrink-0"
-                                  skill={skill}
-                                />
-                                <div className="min-w-0">
-                                  <p className="font-medium">{skill.name}</p>
-                                  {description && (
-                                    <p
-                                      className="line-clamp-2 text-sm text-base-content/70"
-                                      title={description.fullText}
-                                    >
-                                      {description.text}
-                                    </p>
-                                  )}
-                                  {skill.scope !== "system" && (
-                                    <p
-                                      className="mt-1 truncate text-xs text-base-content/60"
-                                      title={skill.path}
-                                    >
-                                      {skill.scope} · {skill.path}
-                                    </p>
-                                  )}
-                                  {skill.pluginId && (
-                                    <p className="text-xs text-base-content/60">
-                                      {skill.pluginId}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <label className="flex shrink-0 items-center gap-2 text-sm">
-                                <span className="sr-only">
-                                  Enable {skill.name}
-                                </span>
-                                <input
-                                  aria-label={`Enable ${skill.name}`}
-                                  aria-checked={skill.enabled}
-                                  checked={skill.enabled}
-                                  className="toggle toggle-primary toggle-sm"
-                                  disabled={isPending}
-                                  onChange={() => void toggleSkill(skill)}
-                                  role="switch"
-                                  type="checkbox"
-                                />
-                              </label>
+                <span className="min-w-0 truncate" title={root}>
+                  {root}
+                </span>
+              </span>
+              <button
+                aria-label={`Remove Skill directory ${root}`}
+                className="btn btn-ghost btn-xs shrink-0"
+                disabled={setSkillsExtraRootsMutation.isPending}
+                onClick={() => removeSkillDirectory(root)}
+                type="button"
+              >
+                <XMarkIcon aria-hidden="true" className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {skillRootError && (
+        <p className="text-sm text-error" role="alert">
+          Unable to update Skill directories: {skillRootError}
+        </p>
+      )}
+      {skills.isLoading && <span className="loading loading-spinner" />}
+      {skills.isError && (
+        <p className="text-error">
+          Unable to load Skills: {formatErrorMessage(skills.error)}
+        </p>
+      )}
+      {!skills.isLoading && !visibleSkillGroups.length && (
+        <p className="text-sm text-base-content/60">No Skills discovered.</p>
+      )}
+      <ul className="space-y-2">
+        {visibleSkillGroups.map((entry) => (
+          <li key={entry.cwd}>
+            <details
+              className="rounded-box bg-base-200 p-3"
+              data-testid="skills-source-group"
+              open={entry.skills.length > 0}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium">
+                <span>{skillGroupLabel(entry)}</span>
+                <span className="text-xs font-normal text-base-content/60">
+                  {entry.skills.length} skill
+                  {entry.skills.length === 1 ? "" : "s"}
+                </span>
+              </summary>
+              {entry.skills.length ? (
+                <ul className="mt-2 space-y-2">
+                  {entry.skills.map((skill) => {
+                    const pendingPath =
+                      skillMutationPath ??
+                      (writeSkillConfig.isPending
+                        ? writeSkillConfig.variables?.path
+                        : null);
+                    const isPending = pendingPath === skill.path;
+                    const error = skillErrors[skill.path];
+                    const description = skillDescription(skill);
+                    return (
+                      <li
+                        className="rounded-box border border-base-300 bg-base-100 p-2"
+                        key={skill.path}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-2">
+                            <SkillIcon
+                              className="mt-0.5 size-6 shrink-0"
+                              skill={skill}
+                            />
+                            <div className="min-w-0">
+                              <p className="font-medium">{skill.name}</p>
+                              {description && (
+                                <p
+                                  className="line-clamp-2 text-sm text-base-content/70"
+                                  title={description.fullText}
+                                >
+                                  {description.text}
+                                </p>
+                              )}
+                              {skill.scope !== "system" && (
+                                <p
+                                  className="mt-1 truncate text-xs text-base-content/60"
+                                  title={skill.path}
+                                >
+                                  {skill.scope} · {skill.path}
+                                </p>
+                              )}
+                              {skill.pluginId && (
+                                <p className="text-xs text-base-content/60">
+                                  {skill.pluginId}
+                                </p>
+                              )}
                             </div>
-                            {error && (
-                              <p
-                                className="mt-1 text-xs text-error"
-                                role="alert"
-                              >
-                                Unable to update Skill: {error}
-                              </p>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="mt-1 font-medium">No skills</p>
-                  )}
-                  {entry.errors.length > 0 && (
-                    <p className="mt-1 text-xs text-error">
-                      {entry.errors.length} discovery errors
-                    </p>
-                  )}
-                </details>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </article>
+                          </div>
+                          <label className="flex shrink-0 items-center gap-2 text-sm">
+                            <span className="sr-only">Enable {skill.name}</span>
+                            <input
+                              aria-label={`Enable ${skill.name}`}
+                              aria-checked={skill.enabled}
+                              checked={skill.enabled}
+                              className="toggle toggle-primary toggle-sm"
+                              disabled={isPending}
+                              onChange={() => void toggleSkill(skill)}
+                              role="switch"
+                              type="checkbox"
+                            />
+                          </label>
+                        </div>
+                        {error && (
+                          <p className="mt-1 text-xs text-error" role="alert">
+                            Unable to update Skill: {error}
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="mt-1 font-medium">No skills</p>
+              )}
+              {entry.errors.length > 0 && (
+                <p className="mt-1 text-xs text-error">
+                  {entry.errors.length} discovery errors
+                </p>
+              )}
+            </details>
+          </li>
+        ))}
+      </ul>
     </section>
   ) : null;
 }

@@ -10,6 +10,7 @@ export function upsertThreadInListCaches(
   const cachedLists = queryClient.getQueriesData<v2.ThreadListResponse>({
     queryKey: appServerQueryKeys.threadListRoot,
   });
+  let shouldRefreshSearchLists = false;
 
   for (const [queryKey, data] of cachedLists) {
     if (
@@ -19,6 +20,10 @@ export function upsertThreadInListCaches(
       continue;
     }
     const params = queryKey.at(-1) as v2.ThreadListParams | undefined;
+    if (params?.searchTerm?.trim()) {
+      shouldRefreshSearchLists = true;
+      continue;
+    }
     if (params?.archived === true) {
       continue;
     }
@@ -33,11 +38,16 @@ export function upsertThreadInListCaches(
       params?.sortDirection === "asc"
         ? [...data.data, thread]
         : [thread, ...data.data];
-    const limitedData =
-      params?.limit && params.limit > 0
+    const isAllPagesQuery = queryKey.at(-2) === "all";
+    const nextListData =
+      !isAllPagesQuery && params?.limit && params.limit > 0
         ? nextData.slice(0, params.limit)
         : nextData;
-    queryClient.setQueryData(queryKey, { ...data, data: limitedData });
+    queryClient.setQueryData(queryKey, { ...data, data: nextListData });
+  }
+
+  if (shouldRefreshSearchLists) {
+    invalidateThreadList(queryClient);
   }
 }
 

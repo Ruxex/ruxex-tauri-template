@@ -55,22 +55,34 @@ describe("ChatSearchBox", () => {
 
     const input = screen.getByRole("searchbox", { name: "Search chats" });
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(useThreadSearch).toHaveBeenLastCalledWith("");
+    expect(useThreadSearch).toHaveBeenLastCalledWith("", {
+      archived: false,
+      limit: 8,
+    });
 
     fireEvent.change(input, { target: { value: "c" } });
     fireEvent.change(input, { target: { value: "co" } });
     fireEvent.change(input, { target: { value: "compiler" } });
 
-    expect(useThreadSearch).toHaveBeenLastCalledWith("");
+    expect(useThreadSearch).toHaveBeenLastCalledWith("", {
+      archived: false,
+      limit: 8,
+    });
     await act(async () => {
       vi.advanceTimersByTime(399);
     });
-    expect(useThreadSearch).toHaveBeenLastCalledWith("");
+    expect(useThreadSearch).toHaveBeenLastCalledWith("", {
+      archived: false,
+      limit: 8,
+    });
 
     await act(async () => {
       vi.advanceTimersByTime(1);
     });
-    expect(useThreadSearch).toHaveBeenLastCalledWith("compiler");
+    expect(useThreadSearch).toHaveBeenLastCalledWith("compiler", {
+      archived: false,
+      limit: 8,
+    });
     expect(screen.getByRole("link", { name: /Fix the compiler/ })).toBeTruthy();
   });
 });

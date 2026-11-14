@@ -284,25 +284,32 @@ make ui-fixtures
 ```
 
 The generated home is `.d/` and is intentionally not committed. The ordinary
-baseline contains 14 threads: 12 active and 2 archived, across three rootless
+baseline contains 19 threads: 17 active and 2 archived, across three rootless
 projects with 2, 1, and 0 project threads. Re-running the command resets the
 home before rebuilding both ordinary and large data, so the screenshots remain
 deterministic.
 
 The stable page pass captures every routed page, ordinary page-level data, and
 reachable dialogs and menus in their real page context. The ordinary home has
-12 active chats (9 unassigned and 3 project-assigned), 2 archived chats, and 3
+17 active chats (14 unassigned and 3 project-assigned), 2 archived chats, and 3
 projects. The Chats index captures both tabs, tab-scoped search, the global
 sidebar-search handoff, and `Product planning` has 2 chats. The Automation and
 MCP settings pages each receive one configured record before their populated
 screenshots are captured.
 
+The Projects page loads all project-list cursor pages and can sort by manual
+position or recent activity. Project detail loads all active chats, with API
+title search and sort choices. The project-list API does not provide search.
+
 The large-data pass extends the same home through the visible UI and captures
-24 active chats (11 unassigned and 13 project-assigned), 60 archived chats, 24
-projects, 12 chats in `Product planning`, 12 schedules, and 12 configured MCP
+77 active chats (16 unassigned and 61 project-assigned), 60 archived chats, 120
+projects, 60 chats in `Product planning`, 12 schedules, and 12 configured MCP
 servers. It captures the first and second archive pages, the top and bottom of
-both Chats tabs and other long lists, and the project detail view where the
-current eight-chat limit is visible. The
+both Chats tabs, Projects, and project chats, and recent-activity sort views.
+The persistent pass also captures dedicated chat pages for the Example
+provider's plan, reasoning, Markdown, single-subagent, and parallel-subagent
+scenarios.
+The
 volatile pass also captures pending requests inside Approval center and the
 Activity page's Needs action view, along with pending user input, permissions,
 streaming, queued message, and disconnect recovery. The marketplace and Git

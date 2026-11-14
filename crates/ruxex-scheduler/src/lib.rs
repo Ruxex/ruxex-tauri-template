@@ -52,7 +52,7 @@ impl SchedulerState {
 }
 
 const SCHEDULES_FILE: &str = "schedules.json";
-const CURRENT_SCHEMA_VERSION: u8 = 1;
+const CURRENT_SCHEMA_VERSION: u8 = 2;
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
@@ -142,6 +142,8 @@ impl<'de> Deserialize<'de> for ScheduleCadence {
 pub struct ScheduleInput {
     pub name: String,
     pub prompt: String,
+    pub icon: String,
+    pub color: String,
     pub thread_id: Option<String>,
     pub cadence: ScheduleCadence,
     #[serde(default = "enabled_by_default")]
@@ -167,6 +169,8 @@ pub struct ScheduleRecord {
     pub id: String,
     pub name: String,
     pub prompt: String,
+    pub icon: String,
+    pub color: String,
     pub thread_id: Option<String>,
     pub cadence: ScheduleCadence,
     pub next_run_at: String,
@@ -504,6 +508,8 @@ pub fn new_record(
         id,
         name: input.name,
         prompt: input.prompt,
+        icon: input.icon,
+        color: input.color,
         thread_id: input.thread_id,
         cadence: input.cadence,
         next_run_at: next.to_rfc3339(),
@@ -526,6 +532,8 @@ pub fn updated_record(
         id: previous.id.clone(),
         name: input.name,
         prompt: input.prompt,
+        icon: input.icon,
+        color: input.color,
         thread_id: input.thread_id,
         cadence: input.cadence,
         next_run_at: next.to_rfc3339(),
@@ -677,6 +685,8 @@ mod tests {
         ScheduleInput {
             name: "Checks".to_string(),
             prompt: "run checks".to_string(),
+            icon: "calendar".to_string(),
+            color: "blue".to_string(),
             thread_id: None,
             cadence,
             enabled: true,
@@ -732,6 +742,8 @@ mod tests {
                 "id": "legacy",
                 "name": "Legacy",
                 "prompt": "run it",
+                "icon": "calendar",
+                "color": "blue",
                 "threadId": null,
                 "cadence": {
                     "kind": "weekly",

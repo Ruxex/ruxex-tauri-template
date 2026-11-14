@@ -13,9 +13,10 @@ UI fixtureは、ユーザーがデスクトップアプリを使うときと同�
 
 `make ui-fixtures` はページの中で実データがどう並ぶかを確認するため、空状態だけでなく通常量と大量データの画面も撮影します。部品カタログ単体の撮影は行いません。
 
-- 通常量: active chat 12件（未所属9件、プロジェクト所属3件）、Chats一覧は両タブ・タブ別検索・サイドバー検索からの全件表示、サイドバー検索の8件上限、archived chat 2件、project 3件、`Product planning` の chat 2件、schedule 1件、MCP server 1件。
-- 大量データ: active chat 24件（未所属11件、プロジェクト所属13件）、Chats一覧は両タブの上端と下端、archived chat 60件、project 24件、`Product planning` の chat 12件、schedule 12件、MCP server 12件。
-- Archived chats は1ページ50件の前後を撮影します。Projects、Automation、MCP settings はリストの上端と下端を撮り、project detail は現在の8件表示を確認します。
+- 通常量: active chat 17件（未所属14件、プロジェクト所属3件）、Chats一覧は両タブ・タブ別検索・サイドバー検索からの全件表示、サイドバー検索の8件上限、archived chat 2件、project 3件（並び替え表示あり）、`Product planning` の chat 2件（タイトル検索・並び替え表示あり）、schedule 1件、MCP server 1件。
+- 大量データ: active chat 77件（未所属16件、プロジェクト所属61件）、Chats一覧は両タブの上端と下端、archived chat 60件、project 120件、`Product planning` の chat 60件、schedule 12件、MCP server 12件。
+- Exampleプロバイダの新しい `plan`、`reasoning`、`markdown`、`subagent`、`parallel-subagents` シナリオも作成し、個別チャット画面を撮影します。
+- Archived chats は1ページ50件の前後を撮影します。Projectsとプロジェクト内チャットはAPIカーソルを複数ページ使う件数を作り、一覧の上端・下端とソート状態を撮影します。AutomationとMCP settingsもリストの上端と下端を撮ります。
 - Approval center と Activity の Needs action は、pending approval がある画面を撮影します。
 
 データは各画面のフォームと通常の操作で作成します。生成した `.d/` と画像はコミットしません。

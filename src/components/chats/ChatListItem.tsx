@@ -53,7 +53,7 @@ export function ChatListItem({
       className={`group/thread grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-center overflow-hidden rounded-box border ${showCardBoundary ? "border-base-300 bg-base-100" : "border-transparent"} p-0 transition hover:border-primary/50 hover:bg-base-200 ${selected ? "border-primary/30 bg-primary/10 ring-1 ring-inset ring-primary/30" : ""}`}
     >
       <Link
-        className="block h-full w-full min-w-0 max-w-full overflow-hidden px-2 py-0.5"
+        className="flex h-full w-full min-w-0 max-w-full flex-col justify-center overflow-hidden px-2 py-0.5"
         to={`/chat/${thread.id}`}
         onClick={onClick}
         onMouseEnter={() => setIsTitleHovered(true)}

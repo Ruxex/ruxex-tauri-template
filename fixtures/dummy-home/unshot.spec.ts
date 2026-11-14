@@ -1,6 +1,10 @@
 import path from "node:path";
 
-import { PAGE_DENSITY_COUNTS } from "./catalog";
+import {
+  buildScenarioTitle,
+  PAGE_DENSITY_COUNTS,
+  PERSISTENT_SCENARIOS,
+} from "./catalog";
 import {
   closeSidebarPanel,
   saveFixtureScreenshot,
@@ -40,6 +44,7 @@ describe("DummyProvider unshot UI screenshots", () => {
 
     await openFixtureThread();
     await saveFixtureScreenshot("chat-completed-basic.png");
+    await captureExampleProviderThreads();
     await captureThreadSummary();
     await captureVisualizeFrame();
 
@@ -52,6 +57,38 @@ describe("DummyProvider unshot UI screenshots", () => {
     await closeSidebarPanel();
   });
 });
+
+async function captureExampleProviderThreads(): Promise<void> {
+  const scenarioIds = [
+    "plan",
+    "reasoning",
+    "markdown",
+    "subagent",
+    "parallel-subagents",
+  ] as const;
+
+  for (const scenarioId of scenarioIds) {
+    const scenario = PERSISTENT_SCENARIOS.find(
+      (candidate) => candidate.id === scenarioId,
+    );
+    if (!scenario) {
+      throw new Error(`Missing Example provider fixture: ${scenarioId}`);
+    }
+
+    await browser.url("tauri://localhost/#/chats");
+    await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+    const title = buildScenarioTitle(scenario, 1);
+    const chat = $(
+      `//main//ul[@aria-label="Chats"]//a[contains(., "${title}")]`,
+    );
+    await chat.waitForDisplayed({ timeout: 10_000 });
+    await chat.click();
+    await $("[aria-label='Chat activity']").waitForDisplayed({
+      timeout: 10_000,
+    });
+    await saveFixtureScreenshot(`chat-example-${scenarioId}.png`);
+  }
+}
 
 async function captureThemePresetPopover(): Promise<void> {
   await openRoute("/settings/appearance", "h2=Appearance");
@@ -250,7 +287,9 @@ async function captureAutomationStates(): Promise<void> {
   );
   await saveFixtureScreenshot("automation-ordinary.png");
 
-  await $("article[aria-label='Open schedule: Fixture review cadence']").click();
+  await $(
+    "article[aria-label='Open schedule: Fixture review cadence']",
+  ).click();
   await $("h1=Fixture review cadence").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("automation-detail-ordinary.png");
   await $("button[aria-label='Edit schedule: Fixture review cadence']").click();

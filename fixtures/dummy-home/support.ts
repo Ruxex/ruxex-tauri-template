@@ -13,6 +13,7 @@ export const MINIMAP_TURN_COUNT = 7;
 export type ScenarioExpectation = {
   kind: "text" | "error" | "goal";
   value: string;
+  alternatives?: readonly string[];
 };
 
 export function scenarioPrompt(
@@ -32,7 +33,11 @@ export function scenarioExpectation(
   if (scenario.errorText) {
     return { kind: "error", value: scenario.errorText };
   }
-  return { kind: "text", value: requireScenarioText(scenario.completionText) };
+  return {
+    kind: "text",
+    value: requireScenarioText(scenario.completionText),
+    alternatives: scenario.alternateCompletionTexts,
+  };
 }
 
 export async function waitForDesktopReady(): Promise<void> {
@@ -177,13 +182,10 @@ async function fillComposer(
   text: string,
 ): Promise<void> {
   await message.setValue(text);
-  await browser.waitUntil(
-    async () => (await message.getText()) === text,
-    {
-      timeout: 5_000,
-      timeoutMsg: "The chat editor should contain the complete prompt",
-    },
-  );
+  await browser.waitUntil(async () => (await message.getText()) === text, {
+    timeout: 5_000,
+    timeoutMsg: "The chat editor should contain the complete prompt",
+  });
 }
 
 async function waitForAssistantMessageCount(count: number): Promise<void> {
@@ -310,7 +312,9 @@ export async function waitForCompletedTurn(
     async () => {
       const text = await $(".workbench-main").getText();
       const normalized = text.toLowerCase();
-      return normalized.includes(expectation.value.toLowerCase());
+      return [expectation.value, ...(expectation.alternatives ?? [])].some(
+        (value) => normalized.includes(value.toLowerCase()),
+      );
     },
     {
       timeout: 45_000,
@@ -405,10 +409,7 @@ export async function createFixtureSchedule(name: string): Promise<void> {
   await $("textarea[aria-label='Instructions']").setValue(
     `Review the fixture page density for ${name}.`,
   );
-  await $("select[aria-label='Cadence']").selectByAttribute(
-    "value",
-    "weekly",
-  );
+  await $("select[aria-label='Cadence']").selectByAttribute("value", "weekly");
   const monday = $("button[aria-label='Monday']");
   if ((await monday.getAttribute("aria-pressed")) !== "true") {
     await monday.click();
@@ -419,10 +420,14 @@ export async function createFixtureSchedule(name: string): Promise<void> {
       timeout: 10_000,
     });
   } catch (error) {
-    const dialogText = await $("dialog[aria-labelledby='schedule-dialog-title']")
+    const dialogText = await $(
+      "dialog[aria-labelledby='schedule-dialog-title']",
+    )
       .getText()
       .catch(() => "<dialog closed>");
-    const pageText = await $("main").getText().catch(() => "<main unavailable>");
+    const pageText = await $("main")
+      .getText()
+      .catch(() => "<main unavailable>");
     throw new Error(
       `Schedule ${name} was not listed after creation. Dialog: ${dialogText}. Page: ${pageText}`,
       { cause: error },
@@ -456,25 +461,29 @@ export async function createWorkspaceProject(
     process.stderr.write(chunk);
   });
   await $("button[aria-label='Select workspace folder']").click();
-  const chooserExitCode = await new Promise<number | null>((resolve, reject) => {
-    chooser.once("error", reject);
-    chooser.once("close", (code) => resolve(code));
-  });
+  const chooserExitCode = await new Promise<number | null>(
+    (resolve, reject) => {
+      chooser.once("error", reject);
+      chooser.once("close", (code) => resolve(code));
+    },
+  );
   if (chooserExitCode !== 0) {
     throw new Error(
       `Unable to select workspace folder through accessibility: ${chooserOutput}`,
     );
   }
-  const selectedFolder = $(
-    "button[aria-label^='Selected workspace folder: ']",
-  );
+  const selectedFolder = $("button[aria-label^='Selected workspace folder: ']");
   await browser.waitUntil(
     async () =>
       (await selectedFolder.getAttribute("aria-label")) ===
       `Selected workspace folder: ${workspace}`,
     {
       timeout: 5_000,
-      timeoutMsg: `The selected workspace folder did not match. Expected ${workspace}; dialog: ${await $("dialog").getText().catch(() => "<closed>")}`,
+      timeoutMsg: `The selected workspace folder did not match. Expected ${workspace}; dialog: ${await $(
+        "dialog",
+      )
+        .getText()
+        .catch(() => "<closed>")}`,
     },
   );
   await $("button[aria-label='Create project']").click();

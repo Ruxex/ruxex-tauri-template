@@ -11,6 +11,7 @@ import { ProjectIcon } from "./ProjectIcon";
 
 type ProjectMetadataFieldsProps = {
   value: ProjectMetadata;
+  entityLabel?: string;
   onChange: (value: ProjectMetadata) => void;
 };
 
@@ -41,6 +42,7 @@ const PROJECT_COLOR_SWATCH_CLASSES: Record<ProjectMetadata["color"], string> = {
 
 export function ProjectMetadataFields({
   value,
+  entityLabel = "Project",
   onChange,
 }: ProjectMetadataFieldsProps) {
   const [openSelector, setOpenSelector] = useState<OpenSelector>(null);
@@ -87,9 +89,13 @@ export function ProjectMetadataFields({
 
   return (
     <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
-      <ProjectIconPreview value={value} selectedIcon={selectedIcon.value} />
+      <ProjectIconPreview
+        entityLabel={entityLabel}
+        value={value}
+        selectedIcon={selectedIcon.value}
+      />
       <section
-        aria-label="Project metadata controls"
+        aria-label={`${entityLabel} metadata controls`}
         className="grid grid-cols-2 gap-3"
       >
         <div className="form-control w-full" ref={iconSelectorRef}>
@@ -97,7 +103,7 @@ export function ProjectMetadataFields({
             <button
               aria-expanded={openSelector === "icon"}
               aria-haspopup="menu"
-              aria-label={`Project icon: ${selectedIcon.label}`}
+              aria-label={`${entityLabel} icon: ${selectedIcon.label}`}
               className="btn min-h-11 w-full justify-center gap-2 border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
               ref={iconTriggerRef}
               type="button"
@@ -118,7 +124,7 @@ export function ProjectMetadataFields({
             </button>
             {openSelector === "icon" && (
               <fieldset
-                aria-label="Project icon options"
+                aria-label={`${entityLabel} icon options`}
                 className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
               >
                 {PROJECT_ICON_OPTIONS.map((option) => {
@@ -155,7 +161,7 @@ export function ProjectMetadataFields({
             <button
               aria-expanded={openSelector === "color"}
               aria-haspopup="menu"
-              aria-label={`Project color: ${selectedColor.label}`}
+              aria-label={`${entityLabel} color: ${selectedColor.label}`}
               className="btn min-h-11 w-full justify-center gap-2 border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
               ref={colorTriggerRef}
               type="button"
@@ -175,7 +181,7 @@ export function ProjectMetadataFields({
             </button>
             {openSelector === "color" && (
               <fieldset
-                aria-label="Project color options"
+                aria-label={`${entityLabel} color options`}
                 className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
               >
                 {PROJECT_COLOR_OPTIONS.map((option) => {
@@ -211,12 +217,16 @@ export function ProjectMetadataFields({
 }
 
 function ProjectIconPreview({
+  entityLabel,
   value,
   selectedIcon,
-}: ProjectIconPreviewProps & { selectedIcon: ProjectMetadata["icon"] }) {
+}: ProjectIconPreviewProps & {
+  entityLabel: string;
+  selectedIcon: ProjectMetadata["icon"];
+}) {
   return (
     <span
-      aria-label="Project preview"
+      aria-label={`${entityLabel} preview`}
       className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${projectColorClassName(value.color)}`}
       role="img"
     >

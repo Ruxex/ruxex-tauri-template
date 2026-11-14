@@ -65,6 +65,8 @@ DUMMY_PROVIDER_CONFIG = (
     '[features]\n'
     'request_permissions_tool = true\n'
     'default_mode_request_user_input = true\n'
+    '\n[tools.update_plan]\n'
+    'enabled = true\n'
 )
 
 

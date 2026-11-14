@@ -286,7 +286,9 @@ describe("ProjectSidebar", () => {
     ).toBeNull();
     expect(within(rail).getByRole("button", { name: "Home" })).toBeTruthy();
     expect(within(rail).getByRole("button", { name: "Projects" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Resize left pane" }),
+    ).toBeNull();
   });
 
   it("leaves pane resizing to the parent resizable panel group", async () => {
@@ -303,8 +305,12 @@ describe("ProjectSidebar", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
-    expect(screen.queryByRole("separator", { name: "Resize left pane" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Resize left pane" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("separator", { name: "Resize left pane" }),
+    ).toBeNull();
   });
 
   it("renders Heroicons in the icon rail", async () => {
@@ -354,6 +360,7 @@ describe("ProjectSidebar", () => {
         .map((button) => button.getAttribute("aria-label")),
     ).toEqual([
       "Home",
+      "Chats",
       "Projects",
       "Plugins",
       "Automation",
@@ -486,9 +493,7 @@ describe("ProjectSidebar", () => {
     expect(
       within(panel).getByRole("link", { name: "Appearance" }),
     ).toBeTruthy();
-    expect(
-      within(panel).getByRole("link", { name: "Provider" }),
-    ).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "Provider" })).toBeTruthy();
     expect(within(panel).queryByRole("link", { name: "Account" })).toBeNull();
   });
 });

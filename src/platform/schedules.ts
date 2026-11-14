@@ -1,4 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
+import type {
+  ProjectColor,
+  ProjectIcon,
+} from "../components/projects/project-metadata";
 
 export type ScheduleCadence =
   | { kind: "once"; at: string }
@@ -14,6 +18,8 @@ export type ScheduleCadence =
 export type ScheduleInput = {
   name: string;
   prompt: string;
+  icon: ProjectIcon;
+  color: ProjectColor;
   threadId: string | null;
   cadence: ScheduleCadence;
   enabled: boolean;

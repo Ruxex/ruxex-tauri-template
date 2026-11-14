@@ -92,13 +92,13 @@ export function ChatsPage() {
       ? (unassignedList.data?.data ?? [])
       : (projectList.data?.data ?? []);
   const threads =
-    hasSearchTerm && !isGlobalSearch
-      ? allThreads.filter((thread) =>
+    hasSearchTerm && isGlobalSearch
+      ? allThreads
+      : allThreads.filter((thread) =>
           scope === "unassigned"
             ? thread.projectId === null
             : thread.projectId !== null,
-        )
-      : allThreads;
+        );
   const isLoading = isSearchPending || activeQuery.isLoading;
   const isError = !isSearchPending && activeQuery.isError;
 

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
+import type { v2 } from "../protocol";
 import {
   EmptyState,
   ErrorState,
@@ -16,14 +17,25 @@ import {
   projectColorClassName,
 } from "../components/projects/project-metadata";
 
+type ProjectSortKey = NonNullable<v2.ProjectListParams["sortKey"]>;
+
+const PROJECT_SORT_OPTIONS: { label: string; value: ProjectSortKey }[] = [
+  { label: "Manual order", value: "position" },
+  { label: "Recently active", value: "recencyAt" },
+];
+
 export function ProjectsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<ProjectSortKey>("position");
   const navigate = useNavigate();
-  const projects = useProjectList({
-    limit: 100,
-    sortKey: "position",
-    sortDirection: "asc",
-  });
+  const projects = useProjectList(
+    {
+      limit: 50,
+      sortKey,
+      sortDirection: sortKey === "position" ? "asc" : "desc",
+    },
+    true,
+  );
   return (
     <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5 pb-6">
@@ -68,62 +80,82 @@ export function ProjectsPage() {
               />
             )}
           {projects.data?.data.length ? (
-            <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
-              <table aria-label="Projects" className="table">
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Workspace</th>
-                    <th>Roots</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.data?.data.map((project) => {
-                    const projectMetadata = parseProjectMetadata(
-                      project.metadata,
-                    );
-                    return (
-                      <tr
-                        aria-label={`Open project ${project.name}`}
-                        className="cursor-pointer transition-colors hover:bg-base-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
-                        key={project.id}
-                        tabIndex={0}
-                        onClick={() => navigate(`/projects/${project.id}`)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            navigate(`/projects/${project.id}`);
-                          }
-                        }}
-                      >
-                        <td>
-                          <div className="flex min-w-40 items-center gap-3 font-semibold">
-                            <span
-                              className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
-                            >
-                              <ProjectIcon
-                                aria-hidden="true"
-                                className="size-4"
-                                icon={projectMetadata.icon}
-                              />
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <label className="select select-bordered select-sm min-w-44">
+                  <span className="sr-only">Sort projects</span>
+                  <select
+                    aria-label="Sort projects"
+                    value={sortKey}
+                    onChange={(event) =>
+                      setSortKey(event.target.value as ProjectSortKey)
+                    }
+                  >
+                    {PROJECT_SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
+                <table aria-label="Projects" className="table">
+                  <thead>
+                    <tr>
+                      <th>Project</th>
+                      <th>Workspace</th>
+                      <th>Roots</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {projects.data?.data.map((project) => {
+                      const projectMetadata = parseProjectMetadata(
+                        project.metadata,
+                      );
+                      return (
+                        <tr
+                          aria-label={`Open project ${project.name}`}
+                          className="cursor-pointer transition-colors hover:bg-base-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                          key={project.id}
+                          tabIndex={0}
+                          onClick={() => navigate(`/projects/${project.id}`)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              navigate(`/projects/${project.id}`);
+                            }
+                          }}
+                        >
+                          <td>
+                            <div className="flex min-w-40 items-center gap-3 font-semibold">
+                              <span
+                                className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
+                              >
+                                <ProjectIcon
+                                  aria-hidden="true"
+                                  className="size-4"
+                                  icon={projectMetadata.icon}
+                                />
+                              </span>
+                              <span className="truncate">{project.name}</span>
+                            </div>
+                          </td>
+                          <td className="max-w-80">
+                            <span className="block truncate font-mono text-xs text-base-content/65">
+                              {project.roots[0]?.path ??
+                                "No workspace root configured"}
                             </span>
-                            <span className="truncate">{project.name}</span>
-                          </div>
-                        </td>
-                        <td className="max-w-80">
-                          <span className="block truncate font-mono text-xs text-base-content/65">
-                            {project.roots[0]?.path ??
-                              "No workspace root configured"}
-                          </span>
-                        </td>
-                        <td className="text-sm text-base-content/70">
-                          {project.roots.length}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td className="text-sm text-base-content/70">
+                            {project.roots.length}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : null}
         </div>
