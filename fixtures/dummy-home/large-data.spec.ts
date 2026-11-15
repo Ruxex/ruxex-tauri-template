@@ -13,6 +13,7 @@ import {
   sendScenario,
   sendScenarioFromCurrentComposer,
   waitForDesktopReady,
+  waitForHomeReady,
 } from "./support";
 
 const FIRST_LARGE_OCCURRENCE = 3;
@@ -121,6 +122,9 @@ async function createLargeThreadCatalog(
     );
   }
 
+  await browser.url("tauri://localhost/#/");
+  await waitForHomeReady();
+
   const activeStart =
     FIRST_PROJECT_THREAD_OCCURRENCE + LARGE_DATA_ADDITIONS.projectThreads;
   const activeEnd =
@@ -150,7 +154,7 @@ async function createLargeMcpServerList(): Promise<void> {
   await browser.url("tauri://localhost/#/settings/mcp-servers");
   await $("h1=MCP servers").waitForDisplayed({ timeout: 10_000 });
   for (
-    let index = 2;
+    let index = 1;
     index <= PAGE_DENSITY_COUNTS.large.mcpServers;
     index += 1
   ) {

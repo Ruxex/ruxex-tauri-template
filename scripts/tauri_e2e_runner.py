@@ -45,6 +45,7 @@ SAFE_ENVIRONMENT_KEYS = frozenset(
         "XDG_STATE_HOME",
         "RUXEX_E2E_APP_BINARY",
         "RUXEX_E2E_ARTIFACTS",
+        "RUXEX_E2E_AUTO_OAUTH",
         "RUXEX_E2E_HEADLESS",
         "RUXEX_E2E_PLUGIN",
         "RUXEX_E2E_LOG_LEVEL",
@@ -101,6 +102,9 @@ def build_environment(
             "RUXEX_E2E_ARTIFACTS": str(artifact_dir),
         }
     )
+    # Fixed local token for the Python MCP auth fixture. Keep this value out
+    # of the generated run metadata via the sensitive-key filter.
+    environment["MCP_FIXTURE_BEARER_TOKEN"] = "ui-fixture-token"
 
     additional_path_entries: list[str] = []
     for variable in ("TAURI_DRIVER_PATH", "WEBKIT_WEBDRIVER_PATH", "XVFB_RUN_PATH"):

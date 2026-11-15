@@ -4,7 +4,7 @@
 -include .env .env.local
 export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
-.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -20,6 +20,8 @@ help:
 	@printf '%s\n' '  make rust-test          Rust/Tauriのテストを実行'
 	@printf '%s\n' '  make mcp-fixture-build  テスト用MCPサーバーをビルド'
 	@printf '%s\n' '  make mcp-fixture-test   テスト用MCPサーバーの疎通を確認'
+	@printf '%s\n' '  make mcp-python-fixture Python製HTTP MCPサーバーを起動'
+	@printf '%s\n' '  make mcp-python-fixture-config 認証パターン別のMCP設定例を表示'
 	@printf '%s\n' '  make build              フロントエンドをビルド'
 	@printf '%s\n' '  make verify             全検証とビルドを実行'
 	@printf '%s\n' '  make format-check       フォーマット検査'
@@ -72,6 +74,12 @@ mcp-fixture-test: mcp-fixture-build
 	MCP_FIXTURE_BIN=target/debug/ruxex-mcp-fixture \
 		python3 -m unittest scripts/test_mcp_fixture.py -v
 
+mcp-python-fixture:
+	python3 scripts/mcp_http_fixture.py
+
+mcp-python-fixture-config:
+	python3 scripts/mcp_http_fixture.py --print-configs
+
 build:
 	pnpm build
 
@@ -115,15 +123,15 @@ e2e-diagnostics: e2e-plugin-build
 e2e-diagnostics-headless: e2e-plugin-build
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=1 python3 scripts/tauri_e2e_runner.py --headless --binary target/debug/ruxex-desktop-e2e-plugin --spec e2e/diagnostics.spec.ts
 
-ui-fixtures: mcp-fixture-build e2e-build
+ui-fixtures: e2e-build
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-home --spec fixtures/dummy-home/persistent.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/pages.spec.ts
-	MCP_STREAMABLE_HTTP_BIND_ADDR=127.0.0.1:3920 target/debug/ruxex-mcp-http-fixture >/dev/null 2>&1 & \
+	MCP_STREAMABLE_HTTP_BIND_ADDR=127.0.0.1:3920 python3 scripts/mcp_http_fixture.py >/dev/null 2>&1 & \
 		set -e; \
 		mcp_fixture_pid=$$!; \
 		trap 'kill $$mcp_fixture_pid 2>/dev/null || true' EXIT; \
 		sleep 1; \
-		GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/unshot.spec.ts; \
+		GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 RUXEX_E2E_AUTO_OAUTH=1 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/unshot.spec.ts; \
 		GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/large-data.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/volatile.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --marketplace-home --spec fixtures/marketplace-home/persistent.spec.ts

@@ -78,8 +78,8 @@ export const PAGE_DENSITY_COUNTS = {
     mcpServers: 1,
   },
   large: {
-    activeThreads: 77,
-    unassignedThreads: 16,
+    activeThreads: 78,
+    unassignedThreads: 17,
     projectAssignedThreads: 61,
     archivedThreads: 60,
     projects: 120,

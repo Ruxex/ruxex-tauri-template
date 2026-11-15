@@ -7,6 +7,7 @@ import {
 } from "./catalog";
 import {
   closeSidebarPanel,
+  openNewChat,
   saveFixtureScreenshot,
   sendComposerPrompt,
   waitForCompletedTurn,
@@ -17,6 +18,12 @@ import {
 async function openRoute(path: string, selector: string): Promise<void> {
   await browser.url(`tauri://localhost/#${path}`);
   await $(selector).waitForDisplayed({ timeout: 10_000 });
+}
+
+async function clickViaDom(selector: string): Promise<void> {
+  const element = $(selector);
+  await element.waitForDisplayed({ timeout: 10_000 });
+  await browser.execute((target: HTMLElement) => target.click(), await element);
 }
 
 async function openFixtureThread(): Promise<void> {
@@ -32,7 +39,8 @@ async function openFixtureThread(): Promise<void> {
 }
 
 describe("DummyProvider unshot UI screenshots", () => {
-  it("captures the remaining page and interactive component states", async () => {
+  it("captures the remaining page and interactive component states", async function () {
+    this.timeout(3 * 60_000);
     await waitForDesktopReady();
 
     await captureAccountStates();
@@ -264,7 +272,9 @@ async function captureChatSearch(): Promise<void> {
 
 async function captureProjectDialogs(): Promise<void> {
   await openRoute("/projects", "h1=Projects");
-  await $("button[aria-label='New project']").click();
+  const newProjectButton = $("button[aria-label='New project']");
+  await newProjectButton.scrollIntoView({ block: "center" });
+  await clickViaDom("button[aria-label='New project']");
   await $("h2=Create a project").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("project-create-dialog.png");
 
@@ -288,7 +298,7 @@ async function captureProjectDialogs(): Promise<void> {
 
 async function captureAutomationStates(): Promise<void> {
   await openRoute("/schedules", "h1=Automation");
-  await $("button[aria-label='New schedule']").click();
+  await clickViaDom("button[aria-label='New schedule']");
   await $("h2=Create a schedule").waitForDisplayed({ timeout: 10_000 });
   await $("input[aria-label='Schedule name']").setValue(
     "Fixture review cadence",
@@ -318,12 +328,12 @@ async function captureAutomationStates(): Promise<void> {
   );
   await saveFixtureScreenshot("automation-ordinary.png");
 
-  await $(
+  await clickViaDom(
     "article[aria-label='Open schedule: Fixture review cadence']",
-  ).click();
+  );
   await $("h1=Fixture review cadence").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("automation-detail-ordinary.png");
-  await $("button[aria-label='Edit schedule: Fixture review cadence']").click();
+  await clickViaDom("button[aria-label='Edit schedule: Fixture review cadence']");
   await $("h2=Edit schedule").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("automation-edit-dialog.png");
   await $(
@@ -332,7 +342,7 @@ async function captureAutomationStates(): Promise<void> {
 
   await openRoute("/schedules", "h1=Automation");
 
-  await $$('button[aria-label="Run now: Fixture review cadence"]')[0].click();
+  await clickViaDom('button[aria-label="Run now: Fixture review cadence"]');
   await $("h2=Run schedule now?").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("automation-action-dialog.png");
   await $("button[aria-label='Cancel']").click();
@@ -340,7 +350,7 @@ async function captureAutomationStates(): Promise<void> {
 
 async function captureMcpDialogs(): Promise<void> {
   await openRoute("/settings/mcp-servers", "h1=MCP servers");
-  await $("button[aria-label='Add MCP server']").click();
+  await clickViaDom("button[aria-label='Add MCP server']");
   await $("h2=Add MCP server").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("mcp-add-stdio-dialog.png");
 
@@ -354,23 +364,25 @@ async function captureMcpDialogs(): Promise<void> {
     "dialog .modal-box button[aria-label='Close MCP server dialog']",
   ).click();
 
-  await $("button[aria-label='Add MCP server']").click();
+  await clickViaDom("button[aria-label='Add MCP server']");
   await $("h2=Add MCP server").waitForDisplayed({ timeout: 10_000 });
-  await $("input[aria-label='Server name']").setValue("fixture-mcp");
+  await $("input[aria-label='Server name']").setValue("example");
   await $("select[aria-label='Transport']").selectByAttribute(
     "value",
     "streamableHttp",
   );
-  await $("input[aria-label='URL']").setValue("http://127.0.0.1:3920/mcp");
+  await $("input[aria-label='URL']").setValue(
+    "http://127.0.0.1:3920/mcp/oauth-dcr",
+  );
   await $("dialog .modal-box button[aria-label='Add MCP server']").click();
   await browser.waitUntil(
     async () => {
       const text = await $("main").getText();
-      return text.includes("fixture-mcp") && text.includes("Resources (1)");
+      return text.includes("example");
     },
     {
       timeout: 30_000,
-      timeoutMsg: "The HTTP MCP fixture should expose its configured resources",
+      timeoutMsg: "The HTTP MCP fixture should appear in the server list",
     },
   );
   await browser.waitUntil(
@@ -383,12 +395,60 @@ async function captureMcpDialogs(): Promise<void> {
     },
   );
   await saveFixtureScreenshot("mcp-servers-ordinary.png");
-  await $("[data-testid='mcp-server-details-fixture-mcp'] summary").click();
+  await $("[data-testid='mcp-server-details-example'] summary").click();
+  await browser.waitUntil(
+    async () =>
+      (await $("[data-testid='mcp-server-details-example']").getText()).includes(
+        "Authentication not configured",
+      ),
+    {
+      timeout: 30_000,
+      timeoutMsg: "The unauthenticated OAuth server should show its auth state",
+    },
+  );
+  await saveFixtureScreenshot("mcp-auth-required.png");
+
+  await openRoute("/capabilities/mcp", "h1=MCP");
+  await browser.waitUntil(
+    async () => (await $("main").getText()).includes("Connect example"),
+    {
+      timeout: 30_000,
+      timeoutMsg: "The MCP capabilities page should offer OAuth login",
+    },
+  );
+  await $(`[data-testid='mcp-server-details-example'] summary`).click();
+  await $("button[aria-label='Connect example']").waitForDisplayed({
+    timeout: 10_000,
+  });
+  await saveFixtureScreenshot("capabilities-mcp-auth-required.png");
+  await $("button[aria-label='Connect example']").click();
+  await browser.pause(2_000);
+  await saveFixtureScreenshot("capabilities-mcp-oauth-login-started.png");
+
+  await openRoute("/settings/mcp-servers", "h1=MCP servers");
+  await $(`[data-testid='mcp-server-details-example'] summary`).click();
+  await $("button[aria-label='Edit example']").click();
+  await $("h2=Edit MCP server").waitForDisplayed({ timeout: 10_000 });
+  await $("input[aria-label='URL']").setValue(
+    "http://127.0.0.1:3920/mcp/bearer",
+  );
+  await $("input[aria-label='Bearer token environment variable']").setValue(
+    "MCP_FIXTURE_BEARER_TOKEN",
+  );
+  await $("dialog .modal-box button[aria-label='Save changes']").click();
+  await browser.waitUntil(
+    async () =>
+      (await $("main").getText()).includes("Resources (1)") &&
+      (await $("main").getText()).includes("Bearer token configured"),
+    {
+      timeout: 30_000,
+      timeoutMsg: "The bearer-authenticated MCP server should expose its resource",
+    },
+  );
+  await saveFixtureScreenshot("capabilities-mcp-bearer-authenticated.png");
   await saveFixtureScreenshot("mcp-configured-resources.png");
 
-  const resourceButton = $(
-    "button[aria-label='Read example-note from fixture-mcp']",
-  );
+  const resourceButton = $("button[aria-label='Read example-note from example']");
   await resourceButton.scrollIntoView({ block: "center" });
   await resourceButton.click();
   await $("[data-testid='mcp-resource-text']").waitForDisplayed({
@@ -396,20 +456,44 @@ async function captureMcpDialogs(): Promise<void> {
   });
   await saveFixtureScreenshot("mcp-resource-viewer.png");
 
-  await $("button[aria-label='Edit fixture-mcp']").click();
+  await $("button[aria-label='Edit example']").click();
   await $("h2=Edit MCP server").waitForDisplayed({ timeout: 10_000 });
   await saveFixtureScreenshot("mcp-edit-dialog.png");
   await $(
     "dialog .modal-box button[aria-label='Close MCP server dialog']",
   ).click();
 
-  await openRoute("/capabilities/mcp", "h1=MCP");
+  await openNewChat();
+  await sendComposerPrompt("example:mcp");
+  await waitForCompletedTurn({
+    kind: "text",
+    value: "The MCP tool result was received. This is a fixed MCP integration response.",
+  });
+  await saveFixtureScreenshot("mcp-tool-execution.png");
+
+  await openRoute("/settings/mcp-servers", "h1=MCP servers");
+  const exampleServer = $("[data-testid='mcp-server-details-example']");
+  await exampleServer.$("summary").click();
+  await $("input[aria-label='Enable MCP server: example']").click();
   await browser.waitUntil(
-    async () => (await $("main").getText()).includes("fixture-mcp"),
+    async () =>
+      (await $("input[aria-label='Enable MCP server: example']").getAttribute(
+        "aria-checked",
+      )) === "false",
     {
       timeout: 30_000,
-      timeoutMsg: "The MCP capabilities page should show the configured server",
+      timeoutMsg: "The MCP server should be disabled after the fixture run",
     },
   );
-  await saveFixtureScreenshot("capabilities-mcp-ordinary.png");
+  await saveFixtureScreenshot("mcp-server-disabled.png");
+
+  await $("button[aria-label='Delete example']").click();
+  await browser.waitUntil(
+    async () => (await $("main").getText()).includes("No global MCP servers configured."),
+    {
+      timeout: 30_000,
+      timeoutMsg: "The MCP server configuration should be removed",
+    },
+  );
+  await saveFixtureScreenshot("mcp-server-removed.png");
 }

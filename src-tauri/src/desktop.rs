@@ -185,6 +185,36 @@ pub(crate) fn open_browser_window(url: String) -> CommandResult<()> {
             "browser URL must use http:// or https://",
         )
     })?;
+    #[cfg(feature = "e2e")]
+    if std::env::var_os("RUXEX_E2E_AUTO_OAUTH").as_deref() == Some(std::ffi::OsStr::new("1")) {
+        let result = std::process::Command::new("curl")
+            .args([
+                "--fail",
+                "--silent",
+                "--show-error",
+                "--location",
+                "--max-time",
+                "20",
+            ])
+            .arg(url.as_str())
+            .output()
+            .map_err(|error| {
+                command_error(
+                    DesktopAppServerErrorKind::Initialization,
+                    format!("failed to run OAuth browser fixture: {error}"),
+                )
+            })?;
+        if !result.status.success() {
+            return Err(command_error(
+                DesktopAppServerErrorKind::Initialization,
+                format!(
+                    "OAuth browser fixture failed: {}",
+                    String::from_utf8_lossy(&result.stderr).trim()
+                ),
+            ));
+        }
+        return Ok(());
+    }
     tauri_plugin_opener::open_url(url, None::<&str>).map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Initialization,
