@@ -9,8 +9,8 @@ import {
   closeSidebarPanel,
   saveFixtureScreenshot,
   sendComposerPrompt,
-  waitForDesktopReady,
   waitForCompletedTurn,
+  waitForDesktopReady,
   withWindowSize,
 } from "./support";
 
@@ -76,7 +76,8 @@ async function captureExampleProviderThreads(): Promise<void> {
     }
 
     await browser.url("tauri://localhost/#/chats");
-    await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+    const chatsHeading = $("h1=Chats");
+    await chatsHeading.waitForDisplayed({ timeout: 10_000 });
     const title = buildScenarioTitle(scenario, 1);
     const chat = $(
       `//main//ul[@aria-label="Chats"]//a[contains(., "${title}")]`,
@@ -86,8 +87,38 @@ async function captureExampleProviderThreads(): Promise<void> {
     await $("[aria-label='Chat activity']").waitForDisplayed({
       timeout: 10_000,
     });
-    await saveFixtureScreenshot(`chat-example-${scenarioId}.png`);
+    if (scenarioId === "markdown") {
+      await captureMarkdownResponse();
+    } else {
+      await saveFixtureScreenshot(`chat-example-${scenarioId}.png`);
+    }
   }
+}
+
+async function captureMarkdownResponse(): Promise<void> {
+  const response = $(
+    '//article[.//h1[normalize-space()="Markdown rendering fixture"]]',
+  );
+  await response.waitForDisplayed({ timeout: 10_000 });
+
+  const sections = [
+    ["top", "h1=Markdown rendering fixture"],
+    ["lists", "h2=Lists and quote"],
+    ["table", "h2=Table"],
+    ["code", "h2=Code blocks"],
+    ["mermaid", "h2=Mermaid"],
+  ] as const;
+
+  for (const [section, selector] of sections) {
+    const heading = response.$(selector);
+    await heading.waitForDisplayed({ timeout: 10_000 });
+    await heading.scrollIntoView({ block: "center" });
+    await saveFixtureScreenshot(`chat-example-markdown-${section}.png`);
+  }
+
+  await response.$("h1=Markdown rendering fixture").scrollIntoView({
+    block: "start",
+  });
 }
 
 async function captureThemePresetPopover(): Promise<void> {

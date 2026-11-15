@@ -15,7 +15,7 @@ UI fixtureは、ユーザーがデスクトップアプリを使うときと同�
 
 - 通常量: active chat 17件（未所属14件、プロジェクト所属3件）、Chats一覧は両タブ・タブ別検索・サイドバー検索からの全件表示、サイドバー検索の8件上限、archived chat 2件、project 3件（並び替え表示あり）、`Product planning` の chat 2件（タイトル検索・並び替え表示あり）、schedule 1件、MCP server 1件。
 - 大量データ: active chat 77件（未所属16件、プロジェクト所属61件）、Chats一覧は両タブの上端と下端、archived chat 60件、project 120件、`Product planning` の chat 60件、schedule 12件、MCP server 12件。
-- Exampleプロバイダの新しい `plan`、`reasoning`、`markdown`、`subagent`、`parallel-subagents` シナリオも作成し、個別チャット画面を撮影します。
+- Exampleプロバイダの新しい `plan`、`reasoning`、`markdown`、`subagent`、`parallel-subagents` シナリオも作成し、個別チャット画面を撮影します。Markdownレスポンスは見出しごとにスクロールして、インライン表現、リスト／引用、表、コードブロック、Mermaidを一通り撮ります。
 - Archived chats は1ページ50件の前後を撮影します。Projectsとプロジェクト内チャットはAPIカーソルを複数ページ使う件数を作り、一覧の上端・下端とソート状態を撮影します。AutomationとMCP settingsもリストの上端と下端を撮ります。
 - Approval center と Activity の Needs action は、pending approval がある画面を撮影します。
 

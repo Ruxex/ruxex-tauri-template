@@ -14,6 +14,7 @@ const useCreateThread = vi.hoisted(() => vi.fn());
 const useModelList = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
 const useProjectList = vi.hoisted(() => vi.fn());
+const useAllProjectList = vi.hoisted(() => vi.fn());
 const useSetThreadGoal = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 const useCollaborationModes = vi.hoisted(() => vi.fn());
@@ -24,6 +25,7 @@ vi.mock("../app-server/hooks", () => ({
   useModelList,
   useProject,
   useProjectList,
+  useAllProjectList,
   useSetThreadGoal,
   useSendMessage,
   useCollaborationModes,
@@ -93,6 +95,16 @@ describe("HomePage", () => {
     });
     useProject.mockReturnValue({ data: undefined });
     useProjectList.mockReturnValue({
+      data: {
+        data: [
+          { id: "project-1", name: "Project Alpha" },
+          { id: "project-2", name: "Project Beta" },
+        ],
+      },
+      isError: false,
+      isLoading: false,
+    });
+    useAllProjectList.mockReturnValue({
       data: {
         data: [
           { id: "project-1", name: "Project Alpha" },

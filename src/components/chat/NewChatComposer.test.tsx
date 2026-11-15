@@ -31,6 +31,11 @@ vi.mock("../../app-server/hooks", () => ({
   }),
   useModelList: () => ({ data: { data: [] } }),
   useProject: () => ({ data: { project: { roots: [] } }, isLoading: false }),
+  useAllProjectList: () => ({
+    data: { data: [{ id: "late-project", name: "Late project" }] },
+    isLoading: false,
+    isError: false,
+  }),
   useProjectList: () => ({
     data: { data: [] },
     isLoading: false,
@@ -107,7 +112,13 @@ vi.mock("../conversation/ComposerMessageInput", () => ({
 }));
 
 vi.mock("../chats/ProjectSelector", () => ({
-  ProjectSelector: () => null,
+  ProjectSelector: ({ projects }: { projects: { name: string }[] }) => (
+    <ul aria-label="Project selector options">
+      {projects.map((project) => (
+        <li key={project.name}>{project.name}</li>
+      ))}
+    </ul>
+  ),
 }));
 
 vi.mock("../common/AttachmentPreview", () => ({
@@ -138,6 +149,17 @@ describe("NewChatComposer", () => {
     createThreadMutation.mockResolvedValue({ thread: { id: "thread-1" } });
     sendMessageMutation.mockResolvedValue({});
     setGoalMutation.mockResolvedValue({});
+  });
+
+  it("includes projects beyond the first API page in the project selector", async () => {
+    const { NewChatComposer } = await import("./NewChatComposer");
+
+    render(<NewChatComposer />);
+
+    expect(
+      screen.getByRole("list", { name: "Project selector options" })
+        .textContent,
+    ).toContain("Late project");
   });
 
   it("submits only with Ctrl+Enter", async () => {

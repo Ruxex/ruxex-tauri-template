@@ -1,4 +1,3 @@
-import { ServerIcon } from "@heroicons/react/24/outline";
 import { useMemo, useRef, useState } from "react";
 
 import { formatErrorMessage } from "../app/error-message";
@@ -10,8 +9,8 @@ import type {
 } from "../app-server/mcp-config";
 import { PageContainer } from "../components/layout/PageContainer";
 import { SettingsPanel } from "../components/settings/SettingsCards";
-import { McpServerList } from "./mcp-servers/McpServerList";
 import { McpServerDialog } from "./mcp-servers/McpServerDialog";
+import { McpServerList } from "./mcp-servers/McpServerList";
 import {
   createMcpServerForm,
   type McpServerFormState,
@@ -95,8 +94,16 @@ export function McpServersPage() {
 
   return (
     <PageContainer>
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold">MCP servers</h1>
+        <button
+          aria-label="Add MCP server"
+          className="btn btn-primary"
+          type="button"
+          onClick={(event) => openAddDialog(event.currentTarget)}
+        >
+          Add MCP server
+        </button>
       </div>
 
       {actions.writeError && !dialog && (
@@ -104,22 +111,6 @@ export function McpServersPage() {
           {actions.writeError}
         </p>
       )}
-
-      <SettingsPanel icon={ServerIcon} title="Global MCP configuration">
-        <div className="flex items-center justify-between gap-3 px-5 py-4">
-          <p className="text-sm text-base-content/70">
-            These servers are available across your projects.
-          </p>
-          <button
-            aria-label="Add MCP server"
-            className="btn btn-primary"
-            type="button"
-            onClick={(event) => openAddDialog(event.currentTarget)}
-          >
-            Add MCP server
-          </button>
-        </div>
-      </SettingsPanel>
 
       <SettingsPanel title="Configured MCP servers">
         {globalConfig.isLoading && (

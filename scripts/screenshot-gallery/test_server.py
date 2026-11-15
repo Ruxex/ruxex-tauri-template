@@ -111,9 +111,9 @@ class ScreenshotGalleryTests(unittest.TestCase):
             self.assertIn("Settings", document)
             self.assertIn("Projects", document)
             self.assertIn("Git Diff Review", document)
-            self.assertEqual(document.count('<img '), 4)
+            self.assertEqual(document.count('<img '), 3)
 
-    def test_document_generates_grouped_slideshow_triggers_and_controls(self) -> None:
+    def test_document_renders_static_cards_without_slideshow(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             collection = root / "latest"
@@ -125,25 +125,10 @@ class ScreenshotGalleryTests(unittest.TestCase):
 
             document = build_gallery_document(root)
 
-            self.assertNotIn('target="_blank"', document)
-            self.assertEqual(document.count("data-slideshow-index="), 4)
-            self.assertIn('data-slideshow-index="0"', document)
-            self.assertIn('data-slideshow-index="1"', document)
-            self.assertIn('data-slideshow-index="2"', document)
-            self.assertIn('data-slideshow-index="3"', document)
-            self.assertIn('<dialog class="slideshow" id="slideshow-dialog"', document)
-            self.assertIn('id="slideshow-previous"', document)
-            self.assertIn('id="slideshow-next"', document)
-            self.assertIn('id="slideshow-close"', document)
-            self.assertIn("const slideshowImages =", document)
-            self.assertIn("openSlideshow(index)", document)
-            self.assertIn('event.key === "ArrowLeft"', document)
-            self.assertIn('event.key === "ArrowRight"', document)
-            self.assertIn("pointerdown", document)
-            self.assertIn("Math.abs(deltaX) > Math.abs(deltaY)", document)
-            self.assertIn("width: 100vw", document)
-            self.assertIn("height: 100dvh", document)
-            self.assertIn("max-height: calc(100dvh", document)
+            self.assertEqual(document.count('<article class="card">'), 4)
+            self.assertNotIn("<button", document)
+            self.assertNotIn("slideshow", document.lower())
+            self.assertIn('<img src="/latest/settings-general.png"', document)
 
 
 if __name__ == "__main__":

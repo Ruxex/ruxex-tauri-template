@@ -183,8 +183,6 @@ def image_card(
     relative_path: Path,
     size: int,
     modified: float,
-    *,
-    index: int,
 ) -> str:
     """Render one gallery card."""
 
@@ -192,13 +190,13 @@ def image_card(
     display_path = html.escape(relative_path.as_posix())
     modified_at = datetime.fromtimestamp(modified).astimezone().strftime("%Y-%m-%d %H:%M")
     return f"""
-      <button class="card slideshow-trigger" type="button" data-slideshow-index="{index}" aria-label="Open {display_path} in slideshow">
+      <article class="card">
         <div class="preview"><img src="/{relative_url}" alt="{display_path}" loading="lazy"></div>
         <div class="card-body">
           <div class="filename">{display_path}</div>
           <div class="metadata">{modified_at} · {format_size(size)}</div>
         </div>
-      </button>"""
+      </article>"""
 
 
 def build_gallery_document(
@@ -213,25 +211,14 @@ def build_gallery_document(
     selected_collections = list(collections or (find_latest_batch(root) if select_latest else (root,)))
     images = list_images(root, selected_collections)
     sections: list[str] = []
-    slideshow_images: list[dict[str, str]] = []
     for group, group_images_list in group_images(images):
-        global_index = len(slideshow_images)
-        slideshow_images.extend(
-            {
-                "src": f"/{quote(path.as_posix(), safe='/')}",
-                "alt": path.as_posix(),
-                "label": path.as_posix(),
-            }
-            for path, _, _ in group_images_list
-        )
         cards = "\n".join(
             image_card(
                 path,
                 size,
                 modified,
-                index=global_index + index,
             )
-            for index, (path, size, modified) in enumerate(group_images_list)
+            for path, size, modified in group_images_list
         )
         count = len(group_images_list)
         suffix = "s" if count != 1 else ""
@@ -249,7 +236,6 @@ def build_gallery_document(
     title = "Screenshot Gallery"
     label = collection_label or f"Collection: {', '.join(collection.name for collection in selected_collections)}"
     subtitle = f"{len(images)} screenshot{'s' if len(images) != 1 else ''} · {html.escape(label)}"
-    slideshow_json = json.dumps(slideshow_images, ensure_ascii=False).replace("<", "\\u003c")
     return f"""<!doctype html>
 <html lang="en">
   <head>
@@ -269,27 +255,13 @@ def build_gallery_document(
       h2 {{ margin: 0; color: #f8fafc; font-size: 1.15rem; letter-spacing: -0.02em; }}
       .section-heading span {{ color: #64748b; font-size: 0.78rem; white-space: nowrap; }}
       .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }}
-      .card {{ display: block; overflow: hidden; color: inherit; text-decoration: none; background: #1e293b; border: 1px solid #334155; border-radius: 14px; transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }}
-      button.card {{ width: 100%; padding: 0; text-align: left; font: inherit; cursor: pointer; }}
-      .card:hover {{ transform: translateY(-2px); border-color: #60a5fa; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22); }}
+      .card {{ overflow: hidden; color: inherit; background: #1e293b; border: 1px solid #334155; border-radius: 14px; }}
       .preview {{ aspect-ratio: 16 / 10; background: #020617; }}
       .preview img {{ display: block; width: 100%; height: 100%; object-fit: contain; }}
       .card-body {{ padding: 12px 14px 13px; }}
       .filename {{ color: #f8fafc; font-size: 0.88rem; line-height: 1.4; overflow-wrap: anywhere; }}
       .metadata {{ margin-top: 6px; color: #94a3b8; font-size: 0.75rem; }}
       .empty {{ padding: 48px 20px; text-align: center; color: #94a3b8; background: #1e293b; border: 1px dashed #475569; border-radius: 14px; }}
-      dialog.slideshow {{ width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; color: #e5e7eb; background: #0f172a; border: 0; border-radius: 0; box-shadow: none; }}
-      dialog.slideshow::backdrop {{ background: rgba(2, 6, 23, 0.84); backdrop-filter: blur(4px); }}
-      .slideshow-shell {{ display: grid; width: 100%; height: 100%; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding: max(8px, 1.5vw); }}
-      .slideshow-close {{ grid-column: 1 / -1; justify-self: end; }}
-      .slideshow-control {{ display: inline-flex; align-items: center; justify-content: center; align-self: center; width: 44px; height: 44px; color: #f8fafc; background: #1e293b; border: 1px solid #475569; border-radius: 999px; cursor: pointer; font-size: 1.5rem; }}
-      .slideshow-control:hover {{ background: #334155; border-color: #93c5fd; }}
-      .slideshow-control:focus-visible, .slideshow-trigger:focus-visible {{ outline: 2px solid #60a5fa; outline-offset: 3px; }}
-      .slideshow-stage {{ display: flex; min-width: 0; min-height: 0; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin: 0; touch-action: pan-y; user-select: none; }}
-      .slideshow-stage img {{ display: block; max-width: 100%; max-height: calc(100dvh - 96px); object-fit: contain; }}
-      .slideshow-caption {{ display: flex; width: 100%; justify-content: space-between; gap: 16px; color: #cbd5e1; font-size: 0.85rem; }}
-      .slideshow-caption span:first-child {{ min-width: 0; overflow-wrap: anywhere; }}
-      @media (max-width: 640px) {{ .slideshow-shell {{ padding: 6px; }} .slideshow-control {{ width: 38px; height: 38px; }} .slideshow-stage img {{ max-height: calc(100dvh - 82px); }} }}
       @media (max-width: 640px) {{ main {{ width: min(100% - 24px, 520px); padding-top: 24px; }} .grid {{ grid-template-columns: 1fr; }} }}
     </style>
   </head>
@@ -301,98 +273,6 @@ def build_gallery_document(
       </header>
       {''.join(sections)}
     </main>
-    <dialog class="slideshow" id="slideshow-dialog" aria-labelledby="slideshow-title">
-      <div class="slideshow-shell">
-        <button class="slideshow-control slideshow-close" id="slideshow-close" type="button" aria-label="Close slideshow">×</button>
-        <button class="slideshow-control" id="slideshow-previous" type="button" aria-label="Previous screenshot">‹</button>
-        <figure class="slideshow-stage" id="slideshow-stage">
-          <img id="slideshow-image" alt="" draggable="false">
-          <figcaption class="slideshow-caption">
-            <span id="slideshow-title"></span>
-            <span id="slideshow-position" aria-live="polite"></span>
-          </figcaption>
-        </figure>
-        <button class="slideshow-control" id="slideshow-next" type="button" aria-label="Next screenshot">›</button>
-      </div>
-    </dialog>
-    <script id="slideshow-data" type="application/json">{slideshow_json}</script>
-    <script>
-      (() => {{
-        const slideshowImages = JSON.parse(document.getElementById("slideshow-data").textContent);
-        const dialog = document.getElementById("slideshow-dialog");
-        const image = document.getElementById("slideshow-image");
-        const title = document.getElementById("slideshow-title");
-        const position = document.getElementById("slideshow-position");
-        const stage = document.getElementById("slideshow-stage");
-        const previous = document.getElementById("slideshow-previous");
-        const next = document.getElementById("slideshow-next");
-        const close = document.getElementById("slideshow-close");
-        let currentIndex = 0;
-        let pointerStart = null;
-
-        function renderSlide() {{
-          if (!slideshowImages.length) return;
-          const slide = slideshowImages[currentIndex];
-          image.src = slide.src;
-          image.alt = slide.alt;
-          title.textContent = slide.label;
-          position.textContent = `${{currentIndex + 1}} / ${{slideshowImages.length}}`;
-        }}
-
-        function openSlideshow(index) {{
-          if (!slideshowImages.length) return;
-          currentIndex = ((index % slideshowImages.length) + slideshowImages.length) % slideshowImages.length;
-          renderSlide();
-          if (!dialog.open) dialog.showModal();
-        }}
-
-        function move(delta) {{
-          if (!slideshowImages.length) return;
-          currentIndex = (currentIndex + delta + slideshowImages.length) % slideshowImages.length;
-          renderSlide();
-        }}
-
-        function closeSlideshow() {{
-          if (dialog.open) dialog.close();
-        }}
-
-        document.querySelectorAll("[data-slideshow-index]").forEach((card) => {{
-          card.addEventListener("click", () => {{
-            const index = Number(card.dataset.slideshowIndex);
-            openSlideshow(index);
-          }});
-        }});
-        previous.addEventListener("click", () => move(-1));
-        next.addEventListener("click", () => move(1));
-        close.addEventListener("click", closeSlideshow);
-        dialog.addEventListener("cancel", (event) => {{
-          event.preventDefault();
-          closeSlideshow();
-        }});
-        dialog.addEventListener("click", (event) => {{
-          if (event.target === dialog) closeSlideshow();
-        }});
-        dialog.addEventListener("keydown", (event) => {{
-          if (event.key === "ArrowLeft") move(-1);
-          if (event.key === "ArrowRight") move(1);
-          if (event.key === "Escape") closeSlideshow();
-        }});
-        stage.addEventListener("pointerdown", (event) => {{
-          pointerStart = {{ x: event.clientX, y: event.clientY }};
-          stage.setPointerCapture?.(event.pointerId);
-        }});
-        stage.addEventListener("pointerup", (event) => {{
-          if (!pointerStart) return;
-          const deltaX = event.clientX - pointerStart.x;
-          const deltaY = event.clientY - pointerStart.y;
-          pointerStart = null;
-          if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) >= 40) {{
-            move(deltaX < 0 ? 1 : -1);
-          }}
-        }});
-        stage.addEventListener("pointercancel", () => {{ pointerStart = null; }});
-      }})();
-    </script>
   </body>
 </html>
 """

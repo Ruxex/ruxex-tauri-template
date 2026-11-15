@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
 import {
+  useAllProjectList,
   useCollaborationModes,
   useCreateThread,
   useModelList,
   useProject,
-  useProjectList,
   useSendMessage,
   useSetThreadGoal,
 } from "../../app-server/hooks";
@@ -21,9 +21,9 @@ import {
   type PermissionMode,
 } from "../conversation/ComposerOptions";
 import { ComposerSettings } from "../conversation/ComposerSettings";
+import { ComposerTextInput } from "../conversation/ComposerTextInput";
 import { planCollaborationMode } from "../conversation/collaboration-model";
 import { isComposerSubmitShortcut } from "../conversation/composer-model";
-import { ComposerTextInput } from "../conversation/ComposerTextInput";
 import { SelectedComposerSkill } from "../conversation/SelectedComposerSkill";
 import { SlashCommandPalette } from "../conversation/SlashCommandPalette";
 import {
@@ -46,8 +46,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const models = useModelList();
   const { skills, visibleSkills } = useComposerSkills();
   const collaborationModes = useCollaborationModes();
-  const projects = useProjectList({
-    limit: 100,
+  const projects = useAllProjectList({
     sortKey: "position",
     sortDirection: "asc",
   });

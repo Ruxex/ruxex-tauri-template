@@ -124,7 +124,7 @@ export function ArchivePage() {
                 </button>
                 <button
                   aria-label="Delete"
-                  className="btn btn-ghost btn-sm btn-square text-error"
+                  className="btn btn-ghost btn-sm btn-square"
                   title="Delete"
                   disabled={deleteThread.isPending}
                   onClick={() => openDeleteDialog(thread)}

@@ -54,7 +54,7 @@ async function captureLargeChats(): Promise<void> {
       PAGE_DENSITY_COUNTS.large.unassignedThreads,
     {
       timeout: 20_000,
-      timeoutMsg: "The Unassigned tab should load every unassigned thread",
+      timeoutMsg: "The No project tab should load every unassigned thread",
     },
   );
   await saveFixtureScreenshot("chats-unassigned-many-top.png");

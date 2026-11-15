@@ -161,10 +161,10 @@ async function captureChatTabs(): Promise<void> {
   await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
   const selectedTab = $('button[role="tab"][aria-selected="true"]');
   await browser.waitUntil(
-    async () => (await selectedTab.getText()) === "Unassigned",
+    async () => (await selectedTab.getText()) === "No project",
     {
       timeout: 10_000,
-      timeoutMsg: "Unassigned should be the default Chats tab",
+      timeoutMsg: "No project should be the default Chats tab",
     },
   );
   await browser.waitUntil(
@@ -173,7 +173,7 @@ async function captureChatTabs(): Promise<void> {
       PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
     {
       timeout: 10_000,
-      timeoutMsg: "The Unassigned tab should show only unassigned chats",
+      timeoutMsg: "The No project tab should show only unassigned chats",
     },
   );
 
@@ -193,7 +193,7 @@ async function captureChatTabs(): Promise<void> {
 async function captureChatScopedSearch(): Promise<void> {
   await browser.url("tauri://localhost/#/chats");
   await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
-  await $("button=Unassigned").click();
+  await $("button=No project").click();
   const search = $('section.workbench-main input[aria-label="Search chats"]');
   await search.setValue("Fixture");
   await browser.waitUntil(
@@ -202,7 +202,7 @@ async function captureChatScopedSearch(): Promise<void> {
       PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
     {
       timeout: 15_000,
-      timeoutMsg: "Page search should stay scoped to Unassigned",
+      timeoutMsg: "Page search should stay scoped to No project",
     },
   );
   await saveFixtureScreenshot("chats-search-unassigned-ordinary.png");

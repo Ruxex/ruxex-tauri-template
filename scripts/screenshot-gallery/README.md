@@ -8,10 +8,8 @@ Page-density captures use `ordinary` and `many` in their filenames. Long lists
 may have separate `top`, `bottom`, or page-number screenshots so the gallery
 shows both page layout and overflow behavior.
 
-Click a screenshot card to open the slideshow at that image. Use the previous
-and next buttons, the left/right arrow keys, or swipe horizontally on the image
-to move through every screenshot in gallery order, including across page
-groups. Press `Escape` or the close button to return to the gallery.
+Screenshot cards are static previews. Use the browser page to scroll through
+the grouped screenshots; clicking a card does not open a separate viewer.
 
 Run it from the repository root:
 
