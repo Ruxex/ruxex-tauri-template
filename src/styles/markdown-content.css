@@ -1,0 +1,90 @@
+.selectable-content {
+  --markdown-border: color-mix(
+    in srgb,
+    var(--color-base-content) 16%,
+    transparent
+  );
+  --markdown-muted: color-mix(
+    in srgb,
+    var(--color-base-content) 5%,
+    var(--color-base-100)
+  );
+  line-height: 1.6;
+}
+
+.selectable-content [data-streamdown="heading-1"],
+.selectable-content [data-streamdown="heading-2"] {
+  border-bottom: 1px solid var(--markdown-border);
+  padding-bottom: 0.3em;
+}
+
+.selectable-content [data-streamdown^="heading-"] {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-block: 1.35em 0.65em;
+}
+
+.selectable-content [data-streamdown="heading-1"] {
+  font-size: 1.7em;
+}
+
+.selectable-content [data-streamdown="heading-2"] {
+  font-size: 1.4em;
+}
+
+.selectable-content [data-streamdown="heading-3"] {
+  font-size: 1.2em;
+}
+
+.selectable-content p {
+  margin-block: 0.75em;
+}
+
+.selectable-content [data-streamdown="link"] {
+  color: var(--color-primary);
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 0.15em;
+}
+
+.selectable-content [data-streamdown="inline-code"] {
+  background-color: var(--markdown-muted);
+  border: 1px solid var(--markdown-border);
+  border-radius: 0.35rem;
+  padding: 0.12em 0.35em;
+}
+
+.selectable-content [data-streamdown="code-block"] {
+  border: 1px solid var(--markdown-border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.selectable-content [data-streamdown="blockquote"] {
+  background-color: var(--markdown-muted);
+  border-left-color: var(--color-primary);
+  border-radius: 0 0.35rem 0.35rem 0;
+  padding-block: 0.25rem;
+}
+
+.selectable-content [data-streamdown="table-wrapper"] {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.selectable-content [data-streamdown="table"] {
+  font-size: 0.95em;
+}
+
+.selectable-content [data-streamdown="table-header"] {
+  background-color: var(--markdown-muted);
+}
+
+.selectable-content [data-streamdown="table-header-cell"],
+.selectable-content [data-streamdown="table-cell"] {
+  padding: 0.6rem 0.85rem;
+}
+
+.selectable-content [data-streamdown="horizontal-rule"] {
+  border-color: var(--markdown-border);
+}

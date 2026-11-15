@@ -73,6 +73,7 @@ export function MarkdownContent({
       lineNumbers={false}
       plugins={plugins}
       rehypePlugins={rehypePlugins}
+      shikiTheme={["github-light", "github-dark"]}
     >
       {text}
     </Streamdown>
