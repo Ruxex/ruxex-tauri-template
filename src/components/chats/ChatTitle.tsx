@@ -1,5 +1,9 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
+const MIN_TITLE_SCROLL_OVERFLOW_PX = 12;
+const TITLE_SCROLL_MS_PER_PIXEL = 37.5;
+const TITLE_SCROLL_START_DELAY_MS = 400;
+
 export function ChatTitle({
   isHovered,
   title,
@@ -33,8 +37,10 @@ export function ChatTitle({
     return () => observer.disconnect();
   }, [title]);
 
-  const isOverflowing = overflowDistance > 0;
-  const slideDurationMs = Math.max(4500, Math.round(overflowDistance * 37.5));
+  const isOverflowing = overflowDistance >= MIN_TITLE_SCROLL_OVERFLOW_PX;
+  const slideDurationMs = Math.round(
+    overflowDistance * TITLE_SCROLL_MS_PER_PIXEL,
+  );
 
   return (
     <span
@@ -56,7 +62,9 @@ export function ChatTitle({
           data-title-marquee
           style={{
             transform: `translateX(${isHovered ? -overflowDistance : 0}px)`,
-            transitionDelay: isHovered ? "200ms" : "0ms",
+            transitionDelay: isHovered
+              ? `${TITLE_SCROLL_START_DELAY_MS}ms`
+              : "0ms",
             transitionDuration: `${slideDurationMs}ms`,
           }}
         >

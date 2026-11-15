@@ -123,6 +123,19 @@ export function ScheduleDetailPage() {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <input
+            aria-label={`${currentSchedule.enabled ? "Disable" : "Enable"} schedule: ${currentSchedule.name}`}
+            checked={currentSchedule.enabled}
+            className="toggle toggle-primary toggle-sm"
+            disabled={schedules.setEnabled.isPending}
+            onChange={(event) =>
+              schedules.setEnabled.mutate({
+                id: currentSchedule.id,
+                enabled: event.target.checked,
+              })
+            }
+            type="checkbox"
+          />
           <button
             aria-label={`Edit schedule: ${currentSchedule.name}`}
             className="btn btn-ghost btn-sm btn-square"
@@ -159,6 +172,12 @@ export function ScheduleDetailPage() {
           </button>
         </div>
       </header>
+      {schedules.setEnabled.isError && (
+        <p className="text-sm text-error" role="alert">
+          Unable to update schedule status:{" "}
+          {formatErrorMessage(schedules.setEnabled.error)}
+        </p>
+      )}
       <section className="rounded-box border border-base-300 bg-base-100 p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -252,13 +271,12 @@ function ScheduleHistoryItem({
     );
   }
 
-  const thread =
-    threadQuery.data?.thread ?? {
-      id: threadId,
-      name: null,
-      preview: run.message || "Automation run",
-      updatedAt: Math.floor(new Date(run.at).getTime() / 1000),
-    };
+  const thread = threadQuery.data?.thread ?? {
+    id: threadId,
+    name: null,
+    preview: run.message || "Automation run",
+    updatedAt: Math.floor(new Date(run.at).getTime() / 1000),
+  };
   return (
     <li>
       <ThreadCard

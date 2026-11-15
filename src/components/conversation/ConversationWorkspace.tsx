@@ -251,7 +251,7 @@ export function ConversationWorkspace({
   return (
     <div
       className={[
-        "chat-workspace mx-auto grid min-h-full w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+        "chat-workspace mx-auto grid h-full min-h-0 w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
         ...chatGridClasses,
         ...(hasMinimap ? ["chat-workspace--has-minimap"] : []),
         ...(hasSummary ? ["chat-workspace--has-summary"] : []),

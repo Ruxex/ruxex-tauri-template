@@ -361,7 +361,7 @@ describe("ChatListItem", () => {
     fireEvent.mouseEnter(titleRegion);
     expect(marquee?.className).toContain("transition-transform");
     expect(marquee?.style.transform).toBe("translateX(-120px)");
-    expect(marquee?.style.transitionDelay).toBe("200ms");
+    expect(marquee?.style.transitionDelay).toBe("400ms");
     expect(marquee?.style.transitionDuration).toBe("4500ms");
     expect(marquee?.className).toContain("ease-linear");
     expect(titleText?.className).toContain("opacity-0");
