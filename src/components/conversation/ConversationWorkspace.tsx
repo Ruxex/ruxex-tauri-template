@@ -190,7 +190,23 @@ export function ConversationWorkspace({
   }
   if (conversation.isError || !conversation.data) {
     return (
-      <p className="alert alert-error">Unable to load this conversation.</p>
+      <div
+        aria-busy={conversation.isFetching}
+        className="alert alert-error flex flex-wrap items-center justify-between gap-3"
+        role="alert"
+      >
+        <p>
+          Unable to load this conversation. Check your connection and try again.
+        </p>
+        <button
+          className="btn btn-sm"
+          disabled={conversation.isFetching}
+          onClick={() => void conversation.resync().catch(() => undefined)}
+          type="button"
+        >
+          {conversation.isFetching ? "Retrying…" : "Retry"}
+        </button>
+      </div>
     );
   }
 
@@ -247,7 +263,7 @@ export function ConversationWorkspace({
       {hasMinimap && (
         <ConversationMinimap items={items} timelineRef={timelineRef} />
       )}
-      <main className="chat-main-column flex h-full min-h-0 w-full min-w-0 max-w-[53rem] justify-self-center flex-col gap-4">
+      <div className="chat-main-column flex h-full min-h-0 w-full min-w-0 max-w-[53rem] justify-self-center flex-col gap-4">
         {turnError && (
           <p className="alert alert-error" role="alert">
             <span>Turn failed: {turnError.message}</span>
@@ -285,7 +301,7 @@ export function ConversationWorkspace({
             reasoningEffort={conversation.data.thread.reasoningEffort}
           />
         </div>
-      </main>
+      </div>
       {hasSummary && (
         <ThreadSummaryPanel
           gitDiff={gitDiff}

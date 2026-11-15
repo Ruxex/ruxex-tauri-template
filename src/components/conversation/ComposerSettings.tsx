@@ -76,7 +76,12 @@ export function ComposerSettings({
           </select>
         </label>
         <label className="form-control mt-3">
-          <span className="label-text text-xs font-medium">Effort</span>
+          <span className="label-text text-xs font-medium">
+            Effort{" "}
+            <span className="font-normal text-base-content/60">
+              (reasoning depth)
+            </span>
+          </span>
           <select
             aria-label="Effort"
             className="select select-bordered select-sm mt-1"

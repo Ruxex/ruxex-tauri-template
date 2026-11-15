@@ -1,12 +1,13 @@
 import {
   ChevronRightIcon,
   FolderIcon,
+  MagnifyingGlassIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useProjectList } from "../../app-server/hooks";
+import { useAllProjectList } from "../../app-server/hooks";
 import { EmptyState } from "../common/AsyncState";
 import { ThreadList } from "../sidebar/ThreadList";
 import { ChatSearchBox } from "./ChatSearchBox";
@@ -18,14 +19,22 @@ export function ChatSidebarSections({
   onClose: () => void;
   selectedThreadId?: string;
 }) {
+  const [projectSearch, setProjectSearch] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<
     Record<string, boolean>
   >({});
-  const projects = useProjectList({
+  const projects = useAllProjectList({
     limit: 100,
     sortKey: "position",
     sortDirection: "asc",
   });
+  const allProjects = projects.data?.data ?? [];
+  const normalizedProjectSearch = projectSearch.trim().toLocaleLowerCase();
+  const visibleProjects = normalizedProjectSearch
+    ? allProjects.filter((project) =>
+        project.name.toLocaleLowerCase().includes(normalizedProjectSearch),
+      )
+    : allProjects;
 
   return (
     <nav aria-label="Chat navigation" className="flex min-h-0 flex-1 flex-col">
@@ -65,63 +74,118 @@ export function ChatSidebarSections({
             />
             <span>Projects</span>
           </summary>
-          <div className="w-full space-y-1" id="projects-list">
+          <div className="w-full" id="projects-list">
+            {allProjects.length > 8 && (
+              <search className="mb-2 block">
+                <label className="input input-bordered input-sm mx-2 flex w-[calc(100%-1rem)] items-center gap-2">
+                  <MagnifyingGlassIcon
+                    aria-hidden="true"
+                    className="size-4 shrink-0"
+                  />
+                  <span className="sr-only">Filter projects</span>
+                  <input
+                    className="min-w-0 grow bg-transparent"
+                    onChange={(event) => setProjectSearch(event.target.value)}
+                    placeholder="Filter projects"
+                    type="search"
+                    value={projectSearch}
+                  />
+                </label>
+              </search>
+            )}
             {projects.isLoading && (
-              <span className="loading loading-spinner loading-sm mx-3" />
+              <span
+                className="mx-3 inline-flex items-center gap-2"
+                role="status"
+              >
+                <span
+                  aria-hidden="true"
+                  className="loading loading-spinner loading-sm"
+                />
+                <span className="sr-only">Loading projects…</span>
+              </span>
             )}
             {projects.isError && (
-              <p className="px-3 text-xs text-error">
+              <div
+                aria-busy={projects.isFetching}
+                className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-error"
+                role="alert"
+              >
                 Unable to load projects.
-              </p>
-            )}
-            {projects.data?.data.map((project) => (
-              <li className="min-w-0" key={project.id}>
                 <button
-                  aria-controls={`project-chats-${project.id}`}
-                  aria-expanded={Boolean(expandedProjects[project.id])}
-                  aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
-                  className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-3"
+                  className="btn btn-ghost btn-xs"
+                  disabled={projects.isFetching}
+                  onClick={() => void projects.refetch()}
                   type="button"
-                  onClick={() =>
-                    setExpandedProjects((current) => ({
-                      ...current,
-                      [project.id]: !current[project.id],
-                    }))
-                  }
                 >
-                  <ChevronRightIcon
-                    aria-hidden="true"
-                    className={`size-4 transition-transform ${expandedProjects[project.id] ? "rotate-90" : ""}`}
-                  />
-                  <FolderIcon aria-hidden="true" className="size-4 shrink-0" />
-                  <span className="min-w-0 truncate">{project.name}</span>
+                  {projects.isFetching ? "Retrying…" : "Retry"}
                 </button>
-                {expandedProjects[project.id] && (
-                  <div className="pl-8" id={`project-chats-${project.id}`}>
-                    <ThreadList
-                      onSelect={onClose}
-                      projectId={project.id}
-                      selectedThreadId={selectedThreadId}
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
-            {!projects.isLoading && !projects.data?.data.length && (
-              <div className="px-1">
-                <EmptyState
-                  action={
-                    <Link className="btn btn-ghost btn-xs" to="/projects">
-                      Open projects
-                    </Link>
-                  }
-                  compact
-                  description="Create a project to organize chats and workspaces."
-                  icon={FolderIcon}
-                  title="No projects yet"
-                />
               </div>
             )}
+            {visibleProjects.length > 0 && (
+              <ul className="w-full space-y-1" role="list">
+                {visibleProjects.map((project) => (
+                  <li className="min-w-0" key={project.id}>
+                    <button
+                      aria-controls={`project-chats-${project.id}`}
+                      aria-expanded={Boolean(expandedProjects[project.id])}
+                      aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
+                      className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-3"
+                      type="button"
+                      onClick={() =>
+                        setExpandedProjects((current) => ({
+                          ...current,
+                          [project.id]: !current[project.id],
+                        }))
+                      }
+                    >
+                      <ChevronRightIcon
+                        aria-hidden="true"
+                        className={`size-4 transition-transform ${expandedProjects[project.id] ? "rotate-90" : ""}`}
+                      />
+                      <FolderIcon
+                        aria-hidden="true"
+                        className="size-4 shrink-0"
+                      />
+                      <span className="min-w-0 truncate">{project.name}</span>
+                    </button>
+                    {expandedProjects[project.id] && (
+                      <div className="pl-8" id={`project-chats-${project.id}`}>
+                        <ThreadList
+                          onSelect={onClose}
+                          projectId={project.id}
+                          selectedThreadId={selectedThreadId}
+                        />
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!projects.isLoading &&
+              allProjects.length > 0 &&
+              !visibleProjects.length && (
+                <p className="px-3 py-2 text-xs text-base-content/60">
+                  No projects match this filter.
+                </p>
+              )}
+            {!projects.isLoading &&
+              !projects.isError &&
+              !allProjects.length && (
+                <div className="px-1">
+                  <EmptyState
+                    action={
+                      <Link className="btn btn-ghost btn-xs" to="/projects">
+                        Open projects
+                      </Link>
+                    }
+                    compact
+                    description="Create a project to organize chats and workspaces."
+                    icon={FolderIcon}
+                    title="No projects yet"
+                  />
+                </div>
+              )}
           </div>
         </details>
       </div>

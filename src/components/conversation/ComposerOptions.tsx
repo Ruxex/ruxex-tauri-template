@@ -111,10 +111,27 @@ type PermissionMenuProps = {
   onModeChange: (mode: PermissionMode) => void;
 };
 
-const permissionOptions: Array<{ label: string; mode: PermissionMode }> = [
-  { label: "Ask for approval", mode: "ask" },
-  { label: "Read-only", mode: "read-only" },
-  { label: "Full access", mode: "full-access" },
+const permissionOptions: Array<{
+  description: string;
+  label: string;
+  mode: PermissionMode;
+}> = [
+  {
+    description: "Ask before actions that need approval.",
+    label: "Ask for approval",
+    mode: "ask",
+  },
+  {
+    description:
+      "Can inspect files but cannot change them or access the network.",
+    label: "Read-only",
+    mode: "read-only",
+  },
+  {
+    description: "Can change files and use tools without approval.",
+    label: "Full access",
+    mode: "full-access",
+  },
 ];
 
 function permissionModeLabel(mode: PermissionMode): string {
@@ -152,6 +169,7 @@ export function PermissionMenu({
           <li key={option.mode}>
             <button
               aria-current={mode === option.mode ? "true" : undefined}
+              aria-description={option.description}
               aria-label={option.label}
               disabled={disabled}
               onClick={(event) => {
@@ -161,7 +179,12 @@ export function PermissionMenu({
               role="menuitem"
               type="button"
             >
-              {option.label}
+              <span className="flex flex-col items-start">
+                <span>{option.label}</span>
+                <span className="text-xs font-normal text-base-content/60">
+                  {option.description}
+                </span>
+              </span>
             </button>
           </li>
         ))}
@@ -222,11 +245,22 @@ export function SubmissionModeMenu({
                 closeDropdown(event);
               }}
             >
-              {option === "send"
-                ? "Send"
-                : option === "steer"
-                  ? "Steer active turn"
-                  : "Queue next message"}
+              <span className="flex flex-col items-start">
+                <span>
+                  {option === "send"
+                    ? "Send"
+                    : option === "steer"
+                      ? "Steer active turn"
+                      : "Queue next message"}
+                </span>
+                <span className="text-xs font-normal text-base-content/60">
+                  {option === "send"
+                    ? "Start a new turn with this message."
+                    : option === "steer"
+                      ? "Add this message to the current response."
+                      : "Send it after the current turn finishes."}
+                </span>
+              </span>
             </button>
           </li>
         ))}
