@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useBranding } from "../../app/branding-context";
 import {
   rejectServerRequestWithMessage,
@@ -58,6 +65,16 @@ export function ConversationWorkspace({
   const liveItemsRef = useRef(liveItems);
   liveItemsRef.current = liveItems;
   const liveStatus = liveThread?.status;
+
+  useLayoutEffect(() => {
+    const scrollContainer = timelineRef.current?.closest<HTMLElement>(
+      "[data-conversation-scroll]",
+    );
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    }
+  }, [conversation.isLoading, conversation.isPending, threadId]);
+
   const authoritativeItems = conversation.data?.items.data;
   const turns = conversation.data?.turns.data;
   const latestTurn = turns?.at(-1);
@@ -278,6 +295,7 @@ export function ConversationWorkspace({
           </p>
         )}
         <ChatActivityTimeline
+          key={threadId}
           connected={events.connected ?? true}
           items={items}
           liveStatus={liveStatus}
