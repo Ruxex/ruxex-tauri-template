@@ -2,6 +2,7 @@ import {
   ChevronRightIcon,
   FolderIcon,
   MagnifyingGlassIcon,
+  PencilSquareIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -126,29 +127,42 @@ export function ChatSidebarSections({
               <ul className="w-full space-y-1" role="list">
                 {visibleProjects.map((project) => (
                   <li className="min-w-0" key={project.id}>
-                    <button
-                      aria-controls={`project-chats-${project.id}`}
-                      aria-expanded={Boolean(expandedProjects[project.id])}
-                      aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
-                      className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-3"
-                      type="button"
-                      onClick={() =>
-                        setExpandedProjects((current) => ({
-                          ...current,
-                          [project.id]: !current[project.id],
-                        }))
-                      }
-                    >
-                      <ChevronRightIcon
-                        aria-hidden="true"
-                        className={`size-4 transition-transform ${expandedProjects[project.id] ? "rotate-90" : ""}`}
-                      />
-                      <FolderIcon
-                        aria-hidden="true"
-                        className="size-4 shrink-0"
-                      />
-                      <span className="min-w-0 truncate">{project.name}</span>
-                    </button>
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_2rem] items-center gap-1">
+                      <button
+                        aria-controls={`project-chats-${project.id}`}
+                        aria-expanded={Boolean(expandedProjects[project.id])}
+                        aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
+                        className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-3"
+                        type="button"
+                        onClick={() =>
+                          setExpandedProjects((current) => ({
+                            ...current,
+                            [project.id]: !current[project.id],
+                          }))
+                        }
+                      >
+                        <ChevronRightIcon
+                          aria-hidden="true"
+                          className={`size-4 shrink-0 transition-transform ${expandedProjects[project.id] ? "rotate-90" : ""}`}
+                        />
+                        <FolderIcon
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                        />
+                        <span className="min-w-0 truncate">{project.name}</span>
+                      </button>
+                      <Link
+                        aria-label={`New chat in ${project.name}`}
+                        className="btn btn-ghost btn-sm btn-square size-8 shrink-0"
+                        title={`New chat in ${project.name}`}
+                        to={`/?projectId=${encodeURIComponent(project.id)}`}
+                      >
+                        <PencilSquareIcon
+                          aria-hidden="true"
+                          className="size-4"
+                        />
+                      </Link>
+                    </div>
                     {expandedProjects[project.id] && (
                       <div className="pl-8" id={`project-chats-${project.id}`}>
                         <ThreadList
