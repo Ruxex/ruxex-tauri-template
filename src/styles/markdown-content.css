@@ -161,8 +161,10 @@
 
 .selectable-content [data-streamdown="code-block-header"] > span,
 .selectable-content [data-streamdown="mermaid-block"] > div:first-child > span {
+  display: inline-flex;
   position: relative;
   min-height: 24px;
+  align-items: center;
   padding-inline: 10px;
   margin-block-end: -1px;
   border: 1px solid var(--markdown-border-muted);
