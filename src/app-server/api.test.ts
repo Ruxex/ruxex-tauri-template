@@ -45,6 +45,7 @@ describe("requestAppServerMethod", () => {
   it("uses the app-server harness for connection status and request resolution", async () => {
     await expect(ensureAppServer()).resolves.toEqual({
       socketPath: "/tmp/ruxex-test.sock",
+      homeDataDir: "/home/test/.ruxex",
       appServerVersion: "test-app-server",
     });
 

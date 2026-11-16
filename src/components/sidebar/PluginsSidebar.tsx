@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ChevronRightIcon,
   PuzzlePieceIcon,
@@ -11,6 +12,7 @@ import { MarketplaceAssetImage } from "../plugins/MarketplaceAssetImage";
 import { SidebarHeader } from "./SidebarHeader";
 
 export function PluginsSidebar({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation("navigation");
   const navigate = useNavigate();
   const location = useLocation();
   const plugins = usePluginList();
@@ -35,15 +37,18 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
 
   return (
     <aside
-      aria-label="Capabilities sidebar"
+      aria-label={t("navigation:capabilitiesSidebar")}
       className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
     >
-      <SidebarHeader label="Capabilities" onClose={onClose} />
-      <nav aria-label="Capability sections" className="menu w-full gap-1 p-0">
+      <SidebarHeader label={t("navigation:capabilities")} onClose={onClose} />
+      <nav
+        aria-label={t("navigation:capabilitySections")}
+        className="menu w-full gap-1 p-0"
+      >
         {(
           [
-            ["plugins", "Plugins", PuzzlePieceIcon],
-            ["skills", "Skills", SparklesIcon],
+            ["plugins", t("navigation:plugins"), PuzzlePieceIcon],
+            ["skills", t("navigation:skills"), SparklesIcon],
             ["mcp", "MCP", ServerIcon],
           ] as const
         ).map(([tab, label, Icon]) => (
@@ -68,7 +73,11 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
             className="size-4 shrink-0 transition-transform group-open:rotate-90"
           />
           <span>
-            Installed{plugins.isLoading ? "" : ` (${installedPlugins.length})`}
+            {plugins.isLoading
+              ? t("navigation:installed")
+              : t("navigation:installedCount", {
+                  count: installedPlugins.length,
+                })}
           </span>
         </summary>
         <div className="pl-4 pt-1">
@@ -77,12 +86,12 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
           )}
           {plugins.isError && (
             <p className="px-3 py-2 text-xs text-error">
-              Unable to load installed plugins.
+              {t("navigation:unableToLoadInstalledPlugins")}
             </p>
           )}
           {!plugins.isLoading && !installedPlugins.length && (
             <p className="px-3 py-2 text-xs text-base-content/60">
-              No installed plugins.
+              {t("navigation:noInstalledPlugins")}
             </p>
           )}
           {installedPlugins.length > 0 && (

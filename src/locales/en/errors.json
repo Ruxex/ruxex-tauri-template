@@ -1,0 +1,9 @@
+{
+  "unableToDisplay": "Unable to display the error.",
+  "pluginLocalMarketplaceRequired": "Plugin details require a local marketplace.",
+  "mcpResourceSelectionRequired": "MCP Resource selection is required.",
+  "marketplaceImageSourceNotAllowed": "This marketplace image source is not allowed.",
+  "marketplaceImagePathNotAllowed": "This marketplace image path is not allowed.",
+  "imageReadFailed": "Unable to read image attachment.",
+  "audioReadFailed": "Unable to read captured audio."
+}

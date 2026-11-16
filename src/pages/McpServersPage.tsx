@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo, useRef, useState } from "react";
 
 import { formatErrorMessage } from "../app/error-message";
@@ -24,6 +25,7 @@ type OpenDialog = {
 };
 
 export function McpServersPage() {
+  const { t } = useTranslation("mcp");
   const globalConfig = useGlobalMcpConfig();
   const statuses = useAllMcpServerStatus();
   const [dialog, setDialog] = useState<OpenDialog | null>(null);
@@ -69,11 +71,7 @@ export function McpServersPage() {
   }
 
   async function handleDelete(entry: McpServerEntry) {
-    if (
-      !window.confirm(
-        `Delete MCP server “${entry.name}”? This removes only the global user configuration entry.`,
-      )
-    ) {
+    if (!window.confirm(t("deleteServerConfirmation", { name: entry.name }))) {
       return;
     }
 
@@ -95,14 +93,14 @@ export function McpServersPage() {
   return (
     <PageContainer>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">MCP servers</h1>
+        <h1 className="text-3xl font-semibold">{t("mcpServers")}</h1>
         <button
-          aria-label="Add MCP server"
+          aria-label={t("addMcpServer")}
           className="btn btn-primary"
           type="button"
           onClick={(event) => openAddDialog(event.currentTarget)}
         >
-          Add MCP server
+          {t("addMcpServer")}
         </button>
       </div>
 
@@ -112,7 +110,7 @@ export function McpServersPage() {
         </p>
       )}
 
-      <SettingsPanel title="Configured MCP servers">
+      <SettingsPanel title={t("configuredMcpServers")}>
         {globalConfig.isLoading && (
           <div className="px-5 py-4">
             <span className="loading loading-spinner" />
@@ -120,21 +118,23 @@ export function McpServersPage() {
         )}
         {globalConfig.isError && (
           <p className="px-5 py-4 text-error" role="alert">
-            Unable to load global MCP servers:{" "}
-            {formatErrorMessage(globalConfig.error)}
+            {t("unableToLoadGlobalMcpServers", {
+              details: formatErrorMessage(globalConfig.error),
+            })}
           </p>
         )}
         {statuses.isError && (
           <p className="px-5 py-4 text-error" role="alert">
-            Unable to load MCP runtime status:{" "}
-            {formatErrorMessage(statuses.error)}
+            {t("unableToLoadMcpRuntimeStatus", {
+              details: formatErrorMessage(statuses.error),
+            })}
           </p>
         )}
         {!globalConfig.isLoading &&
           !globalConfig.isError &&
           !entries.length && (
             <p className="px-5 py-4 text-sm text-base-content/60">
-              No global MCP servers configured.
+              {t("noGlobalMcpServersConfigured")}
             </p>
           )}
         {entries.length > 0 && (
@@ -166,14 +166,16 @@ export function McpServersPage() {
             </p>
             <button
               aria-label={
-                actions.reloadMcp.isPending ? "Reloading…" : "Retry MCP reload"
+                actions.reloadMcp.isPending
+                  ? t("reloading")
+                  : t("retryMcpReload")
               }
               className="btn btn-ghost btn-sm"
               type="button"
               disabled={actions.reloadMcp.isPending}
               onClick={() => void actions.retryReload()}
             >
-              Retry MCP reload
+              {t("retryMcpReload")}
             </button>
           </div>
         )}

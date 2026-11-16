@@ -26,6 +26,16 @@ describe("MockAppServer", () => {
     ]);
   });
 
+  it("creates distinct chat workspaces under the mock data home", async () => {
+    const server = new MockAppServer();
+
+    const first = await server.invoke("create_chat_workspace");
+    const second = await server.invoke("create_chat_workspace");
+
+    expect(first).toBe("/home/test/.ruxex/workspaces/chat-1");
+    expect(second).toBe("/home/test/.ruxex/workspaces/chat-2");
+  });
+
   it("delivers protocol events and stops after unsubscribe", () => {
     const server = new MockAppServer();
     const received: AppServerEvent[] = [];

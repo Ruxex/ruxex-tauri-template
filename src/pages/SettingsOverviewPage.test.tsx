@@ -177,4 +177,43 @@ describe("SettingsOverviewPage", () => {
       "Shortcut is already in use.",
     );
   });
+  it("updates an existing fallback error without reloading the native shortcut", async () => {
+    readQuickPanelShortcut.mockRejectedValueOnce("native failure");
+    renderPage();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Unable to load quick panel shortcut.",
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "Language" }), {
+      target: { value: "ja" },
+    });
+    expect(screen.getByRole("alert").textContent).toBe(
+      "クイックパネルのショートカットを読み込めませんでした。",
+    );
+    expect(readQuickPanelShortcut).toHaveBeenCalledTimes(1);
+  });
+});
+
+it("switches general settings and accessible names live using native language names", async () => {
+  readQuickPanelShortcut.mockResolvedValue({
+    shortcut: "CmdOrCtrl+Alt+R",
+    defaultShortcut: "CmdOrCtrl+Shift+Space",
+  });
+  window.localStorage.clear();
+  renderPage();
+  const language = screen.getByRole("combobox", { name: "Language" });
+  fireEvent.change(language, { target: { value: "ja" } });
+  expect(screen.getByRole("heading", { name: "一般" })).toBeTruthy();
+  expect(screen.getByRole("combobox", { name: "言語" })).toBeTruthy();
+  expect(
+    screen.getByRole("checkbox", { name: "デスクトップ通知" }),
+  ).toBeTruthy();
+  expect(
+    await screen.findByRole("textbox", {
+      name: "クイックパネルのショートカット",
+    }),
+  ).toBeTruthy();
+  expect(screen.getByRole("option", { name: "English" })).toBeTruthy();
+  expect(screen.getByRole("option", { name: "日本語" })).toBeTruthy();
+  fireEvent.change(language, { target: { value: "en" } });
+  expect(screen.getByRole("heading", { name: "General" })).toBeTruthy();
 });

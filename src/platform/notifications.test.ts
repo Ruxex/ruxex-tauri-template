@@ -144,3 +144,51 @@ describe("notification adapter", () => {
     });
   });
 });
+
+describe("Japanese notification framing", () => {
+  it("localizes titles and templates while retaining protocol status and server text", () => {
+    expect(classifyAppServerEvent(completed(), "ja")).toMatchObject({
+      title: "ターンが完了しました",
+      body: "ターンが次のステータスで終了しました: completed。",
+    });
+    expect(
+      classifyAppServerEvent(
+        {
+          type: "disconnected",
+          data: { message: "provider/socket closed" },
+        } as AppServerEvent,
+        "ja",
+      ),
+    ).toMatchObject({
+      title: "App Server の接続が切れました",
+      body: "provider/socket closed",
+    });
+    expect(
+      classifyAppServerEvent(
+        { type: "serverRequest", data: { id: 7 } } as AppServerEvent,
+        "ja",
+      ),
+    ).toMatchObject({
+      title: "操作が必要です",
+      body: "App Server が承認または入力を待っています。",
+    });
+  });
+});
+
+it("reads the current notification language for each dispatch", async () => {
+  const send = vi.fn().mockResolvedValue(undefined);
+  let language: "en" | "ja" = "en";
+  const dispatcher = createNotificationDispatcher({
+    language: () => language,
+    isFocused: () => false,
+    send,
+  });
+  await dispatcher.dispatch(completed("english"));
+  language = "ja";
+  await dispatcher.dispatch(completed("japanese"));
+  expect(send.mock.calls[0][0]).toMatchObject({ title: "Turn completed" });
+  expect(send.mock.calls[1][0]).toMatchObject({
+    title: "ターンが完了しました",
+    body: "ターンが次のステータスで終了しました: completed。",
+  });
+});

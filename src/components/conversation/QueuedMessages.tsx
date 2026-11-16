@@ -1,9 +1,12 @@
+import { useTranslation } from "react-i18next";
 import { PhotoIcon, QueueListIcon } from "@heroicons/react/24/outline";
 
 import type { v2 } from "../../protocol";
 import { useThreadQueue } from "../../app-server/hooks";
 
 export function QueuedMessages({ threadId }: { threadId: string }) {
+  const { t } = useTranslation("conversation");
+
   const queue = useThreadQueue(threadId);
   const submissions = queue.data?.data ?? [];
 
@@ -13,7 +16,7 @@ export function QueuedMessages({ threadId }: { threadId: string }) {
 
   return (
     <section
-      aria-label="Queued messages"
+      aria-label={t("queuedMessages")}
       className="flex justify-end"
       data-testid="queued-messages"
     >
@@ -27,6 +30,8 @@ export function QueuedMessages({ threadId }: { threadId: string }) {
 }
 
 function QueuedMessage({ submission }: { submission: v2.QueuedSubmission }) {
+  const { t } = useTranslation("conversation");
+
   const text = submission.input
     .map((input) => (input.type === "text" ? input.text : null))
     .filter((value): value is string => value !== null)
@@ -47,7 +52,8 @@ function QueuedMessage({ submission }: { submission: v2.QueuedSubmission }) {
           />
         )}
         <p className="whitespace-pre-wrap break-words">
-          {text || (hasNonTextInput ? "Image attachment" : "Queued message")}
+          {text ||
+            (hasNonTextInput ? t("imageAttachment") : t("queuedMessage"))}
         </p>
       </div>
     </article>

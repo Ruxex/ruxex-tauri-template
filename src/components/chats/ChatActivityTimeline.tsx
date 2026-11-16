@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment, memo } from "react";
 import type { RefObject } from "react";
 
@@ -64,6 +65,8 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   workingStartedAt,
   completedTurn,
 }: ChatActivityTimelineProps) {
+  const { t } = useTranslation("chats");
+
   const visibleItems = items.filter(isVisibleTimelineItem);
   const timelineRef = useTimelineAutoScroll({
     items: visibleItems,
@@ -88,14 +91,16 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
     showActiveIndicator ? workingStartedAt : null,
   );
   const workingLabel =
-    workingSeconds === null ? "Working" : `Working for ${workingSeconds}s`;
+    workingSeconds === null
+      ? t("working")
+      : t("workingFor", { count: workingSeconds });
   const workedSeconds = completedTurn
     ? getTurnDurationSeconds(completedTurn)
     : null;
   const workedLabel =
     workedSeconds === null
-      ? "Worked"
-      : `Worked for ${formatDuration(workedSeconds)}`;
+      ? t("worked")
+      : t("workedFor", { duration: formatDuration(workedSeconds) });
   const indicatorLabel = showActiveIndicator ? workingLabel : workedLabel;
   const indicatorTurnId = showActiveIndicator
     ? workingTurnId
@@ -105,7 +110,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   return (
     <section
       aria-busy={isBusy}
-      aria-label="Chat activity"
+      aria-label={t("chatActivity")}
       className="space-y-0 bg-base-200 p-4"
       ref={timelineRef}
     >
@@ -177,7 +182,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
         !showCompletedIndicator &&
         !showIndicator && (
           <p className="py-12 text-center text-base-content/60">
-            No activity yet.
+            {t("noActivityYet")}
           </p>
         )}
     </section>

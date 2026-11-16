@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type { v2 } from "../../protocol";
 import type { StateBadgeTone } from "../common/StateBadge";
 
@@ -6,21 +7,30 @@ export function mcpConnectionStatusLabel(
 ): string {
   switch (status) {
     case "connected":
-      return "Connected";
+      return i18n.t("connected", { ns: "mcp", lng: i18n.resolvedLanguage });
     case "starting":
-      return "Starting";
+      return i18n.t("starting", { ns: "mcp", lng: i18n.resolvedLanguage });
     case "authenticationRequired":
-      return "Authentication required";
+      return i18n.t("authenticationRequired", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
     case "failed":
-      return "Connection failed";
+      return i18n.t("connectionFailed", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
     case "cancelled":
-      return "Cancelled";
+      return i18n.t("cancelled", { ns: "mcp", lng: i18n.resolvedLanguage });
     case "disabled":
-      return "Disabled";
+      return i18n.t("disabled", { ns: "mcp", lng: i18n.resolvedLanguage });
     case "notStarted":
-      return "Not started";
+      return i18n.t("notStarted", { ns: "mcp", lng: i18n.resolvedLanguage });
     default:
-      return "Status unavailable";
+      return i18n.t("statusUnavailable", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
   }
 }
 
@@ -29,15 +39,30 @@ export function mcpAuthStatusLabel(
 ): string {
   switch (status) {
     case "oAuth":
-      return "OAuth connected";
+      return i18n.t("oauthConnected", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
     case "bearerToken":
-      return "Bearer token configured";
+      return i18n.t("bearerTokenConfigured", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
     case "notLoggedIn":
-      return "Authentication not configured";
+      return i18n.t("authenticationNotConfigured", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
     case "unsupported":
-      return "Authentication unsupported";
+      return i18n.t("authenticationUnsupported", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
     default:
-      return "Authentication status unavailable";
+      return i18n.t("authenticationStatusUnavailable", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      });
   }
 }
 

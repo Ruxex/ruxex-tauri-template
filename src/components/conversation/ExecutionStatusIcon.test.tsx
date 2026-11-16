@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { i18n } from "../../app/i18n";
 import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
 import {
   ExecutionStatusSummary,
@@ -81,4 +82,31 @@ describe("ExecutionStatusIcon", () => {
 
     expect(container.firstChild).toBeNull();
   });
+  it("updates the default command subject in a standalone summary when language changes", async () => {
+    const { container } = render(<ExecutionStatusSummary status="completed" />);
+    const summary = within(container);
+    expect(
+      summary.getByRole("img", { name: "Command completed" }),
+    ).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(summary.getByRole("img", { name: "コマンドが完了" })).toBeTruthy();
+  });
+  it.each([
+    ["declined", "拒否"],
+    ["interrupted", "中断"],
+    ["future-status", "future-status"],
+  ])(
+    "localizes known Japanese execution status %s and retains unknown values",
+    async (status, label) => {
+      await i18n.changeLanguage("ja");
+      const { container } = render(<ExecutionStatusIcon status={status} />);
+      const icon = within(container).getByRole("img", {
+        name: `コマンドの状態: ${label}`,
+      });
+      expect(icon.getAttribute("title")).toBe(`コマンドの状態: ${label}`);
+      expect(icon.className).toContain("text-warning");
+    },
+  );
 });

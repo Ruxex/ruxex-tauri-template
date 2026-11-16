@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -22,12 +23,17 @@ export function UiPreferencesCard({
   preset,
   onThemePresetChange,
 }: UiPreferencesCardProps) {
+  const { t } = useTranslation("settings");
   const selectedPreset =
     UI_THEME_PRESETS.find((option) => option.id === preset) ??
     UI_THEME_PRESETS[0];
 
   return (
-    <SettingsPanel allowOverflow icon={PaintBrushIcon} title="Interface">
+    <SettingsPanel
+      allowOverflow
+      icon={PaintBrushIcon}
+      title={t("settings:interface")}
+    >
       <div className="text-sm">
         <div className="px-5 py-3.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -38,10 +44,12 @@ export function UiPreferencesCard({
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-3 transition-colors hover:border-primary/60 hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                 <span className="min-w-0">
                   <span className="block text-xs text-base-content/60">
-                    Theme preset
+                    {t("settings:themePreset")}
                   </span>
                   <span className="block truncate font-medium">
-                    {selectedPreset.label}
+                    {selectedPreset.id === "system"
+                      ? t("settings:system")
+                      : selectedPreset.label}
                   </span>
                 </span>
                 <ChevronDownIcon
@@ -51,11 +59,13 @@ export function UiPreferencesCard({
               </summary>
               <div className="absolute left-0 right-0 top-full z-[60] mt-3 max-h-[min(70vh,32rem)] overflow-y-auto rounded-box border border-base-300 bg-base-100 p-3 shadow-xl">
                 <fieldset
-                  aria-label="Theme preset options"
+                  aria-label={t("settings:themePresetOptions")}
                   aria-describedby="theme-preset-attribution"
                   className="grid grid-cols-2 gap-2 sm:grid-cols-3"
                 >
-                  <legend className="sr-only">Theme preset options</legend>
+                  <legend className="sr-only">
+                    {t("settings:themePresetOptions")}
+                  </legend>
                   <p
                     className="col-span-full flex items-start gap-1.5 rounded-md border border-base-300 bg-base-200/50 px-2 py-1.5 text-xs leading-relaxed text-base-content/70"
                     id="theme-preset-attribution"
@@ -64,19 +74,26 @@ export function UiPreferencesCard({
                       aria-hidden="true"
                       className="mt-0.5 size-3.5 shrink-0 text-base-content/55"
                     />
-                    Theme palettes are inspired by third-party projects. Ruxex
-                    is not affiliated with or endorsed by those projects.
+                    {t("settings:themeAttribution")}
                   </p>
                   {UI_THEME_PRESETS.map((option) => {
                     const selected = preset === option.id;
 
                     return (
                       <button
-                        aria-label={option.label}
+                        aria-label={
+                          option.id === "system"
+                            ? t("settings:system")
+                            : option.label
+                        }
                         aria-pressed={selected}
                         className={`flex min-h-32 flex-col justify-between gap-1.5 rounded-lg border p-2 text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-base-300 bg-base-100 hover:border-primary/60"}`}
                         key={option.id}
-                        title={option.label}
+                        title={
+                          option.id === "system"
+                            ? t("settings:system")
+                            : option.label
+                        }
                         type="button"
                         onClick={(event) => {
                           onThemePresetChange(option.id);
@@ -88,7 +105,9 @@ export function UiPreferencesCard({
                         <ThemePresetPreview preset={option} />
                         <span className="flex items-start justify-between gap-2">
                           <span className="min-w-0 truncate font-medium leading-tight">
-                            {option.label}
+                            {option.id === "system"
+                              ? t("settings:system")
+                              : option.label}
                           </span>
                           {selected && (
                             <span
@@ -151,6 +170,7 @@ function ThemePreviewPanel({
   mode: "light" | "dark";
   preset: UiThemePreset;
 }) {
+  const { t } = useTranslation("settings");
   const colors = getUiThemePresetPreview(preset, mode);
 
   return (
@@ -216,7 +236,7 @@ function ThemePreviewPanel({
               color: colors.primaryContent,
             }}
           >
-            <span className="sr-only">Send</span>
+            <span className="sr-only">{t("settings:send")}</span>
           </span>
         </span>
       </span>

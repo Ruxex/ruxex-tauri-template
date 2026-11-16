@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { readVisualizationFile } from "../../platform/native";
 import type { VisualizeReference } from "./visualize-reference";
@@ -11,10 +12,11 @@ type VisualizeFrameProps = {
 };
 
 export function VisualizeFrame({ reference, loadHtml }: VisualizeFrameProps) {
+  const { t } = useTranslation("common");
   const [state, setState] = useState<
-    { status: "loading" } |
-      { status: "ready"; srcDoc: string } |
-      { status: "error"; message: string }
+    | { status: "loading" }
+    | { status: "ready"; srcDoc: string }
+    | { status: "error"; message: string }
   >({ status: "loading" });
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function VisualizeFrame({ reference, loadHtml }: VisualizeFrameProps) {
       .then((html) => {
         if (cancelled) return;
         if (new TextEncoder().encode(html).byteLength > MAX_HTML_BYTES) {
-          setState({ status: "error", message: "Visualization is too large." });
+          setState({ status: "error", message: "visualizationTooLarge" });
           return;
         }
         setState({ status: "ready", srcDoc: createSandboxDocument(html) });
@@ -35,13 +37,15 @@ export function VisualizeFrame({ reference, loadHtml }: VisualizeFrameProps) {
       .catch((error: unknown) => {
         if (cancelled) return;
         const message =
-          error instanceof Error ? error.message : "Unable to load visualization.";
+          error instanceof Error
+            ? error.message
+            : "Unable to load visualization.";
         setState({
           status: "error",
           message:
             message === "Visualization is too large."
-              ? message
-              : "Unable to load visualization.",
+              ? "visualizationTooLarge"
+              : "visualizationLoadFailed",
         });
       });
 
@@ -51,13 +55,17 @@ export function VisualizeFrame({ reference, loadHtml }: VisualizeFrameProps) {
   }, [loadHtml, reference.path]);
 
   if (state.status === "loading") {
-    return <p className="py-4 text-sm text-base-content/60">Loading visualization…</p>;
+    return (
+      <p className="py-4 text-sm text-base-content/60">
+        {t("visualizationLoading")}
+      </p>
+    );
   }
 
   if (state.status === "error") {
     return (
       <p className="alert alert-error" role="alert">
-        {state.message}
+        {t(state.message)}
       </p>
     );
   }
@@ -67,7 +75,7 @@ export function VisualizeFrame({ reference, loadHtml }: VisualizeFrameProps) {
       className={`h-96 w-full border-0 ${reference.mode === "wide" ? "max-w-[1024px]" : "max-w-[736px]"}`}
       sandbox="allow-scripts"
       srcDoc={state.srcDoc}
-      title="Visualization"
+      title={t("visualizationTitle")}
     />
   );
 }

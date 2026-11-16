@@ -1,3 +1,4 @@
+import { AppUiError } from "../../app/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
@@ -28,7 +29,7 @@ export function usePluginRead(params: v2.PluginReadParams | null) {
     queryKey: [...appServerQueryKeys.plugins, "detail", params],
     queryFn: async () => {
       if (!params) {
-        throw new Error("Plugin details require a local marketplace.");
+        throw new AppUiError("pluginLocalMarketplaceRequired");
       }
       const response = await requestAppServerMethod("plugin/read", params);
       return response.response;

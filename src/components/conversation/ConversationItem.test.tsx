@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
+import { i18n } from "../../app/i18n";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -13,6 +15,32 @@ import { ConversationItem } from "./ConversationItem";
 
 describe("ConversationItem", () => {
   afterEach(cleanup);
+
+  it("updates the visible timestamp language while preserving its ISO value", async () => {
+    const date = new Date(2025, 0, 2, 15, 4);
+    render(
+      <ConversationItem
+        item={{
+          id: "localized",
+          turnId: "turn",
+          type: "userMessage",
+          category: "message",
+          title: "User",
+          text: "User-authored content",
+          timestamp: date.getTime() / 1000,
+        }}
+      />,
+    );
+    const time = screen.getByText("Jan 2, 2025, 3:04 PM");
+    expect(time.getAttribute("datetime")).toBe(date.toISOString());
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByText("2025/01/02 15:04").getAttribute("datetime")).toBe(
+      date.toISOString(),
+    );
+    expect(screen.getByText("User-authored content")).toBeTruthy();
+  });
 
   it("renders user messages on the right with Markdown content", () => {
     const onEdit = vi.fn();

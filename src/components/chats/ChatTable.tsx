@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,28 +23,30 @@ export function ChatTable({
   onArchive,
   isArchiving = false,
 }: ChatTableProps) {
+  const { t } = useTranslation("chats");
+
   const showProject = Boolean(projectNames);
   const showActions = Boolean(onArchive);
 
   return (
     <section
-      aria-label="Chats"
+      aria-label={t("chats")}
       className="overflow-x-auto rounded-xl border border-base-300 bg-base-100"
       // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus this region to scroll the table horizontally.
       tabIndex={0}
     >
       <table className="table min-w-[36rem]">
-        <caption className="sr-only">Chats</caption>
+        <caption className="sr-only">{t("chats")}</caption>
         <thead>
           <tr>
-            <th scope="col">Chat</th>
-            {showProject && <th scope="col">Project</th>}
+            <th scope="col">{t("chat")}</th>
+            {showProject && <th scope="col">{t("project")}</th>}
             <th className="text-right" scope="col">
-              Updated
+              {t("updated")}
             </th>
             {showActions && (
               <th className="w-12" scope="col">
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{t("actions")}</span>
               </th>
             )}
           </tr>
@@ -82,6 +85,8 @@ function ChatTableRow({
   onArchive?: (threadId: string) => void;
   isArchiving: boolean;
 }) {
+  const { t } = useTranslation("chats");
+
   const [isTitleHovered, setIsTitleHovered] = useState(false);
   const navigate = useNavigate();
   const events = useAppServerEvents();
@@ -92,7 +97,7 @@ function ChatTableRow({
       (request) => request.threadId === thread.id,
     ),
   );
-  const title = thread.name || thread.preview || "Untitled chat";
+  const title = thread.name || thread.preview || t("untitledChat");
 
   return (
     <tr
@@ -138,10 +143,10 @@ function ChatTableRow({
       {onArchive && (
         <td className="w-12 text-right">
           <button
-            aria-label={`Archive ${title}`}
+            aria-label={t("archiveChat", { title })}
             className="btn btn-ghost btn-xs btn-square opacity-0 transition-opacity group-hover/chat-row:opacity-100 focus-visible:opacity-100"
             disabled={isArchiving}
-            title={`Archive ${title}`}
+            title={t("archiveChat", { title })}
             type="button"
             onClick={() => onArchive(thread.id)}
           >

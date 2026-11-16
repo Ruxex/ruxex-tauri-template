@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { FolderIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
@@ -17,6 +18,7 @@ import type { v2 } from "../../protocol";
 import { skillDescription, skillGroupLabel } from "../capabilities-model";
 
 export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
+  const { t } = useTranslation("capabilities");
   const skills = useSkillsList({}, active);
   const setSkillsExtraRootsMutation = useSetSkillsExtraRoots();
   const writeSkillConfig = useWriteSkillConfig();
@@ -92,7 +94,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
       const selected = await openDialog({
         directory: true,
         multiple: false,
-        title: "Select Skill directory",
+        title: t("selectSkillDirectory"),
       });
       if (typeof selected !== "string") return;
       const root = selected.trim();
@@ -113,7 +115,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
     <section className="grid gap-4" id="skills">
       <div className="flex justify-end">
         <button
-          aria-label="Add Skill directory"
+          aria-label={t("addSkillDirectory")}
           className="btn btn-outline btn-sm gap-1"
           disabled={setSkillsExtraRootsMutation.isPending}
           onClick={() => void addSkillDirectory()}
@@ -127,11 +129,11 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
           ) : (
             <FolderIcon aria-hidden="true" className="size-4" />
           )}
-          Add Skill directory
+          {t("addSkillDirectory")}
         </button>
       </div>
       {skillExtraRoots.length > 0 && (
-        <ul aria-label="Added Skill directories" className="grid gap-1">
+        <ul aria-label={t("addedSkillDirectories")} className="grid gap-1">
           {skillExtraRoots.map((root) => (
             <li
               className="flex min-w-0 items-center justify-between gap-2 rounded-box bg-base-200/40 px-3 py-2 text-sm"
@@ -147,7 +149,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                 </span>
               </span>
               <button
-                aria-label={`Remove Skill directory ${root}`}
+                aria-label={t("removeSkillDirectory", { name: root })}
                 className="btn btn-ghost btn-xs shrink-0"
                 disabled={setSkillsExtraRootsMutation.isPending}
                 onClick={() => removeSkillDirectory(root)}
@@ -161,17 +163,21 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
       )}
       {skillRootError && (
         <p className="text-sm text-error" role="alert">
-          Unable to update Skill directories: {skillRootError}
+          {t("unableToUpdateSkillDirectories", { details: skillRootError })}
         </p>
       )}
       {skills.isLoading && <span className="loading loading-spinner" />}
       {skills.isError && (
         <p className="text-error">
-          Unable to load Skills: {formatErrorMessage(skills.error)}
+          {t("unableToLoadSkills", {
+            details: formatErrorMessage(skills.error),
+          })}
         </p>
       )}
       {!skills.isLoading && !visibleSkillGroups.length && (
-        <p className="text-sm text-base-content/60">No Skills discovered.</p>
+        <p className="text-sm text-base-content/60">
+          {t("noSkillsDiscovered")}
+        </p>
       )}
       <ul className="space-y-2">
         {visibleSkillGroups.map((entry) => (
@@ -184,8 +190,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium">
                 <span>{skillGroupLabel(entry)}</span>
                 <span className="text-xs font-normal text-base-content/60">
-                  {entry.skills.length} skill
-                  {entry.skills.length === 1 ? "" : "s"}
+                  {t("skillCount", { count: entry.skills.length })}
                 </span>
               </summary>
               {entry.skills.length ? (
@@ -236,9 +241,13 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                             </div>
                           </div>
                           <label className="flex shrink-0 items-center gap-2 text-sm">
-                            <span className="sr-only">Enable {skill.name}</span>
+                            <span className="sr-only">
+                              {t("enableSkillNamed", { name: skill.name })}
+                            </span>
                             <input
-                              aria-label={`Enable ${skill.name}`}
+                              aria-label={t("enableSkillNamed", {
+                                name: skill.name,
+                              })}
                               aria-checked={skill.enabled}
                               checked={skill.enabled}
                               className="toggle toggle-primary toggle-sm"
@@ -251,7 +260,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                         </div>
                         {error && (
                           <p className="mt-1 text-xs text-error" role="alert">
-                            Unable to update Skill: {error}
+                            {t("unableToUpdateSkill", { details: error })}
                           </p>
                         )}
                       </li>
@@ -259,11 +268,11 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                   })}
                 </ul>
               ) : (
-                <p className="mt-1 font-medium">No skills</p>
+                <p className="mt-1 font-medium">{t("noSkills")}</p>
               )}
               {entry.errors.length > 0 && (
                 <p className="mt-1 text-xs text-error">
-                  {entry.errors.length} discovery errors
+                  {t("discoveryErrors", { count: entry.errors.length })}
                 </p>
               )}
             </details>

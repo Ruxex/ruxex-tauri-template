@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "../../app/i18n";
 
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
@@ -201,6 +209,39 @@ describe("BrowserNavigationBar", () => {
     expect(screen.queryByText("Conversation")).toBeNull();
   });
 
+  it("renders the chats hierarchy for a chat without a project", () => {
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <BrowserNavigationBar chatTitle="Command demo" />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Chats" }).getAttribute("href"),
+    ).toBe("/chats");
+    expect(screen.getByText("Command demo")).toBeTruthy();
+  });
+
+  it("renders the project hierarchy for a project chat", () => {
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <BrowserNavigationBar
+          chatProjectId="project-1"
+          chatTitle="Command demo"
+          projectTitle="Ruxex"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Projects" }).getAttribute("href"),
+    ).toBe("/projects");
+    expect(
+      screen.getByRole("link", { name: "Ruxex" }).getAttribute("href"),
+    ).toBe("/projects/project-1");
+    expect(screen.getByText("Command demo")).toBeTruthy();
+  });
+
   it("renders the project list and project name in the project breadcrumb", () => {
     render(
       <MemoryRouter initialEntries={["/projects/project-1"]}>
@@ -228,4 +269,25 @@ describe("BrowserNavigationBar", () => {
     ).toBe("/capabilities/plugins");
     expect(screen.getByText("calendar")).toBeTruthy();
   });
+});
+
+it("updates Japanese navigation and accessibility labels live while preserving user titles", async () => {
+  render(
+    <MemoryRouter initialEntries={["/chat/t-1"]}>
+      <BrowserNavigationBar
+        chatTitle="My conversation"
+        onToggleSidebar={vi.fn()}
+      />
+    </MemoryRouter>,
+  );
+  await act(() => i18n.changeLanguage("ja"));
+  expect(
+    screen.getByRole("navigation", { name: "ブラウザーナビゲーション" }),
+  ).toBeTruthy();
+  expect(screen.getByRole("button", { name: "戻る" })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "サイドバーを閉じる" }),
+  ).toBeTruthy();
+  expect(screen.getByRole("link", { name: "チャット" })).toBeTruthy();
+  expect(screen.getByText("My conversation")).toBeTruthy();
 });

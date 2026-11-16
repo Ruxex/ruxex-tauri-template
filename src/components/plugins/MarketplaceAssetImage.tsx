@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 
@@ -35,6 +36,7 @@ export function MarketplaceAssetImage({
   darkSrc,
   src,
 }: MarketplaceAssetImageProps) {
+  const { t } = useTranslation("plugins");
   const [lightSource, setLightSource] = useState<string | null>(null);
   const [darkSource, setDarkSource] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +78,7 @@ export function MarketplaceAssetImage({
   if (isLoading) {
     return (
       <span
-        aria-label="Loading plugin image"
+        aria-label={t("loadingPluginImage")}
         className="loading loading-spinner loading-sm"
         role="status"
       />
@@ -87,7 +89,7 @@ export function MarketplaceAssetImage({
   if (!imageSource) {
     return (
       <span
-        aria-label="Plugin image unavailable"
+        aria-label={t("pluginImageUnavailable")}
         className="inline-flex size-full items-center justify-center text-base-content/40"
         role="img"
       >

@@ -5,6 +5,7 @@
   "windows": ["main", "quick-panel"],
   "permissions": [
     "core:default",
+    "core:window:allow-set-title",
     "dialog:default",
     "notification:default",
     "opener:default"

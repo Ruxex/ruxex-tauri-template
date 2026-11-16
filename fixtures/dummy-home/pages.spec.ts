@@ -137,13 +137,13 @@ describe("DummyProvider page screenshots", () => {
     await browser.url("tauri://localhost/#/projects");
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
     await $(
-      "tr[aria-label='Open project Product planning'] td:first-child",
+      "//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']",
     ).click();
     await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
     await closeSidebarPanel();
     await browser.waitUntil(
       async () =>
-        (await $$("section.card a").length) >=
+        (await $$('section[aria-label="Chats"] a').length) >=
         PAGE_DENSITY_COUNTS.ordinary.projectThreads,
       {
         timeout: 10_000,
@@ -169,7 +169,7 @@ async function captureChatTabs(): Promise<void> {
   );
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
     {
       timeout: 10_000,
@@ -180,7 +180,7 @@ async function captureChatTabs(): Promise<void> {
   await $("button=In projects").click();
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.ordinary.projectAssignedThreads,
     {
       timeout: 10_000,
@@ -198,7 +198,7 @@ async function captureChatScopedSearch(): Promise<void> {
   await search.setValue("Fixture");
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
     {
       timeout: 15_000,
@@ -210,7 +210,7 @@ async function captureChatScopedSearch(): Promise<void> {
   await $("button=In projects").click();
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.ordinary.projectAssignedThreads,
     {
       timeout: 15_000,
@@ -256,7 +256,7 @@ async function captureChatSearchOverflow(): Promise<void> {
   );
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.ordinary.activeThreads,
     {
       timeout: 15_000,
@@ -292,7 +292,7 @@ async function captureProjectChatSearch(): Promise<void> {
   );
   await browser.waitUntil(
     async () =>
-      (await $$('section.card a[href*="/chat/"]').length) ===
+      (await $$('section[aria-label="Chats"] a[href*="/chat/"]').length) ===
       PAGE_DENSITY_COUNTS.ordinary.projectThreads,
     {
       timeout: 15_000,
@@ -301,10 +301,11 @@ async function captureProjectChatSearch(): Promise<void> {
   );
   await saveFixtureScreenshot("project-detail-updated-ordinary.png");
 
-  const search = $('section.card input[aria-label="Search project chats"]');
+  const search = $('input[aria-label="Search project chats"]');
   await search.setValue("Fixture basic 01");
   await browser.waitUntil(
-    async () => (await $$('section.card a[href*="/chat/"]').length) === 1,
+    async () =>
+      (await $$('section[aria-label="Chats"] a[href*="/chat/"]').length) === 1,
     {
       timeout: 15_000,
       timeoutMsg: "Project chat title search should filter to a matching chat",
@@ -358,7 +359,7 @@ async function waitForPageContent(path: string): Promise<void> {
   if (path === "/chats") {
     await browser.waitUntil(
       async () =>
-        (await $$('main ul[aria-label="Chats"] > li').length) ===
+        (await $$('section[aria-label="Chats"] tbody tr').length) ===
           PAGE_DENSITY_COUNTS.ordinary.unassignedThreads ||
         (await $("main").getText()).includes("Unable to load chats"),
       {

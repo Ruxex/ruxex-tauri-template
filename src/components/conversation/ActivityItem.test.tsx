@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "../../app/i18n";
+import { normalizeThreadItem } from "./conversation-item-normalizer";
 
 const openBrowserWindow = vi.hoisted(() => vi.fn());
 const previewArtifact = vi.hoisted(() => vi.fn());
@@ -393,5 +402,106 @@ describe("ActivityItem", () => {
       await screen.findByRole("img", { name: "Artifact preview" }),
     ).toBeTruthy();
     expect(loadArtifactPreview).toHaveBeenCalledWith("/workspace/report.xlsx");
+  });
+  it("updates activity accessible names on language change and preserves tool output", async () => {
+    render(
+      <ActivityItem
+        item={{
+          id: "command-1",
+          turnId: "turn-1",
+          type: "commandExecution",
+          category: "activity",
+          title: "Command",
+          text: "raw output",
+          metadata: { status: "completed" },
+        }}
+      />,
+    );
+    expect(screen.getByRole("img", { name: "Command" })).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByRole("img", { name: "コマンド" })).toBeTruthy();
+    expect(screen.getByText("raw output")).toBeTruthy();
+  });
+
+  it("localizes known normalized activity metadata labels in Japanese", async () => {
+    await i18n.changeLanguage("ja");
+
+    const fileChange = normalizeThreadItem("turn-1", {
+      type: "fileChange",
+      id: "files-1",
+      status: "completed",
+      changes: [{ path: "/workspace/a.ts", kind: { type: "add" }, diff: "" }],
+    });
+    const mcpCall = normalizeThreadItem("turn-1", {
+      type: "mcpToolCall",
+      id: "mcp-1",
+      server: "docs",
+      tool: "search",
+      status: "completed",
+      arguments: {},
+      mcpAppUi: null,
+      pluginId: null,
+      readOnlyHint: null,
+      result: null,
+      error: null,
+      durationMs: null,
+    });
+    const dynamicTool = normalizeThreadItem("turn-1", {
+      type: "dynamicToolCall",
+      id: "dynamic-1",
+      namespace: "filesystem",
+      tool: "read_file",
+      arguments: {},
+      status: "completed",
+      contentItems: null,
+      success: true,
+      durationMs: null,
+    });
+    const collaboration = normalizeThreadItem("turn-1", {
+      type: "collabAgentToolCall",
+      id: "agents-1",
+      tool: "spawnAgent",
+      status: "completed",
+      senderThreadId: "sender",
+      receiverThreadIds: ["receiver-1", "receiver-2"],
+      prompt: "Review the code",
+      model: null,
+      reasoningEffort: null,
+      agentsStates: {},
+    });
+
+    if (dynamicTool.category !== "activity") {
+      throw new Error("Expected normalized tool activity");
+    }
+    dynamicTool.metadata = {
+      ...dynamicTool.metadata,
+      "vendor-detail": "preserved",
+    };
+
+    render(
+      <>
+        <ActivityItem item={fileChange} />
+        <ActivityItem item={mcpCall} />
+        <ActivityItem item={dynamicTool} />
+        <ActivityItem item={collaboration} />
+      </>,
+    );
+
+    for (const label of [
+      "ファイル",
+      "サーバー",
+      "ツール",
+      "名前空間",
+      "成功",
+      "エージェント",
+    ]) {
+      expect(
+        screen.getAllByText(label, { selector: "dt" }).length,
+      ).toBeGreaterThan(0);
+    }
+    expect(screen.getByText("vendor-detail", { selector: "dt" })).toBeTruthy();
+    expect(screen.getByText("preserved", { selector: "dd" })).toBeTruthy();
   });
 });

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { FolderIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { type FormEvent, useState } from "react";
@@ -33,6 +34,8 @@ export function NewProjectDialog({
   onCreated,
   open = true,
 }: NewProjectDialogProps) {
+  const { t } = useTranslation("projects");
+
   const navigate = useNavigate();
   const createProject = useCreateProject();
   const [name, setName] = useState(initialName);
@@ -51,15 +54,13 @@ export function NewProjectDialog({
       const selected = await openDialog({
         directory: true,
         multiple: false,
-        title: "Select workspace folder",
+        title: t("selectWorkspaceFolder"),
       });
       if (typeof selected === "string") {
         setRoot(selected);
       }
     } catch (error) {
-      setRootSelectionError(
-        `Unable to select folder: ${formatErrorMessage(error)}`,
-      );
+      setRootSelectionError(formatErrorMessage(error));
     }
   }
 
@@ -94,17 +95,17 @@ export function NewProjectDialog({
 
   return (
     <DialogShell
-      closeLabel="Close create project dialog"
+      closeLabel={t("closeCreateProjectDialog")}
       icon={PlusIcon}
       onClose={onClose}
       open={open}
-      title="Create a project"
+      title={t("createAProject")}
       titleId="new-project-title"
     >
       <form className="grid w-full gap-4" noValidate onSubmit={handleSubmit}>
         <div className="form-control w-full">
           <input
-            aria-label="Project name"
+            aria-label={t("projectName")}
             aria-invalid={nameValidationError || undefined}
             className="input input-bordered w-full"
             id="new-project-name"
@@ -114,13 +115,13 @@ export function NewProjectDialog({
                 setNameValidationError(false);
               }
             }}
-            placeholder="Project name"
+            placeholder={t("projectName")}
             required
             value={name}
           />
           {nameValidationError && (
             <p className="mt-1 text-xs text-error" role="alert">
-              Enter a project name.
+              {t("enterAProjectName")}
             </p>
           )}
         </div>
@@ -130,11 +131,11 @@ export function NewProjectDialog({
             <button
               aria-label={
                 root
-                  ? `Selected workspace folder: ${root}`
-                  : "Select workspace folder"
+                  ? t("selectedWorkspaceFolder", { path: root })
+                  : t("selectWorkspaceFolder")
               }
               className="btn min-h-11 min-w-0 flex-1 justify-start gap-2 overflow-hidden border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
-              title={root || "Select workspace folder"}
+              title={root || t("selectWorkspaceFolder")}
               type="button"
               onClick={() => void handleSelectRoot()}
             >
@@ -142,14 +143,14 @@ export function NewProjectDialog({
               <span
                 className={`min-w-0 flex-1 truncate text-left ${root ? "font-mono text-xs" : "text-base-content/65"}`}
               >
-                {root || "Select workspace folder"}
+                {root || t("selectWorkspaceFolder")}
               </span>
             </button>
             {root && (
               <button
-                aria-label="Clear workspace folder"
+                aria-label={t("clearWorkspaceFolder")}
                 className="btn btn-ghost btn-square min-h-11 shrink-0 text-error hover:bg-error/10"
-                title="Clear workspace folder"
+                title={t("clearWorkspaceFolder")}
                 type="button"
                 onClick={() => {
                   setRoot("");
@@ -162,7 +163,7 @@ export function NewProjectDialog({
           </div>
           {rootSelectionError && (
             <p className="mt-1 text-xs text-error" role="alert">
-              {rootSelectionError}
+              {t("selectFolderError", { error: rootSelectionError })}
             </p>
           )}
         </div>
@@ -171,18 +172,20 @@ export function NewProjectDialog({
 
         <DialogFooter>
           <button
-            aria-label="Create project"
+            aria-label={t("createProject")}
             className="btn btn-primary min-h-11 whitespace-nowrap"
             disabled={createProject.isPending}
             type="submit"
           >
             <PlusIcon aria-hidden="true" className="size-4" />
-            {createProject.isPending ? "Creating…" : "Create project"}
+            {createProject.isPending ? t("creating") : t("createProject")}
           </button>
         </DialogFooter>
         {createProject.isError && (
           <p className="text-sm text-error" role="alert">
-            Unable to create project: {formatErrorMessage(createProject.error)}
+            {t("createError", {
+              error: formatErrorMessage(createProject.error),
+            })}
           </p>
         )}
       </form>

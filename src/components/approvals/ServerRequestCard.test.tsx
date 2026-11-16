@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../../app/i18n";
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import { ServerRequestCard } from "./ServerRequestCard";
 
@@ -147,7 +148,9 @@ describe("ServerRequestCard", () => {
     );
 
     expect(screen.getByText("pnpm check")).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "Request summary" }),
+    ).toBeNull();
     expect(screen.queryByText("Request details")).toBeNull();
     expect(screen.queryByText("Request 17")).toBeNull();
     expect(
@@ -212,9 +215,12 @@ describe("ServerRequestCard", () => {
       />,
     );
 
-    fireEvent.change(screen.getByRole("textbox", { name: "What should I use?" }), {
-      target: { value: "the workspace cache" },
-    });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "What should I use?" }),
+      {
+        target: { value: "the workspace cache" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));
 
     expect(onResolve).toHaveBeenCalledWith({
@@ -246,8 +252,12 @@ describe("ServerRequestCard", () => {
     expect(screen.getByText("Requested access")).toBeTruthy();
     expect(screen.queryByText("Network access:")).toBeNull();
     expect(screen.queryByText("Access details")).toBeNull();
-    expect(screen.getByRole("region", { name: "Requested access" })).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Requested access" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("region", { name: "Request summary" }),
+    ).toBeNull();
     expect(screen.getByTitle("Read: /workspace/read")).toBeTruthy();
     expect(screen.getByTitle("Write: /workspace/write")).toBeTruthy();
     expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
@@ -373,6 +383,80 @@ describe("ServerRequestCard", () => {
       action: "cancel",
       content: null,
       _meta: null,
+    });
+  });
+  it("localizes permissions while preserving server reasons, paths, and the session grant", async () => {
+    await i18n.changeLanguage("ja");
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn()}
+        onResolve={onResolve}
+        pending={permissionsPending}
+      />,
+    );
+    expect(
+      screen.getByRole("region", { name: "要求されたアクセス" }),
+    ).toBeTruthy();
+    expect(screen.getByText("読み取り: /workspace/read")).toBeTruthy();
+    expect(screen.getByText("書き込み: /workspace/write")).toBeTruthy();
+    expect(screen.getByText("Need to inspect the project")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "このチャットで承認" }));
+    expect(onResolve).toHaveBeenCalledWith({
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          globScanMaxDepth: 3,
+        },
+      },
+      scope: "session",
+    });
+  });
+
+  it("localizes the other-answer label and sends the canonical server answer", async () => {
+    await i18n.changeLanguage("ja");
+    const onResolve = vi.fn(async () => undefined);
+    const choiceRequest = {
+      ...userInputPending,
+      request: {
+        ...userInputPending.request,
+        params: {
+          questions: [
+            {
+              id: "answer",
+              header: "Answer",
+              question: "Server question?",
+              options: [
+                { label: "Server option", description: "Server description" },
+              ],
+              isOther: true,
+            },
+          ],
+        },
+      },
+    } as unknown as PendingServerRequest;
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn()}
+        onResolve={onResolve}
+        pending={choiceRequest}
+      />,
+    );
+    expect(screen.getByRole("radio", { name: /Server option/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "上記以外" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "追加の詳細 (任意)" }),
+      { target: { value: "User note" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "送信" }));
+    expect(onResolve).toHaveBeenCalledWith({
+      answers: {
+        answer: { answers: ["None of the above", "user_note: User note"] },
+      },
     });
   });
 });

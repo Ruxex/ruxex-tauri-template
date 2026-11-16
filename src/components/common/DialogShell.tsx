@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   useId,
   type ComponentType,
@@ -20,13 +21,15 @@ type DialogShellProps = {
 
 export function DialogShell({
   children,
-  closeLabel = "Close dialog",
+  closeLabel,
   icon,
   onClose,
   open,
   title,
   titleId,
 }: DialogShellProps) {
+  const { t } = useTranslation("common");
+  const resolvedCloseLabel = closeLabel ?? t("common:closeDialog");
   const generatedTitleId = useId();
   const resolvedTitleId = titleId ?? generatedTitleId;
   const dialogRef = useNativeModalDialog(open);
@@ -47,7 +50,7 @@ export function DialogShell({
     >
       <div className="modal-box w-full max-w-2xl overflow-visible px-5 py-7">
         <DialogHeader
-          closeLabel={closeLabel}
+          closeLabel={resolvedCloseLabel}
           icon={icon}
           onClose={onClose}
           title={title}
@@ -56,8 +59,8 @@ export function DialogShell({
         {children}
       </div>
       <form className="modal-backdrop" method="dialog">
-        <button aria-label={closeLabel} type="button" onClick={onClose}>
-          Close
+        <button aria-label={resolvedCloseLabel} type="button" onClick={onClose}>
+          {t("common:close")}
         </button>
       </form>
     </dialog>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArrowPathIcon,
   ArrowUturnRightIcon,
@@ -73,6 +74,8 @@ export function Composer({
   pendingUserInputRequests = [],
   onResolveUserInput,
 }: ComposerProps) {
+  const { t } = useTranslation("conversation");
+
   const branding = useBranding();
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
@@ -125,13 +128,13 @@ export function Composer({
   const inputRequestBlockReason = pendingUserInputRequests.length
     ? pendingUserInputRequests.length !== 1 ||
       pendingInputQuestions.length !== 1
-      ? "Answer each question in the request card above before sending another message."
+      ? t("answerEachQuestionInTheRequestCardAboveBeforeSendingAnotherMessage")
       : pendingInputQuestions[0]?.isSecret
-        ? "Use the private answer field in the request card above."
+        ? t("useThePrivateAnswerFieldInTheRequestCardAbove")
         : imageFile
-          ? "Remove the image attachment to answer this request."
+          ? t("removeTheImageAttachmentToAnswerThisRequest")
           : !onResolveUserInput
-            ? "Answer the request card above before sending another message."
+            ? t("answerTheRequestCardAboveBeforeSendingAnotherMessage")
             : null
     : null;
   const composerInputBlocked =
@@ -341,9 +344,11 @@ export function Composer({
           placeholder={
             pendingUserInputRequests.length > 0
               ? canAnswerFromComposer
-                ? "Answer the question above…"
-                : "Answer the questions in the request card above…"
-              : `${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`
+                ? t("answerTheQuestionAbove")
+                : t("answerTheQuestionsInTheRequestCardAbove")
+              : branding
+                ? t("askNamedAssistant", { name: branding.assistantName })
+                : t("askAssistant")
           }
           value={message}
         />
@@ -374,36 +379,36 @@ export function Composer({
             />
             {planMode && (
               <span
-                aria-label="Plan mode active"
+                aria-label={t("planModeActive")}
                 className="badge badge-secondary badge-sm gap-1"
                 role="status"
               >
                 <button
-                  aria-label="Disable plan mode"
+                  aria-label={t("disablePlanMode")}
                   className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 text-secondary-content hover:bg-secondary-content/10"
                   onClick={handlePlanModeChange}
                   type="button"
                 >
                   <XMarkIcon aria-hidden="true" className="size-3" />
                 </button>
-                Plan
+                {t("plan")}
               </span>
             )}
             {goalMode && (
               <span
-                aria-label="Goal mode active"
+                aria-label={t("goalModeActive")}
                 className="badge badge-primary badge-sm gap-1"
                 role="status"
               >
                 <button
-                  aria-label="Disable goal mode"
+                  aria-label={t("disableGoalMode")}
                   className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 text-primary-content hover:bg-primary-content/10"
                   onClick={() => setGoalMode(false)}
                   type="button"
                 >
                   <XMarkIcon aria-hidden="true" className="size-3" />
                 </button>
-                Goal
+                {t("goal")}
               </span>
             )}
           </div>
@@ -418,9 +423,9 @@ export function Composer({
             />
             {activeTurnId && (
               <button
-                aria-label="Stop"
+                aria-label={t("stop")}
                 className="btn btn-error btn-sm btn-outline btn-square"
-                title="Stop"
+                title={t("stop")}
                 type="button"
                 onClick={() => void actions.interrupt(activeTurnId)}
                 disabled={isPending}
@@ -433,15 +438,15 @@ export function Composer({
                 aria-label={
                   pendingUserInputRequests.length > 0
                     ? canAnswerFromComposer
-                      ? "Submit answer"
-                      : "Answer request above"
+                      ? t("submitAnswer")
+                      : t("answerRequestAbove")
                     : isPending
-                      ? "Working…"
+                      ? t("working")
                       : mode === "queue"
-                        ? "Queue"
+                        ? t("queue")
                         : mode === "steer"
-                          ? "Steer"
-                          : "Send"
+                          ? t("steer")
+                          : t("send")
                 }
                 className="btn btn-primary btn-sm btn-square join-item"
                 type="submit"
@@ -470,7 +475,7 @@ export function Composer({
         {pendingUserInputRequests.length > 0 && (
           <p className="mt-2 text-sm text-base-content/70" role="status">
             {inputRequestBlockReason ??
-              "Sending here will answer the pending question."}
+              t("sendingHereWillAnswerThePendingQuestion")}
           </p>
         )}
         {(attachmentError || actions.error || inputRequestError) && (

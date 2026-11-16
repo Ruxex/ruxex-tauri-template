@@ -1,3 +1,6 @@
+import { i18n } from "../../app/i18n";
+import { dateTimeFormatter, formatRelativeTime } from "../../app/locale-format";
+import { useTranslation } from "react-i18next";
 import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -46,7 +49,9 @@ export function ChatListItem({
   onArchive,
   isArchiving = false,
 }: ChatListItemProps) {
-  const title = thread.name || thread.preview || "Untitled chat";
+  const { t } = useTranslation("chats");
+
+  const title = thread.name || thread.preview || t("untitledChat");
   const [isTitleHovered, setIsTitleHovered] = useState(false);
   return (
     <div
@@ -62,7 +67,7 @@ export function ChatListItem({
         <span className="flex min-w-0 items-center gap-2">
           {unread && (
             <span
-              aria-label="Unread chat"
+              aria-label={t("unreadChat")}
               className="size-2 shrink-0 rounded-full bg-primary"
               role="img"
             />
@@ -87,10 +92,10 @@ export function ChatListItem({
         {actions}
         {onArchive && (
           <button
-            aria-label={`Archive ${title}`}
+            aria-label={t("archiveChat", { title })}
             className="btn btn-ghost btn-xs btn-square opacity-0 transition-opacity group-hover/thread:opacity-100 focus:opacity-100"
             disabled={isArchiving}
-            title={`Archive ${title}`}
+            title={t("archiveChat", { title })}
             type="button"
             onClick={(event) => {
               event.preventDefault();
@@ -107,6 +112,7 @@ export function ChatListItem({
 }
 
 export function ChatUpdatedAt({ timestamp }: { timestamp: number }) {
+  useTranslation("chats");
   const absoluteTimestamp = formatAbsoluteChatTimestamp(timestamp);
 
   return (
@@ -122,7 +128,7 @@ export function ChatUpdatedAt({ timestamp }: { timestamp: number }) {
 function formatChatTimestamp(timestamp: number): string {
   const elapsedSeconds = Math.floor(Date.now() / 1000 - timestamp);
   if (elapsedSeconds < 60) {
-    return "just now";
+    return i18n.t("chats:justNow");
   }
   if (elapsedSeconds < 60 * 60) {
     return formatRelativeCount(Math.floor(elapsedSeconds / 60), "minute");
@@ -140,12 +146,19 @@ function formatChatTimestamp(timestamp: number): string {
   return formatAbsoluteChatTimestamp(timestamp);
 }
 
-function formatRelativeCount(value: number, unit: string): string {
-  return `${value} ${unit}${value === 1 ? "" : "s"} ago`;
+function formatRelativeCount(
+  value: number,
+  unit: Intl.RelativeTimeFormatUnit,
+): string {
+  return formatRelativeTime(
+    -value,
+    unit,
+    i18n.resolvedLanguage === "ja" ? "ja" : "en",
+  );
 }
 
 function formatAbsoluteChatTimestamp(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return dateTimeFormatter(i18n.resolvedLanguage === "ja" ? "ja" : "en", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(timestamp * 1000));

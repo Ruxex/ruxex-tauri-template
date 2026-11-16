@@ -1,3 +1,5 @@
+import { formatNumber } from "../app/locale-format";
+import { useTranslation } from "react-i18next";
 import { FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -19,12 +21,15 @@ import type { v2 } from "../protocol";
 
 type ProjectSortKey = NonNullable<v2.ProjectListParams["sortKey"]>;
 
-const PROJECT_SORT_OPTIONS: { label: string; value: ProjectSortKey }[] = [
-  { label: "Manual order", value: "position" },
-  { label: "Recently active", value: "recencyAt" },
-];
-
 export function ProjectsPage() {
+  const { t, i18n } = useTranslation("projects");
+  const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
+
+  const PROJECT_SORT_OPTIONS: { label: string; value: ProjectSortKey }[] = [
+    { label: t("manualOrder"), value: "position" },
+    { label: t("recentlyActive"), value: "recencyAt" },
+  ];
+
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [sortKey, setSortKey] = useState<ProjectSortKey>("position");
@@ -40,16 +45,18 @@ export function ProjectsPage() {
     <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {t("projects")}
+          </h1>
         </div>
         <button
-          aria-label="New project"
+          aria-label={t("newProject")}
           className="btn btn-primary min-h-11 gap-2"
           type="button"
           onClick={() => setIsCreateDialogOpen(true)}
         >
           <PlusIcon aria-hidden="true" className="size-4" />
-          New project
+          {t("newProject")}
         </button>
       </header>
 
@@ -65,11 +72,11 @@ export function ProjectsPage() {
                   onClick={() => void projects.refetch()}
                   type="button"
                 >
-                  {projects.isFetching ? "Retrying…" : "Retry"}
+                  {projects.isFetching ? t("retrying") : t("retry")}
                 </button>
               }
             >
-              Unable to load projects.
+              {t("unableToLoadProjects")}
             </ErrorState>
           )}
           {!projects.isLoading &&
@@ -78,27 +85,27 @@ export function ProjectsPage() {
               <EmptyState
                 action={
                   <button
-                    aria-label="Create project"
+                    aria-label={t("createProject")}
                     className="btn btn-sm btn-primary gap-1"
                     type="button"
                     onClick={() => setIsCreateDialogOpen(true)}
                   >
                     <PlusIcon aria-hidden="true" className="size-4" />
-                    Create project
+                    {t("createProject")}
                   </button>
                 }
-                description="Create a project to organize chats and workspaces."
+                description={t("createAProjectToOrganizeChatsAndWorkspaces")}
                 icon={FolderIcon}
-                title="No projects yet"
+                title={t("noProjectsYet")}
               />
             )}
           {projects.data?.data.length ? (
             <div className="space-y-3">
               <div className="flex justify-end">
                 <label className="select select-bordered select-sm min-w-44">
-                  <span className="sr-only">Sort projects</span>
+                  <span className="sr-only">{t("sortProjects")}</span>
                   <select
-                    aria-label="Sort projects"
+                    aria-label={t("sortProjects")}
                     value={sortKey}
                     onChange={(event) =>
                       setSortKey(event.target.value as ProjectSortKey)
@@ -113,12 +120,12 @@ export function ProjectsPage() {
                 </label>
               </div>
               <div className="overflow-x-auto rounded-xl border border-base-300 bg-base-100">
-                <table aria-label="Projects" className="table">
+                <table aria-label={t("projects")} className="table">
                   <thead>
                     <tr>
-                      <th>Project</th>
-                      <th>Workspace</th>
-                      <th>Roots</th>
+                      <th>{t("project")}</th>
+                      <th>{t("workspace")}</th>
+                      <th>{t("roots")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -162,11 +169,11 @@ export function ProjectsPage() {
                           <td className="max-w-80">
                             <span className="block truncate font-mono text-xs text-base-content/65">
                               {project.roots[0]?.path ??
-                                "No workspace root configured"}
+                                t("noWorkspaceRootConfigured")}
                             </span>
                           </td>
                           <td className="text-sm text-base-content/70">
-                            {project.roots.length}
+                            {formatNumber(project.roots.length, locale)}
                           </td>
                         </tr>
                       );

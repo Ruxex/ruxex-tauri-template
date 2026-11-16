@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
+import { createChatWorkspace } from "../../platform/chat-workspace";
 import {
   useAllProjectList,
   useCollaborationModes,
@@ -41,6 +43,8 @@ type NewChatComposerProps = {
 };
 
 export function NewChatComposer({ projectId }: NewChatComposerProps) {
+  const { t } = useTranslation("chats");
+
   const branding = useBranding();
   const navigate = useNavigate();
   const models = useModelList();
@@ -55,6 +59,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
+  const [workspaceError, setWorkspaceError] = useState<unknown>(null);
   const [selectedSkill, setSelectedSkill] = useState<Pick<
     v2.SkillMetadata,
     "name" | "path" | "interface"
@@ -102,6 +107,16 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
 
     try {
       const root = project.data?.project.roots[0]?.path;
+      setWorkspaceError(null);
+      let cwd = root;
+      if (!selectedProjectId) {
+        try {
+          cwd = await createChatWorkspace();
+        } catch (workspaceCreationError) {
+          setWorkspaceError(workspaceCreationError);
+          return;
+        }
+      }
       const permissionSettings = {
         ask: {
           approvalPolicy: "on-request" as const,
@@ -119,7 +134,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
       const thread = await createThread.mutateAsync({
         ...(model ? { model } : {}),
         ...(selectedProjectId ? { projectId: selectedProjectId } : {}),
-        ...(root ? { cwd: root } : {}),
+        ...(cwd ? { cwd } : {}),
         ...permissionSettings,
         ...(effort ? { config: { model_reasoning_effort: effort } } : {}),
       });
@@ -162,7 +177,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         submitError instanceof Error &&
         submitError.message.toLowerCase().includes("image")
       ) {
-        setAttachmentError(submitError.message);
+        setAttachmentError(submitError);
       }
     }
   }
@@ -201,7 +216,11 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
     createThread.isPending || sendMessage.isPending || setGoal.isPending;
   const isProjectLoading = Boolean(selectedProjectId && project.isLoading);
   const error =
-    attachmentError ?? createThread.error ?? sendMessage.error ?? setGoal.error;
+    workspaceError ??
+    attachmentError ??
+    createThread.error ??
+    sendMessage.error ??
+    setGoal.error;
   const canSubmit =
     Boolean(message.trim() || imageFile) && !(goalMode && !message.trim());
 
@@ -209,7 +228,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
     <div className="flex min-h-full flex-col">
       <div className="flex flex-1 items-center justify-center px-4 pb-8">
         <h1 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-          Let&apos;s get started
+          {t("letsGetStarted")}
         </h1>
       </div>
       <div className="mx-auto w-full max-w-3xl">
@@ -256,7 +275,11 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
             }}
             onKeyDown={handleMessageKeyDown}
             onRemoveImage={clearAttachment}
-            placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
+            placeholder={
+              branding
+                ? t("askNamedAssistant", { name: branding.assistantName })
+                : t("askAssistant")
+            }
             value={message}
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -281,19 +304,19 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
               )}
               {goalMode && (
                 <span
-                  aria-label="Goal mode active"
+                  aria-label={t("goalModeActive")}
                   className="badge badge-primary badge-sm group gap-1"
                   role="status"
                 >
                   <button
-                    aria-label="Disable goal mode"
+                    aria-label={t("disableGoalMode")}
                     className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     onClick={() => setGoalMode(false)}
                     type="button"
                   >
                     <XMarkIcon aria-hidden="true" className="size-3" />
                   </button>
-                  Goal
+                  {t("goal")}
                 </span>
               )}
               <PermissionMenu
@@ -303,19 +326,19 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
               />
               {planMode && (
                 <span
-                  aria-label="Plan mode active"
+                  aria-label={t("planModeActive")}
                   className="badge badge-secondary badge-sm gap-1"
                   role="status"
                 >
                   <button
-                    aria-label="Disable plan mode"
+                    aria-label={t("disablePlanMode")}
                     className="btn btn-ghost btn-circle btn-xs size-4 min-h-4 p-0 text-secondary-content hover:bg-secondary-content/10"
                     onClick={() => setPlanMode(false)}
                     type="button"
                   >
                     <XMarkIcon aria-hidden="true" className="size-3" />
                   </button>
-                  Plan
+                  {t("plan")}
                 </span>
               )}
             </div>
@@ -329,10 +352,10 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                 onModelChange={setModel}
               />
               <button
-                aria-label="Send"
+                aria-label={t("send")}
                 className="btn btn-primary btn-square btn-sm"
                 disabled={isPending || isProjectLoading || !canSubmit}
-                title="Send"
+                title={t("send")}
                 type="submit"
               >
                 <PaperAirplaneIcon aria-hidden="true" className="size-4" />

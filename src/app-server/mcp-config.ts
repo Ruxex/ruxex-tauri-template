@@ -1,3 +1,4 @@
+import { i18n } from "../app/i18n";
 import type { v2 } from "../protocol";
 import type { JsonValue } from "../protocol/generated/serde_json/JsonValue";
 
@@ -66,7 +67,15 @@ function readOptionalString(
   if (value === undefined) {
     return { value: "" };
   }
-  return isString(value) ? { value } : { error: `${key} must be a string` };
+  return isString(value)
+    ? { value }
+    : {
+        error: i18n.t("fieldString", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: key,
+        }),
+      };
 }
 
 function readBoolean(
@@ -78,7 +87,15 @@ function readBoolean(
   if (value === undefined) {
     return { value: fallback };
   }
-  return isBoolean(value) ? { value } : { error: `${key} must be a boolean` };
+  return isBoolean(value)
+    ? { value }
+    : {
+        error: i18n.t("fieldBoolean", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: key,
+        }),
+      };
 }
 
 function readStringArray(
@@ -93,7 +110,13 @@ function readStringArray(
     !Array.isArray(value) ||
     !value.every((item) => typeof item === "string")
   ) {
-    return { error: `${key} must be an array of strings` };
+    return {
+      error: i18n.t("fieldStringArray", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+        field: key,
+      }),
+    };
   }
   return { value };
 }
@@ -108,7 +131,9 @@ function readEnvironmentVariables(
     return { value: [] };
   }
   if (!Array.isArray(value)) {
-    return { error: "env_vars must be an array" };
+    return {
+      error: i18n.t("envVarsArray", { ns: "mcp", lng: i18n.resolvedLanguage }),
+    };
   }
 
   const variables: McpEnvironmentVariableDraft[] = [];
@@ -119,12 +144,20 @@ function readEnvironmentVariables(
     }
     if (!isJsonObject(item) || typeof item.name !== "string") {
       return {
-        error: "env_vars entries must be strings or objects with a name",
+        error: i18n.t("envVarsEntries", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+        }),
       };
     }
     const source = item.source;
     if (source !== undefined && source !== "local" && source !== "remote") {
-      return { error: "env_vars source must be local or remote" };
+      return {
+        error: i18n.t("envVarsSource", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+        }),
+      };
     }
     variables.push({
       name: item.name,
@@ -144,12 +177,22 @@ function readEnvironmentHeaders(
     return { value: {} };
   }
   if (!isJsonObject(value)) {
-    return { error: "env_http_headers must be an object" };
+    return {
+      error: i18n.t("envHeadersObject", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      }),
+    };
   }
   const headers: Record<string, string> = {};
   for (const [name, headerValue] of Object.entries(value)) {
     if (typeof headerValue !== "string") {
-      return { error: "env_http_headers values must be strings" };
+      return {
+        error: i18n.t("envHeadersStrings", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+        }),
+      };
     }
     headers[name] = headerValue;
   }
@@ -163,7 +206,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       name,
       raw,
       draft: null,
-      error: enabled.error ?? "enabled must be a boolean",
+      error:
+        enabled.error ??
+        i18n.t("fieldBoolean", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: "enabled",
+        }),
     };
   }
   const required = readBoolean(raw, "required", false);
@@ -172,7 +221,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       name,
       raw,
       draft: null,
-      error: required.error ?? "required must be a boolean",
+      error:
+        required.error ??
+        i18n.t("fieldBoolean", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: "required",
+        }),
     };
   }
 
@@ -183,7 +238,10 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       name,
       raw,
       draft: null,
-      error: "MCP server must define exactly one of command or url",
+      error: i18n.t("exactlyOneTransport", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      }),
     };
   }
 
@@ -194,7 +252,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
         name,
         raw,
         draft: null,
-        error: command.error ?? "command must be a string",
+        error:
+          command.error ??
+          i18n.t("fieldString", {
+            ns: "mcp",
+            lng: i18n.resolvedLanguage,
+            field: "command",
+          }),
       };
     }
     const args = readStringArray(raw, "args");
@@ -203,7 +267,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
         name,
         raw,
         draft: null,
-        error: args.error ?? "args must be an array of strings",
+        error:
+          args.error ??
+          i18n.t("fieldStringArray", {
+            ns: "mcp",
+            lng: i18n.resolvedLanguage,
+            field: "args",
+          }),
       };
     }
     const cwd = readOptionalString(raw, "cwd");
@@ -212,7 +282,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
         name,
         raw,
         draft: null,
-        error: cwd.error ?? "cwd must be a string",
+        error:
+          cwd.error ??
+          i18n.t("fieldString", {
+            ns: "mcp",
+            lng: i18n.resolvedLanguage,
+            field: "cwd",
+          }),
       };
     }
     const envVars = readEnvironmentVariables(raw);
@@ -221,7 +297,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
         name,
         raw,
         draft: null,
-        error: envVars.error ?? "env_vars is invalid",
+        error:
+          envVars.error ??
+          i18n.t("fieldInvalid", {
+            ns: "mcp",
+            lng: i18n.resolvedLanguage,
+            field: "env_vars",
+          }),
       };
     }
     return {
@@ -250,7 +332,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       name,
       raw,
       draft: null,
-      error: url.error ?? "url must be a string",
+      error:
+        url.error ??
+        i18n.t("fieldString", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: "url",
+        }),
     };
   }
   const bearerTokenEnvVar = readOptionalString(raw, "bearer_token_env_var");
@@ -259,7 +347,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       name,
       raw,
       draft: null,
-      error: bearerTokenEnvVar.error ?? "bearer_token_env_var must be a string",
+      error:
+        bearerTokenEnvVar.error ??
+        i18n.t("fieldString", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: "bearer_token_env_var",
+        }),
     };
   }
   const envHttpHeaders = readEnvironmentHeaders(raw);
@@ -268,7 +362,13 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       name,
       raw,
       draft: null,
-      error: envHttpHeaders.error ?? "env_http_headers is invalid",
+      error:
+        envHttpHeaders.error ??
+        i18n.t("fieldInvalid", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          field: "env_http_headers",
+        }),
     };
   }
   return {
@@ -306,23 +406,42 @@ export function parseMcpServerDictionaryJson(value: string): {
   } catch (error) {
     return {
       entries: [],
-      error: error instanceof Error ? error.message : "Invalid JSON.",
+      error:
+        error instanceof Error
+          ? error.message
+          : i18n.t("invalidJson", { ns: "mcp", lng: i18n.resolvedLanguage }),
     };
   }
 
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return { entries: [], error: "MCP server dictionary must be an object." };
+    return {
+      entries: [],
+      error: i18n.t("dictionaryObject", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      }),
+    };
   }
 
   const entries: McpServerJsonImportEntry[] = [];
   for (const [name, value] of Object.entries(parsed)) {
     if (!name.trim() || name !== name.trim()) {
-      return { entries: [], error: "Server names cannot be empty or padded." };
+      return {
+        entries: [],
+        error: i18n.t("serverNamesUnpadded", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+        }),
+      };
     }
     if (value === null || typeof value !== "object" || Array.isArray(value)) {
       return {
         entries: [],
-        error: `Configuration for “${name}” must be an object.`,
+        error: i18n.t("namedConfigObject", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          name,
+        }),
       };
     }
 
@@ -331,26 +450,45 @@ export function parseMcpServerDictionaryJson(value: string): {
     if (!entry.draft) {
       return {
         entries: [],
-        error: `Configuration for “${name}” is invalid: ${entry.error}.`,
+        error: i18n.t("namedConfigInvalid", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          name,
+          details: entry.error,
+        }),
       };
     }
     if (entry.draft.transport === "stdio" && !entry.draft.command.trim()) {
       return {
         entries: [],
-        error: `Configuration for “${name}” needs a command.`,
+        error: i18n.t("namedConfigCommand", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          name,
+        }),
       };
     }
     if (entry.draft.transport === "streamableHttp" && !entry.draft.url.trim()) {
       return {
         entries: [],
-        error: `Configuration for “${name}” needs a URL.`,
+        error: i18n.t("namedConfigUrl", {
+          ns: "mcp",
+          lng: i18n.resolvedLanguage,
+          name,
+        }),
       };
     }
     entries.push({ name, value: config });
   }
 
   if (entries.length === 0) {
-    return { entries: [], error: "Add at least one MCP server." };
+    return {
+      entries: [],
+      error: i18n.t("atLeastOneServer", {
+        ns: "mcp",
+        lng: i18n.resolvedLanguage,
+      }),
+    };
   }
   return { entries, error: null };
 }
@@ -378,7 +516,10 @@ export function extractGlobalMcpConfig(
             name,
             raw: {},
             draft: null,
-            error: "MCP server configuration must be an object",
+            error: i18n.t("serverConfigObject", {
+              ns: "mcp",
+              lng: i18n.resolvedLanguage,
+            }),
           },
     ),
   };

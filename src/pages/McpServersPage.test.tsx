@@ -94,7 +94,18 @@ function renderPage() {
   );
 }
 
+import { i18n } from "../app/i18n";
+
 describe("McpServersPage", () => {
+  it("renders Japanese MCP settings and dialog controls", async () => {
+    await i18n.changeLanguage("ja");
+    renderPage();
+    expect(screen.getByRole("heading", { name: "MCP サーバー" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "MCP サーバーを追加" }));
+    expect(screen.getByLabelText("サーバー名")).toBeTruthy();
+    expect(screen.getByLabelText("コマンド")).toBeTruthy();
+  });
+
   beforeEach(() => {
     useGlobalMcpConfig.mockReset().mockReturnValue(config());
     useAllMcpServerStatus.mockReset().mockReturnValue(status());
@@ -498,4 +509,25 @@ describe("McpServersPage", () => {
       expect(screen.getByText("Saved, but MCP reload failed")).toBeTruthy(),
     );
   });
+  it.each([
+    ["en", "Edit docs / server-1", "Delete docs / server-1"],
+    ["ja", "docs / server-1 を編集", "docs / server-1 を削除"],
+  ] as const)(
+    "renders complete %s visible server action labels",
+    async (language, editLabel, deleteLabel) => {
+      await i18n.changeLanguage(language);
+      const name = "docs / server-1";
+      useGlobalMcpConfig.mockReturnValue(
+        config({ servers: [entry({ name, draft: draft({ name }) })] }),
+      );
+      renderPage();
+      screen.getByTestId(`mcp-server-details-${name}`).setAttribute("open", "");
+      expect(screen.getByRole("button", { name: editLabel }).textContent).toBe(
+        editLabel,
+      );
+      expect(
+        screen.getByRole("button", { name: deleteLabel }).textContent,
+      ).toBe(deleteLabel);
+    },
+  );
 });

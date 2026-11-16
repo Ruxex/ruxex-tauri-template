@@ -1,0 +1,21 @@
+{
+  "actions": {
+    "cancel": "キャンセル",
+    "save": "保存",
+    "close": "閉じる",
+    "delete": "削除"
+  },
+  "states": {
+    "loading": "読み込み中…"
+  },
+  "removeImageAttachment": "添付画像を削除",
+  "closeDialog": "ダイアログを閉じる",
+  "close": "閉じる",
+  "selectedImage": "選択した画像: {{name}}",
+  "skillIcon": "{{name}}のアイコン",
+  "imageOnlySupported": "添付できるのは画像のみです。",
+  "visualizationLoading": "ビジュアライゼーションを読み込み中…",
+  "visualizationTitle": "ビジュアライゼーション",
+  "visualizationTooLarge": "ビジュアライゼーションが大きすぎます。",
+  "visualizationLoadFailed": "ビジュアライゼーションを読み込めません。"
+}

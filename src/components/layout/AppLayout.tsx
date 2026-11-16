@@ -1,3 +1,5 @@
+import { i18n } from "../../app/i18n";
+import { useTranslation } from "react-i18next";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
@@ -42,32 +44,37 @@ function gitDiffTabId(target: GitDiffReviewTarget) {
 function gitDiffTabLabel(target: GitDiffReviewTarget) {
   const workspaceName =
     target.workspace.split(/[\\/]/).filter(Boolean).at(-1) || target.workspace;
-  return `Git Diff — ${workspaceName}`;
+  return i18n.t("navigation:gitDiffTab", { workspace: workspaceName });
 }
 
 function terminalTabLabel(cwd: string | null) {
-  const workingDirectory = cwd?.split(/[\\/]/).filter(Boolean).at(-1) || "Home";
-  return `Terminal — ${workingDirectory}`;
+  const workingDirectory =
+    cwd?.split(/[\\/]/).filter(Boolean).at(-1) || i18n.t("navigation:home");
+  return i18n.t("navigation:terminalTab", { directory: workingDirectory });
 }
 
 export function AppLayout() {
+  const { t } = useTranslation("navigation");
   const location = useLocation();
   const { projectId, threadId } = useParams<{
     projectId?: string;
     threadId?: string;
   }>();
+  const isChatRoute = location.pathname.startsWith("/chat/");
   const thread = useThread(threadId ?? "");
-  const project = useProject(projectId ?? "");
+  const threadProjectId = isChatRoute ? thread.data?.thread.projectId : null;
+  const project = useProject(projectId ?? threadProjectId ?? "");
   const { markThreadRead } = useThreadReadState();
   const { preferences, update } = useUiPreferences();
   const routePanel = sidebarPanelForPath(location.pathname);
-  const isChatRoute = location.pathname.startsWith("/chat/");
   const hidesContextPanel =
     routePanel === "projects" ||
     routePanel === "account" ||
     location.pathname.startsWith("/approvals");
   const chatTitle =
-    thread.data?.thread.name || thread.data?.thread.preview || "Conversation";
+    thread.data?.thread.name ||
+    thread.data?.thread.preview ||
+    t("navigation:conversation");
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
   const [rightPaneOpen, setRightPaneOpen] = useState(false);
   const [rightPaneTabs, setRightPaneTabs] = useState<RightPaneTab[]>([]);
@@ -190,6 +197,7 @@ export function AppLayout() {
   return (
     <main className="workbench fixed inset-0 flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
       <BrowserNavigationBar
+        chatProjectId={threadProjectId ?? undefined}
         chatTitle={chatTitle}
         onToggleSidebar={
           hidesContextPanel
@@ -227,7 +235,10 @@ export function AppLayout() {
             }
           />
         </ResizablePanel>
-        <ResizableHandle aria-label="Resize left pane" withHandle />
+        <ResizableHandle
+          aria-label={t("navigation:resizeLeftPane")}
+          withHandle
+        />
         <ResizablePanel className="min-w-0" id="main-content">
           <div
             className="flex min-w-0 min-h-0 h-full flex-1 flex-col @container/chat"
@@ -253,7 +264,7 @@ export function AppLayout() {
           </div>
         </ResizablePanel>
         <ResizableHandle
-          aria-label="Resize right pane"
+          aria-label={t("navigation:resizeRightPane")}
           className={rightPaneOpen ? undefined : "hidden"}
           data-testid="right-pane-resize-handle"
           withHandle
@@ -272,14 +283,14 @@ export function AppLayout() {
           panelRef={rightPaneRef}
         >
           <aside
-            aria-label="Right pane"
+            aria-label={t("navigation:rightPane")}
             className="h-full overflow-hidden border-l border-base-300 bg-base-100 transition-[width] duration-200 ease-out"
             data-testid="right-pane"
           >
             {rightPaneTabs.length > 0 && (
               <div className="flex h-full min-h-0 flex-col">
                 <div
-                  aria-label="Right pane tabs"
+                  aria-label={t("navigation:rightPaneTabs")}
                   className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-base-300 px-2 pt-2"
                   onKeyDown={handleTabListKeyDown}
                   role="tablist"
@@ -313,7 +324,7 @@ export function AppLayout() {
                           {label}
                         </button>
                         <button
-                          aria-label={`Close ${label} tab`}
+                          aria-label={t("navigation:closeTab", { label })}
                           className="mr-1 rounded p-1 text-base-content/50 hover:bg-base-300 hover:text-base-content"
                           onClick={() => closeRightPaneTab(tab.id)}
                           type="button"

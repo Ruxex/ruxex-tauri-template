@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
@@ -21,15 +22,18 @@ export function useConfig(params: v2.ConfigReadParams = {}) {
 }
 
 export function useGlobalMcpConfig() {
+  // Select from raw cached configuration again when the UI language changes.
+  useTranslation("mcp");
   const status = useAppServerStatus();
 
-  return useQuery<GlobalMcpConfig>({
+  return useQuery<v2.ConfigReadResponse, Error, GlobalMcpConfig>({
     queryKey: appServerQueryKeys.globalMcpConfig,
+    select: (response) => extractGlobalMcpConfig(response),
     queryFn: async () => {
       const response = await requestAppServerMethod("config/read", {
         includeLayers: true,
       });
-      return extractGlobalMcpConfig(response.response);
+      return response.response;
     },
     enabled: Boolean(status.data),
   });

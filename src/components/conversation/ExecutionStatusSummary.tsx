@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 
 import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
@@ -11,8 +12,9 @@ type ExecutionStatusSummaryProps = {
 export function ExecutionStatusSummary({
   status,
   exitCode,
-  subject = "Command",
+  subject,
 }: ExecutionStatusSummaryProps) {
+  const { t } = useTranslation("conversation");
   const hasExitCode = exitCode !== undefined && exitCode !== "";
 
   if (!status && !hasExitCode) {
@@ -21,13 +23,15 @@ export function ExecutionStatusSummary({
 
   return (
     <span className="inline-flex items-center gap-2">
-      <ExecutionStatusIcon status={status} subject={subject} />
+      <ExecutionStatusIcon status={status} subject={subject ?? t("command")} />
       <ExitCodeDisplay exitCode={exitCode} />
     </span>
   );
 }
 
 export function ExitCodeDisplay({ exitCode }: { exitCode?: string }) {
+  const { t } = useTranslation("conversation");
+
   if (exitCode === undefined || exitCode === "") {
     return null;
   }
@@ -36,7 +40,7 @@ export function ExitCodeDisplay({ exitCode }: { exitCode?: string }) {
     return (
       <span
         className="font-mono text-xs text-base-content/70"
-        title="Exit code 0"
+        title={t("exitCode0")}
       >
         0
       </span>
@@ -45,10 +49,10 @@ export function ExitCodeDisplay({ exitCode }: { exitCode?: string }) {
 
   return (
     <span
-      aria-label={`Command exited with code ${exitCode}`}
+      aria-label={t("commandExit", { code: exitCode })}
       className="inline-flex shrink-0 items-center gap-1 text-error"
       role="img"
-      title={`Command exited with code ${exitCode}`}
+      title={t("commandExit", { code: exitCode })}
     >
       <XCircleIcon aria-hidden="true" className="size-4" />
       <span>{exitCode}</span>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 
 import type { v2 } from "../../protocol";
@@ -20,11 +21,13 @@ export function ComposerSettings({
   onEffortChange,
   onModelChange,
 }: ComposerSettingsProps) {
+  const { t } = useTranslation("conversation");
+
   const visibleModels = models.filter((item) => !item.hidden);
   const selectedModel =
     visibleModels.find((item) => item.model === model) ??
     visibleModels.find((item) => item.isDefault);
-  const modelLabel = selectedModel?.displayName ?? "No model available";
+  const modelLabel = selectedModel?.displayName ?? t("noModelAvailable");
   const availableEfforts = selectedModel?.supportedReasoningEfforts ?? [];
   const effortLabel = availableEfforts.some(
     (option) => option.reasoningEffort === effort,
@@ -36,7 +39,7 @@ export function ComposerSettings({
   return (
     <details className="dropdown dropdown-top dropdown-end" ref={detailsRef}>
       <summary
-        aria-label="Model and effort"
+        aria-label={t("modelAndEffort")}
         className={`btn btn-ghost btn-sm max-w-64 gap-1 ${selectedModel ? "" : "text-base-content/60"}`}
       >
         <AdjustmentsHorizontalIcon aria-hidden="true" className="size-4" />
@@ -52,9 +55,9 @@ export function ComposerSettings({
       </summary>
       <div className="dropdown-content z-20 mb-2 w-64 rounded-box border border-base-300 bg-base-100 p-3 shadow-lg">
         <label className="form-control">
-          <span className="label-text text-xs font-medium">Model</span>
+          <span className="label-text text-xs font-medium">{t("model")}</span>
           <select
-            aria-label="Model"
+            aria-label={t("model")}
             className="select select-bordered select-sm mt-1"
             disabled={disabled}
             onChange={(event) => {
@@ -70,20 +73,20 @@ export function ComposerSettings({
             ))}
             {!visibleModels.length && (
               <option disabled value="">
-                No models available
+                {t("noModelsAvailable")}
               </option>
             )}
           </select>
         </label>
         <label className="form-control mt-3">
           <span className="label-text text-xs font-medium">
-            Effort{" "}
+            {t("effort")}{" "}
             <span className="font-normal text-base-content/60">
-              (reasoning depth)
+              {t("reasoningDepth")}
             </span>
           </span>
           <select
-            aria-label="Effort"
+            aria-label={t("effort")}
             className="select select-bordered select-sm mt-1"
             disabled={disabled}
             onChange={(event) => {
@@ -102,7 +105,7 @@ export function ComposerSettings({
             ))}
             {!availableEfforts.length && (
               <option disabled value="">
-                No efforts available
+                {t("noEffortsAvailable")}
               </option>
             )}
           </select>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -17,6 +18,8 @@ export function ChatSearchBox({
   initialSearchTerm = "",
   onSelect,
 }: ChatSearchBoxProps) {
+  const { t } = useTranslation("chats");
+
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [debouncedSearchTerm, setDebouncedSearchTerm] =
     useState(initialSearchTerm);
@@ -43,9 +46,9 @@ export function ChatSearchBox({
       <label className="input input-bordered input-sm flex w-full items-center gap-2">
         <MagnifyingGlassIcon aria-hidden="true" className="size-4 shrink-0" />
         <input
-          aria-label="Search chats"
+          aria-label={t("searchChats")}
           className="min-w-0 grow bg-transparent outline-none"
-          placeholder="Search chats"
+          placeholder={t("searchChats")}
           type="search"
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
@@ -67,7 +70,7 @@ export function ChatSearchBox({
             !results.isError &&
             !rows.length && (
               <p className="px-3 py-2 text-xs text-base-content/60">
-                No matching chats.
+                {t("noMatchingChatsMessage")}
               </p>
             )}
           {!isDebouncing && rows.length > 0 && (
@@ -91,7 +94,7 @@ export function ChatSearchBox({
                 className="btn btn-ghost btn-sm mt-2 w-full justify-start"
                 to={`/chats?q=${encodeURIComponent(debouncedSearchTerm.trim())}&scope=all`}
               >
-                View all results
+                {t("viewAllResults")}
               </Link>
             )}
         </div>

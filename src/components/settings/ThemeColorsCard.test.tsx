@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../../app/i18n";
 import { ThemeColorsCard } from "./ThemeColorsCard";
 
 describe("ThemeColorsCard", () => {
@@ -46,4 +53,17 @@ describe("ThemeColorsCard", () => {
     );
     expect(onReset).toHaveBeenCalledOnce();
   });
+});
+
+it("preserves the focused color input when its language changes", async () => {
+  render(
+    <ThemeColorsCard colors={{ primary: "#123456" }} onColorChange={vi.fn()} />,
+  );
+  const summary = screen.getByText("Advanced theme colors");
+  fireEvent.click(summary);
+  const input = screen.getByRole("textbox", { name: "Primary color" });
+  input.focus();
+  await act(() => i18n.changeLanguage("ja"));
+  expect(screen.getByRole("textbox", { name: "プライマリーの色" })).toBe(input);
+  expect(document.activeElement).toBe(input);
 });

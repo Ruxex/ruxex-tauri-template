@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type {
   McpEnvironmentVariableDraft,
   McpServerDraft,
@@ -128,18 +129,30 @@ export function validateMcpServerForm(
   const draft = formStateToDraft(form);
   const errors: McpServerFormErrors = {};
   if (!draft.name) {
-    errors.name = "Server name is required.";
+    errors.name = i18n.t("serverNameIsRequired", {
+      ns: "mcp",
+      lng: i18n.resolvedLanguage,
+    });
   } else if (
     existingNames.includes(draft.name) &&
     draft.name !== originalName
   ) {
-    errors.name = "A server with this name already exists.";
+    errors.name = i18n.t("aServerWithThisNameAlreadyExists", {
+      ns: "mcp",
+      lng: i18n.resolvedLanguage,
+    });
   }
   if (draft.transport === "stdio" && !draft.command) {
-    errors.command = "Command is required for stdio servers.";
+    errors.command = i18n.t("commandIsRequiredForStdioServers", {
+      ns: "mcp",
+      lng: i18n.resolvedLanguage,
+    });
   }
   if (draft.transport === "streamableHttp" && !draft.url) {
-    errors.url = "URL is required for HTTP servers.";
+    errors.url = i18n.t("urlIsRequiredForHttpServers", {
+      ns: "mcp",
+      lng: i18n.resolvedLanguage,
+    });
   }
   return errors;
 }

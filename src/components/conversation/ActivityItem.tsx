@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { memo } from "react";
 
 import {
@@ -16,7 +17,8 @@ type ActivityItemProps = {
 
 export const ActivityItem = memo(
   function ActivityItem({ item, loadArtifactPreview }: ActivityItemProps) {
-    const presentation = getActivityPresentation(item.type);
+    const { t } = useTranslation("conversation");
+    const presentation = getActivityPresentation(item.type, t);
     const isCommandExecution = item.type === "commandExecution";
 
     return (

@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { i18n } from "../../app/i18n";
+
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -35,18 +37,20 @@ describe("TokenUsageSection", () => {
     render(<TokenUsageSection usage={usage} />);
 
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByTitle("Input tokens: 100,000").textContent).toContain(
-      "100k",
+    const summary = screen.getByTitle(
+      "Input tokens: 100,000; Output tokens: 23,456; Total tokens: 123,456",
     );
-    expect(screen.getByTitle("Output tokens: 23,456").textContent).toContain(
-      "23.5k",
-    );
-    expect(screen.getByTitle("Total tokens: 123,456").textContent).toContain(
-      "123.5k",
+    expect(summary.querySelector('[aria-hidden="true"]')?.textContent).toBe(
+      "100k/23.5k Σ123.5k",
     );
     expect(
-      screen.getByTitle("Total amount: 1,234.56789").textContent,
-    ).toContain("1.23k");
+      screen.getByText("Input 100,000, Output 23,456, Total 123,456"),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByTitle("Total amount: 1,234.57")
+        .querySelector('[aria-hidden="true"]')?.textContent,
+    ).toBe("1,234.57");
     expect(screen.queryByText("Latest turn")).toBeNull();
     expect(screen.queryByText("Reasoning")).toBeNull();
     expect(screen.queryByText("Context window")).toBeNull();
@@ -57,5 +61,22 @@ describe("TokenUsageSection", () => {
 
     expect(screen.queryByRole("heading", { name: "Token Usage" })).toBeNull();
     expect(screen.queryByText("No token usage yet.")).toBeNull();
+  });
+  it("localizes compact token counts and complete accessible summaries", async () => {
+    await i18n.changeLanguage("ja");
+    render(<TokenUsageSection usage={usage} />);
+    expect(
+      screen.getByRole("heading", { name: "トークン使用量" }),
+    ).toBeTruthy();
+    const summary = screen.getByTitle(
+      "入力トークン: 100,000; 出力トークン: 23,456; 合計トークン: 123,456",
+    );
+    expect(summary.querySelector('[aria-hidden="true"]')?.textContent).toBe(
+      "10万/2.3万 Σ12.3万",
+    );
+    expect(
+      screen.getByText("入力 100,000、出力 23,456、合計 123,456"),
+    ).toBeTruthy();
+    expect(screen.getByTitle("合計金額: 1,234.57")).toBeTruthy();
   });
 });

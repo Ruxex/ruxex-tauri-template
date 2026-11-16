@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type { v2 } from "../../protocol";
 
 type PluginActionsSource = Pick<
@@ -21,9 +22,15 @@ export function getPluginActionPolicy(
     canUninstall,
     installDisabled: official || remote,
     installTitle: official
-      ? "Official Apps are not supported in Ruxex."
+      ? i18n.t("officialAppsAreNotSupportedInRuxex", {
+          ns: "plugins",
+          lng: i18n.resolvedLanguage,
+        })
       : remote
-        ? "Remote marketplace plugins cannot be installed here."
+        ? i18n.t("remoteMarketplacePluginsCannotBeInstalledHere", {
+            ns: "plugins",
+            lng: i18n.resolvedLanguage,
+          })
         : null,
   };
 }

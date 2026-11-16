@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ChevronDownIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 
 import type { v2 } from "../../protocol";
@@ -16,14 +17,15 @@ export function RuntimeSummary({
   rateLimitName,
   models = [],
 }: RuntimeSummaryProps) {
+  const { t } = useTranslation("settings");
   return (
-    <SettingsPanel icon={CpuChipIcon} title="Runtime summary">
+    <SettingsPanel icon={CpuChipIcon} title={t("settings:runtimeSummary")}>
       <dl className="divide-y divide-base-300 text-sm">
         <details className="group">
           <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_minmax(12rem,40%)] items-center gap-4 px-5 py-3.5 transition-colors hover:bg-base-200/60 max-sm:grid-cols-1 max-sm:gap-2 [&::-webkit-details-marker]:hidden">
-            <span className="font-medium">Models</span>
+            <span className="font-medium">{t("settings:models")}</span>
             <span className="flex items-center justify-end gap-2 text-right text-primary max-sm:justify-between">
-              {modelCount} available
+              {t("settings:modelsAvailable", { count: modelCount })}
               <ChevronDownIcon
                 aria-hidden="true"
                 className="size-4 shrink-0 transition-transform group-open:rotate-180"
@@ -33,7 +35,7 @@ export function RuntimeSummary({
           <div className="space-y-2 border-t border-base-300 px-5 py-3.5">
             {models.length === 0 ? (
               <p className="text-sm text-base-content/70">
-                No model information available.
+                {t("settings:noModels")}
               </p>
             ) : (
               models.map((model) => (
@@ -51,17 +53,29 @@ export function RuntimeSummary({
                     </p>
                   )}
                   <p className="mt-1 text-xs text-base-content/60">
-                    Input: {model.inputModalities?.join(", ") || "Unknown"}
+                    {t("settings:modelInput", {
+                      modalities:
+                        model.inputModalities?.join(", ") ||
+                        t("settings:unknown"),
+                    })}
                     {(model.supportedReasoningEfforts?.length ?? 0) > 0 &&
-                      ` · Reasoning: ${model.supportedReasoningEfforts?.map((effort) => effort.reasoningEffort).join(", ")}`}
+                      t("settings:modelReasoning", {
+                        efforts: model.supportedReasoningEfforts
+                          ?.map((effort) => effort.reasoningEffort)
+                          .join(", "),
+                      })}
                   </p>
                 </article>
               ))
             )}
           </div>
         </details>
-        <SettingRow label="Permissions">{permissionCount} profiles</SettingRow>
-        <SettingRow label="Rate limits">{rateLimitName}</SettingRow>
+        <SettingRow label={t("settings:permissions")}>
+          {t("settings:profiles", { count: permissionCount })}
+        </SettingRow>
+        <SettingRow label={t("settings:rateLimits")}>
+          {rateLimitName}
+        </SettingRow>
       </dl>
     </SettingsPanel>
   );

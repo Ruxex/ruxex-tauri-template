@@ -51,9 +51,12 @@ describe("desktop app-server flow", () => {
   beforeEach(() => {
     server = new MockAppServer();
     invoke.mockReset();
-    invoke.mockImplementation((command: string, args: unknown) =>
-      server.invoke(command, args as never),
-    );
+    invoke.mockImplementation((command: string, args: unknown) => {
+      if (command === "create_chat_workspace") {
+        return Promise.resolve("/home/test/.ruxex/workspaces/chat-1");
+      }
+      return server.invoke(command, args as never);
+    });
     listen.mockReset();
     listen.mockResolvedValue(() => undefined);
     server.respond("model/list", { data: [], nextCursor: null });
@@ -100,6 +103,7 @@ describe("desktop app-server flow", () => {
     expect(server.requests[0]).toMatchObject({
       method: "thread/start",
       params: {
+        cwd: "/home/test/.ruxex/workspaces/chat-1",
         approvalPolicy: "on-request",
         sandbox: "workspace-write",
       },

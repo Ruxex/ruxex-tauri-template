@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -43,6 +44,8 @@ export function ProjectSelector({
   onCreateProject,
   onRetry,
 }: ProjectSelectorProps) {
+  const { t } = useTranslation("chats");
+
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -143,7 +146,7 @@ export function ProjectSelector({
     >
       <summary
         aria-disabled={disabled}
-        aria-label="Project"
+        aria-label={t("project")}
         className={`btn btn-ghost btn-xs w-full justify-between gap-1 ${disabled ? "opacity-60" : ""}`}
       >
         <span className="flex min-w-0 items-center gap-1">
@@ -156,7 +159,7 @@ export function ProjectSelector({
             />
           )}
           <span className="truncate">
-            {selectedProject?.name ?? "No project"}
+            {selectedProject?.name ?? t("noProject")}
           </span>
         </span>
         <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -170,7 +173,7 @@ export function ProjectSelector({
           <input
             aria-activedescendant={activeOption}
             aria-controls={listId}
-            aria-label="Search projects"
+            aria-label={t("searchProjects")}
             aria-expanded={open}
             className="grow text-sm"
             onChange={(event) => {
@@ -178,7 +181,7 @@ export function ProjectSelector({
               setActiveIndex(0);
             }}
             onKeyDown={handleSearchKeyDown}
-            placeholder="Search projects"
+            placeholder={t("searchProjects")}
             ref={searchRef}
             role="combobox"
             type="search"
@@ -186,14 +189,19 @@ export function ProjectSelector({
           />
         </label>
 
-        <div aria-label="Projects" className="mt-2" id={listId} role="listbox">
+        <div
+          aria-label={t("projects")}
+          className="mt-2"
+          id={listId}
+          role="listbox"
+        >
           <div className="max-h-52 overflow-y-auto">
             {isLoading && (
               <p
                 className="px-3 py-2 text-sm text-base-content/60"
                 role="status"
               >
-                Loading projects…
+                {t("loadingProjects")}
               </p>
             )}
             {isError && (
@@ -202,7 +210,7 @@ export function ProjectSelector({
                 className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-error"
                 role="alert"
               >
-                <span>Unable to load projects.</span>
+                <span>{t("unableToLoadProjects")}</span>
                 {onRetry && (
                   <button
                     className="btn btn-ghost btn-xs"
@@ -210,7 +218,7 @@ export function ProjectSelector({
                     onClick={onRetry}
                     type="button"
                   >
-                    {isRetrying ? "Retrying…" : "Retry"}
+                    {isRetrying ? t("retrying") : t("retry")}
                   </button>
                 )}
               </div>
@@ -241,7 +249,9 @@ export function ProjectSelector({
             )}
             {!isLoading && !isError && visibleProjects.length === 0 && (
               <p className="px-3 py-2 text-sm text-base-content/60">
-                {projects.length ? "No matching projects." : "No projects yet."}
+                {projects.length
+                  ? t("noMatchingProjects")
+                  : t("noProjectsYetMessage")}
               </p>
             )}
           </div>
@@ -259,7 +269,7 @@ export function ProjectSelector({
             tabIndex={-1}
             type="button"
           >
-            <span className="min-w-0 flex-1">No project</span>
+            <span className="min-w-0 flex-1">{t("noProject")}</span>
             {!value && (
               <CheckIcon aria-hidden="true" className="size-4 shrink-0" />
             )}
@@ -278,7 +288,7 @@ export function ProjectSelector({
               type="button"
             >
               <PlusIcon aria-hidden="true" className="size-4" />
-              Create project
+              {t("createProject")}
             </button>
           </div>
         )}

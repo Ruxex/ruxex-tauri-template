@@ -3,6 +3,8 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../../app/i18n";
+
 const previewArtifact = vi.hoisted(() => vi.fn());
 const openArtifact = vi.hoisted(() => vi.fn());
 const saveArtifact = vi.hoisted(() => vi.fn());
@@ -151,5 +153,34 @@ describe("ArtifactPreview", () => {
         "/tmp/report.pdf",
       );
     });
+  });
+  it("localizes count captions and controls while retaining preview diagnostics", async () => {
+    await i18n.changeLanguage("ja");
+    previewArtifact.mockResolvedValue({
+      mimeType: "image/svg+xml",
+      dataUrl: "data:image/svg+xml;base64,preview",
+      format: "xlsx",
+      sheets: 2,
+      rows: 4000,
+      columns: 3,
+      byteSize: 128,
+      pages: [
+        {
+          label: "Server page label",
+          dataUrl: "data:image/svg+xml;base64,preview",
+          width: 640,
+          height: 480,
+          diagnostics: [],
+        },
+      ],
+      diagnostics: ["External diagnostic"],
+    });
+    render(<ArtifactPreview path="/workspace/report.xlsx" />);
+    expect(await screen.findByText("2 シート · 4,000 行 · 3 列")).toBeTruthy();
+    expect(screen.getByText("· 1 件の診断")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "成果物のファイルを開く" }),
+    ).toBeTruthy();
+    expect(screen.getByText("External diagnostic")).toBeTruthy();
   });
 });

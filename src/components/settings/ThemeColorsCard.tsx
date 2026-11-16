@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { SwatchIcon } from "@heroicons/react/24/outline";
 
 import {
@@ -8,26 +9,26 @@ import {
 } from "../../app/ui-preferences";
 
 const THEME_COLOR_LABELS: Record<UiThemeColorKey, string> = {
-  "base-100": "Base 100",
-  "base-200": "Base 200",
-  "base-300": "Base 300",
-  "base-content": "Base content",
-  primary: "Primary",
-  "primary-content": "Primary content",
-  secondary: "Secondary",
-  "secondary-content": "Secondary content",
-  accent: "Accent",
-  "accent-content": "Accent content",
-  neutral: "Neutral",
-  "neutral-content": "Neutral content",
-  info: "Info",
-  "info-content": "Info content",
-  success: "Success",
-  "success-content": "Success content",
-  warning: "Warning",
-  "warning-content": "Warning content",
-  error: "Error",
-  "error-content": "Error content",
+  "base-100": "base100",
+  "base-200": "base200",
+  "base-300": "base300",
+  "base-content": "baseContent",
+  primary: "primary",
+  "primary-content": "primaryContent",
+  secondary: "secondary",
+  "secondary-content": "secondaryContent",
+  accent: "accent",
+  "accent-content": "accentContent",
+  neutral: "neutral",
+  "neutral-content": "neutralContent",
+  info: "info",
+  "info-content": "infoContent",
+  success: "success",
+  "success-content": "successContent",
+  warning: "warning",
+  "warning-content": "warningContent",
+  error: "error",
+  "error-content": "errorContent",
 };
 
 const THEME_COLOR_GROUPS: readonly {
@@ -35,11 +36,11 @@ const THEME_COLOR_GROUPS: readonly {
   keys: readonly UiThemeColorKey[];
 }[] = [
   {
-    label: "Base colors",
+    label: "baseColors",
     keys: ["base-100", "base-200", "base-300", "base-content"],
   },
   {
-    label: "Brand colors",
+    label: "brandColors",
     keys: [
       "primary",
       "primary-content",
@@ -52,7 +53,7 @@ const THEME_COLOR_GROUPS: readonly {
     ],
   },
   {
-    label: "Status colors",
+    label: "statusColors",
     keys: [
       "info",
       "info-content",
@@ -77,39 +78,43 @@ export function ThemeColorsCard({
   onReset?: () => void;
   preset?: UiThemePresetId;
 }) {
+  const { t } = useTranslation("settings");
   const presetLabel =
-    UI_THEME_PRESETS.find((option) => option.id === preset)?.label ?? "System";
+    preset === "system"
+      ? t("settings:system")
+      : (UI_THEME_PRESETS.find((option) => option.id === preset)?.label ??
+        t("settings:system"));
 
   return (
     <details className="collapse collapse-arrow rounded-box border border-base-300 bg-base-100 shadow-sm">
       <summary className="collapse-title flex items-center gap-2 py-3 text-sm font-medium">
         <SwatchIcon aria-hidden="true" className="size-5 text-primary" />
-        Advanced theme colors
+        {t("settings:advancedThemeColors")}
       </summary>
       <div className="collapse-content p-0">
         <div className="border-t border-base-300">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
             <span className="text-xs text-base-content/60">
-              Inherited from {presetLabel}
+              {t("settings:inheritedFrom", { preset: presetLabel })}
             </span>
             <button
-              aria-label="Reset advanced colors"
+              aria-label={t("settings:resetAdvancedColors")}
               className="btn btn-ghost btn-xs"
               type="button"
               onClick={() => onReset?.()}
             >
-              Reset colors
+              {t("settings:resetColors")}
             </button>
           </div>
           <div className="space-y-6 px-5 pb-5">
             {THEME_COLOR_GROUPS.map((group) => (
               <fieldset className="grid gap-3" key={group.label}>
                 <legend className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                  {group.label}
+                  {t(`settings:${group.label}`)}
                 </legend>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {group.keys.map((key) => {
-                    const label = THEME_COLOR_LABELS[key];
+                    const label = t(`settings:${THEME_COLOR_LABELS[key]}`);
                     const inputId = `settings-theme-color-${key}`;
                     return (
                       <label className="grid gap-1" htmlFor={inputId} key={key}>
@@ -118,13 +123,15 @@ export function ThemeColorsCard({
                           --color-{key}
                         </span>
                         <input
-                          aria-label={`${label} color`}
+                          aria-label={t("settings:colorLabel", { label })}
                           className="input input-bordered input-sm w-full"
                           id={inputId}
                           onChange={(event) =>
                             onColorChange(key, event.target.value)
                           }
-                          placeholder={`Inherited from ${presetLabel}`}
+                          placeholder={t("settings:inheritedFrom", {
+                            preset: presetLabel,
+                          })}
                           type="text"
                           value={colors[key] ?? ""}
                         />

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -14,7 +15,30 @@ const useSchedules = vi.hoisted(() => vi.fn());
 vi.mock("../app-server/hooks", () => ({ useSchedules }));
 vi.mock("../app-server/runtime", () => ({ isDesktopRuntime: true }));
 
+import { i18n } from "../app/i18n";
+
 describe("SchedulesPage", () => {
+  it("renders Japanese schedule actions while preserving user content", async () => {
+    await i18n.changeLanguage("ja");
+    const { SchedulesPage } = await import("./SchedulesPage");
+    render(<SchedulesPage />);
+    expect(screen.getByRole("heading", { name: "自動化" })).toBeTruthy();
+    expect(screen.getByText("Nightly checks")).toBeTruthy();
+    expect(screen.getByText("run checks")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "今すぐ実行: Nightly checks" }),
+    );
+    expect(
+      screen.getByRole("heading", {
+        name: "スケジュールを今すぐ実行しますか？",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("「Nightly checks」を今すぐ実行しますか？"),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "キャンセル" })).toBeTruthy();
+  });
+
   afterEach(cleanup);
 
   beforeEach(() => {
@@ -239,5 +263,35 @@ describe("SchedulesPage", () => {
     render(<SchedulesPage />);
     fireEvent.click(screen.getByRole("button", { name: "New schedule" }));
     expect(screen.queryByRole("option", { name: "One time" })).toBeNull();
+  });
+  it("updates an existing schedule validation message when language changes", async () => {
+    const { SchedulesPage } = await import("./SchedulesPage");
+    render(<SchedulesPage />);
+    fireEvent.click(screen.getByRole("button", { name: "New schedule" }));
+    fireEvent.change(screen.getByLabelText("Schedule name"), {
+      target: { value: "Morning checks" },
+    });
+    fireEvent.change(screen.getByLabelText("Instructions"), {
+      target: { value: "run checks" },
+    });
+    fireEvent.change(screen.getByLabelText("Cadence"), {
+      target: { value: "weekly" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Monday" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create schedule" }));
+    expect(
+      screen.getByText("Choose at least one weekday for the weekly schedule."),
+    ).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(
+      screen.getByText(
+        "毎週のスケジュールには曜日を 1 つ以上指定してください。",
+      ),
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText("スケジュール名") as HTMLInputElement).value,
+    ).toBe("Morning checks");
   });
 });

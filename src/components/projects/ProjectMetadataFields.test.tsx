@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../../app/i18n";
 import { DEFAULT_PROJECT_METADATA } from "./project-metadata";
 import { ProjectMetadataFields } from "./ProjectMetadataFields";
 
@@ -197,4 +198,30 @@ describe("ProjectMetadataFields", () => {
 
     expect(document.activeElement).toBe(colorTrigger);
   });
+  it.each([
+    ["globe", "ウェブサイト"],
+    ["book", "ドキュメント"],
+    ["cube", "パッケージ"],
+    ["heart", "健康"],
+    ["wrench", "ツール"],
+  ] as const)(
+    "localizes the %s icon using its stored metadata value",
+    async (icon, label) => {
+      await i18n.changeLanguage("ja");
+      const onChange = vi.fn();
+      render(
+        <ProjectMetadataFields
+          value={{ icon, color: "blue" }}
+          onChange={onChange}
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: `プロジェクトのアイコン: ${label}`,
+        }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      expect(onChange).toHaveBeenCalledWith({ icon, color: "blue" });
+    },
+  );
 });

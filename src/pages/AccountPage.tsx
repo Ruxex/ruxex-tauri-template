@@ -1,3 +1,5 @@
+import { i18n } from "../app/i18n";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -13,6 +15,7 @@ import {
 } from "../components/settings/SettingsCards";
 
 export function AccountPage() {
+  const { t } = useTranslation("settings");
   const account = useAccount();
   const login = useLogin();
   const logout = useLogout();
@@ -39,7 +42,7 @@ export function AccountPage() {
   if (data?.authStatus !== "authenticated") {
     return (
       <AccountPageLayout>
-        <SettingsPanel title="Sign in">
+        <SettingsPanel title={t("settings:signIn")}>
           <form
             className="grid gap-5 p-5"
             onSubmit={(event) => {
@@ -51,8 +54,8 @@ export function AccountPage() {
               autoComplete="current-password"
               hideLabel
               id="account-api-key"
-              label="API key"
-              placeholder="Enter your API key"
+              label={t("settings:apiKey")}
+              placeholder={t("settings:apiKeyPlaceholder")}
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
               required
@@ -62,12 +65,18 @@ export function AccountPage() {
             )}
             <div className="flex justify-end">
               <button
-                aria-label={login.isPending ? "Logging in…" : "Log in"}
+                aria-label={
+                  login.isPending
+                    ? t("settings:loggingIn")
+                    : t("settings:logIn")
+                }
                 className="btn btn-primary"
                 type="submit"
                 disabled={login.isPending}
               >
-                {login.isPending ? "Logging in…" : "Log in"}
+                {login.isPending
+                  ? t("settings:loggingIn")
+                  : t("settings:logIn")}
               </button>
             </div>
           </form>
@@ -78,9 +87,9 @@ export function AccountPage() {
 
   return (
     <AccountPageLayout>
-      <SettingsPanel title="Information">
+      <SettingsPanel title={t("settings:information")}>
         <dl className="divide-y divide-base-300 text-sm">
-          <SettingRow label="Status">
+          <SettingRow label={t("settings:status")}>
             <StateBadge
               icon={
                 data?.authStatus === "authenticated"
@@ -92,28 +101,32 @@ export function AccountPage() {
               }
             >
               {data?.authStatus === "authenticated"
-                ? "Authenticated"
-                : "Authentication required"}
+                ? t("settings:authenticated")
+                : t("settings:authenticationRequired")}
             </StateBadge>
           </SettingRow>
-          <SettingRow label="Account type">
+          <SettingRow label={t("settings:accountType")}>
             {formatAccountType(data?.account?.type)}
           </SettingRow>
         </dl>
         <div className="flex justify-end px-5 py-4">
           <button
-            aria-label={logout.isPending ? "Logging out…" : "Log out"}
+            aria-label={
+              logout.isPending ? t("settings:loggingOut") : t("settings:logOut")
+            }
             className="btn btn-outline"
             disabled={logout.isPending}
             type="button"
             onClick={() => logout.mutate()}
           >
-            {logout.isPending ? "Logging out…" : "Log out"}
+            {logout.isPending ? t("settings:loggingOut") : t("settings:logOut")}
           </button>
         </div>
         {logout.isError && (
           <p className="px-5 pb-4 text-sm text-error" role="alert">
-            Unable to log out: {formatErrorMessage(logout.error)}
+            {t("settings:logoutError", {
+              error: formatErrorMessage(logout.error),
+            })}
           </p>
         )}
       </SettingsPanel>
@@ -131,16 +144,19 @@ export function AccountPage() {
 }
 
 function AccountPageLayout({ children }: { children: ReactNode }) {
+  const { t } = useTranslation("settings");
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">Account</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">
+        {t("settings:account")}
+      </h2>
       {children}
     </div>
   );
 }
 
 function formatAccountType(type: string | undefined): string {
-  if (!type) return "Not signed in";
-  if (type === "apiKey") return "API key";
+  if (!type) return i18n.t("settings:notSignedIn");
+  if (type === "apiKey") return i18n.t("settings:apiKey");
   return type;
 }

@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ActivityCenter } from "./ActivityCenter";
 
+import { i18n } from "../../app/i18n";
+
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useServerRequests = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
@@ -98,9 +100,9 @@ describe("ActivityCenter", () => {
 
     expect(screen.getByRole("heading", { name: "Activity" })).toBeTruthy();
     expect(screen.getByText("API scout agent")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Open thread/ }).getAttribute("href")).toBe(
-      "/chat/child-1",
-    );
+    expect(
+      screen.getByRole("link", { name: /Open thread/ }).getAttribute("href"),
+    ).toBe("/chat/child-1");
   });
 
   it("shows approval cards in the needs action filter", async () => {
@@ -120,5 +122,16 @@ describe("ActivityCenter", () => {
 
     expect(screen.getByText("API scout agent")).toBeTruthy();
     expect(screen.queryByText("Approval requested")).toBeNull();
+  });
+  it("localizes activity and approval actions while retaining server commands", async () => {
+    await i18n.changeLanguage("ja");
+    renderPage();
+    expect(
+      screen.getByRole("heading", { name: "アクティビティ" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: /スレッドを開く/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /対応が必要/ }));
+    expect(screen.getByText("pnpm check")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "今回のみ承認" })).toBeTruthy();
   });
 });

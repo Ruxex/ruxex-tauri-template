@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ChevronRightIcon,
   FolderIcon,
@@ -20,6 +21,8 @@ export function ChatSidebarSections({
   onClose: () => void;
   selectedThreadId?: string;
 }) {
+  const { t } = useTranslation("chats");
+
   const [projectSearch, setProjectSearch] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<
     Record<string, boolean>
@@ -38,10 +41,13 @@ export function ChatSidebarSections({
     : allProjects;
 
   return (
-    <nav aria-label="Chat navigation" className="flex min-h-0 flex-1 flex-col">
+    <nav
+      aria-label={t("chatNavigation")}
+      className="flex min-h-0 flex-1 flex-col"
+    >
       <Link className="btn btn-outline btn-sm mb-5 w-full" to="/">
         <PlusIcon aria-hidden="true" className="size-4" />
-        New chat
+        {t("newChat")}
       </Link>
       <ChatSearchBox onSelect={() => onClose()} />
 
@@ -52,11 +58,11 @@ export function ChatSidebarSections({
             className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/75 hover:bg-base-200"
             id="recent-chats-heading"
           >
+            <span>{t("recentChats")}</span>
             <ChevronRightIcon
               aria-hidden="true"
-              className="size-4 shrink-0 transition-transform group-open:rotate-90"
+              className="ml-auto size-4 shrink-0 transition-transform group-open:rotate-90"
             />
-            <span>Recent chats</span>
           </summary>
           <div className="pl-1" id="recent-chats-list">
             <ThreadList selectedThreadId={selectedThreadId} />
@@ -69,11 +75,11 @@ export function ChatSidebarSections({
             className="flex cursor-pointer list-none items-center gap-2 rounded-box px-3 py-2 text-xs font-semibold uppercase tracking-wide text-base-content/75 hover:bg-base-200"
             id="projects-heading"
           >
+            <span>{t("projects")}</span>
             <ChevronRightIcon
               aria-hidden="true"
-              className="size-4 shrink-0 transition-transform group-open:rotate-90"
+              className="ml-auto size-4 shrink-0 transition-transform group-open:rotate-90"
             />
-            <span>Projects</span>
           </summary>
           <div className="w-full" id="projects-list">
             {allProjects.length > 8 && (
@@ -83,11 +89,11 @@ export function ChatSidebarSections({
                     aria-hidden="true"
                     className="size-4 shrink-0"
                   />
-                  <span className="sr-only">Filter projects</span>
+                  <span className="sr-only">{t("filterProjects")}</span>
                   <input
                     className="min-w-0 grow bg-transparent"
                     onChange={(event) => setProjectSearch(event.target.value)}
-                    placeholder="Filter projects"
+                    placeholder={t("filterProjects")}
                     type="search"
                     value={projectSearch}
                   />
@@ -103,7 +109,7 @@ export function ChatSidebarSections({
                   aria-hidden="true"
                   className="loading loading-spinner loading-sm"
                 />
-                <span className="sr-only">Loading projects…</span>
+                <span className="sr-only">{t("loadingProjects")}</span>
               </span>
             )}
             {projects.isError && (
@@ -112,26 +118,31 @@ export function ChatSidebarSections({
                 className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-error"
                 role="alert"
               >
-                Unable to load projects.
+                {t("unableToLoadProjects")}
                 <button
                   className="btn btn-ghost btn-xs"
                   disabled={projects.isFetching}
                   onClick={() => void projects.refetch()}
                   type="button"
                 >
-                  {projects.isFetching ? "Retrying…" : "Retry"}
+                  {projects.isFetching ? t("retrying") : t("retry")}
                 </button>
               </div>
             )}
             {visibleProjects.length > 0 && (
-              <ul className="w-full space-y-1" role="list">
+              <ul className="w-full space-y-1">
                 {visibleProjects.map((project) => (
                   <li className="min-w-0" key={project.id}>
                     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_2rem] items-center gap-1">
                       <button
                         aria-controls={`project-chats-${project.id}`}
                         aria-expanded={Boolean(expandedProjects[project.id])}
-                        aria-label={`${expandedProjects[project.id] ? "Collapse" : "Expand"} ${project.name}`}
+                        aria-label={t(
+                          expandedProjects[project.id]
+                            ? "collapseProject"
+                            : "expandProject",
+                          { name: project.name },
+                        )}
                         className="btn btn-ghost btn-sm w-full justify-start gap-2 truncate px-3"
                         type="button"
                         onClick={() =>
@@ -152,9 +163,11 @@ export function ChatSidebarSections({
                         <span className="min-w-0 truncate">{project.name}</span>
                       </button>
                       <Link
-                        aria-label={`New chat in ${project.name}`}
+                        aria-label={t("newChatInProject", {
+                          name: project.name,
+                        })}
                         className="btn btn-ghost btn-sm btn-square size-8 shrink-0"
-                        title={`New chat in ${project.name}`}
+                        title={t("newChatInProject", { name: project.name })}
                         to={`/?projectId=${encodeURIComponent(project.id)}`}
                       >
                         <PencilSquareIcon
@@ -180,7 +193,7 @@ export function ChatSidebarSections({
               allProjects.length > 0 &&
               !visibleProjects.length && (
                 <p className="px-3 py-2 text-xs text-base-content/60">
-                  No projects match this filter.
+                  {t("noProjectsMatchThisFilter")}
                 </p>
               )}
             {!projects.isLoading &&
@@ -190,13 +203,15 @@ export function ChatSidebarSections({
                   <EmptyState
                     action={
                       <Link className="btn btn-ghost btn-xs" to="/projects">
-                        Open projects
+                        {t("openProjects")}
                       </Link>
                     }
                     compact
-                    description="Create a project to organize chats and workspaces."
+                    description={t(
+                      "createAProjectToOrganizeChatsAndWorkspaces",
+                    )}
                     icon={FolderIcon}
-                    title="No projects yet"
+                    title={t("noProjectsYet")}
                   />
                 </div>
               )}

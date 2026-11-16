@@ -56,7 +56,7 @@ describe("Volatile DummyProvider event states", () => {
         case "pending-user-input":
           await sendComposerPrompt(prompt);
           await $(
-            "[aria-label='Chat activity'] article input",
+            "[aria-label='Chat activity'] article button[aria-label='Submit']",
           ).waitForDisplayed({
             timeout: 30_000,
           });

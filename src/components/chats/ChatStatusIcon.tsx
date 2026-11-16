@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ExclamationCircleIcon,
   PauseCircleIcon,
@@ -7,11 +8,12 @@ import {
 import { type ChatStatus, chatStatusLabel } from "./chat-status";
 
 export function ChatStatusIcon({ status }: { status: ChatStatus }) {
+  const { t } = useTranslation("chats");
   const label = chatStatusLabel(status);
 
   return (
     <span
-      aria-label={`Chat status: ${label}`}
+      aria-label={t("chatStatus", { status: label })}
       className={`inline-flex size-4 shrink-0 items-center justify-center ${statusColorClassName(status)}`}
       role="status"
     >

@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type { ConversationViewItem } from "../conversation/conversation-model";
 import type { v2 } from "../../protocol";
 
@@ -65,7 +66,16 @@ export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3_600);
   const minutes = Math.floor((seconds % 3_600) / 60);
   const remainingSeconds = seconds % 60;
-  if (hours > 0) return `${hours}h ${minutes}m ${remainingSeconds}s`;
-  if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
-  return `${remainingSeconds}s`;
+  if (hours > 0)
+    return i18n.t("chats:durationHours", {
+      hours,
+      minutes,
+      seconds: remainingSeconds,
+    });
+  if (minutes > 0)
+    return i18n.t("chats:durationMinutes", {
+      minutes,
+      seconds: remainingSeconds,
+    });
+  return i18n.t("chats:durationSeconds", { seconds: remainingSeconds });
 }

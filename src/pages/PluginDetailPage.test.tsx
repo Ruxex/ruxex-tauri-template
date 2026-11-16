@@ -1,11 +1,6 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,7 +16,37 @@ vi.mock("../app-server/hooks", () => ({
   useUninstallPlugin,
 }));
 
+import { i18n } from "../app/i18n";
+
 describe("PluginDetailPage", () => {
+  it("renders Japanese plugin actions and preserves plugin metadata", async () => {
+    await i18n.changeLanguage("ja");
+    const { PluginDetailPage } = await import("./PluginDetailPage");
+    render(
+      <MemoryRouter
+        initialEntries={["/capabilities/plugins/community/example"]}
+      >
+        <Routes>
+          <Route
+            path="/capabilities/plugins/:marketplaceName/:pluginName"
+            element={<PluginDetailPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("button", { name: "Example Plugin をインストール" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "情報" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        "The plugin read endpoint provides the canonical details.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("developer-tools")).toBeTruthy();
+    expect(screen.getByText("1.2.3")).toBeTruthy();
+  });
+
   afterEach(cleanup);
 
   beforeEach(() => {
@@ -238,12 +263,16 @@ describe("PluginDetailPage", () => {
     );
 
     const install = useInstallPlugin.mock.results.at(-1)?.value;
-    fireEvent.click(screen.getByRole("button", { name: "Install Example Plugin" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Install Example Plugin" }),
+    );
     expect(install.mutateAsync).toHaveBeenCalledWith({
       marketplacePath: "/tmp/community",
       pluginName: "example",
     });
-    expect(screen.queryByRole("button", { name: "Uninstall Example Plugin" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Uninstall Example Plugin" }),
+    ).toBeNull();
   });
 
   it("shows only uninstall for an installed plugin", async () => {
@@ -304,7 +333,10 @@ describe("PluginDetailPage", () => {
       isError: false,
       error: null,
     });
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
     render(
@@ -327,7 +359,9 @@ describe("PluginDetailPage", () => {
     expect(uninstall.mutateAsync).toHaveBeenCalledWith({
       pluginId: "example@community",
     });
-    expect(screen.queryByRole("button", { name: "Install Example Plugin" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Install Example Plugin" }),
+    ).toBeNull();
   });
 
   it("renders list metadata for remote-only plugins", async () => {
@@ -412,11 +446,52 @@ describe("PluginDetailPage", () => {
       ),
     ).toBeTruthy();
     expect(
-      (screen.getByRole("button", { name: "Install Calendar" }) as HTMLButtonElement)
-        .disabled,
+      (
+        screen.getByRole("button", {
+          name: "Install Calendar",
+        }) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
-    expect(screen.queryByRole("button", { name: "Uninstall Calendar" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Uninstall Calendar" }),
+    ).toBeNull();
     expect(usePluginRead).toHaveBeenCalledWith(null);
   });
-
+  it.each([
+    ["en", "install", "Unable to install plugin:"],
+    ["en", "uninstall", "Unable to uninstall plugin:"],
+    ["ja", "install", "プラグインをインストールできません:"],
+    ["ja", "uninstall", "プラグインをアンインストールできません:"],
+  ] as const)(
+    "renders %s %s failure details exactly once",
+    async (language, action, framing) => {
+      await i18n.changeLanguage(language);
+      const details =
+        "provider/acme: EnglishOnly unavailable (code -32601); /srv/plugins";
+      const mutation =
+        action === "install" ? useInstallPlugin : useUninstallPlugin;
+      mutation.mockReturnValue({
+        isPending: false,
+        isError: true,
+        error: { message: details },
+        mutateAsync: vi.fn(),
+      });
+      const { PluginDetailPage } = await import("./PluginDetailPage");
+      render(
+        <MemoryRouter
+          initialEntries={["/capabilities/plugins/community/example"]}
+        >
+          <Routes>
+            <Route
+              path="/capabilities/plugins/:marketplaceName/:pluginName"
+              element={<PluginDetailPage />}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("alert").textContent).toBe(
+        `${framing} ${details}`,
+      );
+    },
+  );
 });

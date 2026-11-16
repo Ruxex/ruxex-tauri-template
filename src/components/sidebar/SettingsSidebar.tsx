@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArchiveBoxIcon,
   CpuChipIcon,
@@ -14,19 +15,20 @@ import { NavLink } from "react-router-dom";
 import { SidebarHeader } from "./SidebarHeader";
 
 export function SettingsSidebar({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation("navigation");
   return (
     <aside
-      aria-label="Settings sidebar"
+      aria-label={t("navigation:settingsSidebar")}
       className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
     >
-      <SidebarHeader label="Settings" onClose={onClose} />
-      <nav aria-label="Settings sections" className="space-y-3">
+      <SidebarHeader label={t("navigation:settings")} onClose={onClose} />
+      <nav aria-label={t("navigation:settingsSections")} className="space-y-3">
         <section aria-labelledby="settings-personal-heading">
           <h3
             className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-base-content/50"
             id="settings-personal-heading"
           >
-            Personal
+            {t("navigation:personal")}
           </h3>
           <ul className="menu w-full gap-1 p-0">
             <li>
@@ -40,7 +42,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings"
               >
                 <InformationCircleIcon aria-hidden="true" className="size-4" />
-                General
+                {t("navigation:general")}
               </NavLink>
             </li>
             <li>
@@ -53,7 +55,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/appearance"
               >
                 <SparklesIcon aria-hidden="true" className="size-4" />
-                Appearance
+                {t("navigation:appearance")}
               </NavLink>
             </li>
             <li>
@@ -66,7 +68,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/archive"
               >
                 <ArchiveBoxIcon aria-hidden="true" className="size-4" />
-                Archived chats
+                {t("navigation:archivedChats")}
               </NavLink>
             </li>
           </ul>
@@ -77,7 +79,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
             className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-base-content/50"
             id="settings-integrations-heading"
           >
-            Integrations
+            {t("navigation:integrations")}
           </h3>
           <ul className="menu w-full gap-1 p-0">
             <li>
@@ -90,7 +92,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/marketplaces"
               >
                 <PuzzlePieceIcon aria-hidden="true" className="size-4" />
-                Plugin marketplaces
+                {t("navigation:pluginMarketplaces")}
               </NavLink>
             </li>
             <li>
@@ -103,7 +105,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/hooks"
               >
                 <ShieldCheckIcon aria-hidden="true" className="size-4" />
-                Hooks
+                {t("navigation:hooks")}
               </NavLink>
             </li>
             <li>
@@ -115,11 +117,8 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 }
                 to="/settings/mcp-servers"
               >
-                <WrenchScrewdriverIcon
-                  aria-hidden="true"
-                  className="size-4"
-                />
-                MCP servers
+                <WrenchScrewdriverIcon aria-hidden="true" className="size-4" />
+                {t("navigation:mcpServers")}
               </NavLink>
             </li>
           </ul>
@@ -130,7 +129,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
             className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-base-content/50"
             id="settings-system-heading"
           >
-            System
+            {t("navigation:system")}
           </h3>
           <ul className="menu w-full gap-1 p-0">
             <li>
@@ -143,7 +142,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/provider"
               >
                 <CpuChipIcon aria-hidden="true" className="size-4" />
-                Provider
+                {t("navigation:provider")}
               </NavLink>
             </li>
             <li>
@@ -156,7 +155,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/app-server"
               >
                 <ServerIcon aria-hidden="true" className="size-4" />
-                App Server
+                {t("navigation:appServer")}
               </NavLink>
             </li>
             <li>
@@ -169,7 +168,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/version"
               >
                 <TagIcon aria-hidden="true" className="size-4" />
-                Version
+                {t("navigation:version")}
               </NavLink>
             </li>
           </ul>

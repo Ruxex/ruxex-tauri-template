@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 
 import { HomeSidebar } from "./HomeSidebar";
@@ -47,15 +48,18 @@ export function RouteSidebar({
   onClose: () => void;
   panel: SidebarPanelDefinition;
 }) {
+  const { t } = useTranslation("navigation");
   return (
     <aside
-      aria-label={`${panel.label} sidebar`}
+      aria-label={t("navigation:sidebar", {
+        label: t(`navigation:${panel.id}`),
+      })}
       className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
     >
-      <SidebarHeader label={panel.label} onClose={onClose} />
+      <SidebarHeader label={t(`navigation:${panel.id}`)} onClose={onClose} />
       <div className="rounded-box bg-base-200 p-4 text-sm text-base-content/70">
         <NavLink className="btn btn-primary btn-sm mt-4" to={panel.route}>
-          Open {panel.label}
+          {t("navigation:openPanel", { label: t(`navigation:${panel.id}`) })}
         </NavLink>
       </div>
     </aside>

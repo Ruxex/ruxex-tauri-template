@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -10,8 +11,10 @@ type ExecutionStatusIconProps = {
 
 export function ExecutionStatusIcon({
   status,
-  subject = "Command",
+  subject,
 }: ExecutionStatusIconProps) {
+  const { t } = useTranslation("conversation");
+  const resolvedSubject = subject ?? t("command");
   if (!status) {
     return null;
   }
@@ -19,10 +22,10 @@ export function ExecutionStatusIcon({
   if (status === "inProgress" || status === "running") {
     return (
       <span
-        aria-label={`${subject} running`}
+        aria-label={t("subjectRunning", { subject: resolvedSubject })}
         className="inline-flex size-4 shrink-0 items-center justify-center text-primary"
         role="img"
-        title={`${subject} running`}
+        title={t("subjectRunning", { subject: resolvedSubject })}
       >
         <span
           aria-hidden="true"
@@ -35,22 +38,41 @@ export function ExecutionStatusIcon({
   if (status === "completed") {
     return (
       <span
-        aria-label={`${subject} completed`}
+        aria-label={t("subjectCompleted", { subject: resolvedSubject })}
         className="inline-flex size-4 shrink-0 items-center justify-center text-success"
         role="img"
-        title={`${subject} completed`}
+        title={t("subjectCompleted", { subject: resolvedSubject })}
       >
         <CheckCircleIcon aria-hidden="true" className="size-4" />
       </span>
     );
   }
 
+  const displayStatus =
+    status === "declined" || status === "interrupted"
+      ? t(`executionStatuses.${status}`)
+      : status;
+
   return (
     <span
-      aria-label={status === "failed" ? `${subject} failed` : `${subject} status: ${status}`}
+      aria-label={
+        status === "failed"
+          ? t("subjectFailed", { subject: resolvedSubject })
+          : t("subjectStatus", {
+              subject: resolvedSubject,
+              status: displayStatus,
+            })
+      }
       className="inline-flex size-4 shrink-0 items-center justify-center text-warning"
       role="img"
-      title={status === "failed" ? `${subject} failed` : `${subject} status: ${status}`}
+      title={
+        status === "failed"
+          ? t("subjectFailed", { subject: resolvedSubject })
+          : t("subjectStatus", {
+              subject: resolvedSubject,
+              status: displayStatus,
+            })
+      }
     >
       <ExclamationTriangleIcon aria-hidden="true" className="size-4" />
     </span>

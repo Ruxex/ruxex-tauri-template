@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { v2 } from "../../protocol";
 import { formatErrorMessage } from "../../app/error-message";
 
@@ -12,20 +13,21 @@ export function McpResourceViewer({
   isLoading = false,
   error,
 }: McpResourceViewerProps) {
+  const { t } = useTranslation("mcp");
   if (isLoading) {
-    return <p role="status">Loading Resource…</p>;
+    return <p role="status">{t("loadingResource")}</p>;
   }
 
   if (error) {
     return (
       <p role="alert">
-        Unable to read MCP Resource: {formatErrorMessage(error)}
+        {t("unableToReadMcpResource", { details: formatErrorMessage(error) })}
       </p>
     );
   }
 
   if (!response?.contents.length) {
-    return <p role="status">No Resource content.</p>;
+    return <p role="status">{t("noResourceContent")}</p>;
   }
 
   return (
@@ -48,12 +50,12 @@ export function McpResourceViewer({
             className="rounded-box bg-base-200 p-3 text-sm"
             key={`blob:${content.uri}`}
           >
-            <p className="font-medium">Binary content</p>
+            <p className="font-medium">{t("binaryContent")}</p>
             <p className="text-xs text-base-content/60">
-              {content.mimeType ?? "MIME type unavailable"}
+              {content.mimeType ?? t("mimeTypeUnavailable")}
             </p>
             <p className="text-xs text-base-content/60">
-              {content.blob.length} base64 characters
+              {t("base64Count", { count: content.blob.length })}
             </p>
           </div>
         );

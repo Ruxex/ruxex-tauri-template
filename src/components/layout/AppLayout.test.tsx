@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -44,6 +45,7 @@ vi.mock("../git-diff/GitDiffReviewPane", () => ({
 }));
 
 import type { AppOutletContext } from "../../app/app-outlet-context";
+import { i18n } from "../../app/i18n";
 import { AppLayout } from "./AppLayout";
 
 function DiffActions() {
@@ -249,6 +251,39 @@ describe("AppLayout", () => {
     );
 
     expect(screen.getByText("Command demo")).toBeTruthy();
+  });
+
+  it("uses the selected thread's project for its breadcrumbs", () => {
+    useThread.mockReturnValue({
+      data: {
+        thread: {
+          id: "thread-1",
+          name: "Command demo",
+          preview: "fallback",
+          projectId: "project-1",
+        },
+      },
+    });
+    useProject.mockReturnValue({
+      data: { project: { name: "Ruxex" } },
+    });
+    useUiPreferences.mockReturnValue({
+      preferences: { sidebarCollapsed: false },
+      update: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <Routes>
+          <Route path="/chat/:threadId" element={<AppLayout />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(useProject).toHaveBeenCalledWith("project-1");
+    expect(
+      screen.getByRole("link", { name: "Ruxex" }).getAttribute("href"),
+    ).toBe("/projects/project-1");
   });
 
   it("marks the selected chat read at its current update position", () => {
@@ -505,5 +540,20 @@ describe("AppLayout", () => {
     expect(
       screen.getByTestId("right-pane-panel").getAttribute("data-pane-open"),
     ).toBe("true");
+  });
+  it("updates pane tab and close labels live in Japanese while retaining workspace names", async () => {
+    renderWithDiffActions();
+    fireEvent.click(screen.getByRole("button", { name: "Open first diff" }));
+    await act(() => i18n.changeLanguage("ja"));
+    expect(
+      screen.getByRole("tab", { name: "Git差分 — repo-one" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tablist", { name: "右ペインのタブ" }),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Git差分 — repo-oneタブを閉じる" }),
+    );
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 });

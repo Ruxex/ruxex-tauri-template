@@ -1,27 +1,31 @@
+import { i18n } from "../../app/i18n";
+import { useTranslation } from "react-i18next";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 
 import { CapabilityStatus } from "../common/CapabilityStatus";
 import { SettingsPanel } from "./SettingsPanel";
 
 const CAPABILITY_LABELS: Record<string, string> = {
-  apiKeyModelDiscovery: "API key model discovery",
-  commandAuth: "Command authorization",
-  externalWebAccess: "External web access",
-  historyNotes: "History notes",
-  interactiveLogin: "Interactive login",
-  modelListing: "Model listing",
-  namespaceTools: "Namespace tools",
-  remoteCompaction: "Remote compaction",
-  standaloneWebSearch: "Standalone web search",
-  streaming: "Streaming",
-  usage: "Usage reporting",
-  webSearch: "Web search",
-  websocket: "WebSocket",
+  apiKeyModelDiscovery: "apiKeyModelDiscovery",
+  commandAuth: "commandAuthorization",
+  externalWebAccess: "externalWebAccess",
+  historyNotes: "historyNotes",
+  interactiveLogin: "interactiveLogin",
+  modelListing: "modelListing",
+  namespaceTools: "namespaceTools",
+  remoteCompaction: "remoteCompaction",
+  standaloneWebSearch: "standaloneWebSearch",
+  streaming: "streaming",
+  usage: "usageReporting",
+  webSearch: "webSearch",
+  websocket: "webSocket",
 };
 
 function capabilityLabel(name: string): string {
   return (
-    CAPABILITY_LABELS[name] ??
+    (CAPABILITY_LABELS[name]
+      ? i18n.t(`settings:${CAPABILITY_LABELS[name]}`)
+      : undefined) ??
     name
       .replace(/([a-z])([A-Z])/g, "$1 $2")
       .replaceAll("_", " ")
@@ -34,8 +38,9 @@ export function CapabilitiesCard({
 }: {
   capabilities: Record<string, boolean | string>;
 }) {
+  const { t } = useTranslation("settings");
   return (
-    <SettingsPanel icon={SparklesIcon} title="Capabilities">
+    <SettingsPanel icon={SparklesIcon} title={t("settings:capabilities")}>
       <dl className="grid grid-cols-1 gap-px bg-base-300 text-sm sm:grid-cols-2 xl:grid-cols-3">
         {Object.entries(capabilities).map(([name, enabled]) => (
           <div
@@ -45,12 +50,17 @@ export function CapabilitiesCard({
             <dt className="min-w-0 leading-snug">{capabilityLabel(name)}</dt>
             <dd className="justify-self-end text-right">
               {enabled === true ? (
-                <CapabilityStatus label="Enabled" state="enabled" />
+                <CapabilityStatus
+                  label={t("settings:enabled")}
+                  state="enabled"
+                />
               ) : (
                 <CapabilityStatus
                   state="unsupported"
                   label={
-                    typeof enabled === "boolean" ? "Unsupported" : String(enabled)
+                    typeof enabled === "boolean"
+                      ? t("settings:unsupported")
+                      : String(enabled)
                   }
                 />
               )}

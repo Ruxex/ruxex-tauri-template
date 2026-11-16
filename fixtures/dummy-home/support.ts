@@ -41,7 +41,23 @@ export function scenarioExpectation(
 }
 
 export async function waitForDesktopReady(): Promise<void> {
-  await $("main").waitForDisplayed({ timeout: 10_000 });
+  try {
+    await $("main").waitForDisplayed({ timeout: 10_000 });
+  } catch (error) {
+    const page = await browser
+      .execute(() => ({
+        url: window.location.href,
+        readyState: document.readyState,
+        text: document.body?.innerText.slice(0, 500) ?? "<no body>",
+      }))
+      .catch(() => null);
+    throw new Error(
+      `Desktop UI did not render its main content: ${JSON.stringify(page)}`,
+      {
+        cause: error,
+      },
+    );
+  }
   await $("button[aria-label='Account']").click();
   await browser.waitUntil(
     async () => {
@@ -67,19 +83,7 @@ export async function waitForDesktopReady(): Promise<void> {
 }
 
 export async function openNewChat(): Promise<void> {
-  const newChat = $('nav[aria-label="Chat navigation"] a[href="/"]');
-  if (!(await newChat.isDisplayed().catch(() => false))) {
-    await $(
-      "nav[aria-label='Workspace navigation'] button[aria-label='Home']",
-    ).click();
-  }
-
-  if (await newChat.isDisplayed().catch(() => false)) {
-    await newChat.click();
-  } else {
-    await browser.url("tauri://localhost/#/");
-  }
-
+  await browser.url("tauri://localhost/#/");
   await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
@@ -367,7 +371,9 @@ export async function resolveApproval(
 }
 
 export async function submitUserInput(answer: string): Promise<void> {
-  const card = $("[aria-label='Chat activity'] article");
+  const card = $(
+    "//*[@aria-label='Chat activity']//article[.//button[@aria-label='Submit']]",
+  );
   const otherOption = card.$("input[type='radio'][value='None of the above']");
   await otherOption.waitForDisplayed({ timeout: 30_000 });
   await otherOption.click();
@@ -532,7 +538,7 @@ export async function openProjectChat(projectName: string): Promise<void> {
     ).click();
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
     await $(
-      `tr[aria-label='Open project ${projectName}'] td:first-child`,
+      `//table[@aria-label='Projects']//a[normalize-space(.)='${projectName}']`,
     ).click();
     await projectHeading.waitForDisplayed({ timeout: 10_000 });
   }

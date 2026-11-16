@@ -11,6 +11,9 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const useProjectList = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() =>
+  vi.fn(() => ({ threads: {}, pendingServerRequests: {} })),
+);
 const useThreadList = vi.hoisted(() => vi.fn());
 const useThreadActivity = vi.hoisted(() => vi.fn());
 const useThreadReadState = vi.hoisted(() =>
@@ -24,6 +27,8 @@ const activeThreadListParams = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
+  useAllProjectList: useProjectList,
+  useAppServerEvents,
   useThreadList,
   useThreadActivity,
   useArchiveThread,
@@ -87,9 +92,14 @@ describe("ChatSidebarSections", () => {
 
     expect(links[0].textContent?.trim()).toBe("New chat");
     expect(links[1].textContent).toContain("Build the sidebar");
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     expect(links[0].getAttribute("href")).toBe("/");
     expect(links[1].getAttribute("href")).toBe("/chat/thread-1");
+    expect(
+      screen
+        .getByRole("link", { name: "New chat in Project Alpha" })
+        .getAttribute("href"),
+    ).toBe("/?projectId=project-1");
     expect(scrollRegion?.className).toContain("-mr-4");
     expect(scrollRegion?.className).toContain("pr-4");
     expect(

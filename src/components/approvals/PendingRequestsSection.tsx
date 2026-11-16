@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
@@ -14,11 +15,13 @@ export function PendingRequestsSection({
   connected,
   pendingRequests,
 }: PendingRequestsSectionProps) {
+  const { t } = useTranslation("approvals");
+
   if (!pendingRequests.length) {
     return (
       <div className="card border border-dashed border-base-300 bg-base-100">
         <div className="card-body items-center text-center">
-          <p>No pending approvals.</p>
+          <p>{t("noPendingApprovals")}</p>
         </div>
       </div>
     );

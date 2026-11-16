@@ -1,0 +1,25 @@
+{
+  "waylandUnavailable": "Linux / Waylandではグローバルショートカットは現在利用できません。",
+  "windowTitle": "クイックリクエスト",
+  "placeholder": "質問を入力…",
+  "imageAttachment": "画像の添付",
+  "imageAttached": "画像を添付済み",
+  "audioRecorded": "音声を録音済み",
+  "imageAndAudioAttached": "画像を添付済み・音声を録音済み",
+  "captureScreen": "画面をキャプチャ",
+  "capturing": "キャプチャ中…",
+  "attachImage": "画像を添付",
+  "stopRecording": "録音を停止",
+  "recordAudio": "音声を録音",
+  "send": "送信",
+  "sending": "送信中…",
+  "errors": {
+    "imageOnly": "添付できるのは画像のみです。",
+    "captureUnavailable": "画面キャプチャを利用できません。",
+    "captureCancelled": "画面キャプチャをキャンセルしました。",
+    "audioUnavailable": "音声録音を利用できません。",
+    "audioReadFailed": "録音した音声を読み込めません。",
+    "audioCancelled": "音声録音をキャンセルしました。",
+    "sendFailed": "クイックリクエストを送信できません。"
+  }
+}

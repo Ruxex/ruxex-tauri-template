@@ -1,0 +1,21 @@
+{
+  "actions": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "delete": "Delete"
+  },
+  "states": {
+    "loading": "Loading…"
+  },
+  "removeImageAttachment": "Remove image attachment",
+  "closeDialog": "Close dialog",
+  "close": "Close",
+  "selectedImage": "Selected image: {{name}}",
+  "skillIcon": "{{name}} icon",
+  "imageOnlySupported": "Only image attachments are supported.",
+  "visualizationLoading": "Loading visualization…",
+  "visualizationTitle": "Visualization",
+  "visualizationTooLarge": "Visualization is too large.",
+  "visualizationLoadFailed": "Unable to load visualization."
+}

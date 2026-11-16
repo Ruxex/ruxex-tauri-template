@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   useEffect,
   useState,
@@ -5,7 +6,6 @@ import {
 } from "react";
 
 import { useUiPreferences } from "../app/ui-preferences";
-import { translateUi } from "../app/i18n";
 import {
   LanguageCard,
   NotificationsCard,
@@ -57,12 +57,15 @@ function shortcutKeyFromEvent(
 }
 
 export function SettingsOverviewPage() {
+  const { t } = useTranslation("settings");
   const { preferences, update } = useUiPreferences();
   const [shortcut, setShortcut] = useState("");
   const [defaultShortcut, setDefaultShortcut] = useState("");
   const [isLoadingShortcut, setIsLoadingShortcut] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
-  const [shortcutError, setShortcutError] = useState<string | null>(null);
+  const [shortcutError, setShortcutError] = useState<
+    Error | "load" | "update" | null
+  >(null);
 
   useEffect(() => {
     let active = true;
@@ -74,11 +77,7 @@ export function SettingsOverviewPage() {
       })
       .catch((error: unknown) => {
         if (!active) return;
-        setShortcutError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load quick panel shortcut.",
-        );
+        setShortcutError(error instanceof Error ? error : "load");
       })
       .finally(() => {
         if (active) setIsLoadingShortcut(false);
@@ -97,11 +96,7 @@ export function SettingsOverviewPage() {
       setShortcut(settings.shortcut);
       setDefaultShortcut(settings.defaultShortcut);
     } catch (error) {
-      setShortcutError(
-        error instanceof Error
-          ? error.message
-          : "Unable to update quick panel shortcut.",
-      );
+      setShortcutError(error instanceof Error ? error : "update");
     } finally {
       setIsSavingShortcut(false);
     }
@@ -118,7 +113,9 @@ export function SettingsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">General</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">
+        {t("settings:general")}
+      </h2>
       <LanguageCard
         language={preferences.language}
         onLanguageChange={(language) => update({ language })}
@@ -126,16 +123,23 @@ export function SettingsOverviewPage() {
       <QuickPanelCard
         defaultShortcut={defaultShortcut}
         disabled={isLoadingShortcut || isSavingShortcut}
-        error={shortcutError}
+        error={
+          shortcutError instanceof Error
+            ? shortcutError.message
+            : shortcutError
+              ? t(
+                  shortcutError === "load"
+                    ? "settings:shortcutLoadError"
+                    : "settings:shortcutSaveError",
+                )
+              : null
+        }
         isLoading={isLoadingShortcut}
         onReset={() => void saveShortcut(defaultShortcut)}
         onSave={() => void saveShortcut()}
         onShortcutKeyDown={handleShortcutKeyDown}
         shortcut={shortcut}
-        waylandNotice={translateUi(
-          "quickPanelWaylandUnavailable",
-          preferences.language,
-        )}
+        waylandNotice={t("quickPanel:waylandUnavailable")}
       />
       <NotificationsCard
         enabled={preferences.notifications.desktop}

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ChatBubbleLeftRightIcon,
   MagnifyingGlassIcon,
@@ -24,13 +25,15 @@ import { PageContainer } from "../components/layout/PageContainer";
 type ChatSortKey = NonNullable<ThreadSearchOptions["sortKey"]>;
 type ChatScope = "unassigned" | "projects";
 
-const SORT_OPTIONS: { label: string; value: ChatSortKey }[] = [
-  { label: "Most recently active", value: "recency_at" },
-  { label: "Recently updated", value: "updated_at" },
-  { label: "Newest first", value: "created_at" },
-];
-
 export function ChatsPage() {
+  const { t } = useTranslation("chats");
+
+  const SORT_OPTIONS: { label: string; value: ChatSortKey }[] = [
+    { label: t("mostRecentlyActive"), value: "recency_at" },
+    { label: t("recentlyUpdated"), value: "updated_at" },
+    { label: t("newestFirst"), value: "created_at" },
+  ];
+
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearchTerm = searchParams.get("q") ?? "";
   const isGlobalSearch = searchParams.get("scope") === "all";
@@ -115,16 +118,16 @@ export function ChatsPage() {
   return (
     <PageContainer>
       <header className="pb-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Chats</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("chats")}</h1>
       </header>
 
       <div className="flex flex-wrap items-center gap-3">
         <label className="input input-bordered flex min-w-56 flex-1 items-center gap-2">
           <MagnifyingGlassIcon aria-hidden="true" className="size-4 shrink-0" />
           <input
-            aria-label="Search chats"
+            aria-label={t("searchChats")}
             className="min-w-0 grow bg-transparent outline-none"
-            placeholder="Search chats"
+            placeholder={t("searchChats")}
             type="search"
             value={urlSearchTerm}
             onChange={(event) => {
@@ -141,9 +144,9 @@ export function ChatsPage() {
           />
         </label>
         <label className="select select-bordered min-w-52">
-          <span className="sr-only">Sort chats</span>
+          <span className="sr-only">{t("sortChats")}</span>
           <select
-            aria-label="Sort chats"
+            aria-label={t("sortChats")}
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as ChatSortKey)}
           >
@@ -158,13 +161,13 @@ export function ChatsPage() {
 
       {hasSearchTerm && isGlobalSearch && (
         <p className="text-sm text-base-content/65">
-          Showing results across all chats.
+          {t("showingResultsAcrossAllChats")}
         </p>
       )}
 
       <div className="attached-tabs">
         <div
-          aria-label="Chat scope"
+          aria-label={t("chatScope")}
           className="attached-tablist"
           onKeyDown={handleTabListKeyDown}
           role="tablist"
@@ -178,7 +181,7 @@ export function ChatsPage() {
             tabIndex={scope === "unassigned" ? 0 : -1}
             type="button"
           >
-            No project
+            {t("noProject")}
           </button>
           <button
             aria-selected={scope === "projects"}
@@ -189,7 +192,7 @@ export function ChatsPage() {
             tabIndex={scope === "projects" ? 0 : -1}
             type="button"
           >
-            In projects
+            {t("inProjects")}
           </button>
         </div>
 
@@ -215,17 +218,17 @@ export function ChatsPage() {
                   onClick={() => void activeQuery.refetch()}
                   type="button"
                 >
-                  {activeQuery.isFetching ? "Retrying…" : "Retry"}
+                  {activeQuery.isFetching ? t("retrying") : t("retry")}
                 </button>
               }
             >
-              {formatErrorMessage(activeQuery.error) || "Unable to load chats."}
+              {formatErrorMessage(activeQuery.error) || t("unableToLoadChats")}
             </ErrorState>
           )}
           {!isLoading && !isError && threads.length === 0 && (
             <EmptyState
               icon={ChatBubbleLeftRightIcon}
-              title={hasSearchTerm ? "No matching chats" : "No chats yet"}
+              title={hasSearchTerm ? t("noMatchingChats") : t("noChatsYet")}
             />
           )}
           {!isLoading && !isError && threads.length > 0 && (

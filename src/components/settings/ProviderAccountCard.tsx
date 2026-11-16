@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -20,11 +21,15 @@ export function ProviderAccountCard({
   account,
   dataDirectory,
 }: ProviderAccountCardProps) {
+  const { t } = useTranslation("settings");
   return (
-    <SettingsPanel icon={UserCircleIcon} title="Provider and account">
+    <SettingsPanel
+      icon={UserCircleIcon}
+      title={t("settings:providerAndAccount")}
+    >
       <dl className="divide-y divide-base-300 text-sm">
-        <SettingRow label="Provider">{provider}</SettingRow>
-        <SettingRow label="Auth">
+        <SettingRow label={t("settings:provider")}>{provider}</SettingRow>
+        <SettingRow label={t("settings:auth")}>
           <StateBadge
             icon={
               authStatus === "authenticated"
@@ -36,8 +41,8 @@ export function ProviderAccountCard({
             {authStatus}
           </StateBadge>
         </SettingRow>
-        <SettingRow label="Account">{account}</SettingRow>
-        <SettingRow label="Data directory">
+        <SettingRow label={t("settings:account")}>{account}</SettingRow>
+        <SettingRow label={t("settings:dataDirectory")}>
           <span
             className="block truncate font-mono text-xs"
             title={dataDirectory}

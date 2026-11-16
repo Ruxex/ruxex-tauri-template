@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type {
   ScheduleCadence,
   ScheduleInput,
@@ -112,14 +113,20 @@ export function scheduleInputFromForm(
   if (state.cadenceKind === "once" && !Number.isFinite(onceTimestamp)) {
     return {
       ok: false,
-      message: "Choose a valid time for the one-time schedule.",
+      message: i18n.t("chooseAValidTimeForTheOnetimeSchedule", {
+        ns: "schedules",
+        lng: i18n.resolvedLanguage,
+      }),
     };
   }
 
   if (state.cadenceKind === "weekly" && state.weekdays.length === 0) {
     return {
       ok: false,
-      message: "Choose at least one weekday for the weekly schedule.",
+      message: i18n.t("chooseAtLeastOneWeekdayForTheWeeklySchedule", {
+        ns: "schedules",
+        lng: i18n.resolvedLanguage,
+      }),
     };
   }
 

@@ -11,6 +11,8 @@ import {
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../app/i18n";
+
 const useParams = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
 const useProjectThreads = vi.hoisted(() => vi.fn());
@@ -18,6 +20,9 @@ const useArchiveThread = vi.hoisted(() => vi.fn());
 const useUpdateProject = vi.hoisted(() => vi.fn());
 const useDeleteProject = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() =>
+  vi.fn(() => ({ threads: {}, pendingServerRequests: {} })),
+);
 
 vi.mock("react-router-dom", async () => {
   const actual =
@@ -32,6 +37,7 @@ vi.mock("../app-server/hooks", () => ({
   useProject,
   useProjectThreads,
   useUpdateProject,
+  useAppServerEvents,
 }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
 vi.mock("../components/common/ThreadCard", () => ({
@@ -82,7 +88,7 @@ describe("ProjectHomePage", () => {
             id: "thread-1",
             name: "Project chat",
             preview: "Project chat preview",
-            updatedAt: 1_735_689_600,
+            updatedAt: Math.floor(Date.now() / 1000) - 120,
           },
         ],
       },
@@ -113,7 +119,7 @@ describe("ProjectHomePage", () => {
     expect(screen.getByRole("heading", { name: "Ruxex" })).toBeTruthy();
     expect(screen.getByText("/workspace")).toBeTruthy();
     expect(screen.getByText("Project chat")).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Chats" })).toBeTruthy();
+    expect(screen.getByRole("table", { name: "Chats" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
     ).toBe("/?projectId=project-1");
@@ -370,5 +376,24 @@ describe("ProjectHomePage", () => {
     );
 
     expect(screen.getByText("Unable to load this project.")).toBeTruthy();
+  });
+  it("localizes project detail actions and dialogs while retaining project content", async () => {
+    await i18n.changeLanguage("ja");
+    const { ProjectHomePage } = await import("./ProjectHomePage");
+    render(
+      <MemoryRouter>
+        <ProjectHomePage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "Ruxex" })).toBeTruthy();
+    expect(screen.getByText("Project chat")).toBeTruthy();
+    expect(screen.getByLabelText("プロジェクトのチャットを検索")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "プロジェクトを編集" }));
+    expect(
+      screen.getByRole("dialog", { name: "プロジェクトを編集" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "プロジェクトを保存" }),
+    ).toBeTruthy();
   });
 });

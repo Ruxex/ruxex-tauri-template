@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type { v2 } from "../../protocol";
 import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 
@@ -107,10 +108,10 @@ export function availableSubmissionModes(
 
 export function submissionModeLabel(mode: SubmissionMode): string {
   return mode === "steer"
-    ? "Steer active turn"
+    ? i18n.t("conversation:steerActiveTurn")
     : mode === "queue"
-      ? "Queue next message"
-      : "Send";
+      ? i18n.t("conversation:queueNextMessage")
+      : i18n.t("conversation:send");
 }
 
 export function buildImageUserInput(url: string): v2.UserInput {

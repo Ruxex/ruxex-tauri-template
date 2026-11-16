@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "../app/i18n";
 
 const useUiPreferences = vi.hoisted(() => vi.fn());
 
@@ -88,5 +96,36 @@ describe("AppearancePage", () => {
         preset: "github-dark",
       },
     });
+  });
+  it("updates theme, typography and advanced color accessible names in Japanese", async () => {
+    useUiPreferences.mockReturnValue({
+      preferences: {
+        theme: { preset: "system", colors: {} },
+        chatFontFamily: "system-ui",
+        chatFontSize: 14,
+        uiFontFamily: "system-ui",
+        uiFontSize: 14,
+        uiZoom: 100,
+      },
+      update: vi.fn(),
+    });
+    const { AppearancePage } = await import("./AppearancePage");
+    render(<AppearancePage />);
+    await act(() => i18n.changeLanguage("ja"));
+    expect(screen.getByRole("heading", { name: "外観" })).toBeTruthy();
+    expect(
+      screen.getByRole("spinbutton", { name: "チャットの文字サイズ" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "UIのフォント" })).toBeTruthy();
+    const colors = screen
+      .getByText("テーマカラーの詳細設定")
+      .closest("details");
+    const summary = colors?.querySelector("summary");
+    if (!summary) throw new Error("Theme colors summary is missing");
+    fireEvent.click(summary);
+    expect(
+      screen.getByRole("textbox", { name: "プライマリーの色" }),
+    ).toBeTruthy();
+    expect(screen.getByText("システムから継承")).toBeTruthy();
   });
 });

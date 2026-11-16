@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { i18n } from "../../app/i18n";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -508,5 +509,40 @@ describe("capability query and mutation hooks", () => {
         }),
       ),
     ).rejects.toThrow("MCP unavailable");
+  });
+
+  it("updates cached MCP configuration errors when language changes without another request", async () => {
+    requestAppServerMethod.mockReset().mockResolvedValue({
+      response: {
+        config: {},
+        origins: {},
+        layers: [
+          {
+            name: { type: "user" },
+            version: "v1",
+            config: {
+              mcp_servers: { docs: { command: "node", args: "invalid" } },
+            },
+          },
+        ],
+      },
+    });
+    const { useGlobalMcpConfig } = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => useGlobalMcpConfig(), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.servers[0]?.error).toBe(
+      "args must be an array of strings",
+    );
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    await waitFor(() =>
+      expect(result.current.data?.servers[0]?.error).toBe(
+        "args は文字列の配列で指定してください",
+      ),
+    );
+    expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
   });
 });

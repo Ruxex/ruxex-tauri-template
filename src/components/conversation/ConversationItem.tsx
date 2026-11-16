@@ -1,3 +1,6 @@
+import { i18n } from "../../app/i18n";
+import { dateTimeFormatter } from "../../app/locale-format";
+import { useTranslation } from "react-i18next";
 import { ClipboardDocumentIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, memo, useState } from "react";
 
@@ -21,6 +24,8 @@ export const ConversationItem = memo(function ConversationItem({
   item,
   onEdit,
 }: ConversationItemProps) {
+  const { t } = useTranslation("conversation");
+
   const isUser = item.type === "userMessage";
   const canEdit =
     isUser &&
@@ -75,7 +80,7 @@ export const ConversationItem = memo(function ConversationItem({
           onSubmit={(event) => void handleSubmit(event)}
         >
           <textarea
-            aria-label="Edit message"
+            aria-label={t("editMessage")}
             className="textarea textarea-bordered min-h-28 w-full resize-y"
             disabled={isSubmitting}
             onChange={(event) => setDraft(event.target.value)}
@@ -83,21 +88,21 @@ export const ConversationItem = memo(function ConversationItem({
           />
           <div className="mt-2 flex justify-end gap-2">
             <button
-              aria-label="Cancel"
+              aria-label={t("cancel")}
               className="btn btn-ghost btn-sm"
               disabled={isSubmitting}
               onClick={() => setIsEditing(false)}
               type="button"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
-              aria-label={isSubmitting ? "Sending…" : "Send"}
+              aria-label={isSubmitting ? t("sending") : t("send")}
               className="btn btn-primary btn-sm"
               disabled={isSubmitting || !draft.trim()}
               type="submit"
             >
-              {isSubmitting ? "Sending…" : "Send"}
+              {isSubmitting ? t("sending") : t("send")}
             </button>
           </div>
         </form>
@@ -114,7 +119,7 @@ export const ConversationItem = memo(function ConversationItem({
       )}
       {isUser && (
         <fieldset
-          aria-label="Message actions"
+          aria-label={t("messageActions")}
           className="chat-footer m-0 mt-1 flex min-h-7 items-center justify-end gap-1 border-0 p-0 text-xs text-base-content/60 opacity-0 transition-opacity group-hover:opacity-100"
         >
           {!isEditing && (
@@ -128,20 +133,20 @@ export const ConversationItem = memo(function ConversationItem({
                 </time>
               )}
               <button
-                aria-label={copied ? "Copied message" : "Copy message"}
+                aria-label={copied ? t("copiedMessage") : t("copyMessage")}
                 className="btn btn-ghost btn-xs"
                 onClick={() => void handleCopy()}
-                title={copied ? "Copied" : "Copy"}
+                title={copied ? t("copied") : t("copy")}
                 type="button"
               >
                 <ClipboardDocumentIcon aria-hidden="true" className="size-4" />
               </button>
               {canEdit && (
                 <button
-                  aria-label="Edit message"
+                  aria-label={t("editMessage")}
                   className="btn btn-ghost btn-xs"
                   onClick={beginEditing}
-                  title="Edit"
+                  title={t("edit")}
                   type="button"
                 >
                   <PencilIcon aria-hidden="true" className="size-4" />
@@ -167,7 +172,7 @@ function areConversationItemPropsEqual(
 }
 
 function formatTimestamp(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return dateTimeFormatter(i18n.resolvedLanguage === "ja" ? "ja" : "en", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(timestamp * 1000));

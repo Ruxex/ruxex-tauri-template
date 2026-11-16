@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   useCallback,
   useEffect,
@@ -49,6 +50,8 @@ export function ConversationWorkspace({
     cwd: string | null;
   }) => void;
 }) {
+  const { t } = useTranslation("conversation");
+
   const branding = useBranding();
   const timelineRef = useRef<HTMLElement | null>(null);
   const conversation = useThreadConversation(threadId);
@@ -70,11 +73,13 @@ export function ConversationWorkspace({
         subagentThreadList.data?.data ?? [],
         events.threads,
         Object.values(events.pendingServerRequests),
+        t,
       ),
     [
       events.pendingServerRequests,
       events.threads,
       subagentThreadList.data?.data,
+      t,
     ],
   );
   const liveItems = liveThread?.items ?? EMPTY_LIVE_ITEMS;
@@ -82,6 +87,7 @@ export function ConversationWorkspace({
   liveItemsRef.current = liveItems;
   const liveStatus = liveThread?.status;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: These values intentionally trigger scroll reset on thread and loading-state changes.
   useLayoutEffect(() => {
     const scrollContainer = timelineRef.current?.closest<HTMLElement>(
       "[data-conversation-scroll]",
@@ -115,6 +121,7 @@ export function ConversationWorkspace({
             {
               preferAuthoritative: isRecovering,
               assistantName: branding?.assistantName,
+              translate: t,
             },
           )
         : [],
@@ -125,6 +132,7 @@ export function ConversationWorkspace({
       liveItems,
       liveStatus,
       turns,
+      t,
     ],
   );
   const pendingRequests = useMemo(
@@ -235,16 +243,14 @@ export function ConversationWorkspace({
         className="alert alert-error flex flex-wrap items-center justify-between gap-3"
         role="alert"
       >
-        <p>
-          Unable to load this conversation. Check your connection and try again.
-        </p>
+        <p>{t("unableToLoadThisConversationCheckYourConnectionAndTryAgain")}</p>
         <button
           className="btn btn-sm"
           disabled={conversation.isFetching}
           onClick={() => void conversation.resync().catch(() => undefined)}
           type="button"
         >
-          {conversation.isFetching ? "Retrying…" : "Retry"}
+          {conversation.isFetching ? t("retrying") : t("retry")}
         </button>
       </div>
     );
@@ -307,7 +313,7 @@ export function ConversationWorkspace({
       <div className="chat-main-column flex w-full min-w-0 max-w-[53rem] justify-self-center self-stretch flex-col gap-4">
         {turnError && (
           <p className="alert alert-error" role="alert">
-            <span>Turn failed: {turnError.message}</span>
+            <span>{t("turnError", { error: turnError.message })}</span>
             {turnError.additionalDetails && (
               <span>{turnError.additionalDetails}</span>
             )}
@@ -315,7 +321,7 @@ export function ConversationWorkspace({
         )}
         {editError && (
           <p className="alert alert-error" role="alert">
-            Unable to edit this message: {editError.message}
+            {t("editError", { error: editError.message })}
           </p>
         )}
         <ChatActivityTimeline

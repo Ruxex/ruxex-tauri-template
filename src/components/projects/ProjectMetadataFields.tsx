@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { i18n } from "../../app/i18n";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 
@@ -42,9 +44,10 @@ const PROJECT_COLOR_SWATCH_CLASSES: Record<ProjectMetadata["color"], string> = {
 
 export function ProjectMetadataFields({
   value,
-  entityLabel = "Project",
+  entityLabel = i18n.t("projects:project"),
   onChange,
 }: ProjectMetadataFieldsProps) {
+  const { t } = useTranslation("projects");
   const [openSelector, setOpenSelector] = useState<OpenSelector>(null);
   const iconSelectorRef = useRef<HTMLDivElement>(null);
   const colorSelectorRef = useRef<HTMLDivElement>(null);
@@ -95,7 +98,7 @@ export function ProjectMetadataFields({
         selectedIcon={selectedIcon.value}
       />
       <section
-        aria-label={`${entityLabel} metadata controls`}
+        aria-label={t("metadataControls", { entity: entityLabel })}
         className="grid grid-cols-2 gap-3"
       >
         <div className="form-control w-full" ref={iconSelectorRef}>
@@ -103,7 +106,10 @@ export function ProjectMetadataFields({
             <button
               aria-expanded={openSelector === "icon"}
               aria-haspopup="menu"
-              aria-label={`${entityLabel} icon: ${selectedIcon.label}`}
+              aria-label={t("iconLabel", {
+                entity: entityLabel,
+                icon: t(`icons.${selectedIcon.value}`),
+              })}
               className="btn min-h-11 w-full justify-center gap-2 border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
               ref={iconTriggerRef}
               type="button"
@@ -124,18 +130,18 @@ export function ProjectMetadataFields({
             </button>
             {openSelector === "icon" && (
               <fieldset
-                aria-label={`${entityLabel} icon options`}
+                aria-label={t("iconOptions", { entity: entityLabel })}
                 className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
               >
                 {PROJECT_ICON_OPTIONS.map((option) => {
                   const selected = value.icon === option.value;
                   return (
                     <button
-                      aria-label={option.label}
+                      aria-label={t(`icons.${option.value}`)}
                       aria-pressed={selected}
                       className={`btn btn-square ${selected ? "btn-primary" : "btn-ghost"}`}
                       key={option.value}
-                      title={option.label}
+                      title={t(`icons.${option.value}`)}
                       type="button"
                       onClick={() => {
                         onChange({ ...value, icon: option.value });
@@ -161,7 +167,10 @@ export function ProjectMetadataFields({
             <button
               aria-expanded={openSelector === "color"}
               aria-haspopup="menu"
-              aria-label={`${entityLabel} color: ${selectedColor.label}`}
+              aria-label={t("colorLabel", {
+                entity: entityLabel,
+                color: t(`colors.${selectedColor.value}`),
+              })}
               className="btn min-h-11 w-full justify-center gap-2 border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
               ref={colorTriggerRef}
               type="button"
@@ -181,18 +190,18 @@ export function ProjectMetadataFields({
             </button>
             {openSelector === "color" && (
               <fieldset
-                aria-label={`${entityLabel} color options`}
+                aria-label={t("colorOptions", { entity: entityLabel })}
                 className="absolute z-20 mt-2 grid w-full grid-cols-4 gap-2 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg"
               >
                 {PROJECT_COLOR_OPTIONS.map((option) => {
                   const selected = value.color === option.value;
                   return (
                     <button
-                      aria-label={option.label}
+                      aria-label={t(`colors.${option.value}`)}
                       aria-pressed={selected}
                       className={`btn btn-square ${selected ? "bg-base-200 ring-2 ring-primary" : "btn-ghost"}`}
                       key={option.value}
-                      title={option.label}
+                      title={t(`colors.${option.value}`)}
                       type="button"
                       onClick={() => {
                         onChange({ ...value, color: option.value });
@@ -224,9 +233,10 @@ function ProjectIconPreview({
   entityLabel: string;
   selectedIcon: ProjectMetadata["icon"];
 }) {
+  const { t } = useTranslation("projects");
   return (
     <span
-      aria-label={`${entityLabel} preview`}
+      aria-label={t("entityPreview", { entity: entityLabel })}
       className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${projectColorClassName(value.color)}`}
       role="img"
     >

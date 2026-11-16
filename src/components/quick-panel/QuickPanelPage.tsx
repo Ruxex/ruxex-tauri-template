@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
-
-import { useCreateThread, useSendMessage } from "../../app-server/hooks";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AppUiError, formatErrorMessage } from "../../app/error-message";
 import { useBranding } from "../../app/branding-context";
-import type { v2 } from "../../protocol";
+import { useCreateThread, useSendMessage } from "../../app-server/hooks";
+import { isNativeDesktopRuntime } from "../../app-server/runtime";
 import { closeQuickPanel } from "../../platform/native";
+import type { v2 } from "../../protocol";
 
 function readBlobDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -12,11 +15,11 @@ function readBlobDataUrl(blob: Blob): Promise<string> {
       if (typeof reader.result === "string") {
         resolve(reader.result);
       } else {
-        reject(new Error("Unable to read captured audio."));
+        reject(new AppUiError("audioReadFailed"));
       }
     });
     reader.addEventListener("error", () =>
-      reject(reader.error ?? new Error("Unable to read captured audio.")),
+      reject(reader.error ?? new AppUiError("audioReadFailed")),
     );
     reader.readAsDataURL(blob);
   });
@@ -28,6 +31,9 @@ function readFileDataUrl(file: File): Promise<string> {
 
 export function QuickPanelPage() {
   const branding = useBranding();
+  const { t } = useTranslation("quickPanel");
+  const windowTitle = t("windowTitle");
+
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
   const [message, setMessage] = useState("");
@@ -35,10 +41,20 @@ export function QuickPanelPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | string | null>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    if (!isNativeDesktopRuntime) return;
+    void getCurrentWindow()
+      .setTitle(windowTitle)
+      .catch((error) => {
+        console.error("Unable to set Quick Panel title.", error);
+      });
+  }, [windowTitle]);
 
   useEffect(() => {
     return () => {
@@ -53,7 +69,7 @@ export function QuickPanelPage() {
     const file = event.target.files?.[0] ?? null;
     if (file && !file.type.startsWith("image/")) {
       setImageFile(null);
-      setError("Only image attachments are supported.");
+      setError("imageOnly");
       event.target.value = "";
       return;
     }
@@ -63,7 +79,7 @@ export function QuickPanelPage() {
 
   async function captureScreen() {
     if (!navigator.mediaDevices?.getDisplayMedia) {
-      setError("Screen capture is unavailable.");
+      setError("captureUnavailable");
       return;
     }
     setIsCapturing(true);
@@ -95,7 +111,7 @@ export function QuickPanelPage() {
         new File([blob], "screen-capture.png", { type: "image/png" }),
       );
     } catch {
-      setError("Screen capture cancelled.");
+      setError("captureCancelled");
     } finally {
       stream?.getTracks().forEach((track) => {
         track.stop();
@@ -106,11 +122,11 @@ export function QuickPanelPage() {
 
   async function startRecording() {
     if (typeof MediaRecorder === "undefined") {
-      setError("Audio recording is unavailable.");
+      setError("audioUnavailable");
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Audio recording is unavailable.");
+      setError("audioUnavailable");
       return;
     }
     try {
@@ -128,7 +144,7 @@ export function QuickPanelPage() {
         });
         void readBlobDataUrl(blob)
           .then(setAudioUrl)
-          .catch(() => setError("Unable to read recorded audio."));
+          .catch(() => setError("audioReadFailed"));
         stream.getTracks().forEach((track) => {
           track.stop();
         });
@@ -140,7 +156,7 @@ export function QuickPanelPage() {
       setIsRecording(true);
       setError(null);
     } catch {
-      setError("Audio recording was cancelled.");
+      setError("audioCancelled");
     }
   }
 
@@ -175,11 +191,7 @@ export function QuickPanelPage() {
       await sendMessage.mutateAsync({ threadId: thread.thread.id, input });
       await closeQuickPanel();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Unable to send quick request.",
-      );
+      setError(submitError instanceof Error ? submitError : "sendFailed");
     }
   }
 
@@ -187,80 +199,80 @@ export function QuickPanelPage() {
     <main className="min-h-screen bg-base-200 p-4">
       <section className="mx-auto max-w-xl rounded-box border border-base-300 bg-base-100 p-4 shadow-lg">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold">Quick request</h1>
+          <h1 className="text-lg font-semibold">{t("windowTitle")}</h1>
           <span className="text-xs text-base-content/60">
             {branding?.assistantName ?? "Ruxex"}
           </span>
         </div>
         <textarea
-          aria-label="Quick request"
+          aria-label={t("windowTitle")}
           className="textarea textarea-bordered min-h-24 w-full resize-none"
           disabled={createThread.isPending || sendMessage.isPending}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="Ask something…"
+          placeholder={t("placeholder")}
           value={message}
         />
         <input
           accept="image/*"
-          aria-label="Image attachment"
+          aria-label={t("imageAttachment")}
           className="hidden"
           onChange={handleImageChange}
+          ref={imageInput}
           type="file"
         />
         {(imageFile || audioUrl) && (
           <p className="mt-2 text-xs text-base-content/70">
-            {imageFile ? "Image attached" : "Audio recorded"}
-            {imageFile && audioUrl ? " · audio recorded" : ""}
+            {t(
+              imageFile && audioUrl
+                ? "imageAndAudioAttached"
+                : imageFile
+                  ? "imageAttached"
+                  : "audioRecorded",
+            )}
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
-            aria-label="Capture screen"
+            aria-label={t(isCapturing ? "capturing" : "captureScreen")}
             className="btn btn-ghost btn-sm"
             disabled={isCapturing}
             onClick={() => void captureScreen()}
             type="button"
           >
-            {isCapturing ? "Capturing…" : "Capture screen"}
+            {t(isCapturing ? "capturing" : "captureScreen")}
           </button>
           <button
-            aria-label="Attach image"
+            aria-label={t("attachImage")}
             className="btn btn-ghost btn-sm"
-            onClick={() =>
-              document
-                .querySelector<HTMLInputElement>(
-                  'input[aria-label="Image attachment"]',
-                )
-                ?.click()
-            }
+            onClick={() => imageInput.current?.click()}
             type="button"
           >
-            Attach image
+            {t("attachImage")}
           </button>
           {isRecording ? (
             <button
-              aria-label="Stop recording"
+              aria-label={t("stopRecording")}
               className="btn btn-warning btn-sm"
               onClick={stopRecording}
               type="button"
             >
-              Stop recording
+              {t("stopRecording")}
             </button>
           ) : (
             <button
-              aria-label="Record audio"
+              aria-label={t("recordAudio")}
               className="btn btn-ghost btn-sm"
               onClick={() => void startRecording()}
               type="button"
             >
-              Record audio
+              {t("recordAudio")}
             </button>
           )}
           <button
             aria-label={
               createThread.isPending || sendMessage.isPending
-                ? "Sending…"
-                : "Send"
+                ? t("sending")
+                : t("send")
             }
             className="btn btn-primary btn-sm ml-auto"
             disabled={
@@ -272,13 +284,17 @@ export function QuickPanelPage() {
             type="button"
           >
             {createThread.isPending || sendMessage.isPending
-              ? "Sending…"
-              : "Send"}
+              ? t("sending")
+              : t("send")}
           </button>
         </div>
         {error && (
           <p className="mt-2 text-sm text-error" role="alert">
-            {error}
+            {typeof error === "string"
+              ? t(`errors.${error}`)
+              : error instanceof AppUiError
+                ? formatErrorMessage(error)
+                : error.message}
           </p>
         )}
       </section>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   ChangeEventHandler,
   KeyboardEventHandler,
@@ -33,6 +34,8 @@ export function ComposerTextInput({
   placeholder,
   value,
 }: ComposerTextInputProps) {
+  const { t } = useTranslation("conversation");
+
   return (
     <>
       <ComposerMessageInput
@@ -46,7 +49,7 @@ export function ComposerTextInput({
       <input
         ref={attachmentInput}
         accept="image/*"
-        aria-label="Image attachment"
+        aria-label={t("imageAttachment")}
         className="hidden"
         onChange={handleAttachmentChange}
         type="file"

@@ -3,6 +3,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../../app/i18n";
+
 const useServerRequests = vi.hoisted(() => vi.fn());
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const resolveServerRequest = vi.hoisted(() => vi.fn());
@@ -113,5 +115,16 @@ describe("ApprovalCenter", () => {
       18,
       "Unsupported server request",
     );
+  });
+  it("localizes approval decisions while retaining the command payload", async () => {
+    await i18n.changeLanguage("ja");
+    const { ApprovalCenter } = await import("./ApprovalCenter");
+    render(<ApprovalCenter />);
+    expect(screen.getByRole("heading", { name: "承認" })).toBeTruthy();
+    expect(screen.getByText("pnpm check")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "今回のみ承認" }));
+    expect(resolveServerRequest).toHaveBeenCalledWith(17, {
+      decision: "accept",
+    });
   });
 });

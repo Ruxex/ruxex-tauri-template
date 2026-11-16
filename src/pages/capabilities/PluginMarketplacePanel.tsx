@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArrowPathIcon,
   Cog6ToothIcon,
@@ -24,6 +25,7 @@ import {
 } from "../capabilities-model";
 
 export function PluginMarketplacePanel({ active }: { active: boolean }) {
+  const { t } = useTranslation("plugins");
   const plugins = usePluginList({}, active);
   const upgradeMarketplace = useUpgradeMarketplace();
   const installPlugin = useInstallPlugin();
@@ -34,7 +36,9 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
       {plugins.isLoading && <span className="loading loading-spinner" />}
       {plugins.isError && (
         <p className="text-error">
-          Unable to load Plugins: {formatErrorMessage(plugins.error)}
+          {t("unableToLoadPlugins", {
+            details: formatErrorMessage(plugins.error),
+          })}
         </p>
       )}
       {!plugins.isLoading &&
@@ -46,11 +50,11 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                 className="btn btn-primary btn-sm"
                 to="/settings/marketplaces"
               >
-                Add plugin marketplace
+                {t("addPluginMarketplace")}
               </NavLink>
             }
             icon={PuzzlePieceIcon}
-            title="No plugin marketplaces yet"
+            title={t("noPluginMarketplacesYet")}
           />
         )}
       <ul className="space-y-3">
@@ -76,13 +80,18 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                     {marketplace.interface?.displayName ?? marketplace.name}
                   </span>
                   <span className="block text-xs text-base-content/60">
-                    {marketplace.name} · {marketplace.plugins.length} plugins
+                    {marketplace.name} ·{" "}
+                    {t("pluginCount", { count: marketplace.plugins.length })}
                   </span>
                 </div>
                 <div className="collapse-content px-0 pt-2">
                   <div className="mb-3 flex items-center justify-end gap-1">
                     <button
-                      aria-label={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                      aria-label={t("refreshNamed", {
+                        name:
+                          marketplace.interface?.displayName ??
+                          marketplace.name,
+                      })}
                       className="btn btn-ghost btn-square btn-sm"
                       disabled={upgradeMarketplace.isPending}
                       onClick={(event) => {
@@ -91,7 +100,11 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                           marketplaceName: marketplace.name,
                         });
                       }}
-                      title={`Refresh ${marketplace.interface?.displayName ?? marketplace.name}`}
+                      title={t("refreshNamed", {
+                        name:
+                          marketplace.interface?.displayName ??
+                          marketplace.name,
+                      })}
                       type="button"
                     >
                       <ArrowPathIcon
@@ -100,10 +113,18 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                       />
                     </button>
                     <NavLink
-                      aria-label={`Configure ${marketplace.interface?.displayName ?? marketplace.name}`}
+                      aria-label={t("configureNamed", {
+                        name:
+                          marketplace.interface?.displayName ??
+                          marketplace.name,
+                      })}
                       className="btn btn-ghost btn-square btn-sm"
                       onClick={(event) => event.stopPropagation()}
-                      title={`Configure ${marketplace.interface?.displayName ?? marketplace.name}`}
+                      title={t("configureNamed", {
+                        name:
+                          marketplace.interface?.displayName ??
+                          marketplace.name,
+                      })}
                       to="/settings/marketplaces"
                     >
                       <Cog6ToothIcon aria-hidden="true" className="size-4" />
@@ -152,10 +173,12 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                                   plugin.interface?.composerIconUrl;
                                 const installTooltip =
                                   actionPolicy.installTitle ??
-                                  `Install ${displayName}`;
+                                  t("installNamed", { name: displayName });
                                 const installButton = (
                                   <button
-                                    aria-label={`Install ${displayName}`}
+                                    aria-label={t("installNamed", {
+                                      name: displayName,
+                                    })}
                                     className={`btn btn-outline btn-square btn-sm ${isOfficialApps ? "opacity-50" : "btn-primary"}`}
                                     title={installTooltip}
                                     type="button"
@@ -187,13 +210,17 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                                 );
                                 const uninstallButton = (
                                   <button
-                                    aria-label={`Uninstall ${displayName}`}
+                                    aria-label={t("uninstallNamed", {
+                                      name: displayName,
+                                    })}
                                     className="btn btn-outline btn-square btn-sm text-error"
                                     disabled={isUninstalling}
                                     onClick={() => {
                                       if (
                                         window.confirm(
-                                          `Uninstall ${displayName}?`,
+                                          t("uninstallConfirm", {
+                                            name: displayName,
+                                          }),
                                         )
                                       ) {
                                         void uninstallPlugin.mutateAsync({
@@ -201,7 +228,9 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                                         });
                                       }
                                     }}
-                                    title={`Uninstall ${displayName}`}
+                                    title={t("uninstallNamed", {
+                                      name: displayName,
+                                    })}
                                     type="button"
                                   >
                                     {isUninstalling ? (
@@ -228,7 +257,9 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                                       data-testid="plugin-card-content"
                                     >
                                       <Link
-                                        aria-label={`View details for ${displayName}`}
+                                        aria-label={t("viewNamedDetails", {
+                                          name: displayName,
+                                        })}
                                         className="col-span-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3"
                                         to={pluginDetailsPath(
                                           marketplace.name,
@@ -270,12 +301,12 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-base-content/60">
                                               {plugin.installed && (
                                                 <StateBadge tone="success">
-                                                  Installed
+                                                  {t("installed")}
                                                 </StateBadge>
                                               )}
                                               {plugin.enabled && (
                                                 <StateBadge tone="success">
-                                                  Enabled
+                                                  {t("enabled")}
                                                 </StateBadge>
                                               )}
                                             </div>
@@ -305,8 +336,9 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
                                     </div>
                                     {isRemoteOnly && !plugin.installed && (
                                       <p className="mt-2 text-xs text-base-content/60">
-                                        Remote marketplace plugins cannot be
-                                        installed here.
+                                        {t(
+                                          "remoteMarketplacePluginsCannotBeInstalledHere",
+                                        )}
                                       </p>
                                     )}
                                   </li>
@@ -326,24 +358,32 @@ export function PluginMarketplacePanel({ active }: { active: boolean }) {
       </ul>
       {installPlugin.isError && (
         <p className="mt-2 text-sm text-error">
-          Unable to install plugin: {formatErrorMessage(installPlugin.error)}
+          {t("unableToInstallPlugin", {
+            details: formatErrorMessage(installPlugin.error),
+          })}
         </p>
       )}
       {uninstallPlugin.isError && (
         <p className="mt-2 text-sm text-error">
-          Unable to uninstall plugin:{" "}
-          {formatErrorMessage(uninstallPlugin.error)}
+          {t("unableToUninstallPlugin", {
+            details: formatErrorMessage(uninstallPlugin.error),
+          })}
         </p>
       )}
       {upgradeMarketplace.isError && (
         <p className="mt-2 text-sm text-error">
-          Unable to refresh marketplace:{" "}
-          {formatErrorMessage(upgradeMarketplace.error)}
+          {t("unableToRefreshMarketplace", {
+            details: formatErrorMessage(upgradeMarketplace.error),
+          })}
         </p>
       )}
       {plugins.data?.marketplaceLoadErrors.length ? (
         <div className="mt-2 space-y-1 text-sm text-error">
-          <p>{plugins.data.marketplaceLoadErrors.length} marketplace errors</p>
+          <p>
+            {t("marketplaceErrors", {
+              count: plugins.data.marketplaceLoadErrors.length,
+            })}
+          </p>
           {plugins.data.marketplaceLoadErrors.map((loadError) => (
             <p key={loadError.marketplacePath} className="text-xs">
               {loadError.marketplacePath}: {loadError.message}

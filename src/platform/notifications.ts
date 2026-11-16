@@ -4,6 +4,8 @@ import {
   sendNotification,
 } from "@tauri-apps/plugin-notification";
 
+import { i18n, resolveUiLanguage } from "../app/i18n";
+import type { UiLanguage } from "../app/ui-preferences";
 import type { AppServerEvent } from "../app-server/events";
 import type { UiNotificationSound } from "../app/ui-preferences";
 
@@ -15,19 +17,21 @@ export type NotificationCandidate = {
 
 export function classifyAppServerEvent(
   event: AppServerEvent,
+  language: UiLanguage = i18n.resolvedLanguage === "ja" ? "ja" : "en",
 ): NotificationCandidate | null {
+  const t = i18n.getFixedT(resolveUiLanguage(language), "capabilities");
   if (event.type === "disconnected") {
     return {
       id: `disconnected:${event.data.message}`,
-      title: "App Server disconnected",
+      title: t("notificationDisconnected"),
       body: event.data.message,
     };
   }
   if (event.type === "serverRequest") {
     return {
       id: `server-request:${String(event.data.id)}`,
-      title: "Action required",
-      body: "The App Server is waiting for your approval or input.",
+      title: t("notificationActionRequired"),
+      body: t("notificationWaiting"),
     };
   }
   if (
@@ -40,8 +44,8 @@ export function classifyAppServerEvent(
     };
     return {
       id: `turn-completed:${params.threadId}:${params.turn.id}`,
-      title: "Turn completed",
-      body: `The turn finished with status: ${params.turn.status}.`,
+      title: t("notificationCompleted"),
+      body: t("notificationTurnStatus", { status: params.turn.status }),
     };
   }
   return null;
@@ -49,12 +53,14 @@ export function classifyAppServerEvent(
 
 export type NotificationDispatcherOptions = {
   enabled?: () => boolean;
+  language?: () => UiLanguage;
   isFocused: () => boolean;
   send: (candidate: NotificationCandidate) => Promise<void>;
 };
 
 export function createNotificationDispatcher({
   enabled = () => true,
+  language = () => (i18n.resolvedLanguage === "ja" ? "ja" : "en"),
   isFocused,
   send,
 }: NotificationDispatcherOptions) {
@@ -63,7 +69,7 @@ export function createNotificationDispatcher({
 
   return {
     async dispatch(event: AppServerEvent): Promise<boolean> {
-      const candidate = classifyAppServerEvent(event);
+      const candidate = classifyAppServerEvent(event, language());
       if (
         !candidate ||
         !enabled() ||

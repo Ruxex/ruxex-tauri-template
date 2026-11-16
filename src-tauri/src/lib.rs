@@ -148,6 +148,7 @@ pub fn run_with_config(config: DesktopConfig) {
             branding::get_branding,
             desktop_config::get_desktop_ui_policy,
             app_server::ensure_app_server,
+            app_server::create_chat_workspace,
             app_server::app_server_daemon_control,
             artifact_preview::preview_artifact,
             artifact_preview::open_artifact,

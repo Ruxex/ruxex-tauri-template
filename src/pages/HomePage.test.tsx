@@ -10,6 +10,8 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../app/i18n";
+
 const useCreateThread = vi.hoisted(() => vi.fn());
 const useModelList = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
@@ -19,6 +21,7 @@ const useSetThreadGoal = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
 const useCollaborationModes = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
+const createChatWorkspace = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({
   useCreateThread,
@@ -31,6 +34,7 @@ vi.mock("../app-server/hooks", () => ({
   useCollaborationModes,
   useSkillsList,
 }));
+vi.mock("../platform/chat-workspace", () => ({ createChatWorkspace }));
 vi.mock("../components/conversation/ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
@@ -67,6 +71,9 @@ describe("HomePage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    createChatWorkspace
+      .mockReset()
+      .mockResolvedValue("/home/test/.ruxex/workspaces/chat-1");
     useSkillsList.mockReturnValue({ data: { data: [] } });
     useCollaborationModes.mockReturnValue({
       data: { data: [] },
@@ -174,6 +181,7 @@ describe("HomePage", () => {
     await waitFor(() => expect(createThread).toHaveBeenCalled());
     expect(createThread).toHaveBeenCalledWith({
       model: "ruxex",
+      cwd: "/home/test/.ruxex/workspaces/chat-1",
       approvalPolicy: "on-request",
       sandbox: "workspace-write",
       config: { model_reasoning_effort: "medium" },
@@ -295,5 +303,28 @@ describe("HomePage", () => {
     expect(screen.getByLabelText("Project").textContent).toContain(
       "Project Alpha",
     );
+  });
+  it("localizes the home composer without translating project names", async () => {
+    await i18n.changeLanguage("ja");
+    const { HomePage } = await import("./HomePage");
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("heading", { name: "さあ、始めましょう" }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("入力オプション")).toBeTruthy();
+    expect(screen.getByLabelText("Message").getAttribute("placeholder")).toBe(
+      "アシスタントに作業を依頼…",
+    );
+    expect(screen.getByRole("button", { name: "送信" })).toBeTruthy();
+    fireEvent.click(
+      screen
+        .getAllByLabelText("プロジェクト")
+        .find((element) => element.tagName === "SUMMARY") as HTMLElement,
+    );
+    expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
   });
 });

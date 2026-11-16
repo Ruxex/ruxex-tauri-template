@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArrowTopRightOnSquareIcon,
   PlusIcon,
@@ -46,6 +47,7 @@ function getPluginVersion(summary: v2.PluginSummary) {
 }
 
 export function PluginDetailPage() {
+  const { t } = useTranslation("plugins");
   const { marketplaceName = "", pluginName = "" } = useParams<{
     marketplaceName: string;
     pluginName: string;
@@ -99,20 +101,20 @@ export function PluginDetailPage() {
         : "grid gap-4 lg:grid-cols-3";
   const informationItems = [
     {
-      label: "Capabilities",
+      label: t("capabilities"),
       value: interfaceData?.capabilities.join(", ") ?? null,
     },
-    { label: "Developer", value: interfaceData?.developerName ?? null },
-    { label: "Category", value: interfaceData?.category ?? null },
+    { label: t("developer"), value: interfaceData?.developerName ?? null },
+    { label: t("category"), value: interfaceData?.category ?? null },
     {
-      label: "Version",
+      label: t("version"),
       value: pluginSummary ? getPluginVersion(pluginSummary) : null,
     },
     ...(isHttpUrl(interfaceData?.websiteUrl)
       ? [
           {
             href: interfaceData.websiteUrl,
-            label: "Website",
+            label: t("website"),
             value: interfaceData.websiteUrl,
           },
         ]
@@ -121,7 +123,7 @@ export function PluginDetailPage() {
       ? [
           {
             href: interfaceData.privacyPolicyUrl,
-            label: "Privacy Policy",
+            label: t("privacyPolicy"),
             value: interfaceData.privacyPolicyUrl,
           },
         ]
@@ -130,7 +132,7 @@ export function PluginDetailPage() {
       ? [
           {
             href: interfaceData.termsOfServiceUrl,
-            label: "Terms of Service",
+            label: t("termsOfService"),
             value: interfaceData.termsOfServiceUrl,
           },
         ]
@@ -151,7 +153,9 @@ export function PluginDetailPage() {
     return (
       <PageContainer className={pluginPageClassName}>
         <p className="text-error">
-          Unable to load plugin: {formatErrorMessage(plugins.error)}
+          {t("unableToLoadPlugin", {
+            details: formatErrorMessage(plugins.error),
+          })}
         </p>
       </PageContainer>
     );
@@ -160,7 +164,7 @@ export function PluginDetailPage() {
   if (!summary || !marketplace) {
     return (
       <PageContainer className={pluginPageClassName}>
-        <h1 className="text-3xl font-semibold">Plugin not found</h1>
+        <h1 className="text-3xl font-semibold">{t("pluginNotFound")}</h1>
       </PageContainer>
     );
   }
@@ -187,7 +191,7 @@ export function PluginDetailPage() {
             <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               {interfaceData?.developerName && (
                 <p className="text-sm text-base-content/60">
-                  by {interfaceData.developerName}
+                  {t("byDeveloper", { name: interfaceData.developerName })}
                 </p>
               )}
               {description && (
@@ -204,7 +208,7 @@ export function PluginDetailPage() {
               rel="noreferrer"
               target="_blank"
             >
-              Open website
+              {t("openWebsite")}
               <ArrowTopRightOnSquareIcon
                 aria-hidden="true"
                 className="size-3.5"
@@ -216,13 +220,16 @@ export function PluginDetailPage() {
           <div className="ml-auto flex shrink-0 items-start">
             {actionPolicy.canInstall && (
               <button
-                aria-label={`Install ${displayName}`}
+                aria-label={t("installNamed", { name: displayName })}
                 className="btn btn-primary btn-sm gap-1"
                 disabled={
                   installPlugin.isPending || actionPolicy.installDisabled
                 }
                 type="button"
-                title={actionPolicy.installTitle ?? `Install ${displayName}`}
+                title={
+                  actionPolicy.installTitle ??
+                  t("installNamed", { name: displayName })
+                }
                 onClick={() => {
                   if (marketplace.path && !actionPolicy.official) {
                     void installPlugin.mutateAsync({
@@ -240,17 +247,19 @@ export function PluginDetailPage() {
                 ) : (
                   <PlusIcon aria-hidden="true" className="size-4" />
                 )}
-                Install
+                {t("install")}
               </button>
             )}
             {actionPolicy.canUninstall && pluginSummary && (
               <button
-                aria-label={`Uninstall ${displayName}`}
+                aria-label={t("uninstallNamed", { name: displayName })}
                 className="btn btn-error btn-outline btn-sm gap-1"
                 disabled={uninstallPlugin.isPending}
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Uninstall ${displayName}?`)) {
+                  if (
+                    window.confirm(t("uninstallConfirm", { name: displayName }))
+                  ) {
                     void uninstallPlugin.mutateAsync({
                       pluginId: pluginSummary.id,
                     });
@@ -265,7 +274,7 @@ export function PluginDetailPage() {
                 ) : (
                   <TrashIcon aria-hidden="true" className="size-4" />
                 )}
-                Uninstall
+                {t("uninstall")}
               </button>
             )}
           </div>
@@ -273,34 +282,40 @@ export function PluginDetailPage() {
       </header>
       {installPlugin.isError && (
         <p className="text-sm text-error" role="alert">
-          Unable to install plugin: {formatErrorMessage(installPlugin.error)}
+          {t("unableToInstallPlugin", {
+            details: formatErrorMessage(installPlugin.error),
+          })}
         </p>
       )}
       {uninstallPlugin.isError && (
         <p className="text-sm text-error" role="alert">
-          Unable to uninstall plugin:{" "}
-          {formatErrorMessage(uninstallPlugin.error)}
+          {t("unableToUninstallPlugin", {
+            details: formatErrorMessage(uninstallPlugin.error),
+          })}
         </p>
       )}
       {details.isLoading && (
-        <p className="text-sm text-base-content/60">Loading plugin details…</p>
+        <p className="text-sm text-base-content/60">
+          {t("loadingPluginDetails")}
+        </p>
       )}
       {details.isError && (
         <p className="alert alert-error">
-          Unable to load full plugin details:{" "}
-          {formatErrorMessage(details.error)}
+          {t("unableToLoadFullPluginDetails", {
+            details: formatErrorMessage(details.error),
+          })}
         </p>
       )}
       {!marketplace.path && !plugin && (
         <p className="alert alert-info">
-          Detailed plugin metadata is unavailable for remote-only marketplaces.
+          {t("detailedPluginMetadataIsUnavailableForRemoteonlyMarketplaces")}
         </p>
       )}
       {plugin && (
         <div className={detailGridClassName}>
           {plugin.skills.length > 0 && (
             <section className="rounded-box border border-base-300 bg-base-100 p-4">
-              <h2 className="font-semibold">Skills</h2>
+              <h2 className="font-semibold">{t("skills")}</h2>
               <ul className="mt-2 w-full space-y-2 text-sm">
                 {plugin.skills.map((skill) => (
                   <li className="w-full" key={skill.name}>
@@ -334,7 +349,7 @@ export function PluginDetailPage() {
           )}
           {plugin.mcpServers.length > 0 && (
             <section className="rounded-box border border-base-300 bg-base-100 p-4">
-              <h2 className="font-semibold">MCP servers</h2>
+              <h2 className="font-semibold">{t("mcpServers")}</h2>
               <ul className="mt-2 list-inside list-disc text-sm">
                 {plugin.mcpServers.map((server) => (
                   <li key={server}>{server}</li>
@@ -344,7 +359,7 @@ export function PluginDetailPage() {
           )}
           {plugin.hooks.length > 0 && (
             <section className="rounded-box border border-base-300 bg-base-100 p-4">
-              <h2 className="font-semibold">Hooks</h2>
+              <h2 className="font-semibold">{t("hooks")}</h2>
               <ul className="mt-2 list-inside list-disc text-sm">
                 {plugin.hooks.map((hook) => (
                   <li key={hook.key}>{hook.key}</li>
@@ -356,7 +371,7 @@ export function PluginDetailPage() {
       )}
       {informationItems.length > 0 && (
         <section className="rounded-box border border-base-300 bg-base-100 p-4">
-          <h2 className="font-semibold">Information</h2>
+          <h2 className="font-semibold">{t("information")}</h2>
           <dl className="mt-3 grid gap-x-6 gap-y-4 sm:grid-cols-2">
             {informationItems.map((item) => (
               <PluginInformationItem key={item.label} {...item} />
@@ -384,7 +399,7 @@ export function PluginDetailPage() {
                 {selectedSkill.name}
               </h2>
               <button
-                aria-label="Close skill details"
+                aria-label={t("closeSkillDetails")}
                 className="btn btn-ghost btn-sm btn-square"
                 type="button"
                 onClick={() => setSelectedSkill(null)}
@@ -398,11 +413,11 @@ export function PluginDetailPage() {
           </div>
           <form method="dialog" className="modal-backdrop">
             <button
-              aria-label="Close"
+              aria-label={t("close")}
               type="button"
               onClick={() => setSelectedSkill(null)}
             >
-              Close
+              {t("close")}
             </button>
           </form>
         </dialog>

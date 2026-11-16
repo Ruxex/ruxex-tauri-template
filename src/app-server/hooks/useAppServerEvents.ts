@@ -37,9 +37,12 @@ export function useAppServerNotifications() {
   notificationsEnabled.current = preferences.notifications.desktop;
   const notificationSound = useRef(preferences.notifications.sound);
   notificationSound.current = preferences.notifications.sound;
+  const notificationLanguage = useRef(preferences.language);
+  notificationLanguage.current = preferences.language;
   const dispatcher = useRef(
     createNotificationDispatcher({
       enabled: () => notificationsEnabled.current,
+      language: () => notificationLanguage.current,
       isFocused: () => typeof document !== "undefined" && document.hasFocus(),
       send: (candidate) =>
         sendDesktopNotification(candidate, notificationSound.current),

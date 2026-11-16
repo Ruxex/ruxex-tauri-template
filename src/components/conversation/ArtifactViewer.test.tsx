@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { i18n } from "../../app/i18n";
 import type { ArtifactPreviewData } from "../../platform/native";
 import { ArtifactViewer } from "./ArtifactViewer";
 
@@ -73,5 +80,19 @@ describe("ArtifactViewer", () => {
     expect(
       screen.getByRole("img", { name: "Artifact preview" }).getAttribute("src"),
     ).toBe("data:image/svg+xml;base64:fallback");
+  });
+  it("keeps the focused fallback page and zoom while updating its language", async () => {
+    render(
+      <ArtifactViewer preview={{ ...preview, pages: [], diagnostics: [] }} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    const page = screen.getByRole("button", { name: "Select Preview" });
+    page.focus();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByRole("button", { name: "プレビューを選択" })).toBe(page);
+    expect(document.activeElement).toBe(page);
+    expect(screen.getByText("125%")).toBeTruthy();
   });
 });

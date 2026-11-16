@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 
@@ -19,6 +20,8 @@ export function ArtifactPreview({
   path,
   loadPreview = previewArtifact,
 }: ArtifactPreviewProps) {
+  const { t } = useTranslation("conversation");
+
   const [preview, setPreview] = useState<ArtifactPreviewData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export function ArtifactPreview({
   if (error) {
     return (
       <p
-        aria-label="Artifact preview error"
+        aria-label={t("artifactPreviewError")}
         className="my-3 text-sm text-error"
         role="alert"
       >
@@ -61,7 +64,7 @@ export function ArtifactPreview({
   if (!preview) {
     return (
       <span
-        aria-label="Loading artifact preview"
+        aria-label={t("loadingArtifactPreview")}
         className="loading loading-spinner my-4"
         role="status"
       />
@@ -77,7 +80,7 @@ export function ArtifactPreview({
       defaultPath: path,
       filters: [
         {
-          name: `${preview.format.toUpperCase()} artifact`,
+          name: t("artifactLabel", { format: preview.format.toUpperCase() }),
           extensions: [preview.format],
         },
       ],
@@ -96,20 +99,20 @@ export function ArtifactPreview({
     <figure className="my-3 overflow-auto rounded-box border border-base-300 bg-base-200 p-2">
       <ArtifactViewer preview={preview} />
       <button
-        aria-label="Open artifact file"
+        aria-label={t("openArtifactFile")}
         className="btn btn-xs btn-outline mt-2"
         onClick={() => void openArtifact(path)}
         type="button"
       >
-        Open file
+        {t("openFile")}
       </button>
       <button
-        aria-label="Save a copy of the artifact"
+        aria-label={t("saveACopyOfTheArtifact")}
         className="btn btn-xs btn-outline mt-2 ml-2"
         onClick={() => void handleSave()}
         type="button"
       >
-        Save a copy
+        {t("saveACopy")}
       </button>
       {saveError && (
         <p className="mt-2 text-xs text-error" role="alert">
@@ -118,14 +121,26 @@ export function ArtifactPreview({
       )}
       <figcaption className="px-2 py-1 text-xs text-base-content/60">
         {preview.format === "xlsx"
-          ? `${preview.sheets} sheets · ${preview.rows} rows · ${preview.columns} columns`
+          ? t("spreadsheetCaption", {
+              count: preview.sheets,
+              rows: preview.rows,
+              columns: preview.columns,
+            })
           : preview.format === "pptx"
-            ? `${preview.sheets} slides · ${preview.rows} text lines`
+            ? t("presentationCaption", {
+                count: preview.sheets,
+                lines: preview.rows,
+              })
             : preview.format === "pdf"
-              ? `${pages.length} pages · ${preview.byteSize} bytes`
-              : `Document · ${preview.rows} text lines`}
+              ? t("pdfCaption", {
+                  count: pages.length,
+                  bytes: preview.byteSize,
+                })
+              : t("documentCaption", { count: preview.rows })}
         {diagnostics.length > 0 && (
-          <span className="ml-2">· {diagnostics.length} diagnostics</span>
+          <span className="ml-2">
+            {t("diagnosticCount", { count: diagnostics.length })}
+          </span>
         )}
       </figcaption>
     </figure>

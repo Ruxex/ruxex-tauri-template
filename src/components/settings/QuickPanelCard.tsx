@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { CommandLineIcon } from "@heroicons/react/24/outline";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
@@ -25,24 +26,25 @@ export function QuickPanelCard({
   onShortcutKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   shortcut: string;
 }) {
+  const { t } = useTranslation("settings");
   return (
-    <SettingsPanel icon={CommandLineIcon} title="Quick panel">
+    <SettingsPanel icon={CommandLineIcon} title={t("settings:quickPanel")}>
       <div className="text-sm">
         <FormFieldRow
           controlId="settings-quick-panel-shortcut"
-          label="Global shortcut"
+          label={t("settings:globalShortcut")}
         >
           {isLoading ? (
             <span className="loading loading-spinner loading-sm justify-self-end" />
           ) : (
             <div className="flex w-full max-w-sm justify-self-end gap-2 max-sm:max-w-none">
               <input
-                aria-label="Quick panel shortcut"
+                aria-label={t("settings:quickPanelShortcut")}
                 className="input input-bordered input-sm min-w-0 flex-1"
                 disabled={disabled}
                 id="settings-quick-panel-shortcut"
                 onKeyDown={onShortcutKeyDown}
-                placeholder="Press keys…"
+                placeholder={t("settings:pressKeys")}
                 readOnly
                 value={shortcut}
               />
@@ -55,25 +57,25 @@ export function QuickPanelCard({
         {!isLoading && (
           <div className="flex flex-wrap items-center justify-end gap-2 px-5 py-3.5">
             <span className="mr-auto text-xs text-base-content/60">
-              Default: {defaultShortcut}
+              {t("settings:defaultShortcut", { shortcut: defaultShortcut })}
             </span>
             <button
-              aria-label="Reset"
+              aria-label={t("settings:reset")}
               className="btn btn-ghost btn-sm"
               disabled={disabled || shortcut === defaultShortcut}
               onClick={onReset}
               type="button"
             >
-              Reset
+              {t("settings:reset")}
             </button>
             <button
-              aria-label={disabled ? "Saving…" : "Save"}
+              aria-label={disabled ? t("settings:saving") : t("settings:save")}
               className="btn btn-primary btn-sm"
               disabled={disabled || !shortcut.trim()}
               onClick={onSave}
               type="button"
             >
-              {disabled ? "Saving…" : "Save"}
+              {disabled ? t("settings:saving") : t("settings:save")}
             </button>
           </div>
         )}

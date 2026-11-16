@@ -7,8 +7,10 @@ import type { v2 } from "../protocol";
 import { HooksPage } from "./HooksPage";
 
 const useHooksList = vi.hoisted(() => vi.fn());
+const useAppServerStatus = vi.hoisted(() => vi.fn());
 
 vi.mock("../app-server/hooks", () => ({ useHooksList }));
+vi.mock("../app-server/queries", () => ({ useAppServerStatus }));
 
 function hookResult(
   overrides: Partial<ReturnType<typeof defaultHookResult>> = {},
@@ -115,13 +117,53 @@ function populatedResponse(): v2.HooksListResponse {
   };
 }
 
+import { i18n } from "../app/i18n";
+
 describe("HooksPage", () => {
+  it("renders Japanese hook framing and retains commands and event identifiers", async () => {
+    await i18n.changeLanguage("ja");
+    render(<HooksPage />);
+    expect(screen.getByRole("heading", { name: "フック" })).toBeTruthy();
+    expect(screen.getByText("プロジェクト")).toBeTruthy();
+    expect(screen.getByText("PreToolUse")).toBeTruthy();
+    expect(screen.getByText("python3 /workspace/app/check.py")).toBeTruthy();
+    expect(screen.getByText("Hook configuration error")).toBeTruthy();
+  });
+
   afterEach(cleanup);
 
   beforeEach(() => {
     useHooksList
       .mockReset()
       .mockReturnValue(hookResult({ data: populatedResponse() }));
+    useAppServerStatus.mockReset().mockReturnValue({
+      data: { homeDataDir: "/home/user/.ruxex" },
+    });
+  });
+
+  it.each([
+    ["en", "1,234s", "12,345 tokens"],
+    ["ja", "1,234 秒", "12,345 トークン"],
+  ] as const)(
+    "formats hook numeric details in %s",
+    async (locale, timeout, tokens) => {
+      await i18n.changeLanguage(locale);
+      const response = populatedResponse();
+      response.data[0].hooks[0].timeoutSec = 1234n;
+      response.data[0].hooks[0].additionalContextLimit = 12345;
+      useHooksList.mockReturnValue(hookResult({ data: response }));
+      render(<HooksPage />);
+      expect(screen.getByText(timeout)).toBeTruthy();
+      expect(screen.getByText(tokens)).toBeTruthy();
+    },
+  );
+
+  it("lists hooks from the App Server data home", () => {
+    render(<HooksPage />);
+
+    expect(useHooksList).toHaveBeenCalledWith({
+      cwds: ["/home/user/.ruxex"],
+    });
   });
 
   it("shows hook groups, trust states, sources, and handler details", () => {

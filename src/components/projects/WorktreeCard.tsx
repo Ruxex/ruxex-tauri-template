@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CodeBracketIcon,
   FolderOpenIcon,
@@ -9,6 +10,8 @@ import { formatErrorMessage } from "../../app/error-message";
 import { useWorktrees } from "../../app-server/hooks";
 
 export function WorktreeCard({ root }: { root: string }) {
+  const { t } = useTranslation("projects");
+
   const worktrees = useWorktrees(root);
   const [branch, setBranch] = useState("");
   const [force, setForce] = useState(false);
@@ -19,9 +22,11 @@ export function WorktreeCard({ root }: { root: string }) {
         <div>
           <h2 className="card-title">
             <CodeBracketIcon aria-hidden="true" className="size-5" />
-            Git worktrees
+            {t("gitWorktrees")}
           </h2>
-          <p className="text-sm text-base-content/70">Repository: {root}</p>
+          <p className="text-sm text-base-content/70">
+            {t("repository", { path: root })}
+          </p>
         </div>
         <form
           className="flex flex-wrap gap-2"
@@ -37,44 +42,47 @@ export function WorktreeCard({ root }: { root: string }) {
           }}
         >
           <input
-            aria-label="Worktree branch"
+            aria-label={t("worktreeBranch")}
             className="input input-bordered input-sm"
             onChange={(event) => setBranch(event.target.value)}
-            placeholder="branch-name"
+            placeholder={t("worktreeBranchPlaceholder")}
             value={branch}
           />
           <button
-            aria-label="Create worktree"
+            aria-label={t("createWorktree")}
             className="btn btn-sm btn-primary gap-1"
             disabled={worktrees.create.isPending}
             type="submit"
           >
             <PlusIcon aria-hidden="true" className="size-4" />
-            Create worktree
+            {t("createWorktree")}
           </button>
         </form>
         <label className="label cursor-pointer justify-start gap-2">
           <input
-            aria-label="Force removal of dirty worktrees"
+            aria-label={t("forceRemovalOfDirtyWorktrees")}
             checked={force}
             className="checkbox checkbox-sm"
             onChange={(event) => setForce(event.target.checked)}
             type="checkbox"
           />
-          <span className="label-text">Force removal of dirty worktrees</span>
+          <span className="label-text">
+            {t("forceRemovalOfDirtyWorktrees")}
+          </span>
         </label>
         {worktrees.query.isLoading && (
           <span className="loading loading-spinner" />
         )}
         {worktrees.query.isError && (
           <p className="text-sm text-error">
-            Unable to load worktrees:{" "}
-            {formatErrorMessage(worktrees.query.error)}
+            {t("worktreesError", {
+              error: formatErrorMessage(worktrees.query.error),
+            })}
           </p>
         )}
         <ul className="space-y-2">
           {worktrees.query.data?.map((worktree) => {
-            const label = worktree.branch ?? "detached";
+            const label = worktree.branch ?? t("detachedBranch");
             return (
               <li
                 className="flex flex-wrap items-center justify-between gap-2 rounded-box bg-base-200 p-3"
@@ -83,26 +91,26 @@ export function WorktreeCard({ root }: { root: string }) {
                 <div>
                   <p className="font-medium">{label}</p>
                   <p className="text-xs text-base-content/60">
-                    {worktree.path} · {worktree.clean ? "Clean" : "Dirty"}
+                    {worktree.path} · {worktree.clean ? t("clean") : t("dirty")}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <span
                     className={`badge ${worktree.clean ? "badge-success" : "badge-warning"}`}
                   >
-                    {worktree.clean ? "Clean" : "Dirty"}
+                    {worktree.clean ? t("clean") : t("dirty")}
                   </span>
                   <button
-                    aria-label={`Open ${label}`}
+                    aria-label={t("openWorktree", { name: label })}
                     className="btn btn-xs btn-ghost gap-1"
                     onClick={() => worktrees.open.mutate(worktree.path)}
                     type="button"
                   >
                     <FolderOpenIcon aria-hidden="true" className="size-4" />
-                    Open
+                    {t("open")}
                   </button>
                   <button
-                    aria-label={`Remove ${label}`}
+                    aria-label={t("removeWorktree", { name: label })}
                     className="btn btn-xs btn-ghost gap-1 text-error"
                     onClick={() =>
                       worktrees.remove.mutate({ path: worktree.path, force })
@@ -110,7 +118,7 @@ export function WorktreeCard({ root }: { root: string }) {
                     type="button"
                   >
                     <TrashIcon aria-hidden="true" className="size-4" />
-                    Remove
+                    {t("remove")}
                   </button>
                 </div>
               </li>

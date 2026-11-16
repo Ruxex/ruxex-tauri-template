@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { I18nextProvider } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
 import {
@@ -13,6 +14,7 @@ import {
 import { isDesktopRuntime } from "../app-server/runtime";
 import { pathForDeepLink, startDeepLinkListener } from "../platform/deep-links";
 import { BrandingProvider } from "./branding";
+import { i18n } from "./i18n";
 import { queryClient } from "./query-client";
 import { ThreadReadStateProvider } from "./thread-read-state";
 import { UiPreferencesProvider } from "./ui-preferences";
@@ -23,15 +25,17 @@ type AppProvidersProps = {
 
 export function AppProviders({ router }: AppProvidersProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrandingProvider>
-        <ThreadReadStateProvider>
-          <UiPreferencesProvider>
-            <AppRuntime router={router} />
-          </UiPreferencesProvider>
-        </ThreadReadStateProvider>
-      </BrandingProvider>
-    </QueryClientProvider>
+    <I18nextProvider i18n={i18n}>
+      <QueryClientProvider client={queryClient}>
+        <BrandingProvider>
+          <ThreadReadStateProvider>
+            <UiPreferencesProvider>
+              <AppRuntime router={router} />
+            </UiPreferencesProvider>
+          </ThreadReadStateProvider>
+        </BrandingProvider>
+      </QueryClientProvider>
+    </I18nextProvider>
   );
 }
 

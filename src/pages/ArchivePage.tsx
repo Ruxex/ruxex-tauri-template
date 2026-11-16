@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArchiveBoxIcon,
   ArrowUturnLeftIcon,
@@ -20,6 +21,8 @@ import { ThreadCard } from "../components/common/ThreadCard";
 import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
 
 export function ArchivePage() {
+  const { t } = useTranslation("chats");
+
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -75,11 +78,11 @@ export function ArchivePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold">Archived chats</h1>
+          <h1 className="text-3xl font-semibold">{t("archivedChats")}</h1>
         </div>
         {archived.data?.data.length ? (
           <button
-            aria-label="Delete all archived chats"
+            aria-label={t("deleteAllArchivedChats")}
             className="btn btn-error btn-outline btn-sm gap-2"
             disabled={deleteAll.isPending}
             type="button"
@@ -89,7 +92,7 @@ export function ArchivePage() {
             }}
           >
             <TrashIcon aria-hidden="true" className="size-4" />
-            Delete all
+            {t("deleteAll")}
           </button>
         ) : null}
       </div>
@@ -103,18 +106,18 @@ export function ArchivePage() {
               onClick={() => void archived.refetch()}
               type="button"
             >
-              {archived.isFetching ? "Retrying…" : "Retry"}
+              {archived.isFetching ? t("retrying") : t("retry")}
             </button>
           }
         >
-          Unable to load archived chats.
+          {t("unableToLoadArchivedChats")}
         </ErrorState>
       )}
       {!archived.isLoading && !archived.data?.data.length && (
         <EmptyState
-          description="Restored chats will appear in your active history."
+          description={t("restoredChatsWillAppearInYourActiveHistory")}
           icon={ArchiveBoxIcon}
-          title="No archived chats."
+          title={t("noArchivedChats")}
         />
       )}
       <div className="grid gap-3">
@@ -127,9 +130,9 @@ export function ArchivePage() {
             actions={
               <>
                 <button
-                  aria-label="Restore"
+                  aria-label={t("restore")}
                   className="btn btn-ghost btn-sm btn-square text-primary"
-                  title="Restore"
+                  title={t("restore")}
                   type="button"
                   disabled={unarchive.isPending || deleteAll.isPending}
                   onClick={() =>
@@ -139,9 +142,9 @@ export function ArchivePage() {
                   <ArrowUturnLeftIcon aria-hidden="true" className="size-4" />
                 </button>
                 <button
-                  aria-label="Delete"
+                  aria-label={t("delete")}
                   className="btn btn-ghost btn-sm btn-square"
-                  title="Delete"
+                  title={t("delete")}
                   disabled={deleteThread.isPending}
                   onClick={() => openDeleteDialog(thread)}
                   type="button"
@@ -155,23 +158,23 @@ export function ArchivePage() {
       </div>
       {archived.data && (pageNumber > 1 || archived.data.nextCursor) && (
         <nav
-          aria-label="Archived chat pages"
+          aria-label={t("archivedChatPages")}
           className="flex items-center justify-center gap-3"
         >
           <button
-            aria-label="Previous"
+            aria-label={t("previous")}
             className="btn btn-ghost btn-sm"
             disabled={archived.isFetching || pageNumber === 1}
             onClick={() => setCursorHistory((history) => history.slice(0, -1))}
             type="button"
           >
-            Previous
+            {t("previous")}
           </button>
           <span aria-live="polite" className="text-sm text-base-content/60">
-            Page {pageNumber}
+            {t("pageNumber", { page: pageNumber })}
           </span>
           <button
-            aria-label="Next"
+            aria-label={t("next")}
             className="btn btn-ghost btn-sm"
             disabled={archived.isFetching || !archived.data.nextCursor}
             onClick={() =>
@@ -182,7 +185,7 @@ export function ArchivePage() {
             }
             type="button"
           >
-            Next
+            {t("next")}
           </button>
         </nav>
       )}
@@ -198,36 +201,40 @@ export function ArchivePage() {
         >
           <div className="modal-box">
             <h2 className="text-lg font-semibold" id="delete-chat-title">
-              Delete chat?
+              {t("deleteChat")}
             </h2>
             <p className="py-4 text-sm text-base-content/70">
-              Delete “{deleteTarget.name}”? This cannot be undone.
+              {t("deleteConfirmation", { name: deleteTarget.name })}
             </p>
             {deleteError && (
               <p className="alert alert-error mb-4" role="alert">
-                Unable to delete chat: {deleteError}
+                {t("deleteError", { error: deleteError })}
               </p>
             )}
             <div className="modal-action">
               <button
-                aria-label="Cancel"
+                aria-label={t("cancel")}
                 className="btn btn-ghost"
                 disabled={deleteThread.isPending}
                 onClick={closeDeleteDialog}
                 type="button"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 aria-label={
-                  deleteThread.isPending ? "Deleting…" : "Delete permanently"
+                  deleteThread.isPending
+                    ? t("deleting")
+                    : t("deletePermanently")
                 }
                 className="btn btn-error"
                 disabled={deleteThread.isPending}
                 onClick={deleteArchivedThread}
                 type="button"
               >
-                {deleteThread.isPending ? "Deleting…" : "Delete permanently"}
+                {deleteThread.isPending
+                  ? t("deleting")
+                  : t("deletePermanently")}
               </button>
             </div>
           </div>
@@ -248,32 +255,31 @@ export function ArchivePage() {
               className="text-lg font-semibold"
               id="delete-all-archived-chats-title"
             >
-              Delete all archived chats?
+              {t("deleteAllArchivedChatsTitle")}
             </h2>
             <p className="py-4 text-sm text-base-content/70">
-              This permanently deletes every archived chat. This cannot be
-              undone.
+              {t("thisPermanentlyDeletesEveryArchivedChatThisCannotBeUndone")}
             </p>
             {deleteAllError && (
               <p className="alert alert-error mb-4" role="alert">
-                Unable to delete archived chats: {deleteAllError}
+                {t("deleteAllError", { error: deleteAllError })}
               </p>
             )}
             <div className="modal-action">
               <button
-                aria-label="Cancel"
+                aria-label={t("cancel")}
                 className="btn btn-ghost"
                 disabled={deleteAll.isPending}
                 onClick={closeDeleteAllDialog}
                 type="button"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 aria-label={
                   deleteAll.isPending
-                    ? "Deleting all…"
-                    : "Delete all permanently"
+                    ? t("deletingAll")
+                    : t("deleteAllPermanently")
                 }
                 className="btn btn-error"
                 disabled={deleteAll.isPending}
@@ -281,8 +287,8 @@ export function ArchivePage() {
                 type="button"
               >
                 {deleteAll.isPending
-                  ? "Deleting all…"
-                  : "Delete all permanently"}
+                  ? t("deletingAll")
+                  : t("deleteAllPermanently")}
               </button>
             </div>
           </div>

@@ -1,5 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { Crepe } from "@milkdown/crepe";
 import type { CrepeBuilder } from "@milkdown/crepe/builder";
+import type { PlaceholderFeatureConfig } from "@milkdown/crepe/feature/placeholder";
+import { editorViewCtx } from "@milkdown/kit/core";
 import { replaceAll } from "@milkdown/kit/utils";
 import {
   Milkdown,
@@ -34,7 +37,10 @@ function MilkdownEditor({
   placeholder,
   value,
 }: ComposerMessageInputProps) {
+  const { t } = useTranslation("conversation");
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const initialContentRef = useRef({ value, placeholder });
   const onChangeRef = useRef(onChange);
   const onEditorReadyRef = useRef(onEditorReady);
   const [isLoading, getInstance] = useInstance();
@@ -45,7 +51,7 @@ function MilkdownEditor({
   useEditor(
     (root) =>
       new Crepe({
-        defaultValue: value,
+        defaultValue: initialContentRef.current.value,
         features: {
           [Crepe.Feature.BlockEdit]: false,
           [Crepe.Feature.CodeMirror]: false,
@@ -58,7 +64,7 @@ function MilkdownEditor({
         featureConfigs: {
           [Crepe.Feature.Placeholder]: {
             mode: "doc",
-            text: placeholder,
+            text: initialContentRef.current.placeholder,
           },
         },
         root,
@@ -67,7 +73,7 @@ function MilkdownEditor({
           onChangeRef.current(markdown);
         });
       }),
-    [placeholder],
+    [],
   );
 
   useEffect(() => {
@@ -83,10 +89,30 @@ function MilkdownEditor({
       return;
     }
 
-    editor.setAttribute("aria-label", "Message");
+    editor.setAttribute("aria-label", t("message"));
     editor.setAttribute("aria-multiline", "true");
     onEditorReadyRef.current?.(editor);
-  }, [getInstance, isLoading]);
+  }, [getInstance, isLoading, t]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const instance = getInstance();
+    if (!instance) return;
+
+    instance.action((ctx) => {
+      // Resolve by name, as Crepe bundles its own instance of the feature slice.
+      const config = ctx.get<PlaceholderFeatureConfig, "placeholderConfigCtx">(
+        "placeholderConfigCtx",
+      );
+      if (config.text === placeholder) return;
+      ctx.update<PlaceholderFeatureConfig, "placeholderConfigCtx">(
+        "placeholderConfigCtx",
+        (current) => ({ ...current, text: placeholder }),
+      );
+      const view = ctx.get(editorViewCtx);
+      view.updateState(view.state);
+    });
+  }, [getInstance, isLoading, placeholder]);
 
   useEffect(() => {
     if (isLoading) {

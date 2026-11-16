@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,6 +9,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "../../app/i18n";
 
 const useAppServerEvents = vi.hoisted(() => vi.fn());
 const useGitDiffSummary = vi.hoisted(() => vi.fn());
@@ -199,7 +202,7 @@ describe("ConversationWorkspace", () => {
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
-    expect(screen.getByTitle("Total tokens: 1,200").textContent).toContain(
+    expect(screen.getByTitle(/Total tokens: 1,200$/).textContent).toContain(
       "1.2k",
     );
     expect(screen.getByTitle("Total amount: 0.56").textContent).toContain(
@@ -243,13 +246,13 @@ describe("ConversationWorkspace", () => {
     render(<ConversationWorkspace threadId="thread-1" />);
 
     const workspace = screen.getByTestId("chat-workspace");
-    const mainChat = screen.getByRole("main");
+    const mainChat = workspace.querySelector(".chat-main-column");
     expect(
       screen.getByRole("complementary", { name: "Conversation minimap" }),
     ).toBeTruthy();
     expect(screen.getByTestId("conversation-minimap-track")).toBeTruthy();
     expect(workspace.className).toContain("chat-workspace--has-minimap");
-    expect(mainChat.className).toContain("h-full");
+    expect(mainChat?.className).toContain("self-stretch");
   });
 
   it("does not reserve a summary column when token usage is unavailable", async () => {
@@ -356,15 +359,15 @@ describe("ConversationWorkspace", () => {
         .parentElement?.className,
     ).toContain("sticky");
     expect(summaryPanel.parentElement?.className).toContain("sticky");
-    const mainChat = screen.getByRole("main");
-    expect(mainChat.className).toContain("h-full");
-    expect(mainChat.className).toContain("min-h-0");
+    const mainChat = workspace.querySelector(".chat-main-column");
+    expect(mainChat?.className).toContain("self-stretch");
+    expect(mainChat?.className).toContain("min-w-0");
     const timeline = screen.getByRole("region", { name: "Chat activity" });
     expect(timeline.className).not.toContain("overflow-y-auto");
     expect(
       screen.getByTestId("composer").parentElement?.className.split(/\s+/),
     ).toEqual(expect.arrayContaining(["shrink-0"]));
-    expect(mainChat.getAttribute("data-conversation-scroll")).toBeNull();
+    expect(mainChat?.getAttribute("data-conversation-scroll")).toBeNull();
   });
 
   it("shows an error when the completed turn fails asynchronously", async () => {
@@ -388,7 +391,10 @@ describe("ConversationWorkspace", () => {
     expect(root?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
-    expect(screen.getByRole("main").className).toContain("h-full");
+    expect(
+      screen.getByTestId("chat-workspace").querySelector(".chat-main-column")
+        ?.className,
+    ).toContain("self-stretch");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(
       expect.arrayContaining(["sticky", "pb-2"]),
     );
@@ -598,5 +604,51 @@ describe("ConversationWorkspace", () => {
     expect(revertMutation.mock.invocationCallOrder[0]).toBeLessThan(
       sendMutation.mock.invocationCallOrder[0],
     );
+  });
+  it("localizes conversation framing and retains user, model, and server content", async () => {
+    await i18n.changeLanguage("ja");
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    render(<ConversationWorkspace threadId="thread-1" />);
+    expect(screen.getByText("Original prompt")).toBeTruthy();
+    expect(screen.getByText("Assistant reply")).toBeTruthy();
+    expect(screen.getByText(/Authentication required/)).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "キュー内のメッセージ" }),
+    ).toBeTruthy();
+  });
+
+  it("updates normalized activity framing when language changes", async () => {
+    const fixture = useThreadConversation();
+    useThreadConversation.mockReturnValue({
+      ...fixture,
+      data: {
+        ...fixture.data,
+        items: {
+          data: [
+            {
+              turnId: "turn-1",
+              item: {
+                type: "commandExecution",
+                id: "command-1",
+                command: "echo server-output",
+                aggregatedOutput: "server-output",
+                cwd: "/workspace",
+                status: "completed",
+                exitCode: 0,
+              },
+            },
+          ],
+        },
+      },
+    });
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+    render(<ConversationWorkspace threadId="thread-1" />);
+    expect(screen.getByText("Command")).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByText("コマンド")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "コマンドが完了" })).toBeTruthy();
+    expect(screen.getAllByText("echo server-output").length).toBeGreaterThan(0);
   });
 });

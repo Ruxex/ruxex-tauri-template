@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 
 import { formatErrorMessage } from "../../app/error-message";
@@ -9,6 +10,8 @@ type ImageViewProps = {
 };
 
 export function ImageView({ path, url }: ImageViewProps) {
+  const { t } = useTranslation("conversation");
+
   const [source, setSource] = useState<string | null>(url ?? null);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,8 +37,6 @@ export function ImageView({ path, url }: ImageViewProps) {
             );
           }
         });
-    } else if (!url || !isAllowedImageUrl(url)) {
-      setError("This image source is not allowed.");
     }
 
     return () => {
@@ -43,13 +44,18 @@ export function ImageView({ path, url }: ImageViewProps) {
     };
   }, [path, url]);
 
+  if (!path && (!url || !isAllowedImageUrl(url))) {
+    return (
+      <p className="text-sm text-error">{t("thisImageSourceIsNotAllowed")}</p>
+    );
+  }
   if (error) {
     return <p className="text-sm text-error">{error}</p>;
   }
   if (!source) {
     return (
       <span
-        aria-label="Loading image"
+        aria-label={t("loadingImage")}
         className="loading loading-spinner"
         role="status"
       />
@@ -59,7 +65,7 @@ export function ImageView({ path, url }: ImageViewProps) {
   return (
     <figure className="my-3 overflow-hidden rounded-box border border-base-300 bg-base-200">
       <img
-        alt="Screenshot from the App Server"
+        alt={t("screenshotFromTheAppServer")}
         className="max-h-96 max-w-full object-contain"
         src={source}
       />

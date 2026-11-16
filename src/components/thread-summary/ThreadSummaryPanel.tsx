@@ -1,3 +1,5 @@
+import { formatNumber } from "../../app/locale-format";
+import { useTranslation } from "react-i18next";
 import { CodeBracketIcon, CommandLineIcon } from "@heroicons/react/24/outline";
 import type { GitDiffSummary } from "../../platform/git-diff";
 import type { v2 } from "../../protocol";
@@ -20,6 +22,9 @@ export function ThreadSummaryPanel({
   onReviewGitDiff,
   onOpenTerminal,
 }: ThreadSummaryPanelProps) {
+  const { t, i18n } = useTranslation("conversation");
+  const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
+
   if (!tokenUsage && !gitDiff && subagents.length === 0) {
     return null;
   }
@@ -27,7 +32,7 @@ export function ThreadSummaryPanel({
   return (
     <div className="chat-thread-summary-column chat-side-column sticky top-6 z-10 hidden w-full min-w-0 justify-self-end self-start overflow-hidden @container/summary @min-[80rem]/chat:block">
       <aside
-        aria-label="Thread Summary"
+        aria-label={t("threadSummary")}
         className="ml-auto hidden h-full w-full max-w-72 rounded-box text-xs @min-[16rem]/summary:block"
         data-testid="thread-summary-panel"
       >
@@ -41,12 +46,16 @@ export function ThreadSummaryPanel({
           >
             {gitDiff && (
               <section
-                aria-label="Code changes"
+                aria-label={t("codeChanges")}
                 className={tokenUsage || subagents.length > 0 ? "mb-5" : ""}
               >
                 {/* Keep change details on one line so the summary stays compact. */}
                 <button
-                  aria-label={`Review ${gitDiff.added} additions and ${gitDiff.deleted} deletions across ${gitDiff.files} files`}
+                  aria-label={t("reviewChanges", {
+                    added: gitDiff.added,
+                    deleted: gitDiff.deleted,
+                    count: gitDiff.files,
+                  })}
                   className="flex w-full min-w-0 items-center gap-2 rounded px-1 py-1 text-left transition-colors hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
                   onClick={onReviewGitDiff}
                   type="button"
@@ -56,36 +65,37 @@ export function ThreadSummaryPanel({
                       aria-hidden="true"
                       className="size-4 shrink-0"
                     />
-                    <span>Changes</span>
+                    <span>{t("changes")}</span>
                   </span>
                   <span className="ml-auto flex shrink-0 items-center gap-1.5 font-medium tabular-nums">
-                    <span className="text-success">+{gitDiff.added}</span>
-                    <span className="text-error">−{gitDiff.deleted}</span>
+                    <span className="text-success">
+                      +{formatNumber(gitDiff.added, locale)}
+                    </span>
+                    <span className="text-error">
+                      −{formatNumber(gitDiff.deleted, locale)}
+                    </span>
                     <span className="text-base-content/60">
-                      ({gitDiff.files})
+                      ({formatNumber(gitDiff.files, locale)})
                     </span>
                   </span>
                 </button>
               </section>
             )}
+            <TokenUsageSection usage={tokenUsage} />
+            {subagents.length > 0 && <SubagentsSummary rows={subagents} />}
             {onOpenTerminal && (
-              <section
-                aria-label="Terminal"
-                className={tokenUsage || gitDiff ? "mb-5" : ""}
-              >
+              <section aria-label={t("terminal")} className="mt-5">
                 <button
-                  aria-label="Open terminal in right pane"
+                  aria-label={t("openTerminalInRightPane")}
                   className="flex w-full items-center gap-2 rounded px-1 py-1 text-left transition-colors hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
                   onClick={onOpenTerminal}
                   type="button"
                 >
                   <CommandLineIcon aria-hidden="true" className="size-4" />
-                  <span>Terminal</span>
+                  <span>{t("terminal")}</span>
                 </button>
               </section>
             )}
-            <TokenUsageSection usage={tokenUsage} />
-            {subagents.length > 0 && <SubagentsSummary rows={subagents} />}
           </div>
         </div>
       </aside>
@@ -94,12 +104,14 @@ export function ThreadSummaryPanel({
 }
 
 function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
+  const { t } = useTranslation("conversation");
+
   return (
     <details className="mt-5">
       <summary className="cursor-pointer rounded px-1 py-1 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary">
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="shrink-0 font-medium text-base-content/80">
-            Subagents
+            {t("subagents")}
           </span>
           <span className="ml-auto flex min-w-0 flex-wrap justify-end gap-1">
             {rows.map((row) => (
@@ -109,13 +121,13 @@ function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
         </span>
       </summary>
       <ul
-        aria-label="Subagent list"
+        aria-label={t("subagentList")}
         className="mt-2 max-h-48 overflow-y-auto overscroll-contain rounded focus-visible:outline-2 focus-visible:outline-primary"
       >
         {rows.map((row) => (
           <li key={row.threadId}>
             <button
-              aria-label={`Subagent ${row.label}`}
+              aria-label={t("subagentLabel", { name: row.label })}
               className="w-full cursor-pointer truncate rounded px-2 py-1 text-left text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
               type="button"
             >

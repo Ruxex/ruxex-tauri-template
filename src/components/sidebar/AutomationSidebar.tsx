@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { useSchedules } from "../../app-server/hooks";
@@ -11,6 +12,7 @@ import {
 import { SidebarHeader } from "./SidebarHeader";
 
 export function AutomationSidebar({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation("navigation");
   const schedules = useSchedules();
   const recentRuns = (schedules.query.data ?? [])
     .filter((schedule) => schedule.lastRun)
@@ -22,23 +24,24 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
 
   return (
     <aside
-      aria-label="Automation sidebar"
+      aria-label={t("navigation:automationSidebar")}
       className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-base-100 p-4"
     >
-      <SidebarHeader label="Automation" onClose={onClose} />
+      <SidebarHeader label={t("navigation:automation")} onClose={onClose} />
       <h3 className="text-xs font-semibold uppercase tracking-wide text-base-content/55">
-        Recent runs
+        {t("navigation:recentRuns")}
       </h3>
       {schedules.query.isLoading && (
         <div className="flex items-center gap-2 pt-4 text-sm text-base-content/60">
           <span className="loading loading-spinner loading-xs" />
-          Loading…
+          {t("navigation:loading")}
         </div>
       )}
       {schedules.query.isError && (
         <p className="pt-4 text-sm text-error">
-          Unable to load recent runs:{" "}
-          {formatErrorMessage(schedules.query.error)}
+          {t("navigation:loadRunsError", {
+            error: formatErrorMessage(schedules.query.error),
+          })}
         </p>
       )}
       {!schedules.query.isLoading && !schedules.query.isError && (
@@ -73,7 +76,9 @@ export function AutomationSidebar({ onClose }: { onClose: () => void }) {
               >
                 {threadId ? (
                   <Link
-                    aria-label={`Open chat: ${schedule.name}`}
+                    aria-label={t("navigation:openChat", {
+                      name: schedule.name,
+                    })}
                     className="block rounded-box border border-base-300 bg-base-200/35 px-3 py-2.5 transition-colors hover:border-primary/50 hover:bg-base-200"
                     to={`/chat/${threadId}`}
                   >

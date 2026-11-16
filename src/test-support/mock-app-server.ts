@@ -32,9 +32,11 @@ export class MockAppServer {
   readonly rejections: MockRejection[] = [];
   readonly status: AppServerStatus = {
     socketPath: "/tmp/ruxex-test.sock",
+    homeDataDir: "/home/test/.ruxex",
     appServerVersion: "test-app-server",
   };
 
+  private nextWorkspaceId = 0;
   private readonly responses = new Map<Method, unknown>();
   private readonly listeners = new Set<(event: AppServerEvent) => void>();
 
@@ -60,6 +62,9 @@ export class MockAppServer {
     switch (command) {
       case "ensure_app_server":
         return this.status;
+      case "create_chat_workspace":
+        this.nextWorkspaceId += 1;
+        return `${this.status.homeDataDir}/workspaces/chat-${this.nextWorkspaceId}`;
       case "app_server_request": {
         if (!args.request) {
           throw new Error("app_server_request requires a request");

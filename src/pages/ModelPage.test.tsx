@@ -20,7 +20,23 @@ vi.mock("../app-server/hooks", () => ({
   usePermissionProfiles,
 }));
 
+import { i18n } from "../app/i18n";
+
 describe("ModelPage", () => {
+  it("renders Japanese provider framing while preserving provider details", async () => {
+    await i18n.changeLanguage("ja");
+    const { ModelPage } = await import("./ModelPage");
+    render(
+      <MemoryRouter>
+        <ModelPage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "プロバイダー" })).toBeTruthy();
+    expect(screen.getByText("Ruxex")).toBeTruthy();
+    expect(screen.getByText("authenticated")).toBeTruthy();
+    expect(screen.getByText("/home/ada/.ruxex_desktop")).toBeTruthy();
+  });
+
   afterEach(cleanup);
 
   beforeEach(() => {

@@ -1,3 +1,5 @@
+import { formatNumber } from "../../app/locale-format";
+import { useTranslation } from "react-i18next";
 import {
   ChartBarIcon,
   ExclamationTriangleIcon,
@@ -18,15 +20,18 @@ import {
   filterActivityEntries,
 } from "./activity-model";
 
-const filters: Array<{ id: ActivityFilter; label: string }> = [
-  { id: "all", label: "All" },
-  { id: "needsAction", label: "Needs action" },
-  { id: "running", label: "Running" },
-  { id: "agents", label: "Agents" },
-  { id: "completed", label: "Completed" },
-];
-
 export function ActivityCenter() {
+  const { t, i18n } = useTranslation("activity");
+  const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
+
+  const filters: Array<{ id: ActivityFilter; label: string }> = [
+    { id: "all", label: t("all") },
+    { id: "needsAction", label: t("needsAction") },
+    { id: "running", label: t("running") },
+    { id: "agents", label: t("agents") },
+    { id: "completed", label: t("completed") },
+  ];
+
   const [filter, setFilter] = useState<ActivityFilter>("all");
   const events = useAppServerEvents();
   const pendingRequests = useServerRequests();
@@ -45,27 +50,26 @@ export function ActivityCenter() {
     <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
         <p className="text-sm font-medium uppercase tracking-wide text-primary">
-          Workspace
+          {t("workspace")}
         </p>
         <h1 className="flex items-center gap-2 text-3xl font-semibold">
           <ChartBarIcon aria-hidden="true" className="size-7 text-primary" />
-          Activity
+          {t("activity")}
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-base-content/65">
-          Monitor subagents, running threads, and actions waiting for your
-          approval.
+          {t("monitorSubagentsRunningThreadsAndActionsWaitingForYourApproval")}
         </p>
       </div>
 
       {!events.connected && (
         <div className="alert alert-warning">
           <ExclamationTriangleIcon aria-hidden="true" className="size-5" />
-          <StateBadge tone="warning">Disconnected</StateBadge>
+          <StateBadge tone="warning">{t("disconnected")}</StateBadge>
         </div>
       )}
 
       <fieldset className="flex flex-wrap gap-2">
-        <legend className="sr-only">Activity filters</legend>
+        <legend className="sr-only">{t("activityFilters")}</legend>
         {filters.map((option) => (
           <button
             aria-label={option.label}
@@ -78,7 +82,7 @@ export function ActivityCenter() {
             {option.label}
             {option.id === "needsAction" && pendingRequests.length > 0 && (
               <span className="badge badge-warning badge-sm">
-                {pendingRequests.length}
+                {formatNumber(pendingRequests.length, locale)}
               </span>
             )}
           </button>
@@ -91,7 +95,7 @@ export function ActivityCenter() {
           pendingRequests={pendingRequests}
         />
       ) : entries.length > 0 ? (
-        <ul aria-label="Activity entries" className="grid gap-3">
+        <ul aria-label={t("activityEntries")} className="grid gap-3">
           {entries.map((entry) => (
             <ActivityRow entry={entry} key={entry.id} />
           ))}
@@ -99,9 +103,9 @@ export function ActivityCenter() {
       ) : (
         <div className="card border border-dashed border-base-300 bg-base-100">
           <div className="card-body items-center text-center">
-            <p>No activity yet.</p>
+            <p>{t("noActivityYet")}</p>
             <p className="text-sm text-base-content/60">
-              Activity from threads and subagents will appear here.
+              {t("activityFromThreadsAndSubagentsWillAppearHere")}
             </p>
           </div>
         </div>

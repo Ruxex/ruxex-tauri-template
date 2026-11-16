@@ -1,8 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { FlagIcon } from "@heroicons/react/24/outline";
 
 import { useThreadGoal } from "../../app-server/hooks";
 
 export function CurrentGoal({ threadId }: { threadId: string }) {
+  const { t } = useTranslation("conversation");
+
   const goal = useThreadGoal(threadId).data?.goal;
 
   if (goal?.status !== "active") {
@@ -11,7 +14,7 @@ export function CurrentGoal({ threadId }: { threadId: string }) {
 
   return (
     <section
-      aria-label="Current goal"
+      aria-label={t("currentGoal")}
       className="mb-2 flex justify-start"
       data-testid="current-goal"
     >

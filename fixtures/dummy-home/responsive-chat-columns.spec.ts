@@ -9,10 +9,10 @@ async function openFixtureThread(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
   await $(
-    "tr[aria-label='Open project Product planning'] td:first-child",
+    "//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']",
   ).click();
   await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
-  await $("section.card").$$("a")[0].click();
+  await $('section[aria-label="Chats"]').$$("a")[0].click();
   await $("[aria-label='Chat activity']").waitForDisplayed({ timeout: 10_000 });
 }
 

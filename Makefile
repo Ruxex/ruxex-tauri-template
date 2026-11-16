@@ -126,6 +126,7 @@ e2e-diagnostics-headless: e2e-plugin-build
 ui-fixtures: e2e-build
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-home --spec fixtures/dummy-home/persistent.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/pages.spec.ts
+	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/japanese-ui.spec.ts
 	MCP_STREAMABLE_HTTP_BIND_ADDR=127.0.0.1:3920 python3 scripts/mcp_http_fixture.py >/dev/null 2>&1 & \
 		set -e; \
 		mcp_fixture_pid=$$!; \

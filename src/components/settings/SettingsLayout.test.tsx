@@ -2,6 +2,7 @@
 
 import { BellIcon } from "@heroicons/react/24/outline";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -9,6 +10,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "../../app/i18n";
 import { UI_NOTIFICATION_SOUND_OPTIONS } from "../../app/ui-preferences";
 import {
   AppServerCard,
@@ -115,6 +117,42 @@ describe("settings cards", () => {
     );
     expect(onAction).toHaveBeenCalledWith("forceStop");
     expect(screen.getByText("Running")).toBeTruthy();
+  });
+
+  it("closes the App Server stop options when clicking outside", () => {
+    render(
+      <AppServerCard
+        appServerReady
+        connected
+        daemon={{
+          status: "running",
+          managedRuxexPath: "/tmp/ruxex",
+          socketPath: "/tmp/app.sock",
+        }}
+        isAvailable
+        isFetching={false}
+        isPending={false}
+        isRefreshing={false}
+        isUpdatePending={false}
+        mode="daemon"
+        onAction={vi.fn()}
+        onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
+        onUpdate={vi.fn()}
+        resynchronizing={false}
+      />,
+    );
+
+    const stopOptions = screen.getByLabelText("Stop options");
+    fireEvent.click(stopOptions);
+    expect(stopOptions.closest("details")).toHaveProperty("open", true);
+    expect(
+      screen.getByRole("menuitemradio", { name: "Force stop" }),
+    ).toBeTruthy();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(stopOptions.closest("details")).toHaveProperty("open", false);
   });
 
   it("shows only Start when the daemon is not running", () => {
@@ -441,4 +479,78 @@ describe("settings cards", () => {
     ).toBeTruthy();
   });
 
+  it("translates daemon status and confirmation controls live in Japanese", async () => {
+    const onAction = vi.fn();
+    render(
+      <AppServerCard
+        appServerReady
+        connected
+        daemon={{
+          status: "running",
+          pid: 123,
+          managedRuxexPath: "/tmp/ruxex",
+          socketPath: "/tmp/app.sock",
+        }}
+        isAvailable
+        isFetching={false}
+        isPending={false}
+        isRefreshing={false}
+        isUpdatePending={false}
+        mode="daemon"
+        onAction={onAction}
+        onReconnect={vi.fn()}
+        onRefresh={vi.fn()}
+        onUpdate={vi.fn()}
+        resynchronizing={false}
+      />,
+    );
+    await act(() => i18n.changeLanguage("ja"));
+    expect(screen.getByText("実行中")).toBeTruthy();
+    expect(screen.getByText("接続済み")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "再起動" }));
+    const dialog = screen.getByRole("dialog", {
+      name: "App Serverを再起動しますか？",
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "再起動" }));
+    expect(onAction).toHaveBeenCalledWith("restart");
+  });
+
+  it.each([
+    ["alreadyRunning", "Already Running", "実行済み"],
+    ["started", "Started", "開始済み"],
+    ["restarted", "Restarted", "再起動済み"],
+    ["stopped", "Stopped", "停止済み"],
+    ["notRunning", "Not Running", "未実行"],
+    ["running", "Running", "実行中"],
+  ] as const)(
+    "localizes the supported daemon status %s",
+    async (status, english, japanese) => {
+      render(
+        <AppServerCard
+          appServerReady
+          connected
+          daemon={{
+            status,
+            managedRuxexPath: "/tmp/ruxex",
+            socketPath: "/tmp/app.sock",
+          }}
+          isAvailable
+          isFetching={false}
+          isPending={false}
+          isRefreshing={false}
+          isUpdatePending={false}
+          mode="daemon"
+          onAction={vi.fn()}
+          onReconnect={vi.fn()}
+          onRefresh={vi.fn()}
+          onUpdate={vi.fn()}
+          resynchronizing={false}
+        />,
+      );
+      expect(screen.getByText(english)).toBeTruthy();
+      await act(() => i18n.changeLanguage("ja"));
+      expect(screen.getByText(japanese)).toBeTruthy();
+      expect(screen.queryByText(english)).toBeNull();
+    },
+  );
 });

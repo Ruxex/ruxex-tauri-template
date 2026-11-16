@@ -1,0 +1,25 @@
+{
+  "waylandUnavailable": "Linux / Wayland global shortcuts are currently unavailable.",
+  "windowTitle": "Quick request",
+  "placeholder": "Ask something…",
+  "imageAttachment": "Image attachment",
+  "imageAttached": "Image attached",
+  "audioRecorded": "Audio recorded",
+  "imageAndAudioAttached": "Image attached · audio recorded",
+  "captureScreen": "Capture screen",
+  "capturing": "Capturing…",
+  "attachImage": "Attach image",
+  "stopRecording": "Stop recording",
+  "recordAudio": "Record audio",
+  "send": "Send",
+  "sending": "Sending…",
+  "errors": {
+    "imageOnly": "Only image attachments are supported.",
+    "captureUnavailable": "Screen capture is unavailable.",
+    "captureCancelled": "Screen capture cancelled.",
+    "audioUnavailable": "Audio recording is unavailable.",
+    "audioReadFailed": "Unable to read recorded audio.",
+    "audioCancelled": "Audio recording was cancelled.",
+    "sendFailed": "Unable to send quick request."
+  }
+}

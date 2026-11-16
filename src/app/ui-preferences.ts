@@ -7,6 +7,8 @@ import {
   useState,
 } from "react";
 
+import { i18n, resolveUiLanguage } from "./i18n";
+
 import {
   UI_ACCENT_COLORS,
   UI_THEME_COLOR_KEYS,
@@ -305,10 +307,20 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
   const [preferences, setPreferences] = useState(readStoredPreferences);
 
   useEffect(() => {
-    window.localStorage.setItem(
-      UI_PREFERENCES_KEY,
-      JSON.stringify(preferences),
-    );
+    const onStorage = (event: StorageEvent) => {
+      if (
+        event.storageArea !== window.localStorage ||
+        (event.key !== UI_PREFERENCES_KEY && event.key !== null)
+      )
+        return;
+      // Read the latest value: a queued event may describe an older write.
+      setPreferences(readStoredPreferences());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.dataset.uiFontSize = String(
       preferences.uiFontSize,
     );
@@ -329,13 +341,19 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
       preferences.chatFontFamily,
     );
     document.documentElement.style.zoom = `${preferences.uiZoom}%`;
-    document.documentElement.lang =
-      preferences.language === "system"
-        ? navigator.language.startsWith("ja")
-          ? "ja"
-          : "en"
-        : preferences.language;
   }, [preferences]);
+
+  useEffect(() => {
+    const applyLanguage = () => {
+      const language = resolveUiLanguage(preferences.language);
+      void i18n.changeLanguage(language);
+      document.documentElement.lang = language;
+    };
+    applyLanguage();
+    if (preferences.language !== "system") return;
+    window.addEventListener("languagechange", applyLanguage);
+    return () => window.removeEventListener("languagechange", applyLanguage);
+  }, [preferences.language]);
 
   useEffect(() => {
     const preset = preferences.theme.preset ?? "system";
@@ -361,7 +379,11 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
   }, [preferences.theme]);
 
   function update(patch: UiPreferencePatch) {
-    setPreferences((current) => updateUiPreferences(current, patch));
+    // Storage is shared across windows; merge against it even before a queued
+    // storage event arrives. Persist only local edits to avoid echoing events.
+    const next = updateUiPreferences(readStoredPreferences(), patch);
+    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(next));
+    setPreferences(next);
   }
 
   return { preferences, update };

@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../app/i18n";
+
 const useArchivedThreadList = vi.hoisted(() => vi.fn());
 const useUnarchiveThread = vi.hoisted(() => vi.fn());
 const useDeleteThread = vi.hoisted(() => vi.fn());
@@ -194,5 +196,25 @@ describe("ArchivePage", () => {
     );
 
     expect(screen.getByText("Unable to load archived chats.")).toBeTruthy();
+  });
+  it("localizes archive actions and confirmation without translating the chat name", async () => {
+    await i18n.changeLanguage("ja");
+    const { ArchivePage } = await import("./ArchivePage");
+    render(
+      <MemoryRouter>
+        <ArchivePage />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("heading", { name: "アーカイブ済みのチャット" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Old chat")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "復元" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    expect(
+      screen.getByRole("heading", { name: "チャットを削除しますか？" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "完全に削除" })).toBeTruthy();
+    expect(screen.getAllByText(/Old chat/)).toHaveLength(2);
   });
 });

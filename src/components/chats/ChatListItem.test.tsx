@@ -7,10 +7,12 @@ import {
   render,
   screen,
 } from "@testing-library/react";
+import { i18n } from "../../app/i18n";
+
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ChatListItem } from "./ChatListItem";
+import { ChatListItem, ChatUpdatedAt } from "./ChatListItem";
 
 describe("ChatListItem", () => {
   let triggerResize: (() => void) | undefined;
@@ -35,6 +37,23 @@ describe("ChatListItem", () => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
     triggerResize = undefined;
+  });
+
+  it("formats old timestamps and tooltips in the selected UI language", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2025, 1, 2, 15, 4));
+    render(
+      <ChatUpdatedAt
+        timestamp={new Date(2025, 0, 2, 15, 4).getTime() / 1000}
+      />,
+    );
+    expect(screen.getByText("Jan 2, 2025, 3:04 PM").title).toBe(
+      "Jan 2, 2025, 3:04 PM",
+    );
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByText("2025/01/02 15:04").title).toBe("2025/01/02 15:04");
   });
 
   it("renders chat context without exposing model or provider details", () => {
@@ -405,5 +424,34 @@ describe("ChatListItem", () => {
       "[data-title-marquee]",
     );
     expect(marquee).toBeNull();
+  });
+  it("updates relative time and interpolated actions when the UI language changes", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-01-01T12:02:00.000Z"));
+    render(
+      <MemoryRouter>
+        <ChatListItem
+          showUpdatedAt
+          onArchive={vi.fn()}
+          status="running"
+          thread={{
+            id: "thread-1",
+            name: "User title",
+            updatedAt: new Date("2025-01-01T12:00:00.000Z").getTime() / 1000,
+          }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("2 minutes ago")).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByText("2 分前")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "「User title」をアーカイブ" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("status", { name: "チャットの状態: 実行中" }),
+    ).toBeTruthy();
   });
 });

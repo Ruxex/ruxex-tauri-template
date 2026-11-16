@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment } from "react";
 
 import { ActivityItem } from "../conversation/ActivityItem";
@@ -41,6 +42,8 @@ export function CompletedTurnGroup({
   ) => void | Promise<void>;
   turn: v2.Turn;
 }) {
+  const { t } = useTranslation("chats");
+
   const finalAssistantIndex = findLastIndex(
     items,
     (item) => item.type === "agentMessage" && item.text.trim().length > 0,
@@ -55,8 +58,8 @@ export function CompletedTurnGroup({
   const workedSeconds = getTurnDurationSeconds(turn);
   const workedLabel =
     workedSeconds === null
-      ? "Worked"
-      : `Worked for ${formatDuration(workedSeconds)}`;
+      ? t("worked")
+      : t("workedFor", { duration: formatDuration(workedSeconds) });
 
   return (
     <Fragment>

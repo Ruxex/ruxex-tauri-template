@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ConversationViewItem } from "./conversation-model";
@@ -16,6 +17,8 @@ export function ConversationMinimap({
   items,
   timelineRef,
 }: ConversationMinimapProps) {
+  const { t } = useTranslation("conversation");
+
   const userItems = useMemo(
     () => items.filter((item) => item.type === "userMessage"),
     [items],
@@ -117,7 +120,7 @@ export function ConversationMinimap({
   return (
     <div className="chat-minimap-column chat-side-column pointer-events-none sticky top-6 z-10 hidden w-auto min-w-0 justify-self-stretch self-start overflow-hidden @container/minimap @min-[64rem]/chat:block @min-[80rem]/chat:hidden @min-[96rem]/chat:block">
       <aside
-        aria-label="Conversation minimap"
+        aria-label={t("conversationMinimap")}
         className="hidden h-full w-full overflow-hidden @min-[4rem]/minimap:block"
       >
         <div
@@ -161,7 +164,7 @@ export function ConversationMinimap({
                 >
                   <button
                     aria-current={isActive ? "location" : undefined}
-                    aria-label={`Jump to message: ${preview}`}
+                    aria-label={t("jumpToMessage", { preview })}
                     className="relative flex h-7 w-10 -translate-x-[14px] -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
                     onBlur={() => setHoveredId(null)}
                     onClick={() => jumpTo(item)}
@@ -218,7 +221,5 @@ function markerOffsetForDistance(distance: number): number {
   if (distance < 0 || distance >= HOVER_OFFSET_RADIUS) {
     return 0;
   }
-  return Math.round(
-    MAX_HOVER_OFFSET_PX * (1 - distance / HOVER_OFFSET_RADIUS),
-  );
+  return Math.round(MAX_HOVER_OFFSET_PX * (1 - distance / HOVER_OFFSET_RADIUS));
 }

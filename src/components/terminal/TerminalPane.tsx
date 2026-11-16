@@ -1,3 +1,5 @@
+import { i18n } from "../../app/i18n";
+import { useTranslation } from "react-i18next";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
@@ -17,6 +19,7 @@ export function TerminalPane({
   cwd: string | null;
   isOpen: boolean;
 }) {
+  const { t } = useTranslation("capabilities");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -111,7 +114,9 @@ export function TerminalPane({
             terminal.write(Uint8Array.from(event.data));
           } else {
             setHasExited(true);
-            terminal.write("\r\n[Process exited]\r\n");
+            terminal.write(
+              `\r\n[${i18n.t("processExited", { ns: "capabilities", lng: i18n.resolvedLanguage })}]\r\n`,
+            );
           }
         },
       )
@@ -153,7 +158,7 @@ export function TerminalPane({
 
   return (
     <section
-      aria-label="Terminal"
+      aria-label={t("terminal")}
       className="flex h-full min-h-0 flex-col bg-[#1e1e1e]"
     >
       {startError && (
@@ -161,12 +166,12 @@ export function TerminalPane({
           className="border-b border-error/40 bg-error/10 px-3 py-2 text-xs text-error"
           role="alert"
         >
-          Unable to start terminal: {startError}
+          {t("unableToStartTerminal", { details: startError })}
         </div>
       )}
       {hasExited && (
         <span className="sr-only" role="status">
-          Terminal process exited
+          {t("terminalProcessExited")}
         </span>
       )}
       <div

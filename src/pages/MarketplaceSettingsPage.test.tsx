@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,7 +44,29 @@ vi.mock("../app-server/hooks", () => ({
   useUpgradeMarketplace,
 }));
 
+import { i18n } from "../app/i18n";
+
 describe("MarketplaceSettingsPage", () => {
+  it("renders Japanese controls and preserves external names", async () => {
+    await i18n.changeLanguage("ja");
+    try {
+      const { MarketplaceSettingsPage } = await import(
+        "./MarketplaceSettingsPage"
+      );
+      render(
+        <MemoryRouter>
+          <MarketplaceSettingsPage />
+        </MemoryRouter>,
+      );
+      expect(
+        screen.getByRole("button", { name: "マーケットプレイスを追加" }),
+      ).toBeTruthy();
+      expect(screen.getByLabelText("ソース")).toBeTruthy();
+      expect(screen.getByText("Community Plugins")).toBeTruthy();
+    } finally {
+      await i18n.changeLanguage("en");
+    }
+  });
   afterEach(cleanup);
 
   beforeEach(() => {
@@ -159,7 +187,7 @@ describe("MarketplaceSettingsPage", () => {
       }),
     ).toBeTruthy();
     expect(screen.getByText("Community Plugins")).toBeTruthy();
-    expect(screen.getByText(/1 plugins/)).toBeTruthy();
+    expect(screen.getByText(/1 plugin/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Update community" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove community" }));
 
@@ -271,5 +299,24 @@ describe("MarketplaceSettingsPage", () => {
     ).toMatchObject({ version: 1, disabled: {} });
     expect(addMarketplace.mutateAsync).not.toHaveBeenCalled();
     expect(removeMarketplace.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("updates an existing validation error when the language changes", async () => {
+    const { MarketplaceSettingsPage } = await import(
+      "./MarketplaceSettingsPage"
+    );
+    render(
+      <MemoryRouter>
+        <MarketplaceSettingsPage />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add marketplace" }));
+    expect(screen.getByText("Marketplace source is required.")).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(
+      screen.getByText("マーケットプレイスのソースは必須です。"),
+    ).toBeTruthy();
   });
 });

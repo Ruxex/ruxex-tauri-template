@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -9,6 +10,8 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "../../app/i18n";
 
 const useProjectList = vi.hoisted(() => vi.fn());
 const useThreadList = vi.hoisted(() => vi.fn());
@@ -20,9 +23,14 @@ const useThreadSearch = vi.hoisted(() =>
 );
 const usePluginList = vi.hoisted(() => vi.fn());
 const activeThreadListParams = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() =>
+  vi.fn(() => ({ threads: {}, pendingServerRequests: {} })),
+);
 
 vi.mock("../../app-server/hooks", () => ({
   useProjectList,
+  useAllProjectList: useProjectList,
+  useAppServerEvents,
   useThreadList,
   useThreadActivity,
   useArchiveThread,
@@ -130,8 +138,10 @@ describe("ProjectSidebar", () => {
       within(panel).getByRole("button", { name: "Expand Project Alpha" }),
     ).toBeTruthy();
     expect(
-      within(panel).queryByRole("link", { name: /Project Alpha/ }),
-    ).toBeNull();
+      within(panel)
+        .getByRole("link", { name: "New chat in Project Alpha" })
+        .getAttribute("href"),
+    ).toBe("/?projectId=project-1");
     expect(within(panel).queryByRole("link", { name: "Settings" })).toBeNull();
     expect(
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
@@ -202,8 +212,10 @@ describe("ProjectSidebar", () => {
       within(panel).getByRole("button", { name: "Expand Project Alpha" }),
     ).toBeTruthy();
     expect(
-      within(panel).queryByRole("link", { name: /Project Alpha/ }),
-    ).toBeNull();
+      within(panel)
+        .getByRole("link", { name: "New chat in Project Alpha" })
+        .getAttribute("href"),
+    ).toBe("/?projectId=project-1");
     expect(
       within(panel).getByRole("link", { name: /Build the sidebar/ }),
     ).toBeTruthy();
@@ -495,5 +507,35 @@ describe("ProjectSidebar", () => {
     ).toBeTruthy();
     expect(within(panel).getByRole("link", { name: "Provider" })).toBeTruthy();
     expect(within(panel).queryByRole("link", { name: "Account" })).toBeNull();
+  });
+  it("translates every icon rail label when Japanese is selected", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="home"
+          collapsed
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    await act(() => i18n.changeLanguage("ja"));
+    const rail = screen.getByRole("navigation", {
+      name: "ワークスペースのナビゲーション",
+    });
+    expect(
+      within(rail)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual([
+      "ホーム",
+      "チャット",
+      "プロジェクト",
+      "プラグイン",
+      "自動化",
+      "アカウント",
+      "設定",
+    ]);
   });
 });

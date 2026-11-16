@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
@@ -10,6 +11,7 @@ import { SkillsCapabilitiesPanel } from "./capabilities/SkillsCapabilitiesPanel"
 type CapabilityTab = "plugins" | "skills" | "mcp";
 
 export function CapabilitiesPage() {
+  const { t } = useTranslation("capabilities");
   const location = useLocation();
   const activeTab: CapabilityTab =
     location.pathname === "/capabilities/skills"
@@ -25,21 +27,21 @@ export function CapabilitiesPage() {
         <div>
           <h1 className="text-3xl font-semibold">
             {activeTab === "plugins"
-              ? "Plugins"
+              ? t("plugins")
               : activeTab === "skills"
-                ? "Skills"
+                ? t("skills")
                 : "MCP"}
           </h1>
         </div>
         {activeTab === "mcp" && (
           <button
-            aria-label={reloadMcp.isPending ? "Reloading…" : "Reload MCP"}
+            aria-label={reloadMcp.isPending ? t("reloading") : t("reloadMcp")}
             className="btn btn-primary"
             type="button"
             disabled={reloadMcp.isPending}
             onClick={() => void reloadMcp.mutateAsync({})}
           >
-            {reloadMcp.isPending ? "Reloading…" : "Reload MCP"}
+            {reloadMcp.isPending ? t("reloading") : t("reloadMcp")}
           </button>
         )}
       </div>

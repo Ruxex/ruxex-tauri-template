@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { BellIcon } from "@heroicons/react/24/outline";
 
 import type { UiNotificationSound } from "../../app/ui-preferences";
@@ -16,15 +17,16 @@ export function NotificationsCard({
   sound: UiNotificationSound;
   onSoundChange: (sound: UiNotificationSound) => void;
 }) {
+  const { t } = useTranslation("settings");
   return (
-    <SettingsPanel icon={BellIcon} title="Notifications">
+    <SettingsPanel icon={BellIcon} title={t("settings:notifications")}>
       <div className="text-sm">
         <FormFieldRow
           controlId="settings-desktop-notifications"
-          label="Desktop notifications"
+          label={t("settings:desktopNotifications")}
         >
           <input
-            aria-label="Desktop notifications"
+            aria-label={t("settings:desktopNotifications")}
             className="toggle justify-self-end"
             checked={enabled}
             id="settings-desktop-notifications"
@@ -34,10 +36,10 @@ export function NotificationsCard({
         </FormFieldRow>
         <FormFieldRow
           controlId="settings-notification-sound"
-          label="Notification sound"
+          label={t("settings:notificationSound")}
         >
           <select
-            aria-label="Notification sound"
+            aria-label={t("settings:notificationSound")}
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-notification-sound"
             value={sound}
@@ -47,7 +49,7 @@ export function NotificationsCard({
           >
             {UI_NOTIFICATION_SOUND_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(`settings:notificationSounds.${option.value}`)}
               </option>
             ))}
           </select>

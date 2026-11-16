@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next";
+import { i18n } from "../../app/i18n";
 import type {
   LiveConversationItem,
   ThreadExecutionState,
@@ -56,9 +58,11 @@ export function mergeConversationItems(
   options: {
     preferAuthoritative?: boolean;
     assistantName?: string;
+    translate?: TFunction;
   } = {},
 ): ConversationViewItem[] {
-  const assistantName = options.assistantName ?? "Assistant";
+  const translate = options.translate ?? i18n.getFixedT(null, "conversation");
+  const assistantName = options.assistantName ?? translate("assistant");
   const turnTimestamps = new Map(
     turns.map((turn) => [turn.id, turn.startedAt]),
   );
@@ -72,8 +76,8 @@ export function mergeConversationItems(
     const liveItem = liveById.get(key);
     const viewItem =
       liveItem && !options.preferAuthoritative
-        ? liveItemToViewItem(liveItem, liveStatus, assistantName)
-        : normalizeThreadItem(turnId, item, assistantName);
+        ? liveItemToViewItem(liveItem, liveStatus, assistantName, translate)
+        : normalizeThreadItem(turnId, item, assistantName, translate);
     const timestamp = turnTimestamps.get(turnId);
     return timestamp === undefined ? viewItem : { ...viewItem, timestamp };
   });
@@ -81,7 +85,12 @@ export function mergeConversationItems(
   for (const item of live) {
     const key = conversationItemKey(item.turnId, item.id);
     if (!seen.has(key)) {
-      const viewItem = liveItemToViewItem(item, liveStatus, assistantName);
+      const viewItem = liveItemToViewItem(
+        item,
+        liveStatus,
+        assistantName,
+        translate,
+      );
       const timestamp = turnTimestamps.get(item.turnId);
       merged.push(
         timestamp === undefined ? viewItem : { ...viewItem, timestamp },
@@ -102,13 +111,15 @@ export function canSteerTurn(activeTurnId: string | null): boolean {
 function liveItemToViewItem(
   item: LiveConversationItem,
   liveStatus?: ThreadExecutionState["status"],
-  assistantName = "Assistant",
+  assistantName = i18n.t("conversation:assistant"),
+  translate: TFunction = i18n.getFixedT(null, "conversation"),
 ): ConversationViewItem {
   if (item.raw) {
     const normalized = normalizeThreadItem(
       item.turnId,
       item.raw,
       assistantName,
+      translate,
     );
     const viewItem = item.text
       ? { ...normalized, text: item.text }
@@ -133,7 +144,7 @@ function liveItemToViewItem(
     turnId: item.turnId,
     type: item.type,
     category: "activity",
-    title: liveActivityTitle(item.type),
+    title: liveActivityTitle(item.type, translate),
     text: item.text,
     metadata: { status: activityStatusForLiveStatus(liveStatus) },
   };

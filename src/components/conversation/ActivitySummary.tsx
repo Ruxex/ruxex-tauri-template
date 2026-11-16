@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ConversationViewItem } from "./conversation-model";
 import { ExecutionStatusSummary } from "./ExecutionStatusSummary";
 import type { ActivityPresentation } from "./activity-presentation";
@@ -8,6 +9,8 @@ type ActivitySummaryProps = {
 };
 
 export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
+  const { t } = useTranslation("conversation");
+
   const Icon = presentation.icon;
   const metadata = item.metadata;
   const isCommandExecution = item.type === "commandExecution";
@@ -57,8 +60,8 @@ export function ActivitySummary({ item, presentation }: ActivitySummaryProps) {
         />
       )}
       {isInProgress && (
-        <span aria-label="Running" className="sr-only" role="status">
-          Running
+        <span aria-label={t("running")} className="sr-only" role="status">
+          {t("running")}
         </span>
       )}
       {!isCommandExecution && (

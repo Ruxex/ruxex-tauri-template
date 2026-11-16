@@ -1,3 +1,4 @@
+import { i18n } from "../app/i18n";
 import type { v2 } from "../protocol";
 
 export function groupPluginsByCategory<
@@ -5,7 +6,9 @@ export function groupPluginsByCategory<
 >(plugins: T[]) {
   const groups = new Map<string, T[]>();
   for (const plugin of plugins) {
-    const category = plugin.interface?.category ?? "Uncategorized";
+    const category =
+      plugin.interface?.category ??
+      i18n.t("uncategorized", { ns: "plugins", lng: i18n.resolvedLanguage });
     const group = groups.get(category);
     if (group) {
       group.push(plugin);
@@ -31,7 +34,7 @@ const SKILL_DESCRIPTION_MAX_LENGTH = 160;
 export function skillGroupLabel(entry: v2.SkillsListEntry): string {
   return entry.skills.length > 0 &&
     entry.skills.every((skill) => skill.scope === "system")
-    ? "Default"
+    ? i18n.t("default", { ns: "plugins", lng: i18n.resolvedLanguage })
     : entry.cwd;
 }
 

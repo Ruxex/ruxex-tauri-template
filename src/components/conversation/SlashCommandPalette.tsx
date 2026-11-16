@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArchiveBoxIcon,
   ArrowsPointingInIcon,
@@ -38,11 +39,15 @@ export function SlashCommandPalette({
   onSelectSkill,
   onDismiss,
 }: SlashCommandPaletteProps) {
+  const { t } = useTranslation("conversation");
+
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCommands = slashCommands.filter(
     (command) =>
       commands.includes(command.id) &&
-      `${command.id} ${command.label}`.toLowerCase().includes(normalizedQuery),
+      `${command.id} ${t(`commandLabels.${command.id}`)} ${t(`commandLabels.${command.id}`)}`
+        .toLowerCase()
+        .includes(normalizedQuery),
   );
   const visibleSkills = skills.filter((skill) =>
     [
@@ -134,7 +139,7 @@ export function SlashCommandPalette({
 
   return (
     <div
-      aria-label="Slash commands"
+      aria-label={t("slashCommands")}
       className="mb-2 max-h-72 overflow-y-auto rounded-box border border-base-300 bg-base-200/60 p-2"
       onKeyDown={handleKeyDown}
       role="menu"
@@ -146,7 +151,7 @@ export function SlashCommandPalette({
           className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/60"
           id="slash-commands-heading"
         >
-          Commands
+          {t("commands")}
         </h3>
         <ul className="menu menu-vertical w-full gap-1 p-0">
           {visibleCommands.map((command, index) => {
@@ -154,7 +159,7 @@ export function SlashCommandPalette({
             return (
               <li key={command.id}>
                 <button
-                  aria-label={command.label}
+                  aria-label={t(`commandLabels.${command.id}`)}
                   {...optionProps(index)}
                   disabled={disabled}
                   onClick={() => onSelect(command.id)}
@@ -162,14 +167,14 @@ export function SlashCommandPalette({
                   type="button"
                 >
                   <Icon aria-hidden="true" className="size-4" />
-                  {command.label}
+                  {t(`commandLabels.${command.id}`)}
                 </button>
               </li>
             );
           })}
           {!visibleCommands.length && (
             <li className="px-2 py-2 text-xs text-base-content/60">
-              No matching commands.
+              {t("noMatchingCommands")}
             </li>
           )}
         </ul>
@@ -179,11 +184,11 @@ export function SlashCommandPalette({
           className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/60"
           id="slash-skills-heading"
         >
-          Skills
+          {t("skills")}
         </h3>
         {skillsLoading && (
           <p className="px-2 py-2 text-xs text-base-content/60" role="status">
-            Loading skills…
+            {t("loadingSkills")}
           </p>
         )}
         {!skillsLoading && skillsError && (
@@ -193,7 +198,7 @@ export function SlashCommandPalette({
         )}
         {!skillsLoading && !skillsError && !skills.length && (
           <p className="px-2 py-2 text-xs text-base-content/60">
-            No skills available.
+            {t("noSkillsAvailable")}
           </p>
         )}
         {!skillsLoading && !skillsError && skills.length > 0 && (
@@ -232,7 +237,7 @@ export function SlashCommandPalette({
             })}
             {!visibleSkills.length && (
               <li className="px-2 py-2 text-xs text-base-content/60">
-                No matching skills.
+                {t("noMatchingSkills")}
               </li>
             )}
           </ul>

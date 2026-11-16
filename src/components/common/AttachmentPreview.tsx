@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
@@ -10,6 +11,7 @@ export function AttachmentPreview({
   file: File;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation("common");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export function AttachmentPreview({
     >
       {previewUrl ? (
         <img
-          alt={`Selected image: ${file.name}`}
+          alt={t("common:selectedImage", { name: file.name })}
           className="size-10 rounded object-cover"
           src={previewUrl}
         />
@@ -37,11 +39,11 @@ export function AttachmentPreview({
       )}
       <span className="min-w-0 flex-1 truncate">{file.name}</span>
       <button
-        aria-label="Remove image attachment"
+        aria-label={t("common:removeImageAttachment")}
         className="btn btn-ghost btn-xs btn-circle text-error"
         disabled={disabled}
         onClick={onRemove}
-        title="Remove image attachment"
+        title={t("common:removeImageAttachment")}
         type="button"
       >
         <XMarkIcon aria-hidden="true" className="size-4" />

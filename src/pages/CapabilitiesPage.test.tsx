@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -93,7 +94,27 @@ vi.mock("../platform/skill-policy", () => ({
   getDesktopUiPolicy,
 }));
 
+import { i18n } from "../app/i18n";
+
 describe("CapabilitiesPage", () => {
+  it("renders Japanese controls and preserves external names", async () => {
+    await i18n.changeLanguage("ja");
+    try {
+      const { CapabilitiesPage } = await import("./CapabilitiesPage");
+      render(
+        <MemoryRouter>
+          <CapabilitiesPage />
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("heading", { name: "プラグイン" })).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Lint Plugin をインストール" }),
+      ).toBeTruthy();
+      expect(screen.getByText("Official Plugins")).toBeTruthy();
+    } finally {
+      await i18n.changeLanguage("en");
+    }
+  });
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
@@ -996,7 +1017,7 @@ describe("CapabilitiesPage", () => {
       .getByText("docs")
       .closest("details") as HTMLDetailsElement;
     expect(serverDetails.open).toBe(false);
-    expect(within(serverDetails).getByText("1 tools")).toBeTruthy();
+    expect(within(serverDetails).getByText("1 tool")).toBeTruthy();
     expect(screen.queryByText("Official Plugins")).toBeNull();
     expect(screen.queryByText("Collaboration modes")).toBeNull();
   });
@@ -1023,7 +1044,7 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Connect docs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log in to docs" }));
 
     await waitFor(() =>
       expect(oauthLogin.mutateAsync).toHaveBeenCalledWith({ name: "docs" }),
@@ -1045,7 +1066,7 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Connect docs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log in to docs" }));
 
     expect(
       await screen.findByText("OAuth authorization URL is invalid."),
@@ -1094,5 +1115,27 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("OAuth connected")).toBeTruthy();
     expect(screen.getByText("Bearer token configured")).toBeTruthy();
     expect(screen.getByText("Authentication status unavailable")).toBeTruthy();
+  });
+  it("updates an existing local OAuth error when language changes", async () => {
+    oauthLogin.mutateAsync.mockResolvedValueOnce({
+      authorizationUrl: "javascript:alert(1)",
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+    render(
+      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Log in to docs" }));
+    expect(
+      await screen.findByText("OAuth authorization URL is invalid."),
+    ).toBeTruthy();
+    await act(async () => {
+      await i18n.changeLanguage("ja");
+    });
+    expect(screen.getByText("OAuth 認証 URL が無効です。")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "docs にログイン" }),
+    ).toBeTruthy();
   });
 });

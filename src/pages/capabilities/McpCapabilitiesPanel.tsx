@@ -1,60 +1,30 @@
+import { useTranslation } from "react-i18next";
 import { ServerIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
 
 import { formatErrorMessage } from "../../app/error-message";
-import { useMcpOauthLogin, useMcpServerStatus } from "../../app-server/hooks";
+import { useMcpServerStatus } from "../../app-server/hooks";
 import { EmptyState } from "../../components/common/AsyncState";
+import { McpOAuthLoginAction } from "../../components/mcp/McpOAuthLoginAction";
 import { McpStatusSummary } from "../../components/mcp/McpStatusSummary";
-import { openBrowserWindow } from "../../platform/native";
 
 export function McpCapabilitiesPanel({ active }: { active: boolean }) {
+  const { t } = useTranslation("mcp");
   const mcp = useMcpServerStatus({ detail: "full" }, active);
-  const oauthLogin = useMcpOauthLogin();
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-
-  async function connectMcpServer(name: string) {
-    setConnectionError(null);
-    try {
-      const response = await oauthLogin.mutateAsync({ name });
-      let authorizationUrl: URL;
-      try {
-        authorizationUrl = new URL(response.authorizationUrl);
-      } catch {
-        setConnectionError("OAuth authorization URL is invalid.");
-        return;
-      }
-      if (
-        authorizationUrl.protocol !== "https:" &&
-        authorizationUrl.protocol !== "http:"
-      ) {
-        setConnectionError("OAuth authorization URL is invalid.");
-        return;
-      }
-      await openBrowserWindow(response.authorizationUrl);
-    } catch (error) {
-      setConnectionError(
-        error instanceof Error ? error.message : "Unable to start MCP login.",
-      );
-    }
-  }
 
   return active ? (
     <section className="grid gap-4">
-      {connectionError && (
-        <p className="alert alert-error" role="alert">
-          {connectionError}
-        </p>
-      )}
       {!mcp.isLoading && !mcp.isError && !mcp.data?.data.length ? (
-        <EmptyState icon={ServerIcon} title="No MCP servers configured." />
+        <EmptyState icon={ServerIcon} title={t("noMcpServersConfigured")} />
       ) : (
         <article className="card w-full border border-base-300 bg-base-100 shadow-sm">
           <div className="card-body">
-            <h2 className="card-title">MCP servers</h2>
+            <h2 className="card-title">{t("mcpServers")}</h2>
             {mcp.isLoading && <span className="loading loading-spinner" />}
             {mcp.isError && (
               <p className="text-error">
-                Unable to load MCP servers: {formatErrorMessage(mcp.error)}
+                {t("unableToLoadMcpServers", {
+                  details: formatErrorMessage(mcp.error),
+                })}
               </p>
             )}
             <ul className="space-y-2">
@@ -73,27 +43,16 @@ export function McpCapabilitiesPanel({ active }: { active: boolean }) {
                     </summary>
                     <div className="collapse-content space-y-2 px-4 pb-4 pt-0 text-xs text-base-content/60">
                       <div className="flex flex-wrap items-center gap-3">
-                        <span>{Object.keys(server.tools).length} tools</span>
-                        {(server.authStatus === "notLoggedIn" ||
-                          server.authStatus === "oAuth") && (
-                          <button
-                            aria-label={
-                              oauthLogin.isPending
-                                ? "Connecting…"
-                                : server.authStatus === "notLoggedIn"
-                                  ? `Connect ${server.name}`
-                                  : `Re-authenticate ${server.name}`
-                            }
-                            className="btn btn-outline btn-xs"
-                            disabled={oauthLogin.isPending}
-                            onClick={() => void connectMcpServer(server.name)}
-                            type="button"
-                          >
-                            {server.authStatus === "notLoggedIn"
-                              ? `Connect ${server.name}`
-                              : `Re-authenticate ${server.name}`}
-                          </button>
-                        )}
+                        <span>
+                          {t("toolCount", {
+                            count: Object.keys(server.tools).length,
+                          })}
+                        </span>
+                        <McpOAuthLoginAction
+                          authStatus={server.authStatus}
+                          name={server.name}
+                          runtimeStatus={server.runtimeStatus}
+                        />
                       </div>
                       {server.toolsError && (
                         <p className="text-error">{server.toolsError}</p>

@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type { EventState } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
 
@@ -30,7 +31,7 @@ export function buildActivityEntries(
     entries.push({
       id: `approval-${String(request.requestId)}`,
       kind: "approval",
-      title: "Approval requested",
+      title: i18n.t("activity:approvalRequested"),
       detail: request.request.method,
       threadId: request.threadId,
       status: "pending",
@@ -42,7 +43,10 @@ export function buildActivityEntries(
   for (const state of Object.values(snapshot.threads)) {
     const thread = threadById.get(state.threadId);
     const kind = thread?.parentThreadId ? "agent" : "thread";
-    const fallbackLabel = `${kind === "agent" ? "Agent" : "Thread"} ${state.threadId.slice(0, 8)}`;
+    const fallbackLabel = i18n.t(
+      kind === "agent" ? "activity:agentFallback" : "activity:threadFallback",
+      { id: state.threadId.slice(0, 8) },
+    );
     const label =
       state.threadName ??
       thread?.name ??
@@ -53,8 +57,11 @@ export function buildActivityEntries(
     entries.push({
       id: `${kind}-${state.threadId}`,
       kind,
-      title: kind === "agent" ? `${label} agent` : label,
-      detail: thread?.preview ?? "Activity updated.",
+      title:
+        kind === "agent"
+          ? i18n.t("activity:agentTitle", { name: label })
+          : label,
+      detail: thread?.preview ?? i18n.t("activity:activityUpdated"),
       threadId: state.threadId,
       status: activityStatus(state.status),
       timestamp: state.lastActivityAt,

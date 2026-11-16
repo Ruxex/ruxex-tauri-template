@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 
 import type { v2 } from "../../protocol";
@@ -14,6 +15,7 @@ type SkillIconProps = {
 };
 
 export function SkillIcon({ skill, className = "size-5" }: SkillIconProps) {
+  const { t } = useTranslation("common");
   const interfaceData = skill.interface;
   const localSource =
     interfaceData?.iconSmall ?? interfaceData?.iconLarge ?? null;
@@ -37,7 +39,7 @@ export function SkillIcon({ skill, className = "size-5" }: SkillIconProps) {
       data-testid="skill-icon-frame"
     >
       <MarketplaceAssetImage
-        alt={`${displayName} icon`}
+        alt={t("common:skillIcon", { name: displayName })}
         className="size-full object-contain"
         localSrc={localSource}
         src={remoteSource}

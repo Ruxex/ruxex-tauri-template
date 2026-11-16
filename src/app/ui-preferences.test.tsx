@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useTranslation } from "react-i18next";
+import { i18n } from "./i18n";
 
 import {
   DEFAULT_UI_PREFERENCES,
@@ -204,5 +213,247 @@ describe("UI preference persistence", () => {
     expect(
       document.documentElement.style.getPropertyValue("--color-base-100"),
     ).toBe("#111827");
+  });
+});
+
+function LanguageProbe() {
+  const { update } = useUiPreferences();
+  const { t } = useTranslation("common");
+  return (
+    <>
+      <output>{t("actions.close")}</output>
+      <button type="button" onClick={() => update({ language: "ja" })}>
+        Japanese
+      </button>
+      <button type="button" onClick={() => update({ language: "en" })}>
+        English
+      </button>
+    </>
+  );
+}
+
+describe("UI language synchronization", () => {
+  afterEach(cleanup);
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("loads persisted Japanese and synchronizes i18next with the document", () => {
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
+    );
+    render(
+      <UiPreferencesProvider>
+        <LanguageProbe />
+      </UiPreferencesProvider>,
+    );
+    expect(i18n.resolvedLanguage).toBe("ja");
+    expect(document.documentElement.lang).toBe("ja");
+  });
+
+  it("updates visible strings and document language without remounting", () => {
+    render(
+      <UiPreferencesProvider>
+        <LanguageProbe />
+      </UiPreferencesProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Japanese" }));
+    expect(i18n.resolvedLanguage).toBe("ja");
+    expect(screen.getByRole("status").textContent).toBe("閉じる");
+    expect(document.documentElement.lang).toBe("ja");
+    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByRole("status").textContent).toBe("Close");
+    expect(document.documentElement.lang).toBe("en");
+  });
+
+  it("follows languagechange only while system language is selected", () => {
+    const systemLanguage = vi
+      .spyOn(navigator, "language", "get")
+      .mockReturnValue("en-US");
+    const view = render(
+      <UiPreferencesProvider>
+        <LanguageProbe />
+      </UiPreferencesProvider>,
+    );
+    systemLanguage.mockReturnValue("ja-JP");
+    act(() => window.dispatchEvent(new Event("languagechange")));
+    expect(i18n.resolvedLanguage).toBe("ja");
+    expect(document.documentElement.lang).toBe("ja");
+    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    act(() => window.dispatchEvent(new Event("languagechange")));
+    expect(i18n.resolvedLanguage).toBe("en");
+    expect(document.documentElement.lang).toBe("en");
+    view.unmount();
+    act(() => window.dispatchEvent(new Event("languagechange")));
+    expect(i18n.resolvedLanguage).toBe("en");
+    systemLanguage.mockRestore();
+  });
+});
+
+describe("cross-window UI preferences", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  function PreferencesProbe() {
+    const { preferences, update } = useUiPreferences();
+    return (
+      <>
+        <output data-testid="preferences">{JSON.stringify(preferences)}</output>
+        <button type="button" onClick={() => update({ language: "en" })}>
+          English
+        </button>
+      </>
+    );
+  }
+
+  function notifyStorage(
+    key: string | null = UI_PREFERENCES_KEY,
+    storageArea = window.localStorage,
+  ) {
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key,
+          newValue: storageArea.getItem(UI_PREFERENCES_KEY),
+          storageArea,
+        }),
+      ),
+    );
+  }
+
+  it("adopts normalized external preferences without writing them back, then preserves them on local updates", () => {
+    const view = render(
+      <UiPreferencesProvider>
+        <PreferencesProbe />
+      </UiPreferencesProvider>,
+    );
+    const external = {
+      ...DEFAULT_UI_PREFERENCES,
+      language: "ja",
+      sidebarCollapsed: true,
+      chatFontSize: 23,
+      uiFontSize: 19,
+      uiZoom: 115,
+      chatFontFamily: "Inter",
+      uiFontFamily: "Inter",
+      notifications: { desktop: false, sound: "Ping" },
+      theme: {
+        accentColor: "rose",
+        preset: "ruxex-light",
+        colors: { primary: "#123456" },
+      },
+    };
+    const newValue = JSON.stringify(external);
+    window.localStorage.setItem(UI_PREFERENCES_KEY, newValue);
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    notifyStorage();
+    expect(
+      JSON.parse(screen.getByTestId("preferences").textContent ?? "{}"),
+    ).toEqual(parseUiPreferences(newValue));
+    expect(i18n.resolvedLanguage).toBe("ja");
+    expect(document.documentElement.lang).toBe("ja");
+    expect(setItem).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem(UI_PREFERENCES_KEY)).toBe(newValue);
+
+    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    expect(
+      JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
+    ).toEqual({ ...parseUiPreferences(newValue), language: "en" });
+    view.unmount();
+    window.localStorage.setItem(UI_PREFERENCES_KEY, newValue);
+    notifyStorage();
+    expect(i18n.resolvedLanguage).toBe("en");
+  });
+
+  it("ignores unrelated keys and session-storage events", () => {
+    render(
+      <UiPreferencesProvider>
+        <PreferencesProbe />
+      </UiPreferencesProvider>,
+    );
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
+    );
+    notifyStorage("other-key");
+    notifyStorage(UI_PREFERENCES_KEY, window.sessionStorage);
+    expect(i18n.resolvedLanguage).toBe("en");
+  });
+
+  it("uses current storage instead of replaying an older queued storage event", () => {
+    render(
+      <UiPreferencesProvider>
+        <PreferencesProbe />
+      </UiPreferencesProvider>,
+    );
+    const staleValue = JSON.stringify({
+      ...DEFAULT_UI_PREFERENCES,
+      language: "en",
+    });
+    const latestValue = JSON.stringify({
+      ...DEFAULT_UI_PREFERENCES,
+      language: "ja",
+      uiZoom: 120,
+    });
+    window.localStorage.setItem(UI_PREFERENCES_KEY, latestValue);
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: UI_PREFERENCES_KEY,
+          newValue: staleValue,
+          storageArea: window.localStorage,
+        }),
+      ),
+    );
+    expect(
+      JSON.parse(screen.getByTestId("preferences").textContent ?? "{}"),
+    ).toEqual(parseUiPreferences(latestValue));
+    expect(window.localStorage.getItem(UI_PREFERENCES_KEY)).toBe(latestValue);
+  });
+
+  it("merges a local update with external values before their storage event is delivered", () => {
+    render(
+      <UiPreferencesProvider>
+        <PreferencesProbe />
+      </UiPreferencesProvider>,
+    );
+    const external = {
+      ...DEFAULT_UI_PREFERENCES,
+      language: "ja",
+      uiZoom: 120,
+      sidebarCollapsed: true,
+    };
+    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(external));
+    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    expect(
+      JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
+    ).toEqual({
+      ...parseUiPreferences(JSON.stringify(external)),
+      language: "en",
+    });
+  });
+
+  it("resets cleared preferences without restoring the removed key", () => {
+    window.localStorage.setItem(
+      UI_PREFERENCES_KEY,
+      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
+    );
+    render(
+      <UiPreferencesProvider>
+        <PreferencesProbe />
+      </UiPreferencesProvider>,
+    );
+    window.localStorage.clear();
+    notifyStorage(null);
+    expect(
+      JSON.parse(screen.getByTestId("preferences").textContent ?? "{}"),
+    ).toEqual(DEFAULT_UI_PREFERENCES);
+    expect(window.localStorage.getItem(UI_PREFERENCES_KEY)).toBeNull();
   });
 });

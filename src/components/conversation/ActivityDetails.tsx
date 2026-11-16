@@ -1,12 +1,13 @@
-import type { ConversationViewItem } from "./conversation-model";
-import { CommandExecutionView } from "./CommandExecutionView";
+import { useTranslation } from "react-i18next";
+import {
+  type ArtifactPreviewData,
+  openBrowserWindow,
+} from "../../platform/native";
 import { ArtifactPreview } from "./ArtifactPreview";
+import { CommandExecutionView } from "./CommandExecutionView";
+import type { ConversationViewItem } from "./conversation-model";
 import { ImageView } from "./ImageView";
 import { MarkdownContent } from "./MarkdownContent";
-import {
-  openBrowserWindow,
-  type ArtifactPreviewData,
-} from "../../platform/native";
 
 const previewableArtifactFormats = new Set(["xlsx", "docx", "pptx", "pdf"]);
 const hiddenActivityMetadata = new Set([
@@ -25,11 +26,31 @@ export function ActivityDetails({
   item,
   loadArtifactPreview,
 }: ActivityDetailsProps) {
+  const { t } = useTranslation("conversation");
+
   const isCommandExecution = item.type === "commandExecution";
   const command = isCommandExecution ? item.metadata?.command : undefined;
   const metadataEntries = Object.entries(item.metadata ?? {}).filter(
     ([key]) => !hiddenActivityMetadata.has(key),
   );
+  const metadataLabel = (key: string) => {
+    switch (key) {
+      case "agents":
+        return t("metadataLabels.agents");
+      case "files":
+        return t("metadataLabels.files");
+      case "namespace":
+        return t("metadataLabels.namespace");
+      case "server":
+        return t("metadataLabels.server");
+      case "success":
+        return t("metadataLabels.success");
+      case "tool":
+        return t("metadataLabels.tool");
+      default:
+        return key;
+    }
+  };
 
   return (
     <>
@@ -39,12 +60,12 @@ export function ActivityDetails({
       ))}
       {item.browserUrl && (
         <button
-          aria-label="Open in browser"
+          aria-label={t("openInBrowser")}
           className="btn btn-sm btn-outline mb-3"
           onClick={() => void openBrowserWindow(item.browserUrl ?? "")}
           type="button"
         >
-          Open in browser
+          {t("openInBrowser")}
         </button>
       )}
       {item.artifactPath &&
@@ -62,7 +83,7 @@ export function ActivityDetails({
         <dl className="mb-3 grid gap-x-4 gap-y-1 text-xs text-base-content/60 sm:grid-cols-2">
           {metadataEntries.map(([key, value]) => (
             <div className="flex min-w-0 gap-2" key={key}>
-              <dt className="shrink-0 font-medium">{key}</dt>
+              <dt className="shrink-0 font-medium">{metadataLabel(key)}</dt>
               <dd className="truncate" title={value}>
                 {value}
               </dd>

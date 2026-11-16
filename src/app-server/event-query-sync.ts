@@ -91,6 +91,13 @@ export function synchronizeAppServerQueries(
         event.data.params.threadId,
         event.data.params.turn.id,
       );
+    case "mcpServer/oauthLogin/completed":
+      if (event.data.params.success) {
+        void queryClient.invalidateQueries({
+          queryKey: appServerQueryKeys.mcpServers,
+        });
+      }
+      return Promise.resolve();
     default:
       return Promise.resolve();
   }

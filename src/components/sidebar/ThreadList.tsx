@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { useThreadReadState } from "../../app/thread-read-state";
 import {
@@ -32,6 +33,7 @@ export function ThreadList({
   selectedThreadId,
   onSelect,
 }: ThreadListProps) {
+  const { t } = useTranslation("navigation");
   const threads = useThreadList(
     projectId ? projectThreadListParams(projectId) : activeThreadListParams(),
   );
@@ -50,11 +52,13 @@ export function ThreadList({
             onClick={() => void threads.refetch()}
             type="button"
           >
-            {threads.isFetching ? "Retrying…" : "Retry"}
+            {threads.isFetching
+              ? t("navigation:retrying")
+              : t("navigation:retry")}
           </button>
         }
       >
-        Unable to load chats.
+        {t("navigation:unableToLoadChats")}
       </ErrorState>
     );
   }
@@ -62,9 +66,9 @@ export function ThreadList({
     return (
       <EmptyState
         compact
-        description="Start a new chat to see it here."
+        description={t("navigation:emptyChatsHint")}
         icon={ChatBubbleLeftRightIcon}
-        title="No chats yet"
+        title={t("navigation:noChatsYet")}
       />
     );
   }

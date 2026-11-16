@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArrowPathIcon,
   CheckCircleIcon,
@@ -16,6 +17,7 @@ import type {
 } from "../../app-server/daemon-api";
 import { DialogFooter, DialogHeader } from "../common/DialogParts";
 import { useNativeModalDialog } from "../common/useNativeModalDialog";
+import { useCloseDropdownOnOutsidePointerDown } from "../conversation/useCloseDropdown";
 import { StateBadge, type StateBadgeTone } from "../common/StateBadge";
 import { SettingRow, SettingsPanel } from "./SettingsPanel";
 
@@ -83,6 +85,7 @@ export function AppServerCard({
   resynchronizing: boolean;
   updateError?: unknown;
 }) {
+  const { t } = useTranslation("settings");
   const [stopAction, setStopAction] = useState<"stop" | "forceStop">("stop");
   const [confirmationAction, setConfirmationAction] = useState<
     "restart" | "stop" | "forceStop" | null
@@ -90,6 +93,7 @@ export function AppServerCard({
   const confirmationDialogRef = useNativeModalDialog(
     confirmationAction !== null,
   );
+  const stopOptionsRef = useCloseDropdownOnOutsidePointerDown();
   const inProcess = mode === "inprocess";
   const error =
     connectionError ??
@@ -99,10 +103,10 @@ export function AppServerCard({
     daemonError;
   const showDaemonControls = !inProcess && isAvailable;
   const modeLabel = inProcess
-    ? "InProcess mode"
+    ? t("settings:inProcessMode")
     : appServerReady && appServerError == null
-      ? "Daemon mode"
-      : "Unavailable";
+      ? t("settings:daemonMode")
+      : t("settings:unavailable");
   const modeTone: StateBadgeTone = inProcess
     ? "info"
     : appServerReady && appServerError == null
@@ -129,10 +133,10 @@ export function AppServerCard({
       allowOverflow
       action={
         <button
-          aria-label="Refresh"
+          aria-label={t("settings:refresh")}
           className="btn btn-ghost btn-sm btn-square"
           disabled={isFetching || isRefreshing || isPending || isUpdatePending}
-          title="Refresh App Server status"
+          title={t("settings:refreshAppServerStatus")}
           type="button"
           onClick={onRefresh}
         >
@@ -147,10 +151,10 @@ export function AppServerCard({
         </button>
       }
       icon={ServerIcon}
-      title="App Server"
+      title={t("settings:appServer")}
     >
       <dl className="divide-y divide-base-300 text-sm">
-        <SettingRow label="Mode">
+        <SettingRow label={t("settings:mode")}>
           <StateBadge
             icon={modeTone === "error" ? XCircleIcon : InformationCircleIcon}
             tone={modeTone}
@@ -158,28 +162,34 @@ export function AppServerCard({
             {modeLabel}
           </StateBadge>
         </SettingRow>
-        <SettingRow label="Connection">
+        <SettingRow label={t("settings:connection")}>
           <StateBadge
             icon={connected ? CheckCircleIcon : XCircleIcon}
             tone={connected ? "success" : "error"}
           >
-            {connected ? "Connected" : "Disconnected"}
+            {connected ? t("settings:connected") : t("settings:disconnected")}
           </StateBadge>
         </SettingRow>
-        <SettingRow label="Live state">
+        <SettingRow label={t("settings:liveState")}>
           <StateBadge
             icon={resynchronizing ? ExclamationTriangleIcon : CheckCircleIcon}
             tone={resynchronizing ? "warning" : "success"}
           >
-            {resynchronizing ? "Resynchronizing" : "Synchronized"}
+            {resynchronizing
+              ? t("settings:resynchronizing")
+              : t("settings:synchronized")}
           </StateBadge>
         </SettingRow>
-        <SettingRow label="App Server version">
+        <SettingRow label={t("settings:appServerVersion")}>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <span>{displayedVersion ?? "Unavailable"}</span>
+            <span>{displayedVersion ?? t("settings:unavailable")}</span>
             {needsUpdate && (
               <button
-                aria-label={isUpdatePending ? "Updating…" : "Update"}
+                aria-label={
+                  isUpdatePending
+                    ? t("settings:updating")
+                    : t("settings:update")
+                }
                 className="btn btn-outline btn-xs"
                 disabled={
                   isUpdatePending || isPending || isRefreshing || isFetching
@@ -193,20 +203,22 @@ export function AppServerCard({
                     className="loading loading-spinner loading-xs"
                   />
                 )}
-                {isUpdatePending ? "Updating…" : "Update"}
+                {isUpdatePending
+                  ? t("settings:updating")
+                  : t("settings:update")}
               </button>
             )}
           </div>
         </SettingRow>
         {inProcess ? (
-          <SettingRow label="Status">
+          <SettingRow label={t("settings:status")}>
             <StateBadge icon={CheckCircleIcon} tone="success">
-              Running in this process
+              {t("settings:runningInThisProcess")}
             </StateBadge>
           </SettingRow>
         ) : (
           <>
-            <SettingRow label="Status">
+            <SettingRow label={t("settings:status")}>
               <StateBadge
                 icon={
                   appServerStatusTone(daemonStatus) === "success"
@@ -215,7 +227,9 @@ export function AppServerCard({
                 }
                 tone={appServerStatusTone(daemonStatus)}
               >
-                {daemonStatusLabel}
+                {t(`settings:daemonStatuses.${daemonStatus}`, {
+                  defaultValue: daemonStatusLabel,
+                })}
               </StateBadge>
             </SettingRow>
             {daemon?.pid !== undefined && (
@@ -242,7 +256,7 @@ export function AppServerCard({
       <div className="flex flex-wrap justify-end gap-2 px-5 py-4">
         {daemonRunning && (
           <button
-            aria-label="Reconnect"
+            aria-label={t("settings:reconnect")}
             className="btn btn-sm btn-outline"
             type="button"
             onClick={onReconnect}
@@ -256,13 +270,13 @@ export function AppServerCard({
                 className="loading loading-spinner loading-xs"
               />
             )}
-            Reconnect
+            {t("settings:reconnect")}
           </button>
         )}
         {showDaemonControls && daemonRunning && (
           <>
             <button
-              aria-label="Restart"
+              aria-label={t("settings:restart")}
               className="btn btn-sm btn-outline btn-warning"
               disabled={actionDisabled}
               onClick={() => setConfirmationAction("restart")}
@@ -274,11 +288,15 @@ export function AppServerCard({
                   className="loading loading-spinner loading-xs"
                 />
               )}
-              Restart
+              {t("settings:restart")}
             </button>
             <div className="join">
               <button
-                aria-label={stopAction === "stop" ? "Stop" : "Force stop"}
+                aria-label={
+                  stopAction === "stop"
+                    ? t("settings:stop")
+                    : t("settings:forceStop")
+                }
                 className="btn btn-sm join-item btn-outline btn-error"
                 disabled={actionDisabled}
                 onClick={() => setConfirmationAction(stopAction)}
@@ -290,12 +308,14 @@ export function AppServerCard({
                     className="loading loading-spinner loading-xs"
                   />
                 )}
-                {stopAction === "stop" ? "Stop" : "Force stop"}
+                {stopAction === "stop"
+                  ? t("settings:stop")
+                  : t("settings:forceStop")}
               </button>
-              <details className="dropdown dropdown-end">
+              <details className="dropdown dropdown-end" ref={stopOptionsRef}>
                 <summary
                   aria-disabled={actionDisabled}
-                  aria-label="Stop options"
+                  aria-label={t("settings:stopOptions")}
                   className={`btn btn-sm join-item list-none btn-outline btn-error ${actionDisabled ? "pointer-events-none" : ""}`}
                 >
                   <ChevronDownIcon aria-hidden="true" className="size-4" />
@@ -314,7 +334,7 @@ export function AppServerCard({
                       role="menuitemradio"
                       type="button"
                     >
-                      Stop
+                      {t("settings:stop")}
                     </button>
                   </li>
                   <li
@@ -332,7 +352,7 @@ export function AppServerCard({
                       role="menuitemradio"
                       type="button"
                     >
-                      Force stop
+                      {t("settings:forceStop")}
                     </button>
                   </li>
                 </ul>
@@ -342,7 +362,7 @@ export function AppServerCard({
         )}
         {showDaemonControls && !daemonRunning && (
           <button
-            aria-label="Start"
+            aria-label={t("settings:start")}
             className="btn btn-sm btn-outline btn-success"
             disabled={actionDisabled}
             onClick={() => onAction("start")}
@@ -354,7 +374,7 @@ export function AppServerCard({
                 className="loading loading-spinner loading-xs"
               />
             )}
-            Start
+            {t("settings:start")}
           </button>
         )}
       </div>
@@ -374,18 +394,18 @@ export function AppServerCard({
               titleId="app-server-action-title"
               title={
                 confirmationAction === "restart"
-                  ? "Restart App Server?"
+                  ? t("settings:restartAppServer")
                   : confirmationAction === "forceStop"
-                    ? "Force stop App Server?"
-                    : "Stop App Server?"
+                    ? t("settings:forceStopAppServer")
+                    : t("settings:stopAppServer")
               }
             />
             <p className="-mt-2 text-sm text-base-content/70">
               {confirmationAction === "restart"
-                ? "Restarting will briefly interrupt active connections."
+                ? t("settings:restartWarning")
                 : confirmationAction === "forceStop"
-                  ? "Force stopping will immediately terminate the App Server."
-                  : "Stopping will interrupt active connections."}
+                  ? t("settings:forceStopWarning")
+                  : t("settings:stopWarning")}
             </p>
             <DialogFooter>
               <button
@@ -393,7 +413,7 @@ export function AppServerCard({
                 type="button"
                 onClick={() => setConfirmationAction(null)}
               >
-                Cancel
+                {t("settings:cancel")}
               </button>
               <button
                 className={`btn ${confirmationAction === "restart" ? "btn-warning" : "btn-error"}`}
@@ -405,20 +425,20 @@ export function AppServerCard({
                 }}
               >
                 {confirmationAction === "restart"
-                  ? "Restart"
+                  ? t("settings:restart")
                   : confirmationAction === "forceStop"
-                    ? "Force stop"
-                    : "Stop"}
+                    ? t("settings:forceStop")
+                    : t("settings:stop")}
               </button>
             </DialogFooter>
           </div>
           <form className="modal-backdrop" method="dialog">
             <button
-              aria-label="Close confirmation"
+              aria-label={t("settings:closeConfirmation")}
               type="button"
               onClick={() => setConfirmationAction(null)}
             >
-              Close
+              {t("settings:close")}
             </button>
           </form>
         </dialog>

@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "../app/i18n";
 
 const useAccount = vi.hoisted(() => vi.fn());
 const useLogin = vi.hoisted(() => vi.fn());
@@ -107,5 +115,22 @@ describe("AccountPage", () => {
     );
 
     expect(screen.getByText("Error: account unavailable")).toBeTruthy();
+  });
+  it("updates Japanese login controls live without changing entered credentials", async () => {
+    useAccount.mockReturnValue({
+      data: { authStatus: "unauthenticated", account: null },
+    });
+    const { AccountPage } = await import("./AccountPage");
+    render(<AccountPage />);
+    fireEvent.change(screen.getByLabelText("API key"), {
+      target: { value: "user-secret" },
+    });
+    await act(() => i18n.changeLanguage("ja"));
+    expect(screen.getByRole("heading", { name: "アカウント" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "ログイン" })).toBeTruthy();
+    expect(screen.getByLabelText("APIキー")).toHaveProperty(
+      "value",
+      "user-secret",
+    );
   });
 });

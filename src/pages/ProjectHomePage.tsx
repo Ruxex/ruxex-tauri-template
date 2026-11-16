@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from "react-i18next";
 import {
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
@@ -39,16 +40,18 @@ import type { v2 } from "../protocol";
 
 type ProjectChatSortKey = NonNullable<v2.ThreadListParams["sortKey"]>;
 
-const PROJECT_CHAT_SORT_OPTIONS: {
-  label: string;
-  value: ProjectChatSortKey;
-}[] = [
-  { label: "Most recently active", value: "recency_at" },
-  { label: "Recently updated", value: "updated_at" },
-  { label: "Newest first", value: "created_at" },
-];
-
 export function ProjectHomePage() {
+  const { t } = useTranslation("projects");
+
+  const PROJECT_CHAT_SORT_OPTIONS: {
+    label: string;
+    value: ProjectChatSortKey;
+  }[] = [
+    { label: t("mostRecentlyActive"), value: "recency_at" },
+    { label: t("recentlyUpdated"), value: "updated_at" },
+    { label: t("newestFirst"), value: "created_at" },
+  ];
+
   const { projectId = "" } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -102,11 +105,11 @@ export function ProjectHomePage() {
             onClick={() => void project.refetch()}
             type="button"
           >
-            {project.isFetching ? "Retrying…" : "Retry"}
+            {project.isFetching ? t("retrying") : t("retry")}
           </button>
         }
       >
-        Unable to load this project.
+        {t("unableToLoadThisProject")}
       </ErrorState>
     );
   }
@@ -135,15 +138,13 @@ export function ProjectHomePage() {
       const selected = await open({
         directory: true,
         multiple: false,
-        title: "Select workspace folder",
+        title: t("selectWorkspaceFolder"),
       });
       if (typeof selected === "string") {
         setEditRoot(selected);
       }
     } catch (error) {
-      setRootSelectionError(
-        `Unable to select folder: ${formatErrorMessage(error)}`,
-      );
+      setRootSelectionError(formatErrorMessage(error));
     }
   }
 
@@ -205,7 +206,7 @@ export function ProjectHomePage() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
-              Project
+              {t("project")}
             </p>
             <h1 className="min-w-0 text-3xl font-semibold">{details.name}</h1>
             <p
@@ -214,7 +215,7 @@ export function ProjectHomePage() {
             >
               <FolderIcon aria-hidden="true" className="size-3.5 shrink-0" />
               <span className="min-w-0 truncate">
-                {details.roots[0]?.path ?? "No workspace root configured"}
+                {details.roots[0]?.path ?? t("noWorkspaceRootConfigured")}
               </span>
             </p>
           </div>
@@ -224,21 +225,21 @@ export function ProjectHomePage() {
             className="btn btn-primary"
             to={`/?projectId=${encodeURIComponent(projectId)}`}
           >
-            New chat
+            {t("newChat")}
           </Link>
           <button
-            aria-label="Edit project"
+            aria-label={t("editProject")}
             className="btn btn-outline btn-square"
-            title="Edit project"
+            title={t("editProject")}
             type="button"
             onClick={handleOpenEditDialog}
           >
             <Cog6ToothIcon aria-hidden="true" className="size-4" />
           </button>
           <button
-            aria-label="Delete project"
+            aria-label={t("deleteProject")}
             className="btn btn-outline btn-error btn-square"
-            title="Delete project"
+            title={t("deleteProject")}
             type="button"
             onClick={handleOpenDeleteDialog}
           >
@@ -264,11 +265,11 @@ export function ProjectHomePage() {
                   <Cog6ToothIcon aria-hidden="true" className="size-5" />
                 </div>
                 <h2 className="font-semibold" id="edit-project-title">
-                  Edit project
+                  {t("editProject")}
                 </h2>
               </div>
               <button
-                aria-label="Close edit project dialog"
+                aria-label={t("closeEditProjectDialog")}
                 className="btn btn-ghost btn-sm btn-square"
                 type="button"
                 onClick={handleCloseEditDialog}
@@ -279,7 +280,7 @@ export function ProjectHomePage() {
             <form className="grid w-full gap-3" onSubmit={handleEditSubmit}>
               <div className="form-control w-full">
                 <input
-                  aria-label="Project name"
+                  aria-label={t("projectName")}
                   className="input input-bordered w-full"
                   onChange={(event) => setEditName(event.target.value)}
                   required
@@ -291,11 +292,11 @@ export function ProjectHomePage() {
                   <button
                     aria-label={
                       editRoot
-                        ? `Selected workspace folder: ${editRoot}`
-                        : "Select workspace folder"
+                        ? t("selectedWorkspaceFolder", { path: editRoot })
+                        : t("selectWorkspaceFolder")
                     }
                     className="btn btn-outline min-h-11 min-w-0 flex-1 justify-start gap-2 overflow-hidden font-normal"
-                    title={editRoot || "Select workspace folder"}
+                    title={editRoot || t("selectWorkspaceFolder")}
                     type="button"
                     onClick={() => void handleSelectRoot()}
                   >
@@ -306,14 +307,14 @@ export function ProjectHomePage() {
                     <span
                       className={`min-w-0 flex-1 truncate text-left ${editRoot ? "font-mono text-xs" : "text-base-content/65"}`}
                     >
-                      {editRoot || "Select workspace folder"}
+                      {editRoot || t("selectWorkspaceFolder")}
                     </span>
                   </button>
                   {editRoot && (
                     <button
-                      aria-label="Clear workspace folder"
+                      aria-label={t("clearWorkspaceFolder")}
                       className="btn btn-ghost btn-square min-h-11 shrink-0 text-error hover:bg-error/10"
-                      title="Clear workspace folder"
+                      title={t("clearWorkspaceFolder")}
                       type="button"
                       onClick={() => {
                         setEditRoot("");
@@ -326,7 +327,7 @@ export function ProjectHomePage() {
                 </div>
                 {rootSelectionError && (
                   <p className="mt-1 text-xs text-error" role="alert">
-                    {rootSelectionError}
+                    {t("selectFolderError", { error: rootSelectionError })}
                   </p>
                 )}
               </div>
@@ -337,29 +338,29 @@ export function ProjectHomePage() {
               <div className="flex justify-end">
                 <button
                   aria-label={
-                    updateProject.isPending ? "Saving…" : "Save project"
+                    updateProject.isPending ? t("saving") : t("saveProject")
                   }
                   className="btn btn-primary min-h-11 whitespace-nowrap"
                   disabled={updateProject.isPending}
                   type="submit"
                 >
-                  {updateProject.isPending ? "Saving…" : "Save project"}
+                  {updateProject.isPending ? t("saving") : t("saveProject")}
                 </button>
               </div>
               {editError && (
                 <p className="text-sm text-error" role="alert">
-                  Unable to update project: {editError}
+                  {t("updateError", { error: editError })}
                 </p>
               )}
             </form>
           </div>
           <form method="dialog" className="modal-backdrop">
             <button
-              aria-label="Close edit project dialog"
+              aria-label={t("closeEditProjectDialog")}
               type="button"
               onClick={handleCloseEditDialog}
             >
-              Close
+              {t("close")}
             </button>
           </form>
         </dialog>
@@ -376,46 +377,50 @@ export function ProjectHomePage() {
         >
           <div className="modal-box w-full max-w-lg px-5 py-7">
             <h2 className="text-lg font-semibold" id="delete-project-title">
-              Delete project?
+              {t("deleteProjectTitle")}
             </h2>
             <p className="mt-3 text-sm text-base-content/70">
-              This will delete <strong>{details.name}</strong> from your project
-              list. Chats and workspace files will not be deleted.
+              <Trans
+                t={t}
+                i18nKey="deleteConfirmation"
+                values={{ name: details.name }}
+                components={{ projectName: <strong /> }}
+              />
             </p>
             {deleteError && (
               <p className="mt-3 text-sm text-error" role="alert">
-                Unable to delete project: {deleteError}
+                {t("deleteError", { error: deleteError })}
               </p>
             )}
             <div className="mt-6 flex justify-end gap-2">
               <button
-                aria-label="Cancel"
+                aria-label={t("cancel")}
                 className="btn btn-ghost"
                 type="button"
                 onClick={handleCloseDeleteDialog}
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 aria-label={
-                  deleteProject.isPending ? "Deleting…" : "Delete project"
+                  deleteProject.isPending ? t("deleting") : t("deleteProject")
                 }
                 className="btn btn-error"
                 disabled={deleteProject.isPending}
                 type="button"
                 onClick={handleDeleteProject}
               >
-                {deleteProject.isPending ? "Deleting…" : "Delete project"}
+                {deleteProject.isPending ? t("deleting") : t("deleteProject")}
               </button>
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">
             <button
-              aria-label="Close"
+              aria-label={t("close")}
               type="button"
               onClick={handleCloseDeleteDialog}
             >
-              Close
+              {t("close")}
             </button>
           </form>
         </dialog>
@@ -429,18 +434,18 @@ export function ProjectHomePage() {
                 className="size-4 shrink-0"
               />
               <input
-                aria-label="Search project chats"
+                aria-label={t("searchProjectChats")}
                 className="min-w-0 grow bg-transparent outline-none"
-                placeholder="Search project chats"
+                placeholder={t("searchProjectChats")}
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
             <label className="select select-bordered select-sm min-w-48">
-              <span className="sr-only">Sort project chats</span>
+              <span className="sr-only">{t("sortProjectChats")}</span>
               <select
-                aria-label="Sort project chats"
+                aria-label={t("sortProjectChats")}
                 value={sortKey}
                 onChange={(event) =>
                   setSortKey(event.target.value as ProjectChatSortKey)
@@ -465,11 +470,11 @@ export function ProjectHomePage() {
                 onClick={() => void threads.refetch()}
                 type="button"
               >
-                {threads.isFetching ? "Retrying…" : "Retry"}
+                {threads.isFetching ? t("retrying") : t("retry")}
               </button>
             }
           >
-            Unable to load project chats.
+            {t("unableToLoadProjectChats")}
           </ErrorState>
         )}
         {!threads.isLoading &&
@@ -484,27 +489,27 @@ export function ProjectHomePage() {
                     type="button"
                     onClick={() => setSearchTerm("")}
                   >
-                    Clear search
+                    {t("clearSearch")}
                   </button>
                 ) : (
                   <Link
                     className="btn btn-sm btn-primary"
                     to={`/?projectId=${encodeURIComponent(projectId)}`}
                   >
-                    New chat
+                    {t("newChat")}
                   </Link>
                 )
               }
               description={
                 trimmedSearchTerm
-                  ? "Try a different title."
-                  : "Start a new chat to keep work for this project together."
+                  ? t("tryADifferentTitle")
+                  : t("startANewChatToKeepWorkForThisProjectTogether")
               }
               icon={ChatBubbleLeftRightIcon}
               title={
                 trimmedSearchTerm
-                  ? "No matching chats in this project."
-                  : "No chats in this project yet."
+                  ? t("noMatchingChatsInThisProject")
+                  : t("noChatsInThisProjectYet")
               }
             />
           )}

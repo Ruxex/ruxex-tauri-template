@@ -8,7 +8,7 @@ import {
 } from "../query-invalidation";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
-import { useAllThreadList, useThreadList } from "./useThreadQueries";
+import { useAllThreadList } from "./useThreadQueries";
 
 export function useProjectList(
   params: v2.ProjectListParams = {},

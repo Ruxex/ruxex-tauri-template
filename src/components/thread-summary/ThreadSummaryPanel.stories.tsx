@@ -23,10 +23,33 @@ const tokenUsage = {
   modelContextWindow: 200000,
 };
 
+const subagents = [
+  "Atlas",
+  "Beacon",
+  "Cipher",
+  "Delta",
+  "Echo",
+  "Fable",
+  "Grove",
+  "Harbor",
+  "Indigo",
+  "Juniper",
+].map((label, index) => ({
+  threadId: `subagent-${index}`,
+  label,
+  role: null,
+  task: "",
+  status: "done" as const,
+  summary: null,
+  updatedAt: index,
+  waitingForApproval: false,
+}));
+
 export const Loaded: Story = () => (
   <ThreadSummaryPanel
     tokenUsage={tokenUsage}
     gitDiff={{ added: 42, deleted: 18, files: 2 }}
+    subagents={subagents}
   />
 );
 

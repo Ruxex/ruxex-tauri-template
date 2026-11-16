@@ -1,14 +1,12 @@
+import type { TFunction } from "i18next";
+import { i18n } from "../../app/i18n";
 import type {
   PendingServerRequest,
   ThreadExecutionState,
 } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
 
-export type SubagentStatus =
-  | "active"
-  | "done"
-  | "failed"
-  | "interrupted";
+export type SubagentStatus = "active" | "done" | "failed" | "interrupted";
 
 export type SubagentRow = {
   threadId: string;
@@ -25,6 +23,7 @@ export function buildSubagentRows(
   threads: v2.Thread[],
   liveThreads: Record<string, ThreadExecutionState>,
   pendingRequests: PendingServerRequest[],
+  t: TFunction = i18n.getFixedT(null, "conversation"),
 ): SubagentRow[] {
   const waitingThreadIds = new Set(
     pendingRequests
@@ -44,7 +43,7 @@ export function buildSubagentRows(
         label:
           thread.agentNickname ??
           thread.agentRole ??
-          `Agent ${thread.id.slice(0, 8)}`,
+          t("agentFallback", { id: thread.id.slice(0, 8) }),
         role: thread.agentRole,
         task: thread.preview,
         status,

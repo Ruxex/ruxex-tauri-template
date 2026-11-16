@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useState } from "react";
 import {
@@ -39,15 +40,37 @@ export function McpServerDialog({
   onSubmit: (draft: McpServerDraft) => void;
   onImportJson: (entries: McpServerJsonImportEntry[]) => void;
 }) {
+  const { t } = useTranslation("mcp");
   const dialogRef = useNativeModalDialog();
   const [localForm, setLocalForm] = useState(form);
-  const [validationErrors, setValidationErrors] = useState(
-    {} as ReturnType<typeof validateMcpServerForm>,
+  const [invalidForm, setInvalidForm] = useState<McpServerFormState | null>(
+    null,
   );
+  const validationErrors = invalidForm
+    ? validateMcpServerForm(invalidForm, existingNames, originalName)
+    : {};
   const [inputMode, setInputMode] = useState<"fields" | "json">("fields");
   const [jsonText, setJsonText] = useState("");
-  const [jsonError, setJsonError] = useState<string | null>(null);
-  const title = isEditing ? "Edit MCP server" : "Add MCP server";
+  const [invalidJson, setInvalidJson] = useState<string | null>(null);
+  const jsonError =
+    invalidJson === null ? null : validateJsonImport(invalidJson).error;
+
+  function validateJsonImport(value: string) {
+    const result = parseMcpServerDictionaryJson(value);
+    if (result.error) return result;
+    const conflicts = result.entries
+      .map((entry) => entry.name)
+      .filter((name) => existingNames.includes(name));
+    return conflicts.length > 0
+      ? {
+          entries: [],
+          error: t("alreadyConfigured", {
+            names: conflicts.map((name) => `“${name}”`).join(", "),
+          }),
+        }
+      : result;
+  }
+  const title = isEditing ? t("editMcpServer") : t("addMcpServer");
 
   function updateForm(patch: Partial<McpServerFormState>) {
     setLocalForm((current) => ({ ...current, ...patch }));
@@ -63,18 +86,9 @@ export function McpServerDialog({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isEditing && inputMode === "json") {
-      const result = parseMcpServerDictionaryJson(jsonText);
+      const result = validateJsonImport(jsonText);
       if (result.error) {
-        setJsonError(result.error);
-        return;
-      }
-      const conflicts = result.entries
-        .map((entry) => entry.name)
-        .filter((name) => existingNames.includes(name));
-      if (conflicts.length > 0) {
-        setJsonError(
-          `Already configured: ${conflicts.map((name) => `“${name}”`).join(", ")}.`,
-        );
+        setInvalidJson(jsonText);
         return;
       }
       onImportJson(result.entries);
@@ -87,7 +101,7 @@ export function McpServerDialog({
       existingNames,
       originalName,
     );
-    setValidationErrors(errors);
+    setInvalidForm(formToSubmit);
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -96,7 +110,7 @@ export function McpServerDialog({
 
   function switchInputMode(mode: "fields" | "json") {
     if (mode === inputMode) return;
-    setJsonError(null);
+    setInvalidJson(null);
     setInputMode(mode);
   }
 
@@ -112,7 +126,7 @@ export function McpServerDialog({
     >
       <div className="modal-box w-full max-w-2xl px-5 py-7">
         <DialogHeader
-          closeLabel="Close MCP server dialog"
+          closeLabel={t("closeMcpServerDialog")}
           disabled={isPending}
           onClose={onClose}
           title={title}
@@ -125,7 +139,7 @@ export function McpServerDialog({
           >
             {!isEditing && (
               <div
-                aria-label="MCP server configuration mode"
+                aria-label={t("mcpServerConfigurationMode")}
                 className="attached-tablist"
                 onKeyDown={handleTabListKeyDown}
                 role="tablist"
@@ -139,7 +153,7 @@ export function McpServerDialog({
                   type="button"
                   onClick={() => switchInputMode("fields")}
                 >
-                  Fields
+                  {t("fields")}
                 </button>
                 <button
                   aria-selected={inputMode === "json"}
@@ -163,7 +177,7 @@ export function McpServerDialog({
                 role="tabpanel"
               >
                 <textarea
-                  aria-label="MCP server JSON"
+                  aria-label={t("mcpServerJson")}
                   className="textarea textarea-bordered min-h-72 w-full font-mono text-sm"
                   placeholder={
                     '{\n  "server-name": {\n    "command": "npx",\n    "args": []\n  }\n}'
@@ -172,7 +186,7 @@ export function McpServerDialog({
                   value={jsonText}
                   onChange={(event) => {
                     setJsonText(event.target.value);
-                    setJsonError(null);
+                    setInvalidJson(null);
                   }}
                 />
                 {jsonError && (
@@ -189,9 +203,9 @@ export function McpServerDialog({
                 role="tabpanel"
               >
                 <label className="form-control sm:col-span-2">
-                  <span className="label-text">Server name</span>
+                  <span className="label-text">{t("serverName")}</span>
                   <input
-                    aria-label="Server name"
+                    aria-label={t("serverName")}
                     className="input input-bordered mt-1 w-full"
                     value={localForm.draft.name}
                     onChange={(event) =>
@@ -206,9 +220,9 @@ export function McpServerDialog({
                 </label>
 
                 <label className="form-control sm:col-span-2">
-                  <span className="label-text">Transport</span>
+                  <span className="label-text">{t("transport")}</span>
                   <select
-                    aria-label="Transport"
+                    aria-label={t("transport")}
                     className="select select-bordered mt-1 w-full"
                     value={localForm.draft.transport}
                     onChange={(event) =>
@@ -228,9 +242,9 @@ export function McpServerDialog({
                 {localForm.draft.transport === "stdio" ? (
                   <>
                     <label className="form-control sm:col-span-2">
-                      <span className="label-text">Command</span>
+                      <span className="label-text">{t("command")}</span>
                       <input
-                        aria-label="Command"
+                        aria-label={t("command")}
                         className="input input-bordered mt-1 w-full"
                         value={localForm.draft.command}
                         onChange={(event) =>
@@ -244,11 +258,11 @@ export function McpServerDialog({
                       )}
                     </label>
                     <label className="form-control sm:col-span-2">
-                      <span className="label-text">Arguments</span>
+                      <span className="label-text">{t("arguments")}</span>
                       <textarea
-                        aria-label="Arguments"
+                        aria-label={t("arguments")}
                         className="textarea textarea-bordered mt-1 min-h-20 w-full"
-                        placeholder="One argument per line"
+                        placeholder={t("oneArgumentPerLine")}
                         value={localForm.argsText}
                         onChange={(event) =>
                           updateForm({ argsText: event.target.value })
@@ -256,9 +270,11 @@ export function McpServerDialog({
                       />
                     </label>
                     <label className="form-control sm:col-span-2">
-                      <span className="label-text">Working directory</span>
+                      <span className="label-text">
+                        {t("workingDirectory")}
+                      </span>
                       <input
-                        aria-label="Working directory"
+                        aria-label={t("workingDirectory")}
                         className="input input-bordered mt-1 w-full"
                         value={localForm.draft.cwd}
                         onChange={(event) =>
@@ -267,11 +283,13 @@ export function McpServerDialog({
                       />
                     </label>
                     <label className="form-control sm:col-span-2">
-                      <span className="label-text">Environment variables</span>
+                      <span className="label-text">
+                        {t("environmentVariables")}
+                      </span>
                       <textarea
-                        aria-label="Environment variables"
+                        aria-label={t("environmentVariables")}
                         className="textarea textarea-bordered mt-1 min-h-20 w-full"
-                        placeholder="TOKEN or TOKEN (remote), one per line"
+                        placeholder={t("tokenOrTokenRemoteOnePerLine")}
                         value={localForm.envVarsText}
                         onChange={(event) =>
                           updateForm({ envVarsText: event.target.value })
@@ -299,10 +317,10 @@ export function McpServerDialog({
                     </label>
                     <label className="form-control sm:col-span-2">
                       <span className="label-text">
-                        Bearer token environment variable
+                        {t("bearerTokenEnvironmentVariable")}
                       </span>
                       <input
-                        aria-label="Bearer token environment variable"
+                        aria-label={t("bearerTokenEnvironmentVariable")}
                         className="input input-bordered mt-1 w-full"
                         value={localForm.draft.bearerTokenEnvVar}
                         onChange={(event) =>
@@ -312,12 +330,12 @@ export function McpServerDialog({
                     </label>
                     <label className="form-control sm:col-span-2">
                       <span className="label-text">
-                        Environment-backed headers
+                        {t("environmentbackedHeaders")}
                       </span>
                       <textarea
-                        aria-label="Environment-backed headers"
+                        aria-label={t("environmentbackedHeaders")}
                         className="textarea textarea-bordered mt-1 min-h-20 w-full"
-                        placeholder="X-Workspace=WORKSPACE_ID, one per line"
+                        placeholder={t("xworkspaceworkspaceidOnePerLine")}
                         value={localForm.envHeadersText}
                         onChange={(event) =>
                           updateForm({ envHeadersText: event.target.value })
@@ -330,7 +348,7 @@ export function McpServerDialog({
                 <div className="grid gap-2 rounded-lg border border-base-300 px-3 py-3 sm:col-span-2 sm:grid-cols-2">
                   <label className="label cursor-pointer justify-start gap-3">
                     <input
-                      aria-label="Enabled"
+                      aria-label={t("enabled")}
                       checked={localForm.draft.enabled}
                       className="toggle toggle-primary toggle-sm"
                       type="checkbox"
@@ -338,11 +356,11 @@ export function McpServerDialog({
                         updateDraft({ enabled: event.target.checked })
                       }
                     />
-                    <span className="label-text">Enabled</span>
+                    <span className="label-text">{t("enabled")}</span>
                   </label>
                   <label className="label cursor-pointer justify-start gap-3">
                     <input
-                      aria-label="Required"
+                      aria-label={t("required")}
                       checked={localForm.draft.required}
                       className="toggle toggle-primary toggle-sm"
                       type="checkbox"
@@ -350,7 +368,7 @@ export function McpServerDialog({
                         updateDraft({ required: event.target.checked })
                       }
                     />
-                    <span className="label-text">Required</span>
+                    <span className="label-text">{t("required")}</span>
                   </label>
                 </div>
               </div>
@@ -365,23 +383,23 @@ export function McpServerDialog({
           <div className="sm:col-span-2">
             <DialogFooter>
               <button
-                aria-label="Cancel"
+                aria-label={t("cancel")}
                 className="btn btn-ghost"
                 disabled={isPending}
                 type="button"
                 onClick={onClose}
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 aria-label={
                   isPending
-                    ? "Saving…"
+                    ? t("saving")
                     : isEditing
-                      ? "Save changes"
+                      ? t("saveChanges")
                       : inputMode === "json"
-                        ? "Import MCP servers"
-                        : "Add MCP server"
+                        ? t("importMcpServers")
+                        : t("addMcpServer")
                 }
                 className="btn btn-primary gap-2"
                 disabled={isPending}
@@ -389,12 +407,12 @@ export function McpServerDialog({
               >
                 <PlusIcon aria-hidden="true" className="size-4" />
                 {isPending
-                  ? "Saving…"
+                  ? t("saving")
                   : isEditing
-                    ? "Save changes"
+                    ? t("saveChanges")
                     : inputMode === "json"
-                      ? "Import MCP servers"
-                      : "Add MCP server"}
+                      ? t("importMcpServers")
+                      : t("addMcpServer")}
               </button>
             </DialogFooter>
           </div>
@@ -402,11 +420,11 @@ export function McpServerDialog({
       </div>
       <form method="dialog" className="modal-backdrop">
         <button
-          aria-label="Close MCP server dialog"
+          aria-label={t("closeMcpServerDialog")}
           type="button"
           onClick={onClose}
         >
-          Close
+          {t("close")}
         </button>
       </form>
     </dialog>

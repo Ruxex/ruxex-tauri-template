@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -25,6 +26,7 @@ export function ProjectSidebar({
   onPanelChange,
   onToggle,
 }: ProjectSidebarProps) {
+  const { t } = useTranslation("navigation");
   const navigate = useNavigate();
   const location = useLocation();
   const contextPanelVisible = showContextPanel && !collapsed;
@@ -51,10 +53,10 @@ export function ProjectSidebar({
   return (
     <aside
       className={`workbench-sidebar relative flex h-full min-h-0 shrink-0 ${contextPanelVisible ? "w-full" : "workbench-sidebar-collapsed"}`}
-      aria-label="Workspace sidebar"
+      aria-label={t("navigation:workspaceSidebar")}
     >
       <nav
-        aria-label="Workspace navigation"
+        aria-label={t("navigation:workspaceNavigation")}
         className="flex h-full min-h-0 w-16 shrink-0 flex-col items-center border-r border-base-300 bg-base-100 py-3"
       >
         <div className="flex w-full flex-col items-center gap-1">
@@ -62,7 +64,7 @@ export function ProjectSidebar({
             <RailButton
               active={activePanel === panel.id}
               key={panel.id}
-              label={panel.label}
+              label={t(`navigation:${panel.id}`)}
               icon={panel.icon}
               onClick={() => selectPanel(panel)}
             />
@@ -76,7 +78,7 @@ export function ProjectSidebar({
             <RailButton
               active={activePanel === panel.id}
               key={panel.id}
-              label={panel.label}
+              label={t(`navigation:${panel.id}`)}
               icon={panel.icon}
               onClick={() => selectPanel(panel)}
             />

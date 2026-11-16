@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Bars3BottomLeftIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
@@ -41,6 +42,7 @@ export function TypographyCard({
   onUiFontSizeChange: (fontSize: UiFontSize) => void;
   onUiZoomChange: (zoom: number) => void;
 }) {
+  const { t } = useTranslation("settings");
   const [fontFamilies, setFontFamilies] = useState<string[]>([
     ...SYSTEM_FONT_FALLBACKS,
   ]);
@@ -77,24 +79,24 @@ export function TypographyCard({
     <SettingsPanel
       action={
         <button
-          aria-label="Reset to default"
+          aria-label={t("settings:resetToDefault")}
           className="btn btn-ghost btn-sm"
           onClick={onReset}
           type="button"
         >
-          Reset to default
+          {t("settings:resetToDefault")}
         </button>
       }
       icon={Bars3BottomLeftIcon}
-      title="Typography"
+      title={t("settings:typography")}
     >
       <div className="divide-y divide-base-300 text-sm">
         <FormFieldRow
           controlId="settings-chat-font-size"
-          label="Chat font size"
+          label={t("settings:chatFontSize")}
         >
           <input
-            aria-label="Chat font size"
+            aria-label={t("settings:chatFontSize")}
             className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-chat-font-size"
             max={UI_FONT_SIZE_MAX}
@@ -109,9 +111,12 @@ export function TypographyCard({
             value={chatFontSize}
           />
         </FormFieldRow>
-        <FormFieldRow controlId="settings-chat-font-family" label="Chat font">
+        <FormFieldRow
+          controlId="settings-chat-font-family"
+          label={t("settings:chatFont")}
+        >
           <select
-            aria-label="Chat font"
+            aria-label={t("settings:chatFont")}
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-chat-font-family"
             value={chatFontFamily}
@@ -120,15 +125,18 @@ export function TypographyCard({
             {fontFamilies.map((fontFamily) => (
               <option key={fontFamily} value={fontFamily}>
                 {fontFamily === DEFAULT_FONT_FAMILY
-                  ? "System default"
+                  ? t("settings:systemDefault")
                   : fontFamily}
               </option>
             ))}
           </select>
         </FormFieldRow>
-        <FormFieldRow controlId="settings-ui-font-size" label="UI font size">
+        <FormFieldRow
+          controlId="settings-ui-font-size"
+          label={t("settings:uiFontSize")}
+        >
           <input
-            aria-label="UI font size"
+            aria-label={t("settings:uiFontSize")}
             className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-ui-font-size"
             max={UI_FONT_SIZE_MAX}
@@ -143,9 +151,12 @@ export function TypographyCard({
             value={uiFontSize}
           />
         </FormFieldRow>
-        <FormFieldRow controlId="settings-ui-font-family" label="UI font">
+        <FormFieldRow
+          controlId="settings-ui-font-family"
+          label={t("settings:uiFont")}
+        >
           <select
-            aria-label="UI font"
+            aria-label={t("settings:uiFont")}
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-ui-font-family"
             value={uiFontFamily}
@@ -154,15 +165,18 @@ export function TypographyCard({
             {fontFamilies.map((fontFamily) => (
               <option key={fontFamily} value={fontFamily}>
                 {fontFamily === DEFAULT_FONT_FAMILY
-                  ? "System default"
+                  ? t("settings:systemDefault")
                   : fontFamily}
               </option>
             ))}
           </select>
         </FormFieldRow>
-        <FormFieldRow controlId="settings-ui-zoom" label="Zoom level">
+        <FormFieldRow
+          controlId="settings-ui-zoom"
+          label={t("settings:zoomLevel")}
+        >
           <select
-            aria-label="Zoom level"
+            aria-label={t("settings:zoomLevel")}
             className="select select-bordered select-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
             id="settings-ui-zoom"
             value={uiZoom}

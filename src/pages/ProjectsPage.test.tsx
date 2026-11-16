@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { i18n } from "../app/i18n";
+
 const useProjectList = vi.hoisted(() => vi.fn());
 const useCreateProject = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
@@ -112,5 +114,24 @@ describe("ProjectsPage", () => {
     expect(screen.queryByText(/Create your first project/)).toBeNull();
     expect(screen.queryByRole("table", { name: "Projects" })).toBeNull();
     expect(screen.getByRole("button", { name: "Create project" })).toBeTruthy();
+  });
+  it("localizes project creation controls while preserving names and paths", async () => {
+    await i18n.changeLanguage("ja");
+    const { ProjectsPage } = await import("./ProjectsPage");
+    render(
+      <MemoryRouter>
+        <ProjectsPage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("table", { name: "プロジェクト" })).toBeTruthy();
+    expect(screen.getByText("Project Alpha")).toBeTruthy();
+    expect(screen.getByText("/workspace/alpha")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "新規プロジェクト" }));
+    expect(
+      screen.getByRole("dialog", { name: "プロジェクトを作成" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", { name: "プロジェクト名" }),
+    ).toBeTruthy();
   });
 });

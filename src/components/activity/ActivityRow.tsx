@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArrowTopRightOnSquareIcon,
   CheckCircleIcon,
@@ -9,13 +10,6 @@ import {
 import { Link } from "react-router-dom";
 
 import type { ActivityEntry } from "./activity-model";
-
-const kindLabels: Record<ActivityEntry["kind"], string> = {
-  approval: "Approval",
-  agent: "Subagent",
-  thread: "Thread",
-  tool: "Tool",
-};
 
 function statusTone(status: string): string {
   if (status === "completed") return "text-success";
@@ -42,6 +36,15 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export function ActivityRow({ entry }: { entry: ActivityEntry }) {
+  const { t } = useTranslation("activity");
+
+  const kindLabels: Record<ActivityEntry["kind"], string> = {
+    approval: t("approval"),
+    agent: t("subagent"),
+    thread: t("thread"),
+    tool: t("tool"),
+  };
+
   return (
     <li className="card border border-base-300 bg-base-100 shadow-sm">
       <div className="card-body gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
@@ -55,8 +58,10 @@ export function ActivityRow({ entry }: { entry: ActivityEntry }) {
               <span className="badge badge-ghost badge-sm">
                 {kindLabels[entry.kind]}
               </span>
-              <span className={`text-xs capitalize ${statusTone(entry.status)}`}>
-                {entry.status}
+              <span
+                className={`text-xs capitalize ${statusTone(entry.status)}`}
+              >
+                {t(`statuses.${entry.status}`, { defaultValue: entry.status })}
               </span>
             </div>
             <p className="mt-1 break-words text-sm text-base-content/65">
@@ -66,7 +71,7 @@ export function ActivityRow({ entry }: { entry: ActivityEntry }) {
         </div>
         {entry.kind === "approval" ? (
           <Link className="btn btn-ghost btn-sm shrink-0" to="/approvals">
-            Open approvals
+            {t("openApprovals")}
             <ArrowTopRightOnSquareIcon aria-hidden="true" className="size-4" />
           </Link>
         ) : entry.threadId ? (
@@ -74,7 +79,7 @@ export function ActivityRow({ entry }: { entry: ActivityEntry }) {
             className="btn btn-ghost btn-sm shrink-0"
             to={`/chat/${encodeURIComponent(entry.threadId)}`}
           >
-            Open thread
+            {t("openThread")}
             <ArrowTopRightOnSquareIcon aria-hidden="true" className="size-4" />
           </Link>
         ) : null}

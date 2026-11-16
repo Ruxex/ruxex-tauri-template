@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   useAccount,
   useAppServerStatus,
@@ -13,6 +14,7 @@ import {
 } from "../components/settings/SettingsCards";
 
 export function ModelPage() {
+  const { t } = useTranslation("capabilities");
   const account = useAccount();
   const appServerStatus = useAppServerStatus();
   const capabilities = useModelProviderCapabilities();
@@ -22,21 +24,21 @@ export function ModelPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">Provider</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">{t("provider")}</h2>
       <ProviderAccountCard
         provider={
-          provider.data?.name ?? account.data?.providerId ?? "Unavailable"
+          provider.data?.name ?? account.data?.providerId ?? t("unavailable")
         }
-        authStatus={account.data?.authStatus ?? "Unknown"}
-        account={account.data?.displayName ?? "Not signed in"}
-        dataDirectory={appServerStatus.data?.homeDataDir ?? "Unavailable"}
+        authStatus={account.data?.authStatus ?? t("unknown")}
+        account={account.data?.displayName ?? t("notSignedIn")}
+        dataDirectory={appServerStatus.data?.homeDataDir ?? t("unavailable")}
       />
       <CapabilitiesCard capabilities={capabilities.data ?? {}} />
       <RuntimeSummary
         modelCount={models.data?.data.length ?? 0}
         models={models.data?.data}
         permissionCount={permissions.data?.data.length ?? 0}
-        rateLimitName={account.data?.usage?.limitName ?? "Unavailable"}
+        rateLimitName={account.data?.usage?.limitName ?? t("unavailable")}
       />
     </div>
   );

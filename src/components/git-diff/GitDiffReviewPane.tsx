@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import { CodeView } from "@pierre/diffs/react";
 import type { CodeViewItem } from "@pierre/diffs";
@@ -23,6 +24,7 @@ export function GitDiffReviewPane({
   target: GitDiffReviewTarget;
   isOpen: boolean;
 }) {
+  const { t } = useTranslation("capabilities");
   const query = useGitDiffDetails(target.workspace, isOpen);
   const { preferences } = useUiPreferences();
   const [disclosures, setDisclosures] = useState<
@@ -93,13 +95,16 @@ export function GitDiffReviewPane({
   }
 
   return (
-    <section aria-label="Code changes" className="flex h-full min-h-0 flex-col">
+    <section
+      aria-label={t("codeChanges")}
+      className="flex h-full min-h-0 flex-col"
+    >
       <header className="shrink-0 border-b border-base-300 px-4 py-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold">Code Changes</h2>
+          <h2 className="text-sm font-semibold">{t("codeChanges")}</h2>
           {query.data && (
             <span className="text-xs text-base-content/60">
-              {files.length} {files.length === 1 ? "file" : "files"}
+              {t("diffFileCount", { count: files.length })}
               <span className="ml-2 font-medium text-success">
                 +{sum(files, "added")}
               </span>
@@ -116,17 +121,17 @@ export function GitDiffReviewPane({
           className="flex flex-1 items-center justify-center text-sm text-base-content/60"
           role="status"
         >
-          Loading diff…
+          {t("loadingDiff")}
         </div>
       )}
       {query.isError && (
         <div className="p-4 text-sm text-error" role="alert">
-          Unable to load Git diff.
+          {t("unableToLoadGitDiff")}
         </div>
       )}
       {query.data?.length === 0 && (
         <div className="flex flex-1 items-center justify-center text-sm text-base-content/60">
-          No changes
+          {t("noChanges")}
         </div>
       )}
       {query.data && query.data.length > 0 && (
@@ -139,7 +144,9 @@ export function GitDiffReviewPane({
             return (
               <button
                 aria-expanded={!item.collapsed}
-                aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${file.path}`}
+                aria-label={t(item.collapsed ? "expandFile" : "collapseFile", {
+                  path: file.path,
+                })}
                 className="flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-xs hover:bg-base-200"
                 onClick={() => toggleFile(file.path)}
                 type="button"
@@ -157,7 +164,9 @@ export function GitDiffReviewPane({
                   {statusLabel(file)}
                 </span>
                 {file.binary ? (
-                  <span className="shrink-0 text-base-content/50">Binary</span>
+                  <span className="shrink-0 text-base-content/50">
+                    {t("binary")}
+                  </span>
                 ) : (
                   <span className="shrink-0 tabular-nums">
                     <span className="text-success">+{file.added}</span>

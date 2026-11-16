@@ -1,3 +1,4 @@
+import { i18n } from "../../app/i18n";
 import type { v2 } from "../../protocol";
 import type { ThreadExecutionState } from "../../app-server/event-reducer";
 
@@ -11,15 +12,15 @@ export const CHAT_STATUSES = [
 
 export type ChatStatus = (typeof CHAT_STATUSES)[number];
 
-const CHAT_STATUS_LABELS: Record<ChatStatus, string> = {
-  running: "Running",
-  waiting: "Waiting",
-  completed: "Completed",
-  failed: "Failed",
-  stopped: "Stopped",
-};
-
 export function chatStatusLabel(status: ChatStatus): string {
+  const CHAT_STATUS_LABELS: Record<ChatStatus, string> = {
+    running: i18n.t("chats:running"),
+    waiting: i18n.t("chats:waiting"),
+    completed: i18n.t("chats:completed"),
+    failed: i18n.t("chats:failed"),
+    stopped: i18n.t("chats:stopped"),
+  };
+
   return CHAT_STATUS_LABELS[status];
 }
 

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useReducer, useState } from "react";
 
@@ -16,10 +17,12 @@ import {
   createScheduleFormState,
   scheduleFormReducer,
   scheduleInputFromForm,
+  type ScheduleFormState,
 } from "./schedules/schedule-form";
 import { browserTimeZone } from "./schedules/schedule-format";
 
 export function SchedulesPage() {
+  const { t } = useTranslation("schedules");
   const schedules = useSchedules();
   const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleRecord | null>(
@@ -29,7 +32,14 @@ export function SchedulesPage() {
     scheduleFormReducer,
     createScheduleFormState(),
   );
-  const [formError, setFormError] = useState<string | null>(null);
+  const [invalidForm, setInvalidForm] = useState<ScheduleFormState | null>(
+    null,
+  );
+  const invalidResult = invalidForm
+    ? scheduleInputFromForm(invalidForm, browserTimeZone())
+    : null;
+  const formError =
+    invalidResult && !invalidResult.ok ? invalidResult.message : null;
   const [pendingAction, setPendingAction] = useState<ScheduleAction | null>(
     null,
   );
@@ -41,7 +51,7 @@ export function SchedulesPage() {
   function openCreatePanel() {
     setEditingSchedule(null);
     dispatch({ type: "reset" });
-    setFormError(null);
+    setInvalidForm(null);
     setIsCreatePanelOpen(true);
   }
 
@@ -49,21 +59,21 @@ export function SchedulesPage() {
     setEditingSchedule(schedule);
     setIsCreatePanelOpen(false);
     dispatch({ type: "reset", schedule });
-    setFormError(null);
+    setInvalidForm(null);
   }
 
   function closeEditor() {
     setIsCreatePanelOpen(false);
     setEditingSchedule(null);
-    setFormError(null);
+    setInvalidForm(null);
   }
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFormError(null);
+    setInvalidForm(null);
     const result = scheduleInputFromForm(form, browserTimeZone());
     if (!result.ok) {
-      setFormError(result.message);
+      setInvalidForm(form);
       return;
     }
     if (editingSchedule) {
@@ -102,26 +112,34 @@ export function SchedulesPage() {
 
   const savedSchedules = schedules.query.data ?? [];
   const actionError = schedules.runNow.isError
-    ? `Unable to run schedule: ${formatErrorMessage(schedules.runNow.error)}`
+    ? t("runError", { details: formatErrorMessage(schedules.runNow.error) })
     : schedules.remove.isError
-      ? `Unable to delete schedule: ${formatErrorMessage(schedules.remove.error)}`
+      ? t("deleteError", {
+          details: formatErrorMessage(schedules.remove.error),
+        })
       : schedules.setEnabled.isError
-        ? `Unable to update schedule status: ${formatErrorMessage(schedules.setEnabled.error)}`
+        ? t("statusError", {
+            details: formatErrorMessage(schedules.setEnabled.error),
+          })
         : null;
   const editorMutation = editingSchedule ? schedules.update : schedules.create;
   const editorError =
     formError ??
     (editorMutation.isError
-      ? `Unable to ${editingSchedule ? "update" : "create"} schedule: ${formatErrorMessage(editorMutation.error)}`
+      ? t(editingSchedule ? "updateError" : "createError", {
+          details: formatErrorMessage(editorMutation.error),
+        })
       : null);
 
   return (
     <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5">
-        <h1 className="text-3xl font-semibold tracking-tight">Automation</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("automation")}
+        </h1>
         <button
           aria-expanded={isScheduleModalOpen}
-          aria-label={isScheduleModalOpen ? "Close" : "New schedule"}
+          aria-label={isScheduleModalOpen ? t("close") : t("newSchedule")}
           className="btn btn-primary min-h-11 gap-2"
           type="button"
           onClick={() =>
@@ -133,13 +151,13 @@ export function SchedulesPage() {
           ) : (
             <PlusIcon aria-hidden="true" className="size-4" />
           )}
-          {isScheduleModalOpen ? "Close" : "New schedule"}
+          {isScheduleModalOpen ? t("close") : t("newSchedule")}
         </button>
       </header>
 
       {!isDesktopRuntime && (
         <p className="alert alert-info text-sm">
-          Schedules are available in the Tauri desktop runtime.
+          {t("schedulesAreAvailableInTheTauriDesktopRuntime")}
         </p>
       )}
 
@@ -182,13 +200,14 @@ export function SchedulesPage() {
         {schedules.query.isLoading && (
           <div className="flex items-center gap-3 text-sm text-base-content/60">
             <span className="loading loading-spinner loading-sm" />
-            Loading schedules…
+            {t("loadingSchedules")}
           </div>
         )}
         {schedules.query.isError && (
           <p className="text-sm text-error">
-            Unable to load schedules:{" "}
-            {formatErrorMessage(schedules.query.error)}
+            {t("unableToLoadSchedules", {
+              details: formatErrorMessage(schedules.query.error),
+            })}
           </p>
         )}
         {!schedules.query.isLoading && !schedules.query.data?.length && (

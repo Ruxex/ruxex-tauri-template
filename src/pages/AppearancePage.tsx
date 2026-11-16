@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   DEFAULT_CHAT_FONT_SIZE,
   DEFAULT_FONT_FAMILY,
@@ -12,11 +13,14 @@ import {
 } from "../components/settings/SettingsCards";
 
 export function AppearancePage() {
+  const { t } = useTranslation("settings");
   const { preferences, update } = useUiPreferences();
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">Appearance</h2>
+      <h2 className="text-3xl font-semibold tracking-tight">
+        {t("settings:appearance")}
+      </h2>
       <UiPreferencesCard
         onThemePresetChange={(preset) =>
           update({ theme: { ...preferences.theme, preset, colors: {} } })

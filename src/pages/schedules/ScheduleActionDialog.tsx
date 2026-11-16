@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 import { formatErrorMessage } from "../../app/error-message";
@@ -26,6 +27,7 @@ export function ScheduleActionDialog({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useTranslation("schedules");
   const dialogRef = useNativeModalDialog();
   return (
     <dialog
@@ -41,14 +43,14 @@ export function ScheduleActionDialog({
         <DialogHeader
           icon={ExclamationTriangleIcon}
           title={
-            action.kind === "run" ? "Run schedule now?" : "Delete schedule?"
+            action.kind === "run" ? t("runScheduleNow") : t("deleteSchedule")
           }
           titleId="schedule-action-dialog-title"
         />
         <p className="-mt-2 text-sm text-base-content/70">
           {action.kind === "run"
-            ? `Run “${action.schedule.name}” immediately?`
-            : `Delete “${action.schedule.name}”? This cannot be undone.`}
+            ? t("runConfirmation", { name: action.schedule.name })
+            : t("deleteConfirmation", { name: action.schedule.name })}
         </p>
         {error != null && (
           <p className="mt-4 text-sm text-error" role="alert">
@@ -57,27 +59,27 @@ export function ScheduleActionDialog({
         )}
         <DialogFooter>
           <button
-            aria-label="Cancel"
+            aria-label={t("cancel")}
             className="btn btn-ghost"
             type="button"
             onClick={onClose}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
-            aria-label={action.kind === "run" ? "Run now" : "Delete"}
+            aria-label={action.kind === "run" ? t("runNow") : t("delete")}
             className={`btn ${action.kind === "delete" ? "btn-error" : "btn-primary"}`}
             disabled={isPending}
             type="button"
             onClick={onConfirm}
           >
-            {action.kind === "run" ? "Run now" : "Delete"}
+            {action.kind === "run" ? t("runNow") : t("delete")}
           </button>
         </DialogFooter>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button aria-label="Close" type="button" onClick={onClose}>
-          Close
+        <button aria-label={t("close")} type="button" onClick={onClose}>
+          {t("close")}
         </button>
       </form>
     </dialog>

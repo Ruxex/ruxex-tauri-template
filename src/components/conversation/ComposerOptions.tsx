@@ -1,3 +1,5 @@
+import { i18n } from "../../app/i18n";
+import { useTranslation } from "react-i18next";
 import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
@@ -40,12 +42,14 @@ export function ComposerOptions({
   planModeDisabled = false,
   planMode,
 }: ComposerOptionsProps) {
+  const { t } = useTranslation("conversation");
+
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
 
   return (
     <details className="dropdown dropdown-top" ref={detailsRef}>
       <summary
-        aria-label="Composer options"
+        aria-label={t("composerOptions")}
         className="btn btn-ghost btn-sm btn-circle"
       >
         <PlusIcon aria-hidden="true" className="size-5" />
@@ -53,7 +57,7 @@ export function ComposerOptions({
       <ul className="menu dropdown-content z-20 mb-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
         <li>
           <button
-            aria-label="Attach file"
+            aria-label={t("attachFile")}
             disabled={disabled}
             onClick={(event) => {
               onAttach();
@@ -63,13 +67,13 @@ export function ComposerOptions({
             type="button"
           >
             <PaperClipIcon aria-hidden="true" className="size-4" />
-            Attach file
+            {t("attachFile")}
           </button>
         </li>
         <li>
           <button
             aria-current={goalMode ? "true" : undefined}
-            aria-label="Goal mode"
+            aria-label={t("goalMode")}
             className={goalMode ? "active" : undefined}
             disabled={disabled}
             onClick={(event) => {
@@ -80,13 +84,13 @@ export function ComposerOptions({
             type="button"
           >
             <FlagIcon aria-hidden="true" className="size-4" />
-            Goal mode
+            {t("goalMode")}
           </button>
         </li>
         <li>
           <button
             aria-current={planMode ? "true" : undefined}
-            aria-label="Plan mode"
+            aria-label={t("planMode")}
             className={planMode ? "active" : undefined}
             disabled={disabled || planModeDisabled}
             onClick={(event) => {
@@ -97,7 +101,7 @@ export function ComposerOptions({
             type="button"
           >
             <ClipboardDocumentListIcon aria-hidden="true" className="size-4" />
-            Plan mode
+            {t("planMode")}
           </button>
         </li>
       </ul>
@@ -111,33 +115,38 @@ type PermissionMenuProps = {
   onModeChange: (mode: PermissionMode) => void;
 };
 
-const permissionOptions: Array<{
+function getPermissionOptions(): Array<{
   description: string;
   label: string;
   mode: PermissionMode;
-}> = [
-  {
-    description: "Ask before actions that need approval.",
-    label: "Ask for approval",
-    mode: "ask",
-  },
-  {
-    description:
-      "Can inspect files but cannot change them or access the network.",
-    label: "Read-only",
-    mode: "read-only",
-  },
-  {
-    description: "Can change files and use tools without approval.",
-    label: "Full access",
-    mode: "full-access",
-  },
-];
+}> {
+  return [
+    {
+      description: i18n.t("conversation:askBeforeActionsThatNeedApproval"),
+      label: i18n.t("conversation:askForApproval"),
+      mode: "ask",
+    },
+    {
+      description: i18n.t(
+        "conversation:canInspectFilesButCannotChangeThemOrAccessTheNetwork",
+      ),
+      label: i18n.t("conversation:readonly"),
+      mode: "read-only",
+    },
+    {
+      description: i18n.t(
+        "conversation:canChangeFilesAndUseToolsWithoutApproval",
+      ),
+      label: i18n.t("conversation:fullAccess"),
+      mode: "full-access",
+    },
+  ];
+}
 
 function permissionModeLabel(mode: PermissionMode): string {
   return (
-    permissionOptions.find((option) => option.mode === mode)?.label ??
-    "Ask for approval"
+    getPermissionOptions().find((option) => option.mode === mode)?.label ??
+    i18n.t("conversation:askForApproval")
   );
 }
 
@@ -146,6 +155,8 @@ export function PermissionMenu({
   mode,
   onModeChange,
 }: PermissionMenuProps) {
+  const { t } = useTranslation("conversation");
+
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
   const isFullAccess = mode === "full-access";
   const PermissionIcon = isFullAccess
@@ -155,7 +166,7 @@ export function PermissionMenu({
   return (
     <details className="dropdown dropdown-top" ref={detailsRef}>
       <summary
-        aria-label="Permission mode"
+        aria-label={t("permissionMode")}
         className="btn btn-ghost btn-sm gap-1"
       >
         <PermissionIcon
@@ -165,7 +176,7 @@ export function PermissionMenu({
         <span>{permissionModeLabel(mode)}</span>
       </summary>
       <ul className="menu dropdown-content z-20 mb-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
-        {permissionOptions.map((option) => (
+        {getPermissionOptions().map((option) => (
           <li key={option.mode}>
             <button
               aria-current={mode === option.mode ? "true" : undefined}
@@ -206,6 +217,8 @@ export function SubmissionModeMenu({
   mode,
   onModeChange,
 }: SubmissionModeMenuProps) {
+  const { t } = useTranslation("conversation");
+
   const modes = availableSubmissionModes(activeTurnId);
   const options: SubmissionMode[] = ["send", "steer", "queue"];
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
@@ -216,7 +229,7 @@ export function SubmissionModeMenu({
       <summary
         aria-disabled={disabled || undefined}
         className={`btn btn-primary btn-sm join-item px-2 ${disabled ? "opacity-50" : ""}`}
-        aria-label="Submission mode menu"
+        aria-label={t("submissionModeMenu")}
         onClick={(event) => {
           if (disabled) {
             event.preventDefault();
@@ -231,10 +244,10 @@ export function SubmissionModeMenu({
             <button
               aria-label={
                 option === "send"
-                  ? "Send"
+                  ? t("send")
                   : option === "steer"
-                    ? "Steer active turn"
-                    : "Queue next message"
+                    ? t("steerActiveTurn")
+                    : t("queueNextMessage")
               }
               type="button"
               role="menuitem"
@@ -248,17 +261,17 @@ export function SubmissionModeMenu({
               <span className="flex flex-col items-start">
                 <span>
                   {option === "send"
-                    ? "Send"
+                    ? t("send")
                     : option === "steer"
-                      ? "Steer active turn"
-                      : "Queue next message"}
+                      ? t("steerActiveTurn")
+                      : t("queueNextMessage")}
                 </span>
                 <span className="text-xs font-normal text-base-content/60">
                   {option === "send"
-                    ? "Start a new turn with this message."
+                    ? t("startANewTurnWithThisMessage")
                     : option === "steer"
-                      ? "Add this message to the current response."
-                      : "Send it after the current turn finishes."}
+                      ? t("addThisMessageToTheCurrentResponse")
+                      : t("sendItAfterTheCurrentTurnFinishes")}
                 </span>
               </span>
             </button>

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard};
 use ruxex::desktop::config::LoaderOverrides;
@@ -297,6 +298,43 @@ pub(crate) async fn ensure_app_server(
     install_connection(&app, &state, client, status).await
 }
 
+fn create_chat_workspace_in(home: &std::path::Path) -> std::io::Result<std::path::PathBuf> {
+    static NEXT_WORKSPACE_ID: AtomicU64 = AtomicU64::new(0);
+
+    let workspaces = home.join("workspaces");
+    std::fs::create_dir_all(&workspaces)?;
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+
+    loop {
+        let sequence = NEXT_WORKSPACE_ID.fetch_add(1, Ordering::Relaxed);
+        let candidate = workspaces.join(format!(
+            "chat-{timestamp}-{}-{sequence}",
+            std::process::id()
+        ));
+        match std::fs::create_dir(&candidate) {
+            Ok(()) => return std::fs::canonicalize(candidate),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        }
+    }
+}
+
+#[tauri::command]
+pub(crate) fn create_chat_workspace() -> CommandResult<String> {
+    let home = ruxex_home()
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let workspace = create_chat_workspace_in(&home).map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Lifecycle,
+            format!("failed to create chat workspace: {error}"),
+        )
+    })?;
+    Ok(workspace.display().to_string())
+}
+
 #[tauri::command]
 pub(crate) async fn app_server_request(
     state: State<'_, AppServerState>,
@@ -405,8 +443,49 @@ mod tests {
     use super::{
         AppServerDaemonAction, AppServerMode, AppServerStatus, DESKTOP_EXPERIMENTAL_API,
         DesktopAppServerEvent, HOST_APP_SERVER_DAEMON_MODE_ARG, desktop_app_server_daemon_args,
-        parse_app_server_mode, resolve_in_process_paths,
+        create_chat_workspace_in, parse_app_server_mode, resolve_in_process_paths,
     };
+
+    #[test]
+    fn chat_workspaces_are_unique_children_of_the_data_home() {
+        let home = std::env::temp_dir().join(format!(
+            "ruxex workspace-日本-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("test clock should be after the Unix epoch")
+                .as_nanos()
+        ));
+
+        let first = create_chat_workspace_in(&home).expect("first workspace should be created");
+        let second = create_chat_workspace_in(&home).expect("second workspace should be created");
+
+        assert_ne!(first, second);
+        assert!(first.starts_with(home.join("workspaces")));
+        assert!(second.starts_with(home.join("workspaces")));
+        assert!(first.is_dir());
+        assert!(second.is_dir());
+
+        std::fs::remove_dir_all(home).expect("test data home should be removed");
+    }
+
+    #[test]
+    fn chat_workspace_creation_returns_filesystem_errors() {
+        let blocked_home = std::env::temp_dir().join(format!(
+            "ruxex-workspace-blocked-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("test clock should be after the Unix epoch")
+                .as_nanos()
+        ));
+        std::fs::write(&blocked_home, "file blocks a directory").expect("blocker file created");
+
+        let result = create_chat_workspace_in(&blocked_home);
+
+        assert!(result.is_err());
+        std::fs::remove_file(blocked_home).expect("blocker file should be removed");
+    }
 
     #[cfg(unix)]
     #[test]

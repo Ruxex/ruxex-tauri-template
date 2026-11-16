@@ -1,3 +1,4 @@
+import { AppUiError } from "../../app/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
@@ -62,7 +63,7 @@ export function useMcpResource(params: v2.McpResourceReadParams | null) {
     queryKey,
     queryFn: async () => {
       if (!params) {
-        throw new Error("MCP Resource selection is required.");
+        throw new AppUiError("mcpResourceSelectionRequired");
       }
       const requestParams: v2.McpResourceReadParams = {
         server: params.server,
@@ -113,8 +114,6 @@ export function useReloadMcpServers() {
 }
 
 export function useMcpOauthLogin() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (params: v2.McpServerOauthLoginParams) => {
       const response = await requestAppServerMethod(
@@ -122,11 +121,6 @@ export function useMcpOauthLogin() {
         params,
       );
       return response.response;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: appServerQueryKeys.mcpServers,
-      });
     },
   });
 }

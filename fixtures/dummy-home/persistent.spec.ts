@@ -108,7 +108,7 @@ async function assertProjectCounts(): Promise<void> {
 
   for (const [index, project] of PROJECT_FIXTURES.entries()) {
     await $(
-      `tr[aria-label='Open project ${project.name}'] td:first-child`,
+      `//table[@aria-label='Projects']//a[normalize-space(.)='${project.name}']`,
     ).click();
     await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
     await browser.refresh();

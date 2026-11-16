@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CalendarDaysIcon,
   PencilIcon,
@@ -16,22 +17,23 @@ import {
 } from "./schedule-format";
 
 export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
+  const { t } = useTranslation("schedules");
   return (
     <EmptyState
       action={
         <button
-          aria-label="Create schedule"
+          aria-label={t("createSchedule")}
           className="btn btn-sm btn-primary gap-1"
           type="button"
           onClick={onCreate}
         >
           <PlusIcon aria-hidden="true" className="size-4" />
-          Create schedule
+          {t("createSchedule")}
         </button>
       }
-      description="Create your first schedule to automate a prompt."
+      description={t("createYourFirstScheduleToAutomateAPrompt")}
       icon={CalendarDaysIcon}
-      title="No schedules yet"
+      title={t("noSchedulesYet")}
     />
   );
 }
@@ -62,11 +64,13 @@ export function ScheduleCard({
   onOpen?: (schedule: ScheduleRecord) => void;
   onRequestAction: (action: "run" | "delete", schedule: ScheduleRecord) => void;
 }) {
+  const { t, i18n } = useTranslation("schedules");
+  const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
   const enabledTone = schedule.enabled;
 
   return (
     <article
-      aria-label={onOpen ? `Open schedule: ${schedule.name}` : undefined}
+      aria-label={onOpen ? t("openNamed", { name: schedule.name }) : undefined}
       className={`group cursor-pointer overflow-hidden rounded-xl border border-base-300 shadow-sm transition-colors duration-200 ${enabledTone ? "bg-base-100 hover:border-primary/50" : "bg-base-200/40 text-base-content/65 hover:border-base-300"}`}
       role={onOpen ? "link" : undefined}
       tabIndex={onOpen ? 0 : undefined}
@@ -101,15 +105,17 @@ export function ScheduleCard({
             <p
               className={`mt-1 truncate text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}
             >
-              Next run: {formatDateTime(schedule.nextRunAt)}
+              {t("nextRunValue", {
+                time: formatDateTime(schedule.nextRunAt, locale),
+              })}
             </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
-            aria-label={`Edit schedule: ${schedule.name}`}
+            aria-label={t("editNamed", { name: schedule.name })}
             className="btn btn-ghost btn-sm btn-square"
-            title="Edit"
+            title={t("edit")}
             onClick={(event) => {
               event.stopPropagation();
               onEdit(schedule);
@@ -119,10 +125,10 @@ export function ScheduleCard({
             <PencilIcon aria-hidden="true" className="size-4" />
           </button>
           <button
-            aria-label={`Run now: ${schedule.name}`}
+            aria-label={t("runNamed", { name: schedule.name })}
             className="btn btn-ghost btn-sm btn-square"
             disabled={isRunPending}
-            title="Run now"
+            title={t("runNow")}
             onClick={(event) => {
               event.stopPropagation();
               onRequestAction("run", schedule);
@@ -132,10 +138,10 @@ export function ScheduleCard({
             <PlayIcon aria-hidden="true" className="size-4" />
           </button>
           <button
-            aria-label={`Delete: ${schedule.name}`}
+            aria-label={t("deleteNamed", { name: schedule.name })}
             className="btn btn-ghost btn-sm btn-square"
             disabled={isDeletePending}
-            title="Delete"
+            title={t("delete")}
             onClick={(event) => {
               event.stopPropagation();
               onRequestAction("delete", schedule);
@@ -146,7 +152,9 @@ export function ScheduleCard({
           </button>
           <label className="flex shrink-0 items-center">
             <input
-              aria-label={`${schedule.enabled ? "Disable" : "Enable"} schedule: ${schedule.name}`}
+              aria-label={t(schedule.enabled ? "disableNamed" : "enableNamed", {
+                name: schedule.name,
+              })}
               checked={schedule.enabled}
               className="toggle toggle-primary toggle-sm"
               disabled={isTogglePending}
@@ -177,8 +185,13 @@ export function ScheduleCard({
           <div
             className={`min-w-0 space-y-1 text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}
           >
-            <p className="truncate" title={formatDateTime(schedule.lastRun.at)}>
-              Last run: {formatRelativeDateTime(schedule.lastRun.at)}
+            <p
+              className="truncate"
+              title={formatDateTime(schedule.lastRun.at, locale)}
+            >
+              {t("lastRunValue", {
+                time: formatRelativeDateTime(schedule.lastRun.at),
+              })}
             </p>
           </div>
         </div>

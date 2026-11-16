@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 
 import { formatErrorMessage } from "../../app/error-message";
@@ -27,23 +28,26 @@ export function useMcpServerConfigActions({
   refetchStatuses: () => Promise<StatusResult>;
   statuses: v2.McpServerStatus[];
 }) {
+  const { t } = useTranslation("mcp");
   const writeConfig = useWriteConfig();
   const reloadMcp = useReloadMcpServers();
   const [writeError, setWriteError] = useState<string | null>(null);
-  const [reloadError, setReloadError] = useState<string | null>(null);
-  const [higherLayerNotice, setHigherLayerNotice] = useState<string | null>(
+  const [reloadFailed, setReloadFailed] = useState(false);
+  const [higherLayerServer, setHigherLayerServer] = useState<string | null>(
     null,
   );
-  const [overrideNotice, setOverrideNotice] = useState<string | null>(null);
+  const [overrideNotice, setOverrideNotice] = useState<
+    { message: string } | { fallback: true } | null
+  >(null);
 
   async function reloadAfterWrite(name: string, warnIfAnotherLayer: boolean) {
     let reloadSucceeded = false;
     try {
       await reloadMcp.mutateAsync({});
       reloadSucceeded = true;
-      setReloadError(null);
+      setReloadFailed(false);
     } catch {
-      setReloadError("Saved, but MCP reload failed");
+      setReloadFailed(true);
     }
 
     if (warnIfAnotherLayer && reloadSucceeded) {
@@ -55,9 +59,7 @@ export function useMcpServerConfigActions({
         currentStatuses = undefined;
       }
       if (!currentStatuses?.some((status) => status.name === name)) return;
-      setHigherLayerNotice(
-        `Another configuration source is still active for MCP server “${name}”.`,
-      );
+      setHigherLayerServer(name);
     }
   }
 
@@ -69,15 +71,16 @@ export function useMcpServerConfigActions({
     if (configVersion) params.expectedVersion = configVersion;
 
     setWriteError(null);
-    setReloadError(null);
-    setHigherLayerNotice(null);
+    setReloadFailed(false);
+    setHigherLayerServer(null);
     setOverrideNotice(null);
     try {
       const result = await writeConfig.mutateAsync(params);
       if (result.status === "okOverridden") {
         setOverrideNotice(
-          result.overriddenMetadata?.message ??
-            "A higher-priority configuration layer overrides this value.",
+          result.overriddenMetadata?.message != null
+            ? { message: result.overriddenMetadata.message }
+            : { fallback: true },
         );
       }
       return true;
@@ -157,19 +160,27 @@ export function useMcpServerConfigActions({
   async function retryReload() {
     try {
       await reloadMcp.mutateAsync({});
-      setReloadError(null);
+      setReloadFailed(false);
     } catch {
-      setReloadError("Saved, but MCP reload failed");
+      setReloadFailed(true);
     }
   }
 
   return {
     deleteEntry,
     clearWriteError,
-    higherLayerNotice,
+    higherLayerNotice:
+      higherLayerServer === null
+        ? null
+        : t("anotherConfigurationActive", { name: higherLayerServer }),
     importJson,
-    overrideNotice,
-    reloadError,
+    overrideNotice:
+      overrideNotice === null
+        ? null
+        : "message" in overrideNotice
+          ? overrideNotice.message
+          : t("aHigherpriorityConfigurationLayerOverridesThisValue"),
+    reloadError: reloadFailed ? t("savedButMcpReloadFailed") : null,
     reloadMcp,
     retryReload,
     save,

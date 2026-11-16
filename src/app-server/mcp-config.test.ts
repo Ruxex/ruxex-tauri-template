@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { i18n } from "../app/i18n";
 import type { v2 } from "../protocol";
 import {
   draftFromEntry,
@@ -246,4 +247,14 @@ describe("global MCP configuration adapter", () => {
       required: false,
     });
   });
+});
+
+it("localizes Ruxex validation and preserves MCP field names", async () => {
+  await i18n.changeLanguage("ja");
+  const response = configResponse([
+    userLayer({ mcp_servers: { docs: { command: "node", args: "invalid" } } }),
+  ]);
+  expect(extractGlobalMcpConfig(response).servers[0]?.error).toBe(
+    "args は文字列の配列で指定してください",
+  );
 });

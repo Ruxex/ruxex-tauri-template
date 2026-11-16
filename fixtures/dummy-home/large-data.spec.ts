@@ -51,7 +51,7 @@ async function captureLargeChats(): Promise<void> {
   await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.large.unassignedThreads,
     {
       timeout: 20_000,
@@ -59,7 +59,7 @@ async function captureLargeChats(): Promise<void> {
     },
   );
   await saveFixtureScreenshot("chats-unassigned-many-top.png");
-  await $('main ul[aria-label="Chats"] > li:last-child').scrollIntoView({
+  await $('section[aria-label="Chats"] tbody tr:last-child').scrollIntoView({
     block: "center",
   });
   await saveFixtureScreenshot("chats-unassigned-many-bottom.png");
@@ -67,7 +67,7 @@ async function captureLargeChats(): Promise<void> {
   await $("button=In projects").click();
   await browser.waitUntil(
     async () =>
-      (await $$('main ul[aria-label="Chats"] > li').length) ===
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
       PAGE_DENSITY_COUNTS.large.projectAssignedThreads,
     {
       timeout: 20_000,
@@ -75,7 +75,7 @@ async function captureLargeChats(): Promise<void> {
     },
   );
   await saveFixtureScreenshot("chats-projects-many-top.png");
-  await $('main ul[aria-label="Chats"] > li:last-child').scrollIntoView({
+  await $('section[aria-label="Chats"] tbody tr:last-child').scrollIntoView({
     block: "center",
   });
   await saveFixtureScreenshot("chats-projects-many-bottom.png");
@@ -199,9 +199,9 @@ async function captureLargeProjects(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
   await saveFixtureScreenshot("projects-many-top.png");
-  await $("tr[aria-label='Open project Large project 117']").scrollIntoView({
-    block: "center",
-  });
+  await $(
+    "//table[@aria-label='Projects']//a[normalize-space(.)='Large project 117']/ancestor::tr",
+  ).scrollIntoView({ block: "center" });
   await saveFixtureScreenshot("projects-many-bottom.png");
 
   await $("select[aria-label='Sort projects']").selectByAttribute(
@@ -227,12 +227,12 @@ async function captureLargeProjectDetail(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
   await $(
-    "tr[aria-label='Open project Product planning'] td:first-child",
+    "//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']",
   ).click();
   await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
     async () =>
-      (await $$("section.card a").length) ===
+      (await $$('section[aria-label="Chats"] a').length) ===
       PAGE_DENSITY_COUNTS.large.projectThreads,
     {
       timeout: 20_000,
@@ -241,7 +241,7 @@ async function captureLargeProjectDetail(): Promise<void> {
   );
   await closeSidebarPanel();
   await saveFixtureScreenshot("project-detail-many-top.png");
-  const projectChats = await $$("section.card a");
+  const projectChats = await $$('section[aria-label="Chats"] a');
   const projectChatCount = await projectChats.length;
   await projectChats[projectChatCount - 1].scrollIntoView({
     block: "center",

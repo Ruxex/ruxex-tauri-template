@@ -1,3 +1,4 @@
+import { AppUiError } from "../../app/error-message";
 import {
   readLocalMarketplaceAsset,
   readMarketplaceAsset,
@@ -10,7 +11,7 @@ const localAssetCache = new Map<string, Promise<string>>();
 export async function loadMarketplaceAsset(value: string): Promise<string> {
   const requestedUrl = validateMarketplaceAssetUrl(value);
   if (!requestedUrl) {
-    throw new Error("This marketplace image source is not allowed.");
+    throw new AppUiError("marketplaceImageSourceNotAllowed");
   }
 
   const cacheKey = requestedUrl.toString();
@@ -29,7 +30,7 @@ export async function loadMarketplaceAsset(value: string): Promise<string> {
 
 export async function loadLocalMarketplaceAsset(path: string): Promise<string> {
   if (!path) {
-    throw new Error("This marketplace image path is not allowed.");
+    throw new AppUiError("marketplaceImagePathNotAllowed");
   }
 
   const cached = localAssetCache.get(path);

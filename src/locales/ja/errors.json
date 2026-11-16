@@ -1,0 +1,9 @@
+{
+  "unableToDisplay": "エラーを表示できません。",
+  "pluginLocalMarketplaceRequired": "プラグインの詳細にはローカルマーケットプレイスが必要です。",
+  "mcpResourceSelectionRequired": "MCP リソースを選択してください。",
+  "marketplaceImageSourceNotAllowed": "このマーケットプレイス画像のソースは許可されていません。",
+  "marketplaceImagePathNotAllowed": "このマーケットプレイス画像のパスは許可されていません。",
+  "imageReadFailed": "添付画像を読み込めません。",
+  "audioReadFailed": "録音した音声を読み込めません。"
+}

@@ -1,3 +1,5 @@
+import { i18n } from "../../app/i18n";
+import { useTranslation } from "react-i18next";
 import {
   CheckIcon,
   ExclamationTriangleIcon,
@@ -35,6 +37,8 @@ export function ServerRequestCard({
   onResolve,
   onReject,
 }: ServerRequestCardProps) {
+  const { t } = useTranslation("approvals");
+
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const request = pending.request;
@@ -72,13 +76,15 @@ export function ServerRequestCard({
   const isMcpToolApproval =
     mcpParams?.mode === "form" &&
     mcpMeta?.ruxex_approval_kind === "mcp_tool_call";
-  const title = isMcpToolApproval
-    ? "MCP approval requested"
-    : isUserInput
-      ? "Input requested"
-      : request.method.includes("requestApproval")
-        ? "Approval requested"
-        : "Server request";
+  const title = isPermissionsRequest
+    ? t("permissionRequested")
+    : isMcpToolApproval
+      ? t("mCPApprovalRequested")
+      : isUserInput
+        ? t("inputRequested")
+        : request.method.includes("requestApproval")
+          ? t("approvalRequested")
+          : t("serverRequest");
   const RequestIcon = isMcpToolApproval
     ? ShieldCheckIcon
     : isUserInput
@@ -172,18 +178,18 @@ export function ServerRequestCard({
           )}
           {permissionParams && (
             <section
-              aria-label="Requested access"
-              className="mt-2 rounded-box border border-warning/30 bg-warning/5 p-3 text-sm"
+              aria-label={t("requestedAccess")}
+              className="mt-3 rounded-box border border-warning/30 bg-warning/5 p-4 text-sm"
             >
-              <h3 className="font-medium">Requested access</h3>
+              <h3 className="font-semibold">{t("requestedAccess")}</h3>
               {permissionParams.reason && (
-                <p className="mt-1 text-base-content/75">
+                <p className="mt-2 text-base-content/80">
                   {permissionParams.reason}
                 </p>
               )}
-              <ul className="mt-2 space-y-1">
+              <ul className="mt-3 space-y-2">
                 {permissionSummary.map((item) => (
-                  <li className="truncate" key={item} title={item}>
+                  <li className="min-w-0 break-all" key={item}>
                     {item}
                   </li>
                 ))}
@@ -283,12 +289,12 @@ export function ServerRequestCard({
                             type="radio"
                             value={otherLabel}
                           />
-                          <span className="text-sm">{otherLabel}</span>
+                          <span className="text-sm">{t("otherAnswer")}</span>
                         </label>
                         {selected === otherLabel && (
                           <label className="form-control px-2 pb-1">
                             <span className="label-text text-xs">
-                              Additional details (optional)
+                              {t("additionalDetailsOptional")}
                             </span>
                             <textarea
                               className="textarea textarea-bordered textarea-sm mt-1 w-full"
@@ -313,19 +319,25 @@ export function ServerRequestCard({
             })}
           {!isRequestActionable(request) && (
             <p className="mt-2 text-sm text-error">
-              Malformed or unsupported request payload.
+              {t("malformedOrUnsupportedRequestPayload")}
             </p>
           )}
           {!connected && (
             <div className="mt-2">
-              <StateBadge tone="warning">Disconnected</StateBadge>
+              <StateBadge tone="warning">{t("disconnected")}</StateBadge>
             </div>
           )}
         </div>
-        <div className="card-actions justify-end">
+        <div
+          className={
+            permissionParams
+              ? "card-actions flex-col items-stretch gap-2"
+              : "card-actions justify-end"
+          }
+        >
           {actionable && isUserInput && (
             <button
-              aria-label="Submit"
+              aria-label={t("submit")}
               className="btn btn-primary btn-sm gap-1"
               type="button"
               onClick={() => void submitInput()}
@@ -339,7 +351,7 @@ export function ServerRequestCard({
               }
             >
               <CheckIcon aria-hidden="true" className="size-4" />
-              Submit
+              {t("submit")}
             </button>
           )}
           {actionable &&
@@ -347,53 +359,59 @@ export function ServerRequestCard({
             request.method.includes("requestApproval") && (
               <>
                 <button
-                  aria-label="Approve once"
-                  className="btn btn-success btn-sm gap-1"
+                  aria-label={t("approveOnce")}
+                  className={`btn btn-success btn-sm gap-1 ${
+                    permissionParams ? "w-full justify-start" : ""
+                  }`}
                   type="button"
                   onClick={() => void resolve("accept")}
                 >
                   <CheckIcon aria-hidden="true" className="size-4" />
-                  Approve once
+                  {t("approveOnce")}
                 </button>
                 <button
-                  aria-label="Approve in this chat"
-                  className="btn btn-success btn-sm btn-outline gap-1"
+                  aria-label={t("approveInThisChat")}
+                  className={`btn btn-success btn-sm btn-outline gap-1 ${
+                    permissionParams ? "w-full justify-start" : ""
+                  }`}
                   type="button"
                   onClick={() => void resolve("acceptForSession")}
                 >
                   <CheckIcon aria-hidden="true" className="size-4" />
-                  Approve in this chat
+                  {t("approveInThisChat")}
                 </button>
                 <button
-                  aria-label="Reject"
-                  className="btn btn-error btn-sm btn-outline gap-1"
+                  aria-label={t("reject")}
+                  className={`btn btn-error btn-sm btn-outline gap-1 ${
+                    permissionParams ? "w-full justify-start" : ""
+                  }`}
                   type="button"
                   onClick={() => void resolve("decline")}
                 >
                   <XMarkIcon aria-hidden="true" className="size-4" />
-                  Reject
+                  {t("reject")}
                 </button>
               </>
             )}
           {actionable && isMcpToolApproval && (
             <>
               <button
-                aria-label="Allow"
+                aria-label={t("allow")}
                 className="btn btn-success btn-sm gap-1"
                 type="button"
                 onClick={() => void resolveMcp("accept")}
               >
                 <CheckIcon aria-hidden="true" className="size-4" />
-                Allow
+                {t("allow")}
               </button>
               <button
-                aria-label="Cancel"
+                aria-label={t("cancel")}
                 className="btn btn-error btn-sm btn-outline gap-1"
                 type="button"
                 onClick={() => void resolveMcp("cancel")}
               >
                 <XMarkIcon aria-hidden="true" className="size-4" />
-                Cancel
+                {t("cancel")}
               </button>
             </>
           )}
@@ -402,7 +420,7 @@ export function ServerRequestCard({
             !isMcpToolApproval &&
             !request.method.includes("requestApproval") && (
               <button
-                aria-label="Reject"
+                aria-label={t("reject")}
                 className="btn btn-error btn-sm btn-outline gap-1"
                 type="button"
                 onClick={() => void onReject("Unsupported server request")}
@@ -411,7 +429,7 @@ export function ServerRequestCard({
                   aria-hidden="true"
                   className="size-4"
                 />
-                Reject
+                {t("reject")}
               </button>
             )}
         </div>
@@ -430,14 +448,23 @@ function buildPermissionSummary(
     const key = `${access.toLowerCase()}:${path}`;
     if (fileSystemItems.has(key)) return;
     fileSystemItems.add(key);
-    items.push(`${access.charAt(0).toUpperCase()}${access.slice(1)}: ${path}`);
+    items.push(
+      access.toLowerCase() === "read"
+        ? i18n.t("approvals:readPath", { path })
+        : access.toLowerCase() === "write"
+          ? i18n.t("approvals:writePath", { path })
+          : i18n.t("approvals:accessPath", {
+              access: access.charAt(0).toUpperCase() + access.slice(1),
+              path,
+            }),
+    );
   }
 
   if (params.permissions.network) {
     items.push(
       params.permissions.network.enabled === true
-        ? "Network access"
-        : "Network access requested",
+        ? i18n.t("approvals:networkAccess")
+        : i18n.t("approvals:networkAccessRequested"),
     );
   }
 
@@ -452,7 +479,9 @@ function buildPermissionSummary(
     addFileSystemItem(entry.access, formatValue(entry.path));
   });
 
-  return items.length > 0 ? items : ["Specific access requested"];
+  return items.length > 0
+    ? items
+    : [i18n.t("approvals:specificAccessRequested")];
 }
 
 function formatValue(value: unknown): string {

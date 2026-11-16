@@ -1,10 +1,13 @@
+import type { TFunction } from "i18next";
+import { i18n } from "../../app/i18n";
 import type { v2 } from "../../protocol";
 import type { ConversationViewItem } from "./conversation-model";
 
 export function normalizeThreadItem(
   turnId: string,
   item: v2.ThreadItem,
-  assistantName = "Assistant",
+  assistantName?: string,
+  t: TFunction = i18n.getFixedT(null, "conversation"),
 ): ConversationViewItem {
   switch (item.type) {
     case "userMessage": {
@@ -17,7 +20,7 @@ export function normalizeThreadItem(
         turnId,
         type: item.type,
         category: "message",
-        title: "You",
+        title: t("you"),
         text,
         editable:
           item.content.length > 0 &&
@@ -31,17 +34,17 @@ export function normalizeThreadItem(
         turnId,
         type: item.type,
         category: "message",
-        title: assistantName,
+        title: assistantName ?? t("assistant"),
         text: item.text,
       };
     case "plan":
-      return messageActivity(item.id, turnId, item.type, "Plan", item.text);
+      return messageActivity(item.id, turnId, item.type, t("plan"), item.text);
     case "reasoning":
       return messageActivity(
         item.id,
         turnId,
         item.type,
-        "Reasoning",
+        t("reasoning"),
         [...item.summary, ...item.content].join("\n"),
       );
     case "commandExecution":
@@ -50,7 +53,7 @@ export function normalizeThreadItem(
           item.id,
           turnId,
           item.type,
-          "Command",
+          t("command"),
           item.aggregatedOutput || item.command,
           compactMetadata({
             command: item.command,
@@ -66,10 +69,10 @@ export function normalizeThreadItem(
         item.id,
         turnId,
         item.type,
-        "Changes",
+        t("changes"),
         item.changes.length > 0
           ? item.changes.map((change) => JSON.stringify(change)).join("\n")
-          : "No file changes recorded.",
+          : t("noFileChangesRecorded"),
         compactMetadata({ status: item.status, files: item.changes.length }),
       );
     case "mcpToolCall":
@@ -77,12 +80,12 @@ export function normalizeThreadItem(
         item.id,
         turnId,
         item.type,
-        `MCP: ${item.server} / ${item.tool}`,
+        t("mcpToolTitle", { server: item.server, tool: item.tool }),
         item.error
           ? JSON.stringify(item.error)
           : item.result
             ? JSON.stringify(item.result)
-            : "Tool call completed.",
+            : t("toolCallCompleted"),
         compactMetadata({
           server: item.server,
           tool: item.tool,
@@ -99,7 +102,7 @@ export function normalizeThreadItem(
           item.id,
           turnId,
           item.type,
-          `Tool: ${item.tool}`,
+          t("toolName", { tool: item.tool }),
           safeJson(item.arguments),
           compactMetadata({
             namespace: item.namespace,
@@ -113,7 +116,13 @@ export function normalizeThreadItem(
     }
     case "imageView":
       return {
-        ...messageActivity(item.id, turnId, item.type, "Screenshot", item.path),
+        ...messageActivity(
+          item.id,
+          turnId,
+          item.type,
+          t("screenshot"),
+          item.path,
+        ),
         imagePath: item.path,
       };
     case "collabAgentToolCall":
@@ -121,8 +130,8 @@ export function normalizeThreadItem(
         item.id,
         turnId,
         item.type,
-        "Agent collaboration",
-        item.prompt || `Tool: ${item.tool}`,
+        t("agentCollaboration"),
+        item.prompt || t("toolName", { tool: item.tool }),
         compactMetadata({
           tool: item.tool,
           status: item.status,
@@ -134,32 +143,35 @@ export function normalizeThreadItem(
         item.id,
         turnId,
         item.type,
-        "Activity",
+        t("activity"),
         safeJson(item),
       );
   }
 }
 
-export function liveActivityTitle(type: string): string {
+export function liveActivityTitle(
+  type: string,
+  t: TFunction = i18n.getFixedT(null, "conversation"),
+): string {
   switch (type) {
     case "commandExecution":
-      return "Command";
+      return t("command");
     case "fileChange":
-      return "Changes";
+      return t("changes");
     case "mcpToolCall":
-      return "MCP tool";
+      return t("mcpTool");
     case "dynamicToolCall":
-      return "Tool";
+      return t("tool");
     case "plan":
-      return "Plan";
+      return t("plan");
     case "reasoning":
-      return "Reasoning";
+      return t("reasoning");
     case "imageView":
-      return "Screenshot";
+      return t("screenshot");
     case "collabAgentToolCall":
-      return "Agent collaboration";
+      return t("agentCollaboration");
     default:
-      return "Activity";
+      return t("activity");
   }
 }
 
@@ -189,7 +201,7 @@ function safeJson(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch {
-    return "This activity cannot be previewed.";
+    return i18n.t("conversation:thisActivityCannotBePreviewed");
   }
 }
 
