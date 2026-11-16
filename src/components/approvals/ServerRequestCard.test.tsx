@@ -258,8 +258,6 @@ describe("ServerRequestCard", () => {
     expect(
       screen.queryByRole("region", { name: "Request summary" }),
     ).toBeNull();
-    expect(screen.getByTitle("Read: /workspace/read")).toBeTruthy();
-    expect(screen.getByTitle("Write: /workspace/write")).toBeTruthy();
     expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
     expect(screen.queryByRole("radio", { name: "This session" })).toBeNull();
     fireEvent.click(

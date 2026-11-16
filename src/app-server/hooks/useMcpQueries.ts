@@ -114,6 +114,8 @@ export function useReloadMcpServers() {
 }
 
 export function useMcpOauthLogin() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (params: v2.McpServerOauthLoginParams) => {
       const response = await requestAppServerMethod(
@@ -121,6 +123,11 @@ export function useMcpOauthLogin() {
         params,
       );
       return response.response;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.mcpServers,
+      });
     },
   });
 }
