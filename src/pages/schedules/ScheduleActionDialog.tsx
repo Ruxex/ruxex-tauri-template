@@ -5,6 +5,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "../../components/common/DialogParts";
+import { useNativeModalDialog } from "../../components/common/useNativeModalDialog";
 import type { ScheduleRecord } from "../../platform/schedules";
 
 export type ScheduleAction = {
@@ -25,11 +26,12 @@ export function ScheduleActionDialog({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const dialogRef = useNativeModalDialog();
   return (
     <dialog
       aria-labelledby="schedule-action-dialog-title"
       className="modal"
-      open
+      ref={dialogRef}
       onCancel={(event) => {
         event.preventDefault();
         onClose();

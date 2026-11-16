@@ -15,6 +15,7 @@ import type {
   AppServerDaemonOutput,
 } from "../../app-server/daemon-api";
 import { DialogFooter, DialogHeader } from "../common/DialogParts";
+import { useNativeModalDialog } from "../common/useNativeModalDialog";
 import { StateBadge, type StateBadgeTone } from "../common/StateBadge";
 import { SettingRow, SettingsPanel } from "./SettingsPanel";
 
@@ -86,6 +87,9 @@ export function AppServerCard({
   const [confirmationAction, setConfirmationAction] = useState<
     "restart" | "stop" | "forceStop" | null
   >(null);
+  const confirmationDialogRef = useNativeModalDialog(
+    confirmationAction !== null,
+  );
   const inProcess = mode === "inprocess";
   const error =
     connectionError ??
@@ -357,9 +361,8 @@ export function AppServerCard({
       {confirmationAction !== null && (
         <dialog
           aria-labelledby="app-server-action-title"
-          aria-modal="true"
           className="modal"
-          open
+          ref={confirmationDialogRef}
           onCancel={(event) => {
             event.preventDefault();
             setConfirmationAction(null);

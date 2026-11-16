@@ -16,7 +16,7 @@ export function VersionPage() {
   const daemonVersion = daemon.status.data;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">Version</h2>
       <SettingsPanel title="Installed versions">
         <dl>

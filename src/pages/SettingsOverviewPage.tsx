@@ -117,7 +117,7 @@ export function SettingsOverviewPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">General</h2>
       <LanguageCard
         language={preferences.language}

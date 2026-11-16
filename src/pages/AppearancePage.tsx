@@ -15,7 +15,7 @@ export function AppearancePage() {
   const { preferences, update } = useUiPreferences();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">Appearance</h2>
       <UiPreferencesCard
         onThemePresetChange={(preset) =>

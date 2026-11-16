@@ -1,7 +1,7 @@
 import {
   CalendarDaysIcon,
-  PlayIcon,
   PencilIcon,
+  PlayIcon,
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -21,7 +21,7 @@ export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
       action={
         <button
           aria-label="Create schedule"
-          className="btn btn-sm btn-primary"
+          className="btn btn-sm btn-primary gap-1"
           type="button"
           onClick={onCreate}
         >

@@ -17,6 +17,7 @@ import {
   LoadingState,
 } from "../components/common/AsyncState";
 import { ThreadCard } from "../components/common/ThreadCard";
+import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
 
 export function ArchivePage() {
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
@@ -27,6 +28,8 @@ export function ArchivePage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
+  const deleteDialogRef = useNativeModalDialog(deleteTarget !== null);
+  const deleteAllDialogRef = useNativeModalDialog(isDeleteAllDialogOpen);
   const currentCursor = cursorHistory.at(-1) ?? null;
   const archived = useArchivedThreadList(currentCursor);
   const deleteAll = useDeleteAllArchivedThreads();
@@ -69,7 +72,7 @@ export function ArchivePage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Archived chats</h1>
@@ -92,7 +95,20 @@ export function ArchivePage() {
       </div>
       {archived.isLoading && <LoadingState />}
       {archived.isError && (
-        <ErrorState>Unable to load archived chats.</ErrorState>
+        <ErrorState
+          action={
+            <button
+              className="btn btn-sm"
+              disabled={archived.isFetching}
+              onClick={() => void archived.refetch()}
+              type="button"
+            >
+              {archived.isFetching ? "Retrying…" : "Retry"}
+            </button>
+          }
+        >
+          Unable to load archived chats.
+        </ErrorState>
       )}
       {!archived.isLoading && !archived.data?.data.length && (
         <EmptyState
@@ -171,11 +187,14 @@ export function ArchivePage() {
         </nav>
       )}
       {deleteTarget && (
-        <div
+        <dialog
           aria-labelledby="delete-chat-title"
-          aria-modal="true"
-          className="modal modal-open"
-          role="dialog"
+          className="modal"
+          ref={deleteDialogRef}
+          onCancel={(event) => {
+            event.preventDefault();
+            closeDeleteDialog();
+          }}
         >
           <div className="modal-box">
             <h2 className="text-lg font-semibold" id="delete-chat-title">
@@ -212,14 +231,17 @@ export function ArchivePage() {
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
       {isDeleteAllDialogOpen && (
-        <div
+        <dialog
           aria-labelledby="delete-all-archived-chats-title"
-          aria-modal="true"
-          className="modal modal-open"
-          role="dialog"
+          className="modal"
+          ref={deleteAllDialogRef}
+          onCancel={(event) => {
+            event.preventDefault();
+            closeDeleteAllDialog();
+          }}
         >
           <div className="modal-box">
             <h2
@@ -264,7 +286,7 @@ export function ArchivePage() {
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );

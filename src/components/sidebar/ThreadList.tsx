@@ -1,16 +1,16 @@
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+import { useThreadReadState } from "../../app/thread-read-state";
 import {
   activeThreadListParams,
   useArchiveThread,
   useThreadActivity,
   useThreadList,
 } from "../../app-server/hooks";
-import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
-import { useThreadReadState } from "../../app/thread-read-state";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
 import type { v2 } from "../../protocol";
 import { ChatListItem } from "../chats/ChatListItem";
 import { chatStatusFromThreadStatus } from "../chats/chat-status";
-import { EmptyState } from "../common/AsyncState";
+import { EmptyState, ErrorState } from "../common/AsyncState";
 
 type ThreadListProps = {
   projectId?: string;
@@ -40,7 +40,23 @@ export function ThreadList({
     return <span className="loading loading-spinner loading-sm" />;
   }
   if (threads.isError) {
-    return <p className="text-xs text-error">Unable to load chats.</p>;
+    return (
+      <ErrorState
+        compact
+        action={
+          <button
+            className="btn btn-xs"
+            disabled={threads.isFetching}
+            onClick={() => void threads.refetch()}
+            type="button"
+          >
+            {threads.isFetching ? "Retrying…" : "Retry"}
+          </button>
+        }
+      >
+        Unable to load chats.
+      </ErrorState>
+    );
   }
   if (!threads.data?.data.length) {
     return (

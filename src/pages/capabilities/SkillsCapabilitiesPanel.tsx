@@ -114,7 +114,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
       <div className="flex justify-end">
         <button
           aria-label="Add Skill directory"
-          className="btn btn-outline btn-sm"
+          className="btn btn-outline btn-sm gap-1"
           disabled={setSkillsExtraRootsMutation.isPending}
           onClick={() => void addSkillDirectory()}
           type="button"

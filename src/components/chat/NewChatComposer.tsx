@@ -213,13 +213,15 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         </h1>
       </div>
       <div className="mx-auto w-full max-w-3xl">
-        <div className="mb-1 w-fit max-w-full rounded-box border border-base-300 bg-base-100 px-2 py-1.5">
+        <div className="mb-1 w-fit max-w-full rounded-box border border-base-300 bg-base-100 px-2 py-0.5">
           <ProjectSelector
             disabled={isPending}
             isError={projects.isError}
             isLoading={projects.isLoading}
+            isRetrying={projects.isFetching}
             onChange={setSelectedProjectId}
             onCreateProject={() => setShowNewProjectDialog(true)}
+            onRetry={() => void projects.refetch()}
             projects={projects.data?.data ?? []}
             value={selectedProjectId}
           />
@@ -328,13 +330,12 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
               />
               <button
                 aria-label="Send"
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-square btn-sm"
                 disabled={isPending || isProjectLoading || !canSubmit}
                 title="Send"
                 type="submit"
               >
                 <PaperAirplaneIcon aria-hidden="true" className="size-4" />
-                Send
               </button>
             </div>
           </div>

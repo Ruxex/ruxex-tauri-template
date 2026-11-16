@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   CheckIcon,
   ExclamationTriangleIcon,
@@ -7,10 +6,13 @@ import {
   ShieldCheckIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
+import { StateBadge } from "../common/StateBadge";
 import {
+  type ApprovalDecision,
   buildApprovalResponse,
   buildMcpElicitationResponse,
   buildPermissionsApprovalResponse,
@@ -18,9 +20,7 @@ import {
   canResolvePendingRequest,
   isPermissionsApproval,
   isRequestActionable,
-  type ApprovalDecision,
 } from "./approval-model";
-import { StateBadge } from "../common/StateBadge";
 
 type ServerRequestCardProps = {
   pending: PendingServerRequest;
@@ -202,7 +202,7 @@ export function ServerRequestCard({
           {actionable && isUserInput && (
             <button
               aria-label="Submit"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm gap-1"
               type="button"
               onClick={() => void submitInput()}
               disabled={!answer.trim()}
@@ -217,7 +217,7 @@ export function ServerRequestCard({
               <>
                 <button
                   aria-label="Approve once"
-                  className="btn btn-success btn-sm"
+                  className="btn btn-success btn-sm gap-1"
                   type="button"
                   onClick={() => void resolve("accept")}
                 >
@@ -226,7 +226,7 @@ export function ServerRequestCard({
                 </button>
                 <button
                   aria-label="Approve in this chat"
-                  className="btn btn-success btn-sm btn-outline"
+                  className="btn btn-success btn-sm btn-outline gap-1"
                   type="button"
                   onClick={() => void resolve("acceptForSession")}
                 >
@@ -235,7 +235,7 @@ export function ServerRequestCard({
                 </button>
                 <button
                   aria-label="Reject"
-                  className="btn btn-error btn-sm btn-outline"
+                  className="btn btn-error btn-sm btn-outline gap-1"
                   type="button"
                   onClick={() => void resolve("decline")}
                 >
@@ -248,7 +248,7 @@ export function ServerRequestCard({
             <>
               <button
                 aria-label="Allow"
-                className="btn btn-success btn-sm"
+                className="btn btn-success btn-sm gap-1"
                 type="button"
                 onClick={() => void resolveMcp("accept")}
               >
@@ -257,7 +257,7 @@ export function ServerRequestCard({
               </button>
               <button
                 aria-label="Cancel"
-                className="btn btn-error btn-sm btn-outline"
+                className="btn btn-error btn-sm btn-outline gap-1"
                 type="button"
                 onClick={() => void resolveMcp("cancel")}
               >
@@ -272,7 +272,7 @@ export function ServerRequestCard({
             !request.method.includes("requestApproval") && (
               <button
                 aria-label="Reject"
-                className="btn btn-error btn-sm btn-outline"
+                className="btn btn-error btn-sm btn-outline gap-1"
                 type="button"
                 onClick={() => void onReject("Unsupported server request")}
               >
@@ -299,9 +299,7 @@ function buildPermissionSummary(
     const key = `${access.toLowerCase()}:${path}`;
     if (fileSystemItems.has(key)) return;
     fileSystemItems.add(key);
-    items.push(
-      `${access.charAt(0).toUpperCase()}${access.slice(1)}: ${path}`,
-    );
+    items.push(`${access.charAt(0).toUpperCase()}${access.slice(1)}: ${path}`);
   }
 
   if (params.permissions.network) {

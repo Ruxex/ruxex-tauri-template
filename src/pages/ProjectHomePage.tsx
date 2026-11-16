@@ -11,12 +11,11 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
-import type { v2 } from "../protocol";
 import {
+  useArchiveThread,
   useDeleteProject,
   useProject,
   useProjectThreads,
-  useArchiveThread,
   useUpdateProject,
 } from "../app-server/hooks";
 import {
@@ -25,6 +24,7 @@ import {
   LoadingState,
 } from "../components/common/AsyncState";
 import { ThreadCard } from "../components/common/ThreadCard";
+import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
 import { PageContainer } from "../components/layout/PageContainer";
 import { ProjectIcon } from "../components/projects/ProjectIcon";
 import { ProjectMetadataFields } from "../components/projects/ProjectMetadataFields";
@@ -35,6 +35,7 @@ import {
   projectColorClassName,
   projectMetadataToRecord,
 } from "../components/projects/project-metadata";
+import type { v2 } from "../protocol";
 
 type ProjectChatSortKey = NonNullable<v2.ThreadListParams["sortKey"]>;
 
@@ -85,12 +86,29 @@ export function ProjectHomePage() {
   const [rootSelectionError, setRootSelectionError] = useState<string | null>(
     null,
   );
+  const editDialogRef = useNativeModalDialog(isEditDialogOpen);
+  const deleteDialogRef = useNativeModalDialog(isDeleteDialogOpen);
 
   if (project.isLoading) {
     return <LoadingState />;
   }
   if (project.isError || !project.data) {
-    return <ErrorState>Unable to load this project.</ErrorState>;
+    return (
+      <ErrorState
+        action={
+          <button
+            className="btn btn-sm"
+            disabled={project.isFetching}
+            onClick={() => void project.refetch()}
+            type="button"
+          >
+            {project.isFetching ? "Retrying…" : "Retry"}
+          </button>
+        }
+      >
+        Unable to load this project.
+      </ErrorState>
+    );
   }
 
   const details = project.data.project;
@@ -236,7 +254,7 @@ export function ProjectHomePage() {
         <dialog
           aria-labelledby="edit-project-title"
           className="modal"
-          open
+          ref={editDialogRef}
           onCancel={(event) => {
             event.preventDefault();
             handleCloseEditDialog();
@@ -266,7 +284,7 @@ export function ProjectHomePage() {
               <div className="form-control w-full">
                 <input
                   aria-label="Project name"
-                  className="input input-bordered min-h-11 w-full"
+                  className="input input-bordered w-full"
                   onChange={(event) => setEditName(event.target.value)}
                   required
                   value={editName}
@@ -354,7 +372,7 @@ export function ProjectHomePage() {
         <dialog
           aria-labelledby="delete-project-title"
           className="modal"
-          open
+          ref={deleteDialogRef}
           onCancel={(event) => {
             event.preventDefault();
             handleCloseDeleteDialog();
@@ -445,7 +463,20 @@ export function ProjectHomePage() {
           </div>
           {(threads.isLoading || isSearchPending) && <LoadingState size="sm" />}
           {!isSearchPending && threads.isError && (
-            <ErrorState>Unable to load project chats.</ErrorState>
+            <ErrorState
+              action={
+                <button
+                  className="btn btn-sm"
+                  disabled={threads.isFetching}
+                  onClick={() => void threads.refetch()}
+                  type="button"
+                >
+                  {threads.isFetching ? "Retrying…" : "Retry"}
+                </button>
+              }
+            >
+              Unable to load project chats.
+            </ErrorState>
           )}
           {!threads.isLoading &&
             !isSearchPending &&

@@ -35,6 +35,7 @@ import {
   permissionModeSettings,
 } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
+import { SelectedComposerSkill } from "./SelectedComposerSkill";
 import { SlashCommandPalette } from "./SlashCommandPalette";
 import {
   getSlashCommandInput,
@@ -42,9 +43,8 @@ import {
   selectSlashCommand,
   selectSlashSkill,
 } from "./slash-command";
-import { useComposerSelection } from "./useComposerSelection";
 import { useComposerActions } from "./useComposerActions";
-import { SelectedComposerSkill } from "./SelectedComposerSkill";
+import { useComposerSelection } from "./useComposerSelection";
 import { useComposerSkills } from "./useComposerSkills";
 
 type ComposerProps = {
@@ -370,7 +370,7 @@ export function Composer({
                         ? "Steer"
                         : "Send"
                 }
-                className="btn btn-primary btn-sm join-item"
+                className="btn btn-primary btn-sm btn-square join-item"
                 type="submit"
                 disabled={isPending || (!message.trim() && !imageFile)}
               >

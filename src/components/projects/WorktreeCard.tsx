@@ -1,13 +1,12 @@
-import { useState } from "react";
 import {
-  FolderOpenIcon,
   CodeBracketIcon,
+  FolderOpenIcon,
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-
-import { useWorktrees } from "../../app-server/hooks";
+import { useState } from "react";
 import { formatErrorMessage } from "../../app/error-message";
+import { useWorktrees } from "../../app-server/hooks";
 
 export function WorktreeCard({ root }: { root: string }) {
   const worktrees = useWorktrees(root);
@@ -46,7 +45,7 @@ export function WorktreeCard({ root }: { root: string }) {
           />
           <button
             aria-label="Create worktree"
-            className="btn btn-sm btn-primary"
+            className="btn btn-sm btn-primary gap-1"
             disabled={worktrees.create.isPending}
             type="submit"
           >
@@ -95,7 +94,7 @@ export function WorktreeCard({ root }: { root: string }) {
                   </span>
                   <button
                     aria-label={`Open ${label}`}
-                    className="btn btn-xs btn-ghost"
+                    className="btn btn-xs btn-ghost gap-1"
                     onClick={() => worktrees.open.mutate(worktree.path)}
                     type="button"
                   >
@@ -104,7 +103,7 @@ export function WorktreeCard({ root }: { root: string }) {
                   </button>
                   <button
                     aria-label={`Remove ${label}`}
-                    className="btn btn-xs btn-ghost text-error"
+                    className="btn btn-xs btn-ghost gap-1 text-error"
                     onClick={() =>
                       worktrees.remove.mutate({ path: worktree.path, force })
                     }

@@ -15,6 +15,7 @@ import {
   useUninstallPlugin,
 } from "../app-server/hooks";
 import { SkillIcon } from "../components/common/SkillIcon";
+import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
 import { PageContainer } from "../components/layout/PageContainer";
 import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
 import { PluginInformationItem } from "../components/plugins/PluginInformationItem";
@@ -66,6 +67,7 @@ export function PluginDetailPage() {
   const [selectedSkill, setSelectedSkill] = useState<v2.SkillSummary | null>(
     null,
   );
+  const skillDialogRef = useNativeModalDialog(Boolean(selectedSkill));
   const plugin = details.data?.plugin;
   const interfaceData = plugin?.summary.interface ?? summary?.interface;
   const displayName =
@@ -215,7 +217,7 @@ export function PluginDetailPage() {
             {actionPolicy.canInstall && (
               <button
                 aria-label={`Install ${displayName}`}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm gap-1"
                 disabled={
                   installPlugin.isPending || actionPolicy.installDisabled
                 }
@@ -244,7 +246,7 @@ export function PluginDetailPage() {
             {actionPolicy.canUninstall && pluginSummary && (
               <button
                 aria-label={`Uninstall ${displayName}`}
-                className="btn btn-error btn-outline btn-sm"
+                className="btn btn-error btn-outline btn-sm gap-1"
                 disabled={uninstallPlugin.isPending}
                 type="button"
                 onClick={() => {
@@ -366,7 +368,7 @@ export function PluginDetailPage() {
         <dialog
           aria-labelledby="skill-details-title"
           className="modal"
-          open
+          ref={skillDialogRef}
           onCancel={(event) => {
             event.preventDefault();
             setSelectedSkill(null);

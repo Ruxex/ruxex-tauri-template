@@ -1,9 +1,8 @@
 import { FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
-import type { v2 } from "../protocol";
 import {
   EmptyState,
   ErrorState,
@@ -16,6 +15,7 @@ import {
   parseProjectMetadata,
   projectColorClassName,
 } from "../components/projects/project-metadata";
+import type { v2 } from "../protocol";
 
 type ProjectSortKey = NonNullable<v2.ProjectListParams["sortKey"]>;
 
@@ -27,7 +27,6 @@ const PROJECT_SORT_OPTIONS: { label: string; value: ProjectSortKey }[] = [
 export function ProjectsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [sortKey, setSortKey] = useState<ProjectSortKey>("position");
-  const navigate = useNavigate();
   const projects = useProjectList(
     {
       limit: 50,
@@ -38,7 +37,7 @@ export function ProjectsPage() {
   );
   return (
     <PageContainer>
-      <header className="flex flex-wrap items-end justify-between gap-5 pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
         </div>
@@ -54,10 +53,23 @@ export function ProjectsPage() {
       </header>
 
       <section>
-        <div className="pt-4">
+        <div>
           {projects.isLoading && <LoadingState size="sm" />}
           {projects.isError && (
-            <ErrorState>Unable to load projects.</ErrorState>
+            <ErrorState
+              action={
+                <button
+                  className="btn btn-sm"
+                  disabled={projects.isFetching}
+                  onClick={() => void projects.refetch()}
+                  type="button"
+                >
+                  {projects.isFetching ? "Retrying…" : "Retry"}
+                </button>
+              }
+            >
+              Unable to load projects.
+            </ErrorState>
           )}
           {!projects.isLoading &&
             !projects.isError &&
@@ -66,7 +78,7 @@ export function ProjectsPage() {
                 action={
                   <button
                     aria-label="Create project"
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm btn-primary gap-1"
                     type="button"
                     onClick={() => setIsCreateDialogOpen(true)}
                   >
@@ -115,17 +127,8 @@ export function ProjectsPage() {
                       );
                       return (
                         <tr
-                          aria-label={`Open project ${project.name}`}
-                          className="cursor-pointer transition-colors hover:bg-base-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                          className="transition-colors hover:bg-base-200/60"
                           key={project.id}
-                          tabIndex={0}
-                          onClick={() => navigate(`/projects/${project.id}`)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              navigate(`/projects/${project.id}`);
-                            }
-                          }}
                         >
                           <td>
                             <div className="flex min-w-40 items-center gap-3 font-semibold">
@@ -138,7 +141,12 @@ export function ProjectsPage() {
                                   icon={projectMetadata.icon}
                                 />
                               </span>
-                              <span className="truncate">{project.name}</span>
+                              <Link
+                                className="truncate rounded-sm underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                to={`/projects/${project.id}`}
+                              >
+                                {project.name}
+                              </Link>
                             </div>
                           </td>
                           <td className="max-w-80">

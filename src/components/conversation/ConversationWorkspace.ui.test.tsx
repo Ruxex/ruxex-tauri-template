@@ -386,7 +386,7 @@ describe("ConversationWorkspace", () => {
     const root = screen.getByTestId("chat-workspace");
     expect(root).not.toBeNull();
     expect(root?.className.split(/\s+/)).toEqual(
-      expect.arrayContaining(["h-full", "min-h-0", "w-full", "mx-auto"]),
+      expect.arrayContaining(["min-h-full", "w-full", "mx-auto"]),
     );
     expect(screen.getByRole("main").className).toContain("h-full");
     expect(composer.parentElement?.className.split(/\s+/)).toEqual(

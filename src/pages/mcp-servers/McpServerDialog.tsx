@@ -1,14 +1,16 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useState } from "react";
 import {
-  parseMcpServerDictionaryJson,
   type McpServerDraft,
   type McpServerJsonImportEntry,
+  parseMcpServerDictionaryJson,
 } from "../../app-server/mcp-config";
 import {
   DialogFooter,
   DialogHeader,
 } from "../../components/common/DialogParts";
+import { handleTabListKeyDown } from "../../components/common/tab-keyboard";
+import { useNativeModalDialog } from "../../components/common/useNativeModalDialog";
 import {
   formStateToDraft,
   type McpServerFormState,
@@ -37,6 +39,7 @@ export function McpServerDialog({
   onSubmit: (draft: McpServerDraft) => void;
   onImportJson: (entries: McpServerJsonImportEntry[]) => void;
 }) {
+  const dialogRef = useNativeModalDialog();
   const [localForm, setLocalForm] = useState(form);
   const [validationErrors, setValidationErrors] = useState(
     {} as ReturnType<typeof validateMcpServerForm>,
@@ -101,7 +104,7 @@ export function McpServerDialog({
     <dialog
       aria-labelledby="mcp-server-dialog-title"
       className="modal"
-      open
+      ref={dialogRef}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -117,17 +120,21 @@ export function McpServerDialog({
         />
 
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
-          <div className="overflow-hidden rounded-box border border-base-300 bg-base-100 sm:col-span-2">
+          <div
+            className={`${isEditing ? "overflow-hidden rounded-box border border-base-300 bg-base-100" : "attached-tabs"} sm:col-span-2`}
+          >
             {!isEditing && (
               <div
                 aria-label="MCP server configuration mode"
-                className="tabs tabs-border w-full border-b border-base-300 px-3"
+                className="attached-tablist"
+                onKeyDown={handleTabListKeyDown}
                 role="tablist"
               >
                 <button
                   aria-selected={inputMode === "fields"}
-                  className={`tab ${inputMode === "fields" ? "tab-active" : ""}`}
+                  className="attached-tab"
                   id="mcp-fields-tab"
+                  tabIndex={inputMode === "fields" ? 0 : -1}
                   role="tab"
                   type="button"
                   onClick={() => switchInputMode("fields")}
@@ -136,8 +143,9 @@ export function McpServerDialog({
                 </button>
                 <button
                   aria-selected={inputMode === "json"}
-                  className={`tab ${inputMode === "json" ? "tab-active" : ""}`}
+                  className="attached-tab"
                   id="mcp-json-tab"
+                  tabIndex={inputMode === "json" ? 0 : -1}
                   role="tab"
                   type="button"
                   onClick={() => switchInputMode("json")}
@@ -150,7 +158,8 @@ export function McpServerDialog({
             {!isEditing && inputMode === "json" ? (
               <div
                 aria-labelledby="mcp-json-tab"
-                className="grid gap-2 p-4"
+                className="attached-tabpanel grid gap-2 p-4"
+                id="mcp-json-panel"
                 role="tabpanel"
               >
                 <textarea
@@ -175,7 +184,8 @@ export function McpServerDialog({
             ) : (
               <div
                 aria-labelledby="mcp-fields-tab"
-                className="grid gap-4 p-4 sm:grid-cols-2"
+                className={`${isEditing ? "" : "attached-tabpanel"} grid gap-4 p-4 sm:grid-cols-2`}
+                id="mcp-fields-panel"
                 role="tabpanel"
               >
                 <label className="form-control sm:col-span-2">

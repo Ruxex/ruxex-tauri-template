@@ -111,7 +111,7 @@ function RailButton({
     <button
       aria-label={label}
       aria-pressed={active}
-      className={`btn btn-ghost btn-sm size-10 p-0 text-lg ${active ? "btn-active text-primary" : ""}`}
+      className={`btn btn-ghost btn-square text-lg ${active ? "btn-active text-primary" : ""}`}
       title={label}
       type="button"
       onClick={onClick}

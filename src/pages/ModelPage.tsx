@@ -21,7 +21,7 @@ export function ModelPage() {
   const permissions = usePermissionProfiles();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">Provider</h2>
       <ProviderAccountCard
         provider={

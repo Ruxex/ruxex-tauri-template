@@ -16,7 +16,7 @@ export function SubagentDetail({ threadId, onBack }: SubagentDetailProps) {
     <section aria-label="Subagent detail" className="space-y-4">
       <button
         aria-label="Back to subagents"
-        className="btn btn-ghost btn-sm"
+        className="btn btn-ghost btn-sm gap-1"
         onClick={onBack}
         type="button"
       >

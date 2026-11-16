@@ -18,6 +18,7 @@ import {
   LoadingState,
 } from "../components/common/AsyncState";
 import { ThreadCard } from "../components/common/ThreadCard";
+import { handleTabListKeyDown } from "../components/common/tab-keyboard";
 import { PageContainer } from "../components/layout/PageContainer";
 
 type ChatSortKey = NonNullable<ThreadSearchOptions["sortKey"]>;
@@ -118,7 +119,7 @@ export function ChatsPage() {
       </header>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="input input-bordered flex min-h-11 min-w-56 flex-1 items-center gap-2">
+        <label className="input input-bordered flex min-w-56 flex-1 items-center gap-2">
           <MagnifyingGlassIcon aria-hidden="true" className="size-4 shrink-0" />
           <input
             aria-label="Search chats"
@@ -139,7 +140,7 @@ export function ChatsPage() {
             }}
           />
         </label>
-        <label className="select select-bordered min-h-11 min-w-52">
+        <label className="select select-bordered min-w-52">
           <span className="sr-only">Sort chats</span>
           <select
             aria-label="Sort chats"
@@ -161,61 +162,92 @@ export function ChatsPage() {
         </p>
       )}
 
-      <div
-        aria-label="Chat scope"
-        className="tabs tabs-bordered"
-        role="tablist"
-      >
-        <button
-          aria-selected={scope === "unassigned"}
-          className={`tab ${scope === "unassigned" ? "tab-active" : ""}`}
-          onClick={() => selectScope("unassigned")}
-          role="tab"
-          type="button"
+      <div className="attached-tabs">
+        <div
+          aria-label="Chat scope"
+          className="attached-tablist"
+          onKeyDown={handleTabListKeyDown}
+          role="tablist"
         >
-          No project
-        </button>
-        <button
-          aria-selected={scope === "projects"}
-          className={`tab ${scope === "projects" ? "tab-active" : ""}`}
-          onClick={() => selectScope("projects")}
-          role="tab"
-          type="button"
-        >
-          In projects
-        </button>
-      </div>
+          <button
+            aria-selected={scope === "unassigned"}
+            className="attached-tab"
+            id="chat-scope-unassigned-tab"
+            onClick={() => selectScope("unassigned")}
+            role="tab"
+            tabIndex={scope === "unassigned" ? 0 : -1}
+            type="button"
+          >
+            No project
+          </button>
+          <button
+            aria-selected={scope === "projects"}
+            className="attached-tab"
+            id="chat-scope-projects-tab"
+            onClick={() => selectScope("projects")}
+            role="tab"
+            tabIndex={scope === "projects" ? 0 : -1}
+            type="button"
+          >
+            In projects
+          </button>
+        </div>
 
-      {isLoading && <LoadingState size="sm" />}
-      {isError && (
-        <ErrorState>
-          {formatErrorMessage(activeQuery.error) || "Unable to load chats."}
-        </ErrorState>
-      )}
-      {!isLoading && !isError && threads.length === 0 && (
-        <EmptyState
-          icon={ChatBubbleLeftRightIcon}
-          title={hasSearchTerm ? "No matching chats" : "No chats yet"}
-        />
-      )}
-      {!isLoading && !isError && threads.length > 0 && (
-        <ul aria-label="Chats" className="space-y-2">
-          {threads.map((thread) => (
-            <li key={thread.id}>
-              <ThreadCard
-                compact
-                showUpdatedAt
-                projectName={
-                  thread.projectId
-                    ? projectNames.get(thread.projectId)
-                    : undefined
-                }
-                thread={thread}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+        <div
+          aria-labelledby={
+            scope === "unassigned"
+              ? "chat-scope-unassigned-tab"
+              : "chat-scope-projects-tab"
+          }
+          className="attached-tabpanel p-4"
+          id="chat-scope-panel"
+          role="tabpanel"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: A tab panel needs to be reachable when it has no focusable content.
+          tabIndex={0}
+        >
+          {isLoading && <LoadingState size="sm" />}
+          {isError && (
+            <ErrorState
+              action={
+                <button
+                  className="btn btn-sm"
+                  disabled={activeQuery.isFetching}
+                  onClick={() => void activeQuery.refetch()}
+                  type="button"
+                >
+                  {activeQuery.isFetching ? "Retrying…" : "Retry"}
+                </button>
+              }
+            >
+              {formatErrorMessage(activeQuery.error) || "Unable to load chats."}
+            </ErrorState>
+          )}
+          {!isLoading && !isError && threads.length === 0 && (
+            <EmptyState
+              icon={ChatBubbleLeftRightIcon}
+              title={hasSearchTerm ? "No matching chats" : "No chats yet"}
+            />
+          )}
+          {!isLoading && !isError && threads.length > 0 && (
+            <ul aria-label="Chats" className="space-y-2">
+              {threads.map((thread) => (
+                <li key={thread.id}>
+                  <ThreadCard
+                    compact
+                    showUpdatedAt
+                    projectName={
+                      thread.projectId
+                        ? projectNames.get(thread.projectId)
+                        : undefined
+                    }
+                    thread={thread}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </PageContainer>
   );
 }

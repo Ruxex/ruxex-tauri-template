@@ -1,16 +1,12 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 import type { AppOutletContext } from "../../app/app-outlet-context";
 import { useThreadReadState } from "../../app/thread-read-state";
 import { useUiPreferences } from "../../app/ui-preferences";
 import { useProject, useThread } from "../../app-server/hooks";
+import { handleTabListKeyDown } from "../common/tab-keyboard";
 import {
   GitDiffReviewPane,
   type GitDiffReviewTarget,
@@ -198,8 +194,7 @@ export function AppLayout() {
         onToggleSidebar={
           hidesContextPanel
             ? undefined
-            : () =>
-                update({ sidebarCollapsed: !preferences.sidebarCollapsed })
+            : () => update({ sidebarCollapsed: !preferences.sidebarCollapsed })
         }
         onToggleRightPane={() => setRightPaneOpen((open) => !open)}
         projectTitle={project.data?.project.name}
@@ -286,6 +281,7 @@ export function AppLayout() {
                 <div
                   aria-label="Right pane tabs"
                   className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-base-300 px-2 pt-2"
+                  onKeyDown={handleTabListKeyDown}
                   role="tablist"
                 >
                   {rightPaneTabs.map((tab) => {
@@ -311,6 +307,7 @@ export function AppLayout() {
                           id={`right-pane-tab-${tab.id}`}
                           onClick={() => setActiveRightPaneTabId(tab.id)}
                           role="tab"
+                          tabIndex={selected ? 0 : -1}
                           type="button"
                         >
                           {label}

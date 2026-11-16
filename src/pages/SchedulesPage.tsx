@@ -117,7 +117,7 @@ export function SchedulesPage() {
 
   return (
     <PageContainer>
-      <header className="flex flex-wrap items-end justify-between gap-5 pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-5">
         <h1 className="text-3xl font-semibold tracking-tight">Automation</h1>
         <button
           aria-expanded={isScheduleModalOpen}
@@ -173,20 +173,20 @@ export function SchedulesPage() {
         />
       )}
 
-      <section>
+      <section className="flex flex-col gap-4">
         {actionError && (
-          <p className="mt-4 text-sm text-error" role="alert">
+          <p className="text-sm text-error" role="alert">
             {actionError}
           </p>
         )}
         {schedules.query.isLoading && (
-          <div className="flex items-center gap-3 pt-4 text-sm text-base-content/60">
+          <div className="flex items-center gap-3 text-sm text-base-content/60">
             <span className="loading loading-spinner loading-sm" />
             Loading schedules…
           </div>
         )}
         {schedules.query.isError && (
-          <p className="pt-4 text-sm text-error">
+          <p className="text-sm text-error">
             Unable to load schedules:{" "}
             {formatErrorMessage(schedules.query.error)}
           </p>
@@ -195,7 +195,7 @@ export function SchedulesPage() {
           <EmptyScheduleList onCreate={openCreatePanel} />
         )}
         <div
-          className={`grid gap-3 pt-4 ${savedSchedules.length > 1 ? "sm:grid-cols-2" : "max-w-2xl"}`}
+          className={`grid gap-3 ${savedSchedules.length > 1 ? "sm:grid-cols-2" : "max-w-2xl"}`}
           data-testid="schedule-grid"
         >
           {schedules.query.data?.map((schedule) => (

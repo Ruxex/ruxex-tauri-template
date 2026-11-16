@@ -2,9 +2,8 @@ import {
   ShieldCheckIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
-
-import { useHooksList } from "../app-server/hooks";
 import { formatErrorMessage } from "../app/error-message";
+import { useHooksList } from "../app-server/hooks";
 import {
   EmptyState,
   ErrorState,
@@ -242,7 +241,7 @@ export function HooksPage() {
   const entries = hooks.data?.data ?? [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">Hooks</h2>
       {hooks.isLoading && (
         <div
@@ -254,7 +253,18 @@ export function HooksPage() {
         </div>
       )}
       {hooks.isError && (
-        <ErrorState>
+        <ErrorState
+          action={
+            <button
+              className="btn btn-sm"
+              disabled={hooks.isFetching}
+              onClick={() => void hooks.refetch()}
+              type="button"
+            >
+              {hooks.isFetching ? "Retrying…" : "Retry"}
+            </button>
+          }
+        >
           Unable to load hooks
           {hooks.error ? `: ${formatErrorMessage(hooks.error)}` : "."}
         </ErrorState>
@@ -263,7 +273,7 @@ export function HooksPage() {
         <EmptyState icon={ShieldCheckIcon} title="No hooks configured." />
       )}
       {!hooks.isLoading && !hooks.isError && entries.length > 0 && (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {entries.map((entry) => (
             <HookGroup entry={entry} key={entry.cwd} />
           ))}

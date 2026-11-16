@@ -37,7 +37,7 @@ export function ResizableHandle({
   return (
     <Separator
       className={joinClasses(
-        "relative flex w-2 shrink-0 cursor-col-resize items-center justify-center border-0 border-base-300/60 bg-base-300/20 p-0 outline-none transition-colors hover:bg-primary/30 data-[separator=active]:bg-primary/40 data-[separator=hover]:bg-primary/30 data-[orientation=horizontal]:h-2 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:cursor-row-resize",
+        "relative flex w-2 shrink-0 cursor-col-resize items-center justify-center border-0 border-base-300/60 bg-base-300/20 p-0 outline-none transition-colors hover:bg-primary/30 data-[separator=active]:bg-primary/40 data-[separator=hover]:bg-primary/30 data-[separator=focus]:bg-primary/50 data-[separator=focus]:outline data-[separator=focus]:outline-2 data-[separator=focus]:outline-primary data-[separator=focus]:outline-offset-2 data-[orientation=horizontal]:h-2 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:cursor-row-resize",
         className,
       )}
       {...props}

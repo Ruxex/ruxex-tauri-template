@@ -3,6 +3,7 @@
 @import "streamdown/styles.css";
 @import "./markdown-content.css";
 @source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/code/dist/*.js";
 @source "../../node_modules/@streamdown/mermaid/dist/*.js";
 
 .input:focus,
@@ -10,8 +11,68 @@
 .select:focus,
 .select:focus-within,
 .select:open {
-  outline: none;
-  outline-offset: 0;
+  outline-offset: 2px;
+}
+
+.attached-tablist {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  border-block-end: 1px solid var(--color-base-300);
+}
+
+.attached-tab {
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  min-height: 2.5rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  border-block-end: 0;
+  border-start-start-radius: var(--radius-field);
+  border-start-end-radius: var(--radius-field);
+  color: color-mix(in srgb, var(--color-base-content) 60%, transparent);
+  white-space: nowrap;
+}
+
+.attached-tab:hover:not([aria-selected="true"]) {
+  background-color: var(--color-base-200);
+  color: var(--color-base-content);
+}
+
+.attached-tab[aria-selected="true"] {
+  z-index: 1;
+  margin-block-end: -1px;
+  border-color: var(--color-base-300);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+}
+
+.attached-tab[aria-selected="true"]::after {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -1px;
+  height: 1px;
+  background-color: var(--color-base-100);
+  content: "";
+}
+
+.attached-tab:focus-visible {
+  z-index: 2;
+  outline: 2px solid var(--color-primary);
+  outline-offset: -3px;
+}
+
+.attached-tabpanel {
+  min-width: 0;
+  border-inline: 1px solid var(--color-base-300);
+  border-block-end: 1px solid var(--color-base-300);
+  border-end-start-radius: var(--radius-box);
+  border-end-end-radius: var(--radius-box);
+  background-color: var(--color-base-100);
 }
 
 :root {
@@ -292,7 +353,12 @@ body {
   height: 0.3rem;
   border-radius: 9999px;
   background: currentcolor;
-  animation: working-indicator-dot 0.7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .working-indicator-dots > span {
+    animation: working-indicator-dot 0.7s ease-in-out infinite;
+  }
 }
 
 .working-indicator-dots > span:nth-child(2) {
@@ -301,6 +367,18 @@ body {
 
 .working-indicator-dots > span:nth-child(3) {
   animation-delay: 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin,
+  .animate-pulse,
+  .loading-spinner {
+    animation: none !important;
+  }
+
+  .workbench-sidebar {
+    transition: none;
+  }
 }
 
 @keyframes working-indicator-dot {
@@ -342,4 +420,13 @@ body {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
 }

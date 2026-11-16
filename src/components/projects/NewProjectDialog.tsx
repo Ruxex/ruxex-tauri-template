@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import { formatErrorMessage } from "../../app/error-message";
 import { useCreateProject } from "../../app-server/hooks";
-import { DialogShell } from "../common/DialogShell";
 import { DialogFooter } from "../common/DialogParts";
+import { DialogShell } from "../common/DialogShell";
 import { ProjectMetadataFields } from "./ProjectMetadataFields";
 import {
   DEFAULT_PROJECT_METADATA,
@@ -106,7 +106,7 @@ export function NewProjectDialog({
           <input
             aria-label="Project name"
             aria-invalid={nameValidationError || undefined}
-            className="input input-bordered min-h-11 w-full"
+            className="input input-bordered w-full"
             id="new-project-name"
             onChange={(event) => {
               setName(event.target.value);

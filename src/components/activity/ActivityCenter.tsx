@@ -42,7 +42,7 @@ export function ActivityCenter() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
         <p className="text-sm font-medium uppercase tracking-wide text-primary">
           Workspace

@@ -1,6 +1,12 @@
-import { useId, type ComponentType, type ReactNode, type SVGProps } from "react";
+import {
+  useId,
+  type ComponentType,
+  type ReactNode,
+  type SVGProps,
+} from "react";
 
 import { DialogHeader } from "./DialogParts";
+import { useNativeModalDialog } from "./useNativeModalDialog";
 
 type DialogShellProps = {
   children: ReactNode;
@@ -23,6 +29,7 @@ export function DialogShell({
 }: DialogShellProps) {
   const generatedTitleId = useId();
   const resolvedTitleId = titleId ?? generatedTitleId;
+  const dialogRef = useNativeModalDialog(open);
 
   if (!open) {
     return null;
@@ -31,9 +38,8 @@ export function DialogShell({
   return (
     <dialog
       aria-labelledby={resolvedTitleId}
-      aria-modal="true"
       className="modal"
-      open
+      ref={dialogRef}
       onCancel={(event) => {
         event.preventDefault();
         onClose();

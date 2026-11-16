@@ -268,7 +268,7 @@ export function ConversationWorkspace({
   return (
     <div
       className={[
-        "chat-workspace mx-auto grid h-full min-h-0 w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
+        "chat-workspace mx-auto grid min-h-full w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
         ...chatGridClasses,
         ...(hasMinimap ? ["chat-workspace--has-minimap"] : []),
         ...(hasSummary ? ["chat-workspace--has-summary"] : []),
@@ -280,7 +280,7 @@ export function ConversationWorkspace({
       {hasMinimap && (
         <ConversationMinimap items={items} timelineRef={timelineRef} />
       )}
-      <div className="chat-main-column flex h-full min-h-0 w-full min-w-0 max-w-[53rem] justify-self-center flex-col gap-4">
+      <div className="chat-main-column flex w-full min-w-0 max-w-[53rem] justify-self-center self-stretch flex-col gap-4">
         {turnError && (
           <p className="alert alert-error" role="alert">
             <span>Turn failed: {turnError.message}</span>

@@ -16,7 +16,7 @@ export function AppServerPage() {
   const configRequirements = useConfigRequirements();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">App Server</h2>
       <AppServerCard
         appServerVersion={status.data?.appServerVersion}

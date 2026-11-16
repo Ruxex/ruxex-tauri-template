@@ -25,9 +25,11 @@ type ProjectSelectorProps = {
   value: string;
   isLoading: boolean;
   isError: boolean;
+  isRetrying?: boolean;
   disabled?: boolean;
   onChange: (projectId: string) => void;
   onCreateProject?: () => void;
+  onRetry?: () => void;
 };
 
 export function ProjectSelector({
@@ -35,9 +37,11 @@ export function ProjectSelector({
   value,
   isLoading,
   isError,
+  isRetrying = false,
   disabled = false,
   onChange,
   onCreateProject,
+  onRetry,
 }: ProjectSelectorProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -140,9 +144,9 @@ export function ProjectSelector({
       <summary
         aria-disabled={disabled}
         aria-label="Project"
-        className={`btn btn-ghost btn-sm h-9 min-h-9 w-full justify-between gap-2 px-2 text-sm ${disabled ? "opacity-60" : ""}`}
+        className={`btn btn-ghost btn-xs w-full justify-between gap-1 ${disabled ? "opacity-60" : ""}`}
       >
-        <span className="flex min-w-0 items-center gap-2">
+        <span className="flex min-w-0 items-center gap-1">
           {selectedProject ? (
             <ProjectGlyph project={selectedProject} />
           ) : (
@@ -193,9 +197,23 @@ export function ProjectSelector({
               </p>
             )}
             {isError && (
-              <p className="px-3 py-2 text-sm text-error" role="alert">
-                Unable to load projects.
-              </p>
+              <div
+                aria-busy={isRetrying}
+                className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-error"
+                role="alert"
+              >
+                <span>Unable to load projects.</span>
+                {onRetry && (
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    disabled={isRetrying}
+                    onClick={onRetry}
+                    type="button"
+                  >
+                    {isRetrying ? "Retrying…" : "Retry"}
+                  </button>
+                )}
+              </div>
             )}
             {!isLoading && !isError && visibleProjects.length > 0 && (
               <ul className="menu menu-vertical w-full gap-0.5 p-0">
@@ -251,7 +269,7 @@ export function ProjectSelector({
         {onCreateProject && (
           <div className="mt-2 border-t border-base-300 pt-2">
             <button
-              className="btn btn-ghost btn-sm w-full justify-start"
+              className="btn btn-ghost btn-sm w-full justify-start gap-1"
               disabled={disabled}
               onClick={() => {
                 close();

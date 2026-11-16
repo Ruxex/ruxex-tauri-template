@@ -23,7 +23,7 @@ export function ApprovalCenter({
   const connected = connectedOverride ?? connectedFromStore;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
         <p className="text-sm font-medium uppercase tracking-wide text-primary">
           Safety

@@ -5,6 +5,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "../../components/common/DialogParts";
+import { useNativeModalDialog } from "../../components/common/useNativeModalDialog";
 import { ProjectMetadataFields } from "../../components/projects/ProjectMetadataFields";
 import type { ScheduleFormAction, ScheduleFormState } from "./schedule-form";
 import {
@@ -31,11 +32,12 @@ export function ScheduleEditorDialog({
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const dialogRef = useNativeModalDialog();
   return (
     <dialog
       aria-labelledby="schedule-dialog-title"
       className="modal"
-      open
+      ref={dialogRef}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -138,7 +140,7 @@ export function ScheduleEditorDialog({
             {form.cadenceKind === "weekly" && (
               <fieldset className="form-control col-span-2">
                 <legend className="text-sm">Weekdays</legend>
-                <div className="mt-2 grid grid-cols-7 gap-2 rounded-lg border border-base-300 p-2">
+                <div className="mx-auto mt-2 grid grid-cols-7 justify-items-center gap-2 rounded-lg border border-base-300 p-2">
                   {WEEKDAYS.map((day, index) => (
                     <button
                       aria-pressed={form.weekdays.includes(String(index))}

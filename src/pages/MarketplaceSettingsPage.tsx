@@ -64,7 +64,7 @@ export function MarketplaceSettingsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">
         Plugin marketplaces
       </h2>

@@ -41,7 +41,7 @@ describe("ProjectsPage", () => {
     });
   });
 
-  it("opens a project by clicking its row and keeps the compact creation action", async () => {
+  it("opens a project from its link and keeps the compact creation action", async () => {
     const { ProjectsPage } = await import("./ProjectsPage");
 
     render(
@@ -66,10 +66,11 @@ describe("ProjectsPage", () => {
     expect(screen.getByRole("button", { name: "New project" })).toBeTruthy();
     expect(screen.queryByLabelText("Project name")).toBeNull();
     const projectRow = screen.getByRole("row", { name: /Project Alpha/ });
-    expect(projectRow.getAttribute("tabindex")).toBe("0");
-    expect(screen.queryByRole("link", { name: /Project Alpha/ })).toBeNull();
+    const projectLink = screen.getByRole("link", { name: "Project Alpha" });
+    expect(projectRow.getAttribute("tabindex")).toBeNull();
+    expect(projectLink.getAttribute("href")).toBe("/projects/project-1");
     expect(screen.queryByText("Open")).toBeNull();
-    fireEvent.click(projectRow);
+    fireEvent.click(projectLink);
     expect(screen.getByTestId("location").textContent).toBe(
       "/projects/project-1",
     );

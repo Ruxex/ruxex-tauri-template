@@ -4,11 +4,23 @@ export function LoadingState({ size = "lg" }: { size?: "sm" | "lg" }) {
   return <span className={`loading loading-spinner loading-${size}`} />;
 }
 
-export function ErrorState({ children }: { children: ReactNode }) {
+export function ErrorState({
+  action,
+  compact = false,
+  children,
+}: {
+  action?: ReactNode;
+  compact?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <p className="alert alert-error" role="alert">
-      {children}
-    </p>
+    <div
+      className={`alert alert-error flex flex-wrap items-center justify-between gap-3 ${compact ? "p-2 text-xs" : ""}`}
+      role="alert"
+    >
+      <p className="min-w-0 flex-1">{children}</p>
+      {action}
+    </div>
   );
 }
 
