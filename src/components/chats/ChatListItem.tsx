@@ -83,7 +83,7 @@ export function ChatListItem({
         )}
       </Link>
       <div className="flex shrink-0 items-center gap-1 px-1 py-0.5">
-        {showUpdatedAt && <UpdatedAt timestamp={thread.updatedAt} />}
+        {showUpdatedAt && <ChatUpdatedAt timestamp={thread.updatedAt} />}
         {actions}
         {onArchive && (
           <button
@@ -106,7 +106,7 @@ export function ChatListItem({
   );
 }
 
-function UpdatedAt({ timestamp }: { timestamp: number }) {
+export function ChatUpdatedAt({ timestamp }: { timestamp: number }) {
   const absoluteTimestamp = formatAbsoluteChatTimestamp(timestamp);
 
   return (

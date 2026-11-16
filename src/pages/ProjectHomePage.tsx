@@ -23,7 +23,7 @@ import {
   ErrorState,
   LoadingState,
 } from "../components/common/AsyncState";
-import { ThreadCard } from "../components/common/ThreadCard";
+import { ChatTable } from "../components/chats/ChatTable";
 import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
 import { PageContainer } from "../components/layout/PageContainer";
 import { ProjectIcon } from "../components/projects/ProjectIcon";
@@ -192,8 +192,8 @@ export function ProjectHomePage() {
 
   return (
     <PageContainer>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
+      <header className="flex w-full flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <span
             className={`mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl ${projectColorClassName(projectMetadata.color)}`}
           >
@@ -203,17 +203,13 @@ export function ProjectHomePage() {
               icon={projectMetadata.icon}
             />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
               Project
             </p>
-            <h1 className="text-3xl font-semibold">{details.name}</h1>
-            <p className="mt-2 text-sm text-base-content/70">
-              {details.roots.length} workspace root
-              {details.roots.length === 1 ? "" : "s"}
-            </p>
+            <h1 className="min-w-0 text-3xl font-semibold">{details.name}</h1>
             <p
-              className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full bg-base-200 px-2 py-1 text-xs text-base-content/70"
+              className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-base-200 px-2 py-1 text-xs text-base-content/70"
               role="status"
             >
               <FolderIcon aria-hidden="true" className="size-3.5 shrink-0" />
@@ -249,7 +245,7 @@ export function ProjectHomePage() {
             <TrashIcon aria-hidden="true" className="size-4" />
           </button>
         </div>
-      </div>
+      </header>
       {isEditDialogOpen && (
         <dialog
           aria-labelledby="edit-project-title"
@@ -424,112 +420,104 @@ export function ProjectHomePage() {
           </form>
         </dialog>
       )}
-      <section className="card border border-base-300 bg-base-100 shadow-sm">
-        <div className="card-body">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="card-title">Chats</h2>
-            <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2">
-              <label className="input input-bordered input-sm flex min-w-48 flex-1 items-center gap-2 sm:max-w-72">
-                <MagnifyingGlassIcon
-                  aria-hidden="true"
-                  className="size-4 shrink-0"
-                />
-                <input
-                  aria-label="Search project chats"
-                  className="min-w-0 grow bg-transparent outline-none"
-                  placeholder="Search project chats"
-                  type="search"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
-              </label>
-              <label className="select select-bordered select-sm min-w-48">
-                <span className="sr-only">Sort project chats</span>
-                <select
-                  aria-label="Sort project chats"
-                  value={sortKey}
-                  onChange={(event) =>
-                    setSortKey(event.target.value as ProjectChatSortKey)
-                  }
-                >
-                  {PROJECT_CHAT_SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
-          {(threads.isLoading || isSearchPending) && <LoadingState size="sm" />}
-          {!isSearchPending && threads.isError && (
-            <ErrorState
-              action={
-                <button
-                  className="btn btn-sm"
-                  disabled={threads.isFetching}
-                  onClick={() => void threads.refetch()}
-                  type="button"
-                >
-                  {threads.isFetching ? "Retrying…" : "Retry"}
-                </button>
-              }
-            >
-              Unable to load project chats.
-            </ErrorState>
-          )}
-          {!threads.isLoading &&
-            !isSearchPending &&
-            !threads.isFetching &&
-            !threads.data?.data.length && (
-              <EmptyState
-                action={
-                  trimmedSearchTerm ? (
-                    <button
-                      className="btn btn-sm btn-ghost"
-                      type="button"
-                      onClick={() => setSearchTerm("")}
-                    >
-                      Clear search
-                    </button>
-                  ) : (
-                    <Link
-                      className="btn btn-sm btn-primary"
-                      to={`/?projectId=${encodeURIComponent(projectId)}`}
-                    >
-                      New chat
-                    </Link>
-                  )
-                }
-                description={
-                  trimmedSearchTerm
-                    ? "Try a different title."
-                    : "Start a new chat to keep work for this project together."
-                }
-                icon={ChatBubbleLeftRightIcon}
-                title={
-                  trimmedSearchTerm
-                    ? "No matching chats in this project."
-                    : "No chats in this project yet."
-                }
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2">
+            <label className="input input-bordered input-sm flex min-w-48 flex-1 items-center gap-2 sm:max-w-72">
+              <MagnifyingGlassIcon
+                aria-hidden="true"
+                className="size-4 shrink-0"
               />
-            )}
-          <div className="grid gap-3">
-            {threads.data?.data.map((thread) => (
-              <ThreadCard
-                compact
-                isArchiving={archiveThread.isPending}
-                onArchive={() =>
-                  void archiveThread.mutateAsync({ threadId: thread.id })
-                }
-                showUpdatedAt
-                key={thread.id}
-                thread={thread}
+              <input
+                aria-label="Search project chats"
+                className="min-w-0 grow bg-transparent outline-none"
+                placeholder="Search project chats"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
               />
-            ))}
+            </label>
+            <label className="select select-bordered select-sm min-w-48">
+              <span className="sr-only">Sort project chats</span>
+              <select
+                aria-label="Sort project chats"
+                value={sortKey}
+                onChange={(event) =>
+                  setSortKey(event.target.value as ProjectChatSortKey)
+                }
+              >
+                {PROJECT_CHAT_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
-      </section>
+        {(threads.isLoading || isSearchPending) && <LoadingState size="sm" />}
+        {!isSearchPending && threads.isError && (
+          <ErrorState
+            action={
+              <button
+                className="btn btn-sm"
+                disabled={threads.isFetching}
+                onClick={() => void threads.refetch()}
+                type="button"
+              >
+                {threads.isFetching ? "Retrying…" : "Retry"}
+              </button>
+            }
+          >
+            Unable to load project chats.
+          </ErrorState>
+        )}
+        {!threads.isLoading &&
+          !isSearchPending &&
+          !threads.isFetching &&
+          !threads.data?.data.length && (
+            <EmptyState
+              action={
+                trimmedSearchTerm ? (
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    Clear search
+                  </button>
+                ) : (
+                  <Link
+                    className="btn btn-sm btn-primary"
+                    to={`/?projectId=${encodeURIComponent(projectId)}`}
+                  >
+                    New chat
+                  </Link>
+                )
+              }
+              description={
+                trimmedSearchTerm
+                  ? "Try a different title."
+                  : "Start a new chat to keep work for this project together."
+              }
+              icon={ChatBubbleLeftRightIcon}
+              title={
+                trimmedSearchTerm
+                  ? "No matching chats in this project."
+                  : "No chats in this project yet."
+              }
+            />
+          )}
+        {threads.data?.data.length ? (
+          <ChatTable
+            isArchiving={archiveThread.isPending}
+            onArchive={(threadId) =>
+              void archiveThread.mutateAsync({ threadId })
+            }
+            threads={threads.data.data}
+          />
+        ) : null}
+      </div>
     </PageContainer>
   );
 }

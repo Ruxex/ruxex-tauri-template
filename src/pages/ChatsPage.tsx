@@ -17,8 +17,8 @@ import {
   ErrorState,
   LoadingState,
 } from "../components/common/AsyncState";
-import { ThreadCard } from "../components/common/ThreadCard";
 import { handleTabListKeyDown } from "../components/common/tab-keyboard";
+import { ChatTable } from "../components/chats/ChatTable";
 import { PageContainer } from "../components/layout/PageContainer";
 
 type ChatSortKey = NonNullable<ThreadSearchOptions["sortKey"]>;
@@ -229,22 +229,14 @@ export function ChatsPage() {
             />
           )}
           {!isLoading && !isError && threads.length > 0 && (
-            <ul aria-label="Chats" className="space-y-2">
-              {threads.map((thread) => (
-                <li key={thread.id}>
-                  <ThreadCard
-                    compact
-                    showUpdatedAt
-                    projectName={
-                      thread.projectId
-                        ? projectNames.get(thread.projectId)
-                        : undefined
-                    }
-                    thread={thread}
-                  />
-                </li>
-              ))}
-            </ul>
+            <ChatTable
+              projectNames={
+                scope === "projects" || isGlobalSearch
+                  ? projectNames
+                  : undefined
+              }
+              threads={threads}
+            />
           )}
         </div>
       </div>

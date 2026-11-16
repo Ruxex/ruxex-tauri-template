@@ -1,6 +1,6 @@
 import { FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useProjectList } from "../app-server/hooks";
 import {
@@ -25,6 +25,7 @@ const PROJECT_SORT_OPTIONS: { label: string; value: ProjectSortKey }[] = [
 ];
 
 export function ProjectsPage() {
+  const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [sortKey, setSortKey] = useState<ProjectSortKey>("position");
   const projects = useProjectList(
@@ -127,8 +128,17 @@ export function ProjectsPage() {
                       );
                       return (
                         <tr
-                          className="transition-colors hover:bg-base-200/60"
+                          className="cursor-pointer transition-colors hover:bg-base-200/60"
                           key={project.id}
+                          onClick={(event) => {
+                            if (
+                              event.target instanceof Element &&
+                              event.target.closest("a, button")
+                            ) {
+                              return;
+                            }
+                            navigate(`/projects/${project.id}`);
+                          }}
                         >
                           <td>
                             <div className="flex min-w-40 items-center gap-3 font-semibold">

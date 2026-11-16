@@ -10,8 +10,26 @@
 .input:focus-within,
 .select:focus,
 .select:focus-within,
-.select:open {
-  outline-offset: 2px;
+.select:open,
+.textarea:focus,
+.textarea:focus-within,
+.file-input:focus {
+  outline: none;
+  outline-offset: 0;
+}
+
+@media (forced-colors: active) {
+  .input:focus-visible,
+  .input:focus-within,
+  .select:focus-visible,
+  .select:focus-within,
+  .select:open,
+  .textarea:focus-visible,
+  .textarea:focus-within,
+  .file-input:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 
 .attached-tablist {
