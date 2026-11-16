@@ -15,8 +15,10 @@ import {
 } from "react";
 import { useBranding } from "../../app/branding-context";
 import { formatErrorMessage } from "../../app/error-message";
+import type { PendingServerRequest } from "../../app-server/event-reducer";
 import { useCollaborationModes, useModelList } from "../../app-server/hooks";
 import type { v2 } from "../../protocol";
+import { buildChatUserInputResponse } from "../approvals/approval-model";
 import { useImageAttachment } from "../common/useImageAttachment";
 import {
   ComposerOptions,
@@ -54,6 +56,11 @@ type ComposerProps = {
   reasoningEffort?: string | null;
   initialMessage?: string;
   onMessageSent?: () => void;
+  pendingUserInputRequests?: PendingServerRequest[];
+  onResolveUserInput?: (
+    requestId: string | number,
+    result: unknown,
+  ) => Promise<void>;
 };
 
 export function Composer({
@@ -63,6 +70,8 @@ export function Composer({
   reasoningEffort: initialEffort = null,
   initialMessage,
   onMessageSent,
+  pendingUserInputRequests = [],
+  onResolveUserInput,
 }: ComposerProps) {
   const branding = useBranding();
   const [message, setMessage] = useState("");
@@ -74,6 +83,9 @@ export function Composer({
     "name" | "path" | "interface"
   > | null>(null);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
+  const [inputRequestError, setInputRequestError] = useState<string | null>(
+    null,
+  );
   const editorRef = useRef<HTMLElement>(null);
   const {
     attachmentError,
@@ -99,6 +111,32 @@ export function Composer({
   );
   const actions = useComposerActions(threadId);
   const { isPending } = actions;
+  const pendingInputRequest =
+    pendingUserInputRequests.length === 1 ? pendingUserInputRequests[0] : null;
+  const pendingInputParams = pendingInputRequest?.request.params as
+    | { questions?: Array<{ question: string; isSecret?: boolean }> }
+    | undefined;
+  const pendingInputQuestions = pendingInputParams?.questions ?? [];
+  const canAnswerFromComposer =
+    pendingUserInputRequests.length === 1 &&
+    pendingInputQuestions.length === 1 &&
+    typeof onResolveUserInput === "function" &&
+    !pendingInputQuestions[0]?.isSecret;
+  const inputRequestBlockReason = pendingUserInputRequests.length
+    ? pendingUserInputRequests.length !== 1 ||
+      pendingInputQuestions.length !== 1
+      ? "Answer each question in the request card above before sending another message."
+      : pendingInputQuestions[0]?.isSecret
+        ? "Use the private answer field in the request card above."
+        : imageFile
+          ? "Remove the image attachment to answer this request."
+          : !onResolveUserInput
+            ? "Answer the request card above before sending another message."
+            : null
+    : null;
+  const composerInputBlocked =
+    pendingUserInputRequests.length > 0 &&
+    (!canAnswerFromComposer || Boolean(inputRequestBlockReason));
   const slashCommandInput = getSlashCommandInput(message);
   const showSlashCommands = slashCommandInput !== null && !goalMode;
 
@@ -110,11 +148,13 @@ export function Composer({
 
   const SubmitIcon = isPending
     ? ArrowPathIcon
-    : mode === "queue"
-      ? QueueListIcon
-      : mode === "steer"
-        ? ArrowUturnRightIcon
-        : PaperAirplaneIcon;
+    : pendingUserInputRequests.length > 0
+      ? PaperAirplaneIcon
+      : mode === "queue"
+        ? QueueListIcon
+        : mode === "steer"
+          ? ArrowUturnRightIcon
+          : PaperAirplaneIcon;
 
   function handleModelChange(value: string) {
     setModel(value);
@@ -185,7 +225,30 @@ export function Composer({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
-    if ((!text && !imageFile) || isPending || (goalMode && !text)) {
+    if (
+      (!text && !imageFile) ||
+      isPending ||
+      composerInputBlocked ||
+      (goalMode && !text)
+    ) {
+      return;
+    }
+    if (pendingInputRequest && onResolveUserInput) {
+      const result = buildChatUserInputResponse(
+        pendingInputRequest.request,
+        text,
+      );
+      if (!result) return;
+      try {
+        await onResolveUserInput(pendingInputRequest.requestId, result);
+        setMessage("");
+        setGoalMode(false);
+        setSelectedSkill(null);
+        resetAttachment();
+        setInputRequestError(null);
+      } catch (error) {
+        setInputRequestError(formatErrorMessage(error));
+      }
       return;
     }
     const input: v2.UserInput[] = selectedSkill
@@ -250,7 +313,7 @@ export function Composer({
     <div>
       {showSlashCommands && (
         <SlashCommandPalette
-          disabled={isPending}
+          disabled={isPending || composerInputBlocked}
           onDismiss={() => editorRef.current?.focus()}
           onSelectSkill={handleSlashSkillSelect}
           onSelect={(command) => void handleSlashCommandSelect(command)}
@@ -266,7 +329,7 @@ export function Composer({
       >
         <ComposerTextInput
           attachmentInput={attachmentInput}
-          disabled={isPending}
+          disabled={isPending || composerInputBlocked}
           handleAttachmentChange={handleAttachmentChange}
           imageFile={imageFile}
           onChange={setMessage}
@@ -275,13 +338,19 @@ export function Composer({
           }}
           onKeyDown={handleMessageKeyDown}
           onRemoveImage={clearAttachment}
-          placeholder={`${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`}
+          placeholder={
+            pendingUserInputRequests.length > 0
+              ? canAnswerFromComposer
+                ? "Answer the question above…"
+                : "Answer the questions in the request card above…"
+              : `${branding ? `Ask ${branding.assistantName}` : "Ask the assistant"} to work on something…`
+          }
           value={message}
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <ComposerOptions
-              disabled={isPending}
+              disabled={isPending || composerInputBlocked}
               goalMode={goalMode}
               onGoalModeChange={() => {
                 setGoalMode((value) => !value);
@@ -299,7 +368,7 @@ export function Composer({
               />
             )}
             <PermissionMenu
-              disabled={isPending}
+              disabled={isPending || composerInputBlocked}
               mode={permissionMode}
               onModeChange={handlePermissionChange}
             />
@@ -340,7 +409,7 @@ export function Composer({
           </div>
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <ComposerSettings
-              disabled={isPending}
+              disabled={isPending || composerInputBlocked}
               effort={effort}
               model={model}
               models={models.data?.data ?? []}
@@ -362,27 +431,35 @@ export function Composer({
             <div className="join">
               <button
                 aria-label={
-                  isPending
-                    ? "Working…"
-                    : mode === "queue"
-                      ? "Queue"
-                      : mode === "steer"
-                        ? "Steer"
-                        : "Send"
+                  pendingUserInputRequests.length > 0
+                    ? canAnswerFromComposer
+                      ? "Submit answer"
+                      : "Answer request above"
+                    : isPending
+                      ? "Working…"
+                      : mode === "queue"
+                        ? "Queue"
+                        : mode === "steer"
+                          ? "Steer"
+                          : "Send"
                 }
                 className="btn btn-primary btn-sm btn-square join-item"
                 type="submit"
-                disabled={isPending || (!message.trim() && !imageFile)}
+                disabled={
+                  isPending ||
+                  composerInputBlocked ||
+                  (!message.trim() && !imageFile)
+                }
               >
                 <SubmitIcon
                   aria-hidden="true"
                   className={`size-4 ${isPending ? "animate-spin" : ""}`}
                 />
               </button>
-              {activeTurnId && (
+              {activeTurnId && pendingUserInputRequests.length === 0 && (
                 <SubmissionModeMenu
                   activeTurnId={activeTurnId}
-                  disabled={isPending}
+                  disabled={isPending || composerInputBlocked}
                   mode={mode}
                   onModeChange={setMode}
                 />
@@ -390,9 +467,17 @@ export function Composer({
             </div>
           </div>
         </div>
-        {(attachmentError || actions.error) && (
+        {pendingUserInputRequests.length > 0 && (
+          <p className="mt-2 text-sm text-base-content/70" role="status">
+            {inputRequestBlockReason ??
+              "Sending here will answer the pending question."}
+          </p>
+        )}
+        {(attachmentError || actions.error || inputRequestError) && (
           <p className="mt-2 text-sm text-error">
-            {attachmentError || formatErrorMessage(actions.error)}
+            {attachmentError ||
+              inputRequestError ||
+              formatErrorMessage(actions.error)}
           </p>
         )}
       </form>

@@ -367,10 +367,12 @@ export async function resolveApproval(
 }
 
 export async function submitUserInput(answer: string): Promise<void> {
-  const input = $("[aria-label='Chat activity'] article input");
-  await input.waitForDisplayed({ timeout: 30_000 });
-  await input.setValue(answer);
-  await $("button[aria-label='Submit']").click();
+  const card = $("[aria-label='Chat activity'] article");
+  const otherOption = card.$("input[type='radio'][value='None of the above']");
+  await otherOption.waitForDisplayed({ timeout: 30_000 });
+  await otherOption.click();
+  await card.$("textarea").setValue(answer);
+  await card.$("button[aria-label='Submit']").click();
 }
 
 export async function createRootlessProject(

@@ -118,6 +118,13 @@ export function ConversationWorkspace({
       ),
     [events.pendingServerRequests, threadId],
   );
+  const pendingUserInputRequests = useMemo(
+    () =>
+      pendingRequests.filter(
+        (request) => request.request.method === "item/tool/requestUserInput",
+      ),
+    [pendingRequests],
+  );
 
   useEffect(() => {
     const reconnected =
@@ -317,6 +324,8 @@ export function ConversationWorkspace({
             activeTurnId={liveThread?.activeTurnId ?? null}
             model={conversation.data.thread.model}
             reasoningEffort={conversation.data.thread.reasoningEffort}
+            pendingUserInputRequests={pendingUserInputRequests}
+            onResolveUserInput={handleResolve}
           />
         </div>
       </div>

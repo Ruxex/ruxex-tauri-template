@@ -35,7 +35,8 @@ export function ServerRequestCard({
   onResolve,
   onReject,
 }: ServerRequestCardProps) {
-  const [answer, setAnswer] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const request = pending.request;
   const actionable = canResolvePendingRequest(pending, connected);
   const isUserInput = request.method === "item/tool/requestUserInput";
@@ -43,7 +44,7 @@ export function ServerRequestCard({
   const isPermissionsRequest = isPermissionsApproval(request);
   const requestParams = request.params as {
     command?: string | null;
-    questions?: Array<{ id: string; header: string; question: string }>;
+    questions?: v2.ToolRequestUserInputQuestion[];
   };
   const permissionParams = isPermissionsRequest
     ? (request.params as v2.PermissionsRequestApprovalParams)
@@ -107,10 +108,26 @@ export function ServerRequestCard({
   }
 
   async function submitInput() {
-    const questionId = requestParams.questions?.[0]?.id;
-    const result = questionId
-      ? buildUserInputResponse(request, { [questionId]: { answers: [answer] } })
-      : null;
+    const questions = requestParams.questions ?? [];
+    const answerPayload = Object.fromEntries(
+      questions.map((question) => {
+        const selected = answers[question.id]?.trim();
+        const note = notes[question.id]?.trim();
+        const values = question.options?.length
+          ? [
+              ...(selected ? [selected] : []),
+              ...(question.isOther && selected === "None of the above" && note
+                ? [`user_note: ${note}`]
+                : []),
+            ]
+          : [answers[question.id]?.trim() ?? ""].filter(Boolean);
+        return [question.id, { answers: values }];
+      }),
+    );
+    const result =
+      questions.length > 0
+        ? buildUserInputResponse(request, answerPayload)
+        : null;
     if (result) {
       await onResolve(result);
     }
@@ -173,20 +190,127 @@ export function ServerRequestCard({
               </ul>
             </section>
           )}
-          {isUserInput && requestParams.questions?.[0] && (
-            <label className="form-control mt-2 w-full">
-              <span className="label-text">
-                {requestParams.questions[0].question}
-              </span>
-              <input
-                aria-label={requestParams.questions[0].question}
-                className="input input-bordered input-sm mt-1 w-full"
-                value={answer}
-                onChange={(event) => setAnswer(event.target.value)}
-                disabled={!actionable}
-              />
-            </label>
-          )}
+          {isUserInput &&
+            requestParams.questions?.map((question) => {
+              const options = question.options ?? [];
+              if (options.length === 0) {
+                return (
+                  <label className="form-control mt-3 w-full" key={question.id}>
+                    <span className="label-text">{question.question}</span>
+                    <input
+                      className="input input-bordered input-sm mt-1 w-full"
+                      name={`answer-${question.id}`}
+                      type={question.isSecret ? "password" : "text"}
+                      value={answers[question.id] ?? ""}
+                      onChange={(event) =>
+                        setAnswers((current) => ({
+                          ...current,
+                          [question.id]: event.target.value,
+                        }))
+                      }
+                      disabled={!actionable}
+                    />
+                  </label>
+                );
+              }
+
+              const radioName = `answer-${pending.requestId}-${question.id}`;
+              const otherLabel = "None of the above";
+              const selected = answers[question.id] ?? "";
+              return (
+                <fieldset
+                  className="mt-3 rounded-box border border-base-300 p-3"
+                  key={question.id}
+                >
+                  <legend className="px-1 text-sm font-medium">
+                    {question.question}
+                  </legend>
+                  <div className="space-y-2">
+                    {options.map((option, index) => {
+                      const optionId = `${radioName}-${index}`;
+                      return (
+                        <label
+                          className="flex cursor-pointer items-start gap-2 rounded-box px-2 py-2 hover:bg-base-200/70"
+                          htmlFor={optionId}
+                          key={option.label}
+                        >
+                          <input
+                            checked={selected === option.label}
+                            className="radio radio-sm mt-0.5"
+                            disabled={!actionable}
+                            id={optionId}
+                            name={radioName}
+                            onChange={() =>
+                              setAnswers((current) => ({
+                                ...current,
+                                [question.id]: option.label,
+                              }))
+                            }
+                            type="radio"
+                            value={option.label}
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-sm">
+                              {option.label}
+                            </span>
+                            {option.description && (
+                              <span className="block text-xs text-base-content/65">
+                                {option.description}
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                    {question.isOther && (
+                      <>
+                        <label
+                          className="flex cursor-pointer items-center gap-2 rounded-box px-2 py-2 hover:bg-base-200/70"
+                          htmlFor={`${radioName}-other`}
+                        >
+                          <input
+                            checked={selected === otherLabel}
+                            className="radio radio-sm"
+                            disabled={!actionable}
+                            id={`${radioName}-other`}
+                            name={radioName}
+                            onChange={() =>
+                              setAnswers((current) => ({
+                                ...current,
+                                [question.id]: otherLabel,
+                              }))
+                            }
+                            type="radio"
+                            value={otherLabel}
+                          />
+                          <span className="text-sm">{otherLabel}</span>
+                        </label>
+                        {selected === otherLabel && (
+                          <label className="form-control px-2 pb-1">
+                            <span className="label-text text-xs">
+                              Additional details (optional)
+                            </span>
+                            <textarea
+                              className="textarea textarea-bordered textarea-sm mt-1 w-full"
+                              name={`note-${question.id}`}
+                              value={notes[question.id] ?? ""}
+                              onChange={(event) =>
+                                setNotes((current) => ({
+                                  ...current,
+                                  [question.id]: event.target.value,
+                                }))
+                              }
+                              disabled={!actionable}
+                              rows={2}
+                            />
+                          </label>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </fieldset>
+              );
+            })}
           {!isRequestActionable(request) && (
             <p className="mt-2 text-sm text-error">
               Malformed or unsupported request payload.
@@ -205,7 +329,14 @@ export function ServerRequestCard({
               className="btn btn-primary btn-sm gap-1"
               type="button"
               onClick={() => void submitInput()}
-              disabled={!answer.trim()}
+              disabled={
+                !requestParams.questions?.length ||
+                requestParams.questions.some((question) =>
+                  question.options?.length
+                    ? !answers[question.id]
+                    : !answers[question.id]?.trim(),
+                )
+              }
             >
               <CheckIcon aria-hidden="true" className="size-4" />
               Submit

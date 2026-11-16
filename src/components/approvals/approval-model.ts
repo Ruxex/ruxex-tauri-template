@@ -95,6 +95,40 @@ export function buildUserInputResponse(
   return request.method === "item/tool/requestUserInput" ? { answers } : null;
 }
 
+export function buildChatUserInputResponse(
+  request: ServerRequest,
+  value: string,
+): { answers: Record<string, { answers: string[] }> } | null {
+  if (request.method !== "item/tool/requestUserInput" || !value.trim()) {
+    return null;
+  }
+
+  const params = request.params as Partial<v2.ToolRequestUserInputParams>;
+  const [question] = params.questions ?? [];
+  if (!question || params.questions?.length !== 1) {
+    return null;
+  }
+
+  const answer = value.trim();
+  const options = question.options ?? [];
+  const selectedOption = options.find(
+    (option) => option.label.toLowerCase() === answer.toLowerCase(),
+  );
+  const typedOther =
+    question.isOther && answer.toLowerCase() === "none of the above";
+  const answers = selectedOption
+    ? [selectedOption.label]
+    : typedOther
+      ? ["None of the above"]
+      : question.isOther && options.length > 0
+        ? ["None of the above", `user_note: ${answer}`]
+        : [answer];
+
+  return buildUserInputResponse(request, {
+    [question.id]: { answers },
+  });
+}
+
 export function isRequestActionable(value: unknown): value is ServerRequest {
   if (!value || typeof value !== "object") {
     return false;
