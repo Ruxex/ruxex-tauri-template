@@ -1,7 +1,7 @@
 import { code as codeHighlight } from "@streamdown/code";
 import { mermaid } from "@streamdown/mermaid";
 import { useEffect, useState } from "react";
-import type { CustomRendererProps, ThemeInput } from "streamdown";
+import type { CustomRendererProps } from "streamdown";
 import { defaultRehypePlugins, Streamdown } from "streamdown";
 
 type MarkdownContentProps = {
@@ -55,31 +55,6 @@ const plugins = {
   renderers: [{ language: "diff", component: DiffCodeBlock }],
 };
 
-const markdownCodeTheme: ThemeInput = {
-  name: "ruxex-semantic-code",
-  type: "light",
-  fg: "var(--color-base-content)",
-  bg: "var(--color-base-200)",
-  colors: {
-    "editor.foreground": "var(--color-base-content)",
-    "editor.background": "var(--color-base-200)",
-  },
-  tokenColors: [
-    {
-      scope: ["comment", "punctuation.definition.comment"],
-      settings: { foreground: "var(--markdown-muted-fg)", fontStyle: "italic" },
-    },
-    {
-      scope: ["keyword", "storage", "entity.name.function"],
-      settings: { foreground: "var(--color-primary)" },
-    },
-    {
-      scope: ["string", "constant.other", "constant.numeric"],
-      settings: { foreground: "var(--color-secondary)" },
-    },
-  ],
-};
-
 function getPrefersReducedMotion() {
   return (
     typeof window !== "undefined" &&
@@ -126,7 +101,7 @@ export function MarkdownContent({
       lineNumbers={false}
       plugins={plugins}
       rehypePlugins={rehypePlugins}
-      shikiTheme={[markdownCodeTheme, markdownCodeTheme]}
+      shikiTheme={["github-light", "github-dark"]}
     >
       {text}
     </Streamdown>

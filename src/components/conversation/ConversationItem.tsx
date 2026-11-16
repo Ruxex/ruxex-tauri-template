@@ -105,7 +105,7 @@ export const ConversationItem = memo(function ConversationItem({
         <div
           className={
             isUser
-              ? "rounded-box border border-base-300 bg-primary px-3 py-1.5 text-primary-content"
+              ? "rounded-box border border-base-300 bg-base-200 px-3 py-1.5 text-base-content"
               : "w-full border-0 bg-transparent px-0 py-2"
           }
         >
