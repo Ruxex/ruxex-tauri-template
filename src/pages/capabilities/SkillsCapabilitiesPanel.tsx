@@ -201,11 +201,11 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                     const description = skillDescription(skill);
                     return (
                       <li
-                        className="rounded-box border border-base-300 bg-base-100 p-2"
+                        className="rounded-box border border-base-300 bg-base-100 px-4 py-3"
                         key={skill.path}
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-start gap-2">
+                          <div className="flex min-w-0 items-start gap-3">
                             <SkillIcon
                               className="mt-0.5 size-6 shrink-0"
                               skill={skill}

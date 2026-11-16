@@ -188,7 +188,7 @@ export function AppLayout() {
   }
 
   return (
-    <main className="workbench flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
+    <main className="workbench fixed inset-0 flex h-dvh flex-col overflow-hidden bg-base-200 text-base-content">
       <BrowserNavigationBar
         chatTitle={chatTitle}
         onToggleSidebar={
