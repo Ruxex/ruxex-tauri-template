@@ -1,0 +1,13 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128' style='background-color:rgba(255,255,255,0);'><g style='fill:rgba(32,33,36,1); stroke:rgba(32,33,36,1); stroke-width:0.64'><rect x='11' y='32' width='21' height='21'/>
+<rect x='32' y='32' width='21' height='21'/>
+<rect x='53' y='32' width='21' height='21'/>
+<rect x='74' y='32' width='21' height='21'/>
+<rect x='95' y='32' width='21' height='21'/>
+<rect x='11' y='53' width='21' height='21'/>
+<rect x='32' y='53' width='21' height='21'/>
+<rect x='53' y='53' width='21' height='21'/>
+<rect x='74' y='53' width='21' height='21'/>
+<rect x='95' y='53' width='21' height='21'/>
+<rect x='32' y='95' width='21' height='21'/>
+<rect x='53' y='95' width='21' height='21'/>
+<rect x='74' y='95' width='21' height='21'/></g></svg>

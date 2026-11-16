@@ -18,10 +18,12 @@ import {
   useRetainThreadState,
   useRevertThread,
   useSendMessage,
+  useSubagentThreadList,
   useThreadConversation,
 } from "../../app-server/hooks";
 import { useGitDiffSummary } from "../../platform/git-diff";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
+import { buildSubagentRows } from "../thread-summary/subagent-model";
 import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
 import { Composer } from "./Composer";
 import { ConversationMinimap } from "./ConversationMinimap";
@@ -61,6 +63,20 @@ export function ConversationWorkspace({
   const sendMessage = useSendMessage();
   const liveThread = events.threads[threadId];
   const tokenUsage = liveThread?.tokenUsage ?? null;
+  const subagentThreadList = useSubagentThreadList(threadId);
+  const subagents = useMemo(
+    () =>
+      buildSubagentRows(
+        subagentThreadList.data?.data ?? [],
+        events.threads,
+        Object.values(events.pendingServerRequests),
+      ),
+    [
+      events.pendingServerRequests,
+      events.threads,
+      subagentThreadList.data?.data,
+    ],
+  );
   const liveItems = liveThread?.items ?? EMPTY_LIVE_ITEMS;
   const liveItemsRef = useRef(liveItems);
   liveItemsRef.current = liveItems;
@@ -245,7 +261,8 @@ export function ConversationWorkspace({
     !sendMessage.isPending;
   const hasMinimap = items.some((item) => item.type === "userMessage");
   const gitDiff = gitDiffQuery.data ?? null;
-  const hasSummary = tokenUsage !== null || gitDiff !== null;
+  const hasSummary =
+    tokenUsage !== null || gitDiff !== null || subagents.length > 0;
   const chatGridClasses = hasMinimap
     ? hasSummary
       ? [
@@ -343,6 +360,7 @@ export function ConversationWorkspace({
             })
           }
           tokenUsage={tokenUsage}
+          subagents={subagents}
         />
       )}
     </div>

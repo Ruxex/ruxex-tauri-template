@@ -1,11 +1,14 @@
 import { CodeBracketIcon, CommandLineIcon } from "@heroicons/react/24/outline";
 import type { GitDiffSummary } from "../../platform/git-diff";
 import type { v2 } from "../../protocol";
+import { getSubagentIdenticon } from "./subagent-identicon";
+import type { SubagentRow } from "./subagent-model";
 import { TokenUsageSection } from "./TokenUsageSection";
 
 type ThreadSummaryPanelProps = {
   tokenUsage: v2.ThreadTokenUsage | null;
   gitDiff: GitDiffSummary | null;
+  subagents?: SubagentRow[];
   onReviewGitDiff?: () => void;
   onOpenTerminal?: () => void;
 };
@@ -13,10 +16,11 @@ type ThreadSummaryPanelProps = {
 export function ThreadSummaryPanel({
   tokenUsage,
   gitDiff,
+  subagents = [],
   onReviewGitDiff,
   onOpenTerminal,
 }: ThreadSummaryPanelProps) {
-  if (!tokenUsage && !gitDiff) {
+  if (!tokenUsage && !gitDiff && subagents.length === 0) {
     return null;
   }
 
@@ -38,7 +42,7 @@ export function ThreadSummaryPanel({
             {gitDiff && (
               <section
                 aria-label="Code changes"
-                className={tokenUsage ? "mb-5" : ""}
+                className={tokenUsage || subagents.length > 0 ? "mb-5" : ""}
               >
                 {/* Keep change details on one line so the summary stays compact. */}
                 <button
@@ -81,9 +85,67 @@ export function ThreadSummaryPanel({
               </section>
             )}
             <TokenUsageSection usage={tokenUsage} />
+            {subagents.length > 0 && <SubagentsSummary rows={subagents} />}
           </div>
         </div>
       </aside>
     </div>
+  );
+}
+
+function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
+  return (
+    <details className="mt-5">
+      <summary className="cursor-pointer rounded px-1 py-1 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="shrink-0 font-medium text-base-content/80">
+            Subagents
+          </span>
+          <span className="ml-auto flex min-w-0 flex-wrap justify-end gap-1">
+            {rows.map((row) => (
+              <SubagentIdenticon key={row.threadId} threadId={row.threadId} />
+            ))}
+          </span>
+        </span>
+      </summary>
+      <ul
+        aria-label="Subagent list"
+        className="mt-2 max-h-48 overflow-y-auto overscroll-contain rounded focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        {rows.map((row) => (
+          <li key={row.threadId}>
+            <button
+              aria-label={`Subagent ${row.label}`}
+              className="w-full cursor-pointer truncate rounded px-2 py-1 text-left text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+              type="button"
+            >
+              {row.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function SubagentIdenticon({ threadId }: { threadId: string }) {
+  const identicon = getSubagentIdenticon(threadId);
+
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block size-5 shrink-0"
+      style={{
+        backgroundColor: identicon.color,
+        maskImage: `url("${identicon.url}")`,
+        maskPosition: "center",
+        maskRepeat: "no-repeat",
+        maskSize: "contain",
+        WebkitMaskImage: `url("${identicon.url}")`,
+        WebkitMaskPosition: "center",
+        WebkitMaskRepeat: "no-repeat",
+        WebkitMaskSize: "contain",
+      }}
+    />
   );
 }
