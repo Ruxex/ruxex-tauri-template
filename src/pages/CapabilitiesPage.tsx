@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { formatErrorMessage } from "../app/error-message";
 import { useReloadMcpServers } from "../app-server/hooks";
@@ -12,6 +12,7 @@ type CapabilityTab = "plugins" | "skills" | "mcp";
 
 export function CapabilitiesPage() {
   const { t } = useTranslation("capabilities");
+  const { t: tMcp } = useTranslation("mcp");
   const location = useLocation();
   const activeTab: CapabilityTab =
     location.pathname === "/capabilities/skills"
@@ -34,15 +35,20 @@ export function CapabilitiesPage() {
           </h1>
         </div>
         {activeTab === "mcp" && (
-          <button
-            aria-label={reloadMcp.isPending ? t("reloading") : t("reloadMcp")}
-            className="btn btn-primary"
-            type="button"
-            disabled={reloadMcp.isPending}
-            onClick={() => void reloadMcp.mutateAsync({})}
-          >
-            {reloadMcp.isPending ? t("reloading") : t("reloadMcp")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link className="btn btn-primary" to="/settings/mcp-servers">
+              {tMcp("addMcpServer")}
+            </Link>
+            <button
+              aria-label={reloadMcp.isPending ? t("reloading") : t("reloadMcp")}
+              className="btn btn-outline"
+              type="button"
+              disabled={reloadMcp.isPending}
+              onClick={() => void reloadMcp.mutateAsync({})}
+            >
+              {reloadMcp.isPending ? t("reloading") : t("reloadMcp")}
+            </button>
+          </div>
         )}
       </div>
       {activeTab === "mcp" && reloadMcp.isError && (

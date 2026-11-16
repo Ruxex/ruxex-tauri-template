@@ -423,8 +423,20 @@ export function parseMcpServerDictionaryJson(value: string): {
     };
   }
 
+  const root = parsed as JsonObject;
+  const serverDictionary = ["mcpServers", "mcp_servers", "servers"]
+    .map((key) => root[key])
+    .find((candidate) => {
+      return (
+        isJsonObject(candidate) &&
+        !("command" in candidate) &&
+        !("url" in candidate)
+      );
+    }) as JsonObject | undefined;
+  const configs = serverDictionary ?? root;
+
   const entries: McpServerJsonImportEntry[] = [];
-  for (const [name, value] of Object.entries(parsed)) {
+  for (const [name, value] of Object.entries(configs)) {
     if (!name.trim() || name !== name.trim()) {
       return {
         entries: [],
