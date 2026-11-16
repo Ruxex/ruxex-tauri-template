@@ -167,6 +167,7 @@
   align-items: center;
   padding-inline: 10px;
   margin-block-end: -1px;
+  margin-inline-start: 0;
   border: 1px solid var(--markdown-border-muted);
   border-block-end-color: var(--markdown-code-bg);
   border-start-start-radius: 6px;
@@ -232,6 +233,43 @@
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
+}
+
+@media (hover: hover) {
+  .selectable-content
+    [data-streamdown="code-block"]
+    > div:has(> [data-streamdown="code-block-actions"]) {
+    top: 40px;
+    right: auto;
+    left: auto;
+    inset-inline-end: 8px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .selectable-content
+    [data-streamdown="code-block"]:has(
+      [data-streamdown="code-block-body"]:hover,
+      [data-streamdown="code-block-actions"]:hover,
+      [data-streamdown="code-block-copy-button"]:focus-visible
+    )
+    > div:has(> [data-streamdown="code-block-actions"]) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none) {
+  .selectable-content
+    [data-streamdown="code-block"]
+    > div:has(> [data-streamdown="code-block-actions"]) {
+    top: 40px;
+    right: auto;
+    left: auto;
+    inset-inline-end: 8px;
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .selectable-content [data-streamdown="code-block-copy-button"] {
