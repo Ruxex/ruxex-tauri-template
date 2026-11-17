@@ -184,6 +184,12 @@
   font-size: 12px;
 }
 
+.selectable-content
+  [data-streamdown="code-block"][data-language=""]
+  [data-streamdown="code-block-header"] {
+  display: none;
+}
+
 .selectable-content [data-streamdown="mermaid-block"] > div:first-child {
   display: flex;
   min-height: 32px;

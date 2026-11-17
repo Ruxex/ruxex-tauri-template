@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import {
-  CalendarDaysIcon,
   PencilIcon,
   PlayIcon,
   TrashIcon,
@@ -12,6 +11,8 @@ import { formatErrorMessage } from "../app/error-message";
 import { useArchiveThread, useSchedules, useThread } from "../app-server/hooks";
 import { ThreadCard } from "../components/common/ThreadCard";
 import { PageContainer } from "../components/layout/PageContainer";
+import { ProjectIcon } from "../components/projects/ProjectIcon";
+import { projectColorClassName } from "../components/projects/project-metadata";
 import type { ScheduleRun } from "../platform/schedules";
 import {
   type ScheduleAction,
@@ -125,8 +126,14 @@ export function ScheduleDetailPage() {
     <PageContainer className="max-w-3xl">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <CalendarDaysIcon aria-hidden="true" className="size-6" />
+          <span
+            className={`mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl ${currentSchedule.enabled ? projectColorClassName(currentSchedule.color) : "bg-base-200 text-base-content/45"}`}
+          >
+            <ProjectIcon
+              aria-hidden="true"
+              className="size-6"
+              icon={currentSchedule.icon}
+            />
           </span>
           <div className="min-w-0">
             <p className="text-sm font-medium uppercase tracking-wide text-primary">

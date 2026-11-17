@@ -186,6 +186,14 @@ export function AppLayout() {
   }, [rightPaneOpen, rightPaneRef]);
 
   function handlePanelChange(panel: SidebarPanel) {
+    if (panel === "projects") {
+      setActivePanel(panel);
+      if (!preferences.sidebarCollapsed) {
+        update({ sidebarCollapsed: true });
+      }
+      return;
+    }
+
     if (panel === activePanel && !preferences.sidebarCollapsed) {
       update({ sidebarCollapsed: true });
       return;
@@ -216,7 +224,7 @@ export function AppLayout() {
       >
         <ResizablePanel
           className="min-w-0"
-          collapsedSize={64}
+          collapsedSize={60}
           collapsible
           defaultSize={320}
           id="left-sidebar"

@@ -55,6 +55,10 @@ function breadcrumbsForPath(
     ];
   }
 
+  if (pathname === "/chats") {
+    return [{ label: i18n.t("navigation:chats") }];
+  }
+
   if (pathname.startsWith("/chat/")) {
     if (chatProjectId) {
       return [
