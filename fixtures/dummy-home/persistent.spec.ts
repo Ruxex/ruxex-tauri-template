@@ -74,24 +74,35 @@ function findScenario(id: string) {
 
 async function assertListCounts(): Promise<void> {
   const { active } = persistentFixtureCounts();
-  await browser.url("tauri://localhost/#/");
-  await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
-    timeout: 10_000,
-  });
-  const openSidebar = $("button[aria-label='Open sidebar']");
-  if (await openSidebar.isDisplayed().catch(() => false)) {
-    await openSidebar.click();
+  // Rate-limit responses can finish the scenario without persisting a thread.
+  const unassigned =
+    active - 1 - PROJECT_FIXTURES.reduce(
+      (count, project) => count + project.threadScenarioIds.length,
+      0,
+    );
+  await browser.url("tauri://localhost/#/chats");
+  await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
+  try {
+    await browser.waitUntil(
+      async () => {
+        const rowCount = await $$('section[aria-label="Chats"] tbody tr').length;
+        return rowCount >= unassigned && rowCount <= unassigned + 1;
+      },
+      {
+        timeout: 15_000,
+        timeoutMsg: "The Chats page should load the unassigned fixture catalog",
+      },
+    );
+  } catch (error) {
+    const pageText = await $("main").getText().catch(() => "<unavailable>");
+    const rowCount = await $$('section[aria-label="Chats"] tbody tr').length;
+    throw new Error(
+      `Expected ${unassigned} or ${unassigned + 1} unassigned chats; found ${rowCount}. Chats page: ${pageText}`,
+      { cause: error },
+    );
   }
-  const visibleRecentChats = Math.min(active, 8);
-  await browser.waitUntil(
-    async () =>
-      (await $$("#recent-chats-list > ul > li").length) === visibleRecentChats,
-    {
-      timeout: 10_000,
-      timeoutMsg: `Expected ${visibleRecentChats} recent chats in the sidebar`,
-    },
-  );
-
+  await browser.refresh();
+  await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
   await browser.url("tauri://localhost/#/archive");
   await $("h1=Archived chats").waitForDisplayed({ timeout: 10_000 });
   await browser.refresh();

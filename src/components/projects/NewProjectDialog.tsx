@@ -50,6 +50,15 @@ export function NewProjectDialog({
 
   async function handleSelectRoot() {
     setRootSelectionError(null);
+    if (import.meta.env.VITE_E2E === "1") {
+      const e2eHooks = window.__RUXEX_E2E__;
+      const selectedForE2E = e2eHooks?.selectedWorkspaceFolder;
+      if (selectedForE2E) {
+        e2eHooks.selectedWorkspaceFolder = undefined;
+        setRoot(selectedForE2E);
+        return;
+      }
+    }
     try {
       const selected = await openDialog({
         directory: true,

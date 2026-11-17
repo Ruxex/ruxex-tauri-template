@@ -58,6 +58,16 @@ export async function saveMarketplaceScreenshot(name: string): Promise<void> {
   const artifactDirectory = process.env.RUXEX_E2E_ARTIFACTS ?? "artifacts";
   mkdirSync(artifactDirectory, { recursive: true });
   await browser.pause(300);
-  await browser.saveScreenshot(path.join(artifactDirectory, name));
+  if (process.env.GDK_BACKEND === "x11" && process.env.RUXEX_E2E_ARTIFACTS) {
+    await browser.execute(async (screenshotName: string) => {
+      const capture = window.__RUXEX_E2E__?.captureScreenshot;
+      if (!capture) {
+        throw new Error("The E2E screenshot command is unavailable");
+      }
+      await capture(screenshotName);
+    }, name);
+  } else {
+    await browser.saveScreenshot(path.join(artifactDirectory, name));
+  }
   await browser.pause(300);
 }

@@ -20,6 +20,7 @@ HOST = "0.0.0.0"
 UI_FIXTURE_SPECS = (
     "fixtures/dummy-home/persistent.spec.ts",
     "fixtures/dummy-home/pages.spec.ts",
+    "fixtures/dummy-home/japanese-ui.spec.ts",
     "fixtures/dummy-home/unshot.spec.ts",
     "fixtures/dummy-home/large-data.spec.ts",
     "fixtures/dummy-home/volatile.spec.ts",

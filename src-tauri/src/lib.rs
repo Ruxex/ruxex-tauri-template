@@ -8,6 +8,8 @@ pub mod artifacts;
 mod branding;
 mod desktop;
 mod desktop_config;
+#[cfg(all(feature = "e2e", target_os = "linux"))]
+mod e2e_screenshot;
 mod error;
 mod git_diff;
 mod git_diff_commands;
@@ -179,7 +181,9 @@ pub fn run_with_config(config: DesktopConfig) {
             git_diff_commands::git_diff_details,
             app_server::app_server_request,
             app_server::app_server_resolve_server_request,
-            app_server::app_server_reject_server_request
+            app_server::app_server_reject_server_request,
+            #[cfg(all(feature = "e2e", target_os = "linux"))]
+            e2e_screenshot::capture_ui_fixture_screenshot
         ])
         .run(tauri::generate_context!())
         .expect("error while running the desktop application");

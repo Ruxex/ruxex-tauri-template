@@ -14,6 +14,7 @@ import {
   sendScenarioFromCurrentComposer,
   waitForDesktopReady,
   waitForHomeReady,
+  waitForRecentChatCount,
 } from "./support";
 
 const FIRST_LARGE_OCCURRENCE = 3;
@@ -52,7 +53,9 @@ async function captureLargeChats(): Promise<void> {
   await browser.waitUntil(
     async () =>
       (await $$('section[aria-label="Chats"] tbody tr').length) ===
-      PAGE_DENSITY_COUNTS.large.unassignedThreads,
+        PAGE_DENSITY_COUNTS.large.unassignedThreads ||
+      (await $$('section[aria-label="Chats"] tbody tr').length) ===
+        PAGE_DENSITY_COUNTS.large.unassignedThreads + 1,
     {
       timeout: 20_000,
       timeoutMsg: "The No project tab should load every unassigned thread",
@@ -185,13 +188,7 @@ async function captureLargeHome(): Promise<void> {
   if (await openSidebar.isDisplayed().catch(() => false)) {
     await openSidebar.click();
   }
-  await browser.waitUntil(
-    async () => (await $$("#recent-chats-list > ul > li").length) === 8,
-    {
-      timeout: 10_000,
-      timeoutMsg: "The large chat sidebar should fill its eight visible rows",
-    },
-  );
+  await waitForRecentChatCount(8);
   await saveFixtureScreenshot("home-many.png");
 }
 

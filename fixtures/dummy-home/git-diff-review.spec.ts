@@ -16,7 +16,6 @@ describe("Git diff review right pane", () => {
     }
 
     await waitForDesktopReady();
-    await browser.setWindowSize(1920, 1080);
     const projectId = await createWorkspaceProject(
       "Git diff review fixture",
       workspace,
@@ -50,14 +49,34 @@ describe("Git diff review right pane", () => {
       kind: "text",
       value: "This is a fixed response from the dummy provider.",
     });
-
-    const reviewButton = $(
-      "button[aria-label='Review 4 additions and 2 deletions across 2 files']",
+    await browser.waitUntil(
+      async () => {
+        const reviewButtons = await $$(
+          "[data-testid='thread-summary-panel'] section button",
+        );
+        for (const button of reviewButtons) {
+          if (await button.isDisplayed().catch(() => false)) return true;
+        }
+        return false;
+      },
+      {
+        timeout: 15_000,
+        timeoutMsg: "The Git diff summary button should be visible",
+      },
     );
-    await reviewButton.waitForDisplayed({ timeout: 15_000 });
+    const reviewButtons = await $$(
+      "[data-testid='thread-summary-panel'] section button",
+    );
+    let reviewButton = reviewButtons[0];
+    for (const button of reviewButtons) {
+      if (await button.isDisplayed().catch(() => false)) {
+        reviewButton = button;
+        break;
+      }
+    }
     await reviewButton.click();
     await $(
-      "[role='tabpanel'] section[aria-label='Code changes']",
+      "[role='tabpanel'] section[aria-label='Code Changes']",
     ).waitForDisplayed({
       timeout: 10_000,
     });

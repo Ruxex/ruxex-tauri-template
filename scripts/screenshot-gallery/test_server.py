@@ -36,6 +36,7 @@ class ScreenshotGalleryTests(unittest.TestCase):
         specs = (
             "fixtures/dummy-home/persistent.spec.ts",
             "fixtures/dummy-home/pages.spec.ts",
+            "fixtures/dummy-home/japanese-ui.spec.ts",
             "fixtures/dummy-home/unshot.spec.ts",
             "fixtures/dummy-home/large-data.spec.ts",
             "fixtures/dummy-home/volatile.spec.ts",
@@ -52,6 +53,7 @@ class ScreenshotGalleryTests(unittest.TestCase):
                 "run-5",
                 "run-6",
                 "run-7",
+                "run-8",
             ]
             for index, (name, spec) in enumerate(zip(names, specs, strict=True), start=1):
                 run = root / name

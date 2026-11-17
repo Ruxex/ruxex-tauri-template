@@ -4,7 +4,7 @@
 -include .env .env.local
 export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
-.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -32,6 +32,7 @@ help:
 	@printf '%s\n' '  make e2e-diagnostics   E2Eプラグイン付き診断を実行'
 	@printf '%s\n' '  make e2e-diagnostics-headless Xvfb上でE2E診断を実行'
 	@printf '%s\n' '  make ui-fixtures        データ投入とUIスクリーンショットを一括実行'
+	@printf '%s\n' '  make ui-fixtures-i18n   通常データの日本語UIスクリーンショットを撮影'
 	@printf '%s\n' '  make prepare-dummy-home  UI操作でDummyProviderのホームを生成'
 	@printf '%s\n' '  make dummy-home-events   準備済みホームで揮発イベントのUIを表示'
 	@printf '%s\n' '  make dummy-home-pages    準備済みホームの未撮影ページをキャプチャ'
@@ -137,6 +138,10 @@ ui-fixtures: e2e-build
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/volatile.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --marketplace-home --spec fixtures/marketplace-home/persistent.spec.ts
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/run_git_diff_ui_fixture.py
+
+ui-fixtures-i18n: e2e-build
+	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-home --spec fixtures/dummy-home/persistent.spec.ts
+	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-events --spec fixtures/dummy-home/japanese-ui.spec.ts
 
 prepare-dummy-home: e2e-build
 	GDK_BACKEND=x11 RUXEX_E2E_PLUGIN=0 python3 scripts/tauri_e2e_runner.py --dummy-home --spec fixtures/dummy-home/persistent.spec.ts

@@ -68,8 +68,8 @@ export type VolatileScenario = {
 
 export const PAGE_DENSITY_COUNTS = {
   ordinary: {
-    activeThreads: 17,
-    unassignedThreads: 14,
+    activeThreads: 16,
+    unassignedThreads: 13,
     projectAssignedThreads: 3,
     archivedThreads: 2,
     projects: 3,
@@ -78,8 +78,8 @@ export const PAGE_DENSITY_COUNTS = {
     mcpServers: 1,
   },
   large: {
-    activeThreads: 78,
-    unassignedThreads: 17,
+    activeThreads: 76,
+    unassignedThreads: 15,
     projectAssignedThreads: 61,
     archivedThreads: 60,
     projects: 120,

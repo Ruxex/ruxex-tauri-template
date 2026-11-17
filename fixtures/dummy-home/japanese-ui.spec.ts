@@ -32,13 +32,15 @@ describe("Japanese desktop UI", () => {
       await browser.url("tauri://localhost/#/projects");
       await $("h1=プロジェクト").waitForDisplayed({ timeout: 10_000 });
       const project = $(
-        "table[aria-label='プロジェクト'] a[href*='/projects/']",
+        "table[aria-label='プロジェクト'] tbody tr:first-child a[href*='/projects/']",
       );
       await project.waitForDisplayed({ timeout: 15_000 });
       await $("button[aria-label='新規プロジェクト']").waitForDisplayed();
       await saveFixtureScreenshot("japanese-projects.png");
       await project.click();
-      const chat = $("section[aria-label='チャット'] a[href*='/chat/']");
+      const chat = $(
+        "section[aria-label='チャット'] tbody tr:first-child a[href*='/chat/']",
+      );
       await chat.waitForDisplayed({ timeout: 15_000 });
       await saveFixtureScreenshot("japanese-project-detail.png");
       await assertJapaneseDocument();

@@ -242,6 +242,7 @@ describe("thread query hooks", () => {
       limit: 8,
       sortKey: "recency_at",
       sortDirection: "desc",
+      projectId: null,
     });
   });
 

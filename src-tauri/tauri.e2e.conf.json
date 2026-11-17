@@ -1,5 +1,15 @@
 {
   "app": {
+    "windows": [
+      {
+        "title": "Ruxex Desktop",
+        "width": 1920,
+        "height": 1080,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true
+      }
+    ],
     "withGlobalTauri": true,
     "security": {
       "capabilities": ["default", "e2e"]

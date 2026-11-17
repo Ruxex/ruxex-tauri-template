@@ -10,7 +10,7 @@ default-run = "ruxex-desktop"
 [features]
 default = ["example"]
 example = ["dep:ruxex-provider-host-example"]
-e2e = ["dep:tauri-plugin-wdio"]
+e2e = ["dep:tauri-plugin-wdio", "dep:cairo-rs", "dep:webkit2gtk"]
 
 [lib]
 name = "ruxex_desktop_lib"
@@ -83,6 +83,10 @@ tokio = { version = "1", features = [
     "time",
 ] }
 tauri-plugin-wdio = { version = "1", optional = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+cairo-rs = { version = "0.18.5", features = ["png"], optional = true }
+webkit2gtk = { version = "2.0.2", optional = true }
 
 [dev-dependencies]
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }

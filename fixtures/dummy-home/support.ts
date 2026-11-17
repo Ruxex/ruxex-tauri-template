@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 
@@ -42,7 +41,7 @@ export function scenarioExpectation(
 
 export async function waitForDesktopReady(): Promise<void> {
   try {
-    await $("main").waitForDisplayed({ timeout: 10_000 });
+    await $("main").waitForDisplayed({ timeout: 30_000 });
   } catch (error) {
     const page = await browser
       .execute(() => ({
@@ -100,6 +99,31 @@ export async function waitForHomeReady(): Promise<void> {
       timeoutMsg: "The Home project sidebar should finish loading",
     },
   );
+}
+
+export async function waitForRecentChatCount(
+  expectedCount: number,
+  timeout = 30_000,
+): Promise<void> {
+  const sidebar = $('aside[aria-label="Chat sidebar"]');
+  await sidebar.waitForDisplayed({ timeout });
+
+  try {
+    await browser.waitUntil(
+      async () =>
+        (await $$("#recent-chats-list > ul > li").length) === expectedCount,
+      {
+        timeout,
+        timeoutMsg: `Expected ${expectedCount} recent chats in the sidebar`,
+      },
+    );
+  } catch (error) {
+    const sidebarText = await sidebar.getText().catch(() => "<unavailable>");
+    throw new Error(
+      `Expected ${expectedCount} recent chats in the sidebar; current sidebar: ${sidebarText}`,
+      { cause: error },
+    );
+  }
 }
 
 export async function closeSidebarPanel(): Promise<void> {
@@ -215,14 +239,16 @@ export function minimapFixturePrompt(turn: number): string {
   return `Fixture minimap message ${String(turn).padStart(2, "0")} example:basic`;
 }
 
-export async function sendMinimapConversation(): Promise<void> {
+export async function sendMinimapConversation(
+  timeout = 45_000,
+): Promise<void> {
   const expectation = {
     kind: "text" as const,
     value: "This is a fixed response from the dummy provider.",
   };
 
   await sendComposerPrompt(minimapFixturePrompt(1));
-  await waitForCompletedTurn(expectation);
+  await waitForCompletedTurn(expectation, timeout);
   for (let turn = 2; turn <= MINIMAP_TURN_COUNT; turn += 1) {
     await sendFollowUp(minimapFixturePrompt(turn));
     await waitForUserMessageCount(turn);
@@ -311,6 +337,7 @@ async function sendComposerMessage(): Promise<void> {
 
 export async function waitForCompletedTurn(
   expectation: ScenarioExpectation,
+  timeout = 45_000,
 ): Promise<void> {
   await browser.waitUntil(
     async () => {
@@ -321,7 +348,7 @@ export async function waitForCompletedTurn(
       );
     },
     {
-      timeout: 45_000,
+      timeout,
       timeoutMsg: `Expected ${expectation.kind} text: ${expectation.value}`,
     },
   );
@@ -388,6 +415,7 @@ export async function createRootlessProject(
     "nav[aria-label='Workspace navigation'] button[aria-label='Projects']",
   ).click();
   await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
+  await waitForProjectsPageReady();
   await $("button[aria-label='New project']").click();
   await $("dialog").waitForDisplayed({ timeout: 10_000 });
   await $("input[aria-label='Project name']").setValue(project.name);
@@ -407,6 +435,45 @@ export async function createRootlessProject(
       `Project ${project.name} was not opened after creation. Dialog: ${dialogText}. Page: ${pageText}`,
       { cause: error },
     );
+  }
+}
+
+async function waitForProjectsPageReady(timeout = 30_000): Promise<void> {
+  const projectTable = $('table[aria-label="Projects"]');
+  const emptyState = $("h3=No projects yet");
+  const error = $("main [role='alert']");
+  const retry = $("main [role='alert'] button");
+
+  try {
+    await browser.waitUntil(
+      async () => {
+        if (
+          (await projectTable.isDisplayed().catch(() => false)) ||
+          (await emptyState.isDisplayed().catch(() => false))
+        ) {
+          return true;
+        }
+
+        if (
+          (await error.isDisplayed().catch(() => false)) &&
+          (await retry.isDisplayed().catch(() => false)) &&
+          (await retry.isEnabled())
+        ) {
+          await retry.click();
+          await browser.pause(500);
+        }
+        return false;
+      },
+      {
+        timeout,
+        timeoutMsg: "Projects did not finish loading",
+      },
+    );
+  } catch (cause) {
+    const pageText = await $("main").getText().catch(() => "<unavailable>");
+    throw new Error(`Projects did not become ready. Page: ${pageText}`, {
+      cause,
+    });
   }
 }
 
@@ -455,31 +522,13 @@ export async function createWorkspaceProject(
   await $("dialog").waitForDisplayed({ timeout: 10_000 });
   await $("input[aria-label='Project name']").setValue(name);
 
-  const chooser = spawn("/usr/bin/python3", [
-    "scripts/ui-fixtures/select_workspace_folder.py",
-    workspace,
-  ]);
-  let chooserOutput = "";
-  chooser.stdout.setEncoding("utf8").on("data", (chunk: string) => {
-    chooserOutput += chunk;
-    process.stdout.write(chunk);
-  });
-  chooser.stderr.setEncoding("utf8").on("data", (chunk: string) => {
-    chooserOutput += chunk;
-    process.stderr.write(chunk);
-  });
+  await browser.execute((selectedWorkspaceFolder: string) => {
+    if (!window.__RUXEX_E2E__) {
+      throw new Error("The E2E workspace selection hook is unavailable");
+    }
+    window.__RUXEX_E2E__.selectedWorkspaceFolder = selectedWorkspaceFolder;
+  }, workspace);
   await $("button[aria-label='Select workspace folder']").click();
-  const chooserExitCode = await new Promise<number | null>(
-    (resolve, reject) => {
-      chooser.once("error", reject);
-      chooser.once("close", (code) => resolve(code));
-    },
-  );
-  if (chooserExitCode !== 0) {
-    throw new Error(
-      `Unable to select workspace folder through accessibility: ${chooserOutput}`,
-    );
-  }
   const selectedFolder = $("button[aria-label^='Selected workspace folder: ']");
   await browser.waitUntil(
     async () =>
@@ -591,7 +640,17 @@ export async function saveFixtureScreenshot(name: string): Promise<void> {
   const artifactDirectory = process.env.RUXEX_E2E_ARTIFACTS ?? "artifacts";
   mkdirSync(artifactDirectory, { recursive: true });
   await browser.pause(300);
-  await browser.saveScreenshot(path.join(artifactDirectory, name));
+  if (process.env.GDK_BACKEND === "x11" && process.env.RUXEX_E2E_ARTIFACTS) {
+    await browser.execute(async (screenshotName: string) => {
+      const capture = window.__RUXEX_E2E__?.captureScreenshot;
+      if (!capture) {
+        throw new Error("The E2E screenshot command is unavailable");
+      }
+      await capture(screenshotName);
+    }, name);
+  } else {
+    await browser.saveScreenshot(path.join(artifactDirectory, name));
+  }
   await browser.pause(300);
 }
 

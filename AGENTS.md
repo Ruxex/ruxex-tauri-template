@@ -52,6 +52,10 @@ and upstream provenance notices.
 
 ### Tauri agent verification
 
+- When reproducing or investigating a live UI symptom, use the
+  [live WDIO debug skill](.agents/skills/live-wdio-debug/SKILL.md) when needed.
+  It describes a one-action-at-a-time workflow for observing the persistent
+  app session accurately.
 - After completing a UI, Tauri, WebView, IPC, or App Server task, use the
   [Ruxex Tauri agent verification skill](.agents/skills/ruxex-tauri-agent-verification/SKILL.md)
   when real-app observation is useful. It covers the persistent WDIO session,

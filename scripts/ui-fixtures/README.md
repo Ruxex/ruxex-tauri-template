@@ -13,6 +13,8 @@ UI fixtureは、ユーザーがデスクトップアプリを使うときと同�
 
 `make ui-fixtures` はページの中で実データがどう並ぶかを確認するため、空状態だけでなく通常量と大量データの画面も撮影します。部品カタログ単体の撮影は行いません。
 
+`make ui-fixtures-i18n` は通常量のデータを準備し、Settingsで言語を日本語に切り替えた画面を撮影します。ホーム、プロジェクト一覧・詳細、チャット、一般設定、外観設定を対象にし、大量データや追加の一覧状態は作成しません。
+
 - 通常量: active chat 17件（未所属14件、プロジェクト所属3件）、Chats一覧は両タブ・タブ別検索・サイドバー検索からの全件表示、サイドバー検索の8件上限、archived chat 2件、project 3件（並び替え表示あり）、`Product planning` の chat 2件（タイトル検索・並び替え表示あり）、schedule 1件、MCP server 1件。
 - 大量データ: active chat 77件（未所属16件、プロジェクト所属61件）、Chats一覧は両タブの上端と下端、archived chat 60件、project 120件、`Product planning` の chat 60件、schedule 12件、MCP server 12件。
 - Exampleプロバイダの新しい `plan`、`reasoning`、`markdown`、`subagent`、`parallel-subagents` シナリオも作成し、個別チャット画面を撮影します。Markdownレスポンスは見出しごとにスクロールして、インライン表現、リスト／引用、表、コードブロック、Mermaidを一通り撮ります。
