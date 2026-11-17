@@ -40,7 +40,9 @@ export function AppProviders({ router }: AppProvidersProps) {
 }
 
 function AppRuntime({ router }: AppProvidersProps) {
-  useAppServerNotifications();
+  useAppServerNotifications((threadId) => {
+    void router.navigate(`/chat/${encodeURIComponent(threadId)}`);
+  });
   useAppServerQuerySync();
 
   useEffect(() => {
