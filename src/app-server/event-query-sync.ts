@@ -8,6 +8,7 @@ import {
   invalidateThreadList,
   invalidateThreadMetadata,
   invalidateThreadQueue,
+  upsertSubagentThreadInCache,
   upsertThreadInListCaches,
 } from "./query-invalidation";
 import { appServerQueryKeys } from "./query-keys";
@@ -39,6 +40,7 @@ export function synchronizeAppServerQueries(
         { thread: event.data.params.thread },
       );
       upsertThreadInListCaches(queryClient, event.data.params.thread);
+      upsertSubagentThreadInCache(queryClient, event.data.params.thread);
       return Promise.resolve();
     case "thread/status/changed":
       patchThreadCaches(queryClient, event.data.params.threadId, {

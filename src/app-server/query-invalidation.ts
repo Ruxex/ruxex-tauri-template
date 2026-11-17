@@ -51,6 +51,29 @@ export function upsertThreadInListCaches(
   }
 }
 
+export function upsertSubagentThreadInCache(
+  queryClient: QueryClient,
+  thread: v2.Thread,
+): void {
+  const parentThreadId = thread.parentThreadId;
+  if (!parentThreadId) return;
+
+  const queryKey = appServerQueryKeys.subagentThreadList(parentThreadId);
+  queryClient.setQueryData<v2.ThreadListResponse>(queryKey, (current) => {
+    if (!current || current.data.some((item) => item.id === thread.id)) {
+      return current;
+    }
+
+    return {
+      ...current,
+      data: [...current.data, thread]
+        .sort((left, right) => right.updatedAt - left.updatedAt)
+        .slice(0, 100),
+    };
+  });
+  void queryClient.invalidateQueries({ queryKey });
+}
+
 export function invalidateThreadList(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
 }
