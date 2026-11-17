@@ -137,9 +137,9 @@ const RUXEX_LIGHT_COLORS = createThemeColors({
 });
 
 const RUXEX_DARK_COLORS = createThemeColors({
-  base100: "#111827",
-  base200: "#0f172a",
-  base300: "#1e293b",
+  base100: "#1c2a40",
+  base200: "#0b1220",
+  base300: "#34445d",
   baseContent: "#e2e8f0",
   primary: "#60a5fa",
   secondary: "#c084fc",
