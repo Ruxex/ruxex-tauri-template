@@ -130,7 +130,7 @@
   "subagents": "Subagents",
   "subagentList": "Subagent list",
   "tokenUsage": "Token Usage",
-  "tokensIO": "Tokens(I/O)",
+  "tokensIO": "Tokens (I/O)",
   "amount": "Amount",
   "askAssistant": "Ask the assistant to work on something…",
   "askNamedAssistant": "Ask {{name}} to work on something…",
@@ -152,11 +152,6 @@
   "agentFallback": "Agent {{id}}",
   "reviewChanges_one": "Review {{added, number}} additions and {{deleted, number}} deletions across {{count, number}} file",
   "reviewChanges_other": "Review {{added, number}} additions and {{deleted, number}} deletions across {{count, number}} files",
-  "commandLabels": {
-    "archive": "Archive",
-    "compact": "Compact",
-    "goal": "Goal"
-  },
   "tokenSummary": "Input tokens: {{input}}; Output tokens: {{output}}; Total tokens: {{total}}",
   "tokenSummaryAccessible": "Input {{input}}, Output {{output}}, Total {{total}}",
   "totalAmount": "Total amount: {{amount}}",

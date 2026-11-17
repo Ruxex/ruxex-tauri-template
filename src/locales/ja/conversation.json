@@ -130,7 +130,7 @@
   "subagents": "サブエージェント",
   "subagentList": "サブエージェント一覧",
   "tokenUsage": "トークン使用量",
-  "tokensIO": "トークン(入力/出力)",
+  "tokensIO": "トークン (I/O)",
   "amount": "金額",
   "askAssistant": "アシスタントに作業を依頼…",
   "askNamedAssistant": "{{name}}に作業を依頼…",
@@ -152,11 +152,6 @@
   "agentFallback": "エージェント {{id}}",
   "reviewChanges_one": "{{count, number}} ファイルの追加 {{added, number}} 行と削除 {{deleted, number}} 行を確認",
   "reviewChanges_other": "{{count, number}} ファイルの追加 {{added, number}} 行と削除 {{deleted, number}} 行を確認",
-  "commandLabels": {
-    "archive": "アーカイブ",
-    "compact": "コンテキストを圧縮",
-    "goal": "目標"
-  },
   "tokenSummary": "入力トークン: {{input}}; 出力トークン: {{output}}; 合計トークン: {{total}}",
   "tokenSummaryAccessible": "入力 {{input}}、出力 {{output}}、合計 {{total}}",
   "totalAmount": "合計金額: {{amount}}",

@@ -6,6 +6,7 @@ import type {
 } from "react";
 
 import type { v2 } from "../../protocol";
+import type { SlashCommandToken } from "./slash-command";
 import { AttachmentPreview } from "../common/AttachmentPreview";
 import { ComposerMessageInput } from "./ComposerMessageInput";
 
@@ -16,6 +17,10 @@ type ComposerTextInputProps = {
   imageFile: File | null;
   onChange: (value: string) => void;
   onEditorReady: (element: HTMLElement) => void;
+  onSlashCommandContext?: (
+    input: SlashCommandToken | null,
+    removeToken: (() => void) | null,
+  ) => void;
   onKeyDown: KeyboardEventHandler<HTMLDivElement>;
   onRemoveImage: () => void;
   placeholder: string;
@@ -29,6 +34,7 @@ export function ComposerTextInput({
   imageFile,
   onChange,
   onEditorReady,
+  onSlashCommandContext,
   onKeyDown,
   onRemoveImage,
   placeholder,
@@ -42,6 +48,7 @@ export function ComposerTextInput({
         disabled={disabled}
         onChange={onChange}
         onEditorReady={onEditorReady}
+        onSlashCommandContext={onSlashCommandContext}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         value={value}

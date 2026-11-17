@@ -10,6 +10,7 @@ import {
 import {
   type FormEvent,
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -39,13 +40,11 @@ import {
 } from "./composer-model";
 import { buildUserTextInput } from "./conversation-model";
 import { SelectedComposerSkill } from "./SelectedComposerSkill";
-import { SlashCommandPalette } from "./SlashCommandPalette";
 import {
-  getSlashCommandInput,
-  type SlashCommandId,
-  selectSlashCommand,
-  selectSlashSkill,
-} from "./slash-command";
+  SlashCommandPalette,
+  type SlashCommandPaletteHandle,
+} from "./SlashCommandPalette";
+import type { SlashCommandId, SlashCommandToken } from "./slash-command";
 import { useComposerActions } from "./useComposerActions";
 import { useComposerSelection } from "./useComposerSelection";
 import { useComposerSkills } from "./useComposerSkills";
@@ -90,6 +89,10 @@ export function Composer({
     null,
   );
   const editorRef = useRef<HTMLElement>(null);
+  const slashPaletteRef = useRef<SlashCommandPaletteHandle>(null);
+  const removeSlashTokenRef = useRef<(() => void) | null>(null);
+  const [slashCommandInput, setSlashCommandInput] =
+    useState<SlashCommandToken | null>(null);
   const {
     attachmentError,
     attachmentInput,
@@ -140,8 +143,39 @@ export function Composer({
   const composerInputBlocked =
     pendingUserInputRequests.length > 0 &&
     (!canAnswerFromComposer || Boolean(inputRequestBlockReason));
-  const slashCommandInput = getSlashCommandInput(message);
   const showSlashCommands = slashCommandInput !== null && !goalMode;
+
+  const setSlashContext = useCallback(
+    (input: SlashCommandToken | null, removeToken: (() => void) | null) => {
+      setSlashCommandInput(input);
+      removeSlashTokenRef.current = removeToken;
+      if (!editorRef.current) return;
+      if (!input || goalMode) {
+        editorRef.current.removeAttribute("role");
+        editorRef.current.removeAttribute("aria-haspopup");
+        editorRef.current.removeAttribute("aria-autocomplete");
+        editorRef.current.removeAttribute("aria-expanded");
+        editorRef.current.removeAttribute("aria-controls");
+        editorRef.current.removeAttribute("aria-activedescendant");
+        return;
+      }
+      editorRef.current.setAttribute("role", "combobox");
+      editorRef.current.setAttribute("aria-haspopup", "listbox");
+      editorRef.current.setAttribute("aria-autocomplete", "list");
+      editorRef.current.setAttribute("aria-expanded", "true");
+      editorRef.current.setAttribute("aria-controls", "slash-command-palette");
+    },
+    [goalMode],
+  );
+
+  const closeSlashPalette = useCallback(() => {
+    setSlashContext(null, null);
+  }, [setSlashContext]);
+
+  const handleActiveOptionChange = useCallback((id: string | null) => {
+    if (id) editorRef.current?.setAttribute("aria-activedescendant", id);
+    else editorRef.current?.removeAttribute("aria-activedescendant");
+  }, []);
 
   useEffect(() => {
     if (initialMessage !== undefined) {
@@ -185,6 +219,10 @@ export function Composer({
   }
 
   function handleMessageKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (showSlashCommands) {
+      slashPaletteRef.current?.handleKeyDown(event);
+      if (event.defaultPrevented) return;
+    }
     if (!isComposerSubmitShortcut(event)) {
       return;
     }
@@ -193,21 +231,21 @@ export function Composer({
   }
 
   async function handleSlashCommandSelect(command: SlashCommandId) {
-    const selection = selectSlashCommand(message, command);
-    if (selection.kind === "goal") {
+    if (command === "goal") {
+      removeSlashTokenRef.current?.();
       setGoalMode(true);
-      setMessage(selection.message);
-      editorRef.current?.focus();
+      closeSlashPalette();
       return;
     }
 
     try {
-      if (selection.command === "archive") {
+      if (command === "archive") {
         await actions.archive();
       } else {
         await actions.compact();
       }
       setMessage("");
+      closeSlashPalette();
       editorRef.current?.focus();
     } catch {
       // Mutation state renders the error below the composer.
@@ -215,15 +253,38 @@ export function Composer({
   }
 
   function handleSlashSkillSelect(skill: v2.SkillMetadata) {
-    const selection = selectSlashSkill(message, skill);
+    removeSlashTokenRef.current?.();
     setSelectedSkill({
-      name: selection.skill.name,
-      path: selection.skill.path,
+      name: skill.name,
+      path: skill.path,
       interface: skill.interface,
     });
-    setMessage(selection.message);
+    closeSlashPalette();
     editorRef.current?.focus();
   }
+
+  useEffect(() => {
+    if (!showSlashCommands) return;
+    const isPaletteOrEditorTarget = (target: EventTarget | null) =>
+      target instanceof Node &&
+      (editorRef.current?.contains(target) ||
+        (target instanceof Element &&
+          target.closest("[data-slash-command-palette='true']")));
+    const handlePointerDown = (event: PointerEvent) => {
+      if (isPaletteOrEditorTarget(event.target)) return;
+      closeSlashPalette();
+    };
+    const handleFocusIn = (event: FocusEvent) => {
+      if (isPaletteOrEditorTarget(event.target)) return;
+      closeSlashPalette();
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("focusin", handleFocusIn);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [closeSlashPalette, showSlashCommands]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -317,10 +378,14 @@ export function Composer({
       {showSlashCommands && (
         <SlashCommandPalette
           disabled={isPending || composerInputBlocked}
-          onDismiss={() => editorRef.current?.focus()}
+          id="slash-command-palette"
+          key={slashCommandInput.query}
+          onActiveOptionChange={handleActiveOptionChange}
+          onDismiss={closeSlashPalette}
           onSelectSkill={handleSlashSkillSelect}
           onSelect={(command) => void handleSlashCommandSelect(command)}
           query={slashCommandInput?.query}
+          ref={slashPaletteRef}
           skills={visibleSkills}
           skillsError={skills.isError ? formatErrorMessage(skills.error) : null}
           skillsLoading={skills.isLoading}
@@ -338,7 +403,15 @@ export function Composer({
           onChange={setMessage}
           onEditorReady={(element) => {
             editorRef.current = element;
+            if (showSlashCommands) {
+              element.setAttribute("role", "combobox");
+              element.setAttribute("aria-haspopup", "listbox");
+              element.setAttribute("aria-autocomplete", "list");
+              element.setAttribute("aria-expanded", "true");
+              element.setAttribute("aria-controls", "slash-command-palette");
+            }
           }}
+          onSlashCommandContext={setSlashContext}
           onKeyDown={handleMessageKeyDown}
           onRemoveImage={clearAttachment}
           placeholder={

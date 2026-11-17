@@ -12,17 +12,35 @@ export type SlashCommandInput = {
   query: string;
 };
 
+export type SlashCommandToken = SlashCommandInput & {
+  from: number;
+  to: number;
+};
+
 export type SlashCommandSelection =
   | { kind: "immediate"; command: Exclude<SlashCommandId, "goal"> }
   | { kind: "goal"; message: string };
 
+export function getSlashCommandInputAtCursor(
+  text: string,
+  cursor: number,
+): SlashCommandToken | null {
+  const tokens = /\/([^\s]*)/g;
+  for (const match of text.matchAll(tokens)) {
+    const from = match.index;
+    const to = from + match[0].length;
+    const startsAfterSpace = from === 0 || text[from - 1] === " ";
+    if (startsAfterSpace && cursor > from && cursor <= to) {
+      return { query: match[1] ?? "", from, to };
+    }
+  }
+  return null;
+}
+
 export function getSlashCommandInput(
   message: string,
 ): SlashCommandInput | null {
-  if (!message.startsWith("/")) {
-    return null;
-  }
-
+  if (!message.startsWith("/")) return null;
   return { query: message.slice(1).split(/\s/, 1)[0] ?? "" };
 }
 

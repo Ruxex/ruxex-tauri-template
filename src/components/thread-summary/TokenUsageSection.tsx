@@ -1,5 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { CircleStackIcon } from "@heroicons/react/24/outline";
+import {
+  CircleStackIcon,
+  CurrencyDollarIcon,
+} from "@heroicons/react/24/outline";
 
 import { formatNumber, formatCompactNumber } from "../../app/locale-format";
 import type { v2 } from "../../protocol";
@@ -40,7 +43,8 @@ export function TokenUsageSection({ usage }: TokenUsageSectionProps) {
             })}
           >
             <span aria-hidden="true">
-              {formatCompactTokens(usage.total.inputTokens)}/
+              {formatCompactTokens(usage.total.inputTokens)}
+              {" / "}
               {formatCompactTokens(usage.total.outputTokens)} Σ
               {formatCompactTokens(usage.total.totalTokens)}
             </span>
@@ -56,7 +60,10 @@ export function TokenUsageSection({ usage }: TokenUsageSectionProps) {
       </dl>
       {usage.totalAmount !== null && (
         <dl className="flex min-w-0 items-center gap-2 rounded px-1 py-1 text-xs">
-          <dt className="font-medium text-base-content/80">{t("amount")}</dt>
+          <dt className="flex shrink-0 items-center gap-1.5 font-medium text-base-content/80">
+            <CurrencyDollarIcon aria-hidden="true" className="size-4" />
+            <span>{t("amount")}</span>
+          </dt>
           <dd
             className="ml-auto min-w-0 truncate font-medium tabular-nums"
             title={t("totalAmount", {
