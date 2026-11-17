@@ -1,6 +1,6 @@
-import { useTranslation } from "react-i18next";
-import { Fragment, memo } from "react";
 import type { RefObject } from "react";
+import { Fragment, memo } from "react";
+import { useTranslation } from "react-i18next";
 
 import type {
   PendingServerRequest,
@@ -12,7 +12,6 @@ import {
   areConversationViewItemsEqual,
   type ConversationViewItem,
 } from "../conversation/conversation-model";
-import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 import {
   findWorkingIndicatorInsertionIndex,
   formatDuration,
@@ -25,6 +24,7 @@ import {
   TimelineItem,
   WorkingIndicator,
 } from "./TimelineActivityParts";
+import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 import { useWorkingSeconds } from "./useWorkingSeconds";
 
 type ChatActivityTimelineProps = {
@@ -44,6 +44,7 @@ type ChatActivityTimelineProps = {
     result: unknown,
   ) => Promise<void>;
   pendingRequests: PendingServerRequest[];
+  requestSourceLabels?: ReadonlyMap<string, string>;
   timelineRef?: RefObject<HTMLElement | null>;
   turns?: v2.Turn[];
   workingTurnId?: string | null;
@@ -59,6 +60,7 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
   onReject,
   onResolve,
   pendingRequests,
+  requestSourceLabels,
   timelineRef: suppliedTimelineRef,
   turns = [],
   workingTurnId,
@@ -174,6 +176,11 @@ export const ChatActivityTimeline = memo(function ChatActivityTimeline({
           onReject={(message) => onReject(pending.requestId, message)}
           onResolve={(result) => onResolve(pending.requestId, result)}
           pending={pending}
+          sourceLabel={
+            pending.threadId
+              ? requestSourceLabels?.get(pending.threadId)
+              : undefined
+          }
         />
       ))}
       {visibleItems.length === 0 &&
@@ -199,6 +206,7 @@ function areChatActivityTimelinePropsEqual(
     left.onEdit === right.onEdit &&
     left.onReject === right.onReject &&
     left.onResolve === right.onResolve &&
+    left.requestSourceLabels === right.requestSourceLabels &&
     left.timelineRef === right.timelineRef &&
     left.workingTurnId === right.workingTurnId &&
     left.workingStartedAt === right.workingStartedAt &&

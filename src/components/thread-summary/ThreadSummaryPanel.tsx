@@ -1,4 +1,14 @@
-import { CodeBracketIcon, CommandLineIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  CheckIcon,
+  CodeBracketIcon,
+  CommandLineIcon,
+  ExclamationCircleIcon,
+  FolderOpenIcon,
+  PauseIcon,
+} from "@heroicons/react/24/outline";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatNumber } from "../../app/locale-format";
 import type { GitDiffSummary } from "../../platform/git-diff";
@@ -13,6 +23,9 @@ type ThreadSummaryPanelProps = {
   subagents?: SubagentRow[];
   onReviewGitDiff?: () => void;
   onOpenTerminal?: () => void;
+  onOpenWorkspace?: () => void;
+  onOpenEditor?: () => Promise<void>;
+  onOpenSubagent?: (target: { threadId: string; label: string }) => void;
 };
 
 export function ThreadSummaryPanel({
@@ -21,9 +34,13 @@ export function ThreadSummaryPanel({
   subagents = [],
   onReviewGitDiff,
   onOpenTerminal,
+  onOpenWorkspace,
+  onOpenEditor,
+  onOpenSubagent,
 }: ThreadSummaryPanelProps) {
   const { t, i18n } = useTranslation("conversation");
   const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
+  const [editorError, setEditorError] = useState(false);
 
   if (!tokenUsage && !gitDiff && subagents.length === 0) {
     return null;
@@ -82,19 +99,53 @@ export function ThreadSummaryPanel({
               </section>
             )}
             <TokenUsageSection usage={tokenUsage} />
-            {subagents.length > 0 && <SubagentsSummary rows={subagents} />}
-            {onOpenTerminal && (
-              <section aria-label={t("terminal")} className="mt-5">
-                <button
-                  aria-label={t("openTerminalInRightPane")}
-                  className="flex w-full items-center gap-2 rounded px-1 py-1 text-left transition-colors hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
-                  onClick={onOpenTerminal}
-                  type="button"
-                >
-                  <CommandLineIcon aria-hidden="true" className="size-4" />
-                  <span>{t("terminal")}</span>
-                </button>
+            {subagents.length > 0 && (
+              <SubagentsSummary
+                onOpenSubagent={onOpenSubagent}
+                rows={subagents}
+              />
+            )}
+            {(onOpenTerminal || onOpenWorkspace || onOpenEditor) && (
+              <section
+                aria-label={t("workspaceActions")}
+                className="mt-5 grid grid-cols-3 gap-1 border-t border-base-300 pt-3"
+              >
+                {onOpenTerminal && (
+                  <ThreadSummaryActionButton
+                    label={t("openTerminalInRightPane")}
+                    tooltipAlign="left"
+                    onClick={onOpenTerminal}
+                  >
+                    <CommandLineIcon aria-hidden="true" className="size-4" />
+                  </ThreadSummaryActionButton>
+                )}
+                {onOpenWorkspace && (
+                  <ThreadSummaryActionButton
+                    label={t("openWorkspaceInFileManager")}
+                    tooltipAlign="center"
+                    onClick={onOpenWorkspace}
+                  >
+                    <FolderOpenIcon aria-hidden="true" className="size-4" />
+                  </ThreadSummaryActionButton>
+                )}
+                {onOpenEditor && (
+                  <ThreadSummaryActionButton
+                    label={t("openWorkspaceInEditor")}
+                    tooltipAlign="right"
+                    onClick={() => {
+                      setEditorError(false);
+                      void onOpenEditor().catch(() => setEditorError(true));
+                    }}
+                  >
+                    <CodeBracketIcon aria-hidden="true" className="size-4" />
+                  </ThreadSummaryActionButton>
+                )}
               </section>
+            )}
+            {editorError && (
+              <p className="mt-2 text-xs text-error" role="alert">
+                {t("unableToOpenEditor")}
+              </p>
             )}
           </div>
         </div>
@@ -103,20 +154,62 @@ export function ThreadSummaryPanel({
   );
 }
 
-function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
-  const { t } = useTranslation("conversation");
+function ThreadSummaryActionButton({
+  children,
+  label,
+  onClick,
+  tooltipAlign,
+}: {
+  children: ReactNode;
+  label: string;
+  onClick: () => void;
+  tooltipAlign: "left" | "center" | "right";
+}) {
+  const tooltipPosition = {
+    left: "left-0",
+    center: "left-1/2 -translate-x-1/2",
+    right: "right-0",
+  }[tooltipAlign];
 
   return (
-    <details className="collapse collapse-arrow mt-5">
+    <span className="group relative flex justify-center">
+      <button
+        aria-label={label}
+        className="btn btn-ghost btn-sm btn-square"
+        onClick={onClick}
+        type="button"
+      >
+        {children}
+      </button>
+      <span
+        className={`invisible absolute bottom-full z-20 w-max max-w-52 rounded-box border border-base-300 bg-base-100 px-2 py-1 text-center text-xs leading-tight text-base-content opacity-0 shadow-lg group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${tooltipPosition}`}
+        role="tooltip"
+      >
+        {label}
+      </span>
+    </span>
+  );
+}
+
+function SubagentsSummary({
+  rows,
+  onOpenSubagent,
+}: {
+  rows: SubagentRow[];
+  onOpenSubagent?: (target: { threadId: string; label: string }) => void;
+}) {
+  const { t, i18n } = useTranslation("conversation");
+  const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
+
+  return (
+    <details className="collapse collapse-arrow mt-5" open>
       <summary className="collapse-title flex min-h-0 cursor-pointer items-center rounded px-1 py-1 pr-7 text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary">
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="shrink-0 font-medium text-base-content/80">
             {t("subagents")}
           </span>
-          <span className="ml-auto flex min-w-0 flex-wrap justify-end gap-1">
-            {rows.map((row) => (
-              <SubagentIdenticon key={row.threadId} threadId={row.threadId} />
-            ))}
+          <span className="ml-auto shrink-0 tabular-nums text-base-content/60">
+            ({formatNumber(rows.length, locale)})
           </span>
         </span>
       </summary>
@@ -128,17 +221,67 @@ function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
           {rows.map((row) => (
             <li key={row.threadId}>
               <button
-                aria-label={t("subagentLabel", { name: row.label })}
-                className="w-full cursor-pointer truncate rounded px-2 py-1 text-left text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+                aria-label={t("openSubagent", { name: row.label })}
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default"
+                disabled={!onOpenSubagent}
+                onClick={() =>
+                  onOpenSubagent?.({ threadId: row.threadId, label: row.label })
+                }
                 type="button"
               >
-                {row.label}
+                <SubagentIdenticon threadId={row.threadId} />
+                <span className="min-w-0 flex-1 truncate text-base-content/90">
+                  {row.label}
+                </span>
+                <SubagentStatusIndicator status={row.status} />
               </button>
             </li>
           ))}
         </ul>
       </div>
     </details>
+  );
+}
+
+function SubagentStatusIndicator({
+  status,
+}: {
+  status: SubagentRow["status"];
+}) {
+  const { t } = useTranslation("conversation");
+  const statusLabel = t(
+    status === "active"
+      ? "subagentRunning"
+      : status === "done"
+        ? "subagentCompleted"
+        : status === "failed"
+          ? "failed"
+          : "interrupted",
+  );
+
+  return (
+    <span
+      aria-label={statusLabel}
+      className="shrink-0"
+      role="img"
+      title={statusLabel}
+    >
+      {status === "active" ? (
+        <ArrowPathIcon
+          aria-hidden="true"
+          className="size-4 motion-safe:animate-spin motion-reduce:animate-none text-primary"
+        />
+      ) : status === "done" ? (
+        <CheckIcon aria-hidden="true" className="size-4 text-success" />
+      ) : status === "failed" ? (
+        <ExclamationCircleIcon
+          aria-hidden="true"
+          className="size-4 text-error"
+        />
+      ) : (
+        <PauseIcon aria-hidden="true" className="size-4 text-base-content/55" />
+      )}
+    </span>
   );
 }
 

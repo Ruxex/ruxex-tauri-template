@@ -1,12 +1,13 @@
-import { useTranslation } from "react-i18next";
 import {
+  type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useUiPreferences } from "../app/ui-preferences";
 import {
+  EditorCommandCard,
   LanguageCard,
   NotificationsCard,
   QuickPanelCard,
@@ -119,6 +120,10 @@ export function SettingsOverviewPage() {
       <LanguageCard
         language={preferences.language}
         onLanguageChange={(language) => update({ language })}
+      />
+      <EditorCommandCard
+        command={preferences.editorCommand}
+        onCommandChange={(editorCommand) => update({ editorCommand })}
       />
       <QuickPanelCard
         defaultShortcut={defaultShortcut}

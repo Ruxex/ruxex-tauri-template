@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+import { openPath } from "@tauri-apps/plugin-opener";
 import {
   useCallback,
   useEffect,
@@ -7,7 +7,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { useBranding } from "../../app/branding-context";
+import { getEditorCommandPreference } from "../../app/ui-preferences";
 import {
   rejectServerRequestWithMessage,
   resolveServerRequest,
@@ -15,6 +17,7 @@ import {
 import type { LiveConversationItem } from "../../app-server/event-reducer";
 import { clearThreadLiveItems } from "../../app-server/event-store";
 import {
+  useAllThreadList,
   useAppServerEvents,
   useRetainThreadState,
   useRevertThread,
@@ -23,6 +26,7 @@ import {
   useThreadConversation,
 } from "../../app-server/hooks";
 import { useGitDiffSummary } from "../../platform/git-diff";
+import { openWorkspaceInEditor } from "../../platform/native";
 import { ChatActivityTimeline } from "../chats/ChatActivityTimeline";
 import { buildSubagentRows } from "../thread-summary/subagent-model";
 import { ThreadSummaryPanel } from "../thread-summary/ThreadSummaryPanel";
@@ -42,6 +46,7 @@ export function ConversationWorkspace({
   threadId,
   onOpenThreadDiff,
   onOpenThreadTerminal,
+  onOpenSubagent,
 }: {
   threadId: string;
   onOpenThreadDiff?: (target: { threadId: string; workspace: string }) => void;
@@ -49,6 +54,7 @@ export function ConversationWorkspace({
     threadId: string;
     cwd: string | null;
   }) => void;
+  onOpenSubagent?: (target: { threadId: string; label: string }) => void;
 }) {
   const { t } = useTranslation("conversation");
 
@@ -67,6 +73,19 @@ export function ConversationWorkspace({
   const liveThread = events.threads[threadId];
   const tokenUsage = liveThread?.tokenUsage ?? null;
   const subagentThreadList = useSubagentThreadList(threadId);
+  const subagentDescendantList = useAllThreadList({
+    ancestorThreadId: threadId,
+    archived: false,
+    sortKey: "updated_at",
+    sortDirection: "desc",
+  });
+  const subagentThreadIds = useMemo(
+    () =>
+      new Set(
+        (subagentDescendantList.data?.data ?? []).map((thread) => thread.id),
+      ),
+    [subagentDescendantList.data?.data],
+  );
   const subagents = useMemo(
     () =>
       buildSubagentRows(
@@ -81,6 +100,31 @@ export function ConversationWorkspace({
       subagentThreadList.data?.data,
       t,
     ],
+  );
+  const subagentDescendants = useMemo(
+    () =>
+      buildSubagentRows(
+        subagentDescendantList.data?.data ?? [],
+        events.threads,
+        Object.values(events.pendingServerRequests),
+        t,
+      ),
+    [
+      events.pendingServerRequests,
+      events.threads,
+      subagentDescendantList.data?.data,
+      t,
+    ],
+  );
+  const subagentRequestSourceLabels = useMemo(
+    () =>
+      new Map(
+        subagentDescendants.map((subagent) => [
+          subagent.threadId,
+          subagent.label,
+        ]),
+      ),
+    [subagentDescendants],
   );
   const liveItems = liveThread?.items ?? EMPTY_LIVE_ITEMS;
   const liveItemsRef = useRef(liveItems);
@@ -138,16 +182,21 @@ export function ConversationWorkspace({
   const pendingRequests = useMemo(
     () =>
       Object.values(events.pendingServerRequests ?? {}).filter(
-        (request) => request.threadId === threadId,
+        (request) =>
+          request.threadId === threadId ||
+          (request.threadId !== null &&
+            subagentThreadIds.has(request.threadId)),
       ),
-    [events.pendingServerRequests, threadId],
+    [events.pendingServerRequests, subagentThreadIds, threadId],
   );
   const pendingUserInputRequests = useMemo(
     () =>
       pendingRequests.filter(
-        (request) => request.request.method === "item/tool/requestUserInput",
+        (request) =>
+          request.threadId === threadId &&
+          request.request.method === "item/tool/requestUserInput",
       ),
-    [pendingRequests],
+    [pendingRequests, threadId],
   );
 
   useEffect(() => {
@@ -269,13 +318,13 @@ export function ConversationWorkspace({
   const gitDiff = gitDiffQuery.data ?? null;
   const hasSummary =
     tokenUsage !== null || gitDiff !== null || subagents.length > 0;
+  const workspacePath = conversation.data.thread.cwd;
   const chatGridClasses = hasMinimap
     ? hasSummary
       ? [
           "grid-cols-[minmax(0,1fr)]",
           "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
-          "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
-          "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
+          "@min-[80rem]/chat:grid-cols-[minmax(3rem,1fr)_minmax(0,53rem)_minmax(16rem,1fr)]",
         ]
       : [
           "grid-cols-[minmax(0,1fr)]",
@@ -333,6 +382,7 @@ export function ConversationWorkspace({
           onReject={handleReject}
           onResolve={handleResolve}
           pendingRequests={pendingRequests}
+          requestSourceLabels={subagentRequestSourceLabels}
           timelineRef={timelineRef}
           turns={turns}
           workingTurnId={workingTurnId}
@@ -356,14 +406,37 @@ export function ConversationWorkspace({
         <ThreadSummaryPanel
           gitDiff={gitDiff}
           onReviewGitDiff={() => {
-            const workspace = conversation.data?.thread.cwd;
-            if (workspace) onOpenThreadDiff?.({ threadId, workspace });
+            if (workspacePath) {
+              onOpenThreadDiff?.({ threadId, workspace: workspacePath });
+            }
           }}
           onOpenTerminal={() =>
             onOpenThreadTerminal?.({
               threadId,
-              cwd: conversation.data?.thread.cwd ?? null,
+              cwd: workspacePath ?? null,
             })
+          }
+          onOpenSubagent={onOpenSubagent}
+          onOpenWorkspace={
+            workspacePath
+              ? () => {
+                  void openPath(workspacePath).catch((error) => {
+                    console.error(
+                      "Unable to open workspace in file manager.",
+                      error,
+                    );
+                  });
+                }
+              : undefined
+          }
+          onOpenEditor={
+            workspacePath
+              ? () =>
+                  openWorkspaceInEditor(
+                    workspacePath,
+                    getEditorCommandPreference(),
+                  )
+              : undefined
           }
           tokenUsage={tokenUsage}
           subagents={subagents}

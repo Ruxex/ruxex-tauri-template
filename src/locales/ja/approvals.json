@@ -8,6 +8,7 @@
   "inputRequested": "入力リクエスト",
   "approvalRequested": "承認リクエスト",
   "serverRequest": "サーバーリクエスト",
+  "requestedBySubagent": "{{name}} からのリクエスト",
   "requestedAccess": "要求されたアクセス",
   "additionalDetailsOptional": "追加の詳細 (任意)",
   "malformedOrUnsupportedRequestPayload": "リクエストの形式が不正か、未対応です。",

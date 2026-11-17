@@ -7,14 +7,13 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { useTranslation } from "react-i18next";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "./i18n";
 
 import {
-  DEFAULT_UI_PREFERENCES,
   clampUiZoom,
+  DEFAULT_UI_PREFERENCES,
   parseUiPreferences,
   UI_NOTIFICATION_SOUNDS,
   UI_PREFERENCES_KEY,
@@ -99,13 +98,13 @@ describe("UI preference persistence", () => {
     expect(UI_NOTIFICATION_SOUNDS).toContain("system");
   });
 
-  it("updates presentation preferences without changing the version", () => {
+  it("updates presentation preferences with the current version", () => {
     const next = updateUiPreferences(DEFAULT_UI_PREFERENCES, {
       theme: { accentColor: "rose", preset: "ruxex-light" },
     });
 
     expect(next).toMatchObject({
-      version: 9,
+      version: 10,
       theme: { accentColor: "rose", preset: "ruxex-light" },
     });
   });

@@ -118,10 +118,10 @@ export function ConversationMinimap({
   }
 
   return (
-    <div className="chat-minimap-column chat-side-column pointer-events-none sticky top-6 z-10 hidden w-auto min-w-0 justify-self-stretch self-start overflow-hidden @container/minimap @min-[64rem]/chat:block @min-[80rem]/chat:hidden @min-[96rem]/chat:block">
+    <div className="chat-minimap-column chat-side-column pointer-events-none sticky top-6 z-10 hidden w-auto min-w-0 justify-self-stretch self-start overflow-hidden @container/minimap @min-[64rem]/chat:block @min-[80rem]/chat:block">
       <aside
         aria-label={t("conversationMinimap")}
-        className="hidden h-full w-full overflow-hidden @min-[4rem]/minimap:block"
+        className="hidden h-full w-full overflow-hidden @min-[3rem]/minimap:block"
       >
         <div
           className="pointer-events-auto flex h-full max-h-full w-full items-center overflow-y-auto"

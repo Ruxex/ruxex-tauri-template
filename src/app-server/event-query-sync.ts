@@ -4,6 +4,7 @@ import type { v2 } from "../protocol";
 import { requestAppServerMethod } from "./api";
 import type { AppServerEvent } from "./events";
 import {
+  invalidateDescendantThreadLists,
   invalidateThreadConversation,
   invalidateThreadList,
   invalidateThreadMetadata,
@@ -41,6 +42,7 @@ export function synchronizeAppServerQueries(
       );
       upsertThreadInListCaches(queryClient, event.data.params.thread);
       upsertSubagentThreadInCache(queryClient, event.data.params.thread);
+      invalidateDescendantThreadLists(queryClient);
       return Promise.resolve();
     case "thread/status/changed":
       patchThreadCaches(queryClient, event.data.params.threadId, {
@@ -187,6 +189,20 @@ function patchThreadCaches(
   );
   queryClient.setQueriesData<v2.ThreadListResponse>(
     { queryKey: appServerQueryKeys.threadListRoot },
+    (data) =>
+      data
+        ? {
+            ...data,
+            data: data.data.map((thread) =>
+              thread.id === threadId
+                ? mergeThreadPatch(thread, patch, options)
+                : thread,
+            ),
+          }
+        : data,
+  );
+  queryClient.setQueriesData<v2.ThreadListResponse>(
+    { queryKey: appServerQueryKeys.subagentThreadListRoot },
     (data) =>
       data
         ? {

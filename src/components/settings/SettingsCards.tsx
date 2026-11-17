@@ -1,12 +1,13 @@
 export { AppServerCard } from "./AppServerCard";
 export { CapabilitiesCard } from "./CapabilitiesCard";
+export { EditorCommandCard } from "./EditorCommandCard";
 export { LanguageCard } from "./LanguageCard";
 export { NotificationsCard } from "./NotificationsCard";
 export { ProviderAccountCard } from "./ProviderAccountCard";
 export { QuickPanelCard } from "./QuickPanelCard";
 export { RuntimeSummary } from "./RuntimeSummary";
-export { SettingsPanel, SettingRow } from "./SettingsPanel";
 export type { SettingsPanelIcon } from "./SettingsPanel";
-export { TypographyCard } from "./TypographyCard";
+export { SettingRow, SettingsPanel } from "./SettingsPanel";
 export { ThemeColorsCard } from "./ThemeColorsCard";
+export { TypographyCard } from "./TypographyCard";
 export { UiPreferencesCard } from "./UiPreferencesCard";

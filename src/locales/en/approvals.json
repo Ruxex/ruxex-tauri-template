@@ -8,6 +8,7 @@
   "inputRequested": "Input requested",
   "approvalRequested": "Approval requested",
   "serverRequest": "Server request",
+  "requestedBySubagent": "Requested by {{name}}",
   "requestedAccess": "Requested access",
   "additionalDetailsOptional": "Additional details (optional)",
   "malformedOrUnsupportedRequestPayload": "Malformed or unsupported request payload.",

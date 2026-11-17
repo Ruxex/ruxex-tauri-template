@@ -1,10 +1,10 @@
-import { i18n } from "../../app/i18n";
-import { useTranslation } from "react-i18next";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePanelRef } from "react-resizable-panels";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 import type { AppOutletContext } from "../../app/app-outlet-context";
+import { i18n } from "../../app/i18n";
 import { useThreadReadState } from "../../app/thread-read-state";
 import { useUiPreferences } from "../../app/ui-preferences";
 import { useProject, useThread } from "../../app-server/hooks";
@@ -16,6 +16,7 @@ import {
 import { type SidebarPanel, sidebarPanelForPath } from "../sidebar/navigation";
 import { ProjectSidebar } from "../sidebar/ProjectSidebar";
 import { TerminalPane } from "../terminal/TerminalPane";
+import { SubagentConversationPane } from "../thread-summary/SubagentConversationPane";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -35,6 +36,12 @@ type RightPaneTab =
       id: string;
       kind: "terminal";
       cwd: string | null;
+    }
+  | {
+      id: string;
+      kind: "subagent-chat";
+      threadId: string;
+      label: string;
     };
 
 function gitDiffTabId(target: GitDiffReviewTarget) {
@@ -101,6 +108,30 @@ export function AppLayout() {
     ({ cwd }: { threadId: string; cwd: string | null }) => {
       const id = `terminal-tab-${crypto.randomUUID()}`;
       setRightPaneTabs((tabs) => [...tabs, { id, kind: "terminal", cwd }]);
+      setActiveRightPaneTabId(id);
+      if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
+      setRightPaneOpen(true);
+    },
+    [rightPaneOpen, rightPaneRef],
+  );
+
+  const openSubagentChat = useCallback(
+    ({
+      threadId: subagentThreadId,
+      label,
+    }: {
+      threadId: string;
+      label: string;
+    }) => {
+      const id = `subagent-chat:${encodeURIComponent(subagentThreadId)}`;
+      setRightPaneTabs((tabs) =>
+        tabs.some((tab) => tab.id === id)
+          ? tabs
+          : [
+              ...tabs,
+              { id, kind: "subagent-chat", threadId: subagentThreadId, label },
+            ],
+      );
       setActiveRightPaneTabId(id);
       if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
       setRightPaneOpen(true);
@@ -224,7 +255,7 @@ export function AppLayout() {
       >
         <ResizablePanel
           className="min-w-0"
-          collapsedSize={60}
+          collapsedSize={56}
           collapsible
           defaultSize={320}
           id="left-sidebar"
@@ -265,6 +296,7 @@ export function AppLayout() {
                   {
                     openThreadDiff,
                     openThreadTerminal,
+                    openSubagentChat,
                   } satisfies AppOutletContext
                 }
               />
@@ -307,7 +339,9 @@ export function AppLayout() {
                     const label =
                       tab.kind === "git-diff"
                         ? gitDiffTabLabel(tab.target)
-                        : terminalTabLabel(tab.cwd);
+                        : tab.kind === "terminal"
+                          ? terminalTabLabel(tab.cwd)
+                          : tab.label;
                     const selected = tab.id === activeRightPaneTabId;
                     return (
                       <div
@@ -365,6 +399,9 @@ export function AppLayout() {
                           cwd={tab.cwd}
                           isOpen={rightPaneOpen && selected}
                         />
+                      )}
+                      {tab.kind === "subagent-chat" && (
+                        <SubagentConversationPane threadId={tab.threadId} />
                       )}
                     </div>
                   );

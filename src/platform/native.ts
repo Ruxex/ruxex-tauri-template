@@ -33,7 +33,21 @@ export function openArtifact(path: string): Promise<void> {
   return invoke("open_artifact", { path });
 }
 
-export function saveArtifact(path: string, destination: string): Promise<string> {
+export function openWorkspaceInEditor(
+  workspace: string,
+  editorCommand: string,
+): Promise<void> {
+  return invoke("open_workspace_in_editor", { workspace, editorCommand });
+}
+
+export function detectEditorCommand(): Promise<string | null> {
+  return invoke<string | null>("detect_editor_command");
+}
+
+export function saveArtifact(
+  path: string,
+  destination: string,
+): Promise<string> {
   return invoke<string>("save_artifact", { path, destination });
 }
 

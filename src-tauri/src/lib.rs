@@ -8,6 +8,7 @@ pub mod artifacts;
 mod branding;
 mod desktop;
 mod desktop_config;
+mod editor;
 #[cfg(all(feature = "e2e", target_os = "linux"))]
 mod e2e_screenshot;
 mod error;
@@ -154,6 +155,8 @@ pub fn run_with_config(config: DesktopConfig) {
             app_server::app_server_daemon_control,
             artifact_preview::preview_artifact,
             artifact_preview::open_artifact,
+            editor::detect_editor_command,
+            editor::open_workspace_in_editor,
             artifact_preview::save_artifact,
             desktop::read_image_file,
             visualization::read_visualization_file,

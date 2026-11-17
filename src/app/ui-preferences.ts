@@ -3,26 +3,29 @@ import {
   createElement,
   type ReactNode,
   useContext,
+  useCallback,
   useEffect,
   useState,
 } from "react";
 
 import { i18n, resolveUiLanguage } from "./i18n";
+import { detectEditorCommand } from "../platform/native";
 
 import {
+  applyUiTheme,
+  getUiThemePresetMode,
   UI_ACCENT_COLORS,
   UI_THEME_COLOR_KEYS,
   UI_THEME_PRESET_IDS,
-  applyUiTheme,
-  getUiThemePresetMode,
   type UiTheme,
   type UiThemeColors,
   type UiThemePresetId,
 } from "./ui-themes";
+
 export * from "./ui-themes";
 
 export const UI_PREFERENCES_KEY = "ruxex.ui-preferences";
-const UI_PREFERENCES_VERSION = 9;
+const UI_PREFERENCES_VERSION = 10;
 
 export type UiLanguage = "system" | "en" | "ja";
 export const UI_FONT_SIZE_MIN = 10;
@@ -77,6 +80,7 @@ export type UiNotifications = {
 export type UiPreferences = {
   version: typeof UI_PREFERENCES_VERSION;
   sidebarCollapsed: boolean;
+  editorCommand: string;
   language: UiLanguage;
   notifications: UiNotifications;
   theme: UiTheme;
@@ -90,6 +94,7 @@ export type UiPreferences = {
 export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   version: UI_PREFERENCES_VERSION,
   sidebarCollapsed: false,
+  editorCommand: "",
   language: "system",
   notifications: { desktop: true, sound: "system" },
   theme: { accentColor: "blue", preset: "system" },
@@ -139,6 +144,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.version !== 6 &&
         parsed.version !== 7 &&
         parsed.version !== 8 &&
+        parsed.version !== 9 &&
         parsed.version !== UI_PREFERENCES_VERSION)
     ) {
       return DEFAULT_UI_PREFERENCES;
@@ -172,6 +178,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
         parsed.sidebarCollapsed,
         DEFAULT_UI_PREFERENCES.sidebarCollapsed,
       ),
+      editorCommand: readEditorCommand(parsed.editorCommand),
       language: readEnum(
         parsed.language,
         ["system", "en", "ja"],
@@ -269,6 +276,10 @@ function readFontFamily(value: unknown, fallback: UiFontFamily): UiFontFamily {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
+function readEditorCommand(value: unknown): string {
+  return typeof value === "string" ? value.trim().slice(0, 1024) : "";
+}
+
 function readThemeColors(value: unknown): UiThemeColors {
   if (!isRecord(value)) {
     return {};
@@ -291,6 +302,10 @@ function readStoredPreferences(): UiPreferences {
   return parseUiPreferences(window.localStorage.getItem(UI_PREFERENCES_KEY));
 }
 
+export function getEditorCommandPreference(): string {
+  return readStoredPreferences().editorCommand;
+}
+
 function resolvedThemeMode(preset: UiThemePresetId): "light" | "dark" {
   const mode = getUiThemePresetMode(preset);
   if (mode !== "system") {
@@ -305,6 +320,35 @@ function resolvedThemeMode(preset: UiThemePresetId): "light" | "dark" {
 
 function useStoredUiPreferences(): UiPreferencesContextValue {
   const [preferences, setPreferences] = useState(readStoredPreferences);
+
+  const update = useCallback((patch: UiPreferencePatch) => {
+    // Storage is shared across windows; merge against it even before a queued
+    // storage event arrives. Persist only local edits to avoid echoing events.
+    const next = updateUiPreferences(readStoredPreferences(), patch);
+    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(next));
+    setPreferences(next);
+  }, []);
+
+  useEffect(() => {
+    if (preferences.editorCommand) return;
+    let active = true;
+    void detectEditorCommand()
+      .then((command) => {
+        if (
+          active &&
+          command &&
+          !readStoredPreferences().editorCommand
+        ) {
+          update({ editorCommand: command });
+        }
+      })
+      .catch(() => {
+        // The editor default is optional when no desktop command is available.
+      });
+    return () => {
+      active = false;
+    };
+  }, [preferences.editorCommand, update]);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -377,14 +421,6 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
     media.addEventListener?.("change", onChange);
     return () => media.removeEventListener?.("change", onChange);
   }, [preferences.theme]);
-
-  function update(patch: UiPreferencePatch) {
-    // Storage is shared across windows; merge against it even before a queued
-    // storage event arrives. Persist only local edits to avoid echoing events.
-    const next = updateUiPreferences(readStoredPreferences(), patch);
-    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(next));
-    setPreferences(next);
-  }
 
   return { preferences, update };
 }

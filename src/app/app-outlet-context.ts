@@ -6,4 +6,5 @@ export type AppOutletContext = {
     threadId: string;
     cwd: string | null;
   }) => void;
+  openSubagentChat: (target: { threadId: string; label: string }) => void;
 };

@@ -1,5 +1,3 @@
-import { i18n } from "../../app/i18n";
-import { useTranslation } from "react-i18next";
 import {
   CheckIcon,
   ExclamationTriangleIcon,
@@ -8,7 +6,9 @@ import {
   ShieldCheckIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { i18n } from "../../app/i18n";
 
 import type { PendingServerRequest } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
@@ -29,6 +29,7 @@ type ServerRequestCardProps = {
   connected: boolean;
   onResolve: (result: unknown) => Promise<void>;
   onReject: (message: string) => Promise<void>;
+  sourceLabel?: string;
 };
 
 export function ServerRequestCard({
@@ -36,8 +37,10 @@ export function ServerRequestCard({
   connected,
   onResolve,
   onReject,
+  sourceLabel,
 }: ServerRequestCardProps) {
   const { t } = useTranslation("approvals");
+  const idPrefix = useId().replaceAll(":", "");
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -150,6 +153,11 @@ export function ServerRequestCard({
     <article className="card border border-warning/50 bg-base-100 shadow-sm">
       <div className="card-body gap-3 p-4">
         <div>
+          {sourceLabel && (
+            <p className="mb-1 text-xs text-base-content/60">
+              {t("requestedBySubagent", { name: sourceLabel })}
+            </p>
+          )}
           <h2 className="card-title text-base">
             <RequestIcon aria-hidden="true" className="size-5" />
             {title}
@@ -220,7 +228,7 @@ export function ServerRequestCard({
                 );
               }
 
-              const radioName = `answer-${pending.requestId}-${question.id}`;
+              const radioName = `${idPrefix}-answer-${pending.requestId}-${question.id}`;
               const otherLabel = "None of the above";
               const selected = answers[question.id] ?? "";
               return (

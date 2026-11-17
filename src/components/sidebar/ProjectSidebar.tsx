@@ -61,7 +61,7 @@ export function ProjectSidebar({
     >
       <nav
         aria-label={t("navigation:workspaceNavigation")}
-        className="flex h-full min-h-0 w-[60px] shrink-0 flex-col items-center border-r border-base-300 bg-base-100 py-3"
+        className="flex h-full min-h-0 w-14 shrink-0 flex-col items-center border-r border-base-300 bg-base-100 py-3"
       >
         <div className="flex w-full flex-col items-center gap-1">
           {primaryPanels.map((panel) => (

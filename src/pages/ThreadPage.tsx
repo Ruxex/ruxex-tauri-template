@@ -10,6 +10,7 @@ export function ThreadPage() {
     <ConversationWorkspace
       onOpenThreadDiff={outletContext?.openThreadDiff}
       onOpenThreadTerminal={outletContext?.openThreadTerminal}
+      onOpenSubagent={outletContext?.openSubagentChat}
       threadId={threadId}
     />
   );

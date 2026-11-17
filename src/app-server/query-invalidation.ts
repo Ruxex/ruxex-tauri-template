@@ -33,6 +33,18 @@ export function upsertThreadInListCaches(
     ) {
       continue;
     }
+    if (
+      params?.parentThreadId !== undefined &&
+      params.parentThreadId !== thread.parentThreadId
+    ) {
+      continue;
+    }
+    if (
+      params?.ancestorThreadId &&
+      !hasAncestor(thread, params.ancestorThreadId, data.data)
+    ) {
+      continue;
+    }
 
     const nextData =
       params?.sortDirection === "asc"
@@ -48,6 +60,38 @@ export function upsertThreadInListCaches(
 
   if (shouldRefreshSearchLists) {
     invalidateThreadList(queryClient);
+  }
+}
+
+function hasAncestor(
+  thread: v2.Thread,
+  ancestorThreadId: string,
+  cachedThreads: v2.Thread[],
+): boolean {
+  const threadsById = new Map(cachedThreads.map((item) => [item.id, item]));
+  const visited = new Set<string>();
+  let parentThreadId = thread.parentThreadId;
+
+  while (parentThreadId && !visited.has(parentThreadId)) {
+    if (parentThreadId === ancestorThreadId) return true;
+    visited.add(parentThreadId);
+    parentThreadId = threadsById.get(parentThreadId)?.parentThreadId ?? null;
+  }
+
+  return false;
+}
+
+export function invalidateDescendantThreadLists(
+  queryClient: QueryClient,
+): void {
+  const cachedLists = queryClient.getQueriesData<v2.ThreadListResponse>({
+    queryKey: appServerQueryKeys.threadListRoot,
+  });
+  for (const [queryKey] of cachedLists) {
+    const params = queryKey.at(-1) as v2.ThreadListParams | undefined;
+    if (params?.ancestorThreadId) {
+      void queryClient.invalidateQueries({ queryKey, exact: true });
+    }
   }
 }
 
