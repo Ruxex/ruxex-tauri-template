@@ -1,3 +1,4 @@
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -26,7 +27,7 @@ use ruxex::desktop::{
 use ruxex::protocol::protocol::SessionSource;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::scheduler_app_server::{AppServerLogDirection, log_app_server_io};
 
@@ -35,7 +36,7 @@ mod daemon;
 use self::connection::{clear_connection_state, connect_local_endpoint, install_connection};
 use self::daemon::*;
 
-use crate::desktop::ruxex_home;
+use crate::desktop::{ruxex_home, select_vendored_skills_source, sync_vendored_skills};
 use crate::desktop_config::DesktopConfig;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 
@@ -50,6 +51,8 @@ pub(crate) struct AppServerState {
     arg0_paths: Arg0DispatchPaths,
     _arg0_path_guard: Option<Arg0PathEntryGuard>,
     config: DesktopConfig,
+    vendored_skill_root: tauri::async_runtime::Mutex<Option<PathBuf>>,
+    user_skill_roots: tauri::async_runtime::Mutex<Vec<PathBuf>>,
 }
 
 impl AppServerState {
@@ -66,6 +69,8 @@ impl AppServerState {
             arg0_paths,
             _arg0_path_guard: arg0_path_guard,
             config,
+            vendored_skill_root: tauri::async_runtime::Mutex::new(None),
+            user_skill_roots: tauri::async_runtime::Mutex::new(Vec::new()),
         }
     }
 }
@@ -208,6 +213,63 @@ async fn apply_desktop_skill_policy(
     Ok(())
 }
 
+fn desktop_vendored_skills_request(
+    root: &Path,
+    user_roots: &[PathBuf],
+) -> Result<ClientRequest, serde_json::Error> {
+    let mut roots = vec![root.to_string_lossy().into_owned()];
+    for user_root in user_roots {
+        let path = user_root.to_string_lossy().into_owned();
+        if !roots.contains(&path) {
+            roots.push(path);
+        }
+    }
+    serde_json::from_value(serde_json::json!({
+        "method": "skills/extraRoots/set",
+        "id": "desktop-vendored-skills",
+        "params": { "extraRoots": roots }
+    }))
+}
+
+fn desktop_user_skill_roots_from_request(
+    request: &ClientRequest,
+    vendored_root: &Path,
+) -> Result<Option<Vec<PathBuf>>, serde_json::Error> {
+    if request.method_name() != "skills/extraRoots/set" {
+        return Ok(None);
+    }
+    let value = serde_json::to_value(request)?;
+    let roots = value
+        .get("params")
+        .and_then(|params| params.get("extraRoots"))
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .map(PathBuf::from)
+        .filter(|path| path != vendored_root)
+        .fold(Vec::new(), |mut unique, path| {
+            if !unique.contains(&path) {
+                unique.push(path);
+            }
+            unique
+        });
+    Ok(Some(roots))
+}
+
+async fn apply_desktop_vendored_skills(
+    client: &AppServerClient,
+    root: &Path,
+    user_roots: &[PathBuf],
+) -> anyhow::Result<()> {
+    let request = desktop_vendored_skills_request(root, user_roots)?;
+    client
+        .request_typed::<Value>(request)
+        .await
+        .map_err(|error| anyhow::Error::msg(error.to_string()))?;
+    Ok(())
+}
+
 #[tauri::command]
 pub(crate) async fn app_server_daemon_control(
     state: State<'_, AppServerState>,
@@ -294,7 +356,37 @@ pub(crate) async fn ensure_app_server(
     if let Some(status) = state.status.lock().await.clone() {
         return Ok(status);
     }
-    let (client, status) = connect_local_endpoint(state.arg0_paths.clone(), &state.config).await?;
+    let resource_dir = app.path().resource_dir().map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("failed to resolve Desktop resources: {error}"),
+        )
+    })?;
+    let packaged_skill_sources = [
+        resource_dir.join("ruxex-package/ruxex-resources/vendored/skills"),
+        resource_dir.join("resources/ruxex-package/ruxex-resources/vendored/skills"),
+    ];
+    let development_skill_source =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../plugins/ruxex-artifacts/skills");
+    let skill_source = select_vendored_skills_source(
+        &packaged_skill_sources,
+        &development_skill_source,
+        cfg!(debug_assertions),
+    )
+    .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    let home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let vendored_skills_root = sync_vendored_skills(&skill_source, &home)
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    *state.vendored_skill_root.lock().await = Some(vendored_skills_root.clone());
+    let user_skill_roots = state.user_skill_roots.lock().await.clone();
+    let (client, status) = connect_local_endpoint(
+        state.arg0_paths.clone(),
+        &state.config,
+        &vendored_skills_root,
+        &user_skill_roots,
+    )
+    .await?;
     install_connection(&app, &state, client, status).await
 }
 
@@ -324,8 +416,8 @@ fn create_chat_workspace_in(home: &std::path::Path) -> std::io::Result<std::path
 
 #[tauri::command]
 pub(crate) fn create_chat_workspace() -> CommandResult<String> {
-    let home = ruxex_home()
-        .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let home =
+        ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let workspace = create_chat_workspace_in(&home).map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Lifecycle,
@@ -343,6 +435,27 @@ pub(crate) async fn app_server_request(
     let request_handle = request_handle(&state).await?;
     let method = request.method_name();
     let request_id = request.id().clone();
+    let user_skill_roots_update = if method == "skills/extraRoots/set" {
+        let vendored_root = state
+            .vendored_skill_root
+            .lock()
+            .await
+            .clone()
+            .ok_or_else(|| {
+                command_error(
+                    DesktopAppServerErrorKind::Initialization,
+                    "bundled Skills root is not initialized",
+                )
+            })?;
+        desktop_user_skill_roots_from_request(&request, &vendored_root).map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Decode,
+                format!("failed to read Skill roots from request: {error}"),
+            )
+        })?
+    } else {
+        None
+    };
     log_app_server_io(AppServerLogDirection::ToAppServer, &request);
     let result = match request_handle.request(request).await {
         Ok(Ok(result)) => result,
@@ -371,6 +484,9 @@ pub(crate) async fn app_server_request(
             return Err(command_error(DesktopAppServerErrorKind::Transport, message));
         }
     };
+    if let Some(user_roots) = user_skill_roots_update {
+        *state.user_skill_roots.lock().await = user_roots;
+    }
 
     let response = serde_json::json!({
         "method": method,
@@ -436,14 +552,16 @@ pub(crate) async fn request_handle(
 #[cfg(test)]
 mod tests {
     use std::ffi::OsString;
+    use std::path::PathBuf;
 
     use ruxex::arg0::Arg0DispatchPaths;
     use serde_json::json;
 
     use super::{
-        AppServerDaemonAction, AppServerMode, AppServerStatus, DESKTOP_EXPERIMENTAL_API,
-        DesktopAppServerEvent, HOST_APP_SERVER_DAEMON_MODE_ARG, desktop_app_server_daemon_args,
-        create_chat_workspace_in, parse_app_server_mode, resolve_in_process_paths,
+        AppServerDaemonAction, AppServerMode, AppServerState, AppServerStatus,
+        DESKTOP_EXPERIMENTAL_API, DesktopAppServerEvent, HOST_APP_SERVER_DAEMON_MODE_ARG,
+        clear_connection_state, create_chat_workspace_in, desktop_app_server_daemon_args,
+        parse_app_server_mode, resolve_in_process_paths,
     };
 
     #[test]
@@ -613,6 +731,69 @@ mod tests {
         );
     }
 
+    #[test]
+    fn desktop_vendored_skills_request_registers_the_global_root() {
+        let vendored_root = std::path::Path::new("/home/test-user/.ruxex_desktop/vendored/skills");
+        let request = super::desktop_vendored_skills_request(
+            vendored_root,
+            &[
+                std::path::PathBuf::from("/workspace/team-skills"),
+                vendored_root.to_path_buf(),
+            ],
+        )
+        .expect("vendored Skills request should serialize");
+
+        assert_eq!(
+            serde_json::to_value(request).unwrap(),
+            serde_json::json!({
+                "method": "skills/extraRoots/set",
+                "id": "desktop-vendored-skills",
+                "params": {
+                    "extraRoots": [
+                        "/home/test-user/.ruxex_desktop/vendored/skills",
+                        "/workspace/team-skills"
+                    ]
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn desktop_user_skill_roots_survive_connection_registration_round_trip() {
+        let vendored_root = std::path::Path::new("/home/test-user/.ruxex_desktop/vendored/skills");
+        let original_request = super::desktop_vendored_skills_request(
+            vendored_root,
+            &[
+                std::path::PathBuf::from("/workspace/team-skills"),
+                vendored_root.to_path_buf(),
+                std::path::PathBuf::from("/workspace/team-skills"),
+            ],
+        )
+        .expect("vendored Skills request should serialize");
+        let remembered =
+            super::desktop_user_skill_roots_from_request(&original_request, vendored_root)
+                .unwrap()
+                .unwrap();
+        let reconnect_request =
+            super::desktop_vendored_skills_request(vendored_root, &remembered).unwrap();
+
+        assert_eq!(
+            serde_json::to_value(reconnect_request)
+                .unwrap()
+                .pointer("/params/extraRoots")
+                .unwrap()
+                .clone(),
+            serde_json::json!([
+                "/home/test-user/.ruxex_desktop/vendored/skills",
+                "/workspace/team-skills"
+            ])
+        );
+        assert_eq!(
+            remembered,
+            vec![std::path::PathBuf::from("/workspace/team-skills")]
+        );
+    }
+
     #[cfg(feature = "example")]
     #[tokio::test]
     async fn cloudflare_in_process_runtime_uses_the_injected_marker() {
@@ -745,5 +926,16 @@ mod tests {
                 "mode": "inprocess",
             })
         );
+    }
+
+    #[tokio::test]
+    async fn clearing_connection_state_keeps_user_skill_roots_for_reconnect() {
+        let state = AppServerState::default();
+        let roots = vec![PathBuf::from("/workspace/team-skills")];
+        *state.user_skill_roots.lock().await = roots.clone();
+
+        clear_connection_state(&state).await;
+
+        assert_eq!(*state.user_skill_roots.lock().await, roots);
     }
 }

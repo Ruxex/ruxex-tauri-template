@@ -2,16 +2,20 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { i18n } from "../../app/i18n";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "../../app/i18n";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => vi.fn());
+const desktopUiPolicy = vi.hoisted(() => vi.fn());
 
 vi.mock("../api", () => ({ requestAppServerMethod }));
 vi.mock("../queries", () => ({
   useAppServerStatus: appServerStatus,
+}));
+vi.mock("../../platform/skill-policy", () => ({
+  getDesktopUiPolicy: desktopUiPolicy,
 }));
 
 function createWrapper(
@@ -31,6 +35,42 @@ describe("capability query and mutation hooks", () => {
     requestAppServerMethod.mockReset();
     requestAppServerMethod.mockResolvedValue({ response: { data: [] } });
     appServerStatus.mockReturnValue({ data: { appServerVersion: "test" } });
+    desktopUiPolicy.mockReset();
+    desktopUiPolicy.mockResolvedValue({
+      hiddenSkills: [],
+      defaultSkillRoots: [],
+      userSkillRoots: [],
+    });
+  });
+
+  it("keeps the vendored root while adding and removing user roots", async () => {
+    const vendoredRoot = "/home/ada/.ruxex_desktop/vendored/skills";
+    const userRoot = "/workspace/team-skills";
+    desktopUiPolicy.mockResolvedValue({
+      hiddenSkills: [],
+      defaultSkillRoots: [vendoredRoot],
+      userSkillRoots: ["/home/ada/.agents/skills"],
+    });
+    const hooks = await import("./useCapabilityQueries");
+    const { result } = renderHook(() => hooks.useSetSkillsExtraRoots(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () =>
+      result.current.mutateAsync({ extraRoots: [userRoot, vendoredRoot] }),
+    );
+    await act(async () => result.current.mutateAsync({ extraRoots: [] }));
+
+    const addedRoots = requestAppServerMethod.mock.calls[0][1].extraRoots;
+    expect(addedRoots).toEqual(
+      expect.arrayContaining([vendoredRoot, userRoot]),
+    );
+    expect(addedRoots).toHaveLength(2);
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
+      2,
+      "skills/extraRoots/set",
+      { extraRoots: [vendoredRoot] },
+    );
   });
 
   it.each([

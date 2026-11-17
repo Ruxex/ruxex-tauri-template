@@ -223,30 +223,133 @@ pub(crate) fn open_browser_window(url: String) -> CommandResult<()> {
     })
 }
 
-#[cfg(test)]
-fn select_runtime_package(
-    resource_package: &Path,
-    development_package: &Path,
-) -> Result<PathBuf, String> {
-    if resource_package.join("ruxex-package.json").is_file() {
-        return Ok(resource_package.to_path_buf());
+const VENDORED_SKILL_NAMES: [&str; 4] = ["documents", "presentations", "spreadsheets", "pdf"];
+
+fn validate_vendored_skills(source_root: &Path) -> Result<(), String> {
+    for name in VENDORED_SKILL_NAMES {
+        let source = source_root.join(name);
+        for relative in ["SKILL.md", "agents/ruxex.yaml"] {
+            if !source.join(relative).is_file() {
+                return Err(format!(
+                    "bundled Skill asset is missing: {}",
+                    source.join(relative).display()
+                ));
+            }
+        }
     }
-    if development_package.join("ruxex-package.json").is_file() {
-        return Ok(development_package.to_path_buf());
+    Ok(())
+}
+
+pub(crate) fn select_vendored_skills_source(
+    packaged_sources: &[PathBuf],
+    development_source: &Path,
+    allow_development_fallback: bool,
+) -> Result<PathBuf, String> {
+    let mut failures = Vec::new();
+    for source in packaged_sources {
+        match validate_vendored_skills(source) {
+            Ok(()) => return Ok(source.to_path_buf()),
+            Err(error) => failures.push(error),
+        }
+    }
+    if allow_development_fallback {
+        match validate_vendored_skills(development_source) {
+            Ok(()) => return Ok(development_source.to_path_buf()),
+            Err(error) => failures.push(error),
+        }
     }
     Err(format!(
-        "bundled Ruxex runtime package not found at {} or {}",
-        resource_package.display(),
-        development_package.display()
+        "bundled Skill assets not found; {}",
+        failures.join("; ")
     ))
+}
+
+pub(crate) fn sync_vendored_skills(source_root: &Path, home: &Path) -> Result<PathBuf, String> {
+    validate_vendored_skills(source_root)?;
+
+    let vendored_dir = home.join("vendored");
+    reject_symlink(&vendored_dir)?;
+    fs::create_dir_all(&vendored_dir)
+        .map_err(|error| format!("failed to create vendored Skills directory: {error}"))?;
+    let skills_dir = vendored_dir.join("skills");
+    reject_symlink(&skills_dir)?;
+    fs::create_dir_all(&skills_dir)
+        .map_err(|error| format!("failed to create vendored Skills directory: {error}"))?;
+
+    for name in VENDORED_SKILL_NAMES {
+        let source = source_root.join(name);
+        let destination = skills_dir.join(name);
+        remove_path_if_exists(&destination)?;
+        copy_directory_tree(&source, &destination).map_err(|error| {
+            format!(
+                "failed to sync bundled Skill `{name}` to {}: {error}",
+                destination.display()
+            )
+        })?;
+    }
+
+    Ok(skills_dir)
+}
+
+fn reject_symlink(path: &Path) -> Result<(), String> {
+    match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.file_type().is_symlink() => Err(format!(
+            "vendored Skills path must not be a symlink: {}",
+            path.display()
+        )),
+        Ok(_) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(format!(
+            "failed to inspect vendored Skills path {}: {error}",
+            path.display()
+        )),
+    }
+}
+
+fn remove_path_if_exists(path: &Path) -> Result<(), String> {
+    match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.file_type().is_symlink() || metadata.is_file() => {
+            fs::remove_file(path)
+        }
+        Ok(_) => fs::remove_dir_all(path),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => {
+            return Err(format!(
+                "failed to inspect bundled Skill path {}: {error}",
+                path.display()
+            ));
+        }
+    }
+    .map_err(|error| {
+        format!(
+            "failed to replace bundled Skill path {}: {error}",
+            path.display()
+        )
+    })
+}
+
+fn copy_directory_tree(source: &Path, destination: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(destination)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let source_path = entry.path();
+        let destination_path = destination.join(entry.file_name());
+        let file_type = entry.file_type()?;
+        if file_type.is_dir() {
+            copy_directory_tree(&source_path, &destination_path)?;
+        } else if file_type.is_file() {
+            fs::copy(source_path, destination_path)?;
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
-    use super::{product_identity, ruxex_home_from_user_home, select_runtime_package};
+    use super::{product_identity, ruxex_home_from_user_home, sync_vendored_skills};
     use crate::desktop_config::DesktopConfig;
     use crate::marketplace_assets::{
         detect_marketplace_image_mime, read_marketplace_asset_file_from_roots,
@@ -269,6 +372,90 @@ mod tests {
         {
             default_config()
         }
+    }
+
+    fn write_vendored_skill_fixture(root: &Path, file_content: &str) {
+        for name in ["documents", "presentations", "spreadsheets", "pdf"] {
+            let skill = root.join(name);
+            fs::create_dir_all(skill.join("agents")).unwrap();
+            fs::write(skill.join("SKILL.md"), file_content).unwrap();
+            fs::write(skill.join("agents/ruxex.yaml"), "interface: {}\n").unwrap();
+        }
+    }
+
+    #[test]
+    fn sync_vendored_skills_updates_only_bundled_skill_directories() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-vendored-skills-sync-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let source = root.join("package/ruxex-resources/vendored/skills");
+        let home = root.join("home");
+        write_vendored_skill_fixture(&source, "new bundled skill\n");
+        fs::create_dir_all(home.join("skills/user-skill")).unwrap();
+        fs::write(home.join("skills/user-skill/SKILL.md"), "user\n").unwrap();
+        fs::create_dir_all(home.join("vendored/skills/presentations")).unwrap();
+        fs::write(
+            home.join("vendored/skills/presentations/obsolete.txt"),
+            "stale bundled file\n",
+        )
+        .unwrap();
+        fs::create_dir_all(home.join("vendored/skills/custom")).unwrap();
+        fs::write(home.join("vendored/skills/custom/SKILL.md"), "custom\n").unwrap();
+
+        let result = sync_vendored_skills(&source, &home);
+
+        assert_eq!(result.unwrap(), home.join("vendored/skills"));
+        for name in ["documents", "presentations", "spreadsheets", "pdf"] {
+            assert_eq!(
+                fs::read_to_string(home.join(format!("vendored/skills/{name}/SKILL.md"))).unwrap(),
+                "new bundled skill\n"
+            );
+            assert!(
+                home.join(format!("vendored/skills/{name}/agents/ruxex.yaml"))
+                    .is_file()
+            );
+        }
+        assert!(
+            !home
+                .join("vendored/skills/presentations/obsolete.txt")
+                .exists()
+        );
+        assert_eq!(
+            fs::read_to_string(home.join("vendored/skills/custom/SKILL.md")).unwrap(),
+            "custom\n"
+        );
+        assert_eq!(
+            fs::read_to_string(home.join("skills/user-skill/SKILL.md")).unwrap(),
+            "user\n"
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn sync_vendored_skills_rejects_missing_bundled_assets() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-vendored-skills-missing-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let source = root.join("package/ruxex-resources/vendored/skills");
+        let home = root.join("home");
+        write_vendored_skill_fixture(&source, "bundled skill\n");
+        fs::remove_dir_all(source.join("pdf")).unwrap();
+
+        let error = sync_vendored_skills(&source, &home).unwrap_err();
+
+        assert!(error.contains("pdf"));
+        assert!(!home.join("vendored/skills").exists());
+        let _ = fs::remove_dir_all(root);
     }
 
     #[test]
@@ -450,53 +637,37 @@ mod tests {
         let _ = fs::remove_dir_all(home);
     }
 
-    fn package_fixture(name: &str, with_manifest: bool) -> PathBuf {
-        let path =
-            std::env::temp_dir().join(format!("ruxex-desktop-{name}-{}", std::process::id()));
-        let _ = fs::remove_dir_all(&path);
-        fs::create_dir_all(&path).unwrap();
-        if with_manifest {
-            fs::write(path.join("ruxex-package.json"), "{}\n").unwrap();
-        }
-        path
-    }
-
     #[test]
-    fn runtime_package_selection_prefers_bundled_resources() {
-        let resource = package_fixture("resource", true);
-        let development = package_fixture("development", true);
+    fn vendored_skills_source_uses_the_plugin_tree_when_dev_package_is_unstaged() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-vendored-skills-source-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let staged = root.join("staged/ruxex-resources/vendored/skills");
+        let development = root.join("plugins/ruxex-artifacts/skills");
+        write_vendored_skill_fixture(&development, "development skill\n");
 
         assert_eq!(
-            select_runtime_package(&resource, &development).unwrap(),
-            resource
-        );
-
-        let _ = fs::remove_dir_all(development);
-        let _ = fs::remove_dir_all(resource);
-    }
-
-    #[test]
-    fn runtime_package_selection_falls_back_to_development_resources() {
-        let resource = package_fixture("missing-resource", false);
-        let development = package_fixture("fallback", true);
-
-        assert_eq!(
-            select_runtime_package(&resource, &development).unwrap(),
+            super::select_vendored_skills_source(
+                std::slice::from_ref(&staged),
+                &development,
+                true,
+            )
+            .unwrap(),
             development
         );
-
-        let _ = fs::remove_dir_all(resource);
-        let _ = fs::remove_dir_all(development);
-    }
-
-    #[test]
-    fn runtime_package_selection_reports_both_missing_locations() {
-        let resource = std::env::temp_dir().join("ruxex-desktop-no-resource");
-        let development = std::env::temp_dir().join("ruxex-desktop-no-development");
-        let error = select_runtime_package(&resource, &development).unwrap_err();
-
-        assert!(error.contains("bundled Ruxex runtime package not found"));
-        assert!(error.contains(&resource.display().to_string()));
-        assert!(error.contains(&development.display().to_string()));
+        assert!(
+            super::select_vendored_skills_source(
+                std::slice::from_ref(&staged),
+                &development,
+                false,
+            )
+            .is_err()
+        );
+        let _ = fs::remove_dir_all(root);
     }
 }

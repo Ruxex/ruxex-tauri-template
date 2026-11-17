@@ -60,6 +60,11 @@ def validate_package(root: Path, version: str, target: str) -> None:
         "ruxex-resources/node/node_modules/pptxgenjs/package.json",
         "ruxex-resources/ruxex-artifact-tool/src/loader.mjs",
         "ruxex-resources/ruxex-artifact-tool/src/runner.mjs",
+        *[
+            f"ruxex-resources/vendored/skills/{name}/{relative}"
+            for name in ("documents", "presentations", "spreadsheets", "pdf")
+            for relative in ("SKILL.md", "agents/ruxex.yaml")
+        ],
     ]
     if sys.platform == "linux":
         required.append("ruxex-resources/bwrap")
@@ -131,6 +136,8 @@ def main() -> None:
     copy_executable(args.artifact_engine, output / "ruxex-path/ruxex-artifacts-engine")
     copy_directory(args.node_runtime, output / "ruxex-resources/node")
     copy_directory(args.artifact_sdk, output / "ruxex-resources/ruxex-artifact-tool")
+    source_skills = Path(__file__).resolve().parents[1] / "plugins/ruxex-artifacts/skills"
+    copy_directory(source_skills, output / "ruxex-resources/vendored/skills")
     if args.bwrap is not None:
         copy_executable(args.bwrap, output / "ruxex-resources/bwrap")
 

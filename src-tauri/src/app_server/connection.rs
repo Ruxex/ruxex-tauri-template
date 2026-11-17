@@ -1,4 +1,5 @@
 use super::*;
+use std::path::Path;
 
 pub(super) async fn install_connection(
     app: &AppHandle,
@@ -277,6 +278,8 @@ pub(super) async fn initialize_in_process_runtime(
 pub(super) async fn connect_local_endpoint(
     arg0_paths: Arg0DispatchPaths,
     config: &DesktopConfig,
+    vendored_skills_root: &Path,
+    user_skill_roots: &[std::path::PathBuf],
 ) -> CommandResult<(AppServerClient, AppServerStatus)> {
     let (client, status) = match configured_app_server_mode()? {
         AppServerMode::Daemon => connect_daemon_endpoint(config).await,
@@ -288,6 +291,14 @@ pub(super) async fn connect_local_endpoint(
             command_error(
                 DesktopAppServerErrorKind::Initialization,
                 format!("failed to apply desktop Skill policy: {error}"),
+            )
+        })?;
+    apply_desktop_vendored_skills(&client, vendored_skills_root, user_skill_roots)
+        .await
+        .map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Initialization,
+                format!("failed to register bundled Skills root: {error}"),
             )
         })?;
     Ok((client, status))

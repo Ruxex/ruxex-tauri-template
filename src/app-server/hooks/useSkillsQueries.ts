@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { getDesktopUiPolicy } from "../../platform/skill-policy";
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
 import { useAppServerStatus } from "../queries";
@@ -58,10 +58,14 @@ export function useSetSkillsExtraRoots() {
 
   return useMutation({
     mutationFn: async (params: v2.SkillsExtraRootsSetParams) => {
-      const response = await requestAppServerMethod(
-        "skills/extraRoots/set",
-        params,
+      const policy = await getDesktopUiPolicy();
+      const extraRoots = Array.from(
+        new Set([...params.extraRoots, ...policy.defaultSkillRoots]),
       );
+      const response = await requestAppServerMethod("skills/extraRoots/set", {
+        ...params,
+        extraRoots,
+      });
       return response.response;
     },
     onSuccess: () => {

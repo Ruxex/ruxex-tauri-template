@@ -33,6 +33,8 @@ pub struct SkillPolicy {
 #[serde(rename_all = "camelCase")]
 pub struct DesktopUiPolicy {
     pub hidden_skills: Vec<String>,
+    pub default_skill_roots: Vec<String>,
+    pub user_skill_roots: Vec<String>,
 }
 
 impl SkillPolicy {
@@ -47,6 +49,8 @@ impl SkillPolicy {
     pub fn ui_policy(&self) -> DesktopUiPolicy {
         DesktopUiPolicy {
             hidden_skills: self.disabled_skills.iter().cloned().collect(),
+            default_skill_roots: Vec::new(),
+            user_skill_roots: Vec::new(),
         }
     }
 }
@@ -177,11 +181,24 @@ impl DesktopRuntimeState {
     pub(crate) fn home(&self) -> &Path {
         &self.home
     }
+
+    pub(crate) fn ui_policy(&self) -> DesktopUiPolicy {
+        let mut policy = self.config.skill_policy.ui_policy();
+        policy
+            .default_skill_roots
+            .push(self.home.join("vendored/skills").display().to_string());
+        if let Some(user_home) = self.home.parent() {
+            policy
+                .user_skill_roots
+                .push(user_home.join(".agents/skills").display().to_string());
+        }
+        policy
+    }
 }
 
 #[tauri::command]
 pub(crate) fn get_desktop_ui_policy(state: State<'_, DesktopRuntimeState>) -> DesktopUiPolicy {
-    state.config().skill_policy.ui_policy()
+    state.ui_policy()
 }
 
 #[cfg(feature = "example")]
@@ -231,7 +248,7 @@ pub fn default_config() -> DesktopConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::{DesktopConfig, SkillPolicy};
+    use super::{DesktopConfig, DesktopRuntimeState, SkillPolicy};
     use serde_json::json;
 
     #[cfg(not(feature = "example"))]
@@ -325,11 +342,34 @@ mod tests {
             policy.ui_policy(),
             super::DesktopUiPolicy {
                 hidden_skills: vec!["imagegen".to_string(), "review".to_string()],
+                default_skill_roots: Vec::new(),
+                user_skill_roots: Vec::new(),
             }
         );
         assert_eq!(
             serde_json::to_value(policy.ui_policy()).unwrap(),
-            json!({"hiddenSkills": ["imagegen", "review"]})
+            json!({
+                "hiddenSkills": ["imagegen", "review"],
+                "defaultSkillRoots": [],
+                "userSkillRoots": []
+            })
+        );
+    }
+
+    #[test]
+    fn desktop_ui_policy_includes_the_vendored_skills_root() {
+        let state = DesktopRuntimeState {
+            config: test_default_config(),
+            home: std::path::PathBuf::from("/tmp/ruxex-home"),
+        };
+
+        assert_eq!(
+            state.ui_policy().default_skill_roots,
+            vec!["/tmp/ruxex-home/vendored/skills".to_string()]
+        );
+        assert_eq!(
+            state.ui_policy().user_skill_roots,
+            vec!["/tmp/.agents/skills".to_string()]
         );
     }
 

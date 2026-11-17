@@ -4,6 +4,8 @@ import { isNativeDesktopRuntime } from "../app-server/runtime";
 
 export type DesktopUiPolicy = {
   hiddenSkills: string[];
+  defaultSkillRoots: string[];
+  userSkillRoots: string[];
 };
 
 export function filterHiddenSkills<T extends { name: string }>(
@@ -13,7 +15,11 @@ export function filterHiddenSkills<T extends { name: string }>(
   return skills.filter((skill) => !hiddenSkills.has(skill.name));
 }
 
-const defaultPolicy: DesktopUiPolicy = { hiddenSkills: [] };
+const defaultPolicy: DesktopUiPolicy = {
+  hiddenSkills: [],
+  defaultSkillRoots: [],
+  userSkillRoots: [],
+};
 let policyRequest: Promise<DesktopUiPolicy> | null = null;
 
 export function getDesktopUiPolicy(): Promise<DesktopUiPolicy> {

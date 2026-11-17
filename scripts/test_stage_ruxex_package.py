@@ -220,6 +220,24 @@ class StageRuxexPackageTest(unittest.TestCase):
                     "ruxex-resources/ruxex-artifact-tool/src",
                     "ruxex-resources/ruxex-artifact-tool/src/loader.mjs",
                     "ruxex-resources/ruxex-artifact-tool/src/runner.mjs",
+                    "ruxex-resources/vendored",
+                    "ruxex-resources/vendored/skills",
+                    "ruxex-resources/vendored/skills/documents",
+                    "ruxex-resources/vendored/skills/documents/SKILL.md",
+                    "ruxex-resources/vendored/skills/documents/agents",
+                    "ruxex-resources/vendored/skills/documents/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/pdf",
+                    "ruxex-resources/vendored/skills/pdf/SKILL.md",
+                    "ruxex-resources/vendored/skills/pdf/agents",
+                    "ruxex-resources/vendored/skills/pdf/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/presentations",
+                    "ruxex-resources/vendored/skills/presentations/SKILL.md",
+                    "ruxex-resources/vendored/skills/presentations/agents",
+                    "ruxex-resources/vendored/skills/presentations/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/spreadsheets",
+                    "ruxex-resources/vendored/skills/spreadsheets/SKILL.md",
+                    "ruxex-resources/vendored/skills/spreadsheets/agents",
+                    "ruxex-resources/vendored/skills/spreadsheets/agents/ruxex.yaml",
                 ],
             )
             self.assertTrue(os.access(output / "bin/ruxex", os.X_OK))
@@ -305,6 +323,11 @@ class StageRuxexPackageTest(unittest.TestCase):
                 "ruxex-resources/node/node_modules/pptxgenjs/package.json",
                 "ruxex-resources/ruxex-artifact-tool/src/loader.mjs",
                 "ruxex-resources/ruxex-artifact-tool/src/runner.mjs",
+                *[
+                    f"ruxex-resources/vendored/skills/{name}/{relative}"
+                    for name in ("documents", "presentations", "spreadsheets", "pdf")
+                    for relative in ("SKILL.md", "agents/ruxex.yaml")
+                ],
             ):
                 path = root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)

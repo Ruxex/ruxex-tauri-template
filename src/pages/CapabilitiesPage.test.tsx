@@ -723,6 +723,94 @@ describe("CapabilitiesPage", () => {
     expect(screen.queryByText("docs")).toBeNull();
   });
 
+  it("separates vendored Skills from skills discovered in the app workspace", async () => {
+    const vendoredRoot = "/home/ada/.ruxex_desktop/vendored/skills";
+    const userSkillRoot = "/home/ada/.agents/skills";
+    getDesktopUiPolicy.mockResolvedValue({
+      hiddenSkills: [],
+      defaultSkillRoots: [vendoredRoot],
+      userSkillRoots: [userSkillRoot],
+    });
+    useSkillsList.mockReturnValue({
+      data: {
+        data: [
+          {
+            cwd: "/workspace/project",
+            skills: [
+              {
+                name: "documents",
+                description: "Create documents",
+                path: `${vendoredRoot}/documents/SKILL.md`,
+                scope: "user",
+                enabled: true,
+                pluginId: null,
+              },
+              {
+                name: "project-review",
+                description: "Review this project",
+                path: "/workspace/project/.agents/skills/project-review/SKILL.md",
+                scope: "repo",
+                enabled: true,
+                pluginId: null,
+              },
+              {
+                name: "user-writing",
+                description: "Personal writing helper",
+                path: `${userSkillRoot}/user-writing/SKILL.md`,
+                scope: "user",
+                enabled: true,
+                pluginId: null,
+              },
+              {
+                name: "shared-research",
+                description: "Shared research helper",
+                path: "/tmp/shared-skills/shared-research/SKILL.md",
+                scope: "user",
+                enabled: true,
+                pluginId: null,
+              },
+            ],
+            errors: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getAllByTestId("skills-source-group")).toHaveLength(3),
+    );
+    const groups = screen.getAllByTestId("skills-source-group");
+    expect(
+      groups.map((group) => group.querySelector("summary")?.textContent),
+    ).toEqual([
+      "Default1 skill",
+      "~/.agents/skills1 skill",
+      "/workspace/project2 skills",
+    ]);
+    expect(groups.every((group) => !group.hasAttribute("open"))).toBe(true);
+    const vendoredGroup = groups[0];
+    const userGroup = groups[1];
+    const workspaceGroup = groups[2];
+    expect(vendoredGroup.className).toContain("collapse-arrow");
+    expect(vendoredGroup.hasAttribute("open")).toBe(false);
+    expect(within(vendoredGroup).getByText("documents")).toBeTruthy();
+    expect(within(vendoredGroup).queryByText("project-review")).toBeNull();
+    expect(within(userGroup).getByText("user-writing")).toBeTruthy();
+    expect(within(userGroup).queryByText("shared-research")).toBeNull();
+    expect(within(workspaceGroup).getByText("project-review")).toBeTruthy();
+    expect(within(workspaceGroup).queryByText("documents")).toBeNull();
+    expect(within(workspaceGroup).getByText("shared-research")).toBeTruthy();
+  });
+
   it("renders Skills with enabled state and writes by path", async () => {
     const reviewPath = "/workspace/.agents/skills/review";
     const deployPath = "/workspace/.agents/skills/deploy";
@@ -845,6 +933,30 @@ describe("CapabilitiesPage", () => {
     );
   });
 
+  it("does not show the vendored default root as a removable user directory", async () => {
+    const vendoredRoot = "/home/ada/.ruxex_desktop/vendored/skills";
+    getDesktopUiPolicy.mockResolvedValue({
+      hiddenSkills: [],
+      defaultSkillRoots: [vendoredRoot],
+      userSkillRoots: ["/home/ada/.agents/skills"],
+    });
+    open.mockResolvedValueOnce(vendoredRoot);
+    const { CapabilitiesPage } = await import("./CapabilitiesPage");
+
+    render(
+      <MemoryRouter initialEntries={["/capabilities/skills"]}>
+        <CapabilitiesPage />
+      </MemoryRouter>,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Skill directory" }),
+    );
+
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+    expect(setSkillsExtraRoots.mutateAsync).not.toHaveBeenCalled();
+    expect(screen.queryByText(vendoredRoot)).toBeNull();
+  });
+
   it("limits Skill pending state to the affected path", async () => {
     const reviewPath = "/workspace/.agents/skills/review";
     useSkillsList.mockReturnValue({
@@ -903,7 +1015,11 @@ describe("CapabilitiesPage", () => {
   });
 
   it("hides product-disabled Skills and empty source groups from the UI", async () => {
-    getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: ["imagegen"] });
+    getDesktopUiPolicy.mockResolvedValue({
+      hiddenSkills: ["imagegen"],
+      defaultSkillRoots: [],
+      userSkillRoots: ["/home/ada/.agents/skills"],
+    });
     useSkillsList.mockReturnValue({
       data: {
         data: [

@@ -1,7 +1,7 @@
-import { useTranslation } from "react-i18next";
 import { FolderIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { formatErrorMessage } from "../../app/error-message";
 import {
@@ -17,6 +17,16 @@ import {
 import type { v2 } from "../../protocol";
 import { skillDescription, skillGroupLabel } from "../capabilities-model";
 
+function isWithinSkillRoot(path: string, root: string): boolean {
+  if (typeof path !== "string" || typeof root !== "string") return false;
+  const normalizedPath = path.replaceAll("\\", "/").replace(/\/+$/, "");
+  const normalizedRoot = root.replaceAll("\\", "/").replace(/\/+$/, "");
+  return (
+    normalizedPath === normalizedRoot ||
+    normalizedPath.startsWith(`${normalizedRoot}/`)
+  );
+}
+
 export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
   const { t } = useTranslation("capabilities");
   const skills = useSkillsList({}, active);
@@ -29,6 +39,8 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
   const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
     () => new Set(),
   );
+  const [defaultSkillRoots, setDefaultSkillRoots] = useState<string[]>([]);
+  const [userSkillRoots, setUserSkillRoots] = useState<string[]>([]);
   const [skillExtraRoots, setSkillExtraRoots] = useState<string[]>([]);
   const [skillRootError, setSkillRootError] = useState<string | null>(null);
 
@@ -36,8 +48,10 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
     let cancelled = false;
     void getDesktopUiPolicy()
       .then((policy) => {
-        if (!cancelled && policy.hiddenSkills.length > 0) {
+        if (!cancelled) {
           setHiddenSkills(new Set(policy.hiddenSkills));
+          setDefaultSkillRoots(policy.defaultSkillRoots ?? []);
+          setUserSkillRoots(policy.userSkillRoots ?? []);
         }
       })
       .catch(() => undefined);
@@ -47,12 +61,55 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
     };
   }, []);
 
-  const visibleSkillGroups = (skills.data?.data ?? [])
-    .map((entry) => ({
-      ...entry,
-      skills: filterHiddenSkills(entry.skills, hiddenSkills),
-    }))
-    .filter((entry) => entry.skills.length > 0);
+  const visibleEntries = (skills.data?.data ?? []).map((entry) => ({
+    ...entry,
+    skills: filterHiddenSkills(entry.skills, hiddenSkills),
+  }));
+  const allVisibleSkills = visibleEntries.flatMap((entry) => entry.skills);
+  const vendoredSkills = allVisibleSkills.filter((skill) =>
+    defaultSkillRoots.some((root) => isWithinSkillRoot(skill.path, root)),
+  );
+  const userSkills = allVisibleSkills.filter((skill) =>
+    userSkillRoots.some((root) => isWithinSkillRoot(skill.path, root)),
+  );
+  const visibleSkillGroups = [
+    ...(vendoredSkills.length > 0
+      ? [
+          {
+            groupKey: "vendored",
+            groupLabel: t("default", { ns: "plugins" }),
+            skills: vendoredSkills,
+            errors: [],
+          },
+        ]
+      : []),
+    ...(userSkills.length > 0
+      ? [
+          {
+            groupKey: "user-agents",
+            groupLabel: "~/.agents/skills",
+            skills: userSkills,
+            errors: [],
+          },
+        ]
+      : []),
+    ...visibleEntries.flatMap((entry) => {
+      const otherSkills = entry.skills.filter(
+        (skill) =>
+          !vendoredSkills.includes(skill) && !userSkills.includes(skill),
+      );
+      return otherSkills.length > 0
+        ? [
+            {
+              ...entry,
+              groupKey: `other:${entry.cwd}`,
+              groupLabel: skillGroupLabel({ ...entry, skills: otherSkills }),
+              skills: otherSkills,
+            },
+          ]
+        : [];
+    }),
+  ];
 
   async function toggleSkill(skill: v2.SkillMetadata) {
     setSkillMutationPath(skill.path);
@@ -99,6 +156,8 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
       if (typeof selected !== "string") return;
       const root = selected.trim();
       if (!root || skillExtraRoots.includes(root)) return;
+      const policy = await getDesktopUiPolicy();
+      if (policy.defaultSkillRoots.includes(root)) return;
       await updateSkillExtraRoots([...skillExtraRoots, root]);
     } catch (error) {
       setSkillRootError(formatErrorMessage(error));
@@ -181,20 +240,19 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
       )}
       <ul className="space-y-2">
         {visibleSkillGroups.map((entry) => (
-          <li key={entry.cwd}>
+          <li key={entry.groupKey}>
             <details
-              className="rounded-box bg-base-200 p-3"
+              className="collapse collapse-arrow rounded-box border border-base-300 bg-base-100 shadow-sm"
               data-testid="skills-source-group"
-              open={entry.skills.length > 0}
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium">
-                <span>{skillGroupLabel(entry)}</span>
+              <summary className="collapse-title flex items-center justify-between gap-3 py-3 text-sm font-medium">
+                <span>{entry.groupLabel}</span>
                 <span className="text-xs font-normal text-base-content/60">
                   {t("skillCount", { count: entry.skills.length })}
                 </span>
               </summary>
-              {entry.skills.length ? (
-                <ul className="mt-2 space-y-2">
+              <div className="collapse-content p-0">
+                <ul className="space-y-2 border-t border-base-300 px-4 py-3">
                   {entry.skills.map((skill) => {
                     const pendingPath =
                       skillMutationPath ??
@@ -267,14 +325,12 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                     );
                   })}
                 </ul>
-              ) : (
-                <p className="mt-1 font-medium">{t("noSkills")}</p>
-              )}
-              {entry.errors.length > 0 && (
-                <p className="mt-1 text-xs text-error">
-                  {t("discoveryErrors", { count: entry.errors.length })}
-                </p>
-              )}
+                {entry.errors.length > 0 && (
+                  <p className="border-t border-base-300 px-4 py-3 text-xs text-error">
+                    {t("discoveryErrors", { count: entry.errors.length })}
+                  </p>
+                )}
+              </div>
             </details>
           </li>
         ))}
