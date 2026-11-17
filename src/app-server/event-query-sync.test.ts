@@ -143,6 +143,38 @@ describe("app-server event query synchronization", () => {
     });
   });
 
+  it("adds a started subagent to the active parent summary cache", () => {
+    const queryClient = new RealQueryClient();
+    const queryKey = appServerQueryKeys.subagentThreadList("parent-1");
+    const childThread = {
+      id: "agent-1",
+      parentThreadId: "parent-1",
+      updatedAt: 20,
+      projectId: null,
+    } as never;
+    queryClient.setQueryData(queryKey, {
+      data: [],
+      nextCursor: null,
+      backwardsCursor: null,
+    });
+
+    synchronizeAppServerQueries(
+      queryClient as unknown as QueryClient,
+      {
+        type: "serverNotification",
+        data: {
+          method: "thread/started",
+          params: { thread: childThread },
+        },
+      } as AppServerEvent,
+    );
+
+    expect(queryClient.getQueryData(queryKey)).toMatchObject({
+      data: [{ id: "agent-1", parentThreadId: "parent-1" }],
+    });
+    expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
+  });
+
   it("does not invalidate conversation caches for normal turn completion", async () => {
     requestAppServerMethod.mockResolvedValueOnce({
       response: {

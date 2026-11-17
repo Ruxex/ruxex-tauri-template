@@ -8,6 +8,7 @@ import {
   invalidateThreadList,
   invalidateThreadMetadata,
   invalidateThreadQueue,
+  upsertSubagentThreadInCache,
   upsertThreadInListCaches,
 } from "./query-invalidation";
 import { appServerQueryKeys } from "./query-keys";
@@ -63,6 +64,29 @@ describe("app-server query invalidation", () => {
     expect(
       queryClient.getQueryData(appServerQueryKeys.threadList(projectTwoParams)),
     ).toMatchObject({ data: [] });
+  });
+
+  it("adds a newly started subagent to its parent's cached list", () => {
+    const queryClient = new QueryClient();
+    const queryKey = appServerQueryKeys.subagentThreadList("parent-1");
+    const childThread = {
+      id: "agent-1",
+      parentThreadId: "parent-1",
+      updatedAt: 10,
+    } as never;
+
+    queryClient.setQueryData(queryKey, {
+      data: [],
+      nextCursor: null,
+      backwardsCursor: null,
+    });
+
+    upsertSubagentThreadInCache(queryClient, childThread);
+
+    expect(queryClient.getQueryData(queryKey)).toMatchObject({
+      data: [{ id: "agent-1", parentThreadId: "parent-1" }],
+    });
+    expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
   });
 
   it("invalidates conversation queries without invalidating metadata", () => {

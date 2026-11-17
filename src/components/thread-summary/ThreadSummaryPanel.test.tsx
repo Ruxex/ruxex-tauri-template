@@ -70,4 +70,37 @@ describe("ThreadSummaryPanel", () => {
     expect(screen.getByText("(3)")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Token Usage" })).toBeNull();
   });
+
+  it("renders subagents inside the DaisyUI collapse component", async () => {
+    const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
+
+    render(
+      <ThreadSummaryPanel
+        tokenUsage={null}
+        gitDiff={null}
+        subagents={[
+          {
+            threadId: "agent-1",
+            label: "API scout",
+            role: "researcher",
+            task: "Inspect the API",
+            status: "active",
+            summary: null,
+            updatedAt: 1,
+            waitingForApproval: false,
+          },
+        ]}
+      />,
+    );
+
+    const summary = screen.getByText("Subagents");
+    const collapse = summary.closest("details");
+
+    expect(collapse?.classList.contains("collapse")).toBe(true);
+    expect(collapse?.classList.contains("collapse-arrow")).toBe(true);
+    expect(
+      summary.closest("summary")?.classList.contains("collapse-title"),
+    ).toBe(true);
+    expect(collapse?.querySelector(".collapse-content")).toBeTruthy();
+  });
 });

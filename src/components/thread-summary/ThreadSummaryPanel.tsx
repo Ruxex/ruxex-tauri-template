@@ -1,6 +1,6 @@
-import { formatNumber } from "../../app/locale-format";
-import { useTranslation } from "react-i18next";
 import { CodeBracketIcon, CommandLineIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "../../app/locale-format";
 import type { GitDiffSummary } from "../../platform/git-diff";
 import type { v2 } from "../../protocol";
 import { getSubagentIdenticon } from "./subagent-identicon";
@@ -107,8 +107,8 @@ function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
   const { t } = useTranslation("conversation");
 
   return (
-    <details className="mt-5">
-      <summary className="cursor-pointer rounded px-1 py-1 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary">
+    <details className="collapse collapse-arrow mt-5">
+      <summary className="collapse-title flex min-h-0 cursor-pointer items-center rounded px-1 py-1 pr-7 text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary">
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="shrink-0 font-medium text-base-content/80">
             {t("subagents")}
@@ -120,22 +120,24 @@ function SubagentsSummary({ rows }: { rows: SubagentRow[] }) {
           </span>
         </span>
       </summary>
-      <ul
-        aria-label={t("subagentList")}
-        className="mt-2 max-h-48 overflow-y-auto overscroll-contain rounded focus-visible:outline-2 focus-visible:outline-primary"
-      >
-        {rows.map((row) => (
-          <li key={row.threadId}>
-            <button
-              aria-label={t("subagentLabel", { name: row.label })}
-              className="w-full cursor-pointer truncate rounded px-2 py-1 text-left text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
-              type="button"
-            >
-              {row.label}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="collapse-content px-0 pb-0 pt-2">
+        <ul
+          aria-label={t("subagentList")}
+          className="max-h-48 overflow-y-auto overscroll-contain rounded focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          {rows.map((row) => (
+            <li key={row.threadId}>
+              <button
+                aria-label={t("subagentLabel", { name: row.label })}
+                className="w-full cursor-pointer truncate rounded px-2 py-1 text-left text-xs hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+                type="button"
+              >
+                {row.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </details>
   );
 }
