@@ -31,8 +31,6 @@ export function McpOAuthLoginAction({
 
   if (!canLogin) return null;
 
-  const reauthenticate = authStatus === "oAuth";
-
   async function connectMcpServer() {
     setError(null);
     try {
@@ -67,9 +65,7 @@ export function McpOAuthLoginAction({
         aria-label={
           oauthLogin.isPending
             ? t("startingLogin")
-            : reauthenticate
-              ? t("reauthenticateNamed", { name: name })
-              : t("loginNamed", { name: name })
+            : t("authenticateNamed", { name: name })
         }
         className="btn btn-outline btn-xs"
         disabled={oauthLogin.isPending}
@@ -78,9 +74,7 @@ export function McpOAuthLoginAction({
       >
         {oauthLogin.isPending
           ? t("startingLogin")
-          : reauthenticate
-            ? t("reauthenticateNamed", { name: name })
-            : t("loginNamed", { name: name })}
+          : t("authenticate")}
       </button>
       {error && (
         <span className="text-error" role="alert">

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useState } from "react";
 import {
   type McpServerDraft,
@@ -27,6 +27,7 @@ export function McpServerDialog({
   error,
   originalName,
   onClose,
+  onDelete,
   onImportJson,
   onSubmit,
 }: {
@@ -37,6 +38,7 @@ export function McpServerDialog({
   error: string | null;
   originalName?: string;
   onClose: () => void;
+  onDelete?: () => void;
   onSubmit: (draft: McpServerDraft) => void;
   onImportJson: (entries: McpServerJsonImportEntry[]) => void;
 }) {
@@ -382,6 +384,20 @@ export function McpServerDialog({
           )}
           <div className="sm:col-span-2">
             <DialogFooter>
+              {isEditing && onDelete && (
+                <button
+                  aria-label={t("deleteNamedServer", {
+                    name: originalName ?? localForm.draft.name,
+                  })}
+                  className="btn btn-ghost mr-auto text-error"
+                  disabled={isPending}
+                  type="button"
+                  onClick={onDelete}
+                >
+                  <TrashIcon aria-hidden="true" className="size-4" />
+                  {t("delete")}
+                </button>
+              )}
               <button
                 aria-label={t("cancel")}
                 className="btn btn-ghost"

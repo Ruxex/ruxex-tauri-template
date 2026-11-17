@@ -9,7 +9,6 @@ import type {
   McpServerJsonImportEntry,
 } from "../app-server/mcp-config";
 import { PageContainer } from "../components/layout/PageContainer";
-import { SettingsPanel } from "../components/settings/SettingsCards";
 import { McpServerDialog } from "./mcp-servers/McpServerDialog";
 import { McpServerList } from "./mcp-servers/McpServerList";
 import {
@@ -30,6 +29,7 @@ export function McpServersPage() {
   const statuses = useAllMcpServerStatus();
   const [dialog, setDialog] = useState<OpenDialog | null>(null);
   const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const addTriggerRef = useRef<HTMLButtonElement | null>(null);
   const actions = useMcpServerConfigActions({
     configVersion: globalConfig.data?.version,
     refetchConfig: globalConfig.refetch,
@@ -43,7 +43,13 @@ export function McpServersPage() {
     [entries],
   );
   function focusDialogTrigger() {
-    queueMicrotask(() => dialogTriggerRef.current?.focus());
+    queueMicrotask(() => {
+      if (dialogTriggerRef.current?.isConnected) {
+        dialogTriggerRef.current.focus();
+      } else {
+        addTriggerRef.current?.focus();
+      }
+    });
   }
 
   function closeDialog() {
@@ -72,10 +78,15 @@ export function McpServersPage() {
 
   async function handleDelete(entry: McpServerEntry) {
     if (!window.confirm(t("deleteServerConfirmation", { name: entry.name }))) {
-      return;
+      return false;
     }
 
-    await actions.deleteEntry(entry);
+    const deleted = await actions.deleteEntry(entry);
+    if (deleted) {
+      setDialog(null);
+      focusDialogTrigger();
+    }
+    return deleted;
   }
 
   async function handleSave(draft: McpServerDraft) {
@@ -97,6 +108,7 @@ export function McpServersPage() {
         <button
           aria-label={t("addMcpServer")}
           className="btn btn-primary"
+          ref={addTriggerRef}
           type="button"
           onClick={(event) => openAddDialog(event.currentTarget)}
         >
@@ -110,21 +122,19 @@ export function McpServersPage() {
         </p>
       )}
 
-      <SettingsPanel title={t("configuredMcpServers")}>
+      <div className="space-y-4">
         {globalConfig.isLoading && (
-          <div className="px-5 py-4">
-            <span className="loading loading-spinner" />
-          </div>
+          <span className="loading loading-spinner" />
         )}
         {globalConfig.isError && (
-          <p className="px-5 py-4 text-error" role="alert">
+          <p className="text-error" role="alert">
             {t("unableToLoadGlobalMcpServers", {
               details: formatErrorMessage(globalConfig.error),
             })}
           </p>
         )}
         {statuses.isError && (
-          <p className="px-5 py-4 text-error" role="alert">
+          <p className="text-error" role="alert">
             {t("unableToLoadMcpRuntimeStatus", {
               details: formatErrorMessage(statuses.error),
             })}
@@ -133,7 +143,7 @@ export function McpServersPage() {
         {!globalConfig.isLoading &&
           !globalConfig.isError &&
           !entries.length && (
-            <p className="px-5 py-4 text-sm text-base-content/60">
+            <p className="text-sm text-base-content/60">
               {t("noGlobalMcpServersConfigured")}
             </p>
           )}
@@ -142,7 +152,6 @@ export function McpServersPage() {
             entries={entries}
             statuses={statuses.data?.data ?? []}
             isWritePending={actions.writeConfig.isPending}
-            onDelete={(entry) => void handleDelete(entry)}
             onEdit={openEditDialog}
             onEnabledChange={(entry, enabled) =>
               void actions.setEnabled(entry, enabled)
@@ -150,17 +159,17 @@ export function McpServersPage() {
           />
         )}
         {actions.higherLayerNotice && (
-          <p className="px-5 py-4 text-sm text-warning" role="status">
+          <p className="text-sm text-warning" role="status">
             {actions.higherLayerNotice}
           </p>
         )}
         {actions.overrideNotice && (
-          <p className="px-5 py-4 text-sm text-warning" role="status">
+          <p className="text-sm text-warning" role="status">
             {actions.overrideNotice}
           </p>
         )}
         {actions.reloadError && (
-          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-warning" role="alert">
               {actions.reloadError}
             </p>
@@ -179,7 +188,7 @@ export function McpServersPage() {
             </button>
           </div>
         )}
-      </SettingsPanel>
+      </div>
 
       {dialog && (
         <McpServerDialog
@@ -190,6 +199,9 @@ export function McpServersPage() {
           isPending={actions.writeConfig.isPending}
           error={actions.writeError}
           originalName={dialog.originalName}
+          onDelete={
+            dialog.entry ? () => void handleDelete(dialog.entry!) : undefined
+          }
           onClose={closeDialog}
           onImportJson={(entries) => void handleImportJson(entries)}
           onSubmit={(draft) => void handleSave(draft)}

@@ -145,7 +145,7 @@ export function useMcpServerConfigActions({
     await reloadAfterWrite(entry.name, false);
   }
 
-  async function deleteEntry(entry: McpServerEntry) {
+  async function deleteEntry(entry: McpServerEntry): Promise<boolean> {
     const edits: v2.ConfigEdit[] = [
       {
         keyPath: mcpServerKeyPath(entry.name),
@@ -153,8 +153,9 @@ export function useMcpServerConfigActions({
         mergeStrategy: "replace",
       },
     ];
-    if (!(await writeEdits(edits))) return;
+    if (!(await writeEdits(edits))) return false;
     await reloadAfterWrite(entry.name, true);
+    return true;
   }
 
   async function retryReload() {
