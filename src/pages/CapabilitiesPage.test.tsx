@@ -11,29 +11,19 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const useMcpServerStatus = vi.hoisted(() => vi.fn());
 const useInstallPlugin = vi.hoisted(() => vi.fn());
 const usePluginList = vi.hoisted(() => vi.fn());
-const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
 const useSetSkillsExtraRoots = vi.hoisted(() => vi.fn());
 const useWriteSkillConfig = vi.hoisted(() => vi.fn());
 const useUpgradeMarketplace = vi.hoisted(() => vi.fn());
-const useMcpOauthLogin = vi.hoisted(() => vi.fn());
 const useUninstallPlugin = vi.hoisted(() => vi.fn());
-const openBrowserWindow = vi.hoisted(() => vi.fn());
 const getDesktopUiPolicy = vi.hoisted(() => vi.fn());
 const filterHiddenSkills = vi.hoisted(() =>
   vi.fn((skills: { name: string }[], hiddenSkills: ReadonlySet<string>) =>
     skills.filter((skill) => !hiddenSkills.has(skill.name)),
   ),
 );
-const reloadMcp = vi.hoisted(() => ({
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isError: false,
-  error: null,
-}));
 const installPlugin = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
@@ -41,12 +31,6 @@ const installPlugin = vi.hoisted(() => ({
   error: null,
 }));
 const upgradeMarketplace = vi.hoisted(() => ({
-  mutateAsync: vi.fn(),
-  isPending: false,
-  isError: false,
-  error: null,
-}));
-const oauthLogin = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   isPending: false,
   isError: false,
@@ -73,21 +57,17 @@ const uninstallPlugin = vi.hoisted(() => ({
 }));
 
 vi.mock("../app-server/hooks", () => ({
-  useMcpServerStatus,
   useInstallPlugin,
   usePluginList,
-  useReloadMcpServers,
   useSkillsList,
   useSetSkillsExtraRoots,
   useWriteSkillConfig,
   useUpgradeMarketplace,
-  useMcpOauthLogin,
   useUninstallPlugin,
 }));
 
 const open = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
-vi.mock("../platform/native", () => ({ openBrowserWindow }));
 vi.mock("../platform/skill-policy", () => ({
   filterHiddenSkills,
   getDesktopUiPolicy,
@@ -124,19 +104,14 @@ describe("CapabilitiesPage", () => {
       "confirm",
       vi.fn(() => true),
     );
-    openBrowserWindow.mockReset();
     open.mockReset();
     open.mockResolvedValue(null);
     getDesktopUiPolicy.mockReset();
-    getDesktopUiPolicy.mockResolvedValue({ hiddenSkills: [] });
-    oauthLogin.mutateAsync.mockReset();
-    oauthLogin.mutateAsync.mockResolvedValue({
-      authorizationUrl: "https://auth.example.test/start",
+    getDesktopUiPolicy.mockResolvedValue({
+      hiddenSkills: [],
+      defaultSkillRoots: [],
+      userSkillRoots: [],
     });
-    useMcpOauthLogin.mockReturnValue(oauthLogin);
-    reloadMcp.mutateAsync.mockReset();
-    reloadMcp.mutateAsync.mockResolvedValue({});
-    useReloadMcpServers.mockReturnValue(reloadMcp);
     installPlugin.mutateAsync.mockReset();
     installPlugin.mutateAsync.mockResolvedValue({});
     useInstallPlugin.mockReturnValue(installPlugin);
