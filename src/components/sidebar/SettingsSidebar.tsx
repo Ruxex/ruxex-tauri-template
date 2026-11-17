@@ -92,7 +92,7 @@ export function SettingsSidebar({ onClose }: { onClose: () => void }) {
                 to="/settings/marketplaces"
               >
                 <PuzzlePieceIcon aria-hidden="true" className="size-4" />
-                {t("navigation:pluginMarketplaces")}
+                {t("navigation:plugin")}
               </NavLink>
             </li>
             <li>

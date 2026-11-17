@@ -140,7 +140,7 @@ export function SlashCommandPalette({
   return (
     <div
       aria-label={t("slashCommands")}
-      className="mb-2 max-h-72 overflow-y-auto rounded-box border border-base-300 bg-base-200/60 p-2"
+      className="mb-2 max-h-72 overflow-y-auto rounded-box border border-base-300 bg-base-100 p-2"
       onKeyDown={handleKeyDown}
       role="menu"
       ref={menuRef}

@@ -8,7 +8,7 @@ import {
   PlusIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
-import type { SyntheticEvent } from "react";
+import { useLayoutEffect, useRef, useState, type SyntheticEvent } from "react";
 
 import {
   availableSubmissionModes,
@@ -158,13 +158,43 @@ export function PermissionMenu({
   const { t } = useTranslation("conversation");
 
   const detailsRef = useCloseDropdownOnOutsidePointerDown();
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const isFullAccess = mode === "full-access";
   const PermissionIcon = isFullAccess
     ? ExclamationTriangleIcon
     : ShieldCheckIcon;
 
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    function updateMenuPosition() {
+      const composer = detailsRef.current?.closest("form");
+      const menu = menuRef.current;
+      if (!composer || !menu) return;
+
+      const composerBounds = composer.getBoundingClientRect();
+      const menuHeight = menu.getBoundingClientRect().height;
+      menu.style.left = `${composerBounds.left}px`;
+      menu.style.top = `${Math.max(8, composerBounds.top - menuHeight - 8)}px`;
+      menu.style.width = `${composerBounds.width}px`;
+    }
+
+    updateMenuPosition();
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [detailsRef, isOpen]);
+
   return (
-    <details className="dropdown dropdown-top" ref={detailsRef}>
+    <details
+      className="dropdown dropdown-top"
+      onToggle={(event) => setIsOpen(event.currentTarget.open)}
+      ref={detailsRef}
+    >
       <summary
         aria-label={t("permissionMode")}
         className="btn btn-ghost btn-sm gap-1"
@@ -175,13 +205,22 @@ export function PermissionMenu({
         />
         <span>{permissionModeLabel(mode)}</span>
       </summary>
-      <ul className="menu dropdown-content z-20 mb-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+      <ul
+        className="menu dropdown-content fixed z-20 mb-2 w-auto rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+        ref={menuRef}
+        style={{ bottom: "auto" }}
+      >
         {getPermissionOptions().map((option) => (
           <li key={option.mode}>
             <button
               aria-current={mode === option.mode ? "true" : undefined}
               aria-description={option.description}
               aria-label={option.label}
+              className={
+                mode === option.mode
+                  ? "active bg-primary/20 font-semibold text-base-content"
+                  : undefined
+              }
               disabled={disabled}
               onClick={(event) => {
                 onModeChange(option.mode);
