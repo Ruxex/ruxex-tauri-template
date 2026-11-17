@@ -59,7 +59,6 @@ export const router = createHashRouter([
       { path: "schedules/:scheduleId", element: <ScheduleDetailPage /> },
       { path: "capabilities/plugins", element: <CapabilitiesPage /> },
       { path: "capabilities/skills", element: <CapabilitiesPage /> },
-      { path: "capabilities/mcp", element: <CapabilitiesPage /> },
       {
         path: "capabilities/plugins/:marketplaceName/:pluginName",
         element: <PluginDetailPage />,

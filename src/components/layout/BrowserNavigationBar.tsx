@@ -107,10 +107,6 @@ function breadcrumbsForPath(
     return [{ label: i18n.t("navigation:skills") }];
   }
 
-  if (pathname === "/capabilities/mcp") {
-    return [{ label: "MCP" }];
-  }
-
   const pageLabels: Record<string, string> = {
     "/activity": i18n.t("navigation:activity"),
     "/approvals": i18n.t("navigation:approvals"),

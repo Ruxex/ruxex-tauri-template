@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import {
-  act,
   cleanup,
   fireEvent,
   render,
@@ -147,21 +146,6 @@ describe("CapabilitiesPage", () => {
     upgradeMarketplace.mutateAsync.mockReset();
     upgradeMarketplace.mutateAsync.mockResolvedValue({});
     useUpgradeMarketplace.mockReturnValue(upgradeMarketplace);
-    useMcpServerStatus.mockReturnValue({
-      data: {
-        data: [
-          {
-            name: "docs",
-            runtimeStatus: "connected",
-            tools: { search: {} },
-            authStatus: "notLoggedIn",
-            toolsError: null,
-          },
-        ],
-      },
-      isLoading: false,
-      isError: false,
-    });
     useSkillsList.mockReturnValue({
       data: {
         data: [{ cwd: "/workspace", skills: [{ name: "review" }], errors: [] }],
@@ -1118,140 +1102,4 @@ describe("CapabilitiesPage", () => {
     expect((reviewToggle as HTMLInputElement).checked).toBe(true);
   });
 
-  it("shows MCP servers only when the MCP sidebar route is selected", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByRole("heading", { name: "MCP", level: 1 })).toBeTruthy();
-    expect(screen.getByText("docs")).toBeTruthy();
-    const serverDetails = screen
-      .getByText("docs")
-      .closest("details") as HTMLDetailsElement;
-    expect(serverDetails.open).toBe(false);
-    expect(within(serverDetails).getByText("1 tool")).toBeTruthy();
-    expect(screen.queryByText("Official Plugins")).toBeNull();
-    expect(screen.queryByText("Collaboration modes")).toBeNull();
-  });
-
-  it("reloads MCP configuration through the mutation hook", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Reload MCP" }));
-
-    expect(reloadMcp.mutateAsync).toHaveBeenCalledWith({});
-  });
-
-  it("connects an unauthenticated MCP server through the OS browser", async () => {
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Log in to docs" }));
-
-    await waitFor(() =>
-      expect(oauthLogin.mutateAsync).toHaveBeenCalledWith({ name: "docs" }),
-    );
-    expect(openBrowserWindow).toHaveBeenCalledWith(
-      "https://auth.example.test/start",
-    );
-  });
-
-  it("rejects an invalid OAuth authorization URL", async () => {
-    oauthLogin.mutateAsync.mockResolvedValueOnce({
-      authorizationUrl: "javascript:alert(1)",
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Log in to docs" }));
-
-    expect(
-      await screen.findByText("OAuth authorization URL is invalid."),
-    ).toBeTruthy();
-    expect(openBrowserWindow).not.toHaveBeenCalled();
-  });
-
-  it("labels OAuth, bearer-token, and unknown auth states distinctly", async () => {
-    useMcpServerStatus.mockReturnValue({
-      data: {
-        data: [
-          {
-            name: "oauth-docs",
-            runtimeStatus: "connected",
-            tools: {},
-            authStatus: "oAuth",
-            toolsError: null,
-          },
-          {
-            name: "token-docs",
-            runtimeStatus: "connected",
-            tools: {},
-            authStatus: "bearerToken",
-            toolsError: null,
-          },
-          {
-            name: "unknown-docs",
-            runtimeStatus: null,
-            tools: {},
-            authStatus: "unknown",
-            toolsError: null,
-          },
-        ],
-      },
-      isLoading: false,
-      isError: false,
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-
-    render(
-      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("OAuth connected")).toBeTruthy();
-    expect(screen.getByText("Bearer token configured")).toBeTruthy();
-    expect(screen.getByText("Authentication status unavailable")).toBeTruthy();
-  });
-  it("updates an existing local OAuth error when language changes", async () => {
-    oauthLogin.mutateAsync.mockResolvedValueOnce({
-      authorizationUrl: "javascript:alert(1)",
-    });
-    const { CapabilitiesPage } = await import("./CapabilitiesPage");
-    render(
-      <MemoryRouter initialEntries={["/capabilities/mcp"]}>
-        <CapabilitiesPage />
-      </MemoryRouter>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Log in to docs" }));
-    expect(
-      await screen.findByText("OAuth authorization URL is invalid."),
-    ).toBeTruthy();
-    await act(async () => {
-      await i18n.changeLanguage("ja");
-    });
-    expect(screen.getByText("OAuth 認証 URL が無効です。")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "docs にログイン" }),
-    ).toBeTruthy();
-  });
 });

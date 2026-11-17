@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import {
   ChevronRightIcon,
   PuzzlePieceIcon,
-  ServerIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -22,15 +21,12 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
       .filter((plugin) => plugin.installed) ?? [];
   const activeTab = location.pathname.startsWith("/capabilities/plugins")
     ? "plugins"
-    : location.pathname === "/capabilities/skills"
-      ? "skills"
-      : "mcp";
+    : "skills";
 
-  function selectTab(tab: "plugins" | "skills" | "mcp") {
+  function selectTab(tab: "plugins" | "skills") {
     const paths = {
       plugins: "/capabilities/plugins",
       skills: "/capabilities/skills",
-      mcp: "/capabilities/mcp",
     } as const;
     void navigate(paths[tab]);
   }
@@ -49,7 +45,6 @@ export function PluginsSidebar({ onClose }: { onClose: () => void }) {
           [
             ["plugins", t("navigation:plugins"), PuzzlePieceIcon],
             ["skills", t("navigation:skills"), SparklesIcon],
-            ["mcp", "MCP", ServerIcon],
           ] as const
         ).map(([tab, label, Icon]) => (
           <li key={tab}>

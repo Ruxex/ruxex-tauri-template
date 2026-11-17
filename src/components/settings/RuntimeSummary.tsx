@@ -43,10 +43,12 @@ export function RuntimeSummary({
                   className="border-b border-base-300 pb-2 last:border-b-0 last:pb-0"
                   key={model.id}
                 >
-                  <p className="font-medium">{model.displayName}</p>
-                  <p className="font-mono text-xs text-base-content/60">
-                    {model.model}
-                  </p>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p className="min-w-0 font-medium">{model.displayName}</p>
+                    <p className="max-w-full break-all text-right font-mono text-xs text-base-content/60">
+                      {model.model}
+                    </p>
+                  </div>
                   {model.description && (
                     <p className="mt-1 text-xs text-base-content/75">
                       {model.description}
