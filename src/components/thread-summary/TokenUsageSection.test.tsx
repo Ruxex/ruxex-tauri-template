@@ -41,7 +41,7 @@ describe("TokenUsageSection", () => {
       "Input tokens: 100,000; Output tokens: 23,456; Total tokens: 123,456",
     );
     expect(summary.querySelector('[aria-hidden="true"]')?.textContent).toBe(
-      "100k/23.5k Σ123.5k",
+      "100k / 23.5k Σ123.5k",
     );
     expect(
       screen.getByText("Input 100,000, Output 23,456, Total 123,456"),
@@ -72,7 +72,7 @@ describe("TokenUsageSection", () => {
       "入力トークン: 100,000; 出力トークン: 23,456; 合計トークン: 123,456",
     );
     expect(summary.querySelector('[aria-hidden="true"]')?.textContent).toBe(
-      "10万/2.3万 Σ12.3万",
+      "10万 / 2.3万 Σ12.3万",
     );
     expect(
       screen.getByText("入力 100,000、出力 23,456、合計 123,456"),

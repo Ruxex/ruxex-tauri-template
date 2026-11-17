@@ -9,6 +9,7 @@
   "settings": "設定",
   "general": "一般",
   "account": "アカウント",
+  "notSignedIn": "ログインしていません",
   "appearance": "外観",
   "archivedChats": "アーカイブ済みチャット",
   "appServer": "App Server",

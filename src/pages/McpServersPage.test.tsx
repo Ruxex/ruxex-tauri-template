@@ -21,14 +21,11 @@ const useAllMcpServerStatus = vi.hoisted(() => vi.fn());
 const useGlobalMcpConfig = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useWriteConfig = vi.hoisted(() => vi.fn());
-const useMcpResource = vi.hoisted(() => vi.fn());
-
 vi.mock("../app-server/hooks", () => ({
   useAllMcpServerStatus,
   useGlobalMcpConfig,
   useReloadMcpServers,
   useWriteConfig,
-  useMcpResource,
 }));
 
 function draft(overrides: Partial<McpServerDraft> = {}) {
@@ -117,12 +114,6 @@ describe("McpServersPage", () => {
       mutateAsync: vi.fn().mockResolvedValue({}),
       isPending: false,
     });
-    useMcpResource.mockReset().mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-      error: null,
-    });
     vi.stubGlobal(
       "confirm",
       vi.fn(() => true),
@@ -151,7 +142,7 @@ describe("McpServersPage", () => {
     ).toBeTruthy();
   });
 
-  it("lists MCP resources and reads the selected URI without reading templates", () => {
+  it("keeps runtime resources out of the compact server list", () => {
     const resource = {
       name: "guide",
       title: "Guide",
@@ -183,48 +174,24 @@ describe("McpServersPage", () => {
         nextCursor: null,
       },
     });
-    useMcpResource.mockReturnValue({
-      data: {
-        contents: [
-          {
-            uri: "resource://guide",
-            mimeType: "text/plain",
-            text: "Guide content",
-          },
-        ],
-      },
-      isLoading: false,
-      isError: false,
-      error: null,
-    });
     renderPage();
 
-    expect(screen.getByText("Resources (1)")).toBeTruthy();
-    expect(screen.getByText("Dynamic resources")).toBeTruthy();
-    expect(screen.getByText(/dynamic-guide/)).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Read guide from docs" }),
-    );
-
-    expect(useMcpResource).toHaveBeenLastCalledWith({
-      server: "docs",
-      uri: "resource://guide",
-    });
-    expect(screen.getByText("Guide content")).toBeTruthy();
-    expect(useMcpResource).not.toHaveBeenCalledWith({
-      server: "docs",
-      uri: "resource://guide/{section}",
-    });
+    expect(screen.getByText("docs")).toBeTruthy();
+    expect(screen.getByText("Connected")).toBeTruthy();
+    expect(screen.queryByText("Resources (1)")).toBeNull();
+    expect(screen.queryByText("dynamic-guide")).toBeNull();
   });
 
-  it("groups each configured server in a collapsed disclosure with an enable toggle", () => {
+  it("shows each server with its status, configure action, and enable toggle", () => {
     useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
     useAllMcpServerStatus.mockReturnValue(status(["docs"]));
 
     renderPage();
 
-    const serverDetails = screen.getByTestId("mcp-server-details-docs");
-    expect(serverDetails.hasAttribute("open")).toBe(false);
+    expect(screen.getByText("Connected")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Configure docs" }),
+    ).toBeTruthy();
     expect(
       screen.getByRole("switch", { name: "Enable MCP server: docs" }),
     ).toBeTruthy();
@@ -259,7 +226,7 @@ describe("McpServersPage", () => {
     );
   });
 
-  it("separates unavailable connection state from authentication state", () => {
+  it("shows the authentication state when runtime connection state is unavailable", () => {
     useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
     useAllMcpServerStatus.mockReturnValue({
       ...status(["docs"]),
@@ -289,27 +256,19 @@ describe("McpServersPage", () => {
 
     renderPage();
 
-    expect(screen.getByText("Status unavailable")).toBeTruthy();
-    expect(screen.getByText("Authentication", { exact: true })).toBeTruthy();
-    expect(screen.getByText("Authentication not configured")).toBeTruthy();
-    expect(screen.getByText("Resources (1)")).toBeTruthy();
+    expect(screen.getByText("Unauthenticated")).toBeTruthy();
+    expect(screen.queryByText("Status unavailable")).toBeNull();
+    expect(screen.queryByText("Authentication not configured")).toBeNull();
   });
 
-  it("does not repeat the configured state inside the expanded server", () => {
+  it("keeps the configured state in the server row", () => {
     useGlobalMcpConfig.mockReturnValue(config({ servers: [entry()] }));
     useAllMcpServerStatus.mockReturnValue(status(["docs"]));
 
     renderPage();
-    const summary = screen
-      .getByTestId("mcp-server-details-docs")
-      .querySelector("summary");
-    if (!summary) throw new Error("MCP server summary is missing");
-    fireEvent.click(summary);
-
     expect(screen.getByText("Connected")).toBeTruthy();
     expect(screen.queryByText("Needs attention")).toBeNull();
-    expect(screen.queryByText("Server enabled")).toBeNull();
-    expect(screen.getByText("Authentication")).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Enable MCP server: docs" })).toBeTruthy();
   });
 
   it("returns focus to the add trigger when the dialog closes", async () => {
@@ -363,7 +322,7 @@ describe("McpServersPage", () => {
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit docs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Configure docs" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Server name" }), {
       target: { value: "docs-new" },
     });
@@ -422,6 +381,7 @@ describe("McpServersPage", () => {
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
     renderPage();
 
+    fireEvent.click(screen.getByRole("button", { name: "Configure docs" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete docs" }));
 
     await waitFor(() => expect(write).toHaveBeenCalledOnce());
@@ -446,6 +406,7 @@ describe("McpServersPage", () => {
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
     renderPage();
 
+    fireEvent.click(screen.getByRole("button", { name: "Configure docs" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete docs" }));
 
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
@@ -510,8 +471,8 @@ describe("McpServersPage", () => {
     );
   });
   it.each([
-    ["en", "Edit docs / server-1", "Delete docs / server-1"],
-    ["ja", "docs / server-1 を編集", "docs / server-1 を削除"],
+    ["en", "Configure docs / server-1", "Delete docs / server-1"],
+    ["ja", "docs / server-1 の設定", "docs / server-1 を削除"],
   ] as const)(
     "renders complete %s visible server action labels",
     async (language, editLabel, deleteLabel) => {
@@ -521,13 +482,12 @@ describe("McpServersPage", () => {
         config({ servers: [entry({ name, draft: draft({ name }) })] }),
       );
       renderPage();
-      screen.getByTestId(`mcp-server-details-${name}`).setAttribute("open", "");
-      expect(screen.getByRole("button", { name: editLabel }).textContent).toBe(
-        editLabel,
-      );
+      expect(screen.getByRole("button", { name: editLabel })).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: editLabel }));
+      const deleteButton = screen.getByRole("button", { name: deleteLabel });
       expect(
-        screen.getByRole("button", { name: deleteLabel }).textContent,
-      ).toBe(deleteLabel);
+        deleteButton.textContent,
+      ).toBe(language === "en" ? "Delete" : "削除");
     },
   );
 });

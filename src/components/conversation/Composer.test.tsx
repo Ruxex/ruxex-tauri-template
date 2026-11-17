@@ -121,12 +121,19 @@ vi.mock("./ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
     onChange,
+    onEditorReady,
     onKeyDown,
+    onSlashCommandContext,
     placeholder,
     value,
   }: {
     disabled: boolean;
     onChange: (value: string) => void;
+    onEditorReady: (element: HTMLElement) => void;
+    onSlashCommandContext: (
+      input: { query: string; from: number; to: number } | null,
+      removeToken: (() => void) | null,
+    ) => void;
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
     placeholder: string;
     value: string;
@@ -134,9 +141,27 @@ vi.mock("./ComposerMessageInput", () => ({
     <textarea
       aria-label="Message"
       disabled={disabled}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) => {
+        const nextValue = event.target.value;
+        onChange(nextValue);
+        const match = /^\/([^\s]*)/.exec(nextValue);
+        onSlashCommandContext(
+          match
+            ? { query: match[1] ?? "", from: 0, to: match[0].length }
+            : null,
+          match
+            ? () => {
+                onChange(nextValue.slice(match[0].length).trimStart());
+                onSlashCommandContext(null, null);
+              }
+            : null,
+        );
+      }}
       onKeyDown={onKeyDown}
       placeholder={placeholder}
+      ref={(element) => {
+        if (element) onEditorReady(element);
+      }}
       value={value}
     />
   ),
@@ -213,13 +238,16 @@ describe("Composer", () => {
       target: { value: "/" },
     });
 
-    const palette = screen.getByRole("menu", { name: "Slash commands" });
+    const palette = screen.getByRole("listbox", { name: "Slash commands" });
     expect(palette.closest("form")).toBeNull();
-    expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
-    expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
-    expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
-    const archive = screen.getByRole("menuitem", { name: "Archive" });
-    await waitFor(() => expect(document.activeElement).toBe(archive));
+    expect(screen.getByRole("option", { name: "Archive" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Compact" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Goal" })).toBeTruthy();
+    const archive = screen.getByRole("option", { name: "Archive" });
+    const message = screen.getByLabelText("Message");
+    await waitFor(() =>
+      expect(message.getAttribute("aria-activedescendant")).toBe(archive.id),
+    );
     expect(archive.dataset.active).toBe("true");
   });
 
@@ -264,8 +292,8 @@ describe("Composer", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByRole("menuitem", { name: "imagegen" })).toBeNull();
-      expect(screen.getByRole("menuitem", { name: "review" })).toBeTruthy();
+      expect(screen.queryByRole("option", { name: "imagegen" })).toBeNull();
+      expect(screen.getByRole("option", { name: "review" })).toBeTruthy();
     });
   });
 
@@ -309,8 +337,8 @@ describe("Composer", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByRole("menuitem", { name: "imagegen" })).toBeNull();
-      expect(screen.getByRole("menuitem", { name: "review" })).toBeTruthy();
+      expect(screen.queryByRole("option", { name: "imagegen" })).toBeNull();
+      expect(screen.getByRole("option", { name: "review" })).toBeTruthy();
     });
   });
 
@@ -340,7 +368,7 @@ describe("Composer", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "/review Explain the changes" },
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
+    fireEvent.click(screen.getByRole("option", { name: "review" }));
 
     expect(
       screen.getByRole("status", { name: "Selected skill: review" }),
@@ -383,7 +411,7 @@ describe("Composer", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "/review Set the objective" },
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
+    fireEvent.click(screen.getByRole("option", { name: "review" }));
     fireEvent.click(screen.getByLabelText("Composer options"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
 
@@ -419,7 +447,7 @@ describe("Composer", () => {
       fireEvent.change(screen.getByLabelText("Message"), {
         target: { value: "/review Explain the changes" },
       });
-      fireEvent.click(screen.getByRole("menuitem", { name: "review" }));
+      fireEvent.click(screen.getByRole("option", { name: "review" }));
       if (_mode !== "send") {
         fireEvent.click(screen.getByLabelText("Submission mode menu"));
         fireEvent.click(
@@ -509,7 +537,7 @@ describe("Composer", () => {
       fireEvent.change(screen.getByLabelText("Message"), {
         target: { value: `/${label.toLowerCase()}` },
       });
-      fireEvent.click(screen.getByRole("menuitem", { name: label }));
+      fireEvent.click(screen.getByRole("option", { name: label }));
 
       await waitFor(() =>
         expect(mutation).toHaveBeenCalledWith({ threadId: "thread-1" }),
@@ -527,7 +555,7 @@ describe("Composer", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "/goal Ship the redesign" },
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "Goal" }));
+    fireEvent.click(screen.getByRole("option", { name: "Goal" }));
 
     expect(goalMutation).not.toHaveBeenCalled();
     expect(

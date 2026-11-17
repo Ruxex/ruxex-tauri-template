@@ -38,7 +38,8 @@ describe("notification adapter", () => {
   it("classifies only actionable background events", () => {
     expect(classifyAppServerEvent(completed())).toMatchObject({
       id: "turn-completed:thread-1:turn-1",
-      title: "Turn completed",
+      title: "Chat completed",
+      body: "The chat response is complete.",
     });
     expect(
       classifyAppServerEvent({
@@ -120,6 +121,7 @@ describe("notification adapter", () => {
 
     expect(requestPermission).toHaveBeenCalledOnce();
     expect(sendNotification).toHaveBeenCalledWith({
+      id: expect.any(Number),
       title: "Turn completed",
       body: "done",
     });
@@ -138,6 +140,7 @@ describe("notification adapter", () => {
     );
 
     expect(sendNotification).toHaveBeenCalledWith({
+      id: expect.any(Number),
       title: "Turn completed",
       body: "done",
       sound: "Ping",
@@ -148,8 +151,8 @@ describe("notification adapter", () => {
 describe("Japanese notification framing", () => {
   it("localizes titles and templates while retaining protocol status and server text", () => {
     expect(classifyAppServerEvent(completed(), "ja")).toMatchObject({
-      title: "ターンが完了しました",
-      body: "ターンが次のステータスで終了しました: completed。",
+      title: "チャットが完了しました",
+      body: "チャットの返信が完了しました。",
     });
     expect(
       classifyAppServerEvent(
@@ -186,9 +189,9 @@ it("reads the current notification language for each dispatch", async () => {
   await dispatcher.dispatch(completed("english"));
   language = "ja";
   await dispatcher.dispatch(completed("japanese"));
-  expect(send.mock.calls[0][0]).toMatchObject({ title: "Turn completed" });
+  expect(send.mock.calls[0][0]).toMatchObject({ title: "Chat completed" });
   expect(send.mock.calls[1][0]).toMatchObject({
-    title: "ターンが完了しました",
-    body: "ターンが次のステータスで終了しました: completed。",
+    title: "チャットが完了しました",
+    body: "チャットの返信が完了しました。",
   });
 });

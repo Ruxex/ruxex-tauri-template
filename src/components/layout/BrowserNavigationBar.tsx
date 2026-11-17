@@ -203,7 +203,7 @@ export function BrowserNavigationBar({
       </div>
       <nav
         aria-label={t("navigation:breadcrumb")}
-        className={`min-w-0 flex-1 ${sidebarOpen ? "px-3 sm:px-4" : "pl-0 pr-3 sm:pr-4"}`}
+        className={`min-w-0 flex-1 ${sidebarOpen ? "pl-4 pr-3 sm:pl-5 sm:pr-4" : "pl-2 pr-3 sm:pr-4"}`}
       >
         <ol className="flex min-w-0 items-center gap-1 text-xs">
           {breadcrumbs.map((breadcrumb, index) => (

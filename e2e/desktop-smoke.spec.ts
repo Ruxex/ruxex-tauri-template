@@ -5,18 +5,19 @@ describe("Ruxex desktop smoke flow", () => {
     const heading = $("//h1[normalize-space()=\"Let's get started\"]");
     await heading.waitForDisplayed({ timeout: 30_000 });
 
-    const message = $('textarea[aria-label="Message"]');
+    const message = $('div[contenteditable="true"][aria-label="Message"]');
     await message.waitForDisplayed({ timeout: 10_000 });
     const send = $('button[aria-label="Send"]');
     await send.waitForDisplayed({ timeout: 10_000 });
 
     assert.equal(await heading.getText(), "Let's get started");
-    assert.equal(await message.isEnabled(), true);
+    assert.equal(await message.getAttribute("contenteditable"), "true");
+    assert.equal(await message.getAttribute("role"), "textbox");
     assert.equal(await send.isEnabled(), false);
   });
 
   it("creates a dummy-provider thread from the composer", async () => {
-    const message = $('textarea[aria-label="Message"]');
+    const message = $('div[contenteditable="true"][aria-label="Message"]');
     await message.waitForDisplayed({ timeout: 30_000 });
     await message.setValue("E2E dummy provider smoke");
 

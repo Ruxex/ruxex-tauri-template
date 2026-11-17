@@ -9,6 +9,7 @@
   "settings": "Settings",
   "general": "General",
   "account": "Account",
+  "notSignedIn": "Not signed in",
   "appearance": "Appearance",
   "archivedChats": "Archived chats",
   "appServer": "App Server",

@@ -1,6 +1,8 @@
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { useAccount } from "../../app-server/hooks";
 import {
   SIDEBAR_PANELS,
   type SidebarIcon,
@@ -29,6 +31,8 @@ export function ProjectSidebar({
   const { t } = useTranslation("navigation");
   const navigate = useNavigate();
   const location = useLocation();
+  const account = useAccount();
+  const accountIsSignedOut = account.data?.authStatus === "unauthenticated";
   const contextPanelVisible = showContextPanel && !collapsed;
 
   function selectPanel(panel: SidebarPanelDefinition) {
@@ -79,6 +83,8 @@ export function ProjectSidebar({
               active={activePanel === panel.id}
               key={panel.id}
               label={t(`navigation:${panel.id}`)}
+              warning={panel.id === "account" && accountIsSignedOut}
+              warningLabel={t("navigation:notSignedIn")}
               icon={panel.icon}
               onClick={() => selectPanel(panel)}
             />
@@ -100,25 +106,39 @@ function RailButton({
   active,
   icon,
   label,
+  warning = false,
+  warningLabel,
   onClick,
 }: {
   active: boolean;
   icon: SidebarIcon;
   label: string;
+  warning?: boolean;
+  warningLabel?: string;
   onClick: () => void;
 }) {
   const Icon = icon;
+  const accessibleLabel =
+    warning && warningLabel ? `${label}, ${warningLabel}` : label;
+  const title = warning && warningLabel ? `${label} — ${warningLabel}` : label;
 
   return (
     <button
-      aria-label={label}
+      aria-label={accessibleLabel}
       aria-pressed={active}
       className={`btn btn-ghost btn-square text-lg ${active ? "btn-active text-primary" : ""}`}
-      title={label}
+      title={title}
       type="button"
       onClick={onClick}
     >
-      <Icon aria-hidden="true" className="size-5" />
+      <span className="relative inline-flex">
+        <Icon aria-hidden="true" className="size-5" />
+        {warning && (
+          <span className="absolute -bottom-1 -right-1 inline-flex size-3.5 items-center justify-center rounded-full bg-base-100 text-warning">
+            <ExclamationTriangleIcon aria-hidden="true" className="size-3.5" />
+          </span>
+        )}
+      </span>
     </button>
   );
 }

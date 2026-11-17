@@ -1,16 +1,20 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
-  waitFor,
 } from "@testing-library/react";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { v2 } from "../../protocol";
-import { SlashCommandPalette } from "./SlashCommandPalette";
+import {
+  SlashCommandPalette,
+  type SlashCommandPaletteHandle,
+} from "./SlashCommandPalette";
 
 vi.mock("../common/SkillIcon", () => ({
   SkillIcon: ({ skill }: { skill: v2.SkillMetadata }) => (
@@ -33,41 +37,51 @@ describe("SlashCommandPalette", () => {
   it("renders exactly the three supported commands", () => {
     render(<SlashCommandPalette disabled={false} onSelect={vi.fn()} />);
 
-    expect(screen.getAllByRole("menuitem")).toHaveLength(3);
-    expect(screen.getByRole("menuitem", { name: "Archive" })).toBeTruthy();
-    expect(screen.getByRole("menuitem", { name: "Compact" })).toBeTruthy();
-    expect(screen.getByRole("menuitem", { name: "Goal" })).toBeTruthy();
+    expect(screen.getAllByRole("option")).toHaveLength(3);
+    expect(screen.getByRole("option", { name: "Archive" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Compact" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Goal" })).toBeTruthy();
   });
 
   it("reports the selected command ID", () => {
     const onSelect = vi.fn();
     render(<SlashCommandPalette disabled={false} onSelect={onSelect} />);
 
-    fireEvent.click(screen.getByRole("menuitem", { name: "Compact" }));
+    fireEvent.click(screen.getByRole("option", { name: "Compact" }));
 
     expect(onSelect).toHaveBeenCalledWith("compact");
   });
 
-  it("focuses command items and moves focus with arrow keys", async () => {
+  it("moves the active option and selects it with keyboard keys", () => {
     const onSelect = vi.fn();
-    render(<SlashCommandPalette disabled={false} onSelect={onSelect} />);
+    const ref = createRef<SlashCommandPaletteHandle>();
+    render(
+      <SlashCommandPalette
+        disabled={false}
+        onSelect={onSelect}
+        ref={ref}
+      />,
+    );
 
-    const archive = screen.getByRole("menuitem", { name: "Archive" });
-    await waitFor(() => expect(document.activeElement).toBe(archive));
+    const archive = screen.getByRole("option", { name: "Archive" });
+    expect(archive.dataset.active).toBe("true");
 
-    fireEvent.keyDown(archive, { key: "ArrowDown" });
-    const compact = screen.getByRole("menuitem", { name: "Compact" });
+    act(() =>
+      ref.current?.handleKeyDown({ key: "ArrowDown", preventDefault: vi.fn() }),
+    );
+    const compact = screen.getByRole("option", { name: "Compact" });
     expect(compact.dataset.active).toBe("true");
-    expect(document.activeElement).toBe(compact);
 
-    fireEvent.keyDown(compact, { key: "Enter" });
+    act(() =>
+      ref.current?.handleKeyDown({ key: "Enter", preventDefault: vi.fn() }),
+    );
     expect(onSelect).toHaveBeenCalledWith("compact");
   });
 
   it("disables every command while the Composer is busy", () => {
     render(<SlashCommandPalette disabled onSelect={vi.fn()} />);
 
-    for (const item of screen.getAllByRole("menuitem")) {
+    for (const item of screen.getAllByRole("option")) {
       expect((item as HTMLButtonElement).disabled).toBe(true);
     }
   });
@@ -82,11 +96,11 @@ describe("SlashCommandPalette", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Commands" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Skills" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Commands" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Skills" })).toBeTruthy();
     expect(
       screen
-        .getByRole("menu", { name: "Slash commands" })
+        .getByRole("listbox", { name: "Slash commands" })
         .querySelector(".menu-vertical"),
     ).toBeTruthy();
   });
@@ -104,8 +118,8 @@ describe("SlashCommandPalette", () => {
       />,
     );
 
-    expect(screen.queryByRole("menuitem", { name: "Archive" })).toBeNull();
-    const skillItem = screen.getByRole("menuitem", { name: /review/i });
+    expect(screen.queryByRole("option", { name: "Archive" })).toBeNull();
+    const skillItem = screen.getByRole("option", { name: /review/i });
     expect(skillItem.textContent).toContain("Review the current changes");
     fireEvent.click(skillItem);
 

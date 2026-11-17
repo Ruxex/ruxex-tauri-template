@@ -35,17 +35,44 @@ def production_control_tags():
                 cursor += 1
 
             line = source.count("\n", 0, index) + 1
-            yield path.relative_to(ROOT), line, source[index : cursor + 1]
+            yield path.relative_to(ROOT), line, source, index, cursor
+
+
+def has_explicit_name(tag):
+    return "aria-label=" in tag or "aria-labelledby=" in tag
+
+
+def is_wrapped_by_label(source, index):
+    return source.rfind("<label", 0, index) > source.rfind("</label>", 0, index)
+
+
+def button_has_visible_name(source, tag_end):
+    closing = source.find("</button", tag_end)
+    if closing < 0:
+        return False
+
+    content = source[tag_end + 1 : closing]
+    content = re.sub(r"\{\s*(?:false|null|undefined)?\s*\}", "", content)
+    content = re.sub(r"<[^>]*>", "", content)
+    return bool(content.strip()) or bool(re.search(r"\bt\s*\(", content))
 
 
 class AccessibilityLabelTests(unittest.TestCase):
-    def test_production_controls_have_explicit_aria_labels(self):
+    def test_production_controls_have_accessible_names(self):
         unlabeled = [
-            f"{path}:{line}: <{tag.split()[0][1:]}...>"
-            for path, line, tag in production_control_tags()
-            if "aria-label=" not in tag
+            f"{path}:{line}: <{source[index:tag_end].split()[0][1:]}...>"
+            for path, line, source, index, tag_end in production_control_tags()
+            if not has_explicit_name(source[index:tag_end])
+            and (
+                source[index + 1 : index + 7] != "button"
+                or not button_has_visible_name(source, tag_end)
+            )
+            and (
+                source[index + 1 : index + 7] == "button"
+                or not is_wrapped_by_label(source, index)
+            )
         ]
-        self.assertEqual([], unlabeled, "Controls without aria-label:\n" + "\n".join(unlabeled))
+        self.assertEqual([], unlabeled, "Controls without an accessible name:\n" + "\n".join(unlabeled))
 
 
 if __name__ == "__main__":

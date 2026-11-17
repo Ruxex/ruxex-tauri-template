@@ -49,6 +49,13 @@ class ReleaseBoundaryTests(unittest.TestCase):
         self.assertRegex(source, r"VITE_E2E_PLUGIN\s*===\s*[\"']1[\"']")
         self.assertIn("@wdio/tauri-plugin", source)
 
+    def test_wdio_tauri_service_is_declared_for_e2e_runs(self):
+        package = json.loads((ROOT / "package.json").read_text())
+        config = (ROOT / "wdio.conf.ts").read_text()
+
+        self.assertIn("@wdio/tauri-service", config)
+        self.assertIn("@wdio/tauri-service", package["devDependencies"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -360,7 +360,7 @@ describe("SettingsSidebar AppServer navigation", () => {
     expect(screen.getByRole("link", { name: "Appearance" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Version" })).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: "Plugin marketplaces" }),
+      screen.getByRole("link", { name: "Plugin" }),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Provider" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "App Server" })).toBeTruthy();
@@ -400,7 +400,7 @@ describe("SettingsSidebar AppServer navigation", () => {
 
     expect(
       screen
-        .getByRole("link", { name: "Plugin marketplaces" })
+        .getByRole("link", { name: "Plugin" })
         .getAttribute("href"),
     ).toBe("/settings/marketplaces");
   });

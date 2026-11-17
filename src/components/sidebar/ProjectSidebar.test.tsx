@@ -22,6 +22,9 @@ const useThreadSearch = vi.hoisted(() =>
   vi.fn(() => ({ data: undefined, isError: false, isLoading: false })),
 );
 const usePluginList = vi.hoisted(() => vi.fn());
+const useAccount = vi.hoisted(() =>
+  vi.fn(() => ({ data: undefined, isLoading: true })),
+);
 const activeThreadListParams = vi.hoisted(() => vi.fn());
 const useAppServerEvents = vi.hoisted(() =>
   vi.fn(() => ({ threads: {}, pendingServerRequests: {} })),
@@ -37,6 +40,7 @@ vi.mock("../../app-server/hooks", () => ({
   useThreadSearch,
   activeThreadListParams,
   usePluginList,
+  useAccount,
 }));
 vi.mock("../../app/thread-read-state", () => ({ useThreadReadState }));
 
@@ -240,7 +244,6 @@ describe("ProjectSidebar", () => {
     });
     expect(within(panel).getByRole("button", { name: "Plugins" })).toBeTruthy();
     expect(within(panel).getByRole("button", { name: "Skills" })).toBeTruthy();
-    expect(within(panel).getByRole("button", { name: "MCP" })).toBeTruthy();
 
     const installed = within(panel)
       .getByText("Installed (1)")

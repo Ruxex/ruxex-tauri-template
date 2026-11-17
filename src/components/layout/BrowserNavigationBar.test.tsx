@@ -98,7 +98,7 @@ describe("BrowserNavigationBar", () => {
     );
 
     const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
-    expect(breadcrumb.className).toContain("pl-0");
+    expect(breadcrumb.className).toContain("pl-2");
     expect(breadcrumb.previousElementSibling?.className).toContain("w-auto");
   });
 
