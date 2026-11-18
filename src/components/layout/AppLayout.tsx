@@ -1,5 +1,11 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { usePanelRef } from "react-resizable-panels";
 import { Outlet, useLocation, useParams } from "react-router-dom";
@@ -25,6 +31,10 @@ import {
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
 const MAX_RIGHT_PANE_WIDTH = 1536;
+const LEFT_PANE_COLLAPSED_SIZE = 56;
+type PanelResizeHandler = NonNullable<
+  ComponentProps<typeof ResizablePanel>["onResize"]
+>;
 
 type RightPaneTab =
   | {
@@ -91,6 +101,26 @@ export function AppLayout() {
   const leftPaneRef = usePanelRef();
   const rightPaneRef = usePanelRef();
   const previousRoutePanel = useRef<SidebarPanel | null>(null);
+  const handleLeftPaneResize = useCallback<PanelResizeHandler>(
+    (size, _id, previousSize) => {
+      if (previousSize === undefined) return;
+
+      const collapsed = size.inPixels <= LEFT_PANE_COLLAPSED_SIZE;
+      if (collapsed !== preferences.sidebarCollapsed) {
+        update({ sidebarCollapsed: collapsed });
+      }
+    },
+    [preferences.sidebarCollapsed, update],
+  );
+  const handleRightPaneResize = useCallback<PanelResizeHandler>(
+    (size, _id, previousSize) => {
+      if (previousSize === undefined) return;
+
+      const open = size.inPixels > 0;
+      setRightPaneOpen((current) => (current === open ? current : open));
+    },
+    [],
+  );
   const openThreadDiff = useCallback(
     (target: GitDiffReviewTarget) => {
       const id = gitDiffTabId(target);
@@ -255,12 +285,13 @@ export function AppLayout() {
       >
         <ResizablePanel
           className="min-w-0"
-          collapsedSize={56}
+          collapsedSize={LEFT_PANE_COLLAPSED_SIZE}
           collapsible
           defaultSize={320}
           id="left-sidebar"
           maxSize={480}
           minSize={240}
+          onResize={handleLeftPaneResize}
           panelRef={leftPaneRef}
         >
           <ProjectSidebar
@@ -320,6 +351,7 @@ export function AppLayout() {
           id="right-pane"
           maxSize={MAX_RIGHT_PANE_WIDTH}
           minSize={240}
+          onResize={handleRightPaneResize}
           panelRef={rightPaneRef}
         >
           <aside
