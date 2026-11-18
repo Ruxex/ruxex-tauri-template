@@ -1,5 +1,6 @@
-import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 import type { ConversationViewItem } from "./conversation-model";
 
@@ -27,6 +28,12 @@ export function ConversationMinimap({
     userItems.at(-1)?.id ?? null,
   );
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const markerButtonsRef = useRef(new Map<string, HTMLButtonElement>());
+  const hoverCloseTimeoutRef = useRef<number | null>(null);
   const previousLastUserIdRef = useRef<string | null>(
     userItems.at(-1)?.id ?? null,
   );
@@ -91,6 +98,49 @@ export function ConversationMinimap({
     };
   }, [timelineRef, userItems]);
 
+  useEffect(() => {
+    if (!hoveredId) {
+      setHoverPosition(null);
+      return;
+    }
+
+    const dismissOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setHoveredId(null);
+      }
+    };
+
+    const updatePosition = () => {
+      const button = markerButtonsRef.current.get(hoveredId);
+      if (!button) return;
+
+      const bounds = button.getBoundingClientRect();
+      setHoverPosition({
+        top: bounds.top + bounds.height / 2,
+        left: bounds.right + 4,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("keydown", dismissOnEscape);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("keydown", dismissOnEscape);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [hoveredId]);
+
+  useEffect(
+    () => () => {
+      if (hoverCloseTimeoutRef.current !== null) {
+        window.clearTimeout(hoverCloseTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
   if (typeof document === "undefined") {
     return null;
   }
@@ -111,6 +161,24 @@ export function ConversationMinimap({
     target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
     setActiveId(item.id);
     setHoveredId(null);
+  }
+
+  function keepPreviewOpen(id: string) {
+    if (hoverCloseTimeoutRef.current !== null) {
+      window.clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
+    setHoveredId(id);
+  }
+
+  function schedulePreviewClose() {
+    if (hoverCloseTimeoutRef.current !== null) {
+      window.clearTimeout(hoverCloseTimeoutRef.current);
+    }
+    hoverCloseTimeoutRef.current = window.setTimeout(() => {
+      setHoveredId(null);
+      hoverCloseTimeoutRef.current = null;
+    }, 120);
   }
 
   if (!hasMarkers) {
@@ -163,14 +231,21 @@ export function ConversationMinimap({
                   }}
                 >
                   <button
+                    ref={(element) => {
+                      if (element) {
+                        markerButtonsRef.current.set(item.id, element);
+                      } else {
+                        markerButtonsRef.current.delete(item.id);
+                      }
+                    }}
                     aria-current={isActive ? "location" : undefined}
                     aria-label={t("jumpToMessage", { preview })}
                     className="relative flex h-7 w-10 -translate-x-[14px] -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
                     onBlur={() => setHoveredId(null)}
                     onClick={() => jumpTo(item)}
                     onFocus={() => setHoveredId(item.id)}
-                    onMouseEnter={() => setHoveredId(item.id)}
-                    onMouseLeave={() => setHoveredId(null)}
+                    onMouseEnter={() => keepPreviewOpen(item.id)}
+                    onMouseLeave={schedulePreviewClose}
                     type="button"
                   >
                     <span className="absolute left-[10px] top-1/2 -translate-y-1/2">
@@ -181,14 +256,6 @@ export function ConversationMinimap({
                         style={{ transform: `translateX(${markerOffsetPx}px)` }}
                       />
                     </span>
-                    {isHovered && (
-                      <span
-                        className="absolute bottom-1/2 left-14 z-10 w-64 translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
-                        role="tooltip"
-                      >
-                        <span className="block leading-relaxed">{preview}</span>
-                      </span>
-                    )}
                   </button>
                 </div>
               );
@@ -196,6 +263,24 @@ export function ConversationMinimap({
           </div>
         </div>
       </aside>
+      {hoveredId && hoverPosition
+        ? createPortal(
+            <span
+              className="fixed z-[100] w-64 -translate-y-1/2 rounded-box border border-base-300 bg-base-100 px-3 py-2 text-left text-xs text-base-content shadow-xl"
+              onMouseEnter={() => keepPreviewOpen(hoveredId)}
+              onMouseLeave={schedulePreviewClose}
+              role="tooltip"
+              style={{ top: hoverPosition.top, left: hoverPosition.left }}
+            >
+              <span className="block leading-relaxed">
+                {previewText(
+                  userItems.find((item) => item.id === hoveredId)?.text ?? "",
+                )}
+              </span>
+            </span>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
