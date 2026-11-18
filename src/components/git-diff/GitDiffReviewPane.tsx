@@ -104,7 +104,7 @@ export function GitDiffReviewPane({
           id: file.path,
           type: "file",
           file: { name: file.path, contents: "" },
-          collapsed: file.binary || state.collapsed,
+          collapsed: file.binary ? false : state.collapsed,
           version,
         });
       }
@@ -200,20 +200,13 @@ export function GitDiffReviewPane({
             const file = fileByPath.get(item.id);
             if (!file) return null;
             const patchQuery = filePatchQueryByPath.get(file.path);
-            return (
-              <button
-                aria-expanded={!item.collapsed}
-                aria-label={t(item.collapsed ? "expandFile" : "collapseFile", {
-                  path: file.path,
-                })}
-                className="flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-xs hover:bg-base-200 disabled:cursor-default"
-                disabled={file.binary}
-                onClick={() => toggleFile(file.path)}
-                type="button"
-              >
-                <span aria-hidden="true" className="w-3 text-base-content/60">
-                  {item.collapsed ? "›" : "⌄"}
-                </span>
+            const headerContent = (
+              <>
+                {!file.binary && (
+                  <span aria-hidden="true" className="w-3 text-base-content/60">
+                    {item.collapsed ? "›" : "⌄"}
+                  </span>
+                )}
                 <span
                   className="min-w-0 flex-1 truncate font-mono"
                   title={file.path}
@@ -243,6 +236,24 @@ export function GitDiffReviewPane({
                     <span className="ml-1 text-error">−{file.deleted}</span>
                   </span>
                 )}
+              </>
+            );
+            const headerClassName =
+              "flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-xs hover:bg-base-200";
+            if (file.binary) {
+              return <div className={headerClassName}>{headerContent}</div>;
+            }
+            return (
+              <button
+                aria-expanded={!item.collapsed}
+                aria-label={t(item.collapsed ? "expandFile" : "collapseFile", {
+                  path: file.path,
+                })}
+                className={headerClassName}
+                onClick={() => toggleFile(file.path)}
+                type="button"
+              >
+                {headerContent}
               </button>
             );
           }}

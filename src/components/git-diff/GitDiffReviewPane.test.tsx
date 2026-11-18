@@ -49,7 +49,13 @@ vi.mock("@pierre/diffs/react", () => ({
   }) => (
     <div data-testid="code-view">
       {items.map((item) => (
-        <div key={item.id}>{renderCustomHeader(item)}</div>
+        <div
+          data-collapsed={item.collapsed}
+          data-testid={`diff-item-${item.id}`}
+          key={item.id}
+        >
+          {renderCustomHeader(item)}
+        </div>
       ))}
     </div>
   ),
@@ -146,6 +152,27 @@ describe("GitDiffReviewPane", () => {
       ),
     );
     expect(getGitDiffFilePatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps binary files expanded and non-interactive", () => {
+    renderPane([
+      {
+        path: "image.png",
+        status: "modified",
+        added: 0,
+        deleted: 0,
+        binary: true,
+        patch: null,
+      },
+    ]);
+
+    expect(screen.getByTestId("diff-item-image.png").dataset.collapsed).toBe(
+      "false",
+    );
+    expect(screen.getByText("Binary")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Expand image.png" }),
+    ).toBeNull();
   });
 
   it("refreshes details and invalidates the summary and cached file patches", async () => {
