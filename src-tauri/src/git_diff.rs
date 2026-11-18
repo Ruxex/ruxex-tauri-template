@@ -123,24 +123,6 @@ pub fn details(workspace: &Path) -> Result<Vec<GitDiffFile>, String> {
         });
     }
 
-    if !files.is_empty() {
-        let tracked = tracked_patch(workspace)?;
-        let patches = split_file_patches(&tracked);
-        if patches.len() == files.len() {
-            for (index, file) in files.iter_mut().enumerate() {
-                if !file.binary {
-                    file.patch = patches.get(index).cloned();
-                }
-            }
-        } else {
-            for (path, file) in tracked_paths.iter().zip(files.iter_mut()) {
-                if !file.binary {
-                    file.patch = Some(tracked_file_patch(workspace, path)?);
-                }
-            }
-        }
-    }
-
     let name_status = git(
         workspace,
         &["diff", "--name-status", "--no-renames", "-z", "HEAD"],
@@ -191,28 +173,70 @@ pub fn details(workspace: &Path) -> Result<Vec<GitDiffFile>, String> {
         } else {
             (0, false)
         };
-        let patch = if binary {
-            None
-        } else {
-            Some(untracked_patch(workspace, &path)?)
-        };
-        let binary = binary
-            || patch.as_deref().is_some_and(|patch| {
-                patch.contains("Binary files ") || patch.contains("GIT binary patch")
-            });
-        let patch = if binary { None } else { patch };
         files.push(GitDiffFile {
             path: path.to_string_lossy().into_owned(),
             status: "added".to_string(),
             added,
             deleted: 0,
             binary,
-            patch,
+            patch: None,
         });
     }
 
     files.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(files)
+}
+
+pub fn file_patch(workspace: &Path, relative_path: &Path) -> Result<String, String> {
+    validate_workspace(workspace)?;
+    validate_relative_path(relative_path)?;
+
+    let tracked_patch = tracked_file_patch(workspace, relative_path.as_os_str())?;
+    if !tracked_patch.is_empty() {
+        return Ok(tracked_patch);
+    }
+
+    let pathspec = literal_pathspec(relative_path.as_os_str());
+    let tracked = Command::new("git")
+        .args(["ls-files", "--error-unmatch", "-z", "--"])
+        .arg(&pathspec)
+        .current_dir(workspace)
+        .output()
+        .map_err(|error| format!("failed to execute git: {error}"))?;
+    if tracked.status.success() {
+        return Err("file is not part of the current diff".to_string());
+    }
+
+    let untracked = Command::new("git")
+        .args(["ls-files", "--others", "--exclude-standard", "-z", "--"])
+        .arg(&pathspec)
+        .current_dir(workspace)
+        .output()
+        .map_err(|error| format!("failed to execute git: {error}"))?;
+    ensure_success(&untracked)?;
+    if untracked.stdout.is_empty() {
+        return Err("file is not part of the current diff".to_string());
+    }
+
+    untracked_patch(workspace, relative_path.as_os_str())
+}
+
+fn validate_relative_path(path: &Path) -> Result<(), String> {
+    if path.as_os_str().is_empty()
+        || path.is_absolute()
+        || path
+            .components()
+            .any(|component| !matches!(component, std::path::Component::Normal(_)))
+    {
+        return Err("file path must be relative to the workspace".to_string());
+    }
+    Ok(())
+}
+
+fn literal_pathspec(path: &OsStr) -> OsString {
+    let mut pathspec = OsString::from(":(literal)");
+    pathspec.push(path);
+    pathspec
 }
 
 fn validate_workspace(workspace: &Path) -> Result<(), String> {
@@ -249,24 +273,6 @@ fn line_count(contents: &[u8]) -> u64 {
         }
 }
 
-fn tracked_patch(workspace: &Path) -> Result<String, String> {
-    let output = Command::new("git")
-        .args([
-            "diff",
-            "--no-ext-diff",
-            "--no-textconv",
-            "--no-color",
-            "--no-renames",
-            "--unified=3",
-            "HEAD",
-        ])
-        .current_dir(workspace)
-        .output()
-        .map_err(|error| format!("failed to execute git: {error}"))?;
-    ensure_success(&output)?;
-    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-}
-
 fn tracked_file_patch(workspace: &Path, path: &OsStr) -> Result<String, String> {
     let output = Command::new("git")
         .args([
@@ -279,25 +285,12 @@ fn tracked_file_patch(workspace: &Path, path: &OsStr) -> Result<String, String> 
             "HEAD",
             "--",
         ])
-        .arg(path)
+        .arg(literal_pathspec(path))
         .current_dir(workspace)
         .output()
         .map_err(|error| format!("failed to execute git: {error}"))?;
     ensure_success(&output)?;
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-}
-
-fn split_file_patches(patch: &str) -> Vec<String> {
-    let mut files = Vec::<String>::new();
-    for line in patch.split_inclusive('\n') {
-        if line.starts_with("diff --git ") {
-            files.push(String::new());
-        }
-        if let Some(file) = files.last_mut() {
-            file.push_str(line);
-        }
-    }
-    files
 }
 
 fn untracked_patch(workspace: &Path, path: &OsStr) -> Result<String, String> {
@@ -348,7 +341,7 @@ fn git(workspace: &Path, args: &[&str]) -> Result<std::process::Output, String> 
 
 #[cfg(test)]
 mod tests {
-    use super::{details, summary};
+    use super::{details, file_patch, summary};
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::Command;
@@ -449,12 +442,7 @@ mod tests {
         );
         let deleted = files.iter().find(|file| file.path == ".gitignore").unwrap();
         assert_eq!(deleted.status, "deleted");
-        assert!(
-            deleted
-                .patch
-                .as_deref()
-                .is_some_and(|patch| patch.contains("-ignored.txt"))
-        );
+        assert!(deleted.patch.is_none());
 
         let binary = files.iter().find(|file| file.path == "binary.dat").unwrap();
         assert!(binary.binary);
@@ -466,12 +454,7 @@ mod tests {
             .unwrap();
         assert_eq!(added.status, "added");
         assert_eq!(added.added, 2);
-        assert!(
-            added
-                .patch
-                .as_deref()
-                .is_some_and(|patch| patch.contains("+first"))
-        );
+        assert!(added.patch.is_none());
 
         let modified = files
             .iter()
@@ -479,12 +462,28 @@ mod tests {
             .unwrap();
         assert_eq!(modified.status, "modified");
         assert_eq!((modified.added, modified.deleted), (1, 2));
-        assert!(
-            modified
-                .patch
-                .as_deref()
-                .is_some_and(|patch| patch.contains("+changed"))
-        );
+        assert!(modified.patch.is_none());
+    }
+
+    #[test]
+    fn reads_tracked_and_untracked_patches_on_demand() {
+        let repo = Repository::new();
+        fs::write(repo.0.join("tracked.txt"), "one\nchanged\n").unwrap();
+        fs::write(repo.0.join("new file.txt"), "first\nsecond\n").unwrap();
+
+        let tracked = file_patch(&repo.0, Path::new("tracked.txt")).unwrap();
+        let untracked = file_patch(&repo.0, Path::new("new file.txt")).unwrap();
+
+        assert!(tracked.contains("+changed"));
+        assert!(untracked.contains("+first"));
+    }
+
+    #[test]
+    fn rejects_unchanged_and_out_of_workspace_patch_paths() {
+        let repo = Repository::new();
+
+        assert!(file_patch(&repo.0, Path::new("tracked.txt")).is_err());
+        assert!(file_patch(&repo.0, Path::new("../outside.txt")).is_err());
     }
 
     #[cfg(unix)]
@@ -502,12 +501,10 @@ mod tests {
         assert_eq!(files[0].path, "new\nfile.txt");
         assert_eq!(files[0].status, "added");
         assert_eq!(files[0].added, 1);
-        assert!(
-            files[0]
-                .patch
-                .as_deref()
-                .is_some_and(|patch| patch.contains("+content"))
-        );
+        assert!(files[0].patch.is_none());
+        assert!(file_patch(&repo.0, Path::new("new\nfile.txt"))
+            .unwrap()
+            .contains("+content"));
     }
 
     #[test]

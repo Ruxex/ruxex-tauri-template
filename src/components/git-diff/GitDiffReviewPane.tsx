@@ -1,3 +1,5 @@
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import { CodeView } from "@pierre/diffs/react";
@@ -8,7 +10,13 @@ import {
   getUiThemePresetMode,
   useUiPreferences,
 } from "../../app/ui-preferences";
-import { useGitDiffDetails, type GitDiffFile } from "../../platform/git-diff";
+import {
+  gitDiffFilePatchQueryKey,
+  gitDiffFilePatchQueryOptions,
+  gitDiffSummaryQueryKey,
+  useGitDiffDetails,
+  type GitDiffFile,
+} from "../../platform/git-diff";
 
 export type GitDiffReviewTarget = {
   threadId: string;
@@ -26,12 +34,36 @@ export function GitDiffReviewPane({
 }) {
   const { t } = useTranslation("capabilities");
   const query = useGitDiffDetails(target.workspace, isOpen);
+  const queryClient = useQueryClient();
   const { preferences } = useUiPreferences();
   const [disclosures, setDisclosures] = useState<
     Record<string, FileDisclosure>
   >({});
 
   const files = query.data ?? [];
+  const expandedFiles = useMemo(
+    () =>
+      files.filter(
+        (file) => !file.binary && !(disclosures[file.path]?.collapsed ?? true),
+      ),
+    [disclosures, files],
+  );
+  const filePatchQueries = useQueries({
+    queries: expandedFiles.map((file) => ({
+      ...gitDiffFilePatchQueryOptions(target.workspace, file.path),
+      select: parseFilePatch,
+    })),
+  });
+  const filePatchQueryByPath = useMemo(() => {
+    const result = new Map<string, (typeof filePatchQueries)[number]>();
+    expandedFiles.forEach((file, index) => {
+      result.set(file.path, filePatchQueries[index]);
+    });
+    return result;
+  }, [expandedFiles, filePatchQueries]);
+  const isRefreshing =
+    query.isFetching ||
+    filePatchQueries.some((patchQuery) => patchQuery.isFetching);
   const themeType = useMemo(() => {
     const mode = getUiThemePresetMode(preferences.theme.preset ?? "system");
     if (mode !== "system") return mode;
@@ -55,35 +87,46 @@ export function GitDiffReviewPane({
   const items = useMemo<CodeViewItem<undefined>[]>(() => {
     const result: CodeViewItem<undefined>[] = [];
     for (const file of files) {
-      const state = disclosures[file.path] ?? { collapsed: false, version: 0 };
-      const parsed = file.patch
-        ? parsePatchFiles(file.patch).flatMap((patch) => patch.files)
-        : [];
-      const fileDiff = parsed[0];
+      const state = disclosures[file.path] ?? { collapsed: true, version: 0 };
+      const patchQuery = filePatchQueryByPath.get(file.path);
+      const fileDiff = patchQuery?.data;
+      const version = state.version + (patchQuery?.dataUpdatedAt ?? 0);
       if (fileDiff) {
         result.push({
           id: file.path,
           type: "diff",
           fileDiff,
           collapsed: state.collapsed,
-          version: state.version,
+          version,
         });
       } else {
         result.push({
           id: file.path,
           type: "file",
           file: { name: file.path, contents: "" },
-          collapsed: state.collapsed,
-          version: state.version,
+          collapsed: file.binary || state.collapsed,
+          version,
         });
       }
     }
     return result;
-  }, [disclosures, files]);
+  }, [disclosures, filePatchQueryByPath, files]);
+
+  async function refreshDiff() {
+    await Promise.all([
+      query.refetch(),
+      queryClient.invalidateQueries({
+        queryKey: gitDiffSummaryQueryKey(target.workspace),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: gitDiffFilePatchQueryKey(target.workspace),
+      }),
+    ]);
+  }
 
   function toggleFile(path: string) {
     setDisclosures((current) => {
-      const previous = current[path] ?? { collapsed: false, version: 0 };
+      const previous = current[path] ?? { collapsed: true, version: 0 };
       return {
         ...current,
         [path]: {
@@ -102,17 +145,32 @@ export function GitDiffReviewPane({
       <header className="shrink-0 border-b border-base-300 px-4 py-3">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold">{t("codeChanges")}</h2>
-          {query.data && (
-            <span className="text-xs text-base-content/60">
-              {t("diffFileCount", { count: files.length })}
-              <span className="ml-2 font-medium text-success">
-                +{sum(files, "added")}
+          <div className="flex min-w-0 items-center gap-2">
+            {query.data && (
+              <span className="truncate text-xs text-base-content/60">
+                {t("diffFileCount", { count: files.length })}
+                <span className="ml-2 font-medium text-success">
+                  +{sum(files, "added")}
+                </span>
+                <span className="ml-1 font-medium text-error">
+                  −{sum(files, "deleted")}
+                </span>
               </span>
-              <span className="ml-1 font-medium text-error">
-                −{sum(files, "deleted")}
-              </span>
-            </span>
-          )}
+            )}
+            <button
+              aria-label={t("refreshDiff")}
+              className="btn btn-ghost btn-sm btn-square shrink-0"
+              disabled={!isOpen || isRefreshing}
+              onClick={() => void refreshDiff()}
+              title={t("refreshDiff")}
+              type="button"
+            >
+              <ArrowPathIcon
+                aria-hidden="true"
+                className={`size-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -141,13 +199,15 @@ export function GitDiffReviewPane({
           renderCustomHeader={(item) => {
             const file = fileByPath.get(item.id);
             if (!file) return null;
+            const patchQuery = filePatchQueryByPath.get(file.path);
             return (
               <button
                 aria-expanded={!item.collapsed}
                 aria-label={t(item.collapsed ? "expandFile" : "collapseFile", {
                   path: file.path,
                 })}
-                className="flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-xs hover:bg-base-200"
+                className="flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-xs hover:bg-base-200 disabled:cursor-default"
+                disabled={file.binary}
                 onClick={() => toggleFile(file.path)}
                 type="button"
               >
@@ -163,6 +223,16 @@ export function GitDiffReviewPane({
                 <span className="shrink-0 text-base-content/50">
                   {statusLabel(file)}
                 </span>
+                {patchQuery?.isLoading && (
+                  <span className="shrink-0 text-base-content/60" role="status">
+                    {t("loadingDiff")}
+                  </span>
+                )}
+                {patchQuery?.isError && (
+                  <span className="shrink-0 text-error" role="alert">
+                    {t("unableToLoadGitDiff")}
+                  </span>
+                )}
                 {file.binary ? (
                   <span className="shrink-0 text-base-content/50">
                     {t("binary")}
@@ -185,6 +255,10 @@ export function GitDiffReviewPane({
 
 function sum(files: GitDiffFile[], key: "added" | "deleted") {
   return files.reduce((total, file) => total + file[key], 0);
+}
+
+function parseFilePatch(patch: string) {
+  return parsePatchFiles(patch).flatMap((entry) => entry.files)[0] ?? null;
 }
 
 function statusLabel(file: GitDiffFile) {

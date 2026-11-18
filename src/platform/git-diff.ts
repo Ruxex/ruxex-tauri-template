@@ -17,9 +17,7 @@ export type GitDiffFile = {
   patch: string | null;
 };
 
-function getGitDiffSummary(
-  workspace: string,
-): Promise<GitDiffSummary | null> {
+function getGitDiffSummary(workspace: string): Promise<GitDiffSummary | null> {
   return invoke<GitDiffSummary | null>("git_diff_summary", { workspace });
 }
 
@@ -27,22 +25,42 @@ function getGitDiffDetails(workspace: string): Promise<GitDiffFile[]> {
   return invoke<GitDiffFile[]>("git_diff_details", { workspace });
 }
 
+export function gitDiffSummaryQueryKey(workspace: string | null) {
+  return ["platform", "git-diff-summary", workspace] as const;
+}
+
+export function gitDiffDetailsQueryKey(workspace: string | null) {
+  return ["platform", "git-diff-details", workspace] as const;
+}
+
+export function gitDiffFilePatchQueryKey(workspace: string, path?: string) {
+  return path === undefined
+    ? (["platform", "git-diff-file-patch", workspace] as const)
+    : (["platform", "git-diff-file-patch", workspace, path] as const);
+}
+
+export function gitDiffFilePatchQueryOptions(workspace: string, path: string) {
+  return {
+    queryKey: gitDiffFilePatchQueryKey(workspace, path),
+    queryFn: () => invoke<string>("git_diff_file_patch", { workspace, path }),
+    retry: false,
+  };
+}
+
 export function useGitDiffSummary(workspace: string | null) {
   return useQuery({
-    queryKey: ["platform", "git-diff-summary", workspace],
+    queryKey: gitDiffSummaryQueryKey(workspace),
     queryFn: () => getGitDiffSummary(workspace as string),
     enabled: isDesktopRuntime && Boolean(workspace),
-    refetchInterval: 2000,
     retry: false,
   });
 }
 
 export function useGitDiffDetails(workspace: string | null, enabled: boolean) {
   return useQuery({
-    queryKey: ["platform", "git-diff-details", workspace],
+    queryKey: gitDiffDetailsQueryKey(workspace),
     queryFn: () => getGitDiffDetails(workspace as string),
     enabled: isDesktopRuntime && Boolean(workspace) && enabled,
-    refetchInterval: enabled ? 2000 : false,
     retry: false,
   });
 }

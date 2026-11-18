@@ -1,5 +1,6 @@
 {
   "codeChanges": "Code Changes",
+  "refreshDiff": "Refresh diff",
   "loadingDiff": "Loading diff…",
   "unableToLoadGitDiff": "Unable to load Git diff.",
   "noChanges": "No changes",
