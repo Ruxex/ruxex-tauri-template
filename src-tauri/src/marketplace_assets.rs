@@ -309,7 +309,23 @@ pub(super) fn validate_marketplace_svg(bytes: &[u8]) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{append_marketplace_asset_chunk, validate_marketplace_asset_response};
+    use super::{
+        append_marketplace_asset_chunk, detect_marketplace_image_mime,
+        read_marketplace_asset_file_from_roots, validate_marketplace_asset_response,
+        validate_marketplace_asset_url, validate_marketplace_svg,
+    };
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir(label: &str) -> std::path::PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("ruxex-marketplace-{label}-{suffix}"));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
 
     #[test]
     fn remote_asset_response_requires_success_and_an_allowed_final_url() {
@@ -391,5 +407,101 @@ mod tests {
 
         assert!(error.contains("size limit"));
         assert_eq!(contents.len(), 8 * 1024 * 1024);
+    }
+
+    #[test]
+    fn local_asset_reader_checks_roots_types_and_svg_safety() {
+        let root = temp_dir("local");
+        let png = root.join("logo.png");
+        fs::write(&png, b"\x89PNG\r\n\x1a\n").unwrap();
+        let data_url = read_marketplace_asset_file_from_roots(&png, &[&root]).unwrap();
+        assert_eq!(data_url, "data:image/png;base64,iVBORw0KGgo=");
+
+        let unsafe_svg = root.join("unsafe.svg");
+        fs::write(&unsafe_svg, b"<svg><script>alert(1)</script></svg>").unwrap();
+        assert!(read_marketplace_asset_file_from_roots(&unsafe_svg, &[&root]).is_err());
+
+        let safe_svg = root.join("safe.svg");
+        fs::write(
+            &safe_svg,
+            b"<svg xmlns=\"http://www.w3.org/2000/svg\"><rect /></svg>",
+        )
+        .unwrap();
+        assert!(read_marketplace_asset_file_from_roots(&safe_svg, &[&root]).is_ok());
+
+        let outside = root.join("outside");
+        fs::create_dir_all(&outside).unwrap();
+        let outside_file = outside.join("logo.png");
+        fs::write(&outside_file, b"\x89PNG\r\n\x1a\n").unwrap();
+        assert!(
+            read_marketplace_asset_file_from_roots(&outside_file, &[&root.join("missing")])
+                .is_err()
+        );
+        assert!(
+            read_marketplace_asset_file_from_roots(std::path::Path::new("relative.png"), &[&root])
+                .is_err()
+        );
+
+        let unsupported = root.join("notes.txt");
+        fs::write(&unsupported, b"hello").unwrap();
+        assert!(read_marketplace_asset_file_from_roots(&unsupported, &[&root]).is_err());
+        #[cfg(unix)]
+        {
+            let symlink = root.join("linked.png");
+            std::os::unix::fs::symlink(&png, &symlink).unwrap();
+            assert!(read_marketplace_asset_file_from_roots(&symlink, &[&root]).is_err());
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn marketplace_urls_and_image_signatures_reject_ambiguous_inputs() {
+        for allowed in [
+            "https://github.com/acme/plugin/assets/logo.png",
+            "https://raw.githubusercontent.com/acme/plugin/main/logo.png",
+        ] {
+            assert!(validate_marketplace_asset_url(allowed).is_some());
+        }
+        for rejected in [
+            "http://github.com/acme/plugin/logo.png",
+            "https://example.com/acme/plugin/logo.png",
+            "https://user@github.com/acme/plugin/logo.png",
+            "https://github.com/acme/plugin/logo.png?raw=1",
+            "https://github.com/acme/plugin/%2e%2e/logo.png",
+            "https://github.com/acme/plugin",
+        ] {
+            assert!(
+                validate_marketplace_asset_url(rejected).is_none(),
+                "{rejected}"
+            );
+        }
+        assert_eq!(detect_marketplace_image_mime(b"GIF89a"), Some("image/gif"));
+        assert_eq!(detect_marketplace_image_mime(b"GIF87a"), Some("image/gif"));
+        assert_eq!(
+            detect_marketplace_image_mime(b"\xff\xd8\xff"),
+            Some("image/jpeg")
+        );
+        assert_eq!(
+            detect_marketplace_image_mime(b"RIFF0000WEBP"),
+            Some("image/webp")
+        );
+        assert_eq!(
+            detect_marketplace_image_mime(b"0000ftypavif"),
+            Some("image/avif")
+        );
+        assert_eq!(
+            detect_marketplace_image_mime(b"\xef\xbb\xbf  <svg />"),
+            Some("image/svg+xml")
+        );
+        assert_eq!(detect_marketplace_image_mime(&[0xff]), None);
+        assert!(validate_marketplace_svg(b"<svg></svg>").is_ok());
+        for unsafe_svg in [
+            b"plain text".as_slice(),
+            b"<svg onload=\"x\" />",
+            b"<svg href=\"x\" />",
+            b"<svg>url(#x)</svg>",
+        ] {
+            assert!(validate_marketplace_svg(unsafe_svg).is_err());
+        }
     }
 }

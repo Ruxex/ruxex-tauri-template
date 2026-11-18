@@ -591,3 +591,90 @@ fn request_mcp_method(body: &[u8]) -> Option<String> {
         .as_str()
         .map(ToString::to_string)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        ArmSessionPostFailureRequest, ArmedFailureTarget, PostFailureState, StatusCode,
+        arm_post_failure, request_mcp_method,
+    };
+
+    #[test]
+    fn extracts_only_string_methods_from_json_rpc_bodies() {
+        assert_eq!(
+            request_mcp_method(br#"{"method":"tools/call"}"#).as_deref(),
+            Some("tools/call")
+        );
+        for body in [
+            b"not json".as_slice(),
+            br#"{"id":1}"#,
+            br#"{"method":true}"#,
+        ] {
+            assert_eq!(request_mcp_method(body), None);
+        }
+    }
+
+    #[tokio::test]
+    async fn failure_controls_validate_headers_and_clear_disarmed_state() {
+        let state = PostFailureState::default();
+        let valid = ArmSessionPostFailureRequest {
+            status: 503,
+            remaining: 2,
+            www_authenticate_headers: vec!["Bearer realm=\"ruxex\"".to_string()],
+            content_type: Some("text/plain".to_string()),
+            body: Some("retry".to_string()),
+        };
+        assert_eq!(
+            arm_post_failure(state.clone(), valid, ArmedFailureTarget::Session).await,
+            Ok(StatusCode::NO_CONTENT)
+        );
+        assert!(state.armed_failure.lock().await.is_some());
+
+        let invalid_status = ArmSessionPostFailureRequest {
+            status: 99,
+            remaining: 1,
+            www_authenticate_headers: Vec::new(),
+            content_type: None,
+            body: None,
+        };
+        assert_eq!(
+            arm_post_failure(
+                state.clone(),
+                invalid_status,
+                ArmedFailureTarget::Initialize
+            )
+            .await,
+            Err(StatusCode::BAD_REQUEST)
+        );
+
+        let invalid_header = ArmSessionPostFailureRequest {
+            status: 400,
+            remaining: 1,
+            www_authenticate_headers: vec!["bad\nheader".to_string()],
+            content_type: None,
+            body: None,
+        };
+        assert_eq!(
+            arm_post_failure(
+                state.clone(),
+                invalid_header,
+                ArmedFailureTarget::InitializedNotification
+            )
+            .await,
+            Err(StatusCode::BAD_REQUEST)
+        );
+
+        let disarmed = ArmSessionPostFailureRequest {
+            status: 200,
+            remaining: 0,
+            www_authenticate_headers: Vec::new(),
+            content_type: None,
+            body: None,
+        };
+        assert_eq!(
+            arm_post_failure(state.clone(), disarmed, ArmedFailureTarget::Session).await,
+            Ok(StatusCode::NO_CONTENT)
+        );
+        assert!(state.armed_failure.lock().await.is_none());
+    }
+}

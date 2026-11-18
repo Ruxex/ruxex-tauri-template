@@ -217,7 +217,7 @@ mod tests {
 
     use super::{
         default_shortcut, panel_label, panel_route, read_persisted_shortcut,
-        update_persisted_shortcut,
+        update_persisted_shortcut, write_persisted_shortcut,
     };
 
     fn temporary_preferences_path(name: &str) -> std::path::PathBuf {
@@ -345,6 +345,80 @@ mod tests {
         super::replace_preference_file(&temporary_path, &target_path).unwrap();
 
         assert_eq!(fs::read_to_string(&target_path).unwrap(), "new");
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn unchanged_shortcut_skips_registration_and_persistence() {
+        let result = update_persisted_shortcut(
+            default_shortcut(),
+            default_shortcut(),
+            |_| panic!("unregister should not run"),
+            |_| panic!("register should not run"),
+            |_| panic!("persist should not run"),
+        );
+
+        assert_eq!(result.unwrap(), default_shortcut());
+    }
+
+    #[test]
+    fn unregister_failure_stops_update_and_persist_failure_restores_shortcut() {
+        let unregister_error = update_persisted_shortcut(
+            default_shortcut(),
+            "CmdOrCtrl+Alt+R",
+            |_| Err("could not unregister".to_string()),
+            |_| panic!("register must not run after unregister failure"),
+            |_| panic!("persist must not run after unregister failure"),
+        );
+        assert_eq!(unregister_error.unwrap_err(), "could not unregister");
+
+        let actions = Rc::new(RefCell::new(Vec::new()));
+        let unregister_actions = Rc::clone(&actions);
+        let register_actions = Rc::clone(&actions);
+        let persist_actions = Rc::clone(&actions);
+        let persist_error = update_persisted_shortcut(
+            default_shortcut(),
+            "CmdOrCtrl+Alt+R",
+            move |shortcut| {
+                unregister_actions
+                    .borrow_mut()
+                    .push(format!("unregister:{shortcut}"));
+                Ok(())
+            },
+            move |shortcut| {
+                register_actions
+                    .borrow_mut()
+                    .push(format!("register:{shortcut}"));
+                Ok(())
+            },
+            move |_| {
+                persist_actions.borrow_mut().push("persist".to_string());
+                Err("disk full".to_string())
+            },
+        );
+        assert_eq!(persist_error.unwrap_err(), "disk full");
+        assert_eq!(
+            actions.borrow().as_slice(),
+            &[
+                "unregister:CmdOrCtrl+Shift+Space",
+                "register:CmdOrCtrl+Alt+R",
+                "persist",
+                "unregister:CmdOrCtrl+Alt+R",
+                "register:CmdOrCtrl+Shift+Space",
+            ]
+        );
+    }
+
+    #[test]
+    fn persists_preferences_in_a_new_nested_directory() {
+        let directory =
+            std::env::temp_dir().join(format!("ruxex-quick-panel-nested-{}", std::process::id()));
+        let path = directory.join("settings/quick-panel.json");
+        let _ = fs::remove_dir_all(&directory);
+
+        write_persisted_shortcut(&path, "CmdOrCtrl+Alt+R").unwrap();
+
+        assert_eq!(read_persisted_shortcut(&path), "CmdOrCtrl+Alt+R");
         fs::remove_dir_all(directory).unwrap();
     }
 }

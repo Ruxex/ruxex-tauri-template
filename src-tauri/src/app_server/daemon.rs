@@ -470,6 +470,33 @@ mod tests {
     }
 
     #[cfg(unix)]
+    #[tokio::test]
+    async fn reads_the_peer_pid_from_a_live_unix_socket() {
+        let root = temp_dir("peer-pid");
+        let socket = root.join("server.sock");
+        let listener = tokio::net::UnixListener::bind(&socket).unwrap();
+        let accept = tokio::spawn(async move { listener.accept().await.unwrap() });
+        let pid = super::client_socket_peer_pid(&socket).await.unwrap();
+        let (_stream, _) = accept.await.unwrap();
+
+        assert_eq!(pid, Some(std::process::id()));
+        assert!(
+            super::client_socket_peer_pid(&root.join("missing.sock"))
+                .await
+                .is_err()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn process_termination_treats_already_exited_processes_as_stopped() {
+        let missing_pid = 2_000_000_000;
+        assert_eq!(terminate_process(missing_pid), Ok(()));
+        assert_eq!(force_terminate_process(missing_pid), Ok(()));
+    }
+
+    #[cfg(unix)]
     #[test]
     fn process_termination_rejects_zero_and_out_of_range_ids() {
         assert!(

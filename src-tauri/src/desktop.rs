@@ -337,9 +337,8 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
 
     let path_destination = skills_dir.join("ruxex-path");
     reject_symlink(&path_destination)?;
-    fs::create_dir_all(&path_destination).map_err(|error| {
-        format!("failed to create artifact runtime command directory: {error}")
-    })?;
+    fs::create_dir_all(&path_destination)
+        .map_err(|error| format!("failed to create artifact runtime command directory: {error}"))?;
     let engine_destination = path_destination.join("ruxex-artifacts-engine");
     reject_symlink(&engine_destination)?;
     fs::copy(engine_source, &engine_destination)
@@ -405,7 +404,10 @@ mod tests {
     use std::fs;
     use std::path::Path;
 
-    use super::{product_identity, ruxex_home_from_user_home, sync_vendored_skills};
+    use super::{
+        product_identity, ruxex_home_from_user_home, select_vendored_skills_source,
+        sync_vendored_skills,
+    };
     use crate::desktop_config::DesktopConfig;
     use crate::marketplace_assets::{
         detect_marketplace_image_mime, read_marketplace_asset_file_from_roots,
@@ -511,6 +513,117 @@ mod tests {
 
         assert!(error.contains("pdf"));
         assert!(!home.join("vendored/skills").exists());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn artifact_runtime_assets_are_staged_when_the_skill_source_is_packaged() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-vendored-runtime-sync-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let package = root.join("ruxex-package");
+        let source = package.join("ruxex-resources/vendored/skills");
+        let resources = package.join("ruxex-resources");
+        let engine = package.join("ruxex-path/ruxex-artifacts-engine");
+        let home = root.join("home");
+        write_vendored_skill_fixture(&source, "bundled");
+        fs::write(package.join("ruxex-package.json"), "{}").unwrap();
+        fs::create_dir_all(resources.join("node/bin")).unwrap();
+        fs::write(resources.join("node/bin/node"), "runtime").unwrap();
+        fs::create_dir_all(resources.join("ruxex-artifact-tool")).unwrap();
+        fs::write(resources.join("ruxex-artifact-tool/index.mjs"), "tool").unwrap();
+        fs::create_dir_all(engine.parent().unwrap()).unwrap();
+        fs::write(&engine, "engine").unwrap();
+
+        let staged = sync_vendored_skills(&source, &home).unwrap();
+
+        assert_eq!(
+            fs::read_to_string(staged.join("ruxex-resources/node/bin/node")).unwrap(),
+            "runtime"
+        );
+        assert_eq!(
+            fs::read_to_string(staged.join("ruxex-resources/ruxex-artifact-tool/index.mjs"))
+                .unwrap(),
+            "tool"
+        );
+        assert_eq!(
+            fs::read_to_string(staged.join("ruxex-path/ruxex-artifacts-engine")).unwrap(),
+            "engine"
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn artifact_runtime_staging_reports_missing_assets_and_rejects_symlinks() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-vendored-runtime-errors-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let package = root.join("ruxex-package");
+        let source = package.join("ruxex-resources/vendored/skills");
+        let resources = package.join("ruxex-resources");
+        let home = root.join("home");
+        write_vendored_skill_fixture(&source, "bundled");
+        fs::write(package.join("ruxex-package.json"), "{}").unwrap();
+
+        let missing_runtime = sync_vendored_skills(&source, &home).unwrap_err();
+        assert!(missing_runtime.contains("node"));
+
+        fs::create_dir_all(resources.join("node")).unwrap();
+        fs::create_dir_all(resources.join("ruxex-artifact-tool")).unwrap();
+        let missing_engine = sync_vendored_skills(&source, &home).unwrap_err();
+        assert!(missing_engine.contains("ruxex-artifacts-engine"));
+
+        let engine_dir = package.join("ruxex-path");
+        fs::create_dir_all(&engine_dir).unwrap();
+        fs::write(engine_dir.join("ruxex-artifacts-engine"), "engine").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+            let staged_resources = home.join("vendored/skills/ruxex-resources");
+            fs::create_dir_all(home.join("vendored/skills")).unwrap();
+            symlink(&resources, &staged_resources).unwrap();
+            let error = sync_vendored_skills(&source, &home).unwrap_err();
+            assert!(error.contains("must not be a symlink"));
+        }
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn skills_source_selection_checks_packaged_order_and_development_fallback() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-vendored-selection-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let first = root.join("first");
+        let second = root.join("second");
+        let development = root.join("development");
+        write_vendored_skill_fixture(&second, "packaged");
+        write_vendored_skill_fixture(&development, "development");
+
+        assert_eq!(
+            select_vendored_skills_source(&[first.clone(), second.clone()], &development, true)
+                .unwrap(),
+            second
+        );
+        assert_eq!(
+            select_vendored_skills_source(&[first], &development, true).unwrap(),
+            development
+        );
+        assert!(select_vendored_skills_source(&[], &root.join("missing"), false).is_err());
         let _ = fs::remove_dir_all(root);
     }
 

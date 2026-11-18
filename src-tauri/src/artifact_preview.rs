@@ -596,7 +596,8 @@ mod tests {
     use std::path::Path;
 
     use super::{
-        PreviewSheet, escape_xml, read_preview_sections, render_svg, validate_preview_path,
+        PreviewSheet, escape_xml, ooxml_preview_annotations, preview_format, read_ooxml_sections,
+        read_preview_sections, read_zip_text, render_svg, truncate_text, validate_preview_path,
     };
     use crate::artifact_pdf::{PdfPageSpec, PdfTextBlock, create_pdf_bytes};
 
@@ -792,6 +793,36 @@ mod tests {
     }
 
     #[test]
+    fn xlsx_preview_limits_sheets_rows_and_columns() {
+        let root =
+            std::env::temp_dir().join(format!("ruxex-preview-bounded-xlsx-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("large.xlsx");
+        let mut workbook = rust_xlsxwriter::Workbook::new();
+        for sheet_index in 0..5 {
+            let worksheet = workbook.add_worksheet();
+            worksheet.set_name(format!("Sheet {sheet_index}")).unwrap();
+            for row in 0..65 {
+                for column in 0..20 {
+                    worksheet
+                        .write_number(row, column, f64::from(row) + f64::from(column))
+                        .unwrap();
+                }
+            }
+        }
+        workbook.save(&path).unwrap();
+
+        let sheets = read_preview_sections(&path).unwrap();
+        assert_eq!(sheets.len(), 4);
+        assert_eq!(sheets[0].cells.len(), super::PREVIEW_MAX_ROWS);
+        assert_eq!(sheets[0].cells[0].len(), super::PREVIEW_MAX_COLUMNS);
+        assert_eq!(sheets[0].name, "Sheet 0");
+        assert_eq!(sheets[3].name, "Sheet 3");
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
     fn includes_xlsx_merges_tables_and_charts_in_the_preview_annotations() {
         let root =
             std::env::temp_dir().join(format!("ruxex-preview-rich-xlsx-{}", std::process::id()));
@@ -892,5 +923,109 @@ mod tests {
     #[test]
     fn escape_xml_escapes_all_markup_sensitive_characters() {
         assert_eq!(escape_xml("<&\"'>"), "&lt;&amp;&quot;&apos;&gt;");
+    }
+
+    #[test]
+    fn preview_formats_and_unicode_truncation_handle_boundaries() {
+        for (name, expected) in [
+            ("book.xlsx", Some("xlsx")),
+            ("report.DOCX", Some("docx")),
+            ("slides.pptx", Some("pptx")),
+            ("scan.pdf", Some("pdf")),
+            ("notes.txt", None),
+            ("extensionless", None),
+        ] {
+            assert_eq!(preview_format(Path::new(name)), expected);
+        }
+        assert_eq!(truncate_text("abc", 3), "abc");
+        assert_eq!(truncate_text("東京🙂語", 2), "東京…");
+        assert_eq!(truncate_text("東京🙂語", 0), "…");
+    }
+
+    #[test]
+    fn document_and_presentation_xml_annotations_report_preview_only_content() {
+        let docx = ooxml_preview_annotations(
+            "docx",
+            "<w:tbl></w:tbl><w:pStyle/><w:drawing/><w:hyperlink/>",
+        );
+        assert_eq!(
+            docx,
+            [
+                "Tables: 1",
+                "Styled paragraphs: 1",
+                "Images: preview-only",
+                "Fields or links: preview-only",
+            ]
+        );
+        let pptx = ooxml_preview_annotations("pptx", "<a:tbl/><c:chart/><a:blip/>");
+        assert_eq!(
+            pptx,
+            [
+                "Tables: preview-only",
+                "Charts or shapes: preview-only",
+                "Images: preview-only",
+            ]
+        );
+        assert!(ooxml_preview_annotations("docx", "<w:p/>").is_empty());
+        assert!(ooxml_preview_annotations("pptx", "<p:sld/>").is_empty());
+    }
+
+    #[test]
+    fn ooxml_preview_reports_empty_parts_and_empty_text() {
+        let root =
+            std::env::temp_dir().join(format!("ruxex-preview-empty-ooxml-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let missing_slides = root.join("empty.pptx");
+        write_zip(
+            &missing_slides,
+            &[("ppt/presentation.xml", b"<p:presentation />")],
+        );
+        assert!(
+            read_ooxml_sections(&missing_slides, "pptx")
+                .unwrap_err()
+                .contains("no previewable text parts")
+        );
+
+        let empty_document = root.join("empty.docx");
+        write_zip(&empty_document, &[("word/document.xml", b"<w:document />")]);
+        let sections = read_ooxml_sections(&empty_document, "docx").unwrap();
+        assert_eq!(sections[0].cells, [["(no text found)"]]);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn zip_text_reader_reports_missing_and_oversized_parts() {
+        let root =
+            std::env::temp_dir().join(format!("ruxex-preview-zip-reader-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("parts.zip");
+        write_zip(&path, &[("small.xml", b"<x />")]);
+        let file = fs::File::open(&path).unwrap();
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        assert_eq!(read_zip_text(&mut archive, "small.xml").unwrap(), "<x />");
+        assert!(
+            read_zip_text(&mut archive, "missing.xml")
+                .unwrap_err()
+                .contains("missing package part")
+        );
+
+        let large_path = root.join("large.zip");
+        write_zip(
+            &large_path,
+            &[(
+                "large.xml",
+                vec![b'x'; super::PREVIEW_MAX_XML_BYTES as usize + 1].as_slice(),
+            )],
+        );
+        let file = fs::File::open(&large_path).unwrap();
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        assert!(
+            read_zip_text(&mut archive, "large.xml")
+                .unwrap_err()
+                .contains("preview XML limit")
+        );
+        let _ = fs::remove_dir_all(root);
     }
 }

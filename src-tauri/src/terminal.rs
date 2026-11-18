@@ -412,7 +412,10 @@ pub(crate) fn terminal_session_timeout_update<R: Runtime>(
 
 #[cfg(test)]
 mod tests {
-    use super::{TerminalEvent, TerminalState, pty_size, resolve_working_directory};
+    use super::{
+        TerminalEvent, TerminalState, default_terminal_idle_timeout_hours, pty_size,
+        read_terminal_idle_timeout, resolve_working_directory, write_terminal_idle_timeout,
+    };
     use std::sync::mpsc;
     use std::time::Duration;
     use tauri::ipc::{Channel, InvokeResponseBody};
@@ -440,6 +443,41 @@ mod tests {
         let error =
             resolve_working_directory(Some(missing.to_string_lossy().into_owned())).unwrap_err();
         assert!(error.contains("Workspace directory does not exist"));
+        assert!(resolve_working_directory(Some("  ".into())).is_ok());
+    }
+
+    #[test]
+    fn idle_timeout_preferences_default_validate_and_persist_supported_values() {
+        let path = std::env::temp_dir().join(format!(
+            "ruxex-terminal-timeout-{}-{}.json",
+            std::process::id(),
+            std::thread::current().name().unwrap_or("test")
+        ));
+        let _ = std::fs::remove_file(&path);
+        assert_eq!(default_terminal_idle_timeout_hours(), Some(24));
+        assert_eq!(read_terminal_idle_timeout(&path), Some(24));
+
+        std::fs::write(&path, "not json").unwrap();
+        assert_eq!(read_terminal_idle_timeout(&path), Some(24));
+        for (json, expected) in [
+            (r#"{"idle_timeout_hours":1}"#, Some(1)),
+            (r#"{"idle_timeout_hours":6}"#, Some(6)),
+            (r#"{"idle_timeout_hours":24}"#, Some(24)),
+            (r#"{"idle_timeout_hours":72}"#, Some(72)),
+            (r#"{"idle_timeout_hours":null}"#, None),
+            ("{}", Some(24)),
+            (r#"{"idle_timeout_hours":2}"#, Some(24)),
+        ] {
+            std::fs::write(&path, json).unwrap();
+            assert_eq!(read_terminal_idle_timeout(&path), expected);
+        }
+
+        assert!(write_terminal_idle_timeout(&path, Some(2)).is_err());
+        for hours in [Some(1), Some(6), Some(24), Some(72), None] {
+            write_terminal_idle_timeout(&path, hours).unwrap();
+            assert_eq!(read_terminal_idle_timeout(&path), hours);
+        }
+        std::fs::remove_file(path).unwrap();
     }
 
     #[cfg(unix)]
@@ -478,5 +516,51 @@ mod tests {
             }
         }
         assert!(saw_exit, "terminal should emit Exited after it is closed");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn terminal_sessions_write_resize_and_stream_shell_output() {
+        let (events_tx, events_rx) = mpsc::channel();
+        let channel = Channel::<TerminalEvent>::new(move |body| {
+            if let InvokeResponseBody::Json(payload) = body {
+                let _ = events_tx.send(payload);
+            }
+            Ok(())
+        });
+        let state = TerminalState::default();
+        let id = state
+            .start(
+                Some(std::env::temp_dir().to_string_lossy().into_owned()),
+                80,
+                24,
+                channel,
+            )
+            .unwrap();
+        state.resize(&id, 100, 40).unwrap();
+        state.write(&id, "printf 'coverage-marker\\n'\n").unwrap();
+
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        let mut saw_marker = false;
+        while std::time::Instant::now() < deadline {
+            let Ok(payload) = events_rx.recv_timeout(Duration::from_millis(250)) else {
+                continue;
+            };
+            let event: serde_json::Value = serde_json::from_str(&payload).unwrap();
+            let data = event["data"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(serde_json::Value::as_u64)
+                .filter_map(|byte| u8::try_from(byte).ok())
+                .collect::<Vec<_>>();
+            if String::from_utf8_lossy(&data).contains("coverage-marker") {
+                saw_marker = true;
+                break;
+            }
+        }
+        assert!(saw_marker, "the terminal should stream shell output");
+        state.close(&id).unwrap();
+        assert!(state.close(&id).is_ok());
     }
 }

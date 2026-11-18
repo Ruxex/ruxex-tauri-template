@@ -965,3 +965,224 @@ fn data_to_json(cell: Option<&Data>) -> Value {
         Some(Data::Error(value)) => json!(format!("{value:?}")),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_path(label: &str) -> std::path::PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("ruxex-xlsx-{label}-{suffix}"))
+    }
+
+    fn write_json(path: &Path, value: &Value) {
+        fs::write(path, serde_json::to_vec(value).unwrap()).unwrap();
+    }
+
+    #[test]
+    fn parses_a1_ranges_case_insensitively_and_rejects_invalid_bounds() {
+        let range = parse_a1_range("b2:AA9").unwrap();
+        assert_eq!((range.first_row, range.first_col), (1, 1));
+        assert_eq!((range.last_row, range.last_col), (8, 26));
+        assert!(parse_a1_range("C3").is_ok());
+        assert!(parse_a1_range("XFD1").is_ok());
+        for invalid in [
+            "", "A0", "1A", "A1:B2:C3", "B2:A1", "A1:Z0", "A1:!2", "ZZZZ1",
+        ] {
+            assert!(parse_a1_range(invalid).is_err(), "{invalid}");
+        }
+    }
+
+    #[test]
+    fn validates_colors_alignments_and_format_values() {
+        assert!(parse_color("#A0b1C2").is_ok());
+        assert!(parse_color("bad").is_err());
+        assert_eq!(
+            parse_horizontal_alignment("right").unwrap(),
+            FormatAlign::Right
+        );
+        assert!(parse_horizontal_alignment("justify").is_err());
+        assert_eq!(
+            parse_vertical_alignment("bottom").unwrap(),
+            FormatAlign::Bottom
+        );
+        assert!(parse_vertical_alignment("middle").is_err());
+
+        let valid: FormatInput = serde_json::from_value(json!({
+            "range":"A1:B2", "font":{"bold":true,"italic":true,"color":"#112233","size":12.5},
+            "fill":"FFFFFF", "horizontal_alignment":"center", "vertical_alignment":"top",
+            "wrap_text":true, "number_format":"0.00"
+        }))
+        .unwrap();
+        assert!(build_format(&valid).is_ok());
+        for invalid in [
+            json!({"range":"A1","font":{"size":0}}),
+            json!({"range":"A1","font":{"size":-1}}),
+            json!({"range":"A1","fill":"red"}),
+            json!({"range":"A1","number_format":""}),
+        ] {
+            let format: FormatInput = serde_json::from_value(invalid).unwrap();
+            assert!(build_format(&format).is_err());
+        }
+        let infinite_size = FormatInput {
+            range: "A1".into(),
+            font: Some(FontInput {
+                bold: None,
+                italic: None,
+                color: None,
+                size: Some(f64::INFINITY),
+            }),
+            fill: None,
+            horizontal_alignment: None,
+            vertical_alignment: None,
+            wrap_text: None,
+            number_format: None,
+        };
+        assert!(build_format(&infinite_size).is_err());
+    }
+
+    #[test]
+    fn formula_values_and_chart_ranges_cover_supported_shapes() {
+        assert_eq!(
+            formula_result(Some(&json!("text"))).as_deref(),
+            Some("text")
+        );
+        assert_eq!(formula_result(Some(&json!(true))).as_deref(), Some("true"));
+        assert_eq!(formula_result(Some(&json!(42))).as_deref(), Some("42"));
+        assert_eq!(formula_result(Some(&Value::Null)), None);
+        assert_eq!(formula_result(None), None);
+        assert_eq!(formula_result(Some(&json!([]))), None);
+        assert_eq!(formula_result(Some(&json!({}))), None);
+        assert_eq!(chart_range("Revenue", "A1:B4"), "Revenue!A1:B4");
+        assert_eq!(chart_range("Revenue", "Other!A1:B4"), "Other!A1:B4");
+        for chart in ["column", "bar", "line", "pie", "doughnut"] {
+            assert!(chart_type(chart).is_ok());
+        }
+        assert!(chart_type("scatter").is_err());
+    }
+
+    #[test]
+    fn xlsx_dispatch_rejects_missing_unknown_and_incomplete_arguments() {
+        assert!(
+            run_xlsx(&[])
+                .unwrap_err()
+                .to_string()
+                .contains("operation is required")
+        );
+        assert!(
+            run_xlsx(&["other".into()])
+                .unwrap_err()
+                .to_string()
+                .contains("unknown xlsx operation")
+        );
+        assert!(run_xlsx(&["read".into()]).is_err());
+        assert!(run_xlsx(&["read".into(), "--unknown".into(), "x".into()]).is_err());
+    }
+
+    #[test]
+    fn creates_a_rich_workbook_and_reads_its_formula_and_objects() {
+        let input = temp_path("rich.json");
+        let output = temp_path("nested/rich.xlsx");
+        let payload = json!({"sheets":[{
+            "name":"Revenue", "rows":[["Month","Value"],["Jan",10],["Feb",20],["Total",30]],
+            "formulas":[[null,null],[null,null],[null,null],[null,"=SUM(B2:B3)"]],
+            "formats":[{"range":"A1:B1","font":{"bold":true},"fill":"DDEEFF","wrap_text":true}],
+            "merges":[{"range":"A5:B5"}],
+            "column_widths":[{"column":"A:B","width":18}],
+            "tables":[{"name":"RevenueTable","range":"A1:B3"}],
+            "charts":[{"type":"column","position":"D1:H12","series":[{"name":"Monthly","categories":"A2:A3","values":"B2:B3"}]}]
+        }]});
+        write_json(&input, &payload);
+
+        let created = create_xlsx(input.to_str().unwrap(), output.to_str().unwrap()).unwrap();
+        assert_eq!(
+            created["formulas"],
+            json!({"total":1,"evaluated":1,"unsupported":0})
+        );
+        assert_eq!(
+            created["objects"],
+            json!({"merges":1,"tables":1,"charts":1})
+        );
+        assert_eq!(
+            validate_xlsx(output.to_str().unwrap()).unwrap()["valid"],
+            true
+        );
+        let read = read_xlsx(output.to_str().unwrap()).unwrap();
+        assert_eq!(read["sheets"][0]["rows"][1][1], 10);
+        assert_eq!(read["sheets"][0]["formulas"][3][1], "=SUM(B2:B3)");
+        let _ = fs::remove_file(input);
+        let _ = fs::remove_file(output);
+    }
+
+    #[test]
+    fn create_reports_invalid_json_sheets_cells_formulas_and_charts() {
+        let directory = temp_path("invalid");
+        fs::create_dir_all(&directory).unwrap();
+        let input = directory.join("input.json");
+        let output = directory.join("output.xlsx");
+        fs::write(&input, b"not json").unwrap();
+        assert!(
+            create_xlsx(input.to_str().unwrap(), output.to_str().unwrap())
+                .unwrap_err()
+                .to_string()
+                .contains("invalid_json")
+        );
+
+        let invalid_payloads = [
+            json!({"sheets": []}),
+            json!({"sheets":[{"name":"","rows":[]}]}),
+            json!({"sheets":[{"name":"A","rows":[]},{"name":"A","rows":[]}]}),
+            json!({"sheets":[{"name":"A","rows":[[1]],"formulas":[["=1","=2"]]}]}),
+            json!({"sheets":[{"name":"A","rows":[[[]]]}]}),
+            json!({"sheets":[{"name":"A","rows":[],"charts":[{"type":"line","position":"A1","series":[]}]}]}),
+            json!({"sheets":[{"name":"A","rows":[],"charts":[{"type":"scatter","position":"A1","series":[{"categories":"A1","values":"B1"}]}]}]}),
+            json!({"sheets":[{"name":"A","rows":[],"column_widths":[{"column":"A","width":0}]}]}),
+            json!({"sheets":[{"name":"A","rows":[],"column_widths":[{"column":"A:C:D","width":10}]}]}),
+            json!({"sheets":[{"name":"A","rows":[],"column_widths":[{"column":"C:A","width":10}]}]}),
+        ];
+        for (index, payload) in invalid_payloads.iter().enumerate() {
+            write_json(&input, payload);
+            let error = create_xlsx(input.to_str().unwrap(), output.to_str().unwrap()).unwrap_err();
+            assert!(!error.to_string().is_empty(), "case {index}");
+        }
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn writes_scalar_and_formatted_cells_and_rejects_complex_values() {
+        let mut workbook = Workbook::new();
+        let worksheet = workbook.add_worksheet();
+        let format = Format::new().set_bold();
+        assert!(write_cell(worksheet, 0, 0, &json!(null), None).is_ok());
+        assert!(write_cell(worksheet, 0, 1, &json!(null), Some(&format)).is_ok());
+        assert!(write_cell(worksheet, 1, 0, &json!("text"), None).is_ok());
+        assert!(write_cell(worksheet, 1, 1, &json!(true), Some(&format)).is_ok());
+        assert!(write_cell(worksheet, 1, 2, &json!(3.5), None).is_ok());
+        assert!(write_cell(worksheet, 1, 3, &json!([]), None).is_err());
+        assert!(write_cell(worksheet, 1, 4, &json!({}), None).is_err());
+    }
+
+    #[test]
+    fn data_conversion_preserves_types_and_rounds_only_integral_floats() {
+        assert_eq!(data_to_json(None), Value::Null);
+        assert_eq!(data_to_json(Some(&Data::Empty)), Value::Null);
+        assert_eq!(data_to_json(Some(&Data::String("x".into()))), json!("x"));
+        assert_eq!(data_to_json(Some(&Data::Float(4.0))), json!(4));
+        assert_eq!(data_to_json(Some(&Data::Float(4.5))), json!(4.5));
+        assert_eq!(data_to_json(Some(&Data::Int(5))), json!(5));
+        assert_eq!(data_to_json(Some(&Data::Bool(true))), json!(true));
+        assert_eq!(
+            data_to_json(Some(&Data::DateTimeIso("2026-01-01".into()))),
+            json!("2026-01-01")
+        );
+        assert_eq!(
+            data_to_json(Some(&Data::DurationIso("PT1H".into()))),
+            json!("PT1H")
+        );
+    }
+}

@@ -713,6 +713,12 @@ mod tests {
     }
 
     #[test]
+    fn in_process_path_resolution_requires_a_desktop_executable() {
+        let error = resolve_in_process_paths(&Arg0DispatchPaths::default()).unwrap_err();
+        assert!(format!("{error:?}").contains("failed to resolve the desktop executable"));
+    }
+
+    #[test]
     fn desktop_connects_with_experimental_protocol_capability() {
         assert!(DESKTOP_EXPERIMENTAL_API);
     }
@@ -791,6 +797,27 @@ mod tests {
         assert_eq!(
             remembered,
             vec![std::path::PathBuf::from("/workspace/team-skills")]
+        );
+    }
+
+    #[test]
+    fn desktop_skill_root_tracking_ignores_other_methods_and_deduplicates_roots() {
+        let vendored_root = std::path::Path::new("/app/vendored/skills");
+        let unrelated = super::desktop_skill_policy_request("imagegen", 2).unwrap();
+        assert_eq!(
+            super::desktop_user_skill_roots_from_request(&unrelated, vendored_root).unwrap(),
+            None
+        );
+
+        let request = serde_json::from_value(json!({
+            "method":"skills/extraRoots/set",
+            "id":"roots",
+            "params":{"extraRoots":["/team/skills","/app/vendored/skills","/team/skills"]}
+        }))
+        .unwrap();
+        assert_eq!(
+            super::desktop_user_skill_roots_from_request(&request, vendored_root).unwrap(),
+            Some(vec![PathBuf::from("/team/skills")])
         );
     }
 
