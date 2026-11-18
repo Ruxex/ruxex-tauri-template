@@ -7,9 +7,11 @@ XLSX, and PDF creation and inspection, plus Codex-shaped `FileBlob`,
 `SpreadsheetFile`, `PresentationFile`, and `PdfDocument` facades for local file
 workflows. It also provides JSON read and validation commands for each format.
 
-The helper is staged under `ruxex-path`, so the existing managed command
-environment exposes it as a normal shell command. The plugin contains the
-workflow contract; the JS API and format engine ship with the desktop runtime.
+The helper is staged beside each Skill so the Skill can invoke it by absolute
+path without relying on the managed command environment. The desktop syncs the
+shared JS API and format engine once beside the vendored Skill directories.
+The plugin contains the workflow contract; the runtime resources ship with the
+desktop package.
 The file facades are the canonical local file boundaries. Imports are bounded
 and loss-aware: supported workbook, document, and presentation elements are
 reconstructed, while unsupported content is retained as diagnostics instead of

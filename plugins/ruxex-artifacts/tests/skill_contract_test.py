@@ -47,7 +47,8 @@ class ArtifactSkillContractTest(unittest.TestCase):
             skill = (SKILLS_ROOT / skill_name / "SKILL.md").read_text(
                 encoding="utf-8",
             )
-            self.assertIn("ruxex-artifacts run", skill)
+            self.assertIn("absolute path to this `SKILL.md`", skill)
+            self.assertIn('"/absolute/path/to/skill/ruxex-artifacts" run', skill)
             self.assertIn("@ruxex/artifact-tool", skill)
             self.assertIn(constructor, skill)
             self.assertIn(export_method, skill)

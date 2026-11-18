@@ -288,7 +288,63 @@ pub(crate) fn sync_vendored_skills(source_root: &Path, home: &Path) -> Result<Pa
         })?;
     }
 
+    sync_vendored_artifact_runtime(source_root, &skills_dir)?;
+
     Ok(skills_dir)
+}
+
+fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Result<(), String> {
+    let Some(package_root) = source_root
+        .ancestors()
+        .find(|candidate| candidate.join("ruxex-package.json").is_file())
+    else {
+        return Ok(());
+    };
+
+    let resources_source = package_root.join("ruxex-resources");
+    let path_source = package_root.join("ruxex-path");
+    for path in [
+        resources_source.join("node"),
+        resources_source.join("ruxex-artifact-tool"),
+    ] {
+        if !path.is_dir() {
+            return Err(format!(
+                "bundled artifact runtime asset is missing: {}",
+                path.display()
+            ));
+        }
+    }
+    let engine_source = path_source.join("ruxex-artifacts-engine");
+    if !engine_source.is_file() {
+        return Err(format!(
+            "bundled artifact runtime asset is missing: {}",
+            engine_source.display()
+        ));
+    }
+
+    let resources_destination = skills_dir.join("ruxex-resources");
+    reject_symlink(&resources_destination)?;
+    remove_path_if_exists(&resources_destination)?;
+    fs::create_dir_all(&resources_destination)
+        .map_err(|error| format!("failed to create artifact runtime resources: {error}"))?;
+    for name in ["node", "ruxex-artifact-tool"] {
+        copy_directory_tree(
+            &resources_source.join(name),
+            &resources_destination.join(name),
+        )
+        .map_err(|error| format!("failed to sync artifact runtime resource `{name}`: {error}"))?;
+    }
+
+    let path_destination = skills_dir.join("ruxex-path");
+    reject_symlink(&path_destination)?;
+    fs::create_dir_all(&path_destination).map_err(|error| {
+        format!("failed to create artifact runtime command directory: {error}")
+    })?;
+    let engine_destination = path_destination.join("ruxex-artifacts-engine");
+    reject_symlink(&engine_destination)?;
+    fs::copy(engine_source, &engine_destination)
+        .map_err(|error| format!("failed to sync artifact runtime engine: {error}"))?;
+    Ok(())
 }
 
 fn reject_symlink(path: &Path) -> Result<(), String> {

@@ -7,17 +7,18 @@ description: Create, inspect, validate, and preview local document artifacts wit
 
 Use the bundled `ruxex-artifacts` command and the Ruxex-owned JavaScript API
 for local document work. Do not install a package or depend on a system office
-application. The command and its runtimes are available through the managed
-runtime PATH.
+application. Use the absolute path to this `SKILL.md` supplied by the active
+Skill context to locate the sibling `ruxex-artifacts` executable. Invoke it by
+its full path; do not rely on command lookup through `PATH`.
 
 ## Workflow
 
-1. Check support with `ruxex-artifacts capabilities --json`.
+1. Check support with `"/absolute/path/to/skill/ruxex-artifacts" capabilities --json`.
 2. Write one `.mjs` builder that imports `@ruxex/artifact-tool`.
 3. Create or import a `Document` using `Document.create` and `FileBlob`.
 4. Add supported headings, paragraphs, tables, and document formatting.
-5. Run the builder with `ruxex-artifacts run /absolute/path/build.mjs`.
-6. Run `ruxex-artifacts docx validate --input /absolute/path/report.docx --json`.
+5. Run the builder with `"/absolute/path/to/skill/ruxex-artifacts" run /absolute/path/build.mjs`.
+6. Run `"/absolute/path/to/skill/ruxex-artifacts" docx validate --input /absolute/path/report.docx --json`.
 7. Report the absolute output path and validation result.
 
 ## Example

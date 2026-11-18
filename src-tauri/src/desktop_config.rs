@@ -160,10 +160,7 @@ impl DesktopConfigBuilder {
     /// When omitted, the App Server uses its default model-specific
     /// instructions. A provided profile supplies the base instructions for
     /// newly created threads.
-    pub fn system_prompt_profile(
-        mut self,
-        profile: Arc<dyn ruxex::SystemPromptProfile>,
-    ) -> Self {
+    pub fn system_prompt_profile(mut self, profile: Arc<dyn ruxex::SystemPromptProfile>) -> Self {
         self.system_prompt_profile = Some(profile);
         self
     }

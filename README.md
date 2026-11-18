@@ -127,9 +127,10 @@ Stage those files with `scripts/stage-ruxex-package.py`, passing the paths to
 the built Ruxex executable and code-mode host plus `rg` and, on Linux,
 `bwrap`. Pass `--artifact-tools` when the helper is not discoverable on
 `PATH`, and pass `--node-runtime`, `--artifact-sdk`, and `--artifact-engine`
-for the JS facade resources. The staged `ruxex-path` directory is prepended to
-agent command sessions, so the `ruxex-artifacts` Skill can invoke the helper
-directly. The bundled Node runtime must contain the `docx` and `pptxgenjs`
+for the JS facade resources. The stage script places a launcher beside each
+artifact Skill. The desktop syncs the shared runtime resources beside the
+vendored Skill directories, so Skills invoke their launcher by absolute path.
+The bundled Node runtime must contain the `docx` and `pptxgenjs`
 packages as well as the Ruxex SDK. The helper can generate and validate local
 XLSX, DOCX, PPTX, and PDF artifacts. PDF and preview inspection is handled by
 the bundled Rust engine, while the JavaScript facade remains the agent-facing

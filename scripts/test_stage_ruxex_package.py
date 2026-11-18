@@ -226,18 +226,22 @@ class StageRuxexPackageTest(unittest.TestCase):
                     "ruxex-resources/vendored/skills/documents/SKILL.md",
                     "ruxex-resources/vendored/skills/documents/agents",
                     "ruxex-resources/vendored/skills/documents/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/documents/ruxex-artifacts",
                     "ruxex-resources/vendored/skills/pdf",
                     "ruxex-resources/vendored/skills/pdf/SKILL.md",
                     "ruxex-resources/vendored/skills/pdf/agents",
                     "ruxex-resources/vendored/skills/pdf/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/pdf/ruxex-artifacts",
                     "ruxex-resources/vendored/skills/presentations",
                     "ruxex-resources/vendored/skills/presentations/SKILL.md",
                     "ruxex-resources/vendored/skills/presentations/agents",
                     "ruxex-resources/vendored/skills/presentations/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/presentations/ruxex-artifacts",
                     "ruxex-resources/vendored/skills/spreadsheets",
                     "ruxex-resources/vendored/skills/spreadsheets/SKILL.md",
                     "ruxex-resources/vendored/skills/spreadsheets/agents",
                     "ruxex-resources/vendored/skills/spreadsheets/agents/ruxex.yaml",
+                    "ruxex-resources/vendored/skills/spreadsheets/ruxex-artifacts",
                 ],
             )
             self.assertTrue(os.access(output / "bin/ruxex", os.X_OK))
@@ -326,7 +330,7 @@ class StageRuxexPackageTest(unittest.TestCase):
                 *[
                     f"ruxex-resources/vendored/skills/{name}/{relative}"
                     for name in ("documents", "presentations", "spreadsheets", "pdf")
-                    for relative in ("SKILL.md", "agents/ruxex.yaml")
+                    for relative in ("SKILL.md", "agents/ruxex.yaml", "ruxex-artifacts")
                 ],
             ):
                 path = root / relative

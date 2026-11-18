@@ -7,16 +7,17 @@ description: Create, inspect, validate, and preview local PDF artifacts with the
 
 Use the bundled `ruxex-artifacts` command and the Ruxex-owned JavaScript API
 for local PDF work. Do not install a package or depend on a system PDF
-application. The command and its runtimes are available through the managed
-runtime PATH.
+application. Use the absolute path to this `SKILL.md` supplied by the active
+Skill context to locate the sibling `ruxex-artifacts` executable. Invoke it by
+its full path; do not rely on command lookup through `PATH`.
 
 ## Workflow
 
-1. Check support with `ruxex-artifacts capabilities --json`.
+1. Check support with `"/absolute/path/to/skill/ruxex-artifacts" capabilities --json`.
 2. Write one `.mjs` builder that imports `@ruxex/artifact-tool`.
 3. Create a `PdfDocument` with bounded text, tables, and local images.
-4. Run the builder with `ruxex-artifacts run /absolute/path/build.mjs`.
-5. Run `ruxex-artifacts pdf validate --input /absolute/path/review.pdf --json`.
+4. Run the builder with `"/absolute/path/to/skill/ruxex-artifacts" run /absolute/path/build.mjs`.
+5. Run `"/absolute/path/to/skill/ruxex-artifacts" pdf validate --input /absolute/path/review.pdf --json`.
 6. Report the absolute output path and validation result.
 
 ## Example

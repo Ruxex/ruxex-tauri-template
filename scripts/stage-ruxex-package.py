@@ -63,7 +63,7 @@ def validate_package(root: Path, version: str, target: str) -> None:
         *[
             f"ruxex-resources/vendored/skills/{name}/{relative}"
             for name in ("documents", "presentations", "spreadsheets", "pdf")
-            for relative in ("SKILL.md", "agents/ruxex.yaml")
+            for relative in ("SKILL.md", "agents/ruxex.yaml", "ruxex-artifacts")
         ],
     ]
     if sys.platform == "linux":
@@ -75,6 +75,10 @@ def validate_package(root: Path, version: str, target: str) -> None:
         "ruxex-path/ruxex-artifacts",
         "ruxex-path/ruxex-artifacts-engine",
         "ruxex-resources/node/bin/node",
+        *[
+            f"ruxex-resources/vendored/skills/{name}/ruxex-artifacts"
+            for name in ("documents", "presentations", "spreadsheets", "pdf")
+        ],
     }
     for relative in required:
         path = root / relative
@@ -138,6 +142,11 @@ def main() -> None:
     copy_directory(args.artifact_sdk, output / "ruxex-resources/ruxex-artifact-tool")
     source_skills = Path(__file__).resolve().parents[1] / "plugins/ruxex-artifacts/skills"
     copy_directory(source_skills, output / "ruxex-resources/vendored/skills")
+    for name in ("documents", "presentations", "spreadsheets", "pdf"):
+        copy_executable(
+            args.artifact_tools,
+            output / f"ruxex-resources/vendored/skills/{name}/ruxex-artifacts",
+        )
     if args.bwrap is not None:
         copy_executable(args.bwrap, output / "ruxex-resources/bwrap")
 
