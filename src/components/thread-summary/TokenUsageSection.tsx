@@ -16,7 +16,7 @@ export function TokenUsageSection({ usage }: TokenUsageSectionProps) {
   const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
   const formatTokens = (value: number) => formatNumber(value, locale);
   const formatCompactTokens = (value: number) =>
-    formatCompactNumber(value, locale);
+    formatCompactNumber(value, "en");
   const formatAmount = (value: number) =>
     formatNumber(value, locale, { maximumFractionDigits: 2 });
 
@@ -43,10 +43,12 @@ export function TokenUsageSection({ usage }: TokenUsageSectionProps) {
             })}
           >
             <span aria-hidden="true">
-              {formatCompactTokens(usage.total.inputTokens)}
-              {" / "}
-              {formatCompactTokens(usage.total.outputTokens)} Σ
               {formatCompactTokens(usage.total.totalTokens)}
+              {" ("}
+              {formatCompactTokens(usage.total.inputTokens)}
+              {"/"}
+              {formatCompactTokens(usage.total.outputTokens)}
+              {")"}
             </span>
             <span className="sr-only">
               {t("tokenSummaryAccessible", {
