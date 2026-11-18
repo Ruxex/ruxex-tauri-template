@@ -960,9 +960,12 @@ mod tests {
         let state = AppServerState::default();
         let roots = vec![PathBuf::from("/workspace/team-skills")];
         *state.user_skill_roots.lock().await = roots.clone();
+        let (shutdown, mut shutdown_rx) = tauri::async_runtime::channel(1);
+        *state.shutdown.lock().await = Some(shutdown);
 
         clear_connection_state(&state).await;
 
+        assert!(shutdown_rx.recv().await.is_some());
         assert_eq!(*state.user_skill_roots.lock().await, roots);
     }
 }

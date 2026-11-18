@@ -130,3 +130,100 @@ fn read_pdf_file(input_path: &str) -> Result<Vec<u8>, ArtifactError> {
         )
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{create_pdf, read_pdf, run_pdf, validate_pdf};
+    use serde_json::json;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir() -> std::path::PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("ruxex-pdf-unit-{suffix}"));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn pdf_dispatch_rejects_missing_unknown_and_incomplete_arguments() {
+        assert!(
+            run_pdf(&[])
+                .unwrap_err()
+                .to_string()
+                .contains("operation is required")
+        );
+        assert!(
+            run_pdf(&["other".into()])
+                .unwrap_err()
+                .to_string()
+                .contains("unknown pdf operation")
+        );
+        assert!(run_pdf(&["read".into()]).is_err());
+        assert!(run_pdf(&["validate".into(), "--unsupported".into(), "x".into()]).is_err());
+    }
+
+    #[test]
+    fn pdf_create_read_validate_and_invalid_inputs_are_reported() {
+        let directory = temp_dir();
+        let input = directory.join("input.json");
+        let output = directory.join("report.pdf");
+        fs::write(
+            &input,
+            serde_json::to_vec(&json!({
+                "pages":[{"width":595,"height":842,"blocks":[{"text":"PDF coverage","x":48,"y":780,"size":18}] }]
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+
+        let created = create_pdf(input.to_str().unwrap(), output.to_str().unwrap()).unwrap();
+        assert_eq!(created["pages"], 1);
+        assert_eq!(
+            read_pdf(output.to_str().unwrap()).unwrap()["text"][0],
+            "PDF coverage"
+        );
+        assert_eq!(
+            validate_pdf(output.to_str().unwrap()).unwrap()["valid"],
+            true
+        );
+
+        fs::write(&input, b"not JSON").unwrap();
+        assert!(
+            create_pdf(input.to_str().unwrap(), output.to_str().unwrap())
+                .unwrap_err()
+                .to_string()
+                .contains("invalid_json")
+        );
+        fs::write(
+            &input,
+            br#"{"pages":[],"allowed_roots":["/path/not/here"]}"#,
+        )
+        .unwrap();
+        assert!(
+            create_pdf(input.to_str().unwrap(), output.to_str().unwrap())
+                .unwrap_err()
+                .to_string()
+                .contains("pdf_create_error")
+        );
+
+        fs::write(&output, b"not a PDF").unwrap();
+        assert!(
+            read_pdf(output.to_str().unwrap())
+                .unwrap_err()
+                .to_string()
+                .contains("invalid_pdf")
+        );
+        assert!(
+            validate_pdf(output.to_str().unwrap())
+                .unwrap_err()
+                .to_string()
+                .contains("invalid_pdf")
+        );
+        assert!(read_pdf(directory.join("missing.pdf").to_str().unwrap()).is_err());
+        let _ = fs::remove_dir_all(directory);
+    }
+}
