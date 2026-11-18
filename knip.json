@@ -1,5 +1,20 @@
 {
+  "ignoreDependencies": [
+    "@wdio/cli",
+    "@wdio/local-runner",
+    "@wdio/tauri-service"
+  ],
+  "ignoreFiles": [
+    "artifact-tool/src/loader.mjs",
+    "artifact-tool/src/runner.mjs",
+    "artifact-tool/tests/fixtures/smoke-builder.mjs",
+    "public/subagents/LICENSE-Identicon.js",
+    "wdio.dummy-home.conf.mjs",
+    "wdio.marketplace-home.conf.mjs",
+    "wdio.tauri.conf.mjs"
+  ],
   "ignoreIssues": {
+    "artifact-tool/src/index.mjs": ["exports"],
     "src/protocol/generated/**": ["exports", "types"]
   }
 }

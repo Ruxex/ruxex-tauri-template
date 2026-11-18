@@ -14,7 +14,7 @@ import type { ComponentType, SVGProps } from "react";
 
 import { i18n } from "../../app/i18n";
 
-export type ActivityIcon = ComponentType<SVGProps<SVGSVGElement>>;
+type ActivityIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 export type ActivityPresentation = {
   icon: ActivityIcon;

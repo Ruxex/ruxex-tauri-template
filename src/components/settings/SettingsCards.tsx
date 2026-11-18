@@ -6,7 +6,6 @@ export { NotificationsCard } from "./NotificationsCard";
 export { ProviderAccountCard } from "./ProviderAccountCard";
 export { QuickPanelCard } from "./QuickPanelCard";
 export { RuntimeSummary } from "./RuntimeSummary";
-export type { SettingsPanelIcon } from "./SettingsPanel";
 export { SettingRow, SettingsPanel } from "./SettingsPanel";
 export { ThemeColorsCard } from "./ThemeColorsCard";
 export { TypographyCard } from "./TypographyCard";

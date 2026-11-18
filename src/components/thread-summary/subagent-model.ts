@@ -7,7 +7,7 @@ import type {
 } from "../../app-server/event-reducer";
 import type { v2 } from "../../protocol";
 
-export type SubagentStatus = "active" | "done" | "failed" | "interrupted";
+type SubagentStatus = "active" | "done" | "failed" | "interrupted";
 
 export type SubagentRow = {
   threadId: string;

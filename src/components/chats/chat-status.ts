@@ -24,21 +24,6 @@ export function chatStatusLabel(status: ChatStatus): string {
   return CHAT_STATUS_LABELS[status];
 }
 
-export function chatStatusClassName(status: ChatStatus): string {
-  switch (status) {
-    case "running":
-      return "badge-info";
-    case "waiting":
-      return "badge-warning";
-    case "completed":
-      return "badge-success";
-    case "failed":
-      return "badge-error";
-    case "stopped":
-      return "badge-ghost";
-  }
-}
-
 export function chatStatusFromThreadStatus(
   status: v2.ThreadStatus | undefined,
   liveStatus?: ThreadExecutionState["status"],

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 build/
+coverage/
 logs/
 artifacts/e2e/
 .local-dev/

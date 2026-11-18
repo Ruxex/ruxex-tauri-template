@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type StoryVariant = {
+type StoryVariant = {
   content: ReactNode;
   label: string;
 };

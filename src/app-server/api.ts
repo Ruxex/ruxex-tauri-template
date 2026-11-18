@@ -78,7 +78,7 @@ export type AppServerRequestError = {
   message: string;
 };
 
-export function rejectServerRequest(
+function rejectServerRequest(
   requestId: RequestId,
   error: AppServerRequestError,
 ): Promise<void> {

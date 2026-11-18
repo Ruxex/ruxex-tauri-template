@@ -43,7 +43,7 @@ export type PendingServerRequest = {
   itemId: string | null;
 };
 
-export type EventHistoryEntry = {
+type EventHistoryEntry = {
   id: string;
   event: AppServerEvent;
 };

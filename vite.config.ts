@@ -6,6 +6,19 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     setupFiles: ["./src/test-setup.ts"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.stories.tsx",
+        "src/protocol/generated/**",
+        "src/test-setup.ts",
+        "src/test-support/**",
+      ],
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage",
+    },
     exclude: [
       "e2e/**",
       "fixtures/dummy-home/**/*.spec.ts",

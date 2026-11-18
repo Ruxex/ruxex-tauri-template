@@ -73,7 +73,7 @@ export type UiNotificationSound =
   (typeof UI_NOTIFICATION_SOUND_OPTIONS)[number]["value"];
 export const UI_NOTIFICATION_SOUNDS: readonly UiNotificationSound[] =
   UI_NOTIFICATION_SOUND_OPTIONS.map((option) => option.value);
-export type UiNotifications = {
+type UiNotifications = {
   desktop: boolean;
   sound: UiNotificationSound;
 };

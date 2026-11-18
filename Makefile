@@ -4,7 +4,9 @@
 -include .env .env.local
 export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
-.PHONY: help install dev mock-app-server test typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+CARGO_LLVM_COV_VERSION := 0.9.1
+
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -16,6 +18,10 @@ help:
 	@printf '%s\n' '  make lint               BiomeとESLintを実行'
 	@printf '%s\n' '  make check              型チェックとLintを実行'
 	@printf '%s\n' '  make check-tests        型チェック、Lint、フロントエンドテストを実行'
+	@printf '%s\n' '  make coverage           RustとTypeScriptのカバレッジを測定'
+	@printf '%s\n' '  make ts-coverage        TypeScriptのカバレッジを測定'
+	@printf '%s\n' '  make rust-coverage      Rust workspaceのカバレッジを測定'
+	@printf '%s\n' '  make install-coverage-tools cargo-llvm-covをインストール'
 	@printf '%s\n' '  make package-test       ランタイムパッケージのテストを実行'
 	@printf '%s\n' '  make rust-test          Rust/Tauriのテストを実行'
 	@printf '%s\n' '  make mcp-fixture-build  テスト用MCPサーバーをビルド'
@@ -50,6 +56,20 @@ mock-app-server:
 
 test:
 	pnpm test
+
+test-coverage:
+	pnpm test:coverage
+
+ts-coverage: test-coverage
+
+rust-coverage:
+	cargo llvm-cov --workspace --locked --html
+	cargo llvm-cov report --summary-only
+
+coverage: ts-coverage rust-coverage
+
+install-coverage-tools:
+	cargo install cargo-llvm-cov --version $(CARGO_LLVM_COV_VERSION) --locked
 
 typecheck:
 	pnpm typecheck

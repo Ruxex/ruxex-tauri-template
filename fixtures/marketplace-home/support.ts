@@ -38,22 +38,6 @@ export async function openCapabilities(): Promise<void> {
   await $("h1=Plugins").waitForDisplayed({ timeout: 10_000 });
 }
 
-export async function openPluginDetail(
-  marketplaceName: string,
-  pluginName: string,
-): Promise<void> {
-  await browser.url(
-    `tauri://localhost/#${marketplacePluginDetailPath(marketplaceName, pluginName)}`,
-  );
-  await browser.waitUntil(
-    async () => (await browser.getUrl()).includes("/capabilities/plugins/"),
-    {
-      timeout: 10_000,
-      timeoutMsg: `Plugin detail route did not open for ${marketplaceName}/${pluginName}`,
-    },
-  );
-}
-
 export async function saveMarketplaceScreenshot(name: string): Promise<void> {
   const artifactDirectory = process.env.RUXEX_E2E_ARTIFACTS ?? "artifacts";
   mkdirSync(artifactDirectory, { recursive: true });

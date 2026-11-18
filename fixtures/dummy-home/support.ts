@@ -190,7 +190,7 @@ export async function sendScenarioFromCurrentComposer(
   await waitForCompletedTurn(scenarioExpectation(scenario));
 }
 
-export async function sendFollowUp(text: string): Promise<void> {
+async function sendFollowUp(text: string): Promise<void> {
   const previousCount = await $("[aria-label='Chat activity']").$$(
     "article.chat-end",
   ).length;
@@ -258,7 +258,7 @@ export async function sendMinimapConversation(
   }
 }
 
-export async function waitForUserMessageCount(count: number): Promise<void> {
+async function waitForUserMessageCount(count: number): Promise<void> {
   await browser.waitUntil(
     async () =>
       (await $$(`[aria-label='Chat activity'] article.chat-end`)).length >=
@@ -622,7 +622,7 @@ export async function archiveCurrentThread(): Promise<void> {
   );
 }
 
-export async function setCurrentGoal(objective: string): Promise<void> {
+async function setCurrentGoal(objective: string): Promise<void> {
   const options = $("summary[aria-label='Composer options']");
   if (await options.isExisting()) {
     await options.click();

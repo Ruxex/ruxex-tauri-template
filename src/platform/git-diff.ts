@@ -17,13 +17,13 @@ export type GitDiffFile = {
   patch: string | null;
 };
 
-export function getGitDiffSummary(
+function getGitDiffSummary(
   workspace: string,
 ): Promise<GitDiffSummary | null> {
   return invoke<GitDiffSummary | null>("git_diff_summary", { workspace });
 }
 
-export function getGitDiffDetails(workspace: string): Promise<GitDiffFile[]> {
+function getGitDiffDetails(workspace: string): Promise<GitDiffFile[]> {
   return invoke<GitDiffFile[]>("git_diff_details", { workspace });
 }
 

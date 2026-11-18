@@ -7,7 +7,7 @@ export type AppServerDaemonAction =
   | "forceStop"
   | "version";
 
-export type AppServerDaemonStatus =
+type AppServerDaemonStatus =
   | "alreadyRunning"
   | "started"
   | "restarted"

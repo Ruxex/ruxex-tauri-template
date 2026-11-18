@@ -3,7 +3,7 @@ import { useRef, useState, type ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { AppUiError, formatErrorMessage } from "../../app/error-message";
 
-export function readImageDataUrl(file: File): Promise<string> {
+function readImageDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.addEventListener("load", () => {

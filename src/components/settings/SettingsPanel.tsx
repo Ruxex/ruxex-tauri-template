@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode, SVGProps } from "react";
 
-export type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
+type SettingsPanelIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 export function SettingsPanel({
   title,

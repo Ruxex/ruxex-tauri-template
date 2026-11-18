@@ -2,7 +2,7 @@ export type DeepLinkTarget =
   | { kind: "thread"; id: string }
   | { kind: "project"; id: string };
 
-export type ScheduleCadence =
+type ScheduleCadence =
   | { kind: "once"; at: string }
   | { kind: "daily"; hour: number; minute: number }
   | { kind: "weekly"; weekdays: number[]; hour: number; minute: number };

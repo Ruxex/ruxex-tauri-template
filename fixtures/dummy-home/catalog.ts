@@ -1,4 +1,4 @@
-export type PersistentScenarioId =
+type PersistentScenarioId =
   | "basic"
   | "long-markdown"
   | "multi-turn"
@@ -18,7 +18,7 @@ export type PersistentScenarioId =
   | "subagent"
   | "parallel-subagents";
 
-export type PersistentScenarioKind =
+type PersistentScenarioKind =
   | "conversation"
   | "multiTurn"
   | "approval"
@@ -46,7 +46,7 @@ export type ProjectFixture = {
   readonly threadScenarioIds: readonly PersistentScenarioId[];
 };
 
-export type VolatileScenarioId =
+type VolatileScenarioId =
   | "pending-approval"
   | "pending-user-input"
   | "pending-permissions"

@@ -147,7 +147,7 @@ export function activeThreadListParams(): v2.ThreadListParams {
   };
 }
 
-export function threadMetadataQueryOptions(
+function threadMetadataQueryOptions(
   threadId: string,
   includeTurns = false,
 ) {
@@ -173,32 +173,6 @@ export function useThread(threadId: string, includeTurns = false) {
 
   return useQuery({
     ...threadMetadataQueryOptions(threadId, includeTurns),
-    enabled: Boolean(status.data && threadId),
-  });
-}
-
-export function useThreadTurns(
-  threadId: string,
-  params: Omit<v2.ThreadTurnsListParams, "threadId"> = {},
-) {
-  const status = useAppServerStatus();
-
-  return useQuery({
-    queryKey: appServerQueryKeys.threadTurns(threadId, params),
-    queryFn: () => fetchAllThreadTurns(threadId, params),
-    enabled: Boolean(status.data && threadId),
-  });
-}
-
-export function useThreadItems(
-  threadId: string,
-  params: Omit<v2.ThreadItemsListParams, "threadId"> = {},
-) {
-  const status = useAppServerStatus();
-
-  return useQuery({
-    queryKey: appServerQueryKeys.threadItems(threadId, params),
-    queryFn: () => fetchAllThreadItems(threadId, params),
     enabled: Boolean(status.data && threadId),
   });
 }
@@ -256,7 +230,7 @@ export function useThreadQueue(
   });
 }
 
-export type ThreadConversation = {
+type ThreadConversation = {
   thread: v2.ThreadReadResponse["thread"];
   turns: v2.ThreadTurnsListResponse;
   items: v2.ThreadItemsListResponse;

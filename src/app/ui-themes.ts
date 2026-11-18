@@ -5,7 +5,7 @@ export const UI_ACCENT_COLORS = [
   "amber",
   "rose",
 ] as const;
-export type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
+type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export const UI_THEME_COLOR_KEYS = [
   "base-100",
   "base-200",

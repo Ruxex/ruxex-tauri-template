@@ -1,7 +1,7 @@
 import type { v2 } from "../../protocol";
 import type { CollaborationMode } from "../../protocol/generated/CollaborationMode";
 
-export function collaborationModeFromMask(
+function collaborationModeFromMask(
   mask: v2.CollaborationModeMask,
   fallbackModel?: string,
   fallbackEffort?: string,
