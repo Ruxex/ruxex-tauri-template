@@ -8,6 +8,7 @@ const MAX_MARKER_GAP_PX = 28;
 const MAX_MARKER_SPAN_PX = 360;
 const MAX_HOVER_OFFSET_PX = 15;
 const HOVER_OFFSET_RADIUS = 3;
+const HOVER_TOOLTIP_GAP_PX = 12;
 
 type ConversationMinimapProps = {
   items: ConversationViewItem[];
@@ -117,7 +118,7 @@ export function ConversationMinimap({
       const bounds = button.getBoundingClientRect();
       setHoverPosition({
         top: bounds.top + bounds.height / 2,
-        left: bounds.right + 4,
+        left: bounds.right + HOVER_TOOLTIP_GAP_PX,
       });
     };
 

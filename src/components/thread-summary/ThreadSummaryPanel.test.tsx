@@ -61,13 +61,13 @@ describe("ThreadSummaryPanel", () => {
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Open terminal in right pane" }),
+      screen.getByRole("button", { name: "Open terminal" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Open workspace in file manager" }),
+      screen.getByRole("button", { name: "Open folder" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Open workspace in editor" }),
+      screen.getByRole("button", { name: "Open in editor" }),
     ).toBeTruthy();
   });
 

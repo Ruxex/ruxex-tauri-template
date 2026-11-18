@@ -309,8 +309,8 @@ describe("app-server event query synchronization", () => {
       queryClient as unknown as QueryClient,
       {
         type: "disconnected",
-        message: "offline",
-      } as AppServerEvent,
+        data: { message: "offline" },
+      },
     );
 
     expect(queryClient.setQueryData).not.toHaveBeenCalled();

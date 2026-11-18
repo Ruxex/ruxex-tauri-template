@@ -108,7 +108,7 @@ export function ThreadSummaryPanel({
               >
                 {onOpenTerminal && (
                   <ThreadSummaryActionButton
-                    label={t("openTerminalInRightPane")}
+                    label={t("openTerminal")}
                     tooltipAlign="left"
                     onClick={onOpenTerminal}
                   >
@@ -117,7 +117,7 @@ export function ThreadSummaryPanel({
                 )}
                 {onOpenWorkspace && (
                   <ThreadSummaryActionButton
-                    label={t("openWorkspaceInFileManager")}
+                    label={t("openFolder")}
                     tooltipAlign="center"
                     onClick={onOpenWorkspace}
                   >
@@ -126,7 +126,7 @@ export function ThreadSummaryPanel({
                 )}
                 {onOpenEditor && (
                   <ThreadSummaryActionButton
-                    label={t("openWorkspaceInEditor")}
+                    label={t("openInEditor")}
                     tooltipAlign="right"
                     onClick={() => {
                       setEditorError(false);
