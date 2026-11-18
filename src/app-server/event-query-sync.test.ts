@@ -175,6 +175,36 @@ describe("app-server event query synchronization", () => {
     expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
   });
 
+  it("refreshes child metadata after a live subagent activity item", () => {
+    const queryClient = createQueryClient();
+
+    synchronizeAppServerQueries(
+      queryClient as unknown as QueryClient,
+      {
+        type: "serverNotification",
+        data: {
+          method: "item/completed",
+          params: {
+            threadId: "parent-1",
+            turnId: "turn-1",
+            item: {
+              type: "subAgentActivity",
+              id: "activity-1",
+              kind: "started",
+              agentThreadId: "agent-1",
+              agentPath: "root/research",
+            },
+            completedAtMs: 10,
+          },
+        },
+      } as AppServerEvent,
+    );
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: appServerQueryKeys.subagentThreadList("parent-1"),
+    });
+  });
+
   it("does not invalidate conversation caches for normal turn completion", async () => {
     requestAppServerMethod.mockResolvedValueOnce({
       response: {

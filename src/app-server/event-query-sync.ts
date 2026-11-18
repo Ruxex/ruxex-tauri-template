@@ -95,6 +95,15 @@ export function synchronizeAppServerQueries(
         event.data.params.threadId,
         event.data.params.turn.id,
       );
+    case "item/completed":
+      if (event.data.params.item.type === "subAgentActivity") {
+        void queryClient.invalidateQueries({
+          queryKey: appServerQueryKeys.subagentThreadList(
+            event.data.params.threadId,
+          ),
+        });
+      }
+      return Promise.resolve();
     case "mcpServer/oauthLogin/completed":
       if (event.data.params.success) {
         void queryClient.invalidateQueries({
