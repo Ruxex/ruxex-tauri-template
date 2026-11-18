@@ -9,40 +9,29 @@ const usePluginRead = vi.hoisted(() => vi.fn());
 const useInstallPlugin = vi.hoisted(() => vi.fn());
 const useUninstallPlugin = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useInstallPlugin,
   usePluginList,
   usePluginRead,
   useUninstallPlugin,
 }));
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("PluginDetailPage", () => {
   it("renders Japanese plugin actions and preserves plugin metadata", async () => {
     await i18n.changeLanguage("ja");
     const { PluginDetailPage } = await import("./PluginDetailPage");
     render(
-      <MemoryRouter
-        initialEntries={["/capabilities/plugins/community/example"]}
-      >
+      <MemoryRouter initialEntries={["/capabilities/plugins/community/example"]}>
         <Routes>
-          <Route
-            path="/capabilities/plugins/:marketplaceName/:pluginName"
-            element={<PluginDetailPage />}
-          />
+          <Route path="/capabilities/plugins/:marketplaceName/:pluginName" element={<PluginDetailPage />} />
         </Routes>
       </MemoryRouter>,
     );
-    expect(
-      screen.getByRole("button", { name: "Example Plugin をインストール" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Example Plugin をインストール" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "情報" })).toBeTruthy();
-    expect(
-      screen.getByText(
-        "The plugin read endpoint provides the canonical details.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("The plugin read endpoint provides the canonical details.")).toBeTruthy();
     expect(screen.getByText("developer-tools")).toBeTruthy();
     expect(screen.getByText("1.2.3")).toBeTruthy();
   });
@@ -150,8 +139,7 @@ describe("PluginDetailPage", () => {
               screenshotUrls: [],
             },
           },
-          description:
-            "The plugin read endpoint provides the canonical details.",
+          description: "The plugin read endpoint provides the canonical details.",
           skills: [
             {
               name: "review",
@@ -190,21 +178,14 @@ describe("PluginDetailPage", () => {
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
     render(
-      <MemoryRouter
-        initialEntries={["/capabilities/plugins/community/example"]}
-      >
+      <MemoryRouter initialEntries={["/capabilities/plugins/community/example"]}>
         <Routes>
-          <Route
-            path="/capabilities/plugins/:marketplaceName/:pluginName"
-            element={<PluginDetailPage />}
-          />
+          <Route path="/capabilities/plugins/:marketplaceName/:pluginName" element={<PluginDetailPage />} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Example Plugin", level: 1 }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Example Plugin", level: 1 })).toBeTruthy();
     const skillButton = screen.getByRole("button", {
       name: /review.*Interface short description/,
     });
@@ -217,29 +198,17 @@ describe("PluginDetailPage", () => {
     fireEvent.click(skillButton);
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("Reviews changes")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Close skill details" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Close skill details" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByText("docs")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Information", level: 2 }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Information", level: 2 })).toBeTruthy();
     expect(screen.getByText("tools")).toBeTruthy();
     expect(screen.getByText("developer-tools")).toBeTruthy();
     expect(screen.getByText("1.2.3")).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "https://example.com/plugin" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "https://example.com/privacy" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "https://example.com/terms" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Open website" }).getAttribute("href"),
-    ).toBe("https://example.com/plugin");
+    expect(screen.getByRole("link", { name: "https://example.com/plugin" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "https://example.com/privacy" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "https://example.com/terms" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open website" }).getAttribute("href")).toBe("https://example.com/plugin");
     expect(usePluginRead).toHaveBeenCalledWith({
       marketplacePath: "/tmp/community",
       pluginName: "example",
@@ -250,29 +219,20 @@ describe("PluginDetailPage", () => {
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
     render(
-      <MemoryRouter
-        initialEntries={["/capabilities/plugins/community/example"]}
-      >
+      <MemoryRouter initialEntries={["/capabilities/plugins/community/example"]}>
         <Routes>
-          <Route
-            path="/capabilities/plugins/:marketplaceName/:pluginName"
-            element={<PluginDetailPage />}
-          />
+          <Route path="/capabilities/plugins/:marketplaceName/:pluginName" element={<PluginDetailPage />} />
         </Routes>
       </MemoryRouter>,
     );
 
     const install = useInstallPlugin.mock.results.at(-1)?.value;
-    fireEvent.click(
-      screen.getByRole("button", { name: "Install Example Plugin" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Install Example Plugin" }));
     expect(install.mutateAsync).toHaveBeenCalledWith({
       marketplacePath: "/tmp/community",
       pluginName: "example",
     });
-    expect(
-      screen.queryByRole("button", { name: "Uninstall Example Plugin" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Uninstall Example Plugin" })).toBeNull();
   });
 
   it("shows only uninstall for an installed plugin", async () => {
@@ -340,28 +300,19 @@ describe("PluginDetailPage", () => {
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
     render(
-      <MemoryRouter
-        initialEntries={["/capabilities/plugins/community/example"]}
-      >
+      <MemoryRouter initialEntries={["/capabilities/plugins/community/example"]}>
         <Routes>
-          <Route
-            path="/capabilities/plugins/:marketplaceName/:pluginName"
-            element={<PluginDetailPage />}
-          />
+          <Route path="/capabilities/plugins/:marketplaceName/:pluginName" element={<PluginDetailPage />} />
         </Routes>
       </MemoryRouter>,
     );
 
     const uninstall = useUninstallPlugin.mock.results.at(-1)?.value;
-    fireEvent.click(
-      screen.getByRole("button", { name: "Uninstall Example Plugin" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Uninstall Example Plugin" }));
     expect(uninstall.mutateAsync).toHaveBeenCalledWith({
       pluginId: "example@community",
     });
-    expect(
-      screen.queryByRole("button", { name: "Install Example Plugin" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Install Example Plugin" })).toBeNull();
   });
 
   it("renders list metadata for remote-only plugins", async () => {
@@ -424,27 +375,16 @@ describe("PluginDetailPage", () => {
     const { PluginDetailPage } = await import("./PluginDetailPage");
 
     render(
-      <MemoryRouter
-        initialEntries={["/capabilities/plugins/openai-curated/calendar"]}
-      >
+      <MemoryRouter initialEntries={["/capabilities/plugins/openai-curated/calendar"]}>
         <Routes>
-          <Route
-            path="/capabilities/plugins/:marketplaceName/:pluginName"
-            element={<PluginDetailPage />}
-          />
+          <Route path="/capabilities/plugins/:marketplaceName/:pluginName" element={<PluginDetailPage />} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Calendar", level: 1 }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Calendar", level: 1 })).toBeTruthy();
     expect(screen.getByText("Calendar details from the catalog.")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Detailed plugin metadata is unavailable for remote-only marketplaces.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Detailed plugin metadata is unavailable for remote-only marketplaces.")).toBeTruthy();
     expect(
       (
         screen.getByRole("button", {
@@ -452,9 +392,7 @@ describe("PluginDetailPage", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    expect(
-      screen.queryByRole("button", { name: "Uninstall Calendar" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Uninstall Calendar" })).toBeNull();
     expect(usePluginRead).toHaveBeenCalledWith(null);
   });
   it.each([
@@ -462,36 +400,24 @@ describe("PluginDetailPage", () => {
     ["en", "uninstall", "Unable to uninstall plugin:"],
     ["ja", "install", "プラグインをインストールできません:"],
     ["ja", "uninstall", "プラグインをアンインストールできません:"],
-  ] as const)(
-    "renders %s %s failure details exactly once",
-    async (language, action, framing) => {
-      await i18n.changeLanguage(language);
-      const details =
-        "provider/acme: EnglishOnly unavailable (code -32601); /srv/plugins";
-      const mutation =
-        action === "install" ? useInstallPlugin : useUninstallPlugin;
-      mutation.mockReturnValue({
-        isPending: false,
-        isError: true,
-        error: { message: details },
-        mutateAsync: vi.fn(),
-      });
-      const { PluginDetailPage } = await import("./PluginDetailPage");
-      render(
-        <MemoryRouter
-          initialEntries={["/capabilities/plugins/community/example"]}
-        >
-          <Routes>
-            <Route
-              path="/capabilities/plugins/:marketplaceName/:pluginName"
-              element={<PluginDetailPage />}
-            />
-          </Routes>
-        </MemoryRouter>,
-      );
-      expect(screen.getByRole("alert").textContent).toBe(
-        `${framing} ${details}`,
-      );
-    },
-  );
+  ] as const)("renders %s %s failure details exactly once", async (language, action, framing) => {
+    await i18n.changeLanguage(language);
+    const details = "provider/acme: EnglishOnly unavailable (code -32601); /srv/plugins";
+    const mutation = action === "install" ? useInstallPlugin : useUninstallPlugin;
+    mutation.mockReturnValue({
+      isPending: false,
+      isError: true,
+      error: { message: details },
+      mutateAsync: vi.fn(),
+    });
+    const { PluginDetailPage } = await import("./PluginDetailPage");
+    render(
+      <MemoryRouter initialEntries={["/capabilities/plugins/community/example"]}>
+        <Routes>
+          <Route path="/capabilities/plugins/:marketplaceName/:pluginName" element={<PluginDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("alert").textContent).toBe(`${framing} ${details}`);
+  });
 });

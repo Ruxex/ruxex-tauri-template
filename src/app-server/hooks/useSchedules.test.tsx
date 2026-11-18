@@ -10,13 +10,13 @@ const createSchedule = vi.hoisted(() => vi.fn());
 const deleteSchedule = vi.hoisted(() => vi.fn());
 const runScheduleNow = vi.hoisted(() => vi.fn());
 
-vi.mock("../../platform/schedules", () => ({
+vi.mock("@/platform/schedules", () => ({
   listSchedules,
   createSchedule,
   deleteSchedule,
   runScheduleNow,
 }));
-vi.mock("../runtime", () => ({ isDesktopRuntime: true }));
+vi.mock("@/app-server/runtime", () => ({ isDesktopRuntime: true }));
 
 function wrapper({ children }: { children: ReactNode }) {
   return (

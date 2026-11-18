@@ -1,29 +1,27 @@
 import { createHashRouter, Navigate } from "react-router-dom";
-import { ApprovalCenter } from "../components/approvals/ApprovalCenter";
-import { ActivityCenter } from "../components/activity/ActivityCenter";
-import { AppLayout } from "../components/layout/AppLayout";
-import { QuickPanelPage } from "../components/quick-panel/QuickPanelPage";
-import { AccountPage } from "../pages/AccountPage";
-import { AppearancePage } from "../pages/AppearancePage";
-import { AppServerPage } from "../pages/AppServerPage";
-import { ArchivePage } from "../pages/ArchivePage";
-import { CapabilitiesPage } from "../pages/CapabilitiesPage";
-import { ChatsPage } from "../pages/ChatsPage";
-import { HomePage } from "../pages/HomePage";
-import { HooksPage } from "../pages/HooksPage";
-import { MarketplaceSettingsPage } from "../pages/MarketplaceSettingsPage";
-import { McpServersPage } from "../pages/McpServersPage";
-import { ModelPage } from "../pages/ModelPage";
-import { NewChatRedirect } from "../pages/NewChatRedirect";
-import { PluginDetailPage } from "../pages/PluginDetailPage";
-import { ProjectHomePage } from "../pages/ProjectHomePage";
-import { ProjectsPage } from "../pages/ProjectsPage";
-import { SchedulesPage } from "../pages/SchedulesPage";
-import { ScheduleDetailPage } from "../pages/ScheduleDetailPage";
-import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
-import { SettingsPage } from "../pages/SettingsPage";
-import { ThreadPage } from "../pages/ThreadPage";
-import { VersionPage } from "../pages/VersionPage";
+import { AppLayout } from "@/components/feature/layout/AppLayout";
+import { QuickPanelPage } from "@/components/composite/quick-panel/QuickPanelPage";
+import { AccountPage } from "@/pages/AccountPage";
+import { AppearancePage } from "@/pages/AppearancePage";
+import { AppServerPage } from "@/pages/AppServerPage";
+import { ArchivePage } from "@/pages/ArchivePage";
+import { CapabilitiesPage } from "@/pages/CapabilitiesPage";
+import { ChatsPage } from "@/pages/ChatsPage";
+import { HomePage } from "@/pages/HomePage";
+import { HooksPage } from "@/pages/HooksPage";
+import { MarketplaceSettingsPage } from "@/pages/MarketplaceSettingsPage";
+import { McpServersPage } from "@/pages/McpServersPage";
+import { ModelPage } from "@/pages/ModelPage";
+import { NewChatRedirect } from "@/pages/NewChatRedirect";
+import { PluginDetailPage } from "@/pages/PluginDetailPage";
+import { ProjectHomePage } from "@/pages/ProjectHomePage";
+import { ProjectsPage } from "@/pages/ProjectsPage";
+import { SchedulesPage } from "@/pages/SchedulesPage";
+import { ScheduleDetailPage } from "@/pages/ScheduleDetailPage";
+import { SettingsOverviewPage } from "@/pages/SettingsOverviewPage";
+import { SettingsPage } from "@/pages/SettingsPage";
+import { ThreadPage } from "@/pages/ThreadPage";
+import { VersionPage } from "@/pages/VersionPage";
 
 export const router = createHashRouter([
   { path: "/quick-panel", element: <QuickPanelPage /> },
@@ -36,8 +34,6 @@ export const router = createHashRouter([
         path: "account",
         element: <Navigate replace to="/settings/account" />,
       },
-      { path: "approvals", element: <ApprovalCenter /> },
-      { path: "activity", element: <ActivityCenter /> },
       { path: "chats", element: <ChatsPage /> },
       {
         path: "settings",

@@ -45,9 +45,7 @@ describe("terminal commands", () => {
     invoke.mockResolvedValue("terminal-1");
     const onEvent = vi.fn();
 
-    await expect(startTerminal("/workspace", 80, 24, onEvent)).resolves.toBe(
-      "terminal-1",
-    );
+    await expect(startTerminal("/workspace", 80, 24, onEvent)).resolves.toBe("terminal-1");
 
     expect(invoke).toHaveBeenCalledWith("terminal_start", {
       cwd: "/workspace",
@@ -78,11 +76,7 @@ describe("terminal commands", () => {
     invoke.mockResolvedValue("managed-1");
     const firstListener = vi.fn();
     const secondListener = vi.fn();
-    const unsubscribe = subscribeTerminalSession(
-      "tab-managed-1",
-      "/repo",
-      firstListener,
-    );
+    const unsubscribe = subscribeTerminalSession("tab-managed-1", "/repo", firstListener);
 
     const firstStart = ensureTerminalSession("tab-managed-1", "/repo", 80, 24);
     const secondStart = ensureTerminalSession("tab-managed-1", "/repo", 90, 30);
@@ -90,11 +84,7 @@ describe("terminal commands", () => {
     channels[0]?.onmessage?.({ type: "output", data: [65, 66] });
     await Promise.all([firstStart, secondStart]);
 
-    const stopSecond = subscribeTerminalSession(
-      "tab-managed-1",
-      "/repo",
-      secondListener,
-    );
+    const stopSecond = subscribeTerminalSession("tab-managed-1", "/repo", secondListener);
     expect(firstListener).toHaveBeenCalledWith({
       type: "output",
       data: [65, 66],
@@ -132,27 +122,19 @@ describe("terminal commands", () => {
 
     channels[0]?.onmessage?.({ type: "exited" });
     expect(listener).toHaveBeenCalledWith({ type: "exited" });
-    expect(subscribeTerminalSession("tab-exited", null, listener)).toBeTypeOf(
-      "function",
-    );
+    expect(subscribeTerminalSession("tab-exited", null, listener)).toBeTypeOf("function");
     await ensureTerminalSession("tab-exited", null, 80, 24);
-    expect(
-      invoke.mock.calls.filter(([command]) => command === "terminal_start"),
-    ).toHaveLength(1);
+    expect(invoke.mock.calls.filter(([command]) => command === "terminal_start")).toHaveLength(1);
     unsubscribe();
     await closeManagedTerminalSession("tab-exited");
   });
 
   it("resets to a retryable state after startup fails", async () => {
-    invoke
-      .mockRejectedValueOnce(new Error("spawn failed"))
-      .mockResolvedValueOnce("retry");
+    invoke.mockRejectedValueOnce(new Error("spawn failed")).mockResolvedValueOnce("retry");
     const first = ensureTerminalSession("tab-retry", null, 80, 24);
     await expect(first).rejects.toThrow("spawn failed");
     await ensureTerminalSession("tab-retry", null, 80, 24);
-    expect(
-      invoke.mock.calls.filter(([command]) => command === "terminal_start"),
-    ).toHaveLength(2);
+    expect(invoke.mock.calls.filter(([command]) => command === "terminal_start")).toHaveLength(2);
     await closeManagedTerminalSession("tab-retry");
   });
 
@@ -165,10 +147,7 @@ describe("terminal commands", () => {
   it("maps supported timeout preferences and falls back for invalid stored values", async () => {
     expect(terminalSessionTimeoutMs("1h")).toBe(60 * 60 * 1000);
     expect(terminalSessionTimeoutMs("never")).toBeNull();
-    invoke
-      .mockResolvedValueOnce(6)
-      .mockResolvedValueOnce(12)
-      .mockResolvedValueOnce(null);
+    invoke.mockResolvedValueOnce(6).mockResolvedValueOnce(12).mockResolvedValueOnce(null);
     await expect(readTerminalSessionTimeout()).resolves.toBe("6h");
     await expect(readTerminalSessionTimeout()).resolves.toBe("24h");
     await expect(updateTerminalSessionTimeout("never")).resolves.toBe("never");

@@ -20,46 +20,35 @@ const desktopMocks = vi.hoisted(() => ({
 function TranslationProbe() {
   const context = useContext(I18nContext);
   const { t } = useTranslation("common");
-  return (
-    <output>
-      {context ? t("actions.cancel") : "Missing localization provider"}
-    </output>
-  );
+  return <output>{context ? t("actions.cancel") : "Missing localization provider"}</output>;
 }
 
-vi.mock("../app-server/event-store", () => ({
+vi.mock("@/app-server/event-store", () => ({
   startAppServerEventStore,
   stopAppServerEventStore,
 }));
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useAppServerNotifications: vi.fn(),
   useAppServerQuerySync: vi.fn(),
 }));
-vi.mock("../app-server/runtime", () => ({
+vi.mock("@/app-server/runtime", () => ({
   get isDesktopRuntime() {
     return desktopMocks.enabled;
   },
   isNativeDesktopRuntime: false,
 }));
-vi.mock("../platform/deep-links", () => ({
+vi.mock("@/platform/deep-links", () => ({
   pathForDeepLink: desktopMocks.pathForDeepLink,
   startDeepLinkListener: desktopMocks.startDeepLinkListener,
 }));
 vi.mock("react-router-dom", () => ({
-  RouterProvider: ({
-    router,
-  }: {
-    router: { navigate?: (path: string) => void };
-  }) => {
-    desktopMocks.navigate.mockImplementation(
-      router.navigate ?? (() => undefined),
-    );
+  RouterProvider: ({ router }: { router: { navigate?: (path: string) => void } }) => {
+    desktopMocks.navigate.mockImplementation(router.navigate ?? (() => undefined));
     return <TranslationProbe />;
   },
 }));
 vi.mock("./ui-preferences", () => ({
-  UiPreferencesProvider: ({ children }: { children: React.ReactNode }) =>
-    children,
+  UiPreferencesProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 describe("AppProviders", () => {
@@ -109,12 +98,10 @@ describe("AppProviders", () => {
   it("navigates to a deep link and stops its listener when unmounted", async () => {
     desktopMocks.enabled = true;
     desktopMocks.pathForDeepLink.mockReturnValue("/chat/thread-42");
-    desktopMocks.startDeepLinkListener.mockImplementation(
-      async (callback: (target: never) => void) => {
-        desktopMocks.callback = callback;
-        return desktopMocks.stopListener;
-      },
-    );
+    desktopMocks.startDeepLinkListener.mockImplementation(async (callback: (target: never) => void) => {
+      desktopMocks.callback = callback;
+      return desktopMocks.stopListener;
+    });
     const { AppProviders } = await import("./providers");
     const navigate = vi.fn();
     const view = render(<AppProviders router={{ navigate } as never} />);

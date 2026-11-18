@@ -16,9 +16,7 @@ describe("dummy home WDIO support contracts", () => {
       const prompt = scenarioPrompt(scenario, 1);
 
       expect(prompt).toContain(scenario.providerMarker);
-      expect(prompt).toContain(
-        `Fixture ${scenario.id.replaceAll("-", " ")} 01`,
-      );
+      expect(prompt).toContain(`Fixture ${scenario.id.replaceAll("-", " ")} 01`);
     }
   });
 
@@ -43,12 +41,8 @@ describe("dummy home WDIO support contracts", () => {
       expect(pause).toHaveBeenNthCalledWith(2, 300);
       expect(pause).toHaveBeenCalledTimes(2);
       expect(saveScreenshot).toHaveBeenCalledTimes(1);
-      expect(pause.mock.invocationCallOrder[0]).toBeLessThan(
-        saveScreenshot.mock.invocationCallOrder[0],
-      );
-      expect(pause.mock.invocationCallOrder[1]).toBeGreaterThan(
-        saveScreenshot.mock.invocationCallOrder[0],
-      );
+      expect(pause.mock.invocationCallOrder[0]).toBeLessThan(saveScreenshot.mock.invocationCallOrder[0]);
+      expect(pause.mock.invocationCallOrder[1]).toBeGreaterThan(saveScreenshot.mock.invocationCallOrder[0]);
     } finally {
       vi.unstubAllGlobals();
     }
@@ -56,9 +50,7 @@ describe("dummy home WDIO support contracts", () => {
 
   it("defines seven deterministic turns for the minimap fixture", () => {
     expect(MINIMAP_TURN_COUNT).toBeGreaterThanOrEqual(7);
-    expect(minimapFixturePrompt(1)).toBe(
-      "Fixture minimap message 01 example:basic",
-    );
+    expect(minimapFixturePrompt(1)).toBe("Fixture minimap message 01 example:basic");
     expect(minimapFixturePrompt(MINIMAP_TURN_COUNT)).toContain(
       `message ${String(MINIMAP_TURN_COUNT).padStart(2, "0")}`,
     );

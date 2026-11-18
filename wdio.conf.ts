@@ -4,20 +4,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import type { Options } from "@wdio/types";
 
 const repositoryRoot = path.dirname(fileURLToPath(import.meta.url));
-const appBinaryPath = path.resolve(
-  repositoryRoot,
-  process.env.RUXEX_E2E_APP_BINARY ?? "target/debug/ruxex-desktop",
-);
-const artifactDirectory = process.env.RUXEX_E2E_ARTIFACTS
-  ? path.resolve(process.env.RUXEX_E2E_ARTIFACTS)
-  : undefined;
+const appBinaryPath = path.resolve(repositoryRoot, process.env.RUXEX_E2E_APP_BINARY ?? "target/debug/ruxex-desktop");
+const artifactDirectory = process.env.RUXEX_E2E_ARTIFACTS ? path.resolve(process.env.RUXEX_E2E_ARTIFACTS) : undefined;
 const tauriDriverPath = process.env.TAURI_DRIVER_PATH;
 const e2ePluginEnabled = process.env.RUXEX_E2E_PLUGIN === "1";
 
 function safeFileName(value: string): string {
-  return (
-    value.replace(/[^a-z0-9._-]+/gi, "_").replace(/^\.+|\.+$/g, "") || "test"
-  );
+  return value.replace(/[^a-z0-9._-]+/gi, "_").replace(/^\.+|\.+$/g, "") || "test";
 }
 
 const tauriServiceOptions = {
@@ -48,9 +41,7 @@ export const config: Options.Testrunner = {
   ],
   logLevel: (process.env.RUXEX_E2E_LOG_LEVEL ?? "info") as Options.LogLevel,
   framework: "mocha",
-  reporters: artifactDirectory
-    ? [["spec", { outputDir: artifactDirectory }]]
-    : ["spec"],
+  reporters: artifactDirectory ? [["spec", { outputDir: artifactDirectory }]] : ["spec"],
   services: [["@wdio/tauri-service", tauriServiceOptions]],
   afterTest: async (test, _context, result) => {
     if (result.passed || !artifactDirectory) {
@@ -61,16 +52,9 @@ export const config: Options.Testrunner = {
     try {
       await mkdir(artifactDirectory, { recursive: true });
       await browser.saveScreenshot(path.join(artifactDirectory, `${name}.png`));
-      await writeFile(
-        path.join(artifactDirectory, `${name}.html`),
-        await browser.getPageSource(),
-        "utf8",
-      );
+      await writeFile(path.join(artifactDirectory, `${name}.html`), await browser.getPageSource(), "utf8");
     } catch (error) {
-      console.error(
-        `[e2e-artifacts] failed to save evidence for ${name}:`,
-        error,
-      );
+      console.error(`[e2e-artifacts] failed to save evidence for ${name}:`, error);
     }
   },
   mochaOpts: {

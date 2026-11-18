@@ -1,27 +1,17 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  GlobalMcpConfig,
-  McpServerDraft,
-  McpServerEntry,
-} from "../app-server/mcp-config";
+import type { GlobalMcpConfig, McpServerDraft, McpServerEntry } from "@/app-server/mcp-config";
 import { McpServersPage } from "./McpServersPage";
 
 const useAllMcpServerStatus = vi.hoisted(() => vi.fn());
 const useGlobalMcpConfig = vi.hoisted(() => vi.fn());
 const useReloadMcpServers = vi.hoisted(() => vi.fn());
 const useWriteConfig = vi.hoisted(() => vi.fn());
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useAllMcpServerStatus,
   useGlobalMcpConfig,
   useReloadMcpServers,
@@ -91,7 +81,7 @@ function renderPage() {
   );
 }
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("McpServersPage", () => {
   it("renders Japanese MCP settings and dialog controls", async () => {
@@ -130,16 +120,10 @@ describe("McpServersPage", () => {
 
     expect(screen.getByRole("heading", { name: "MCP servers" })).toBeTruthy();
     expect(screen.queryByText("Global MCP configuration")).toBeNull();
-    expect(
-      screen.queryByText(
-        "Manage the MCP servers in your global user configuration.",
-      ),
-    ).toBeNull();
+    expect(screen.queryByText("Manage the MCP servers in your global user configuration.")).toBeNull();
     expect(screen.getByText("No global MCP servers configured.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Add MCP server" }));
-    expect(
-      screen.getByRole("heading", { name: "Add MCP server" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Add MCP server" })).toBeTruthy();
   });
 
   it("keeps runtime resources out of the compact server list", () => {
@@ -189,12 +173,8 @@ describe("McpServersPage", () => {
     renderPage();
 
     expect(screen.getByText("Connected")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Configure docs" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("switch", { name: "Enable MCP server: docs" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Configure docs" })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Enable MCP server: docs" })).toBeTruthy();
   });
 
   it("writes the MCP server enabled state from the summary toggle", async () => {
@@ -209,9 +189,7 @@ describe("McpServersPage", () => {
     });
 
     renderPage();
-    fireEvent.click(
-      screen.getByRole("switch", { name: "Enable MCP server: docs" }),
-    );
+    fireEvent.click(screen.getByRole("switch", { name: "Enable MCP server: docs" }));
 
     await waitFor(() => expect(write).toHaveBeenCalledOnce());
     expect(write).toHaveBeenCalledWith(
@@ -297,9 +275,7 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "npx" },
     });
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Add MCP server" })[1],
-    );
+    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
 
     await waitFor(() => expect(write).toHaveBeenCalledOnce());
     expect(write).toHaveBeenCalledWith({
@@ -364,15 +340,9 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "node" },
     });
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Add MCP server" })[1],
-    );
+    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
 
-    await waitFor(() =>
-      expect(
-        screen.getByText("Managed policy overrides this value."),
-      ).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText("Managed policy overrides this value.")).toBeTruthy());
   });
 
   it("confirms deletion and warns when another layer remains active", async () => {
@@ -397,9 +367,7 @@ describe("McpServersPage", () => {
       },
     ]);
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
-    expect(
-      screen.getByText(/another configuration source is still active/i),
-    ).toBeTruthy();
+    expect(screen.getByText(/another configuration source is still active/i)).toBeTruthy();
   });
 
   it("uses refreshed runtime status before showing a higher-layer delete warning", async () => {
@@ -414,9 +382,7 @@ describe("McpServersPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete docs" }));
 
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
-    expect(
-      screen.queryByText(/another configuration source is still active/i),
-    ).toBeNull();
+    expect(screen.queryByText(/another configuration source is still active/i)).toBeNull();
   });
 
   it("keeps the dialog open on a version conflict", async () => {
@@ -437,21 +403,15 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "node" },
     });
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Add MCP server" })[1],
-    );
+    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
 
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
-    expect(
-      screen.getByRole("heading", { name: "Add MCP server" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Add MCP server" })).toBeTruthy();
   });
 
   it("shows a saved-but-reload-failed warning", async () => {
     const write = vi.fn().mockResolvedValue({ status: "ok" });
-    const failedReload = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("MCP reload failed"));
+    const failedReload = vi.fn().mockRejectedValueOnce(new Error("MCP reload failed"));
     useWriteConfig.mockReturnValue({ mutateAsync: write, isPending: false });
     useReloadMcpServers.mockReturnValue({
       mutateAsync: failedReload,
@@ -466,32 +426,21 @@ describe("McpServersPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Command" }), {
       target: { value: "node" },
     });
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Add MCP server" })[1],
-    );
+    fireEvent.click(screen.getAllByRole("button", { name: "Add MCP server" })[1]);
 
-    await waitFor(() =>
-      expect(screen.getByText("Saved, but MCP reload failed")).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText("Saved, but MCP reload failed")).toBeTruthy());
   });
   it.each([
     ["en", "Configure docs / server-1", "Delete docs / server-1"],
     ["ja", "docs / server-1 の設定", "docs / server-1 を削除"],
-  ] as const)(
-    "renders complete %s visible server action labels",
-    async (language, editLabel, deleteLabel) => {
-      await i18n.changeLanguage(language);
-      const name = "docs / server-1";
-      useGlobalMcpConfig.mockReturnValue(
-        config({ servers: [entry({ name, draft: draft({ name }) })] }),
-      );
-      renderPage();
-      expect(screen.getByRole("button", { name: editLabel })).toBeTruthy();
-      fireEvent.click(screen.getByRole("button", { name: editLabel }));
-      const deleteButton = screen.getByRole("button", { name: deleteLabel });
-      expect(
-        deleteButton.textContent,
-      ).toBe(language === "en" ? "Delete" : "削除");
-    },
-  );
+  ] as const)("renders complete %s visible server action labels", async (language, editLabel, deleteLabel) => {
+    await i18n.changeLanguage(language);
+    const name = "docs / server-1";
+    useGlobalMcpConfig.mockReturnValue(config({ servers: [entry({ name, draft: draft({ name }) })] }));
+    renderPage();
+    expect(screen.getByRole("button", { name: editLabel })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: editLabel }));
+    const deleteButton = screen.getByRole("button", { name: deleteLabel });
+    expect(deleteButton.textContent).toBe(language === "en" ? "Delete" : "削除");
+  });
 });

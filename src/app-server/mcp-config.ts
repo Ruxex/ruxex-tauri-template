@@ -1,6 +1,6 @@
-import { i18n } from "../app/i18n";
-import type { v2 } from "../protocol";
-import type { JsonValue } from "../protocol/generated/serde_json/JsonValue";
+import { i18n } from "@/app/i18n";
+import type { v2 } from "@/protocol";
+import type { JsonValue } from "@/protocol/generated/serde_json/JsonValue";
 
 export type McpServerTransport = "stdio" | "streamableHttp";
 
@@ -106,10 +106,7 @@ function readStringArray(
   if (value === undefined) {
     return { value: [] };
   }
-  if (
-    !Array.isArray(value) ||
-    !value.every((item) => typeof item === "string")
-  ) {
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
     return {
       error: i18n.t("fieldStringArray", {
         ns: "mcp",
@@ -123,9 +120,7 @@ function readStringArray(
 
 function readEnvironmentVariables(
   raw: JsonObject,
-):
-  | { value: McpEnvironmentVariableDraft[]; error?: never }
-  | { value?: never; error: string } {
+): { value: McpEnvironmentVariableDraft[]; error?: never } | { value?: never; error: string } {
   const value = raw.env_vars;
   if (value === undefined) {
     return { value: [] };
@@ -169,9 +164,7 @@ function readEnvironmentVariables(
 
 function readEnvironmentHeaders(
   raw: JsonObject,
-):
-  | { value: Record<string, string>; error?: never }
-  | { value?: never; error: string } {
+): { value: Record<string, string>; error?: never } | { value?: never; error: string } {
   const value = raw.env_http_headers;
   if (value === undefined) {
     return { value: {} };
@@ -390,10 +383,7 @@ export function parseMcpServerDictionaryJson(value: string): {
   } catch (error) {
     return {
       entries: [],
-      error:
-        error instanceof Error
-          ? error.message
-          : i18n.t("invalidJson", { ns: "mcp", lng: i18n.resolvedLanguage }),
+      error: error instanceof Error ? error.message : i18n.t("invalidJson", { ns: "mcp", lng: i18n.resolvedLanguage }),
     };
   }
 
@@ -411,11 +401,7 @@ export function parseMcpServerDictionaryJson(value: string): {
   const serverDictionary = ["mcpServers", "mcp_servers", "servers"]
     .map((key) => root[key])
     .find((candidate) => {
-      return (
-        isJsonObject(candidate) &&
-        !("command" in candidate) &&
-        !("url" in candidate)
-      );
+      return isJsonObject(candidate) && !("command" in candidate) && !("url" in candidate);
     }) as JsonObject | undefined;
   const configs = serverDictionary ?? root;
 
@@ -489,12 +475,8 @@ export function parseMcpServerDictionaryJson(value: string): {
   return { entries, error: null };
 }
 
-export function extractGlobalMcpConfig(
-  response: v2.ConfigReadResponse,
-): GlobalMcpConfig {
-  const layer = response.layers?.find(
-    (candidate) => candidate.name.type === "user",
-  );
+export function extractGlobalMcpConfig(response: v2.ConfigReadResponse): GlobalMcpConfig {
+  const layer = response.layers?.find((candidate) => candidate.name.type === "user");
   if (!layer || !isJsonObject(layer.config)) {
     return { servers: [], version: undefined };
   }
@@ -530,11 +512,7 @@ export function mcpServerKeyPath(name: string): string {
   return `mcp_servers."${escaped}"`;
 }
 
-function assignIfNonEmpty(
-  target: JsonObject,
-  key: string,
-  value: string,
-): void {
+function assignIfNonEmpty(target: JsonObject, key: string, value: string): void {
   if (value.trim()) {
     target[key] = value;
   } else {
@@ -542,22 +520,15 @@ function assignIfNonEmpty(
   }
 }
 
-function serializeEnvironmentVariables(
-  variables: McpEnvironmentVariableDraft[],
-): JsonValue[] {
+function serializeEnvironmentVariables(variables: McpEnvironmentVariableDraft[]): JsonValue[] {
   return variables
     .filter((variable) => variable.name.trim())
     .map((variable) =>
-      variable.source
-        ? { name: variable.name.trim(), source: variable.source }
-        : variable.name.trim(),
+      variable.source ? { name: variable.name.trim(), source: variable.source } : variable.name.trim(),
     );
 }
 
-export function serializeMcpServerDraft(
-  draft: McpServerDraft,
-  original?: JsonObject,
-): JsonObject {
+export function serializeMcpServerDraft(draft: McpServerDraft, original?: JsonObject): JsonObject {
   const serialized: JsonObject = { ...(original ?? {}) };
 
   if (draft.transport === "stdio") {
@@ -581,11 +552,7 @@ export function serializeMcpServerDraft(
       delete serialized[key];
     }
     assignIfNonEmpty(serialized, "url", draft.url);
-    assignIfNonEmpty(
-      serialized,
-      "bearer_token_env_var",
-      draft.bearerTokenEnvVar,
-    );
+    assignIfNonEmpty(serialized, "bearer_token_env_var", draft.bearerTokenEnvVar);
     if (Object.keys(draft.envHttpHeaders).length) {
       serialized.env_http_headers = Object.fromEntries(
         Object.entries(draft.envHttpHeaders)

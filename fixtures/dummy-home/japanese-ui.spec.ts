@@ -22,32 +22,24 @@ describe("Japanese desktop UI", () => {
       await assertJapaneseDocument();
 
       await browser.url("tauri://localhost/#/");
-      await $(
-        "[contenteditable='true'][aria-label='メッセージ']",
-      ).waitForDisplayed({ timeout: 10_000 });
+      await $("[contenteditable='true'][aria-label='メッセージ']").waitForDisplayed({ timeout: 10_000 });
       await $("button[aria-label='送信']").waitForDisplayed();
       await saveFixtureScreenshot("japanese-home.png");
       await assertJapaneseDocument();
 
       await browser.url("tauri://localhost/#/projects");
       await $("h1=プロジェクト").waitForDisplayed({ timeout: 10_000 });
-      const project = $(
-        "table[aria-label='プロジェクト'] tbody tr:first-child a[href*='/projects/']",
-      );
+      const project = $("table[aria-label='プロジェクト'] tbody tr:first-child a[href*='/projects/']");
       await project.waitForDisplayed({ timeout: 15_000 });
       await $("button[aria-label='新規プロジェクト']").waitForDisplayed();
       await saveFixtureScreenshot("japanese-projects.png");
       await project.click();
-      const chat = $(
-        "section[aria-label='チャット'] tbody tr:first-child a[href*='/chat/']",
-      );
+      const chat = $("section[aria-label='チャット'] tbody tr:first-child a[href*='/chat/']");
       await chat.waitForDisplayed({ timeout: 15_000 });
       await saveFixtureScreenshot("japanese-project-detail.png");
       await assertJapaneseDocument();
       await chat.click();
-      await $(
-        "[contenteditable='true'][aria-label='メッセージ']",
-      ).waitForDisplayed({ timeout: 15_000 });
+      await $("[contenteditable='true'][aria-label='メッセージ']").waitForDisplayed({ timeout: 15_000 });
       await $("button[aria-label='送信']").waitForDisplayed();
       await saveFixtureScreenshot("japanese-chat.png");
       await assertJapaneseDocument();
@@ -72,12 +64,9 @@ describe("Japanese desktop UI", () => {
 async function assertJapaneseDocument(): Promise<void> {
   const result = await browser.execute(() => ({
     language: document.documentElement.lang,
-    horizontalOverflow:
-      document.documentElement.scrollWidth > window.innerWidth + 1,
+    horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
   }));
   if (result.language !== "ja" || result.horizontalOverflow) {
-    throw new Error(
-      `Japanese page metadata/overflow: ${JSON.stringify(result)}`,
-    );
+    throw new Error(`Japanese page metadata/overflow: ${JSON.stringify(result)}`);
   }
 }

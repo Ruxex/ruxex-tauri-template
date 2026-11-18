@@ -1,0 +1,55 @@
+import { useTranslation } from "react-i18next";
+import { NavLink } from "react-router-dom";
+
+import { HomeSidebar } from "./HomeSidebar";
+import { AutomationSidebar } from "./AutomationSidebar";
+import { SIDEBAR_PANELS, type SidebarPanel, type SidebarPanelDefinition } from "./navigation";
+import { PluginsSidebar } from "./PluginsSidebar";
+import { SettingsSidebar } from "./SettingsSidebar";
+import { SidebarHeader } from "./SidebarHeader";
+
+export function SidebarContextPanel({
+  activePanel,
+  onClose,
+  selectedThreadId,
+}: {
+  activePanel: SidebarPanel;
+  onClose: () => void;
+  selectedThreadId?: string;
+}) {
+  switch (activePanel) {
+    case "home":
+    case "chats":
+    case "projects":
+      return <HomeSidebar onClose={onClose} selectedThreadId={selectedThreadId} />;
+    case "plugins":
+      return <PluginsSidebar onClose={onClose} />;
+    case "automation":
+      return <AutomationSidebar onClose={onClose} />;
+    case "settings":
+      return <SettingsSidebar onClose={onClose} />;
+    default: {
+      const panel = SIDEBAR_PANELS.find((item) => item.id === activePanel);
+      return panel ? <RouteSidebar panel={panel} onClose={onClose} /> : null;
+    }
+  }
+}
+
+export function RouteSidebar({ onClose, panel }: { onClose: () => void; panel: SidebarPanelDefinition }) {
+  const { t } = useTranslation("navigation");
+  return (
+    <aside
+      aria-label={t("navigation:sidebar", {
+        label: t(`navigation:${panel.id}`),
+      })}
+      className="h-full min-h-0 min-w-0 flex-1 overflow-y-auto bg-base-100 p-4"
+    >
+      <SidebarHeader label={t(`navigation:${panel.id}`)} onClose={onClose} />
+      <div className="rounded-box bg-base-200 p-4 text-sm text-base-content/70">
+        <NavLink className="btn btn-primary btn-sm mt-4" to={panel.route}>
+          {t("navigation:openPanel", { label: t(`navigation:${panel.id}`) })}
+        </NavLink>
+      </div>
+    </aside>
+  );
+}

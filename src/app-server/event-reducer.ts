@@ -1,4 +1,4 @@
-import type { RequestId, ServerRequest, v2 } from "../protocol";
+import type { RequestId, ServerRequest, v2 } from "@/protocol";
 
 import type { AppServerEvent } from "./events";
 import { reduceNotification } from "./event-notification-reducer";
@@ -21,13 +21,7 @@ export type ThreadExecutionState = {
   historyChangedAt: number | null;
   queueChangedAt: number | null;
   activeTurnId: string | null;
-  status:
-    | "idle"
-    | "running"
-    | "completed"
-    | "interrupted"
-    | "failed"
-    | "resynchronizing";
+  status: "idle" | "running" | "completed" | "interrupted" | "failed" | "resynchronizing";
   items: LiveConversationItem[];
   completedTurn: v2.Turn | null;
   tokenUsage?: v2.ThreadTokenUsage | null;
@@ -85,19 +79,13 @@ export function createInitialEventState(): EventState {
   };
 }
 
-export function reduceAppServerEvent(
-  state: EventState,
-  event: AppServerEvent,
-  activityAt = Date.now(),
-): EventState {
+export function reduceAppServerEvent(state: EventState, event: AppServerEvent, activityAt = Date.now()): EventState {
   const eventId = eventIdentity(event, state.eventSequence);
   if (event.type === "serverRequest" && state.seenEventIds.has(eventId)) {
     return state;
   }
 
-  const history = [...state.history, { id: eventId, event }].slice(
-    -MAX_HISTORY,
-  );
+  const history = [...state.history, { id: eventId, event }].slice(-MAX_HISTORY);
   const seenEventIds = new Set(history.map((entry) => entry.id));
 
   const nextState: EventState = {
@@ -159,17 +147,10 @@ export function reduceAppServerEvent(
     };
   }
 
-  return reduceNotification(
-    { ...nextState, resynchronizing: false },
-    event.data,
-    activityAt,
-  );
+  return reduceNotification({ ...nextState, resynchronizing: false }, event.data, activityAt);
 }
 
-export function pruneIdleThreadStates(
-  state: EventState,
-  options: ThreadStatePruneOptions,
-): EventState {
+export function pruneIdleThreadStates(state: EventState, options: ThreadStatePruneOptions): EventState {
   const retainedThreadIds = options.retainedThreadIds ?? new Set<string>();
   const pendingThreadIds = new Set(
     Object.values(state.pendingServerRequests)
@@ -184,14 +165,9 @@ export function pruneIdleThreadStates(
       thread.status !== "resynchronizing",
   );
   const idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_THREAD_TTL_MS;
-  const maxIdleStates = Math.max(
-    0,
-    options.maxIdleStates ?? DEFAULT_MAX_IDLE_THREAD_STATES,
-  );
+  const maxIdleStates = Math.max(0, options.maxIdleStates ?? DEFAULT_MAX_IDLE_THREAD_STATES);
   const staleThreadIds = new Set(
-    idleEntries
-      .filter(([, thread]) => options.now - thread.lastActivityAt >= idleTtlMs)
-      .map(([threadId]) => threadId),
+    idleEntries.filter(([, thread]) => options.now - thread.lastActivityAt >= idleTtlMs).map(([threadId]) => threadId),
   );
   const overflowCount = Math.max(0, idleEntries.length - maxIdleStates);
   for (const [threadId] of [...idleEntries]
@@ -218,9 +194,7 @@ function eventIdentity(event: AppServerEvent, sequence: number): string {
   return `${event.type}:${sequence}`;
 }
 
-function serverRequestKind(
-  request: ServerRequest,
-): PendingServerRequest["kind"] {
+function serverRequestKind(request: ServerRequest): PendingServerRequest["kind"] {
   const method = typeof request.method === "string" ? request.method : "";
   if (method.includes("requestApproval")) {
     return "approval";

@@ -18,12 +18,10 @@ describe("React subscription to the app-server event store", () => {
 
   it("publishes stream state changes to subscribed components", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
-    listenToAppServerEvents.mockImplementation(
-      async (next: (event: AppServerEvent) => void) => {
-        handler = next;
-        return vi.fn();
-      },
-    );
+    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+      handler = next;
+      return vi.fn();
+    });
     const store = await import("./event-store");
     const { result } = renderHook(() => store.useAppServerEventStore());
 
@@ -57,12 +55,10 @@ describe("React subscription to the app-server event store", () => {
 
   it("keeps a thread activity snapshot stable for unrelated events", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
-    listenToAppServerEvents.mockImplementation(
-      async (next: (event: AppServerEvent) => void) => {
-        handler = next;
-        return vi.fn();
-      },
-    );
+    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+      handler = next;
+      return vi.fn();
+    });
     const store = await import("./event-store");
     const { result } = renderHook(() => store.useThreadActivity("thread-1"));
 

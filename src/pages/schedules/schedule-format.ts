@@ -1,17 +1,9 @@
-import { i18n } from "../../app/i18n";
-import { dateTimeFormatter, type UiLocale } from "../../app/locale-format";
-import type { ScheduleCadence } from "../../platform/schedules";
+import { i18n } from "@/app/i18n";
+import { dateTimeFormatter, type UiLocale } from "@/app/locale-format";
+import type { ScheduleCadence } from "@/platform/schedules";
 import type { ScheduleFormState } from "./schedule-form";
 
-export const WEEKDAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const;
+export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
 export const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
   const hour = Math.floor(index / 4)
@@ -66,21 +58,12 @@ export function scheduleCadenceLabel(cadence: ScheduleCadence) {
 
 function weekdayLabel(weekdays: readonly number[]) {
   const labels = weekdays
-    .map((weekday) =>
-      WEEKDAYS[weekday] ? weekdayName(WEEKDAYS[weekday]) : undefined,
-    )
-    .filter((weekday): weekday is (typeof WEEKDAYS)[number] =>
-      Boolean(weekday),
-    );
-  return labels.length > 0
-    ? labels.join(", ")
-    : i18n.t("week", { ns: "schedules", lng: i18n.resolvedLanguage });
+    .map((weekday) => (WEEKDAYS[weekday] ? weekdayName(WEEKDAYS[weekday]) : undefined))
+    .filter((weekday): weekday is (typeof WEEKDAYS)[number] => Boolean(weekday));
+  return labels.length > 0 ? labels.join(", ") : i18n.t("week", { ns: "schedules", lng: i18n.resolvedLanguage });
 }
 
-export function formatDateTime(
-  value: string,
-  locale: UiLocale = i18n.resolvedLanguage === "ja" ? "ja" : "en",
-) {
+export function formatDateTime(value: string, locale: UiLocale = i18n.resolvedLanguage === "ja" ? "ja" : "en") {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return dateTimeFormatter(locale, {
@@ -97,12 +80,8 @@ export function formatRelativeDateTime(value: string) {
   const timestamp = new Date(value).getTime();
   if (Number.isNaN(timestamp)) return value;
 
-  const elapsedSeconds = Math.max(
-    0,
-    Math.floor((Date.now() - timestamp) / 1000),
-  );
-  if (elapsedSeconds < 60)
-    return i18n.t("justNow", { ns: "schedules", lng: i18n.resolvedLanguage });
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (elapsedSeconds < 60) return i18n.t("justNow", { ns: "schedules", lng: i18n.resolvedLanguage });
   if (elapsedSeconds < 60 * 60) {
     return relativeCount(Math.floor(elapsedSeconds / 60), "minute");
   }
@@ -128,9 +107,7 @@ export function browserTimeZone() {
   return dateTimeFormatter("en").resolvedOptions().timeZone || "UTC";
 }
 
-export function systemTimeZoneLabel(
-  locale: UiLocale = i18n.resolvedLanguage === "ja" ? "ja" : "en",
-) {
+export function systemTimeZoneLabel(locale: UiLocale = i18n.resolvedLanguage === "ja" ? "ja" : "en") {
   const timeZone = browserTimeZone();
   const timeZoneName = dateTimeFormatter(locale, {
     timeZoneName: "short",

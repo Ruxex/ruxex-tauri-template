@@ -4,36 +4,28 @@ import { appServerQueryKeys } from "./query-keys";
 
 describe("app-server query keys", () => {
   it("keeps resource identity in thread-scoped keys", () => {
-    expect(appServerQueryKeys.thread("thread-1")).not.toEqual(
-      appServerQueryKeys.thread("thread-2"),
+    expect(appServerQueryKeys.thread("thread-1")).not.toEqual(appServerQueryKeys.thread("thread-2"));
+    expect(appServerQueryKeys.threadTurns("thread-1", { limit: 10 })).not.toEqual(
+      appServerQueryKeys.threadItems("thread-1", { limit: 10 }),
     );
-    expect(
-      appServerQueryKeys.threadTurns("thread-1", { limit: 10 }),
-    ).not.toEqual(appServerQueryKeys.threadItems("thread-1", { limit: 10 }));
   });
 
   it("keeps list and search parameters in their keys", () => {
-    expect(appServerQueryKeys.threadList({ limit: 10 })).not.toEqual(
-      appServerQueryKeys.threadList({ limit: 20 }),
-    );
+    expect(appServerQueryKeys.threadList({ limit: 10 })).not.toEqual(appServerQueryKeys.threadList({ limit: 20 }));
     expect(appServerQueryKeys.threadSearch({ searchTerm: "one" })).not.toEqual(
       appServerQueryKeys.threadSearch({ searchTerm: "two" }),
     );
   });
 
   it("keeps MCP Resource identity separate from server status", () => {
-    expect(
-      appServerQueryKeys.mcpResource("docs", "resource://guide"),
-    ).not.toEqual(appServerQueryKeys.mcpResource("docs", "resource://other"));
-    expect(
-      appServerQueryKeys.mcpResource("docs", "resource://guide"),
-    ).not.toEqual(appServerQueryKeys.mcpServers);
+    expect(appServerQueryKeys.mcpResource("docs", "resource://guide")).not.toEqual(
+      appServerQueryKeys.mcpResource("docs", "resource://other"),
+    );
+    expect(appServerQueryKeys.mcpResource("docs", "resource://guide")).not.toEqual(appServerQueryKeys.mcpServers);
   });
 
   it("separates account refresh variants", () => {
-    expect(appServerQueryKeys.accountRead(false)).not.toEqual(
-      appServerQueryKeys.accountRead(true),
-    );
+    expect(appServerQueryKeys.accountRead(false)).not.toEqual(appServerQueryKeys.accountRead(true));
     expect(appServerQueryKeys.account).toEqual(["app-server", "account"]);
   });
 
@@ -46,9 +38,7 @@ describe("app-server query keys", () => {
       appServerQueryKeys.threadQueue(threadId, params),
     ];
 
-    expect(new Set(keys.map((key) => JSON.stringify(key))).size).toBe(
-      keys.length,
-    );
+    expect(new Set(keys.map((key) => JSON.stringify(key))).size).toBe(keys.length);
     expect(keys.every((key) => key.includes(threadId))).toBe(true);
   });
 });

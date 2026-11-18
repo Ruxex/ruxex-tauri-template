@@ -5,12 +5,8 @@ import {
   DEFAULT_UI_FONT_SIZE,
   DEFAULT_UI_ZOOM,
   useUiPreferences,
-} from "../app/ui-preferences";
-import {
-  ThemeColorsCard,
-  TypographyCard,
-  UiPreferencesCard,
-} from "../components/settings/SettingsCards";
+} from "@/app/ui-preferences";
+import { ThemeColorsCard, TypographyCard, UiPreferencesCard } from "@/components/feature/settings/SettingsCards";
 
 export function AppearancePage() {
   const { t } = useTranslation("settings");
@@ -18,13 +14,9 @@ export function AppearancePage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">
-        {t("settings:appearance")}
-      </h2>
+      <h2 className="text-3xl font-semibold tracking-tight">{t("settings:appearance")}</h2>
       <UiPreferencesCard
-        onThemePresetChange={(preset) =>
-          update({ theme: { ...preferences.theme, preset, colors: {} } })
-        }
+        onThemePresetChange={(preset) => update({ theme: { ...preferences.theme, preset, colors: {} } })}
         preset={preferences.theme.preset ?? "system"}
       />
       <ThemeColorsCard

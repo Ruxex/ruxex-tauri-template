@@ -1,15 +1,12 @@
-import { AppUiError } from "../../app/error-message";
+import { AppUiError } from "@/app/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import { useAppServerStatus } from "../queries";
-import { appServerQueryKeys } from "../query-keys";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { useAppServerStatus } from "@/app-server/queries";
+import { appServerQueryKeys } from "@/app-server/query-keys";
 
-export function usePluginList(
-  params: v2.PluginListParams = {},
-  enabled = true,
-) {
+export function usePluginList(params: v2.PluginListParams = {}, enabled = true) {
   const status = useAppServerStatus();
 
   return useQuery<v2.PluginListResponse>({
@@ -34,9 +31,7 @@ export function usePluginRead(params: v2.PluginReadParams | null) {
       const response = await requestAppServerMethod("plugin/read", params);
       return response.response;
     },
-    enabled: Boolean(
-      status.data && params?.marketplacePath && params.pluginName,
-    ),
+    enabled: Boolean(status.data && params?.marketplacePath && params.pluginName),
   });
 }
 
@@ -60,8 +55,7 @@ function usePluginMutation<TParams, TResponse>(
 
 export function useAddMarketplace() {
   return usePluginMutation(
-    async (params: v2.MarketplaceAddParams) =>
-      (await requestAppServerMethod("marketplace/add", params)).response,
+    async (params: v2.MarketplaceAddParams) => (await requestAppServerMethod("marketplace/add", params)).response,
     [appServerQueryKeys.plugins, appServerQueryKeys.configRoot],
   );
 }
@@ -84,20 +78,14 @@ export function useRemoveMarketplace() {
 
 export function useInstallPlugin() {
   return usePluginMutation(
-    async (params: v2.PluginInstallParams) =>
-      (await requestAppServerMethod("plugin/install", params)).response,
+    async (params: v2.PluginInstallParams) => (await requestAppServerMethod("plugin/install", params)).response,
     [appServerQueryKeys.plugins],
   );
 }
 
 export function useUninstallPlugin() {
   return usePluginMutation(
-    async (params: v2.PluginUninstallParams) =>
-      (await requestAppServerMethod("plugin/uninstall", params)).response,
-    [
-      appServerQueryKeys.plugins,
-      appServerQueryKeys.skills,
-      appServerQueryKeys.mcpServers,
-    ],
+    async (params: v2.PluginUninstallParams) => (await requestAppServerMethod("plugin/uninstall", params)).response,
+    [appServerQueryKeys.plugins, appServerQueryKeys.skills, appServerQueryKeys.mcpServers],
   );
 }

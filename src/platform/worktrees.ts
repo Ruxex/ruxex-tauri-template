@@ -25,9 +25,7 @@ export function listWorktrees(root: string): Promise<WorktreeRecord[]> {
   return invoke<WorktreeRecord[]>("worktree_list", { root });
 }
 
-export function createWorktree(
-  request: WorktreeCreateRequest,
-): Promise<WorktreeRecord> {
+export function createWorktree(request: WorktreeCreateRequest): Promise<WorktreeRecord> {
   return invoke<WorktreeRecord>("worktree_create", { request });
 }
 

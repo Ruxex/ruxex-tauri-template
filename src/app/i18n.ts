@@ -11,8 +11,7 @@ const catalogs = import.meta.glob("../locales/{en,ja}/*.json", {
 });
 const resources: Resource = { en: {}, ja: {} };
 for (const [path, messages] of Object.entries(catalogs)) {
-  const [, language, namespace] =
-    path.match(/\/locales\/(en|ja)\/([^/]+)\.json$/) ?? [];
+  const [, language, namespace] = path.match(/\/locales\/(en|ja)\/([^/]+)\.json$/) ?? [];
   if (language && namespace) {
     resources[language][namespace] = messages as Resource[string][string];
   }
@@ -50,10 +49,7 @@ const legacyKeys: Record<UiTranslationKey, string> = {
   quickPanelWaylandUnavailable: "waylandUnavailable",
 };
 
-export function translateUi(
-  key: UiTranslationKey,
-  language: UiLanguage,
-): string {
+export function translateUi(key: UiTranslationKey, language: UiLanguage): string {
   return i18n.t(legacyKeys[key], {
     ns: "quickPanel",
     lng: resolveUiLanguage(language),

@@ -33,15 +33,9 @@ describe("schedule native bridge", () => {
 
     await expect(schedules.listSchedules()).resolves.toEqual([record]);
     await expect(schedules.createSchedule(input)).resolves.toEqual(record);
-    await expect(
-      schedules.updateSchedule("schedule-1", input),
-    ).resolves.toEqual(record);
-    await expect(
-      schedules.deleteSchedule("schedule-1"),
-    ).resolves.toBeUndefined();
-    await expect(schedules.runScheduleNow("schedule-1")).resolves.toEqual(
-      record,
-    );
+    await expect(schedules.updateSchedule("schedule-1", input)).resolves.toEqual(record);
+    await expect(schedules.deleteSchedule("schedule-1")).resolves.toBeUndefined();
+    await expect(schedules.runScheduleNow("schedule-1")).resolves.toEqual(record);
 
     expect(invoke).toHaveBeenNthCalledWith(1, "schedule_list");
     expect(invoke).toHaveBeenNthCalledWith(2, "schedule_create", { input });

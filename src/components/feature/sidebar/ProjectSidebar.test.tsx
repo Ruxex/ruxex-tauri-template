@@ -1,0 +1,401 @@
+// @vitest-environment jsdom
+
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "@/app/i18n";
+
+const useProjectList = vi.hoisted(() => vi.fn());
+const useThreadList = vi.hoisted(() => vi.fn());
+const useThreadActivity = vi.hoisted(() => vi.fn());
+const useThreadReadState = vi.hoisted(() => vi.fn());
+const useArchiveThread = vi.hoisted(() => vi.fn());
+const useThreadSearch = vi.hoisted(() => vi.fn(() => ({ data: undefined, isError: false, isLoading: false })));
+const usePluginList = vi.hoisted(() => vi.fn());
+const useAccount = vi.hoisted(() => vi.fn(() => ({ data: undefined, isLoading: true })));
+const activeThreadListParams = vi.hoisted(() => vi.fn());
+const useAppServerEvents = vi.hoisted(() => vi.fn(() => ({ threads: {}, pendingServerRequests: {} })));
+
+vi.mock("@/app-server/hooks", () => ({
+  useProjectList,
+  useAllProjectList: useProjectList,
+  useAppServerEvents,
+  useThreadList,
+  useThreadActivity,
+  useArchiveThread,
+  useThreadSearch,
+  activeThreadListParams,
+  usePluginList,
+  useAccount,
+}));
+vi.mock("@/app/thread-read-state", () => ({ useThreadReadState }));
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}</output>;
+}
+
+describe("ProjectSidebar", () => {
+  afterEach(cleanup);
+
+  beforeEach(() => {
+    activeThreadListParams.mockReturnValue({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
+    useProjectList.mockReturnValue({
+      data: { data: [{ id: "project-1", name: "Project Alpha" }] },
+      isLoading: false,
+      isError: false,
+    });
+    useThreadList.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: "thread-1",
+            model: "gpt-5",
+            name: "Build the sidebar",
+            preview: null,
+            status: {
+              type: "active",
+              activeFlags: ["waitingOnApproval"],
+            },
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    useThreadActivity.mockReturnValue({
+      status: undefined,
+      waitingForRequest: false,
+    });
+    useThreadReadState.mockReturnValue({
+      isThreadUnread: vi.fn(() => false),
+    });
+    useArchiveThread.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    usePluginList.mockReturnValue({
+      data: {
+        marketplaces: [
+          {
+            name: "official",
+            plugins: [
+              {
+                id: "lint",
+                name: "Lint tools",
+                installed: true,
+                enabled: true,
+              },
+            ],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+  });
+
+  it("renders the shared chat panel beside the icon rail on the home route", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="home" collapsed={false} onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", { name: "Chat sidebar" });
+
+    expect(screen.getByRole("complementary", { name: "Workspace sidebar" }).className).toContain("w-full");
+    expect(panel.querySelector('a[href="/"]')).toBeTruthy();
+    expect(within(panel).getByText("Recent chats")).toBeTruthy();
+    expect(within(panel).getByText("Projects")).toBeTruthy();
+    expect(within(panel).queryByText("Home")).toBeNull();
+    expect(within(panel).getByRole("button", { name: "Expand Project Alpha" })).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "New chat in Project Alpha" }).getAttribute("href")).toBe(
+      "/?projectId=project-1",
+    );
+    expect(within(panel).queryByRole("link", { name: "Settings" })).toBeNull();
+    expect(within(panel).getByRole("link", { name: /Build the sidebar/ })).toBeTruthy();
+    expect(within(panel).getByRole("status", { name: "Chat status: Waiting" })).toBeTruthy();
+    expect(
+      within(panel).getByRole("button", {
+        name: "Archive Build the sidebar",
+      }),
+    ).toBeTruthy();
+    expect(within(panel).queryByText("gpt-5")).toBeNull();
+    expect(useThreadList).toHaveBeenCalledWith({
+      archived: false,
+      limit: 50,
+      sortKey: "recency_at",
+      sortDirection: "desc",
+    });
+  });
+
+  it("does not render an in-panel close button for the shared chat panel", async () => {
+    const onToggle = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <ProjectSidebar activePanel="home" collapsed={false} onPanelChange={vi.fn()} onToggle={onToggle} />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", { name: "Chat sidebar" });
+    expect(within(panel).queryByRole("button", { name: "Close sidebar panel" })).toBeNull();
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("renders the shared chat panel for projects", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="projects" collapsed={false} onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", {
+      name: "Chat sidebar",
+    });
+    expect(screen.getByRole("complementary", { name: "Workspace sidebar" }).className).not.toContain(
+      "workbench-sidebar-collapsed",
+    );
+    expect(within(panel).getByText("Recent chats")).toBeTruthy();
+    expect(within(panel).getByText("Projects")).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Expand Project Alpha" })).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "New chat in Project Alpha" }).getAttribute("href")).toBe(
+      "/?projectId=project-1",
+    );
+    expect(within(panel).getByRole("link", { name: /Build the sidebar/ })).toBeTruthy();
+  });
+
+  it("renders plugin and skill navigation with collapsed installed plugins", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="plugins" collapsed={false} onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", {
+      name: "Capabilities sidebar",
+    });
+    expect(within(panel).getByRole("button", { name: "Plugins" })).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Skills" })).toBeTruthy();
+
+    const installed = within(panel).getByText("Installed (1)").closest("details");
+    expect(installed?.open).toBe(false);
+    fireEvent.click(installed?.querySelector("summary") as HTMLElement);
+    expect(installed?.open).toBe(true);
+    expect(within(installed as HTMLElement).getByText("Lint tools")).toBeTruthy();
+  });
+
+  it("keeps only the compact rail when the context panel is disabled", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar
+          activePanel="projects"
+          collapsed={false}
+          onPanelChange={vi.fn()}
+          onToggle={vi.fn()}
+          showContextPanel={false}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("navigation", { name: "Workspace navigation" })).toBeTruthy();
+    expect(screen.queryByRole("complementary", { name: "Chat sidebar" })).toBeNull();
+  });
+
+  it("keeps navigation links accessible when the pane is collapsed", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="home" collapsed onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+    expect(within(rail).queryByRole("link", { name: "Ruxex Desktop home" })).toBeNull();
+    expect(within(rail).getByRole("button", { name: "Home" })).toBeTruthy();
+    expect(within(rail).getByRole("button", { name: "Projects" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
+  });
+
+  it("leaves pane resizing to the parent resizable panel group", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProjectSidebar activePanel="home" collapsed={false} onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Resize left pane" })).toBeNull();
+    expect(screen.queryByRole("separator", { name: "Resize left pane" })).toBeNull();
+  });
+
+  it("renders Heroicons in the icon rail", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="home" collapsed onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+
+    expect(within(rail).getByRole("button", { name: "Home" }).querySelector("svg")).toBeTruthy();
+  });
+
+  it("orders account immediately above settings", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="home" collapsed={false} onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+
+    expect(
+      within(rail)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Home", "Chats", "Projects", "Plugins", "Automation", "Account", "Settings"]);
+
+    const secondaryNavigation = within(rail).getByTestId("secondary-navigation");
+    expect(
+      within(secondaryNavigation)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Account", "Settings"]);
+  });
+
+  it("uses an icon rail to switch the visible sidebar panel", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="home" collapsed={false} onPanelChange={onPanelChange} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+    expect(within(rail).getByRole("button", { name: "Home" })).toBeTruthy();
+    expect(within(rail).getByRole("button", { name: "Settings" })).toBeTruthy();
+
+    fireEvent.click(within(rail).getByRole("button", { name: "Settings" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("settings");
+  });
+
+  it("keeps the chat route when Home opens the sidebar", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/chat/thread-1"]}>
+        <ProjectSidebar activePanel="home" collapsed onPanelChange={onPanelChange} onToggle={vi.fn()} />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("home");
+    expect(screen.getByTestId("location").textContent).toBe("/chat/thread-1");
+  });
+
+  it("navigates Home normally from the new-chat route", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/chat/new"]}>
+        <ProjectSidebar activePanel="home" collapsed onPanelChange={onPanelChange} onToggle={vi.fn()} />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("home");
+    expect(screen.getByTestId("location").textContent).toBe("/");
+  });
+
+  it("navigates to Home from a non-chat route", async () => {
+    const onPanelChange = vi.fn();
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <ProjectSidebar activePanel="settings" collapsed onPanelChange={onPanelChange} onToggle={vi.fn()} />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+
+    expect(onPanelChange).toHaveBeenCalledWith("home");
+    expect(screen.getByTestId("location").textContent).toBe("/");
+  });
+
+  it("shows settings tabs in the settings sidebar panel", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <ProjectSidebar activePanel="settings" collapsed={false} onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const panel = screen.getByRole("complementary", {
+      name: "Settings sidebar",
+    });
+    expect(within(panel).getByRole("link", { name: "General" }).className).toContain("text-base-content");
+    expect(within(panel).getByRole("link", { name: "Appearance" })).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "Provider" })).toBeTruthy();
+    expect(within(panel).queryByRole("link", { name: "Account" })).toBeNull();
+  });
+  it("translates every icon rail label when Japanese is selected", async () => {
+    const { ProjectSidebar } = await import("./ProjectSidebar");
+    render(
+      <MemoryRouter>
+        <ProjectSidebar activePanel="home" collapsed onPanelChange={vi.fn()} onToggle={vi.fn()} />
+      </MemoryRouter>,
+    );
+    await act(() => i18n.changeLanguage("ja"));
+    const rail = screen.getByRole("navigation", {
+      name: "ワークスペースのナビゲーション",
+    });
+    expect(
+      within(rail)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["ホーム", "チャット", "プロジェクト", "プラグイン", "自動化", "アカウント", "設定"]);
+  });
+});

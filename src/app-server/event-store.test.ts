@@ -16,12 +16,10 @@ describe("app-server event store", () => {
 
   it("exposes reducer state and marks a lagged stream for resynchronization", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
-    listenToAppServerEvents.mockImplementation(
-      async (next: (event: AppServerEvent) => void) => {
-        handler = next;
-        return () => undefined;
-      },
-    );
+    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+      handler = next;
+      return () => undefined;
+    });
 
     const store = await import("./event-store");
     await store.startAppServerEventStore();
@@ -70,12 +68,10 @@ describe("app-server event store", () => {
 
   it("ignores events from a replaced connection listener", async () => {
     const handlers: Array<(event: AppServerEvent) => void> = [];
-    listenToAppServerEvents.mockImplementation(
-      async (next: (event: AppServerEvent) => void) => {
-        handlers.push(next);
-        return vi.fn();
-      },
-    );
+    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+      handlers.push(next);
+      return vi.fn();
+    });
 
     const store = await import("./event-store");
     await store.startAppServerEventStore();
@@ -95,12 +91,10 @@ describe("app-server event store", () => {
   it("ignores events from a listener after the store has stopped", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
     const unlisten = vi.fn();
-    listenToAppServerEvents.mockImplementationOnce(
-      async (next: (event: AppServerEvent) => void) => {
-        handler = next;
-        return unlisten;
-      },
-    );
+    listenToAppServerEvents.mockImplementationOnce(async (next: (event: AppServerEvent) => void) => {
+      handler = next;
+      return unlisten;
+    });
 
     const store = await import("./event-store");
     await store.startAppServerEventStore();
@@ -116,14 +110,10 @@ describe("app-server event store", () => {
   });
 
   it("allows a failed listener setup to be retried", async () => {
-    listenToAppServerEvents
-      .mockRejectedValueOnce(new Error("listener unavailable"))
-      .mockResolvedValueOnce(vi.fn());
+    listenToAppServerEvents.mockRejectedValueOnce(new Error("listener unavailable")).mockResolvedValueOnce(vi.fn());
 
     const store = await import("./event-store");
-    await expect(store.startAppServerEventStore()).rejects.toThrow(
-      "listener unavailable",
-    );
+    await expect(store.startAppServerEventStore()).rejects.toThrow("listener unavailable");
     await expect(store.startAppServerEventStore()).resolves.toBeUndefined();
     expect(store.getAppServerEventSnapshot().connected).toBe(true);
   });
@@ -132,12 +122,10 @@ describe("app-server event store", () => {
     vi.useFakeTimers();
     try {
       let handler: ((event: AppServerEvent) => void) | undefined;
-      listenToAppServerEvents.mockImplementation(
-        async (next: (event: AppServerEvent) => void) => {
-          handler = next;
-          return vi.fn();
-        },
-      );
+      listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+        handler = next;
+        return vi.fn();
+      });
 
       const store = await import("./event-store");
       await store.startAppServerEventStore();
@@ -173,12 +161,8 @@ describe("app-server event store", () => {
 
       vi.advanceTimersByTime(10 * 60_000 + 1);
 
-      expect(store.getAppServerEventSnapshot().threads).not.toHaveProperty(
-        "idle",
-      );
-      expect(store.getAppServerEventSnapshot().threads).toHaveProperty(
-        "visible",
-      );
+      expect(store.getAppServerEventSnapshot().threads).not.toHaveProperty("idle");
+      expect(store.getAppServerEventSnapshot().threads).toHaveProperty("visible");
       release();
     } finally {
       vi.useRealTimers();
@@ -187,12 +171,10 @@ describe("app-server event store", () => {
 
   it("clears recovered live items without losing active thread metadata", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
-    listenToAppServerEvents.mockImplementation(
-      async (next: (event: AppServerEvent) => void) => {
-        handler = next;
-        return vi.fn();
-      },
-    );
+    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+      handler = next;
+      return vi.fn();
+    });
 
     const store = await import("./event-store");
     await store.startAppServerEventStore();
@@ -219,8 +201,7 @@ describe("app-server event store", () => {
       },
     });
 
-    const staleItem =
-      store.getAppServerEventSnapshot().threads["thread-1"]?.items[0];
+    const staleItem = store.getAppServerEventSnapshot().threads["thread-1"]?.items[0];
     handler?.({
       type: "serverNotification",
       data: {
@@ -233,28 +214,21 @@ describe("app-server event store", () => {
         },
       },
     });
-    store.clearThreadLiveItems(
-      "thread-1",
-      new Set(staleItem ? [staleItem] : []),
-    );
+    store.clearThreadLiveItems("thread-1", new Set(staleItem ? [staleItem] : []));
 
-    expect(store.getAppServerEventSnapshot().threads["thread-1"]).toMatchObject(
-      {
-        activeTurnId: "turn-1",
-        status: "running",
-        items: [{ id: "item-1", text: "stalefresh" }],
-      },
-    );
+    expect(store.getAppServerEventSnapshot().threads["thread-1"]).toMatchObject({
+      activeTurnId: "turn-1",
+      status: "running",
+      items: [{ id: "item-1", text: "stalefresh" }],
+    });
   });
 
   it("notifies event subscribers once for each new event", async () => {
     let handler: ((event: AppServerEvent) => void) | undefined;
-    listenToAppServerEvents.mockImplementation(
-      async (next: (event: AppServerEvent) => void) => {
-        handler = next;
-        return vi.fn();
-      },
-    );
+    listenToAppServerEvents.mockImplementation(async (next: (event: AppServerEvent) => void) => {
+      handler = next;
+      return vi.fn();
+    });
     const listener = vi.fn();
 
     const store = await import("./event-store");

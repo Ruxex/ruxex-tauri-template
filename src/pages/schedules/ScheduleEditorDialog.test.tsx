@@ -9,15 +9,11 @@ import { createScheduleFormState, scheduleFormReducer } from "./schedule-form";
 
 function renderWeeklyEditor() {
   function TestEditor() {
-    const [form, dispatch] = useReducer(
-      scheduleFormReducer,
-      createScheduleFormState(),
-      (state) => ({
-        ...state,
-        cadenceKind: "weekly" as const,
-        weekdays: ["1", "3"],
-      }),
-    );
+    const [form, dispatch] = useReducer(scheduleFormReducer, createScheduleFormState(), (state) => ({
+      ...state,
+      cadenceKind: "weekly" as const,
+      weekdays: ["1", "3"],
+    }));
 
     return (
       <ScheduleEditorDialog
@@ -41,14 +37,9 @@ describe("ScheduleEditorDialog", () => {
 
     const cadence = screen.getByLabelText("Cadence");
     const weekdays = screen.getByRole("group", { name: "Weekdays" });
-    expect(
-      cadence.compareDocumentPosition(weekdays) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(cadence.compareDocumentPosition(weekdays) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    expect(screen.queryAllByRole("checkbox", { name: /Weekday/ })).toHaveLength(
-      0,
-    );
+    expect(screen.queryAllByRole("checkbox", { name: /Weekday/ })).toHaveLength(0);
 
     expect(
       within(weekdays)
@@ -56,29 +47,13 @@ describe("ScheduleEditorDialog", () => {
         .map((button) => button.textContent),
     ).toEqual(["S", "M", "T", "W", "T", "F", "S"]);
 
-    expect(
-      screen
-        .getByRole("button", { name: "Monday" })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
-    expect(
-      screen
-        .getByRole("button", { name: "Tuesday" })
-        .getAttribute("aria-pressed"),
-    ).toBe("false");
+    expect(screen.getByRole("button", { name: "Monday" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Tuesday" }).getAttribute("aria-pressed")).toBe("false");
 
     fireEvent.click(screen.getByRole("button", { name: "Monday" }));
     fireEvent.click(screen.getByRole("button", { name: "Tuesday" }));
 
-    expect(
-      screen
-        .getByRole("button", { name: "Monday" })
-        .getAttribute("aria-pressed"),
-    ).toBe("false");
-    expect(
-      screen
-        .getByRole("button", { name: "Tuesday" })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+    expect(screen.getByRole("button", { name: "Monday" }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("button", { name: "Tuesday" }).getAttribute("aria-pressed")).toBe("true");
   });
 });

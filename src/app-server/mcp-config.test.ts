@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { i18n } from "../app/i18n";
-import type { v2 } from "../protocol";
+import { i18n } from "@/app/i18n";
+import type { v2 } from "@/protocol";
 import {
   draftFromEntry,
   extractGlobalMcpConfig,
@@ -11,17 +11,11 @@ import {
   type McpServerDraft,
 } from "./mcp-config";
 
-function configResponse(
-  layers: v2.ConfigLayer[] | null,
-  config: v2.Config = {} as v2.Config,
-): v2.ConfigReadResponse {
+function configResponse(layers: v2.ConfigLayer[] | null, config: v2.Config = {} as v2.Config): v2.ConfigReadResponse {
   return { config, layers, origins: {} };
 }
 
-function userLayer(
-  config: Record<string, unknown>,
-  version = "user-v1",
-): v2.ConfigLayer {
+function userLayer(config: Record<string, unknown>, version = "user-v1"): v2.ConfigLayer {
   return {
     name: {
       type: "user",
@@ -106,10 +100,7 @@ describe("global MCP configuration adapter", () => {
           mcp_servers: {
             docs: {
               command: "node",
-              env_vars: [
-                "DOCS_TOKEN",
-                { name: "REMOTE_TOKEN", source: "remote" },
-              ],
+              env_vars: ["DOCS_TOKEN", { name: "REMOTE_TOKEN", source: "remote" }],
             },
             broken: { enabled: "yes" },
           },
@@ -151,10 +142,7 @@ describe("global MCP configuration adapter", () => {
       throw new Error("expected a valid MCP draft");
     }
 
-    const serialized = serializeMcpServerDraft(
-      { ...draft, command: "bun" },
-      entry.raw,
-    );
+    const serialized = serializeMcpServerDraft({ ...draft, command: "bun" }, entry.raw);
 
     expect(serialized).toMatchObject({
       command: "bun",
@@ -194,12 +182,9 @@ describe("global MCP configuration adapter", () => {
   });
 
   it("forces required to false when editing a legacy required server", () => {
-    expect(
-      serializeMcpServerDraft(
-        stdioDraft({ required: true }),
-        { command: "node", required: true },
-      ),
-    ).toMatchObject({ required: false });
+    expect(serializeMcpServerDraft(stdioDraft({ required: true }), { command: "node", required: true })).toMatchObject(
+      { required: false },
+    );
   });
 
   it("forces required to false for imported MCP server JSON", () => {
@@ -211,9 +196,7 @@ describe("global MCP configuration adapter", () => {
       }),
     );
 
-    expect(result.entries).toEqual([
-      { name: "docs", value: { command: "node", required: false } },
-    ]);
+    expect(result.entries).toEqual([{ name: "docs", value: { command: "node", required: false } }]);
   });
 
   it("removes incompatible transport fields when switching an existing entry", () => {
@@ -276,10 +259,6 @@ describe("global MCP configuration adapter", () => {
 
 it("localizes Ruxex validation and preserves MCP field names", async () => {
   await i18n.changeLanguage("ja");
-  const response = configResponse([
-    userLayer({ mcp_servers: { docs: { command: "node", args: "invalid" } } }),
-  ]);
-  expect(extractGlobalMcpConfig(response).servers[0]?.error).toBe(
-    "args は文字列の配列で指定してください",
-  );
+  const response = configResponse([userLayer({ mcp_servers: { docs: { command: "node", args: "invalid" } } })]);
+  expect(extractGlobalMcpConfig(response).servers[0]?.error).toBe("args は文字列の配列で指定してください");
 });

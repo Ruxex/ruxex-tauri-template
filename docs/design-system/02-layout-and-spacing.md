@@ -133,7 +133,7 @@ Ruxexのメインウィンドウは初期幅1280px、最小幅960pxです。た�
 
 ## 現行コードとの対応
 
-この初版の基準は、現在のコードで使われている共通パターンを整理したものです。たとえば、[`PageContainer`](../../src/components/layout/PageContainer.tsx) は `max-w-5xl` と `space-y-6` を使い、[`AppLayout`](../../src/components/layout/AppLayout.tsx) は通常ページに `p-4 sm:p-6` を与えています。設定・詳細ページには `max-w-3xl` の例があります。
+この初版の基準は、現在のコードで使われている共通パターンを整理したものです。たとえば、[`PageContainer`](../../src/components/feature/layout/PageContainer.tsx) は `max-w-5xl` と `space-y-6` を使い、[`AppLayout`](../../src/components/feature/layout/AppLayout.tsx) は通常ページに `p-4 sm:p-6` を与えています。設定・詳細ページには `max-w-3xl` の例があります。
 
 これらはガイドの根拠となる既存例であり、現状の全ページを監査した結果ではありません。適用フェーズでは、各画面を確認したうえで、同じ役割の差異をガイドに合わせて段階的に整理します。
 

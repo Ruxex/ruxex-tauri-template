@@ -1,6 +1,6 @@
 import { beforeEach } from "vitest";
 
-import { i18n } from "./app/i18n";
+import { i18n } from "@/app/i18n";
 
 // Reset before mounting each test so language updates do not affect its cleanup.
 beforeEach(async () => {

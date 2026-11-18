@@ -40,30 +40,19 @@ describe("app-server query invalidation", () => {
       backwardsCursor: null,
     });
 
-    queryClient.setQueryData(
-      appServerQueryKeys.threadList(activeParams),
-      response([]),
-    );
-    queryClient.setQueryData(
-      appServerQueryKeys.threadList(projectOneParams),
-      response([]),
-    );
-    queryClient.setQueryData(
-      appServerQueryKeys.threadList(projectTwoParams),
-      response([]),
-    );
+    queryClient.setQueryData(appServerQueryKeys.threadList(activeParams), response([]));
+    queryClient.setQueryData(appServerQueryKeys.threadList(projectOneParams), response([]));
+    queryClient.setQueryData(appServerQueryKeys.threadList(projectTwoParams), response([]));
 
     upsertThreadInListCaches(queryClient, newThread);
 
-    expect(
-      queryClient.getQueryData(appServerQueryKeys.threadList(activeParams)),
-    ).toMatchObject({ data: [{ id: "thread-new" }] });
-    expect(
-      queryClient.getQueryData(appServerQueryKeys.threadList(projectOneParams)),
-    ).toMatchObject({ data: [{ id: "thread-new" }] });
-    expect(
-      queryClient.getQueryData(appServerQueryKeys.threadList(projectTwoParams)),
-    ).toMatchObject({ data: [] });
+    expect(queryClient.getQueryData(appServerQueryKeys.threadList(activeParams))).toMatchObject({
+      data: [{ id: "thread-new" }],
+    });
+    expect(queryClient.getQueryData(appServerQueryKeys.threadList(projectOneParams))).toMatchObject({
+      data: [{ id: "thread-new" }],
+    });
+    expect(queryClient.getQueryData(appServerQueryKeys.threadList(projectTwoParams))).toMatchObject({ data: [] });
   });
 
   it("adds a newly started subagent to its parent's cached list", () => {

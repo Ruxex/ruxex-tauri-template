@@ -10,24 +10,16 @@ describe("getMockAppServer", () => {
     const server = getMockAppServer();
 
     expect(getMockAppServer()).toBe(server);
-    await expect(
-      server.request("model/list", {} as never),
-    ).resolves.toMatchObject({
+    await expect(server.request("model/list", {} as never)).resolves.toMatchObject({
       response: { data: [], nextCursor: null },
     });
-    await expect(
-      server.request("project/list", {} as never),
-    ).resolves.toMatchObject({
+    await expect(server.request("project/list", {} as never)).resolves.toMatchObject({
       response: { data: [], nextCursor: null },
     });
-    await expect(
-      server.request("thread/list", {} as never),
-    ).resolves.toMatchObject({
+    await expect(server.request("thread/list", {} as never)).resolves.toMatchObject({
       response: { data: [], nextCursor: null, backwardsCursor: null },
     });
-    await expect(
-      server.request("account/read", {} as never),
-    ).resolves.toMatchObject({
+    await expect(server.request("account/read", {} as never)).resolves.toMatchObject({
       response: {
         providerId: "mock",
         authStatus: "unauthenticated",

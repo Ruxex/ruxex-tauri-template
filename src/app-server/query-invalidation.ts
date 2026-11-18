@@ -1,22 +1,16 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../protocol";
+import type { v2 } from "@/protocol";
 import { appServerQueryKeys } from "./query-keys";
 
-export function upsertThreadInListCaches(
-  queryClient: QueryClient,
-  thread: v2.Thread,
-): void {
+export function upsertThreadInListCaches(queryClient: QueryClient, thread: v2.Thread): void {
   const cachedLists = queryClient.getQueriesData<v2.ThreadListResponse>({
     queryKey: appServerQueryKeys.threadListRoot,
   });
   let shouldRefreshSearchLists = false;
 
   for (const [queryKey, data] of cachedLists) {
-    if (
-      !data ||
-      data.data.some((cachedThread) => cachedThread.id === thread.id)
-    ) {
+    if (!data || data.data.some((cachedThread) => cachedThread.id === thread.id)) {
       continue;
     }
     const params = queryKey.at(-1) as v2.ThreadListParams | undefined;
@@ -27,34 +21,20 @@ export function upsertThreadInListCaches(
     if (params?.archived === true) {
       continue;
     }
-    if (
-      params?.projectId !== undefined &&
-      params.projectId !== thread.projectId
-    ) {
+    if (params?.projectId !== undefined && params.projectId !== thread.projectId) {
       continue;
     }
-    if (
-      params?.parentThreadId !== undefined &&
-      params.parentThreadId !== thread.parentThreadId
-    ) {
+    if (params?.parentThreadId !== undefined && params.parentThreadId !== thread.parentThreadId) {
       continue;
     }
-    if (
-      params?.ancestorThreadId &&
-      !hasAncestor(thread, params.ancestorThreadId, data.data)
-    ) {
+    if (params?.ancestorThreadId && !hasAncestor(thread, params.ancestorThreadId, data.data)) {
       continue;
     }
 
-    const nextData =
-      params?.sortDirection === "asc"
-        ? [...data.data, thread]
-        : [thread, ...data.data];
+    const nextData = params?.sortDirection === "asc" ? [...data.data, thread] : [thread, ...data.data];
     const isAllPagesQuery = queryKey.at(-2) === "all";
     const nextListData =
-      !isAllPagesQuery && params?.limit && params.limit > 0
-        ? nextData.slice(0, params.limit)
-        : nextData;
+      !isAllPagesQuery && params?.limit && params.limit > 0 ? nextData.slice(0, params.limit) : nextData;
     queryClient.setQueryData(queryKey, { ...data, data: nextListData });
   }
 
@@ -63,11 +43,7 @@ export function upsertThreadInListCaches(
   }
 }
 
-function hasAncestor(
-  thread: v2.Thread,
-  ancestorThreadId: string,
-  cachedThreads: v2.Thread[],
-): boolean {
+function hasAncestor(thread: v2.Thread, ancestorThreadId: string, cachedThreads: v2.Thread[]): boolean {
   const threadsById = new Map(cachedThreads.map((item) => [item.id, item]));
   const visited = new Set<string>();
   let parentThreadId = thread.parentThreadId;
@@ -81,9 +57,7 @@ function hasAncestor(
   return false;
 }
 
-export function invalidateDescendantThreadLists(
-  queryClient: QueryClient,
-): void {
+export function invalidateDescendantThreadLists(queryClient: QueryClient): void {
   const cachedLists = queryClient.getQueriesData<v2.ThreadListResponse>({
     queryKey: appServerQueryKeys.threadListRoot,
   });
@@ -95,10 +69,7 @@ export function invalidateDescendantThreadLists(
   }
 }
 
-export function upsertSubagentThreadInCache(
-  queryClient: QueryClient,
-  thread: v2.Thread,
-): void {
+export function upsertSubagentThreadInCache(queryClient: QueryClient, thread: v2.Thread): void {
   const parentThreadId = thread.parentThreadId;
   if (!parentThreadId) return;
 
@@ -110,9 +81,7 @@ export function upsertSubagentThreadInCache(
 
     return {
       ...current,
-      data: [...current.data, thread]
-        .sort((left, right) => right.updatedAt - left.updatedAt)
-        .slice(0, 100),
+      data: [...current.data, thread].sort((left, right) => right.updatedAt - left.updatedAt).slice(0, 100),
     };
   });
   void queryClient.invalidateQueries({ queryKey });
@@ -122,46 +91,31 @@ export function invalidateThreadList(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
 }
 
-export function invalidateThreadConversation(
-  queryClient: QueryClient,
-  threadId: string,
-): void {
+export function invalidateThreadConversation(queryClient: QueryClient, threadId: string): void {
   void queryClient.invalidateQueries({
     queryKey: appServerQueryKeys.threadConversationRoot(threadId),
   });
 }
 
-export function invalidateThreadMetadata(
-  queryClient: QueryClient,
-  threadId: string,
-): void {
+export function invalidateThreadMetadata(queryClient: QueryClient, threadId: string): void {
   void queryClient.invalidateQueries({
     queryKey: appServerQueryKeys.threadMetadata(threadId),
   });
 }
 
-export function invalidateThreadGoal(
-  queryClient: QueryClient,
-  threadId: string,
-): void {
+export function invalidateThreadGoal(queryClient: QueryClient, threadId: string): void {
   void queryClient.invalidateQueries({
     queryKey: appServerQueryKeys.threadGoal(threadId),
   });
 }
 
-export function invalidateThreadAttachments(
-  queryClient: QueryClient,
-  threadId: string,
-): void {
+export function invalidateThreadAttachments(queryClient: QueryClient, threadId: string): void {
   void queryClient.invalidateQueries({
     queryKey: appServerQueryKeys.threadAttachmentsRoot(threadId),
   });
 }
 
-export function invalidateThreadQueue(
-  queryClient: QueryClient,
-  threadId: string,
-): void {
+export function invalidateThreadQueue(queryClient: QueryClient, threadId: string): void {
   void queryClient.invalidateQueries({
     queryKey: appServerQueryKeys.threadQueueRoot(threadId),
   });
@@ -171,10 +125,7 @@ export function invalidateProjectList(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.projects });
 }
 
-export function invalidateProjectQueries(
-  queryClient: QueryClient,
-  projectId: string,
-): void {
+export function invalidateProjectQueries(queryClient: QueryClient, projectId: string): void {
   void queryClient.invalidateQueries({
     queryKey: appServerQueryKeys.project(projectId),
   });

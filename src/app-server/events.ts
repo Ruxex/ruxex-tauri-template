@@ -1,6 +1,6 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
-import type { ServerNotification, ServerRequest } from "../protocol";
+import type { ServerNotification, ServerRequest } from "@/protocol";
 import { isMockAppServerRuntime } from "./runtime";
 
 export type AppServerEvent =
@@ -9,9 +9,7 @@ export type AppServerEvent =
   | { type: "serverRequest"; data: ServerRequest }
   | { type: "disconnected"; data: { message: string } };
 
-export function listenToAppServerEvents(
-  handler: (event: AppServerEvent) => void,
-): Promise<UnlistenFn> {
+export function listenToAppServerEvents(handler: (event: AppServerEvent) => void): Promise<UnlistenFn> {
   if (isMockAppServerRuntime) {
     return Promise.resolve(() => {
       void handler;

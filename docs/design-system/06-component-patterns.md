@@ -58,6 +58,6 @@
 
 ## 実装参照例
 
-現在の共通部品を新しい画面へ流用する前に、その部品が状態・キーボード操作・可変内容まで同じ役割を持つか確認します。例として、ダイアログの骨格は [`DialogShell`](../../src/components/common/DialogShell.tsx)、非同期状態の簡潔な表示は [`AsyncState`](../../src/components/common/AsyncState.tsx)、バッジ状態の意味表現は [`StateBadge`](../../src/components/common/StateBadge.tsx) を参照できます。
+現在の共通部品を新しい画面へ流用する前に、その部品が状態・キーボード操作・可変内容まで同じ役割を持つか確認します。例として、ダイアログの骨格は [`DialogShell`](../../src/components/base/common/DialogShell.tsx)、非同期状態の簡潔な表示は [`AsyncState`](../../src/components/base/common/AsyncState.tsx)、バッジ状態の意味表現は [`StateBadge`](../../src/components/base/common/StateBadge.tsx) を参照できます。
 
 既存部品がない場合は、次の[参照パターン](./07-reference-patterns.md)を基に、機能に必要な意味・振る舞いを追加します。見た目だけ似せた独自部品は作りません。

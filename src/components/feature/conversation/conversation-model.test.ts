@@ -1,0 +1,133 @@
+import { describe, expect, it } from "vitest";
+
+import { mergeConversationItems, normalizeThreadItem } from "./conversation-model";
+
+describe("conversation model", () => {
+  it("uses the configured assistant name for agent messages", () => {
+    const items = mergeConversationItems(
+      [
+        {
+          turnId: "turn-1",
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "Hello",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      ],
+      [],
+      undefined,
+      [],
+      { assistantName: "Example Assistant" },
+    );
+
+    expect(items[0]?.title).toBe("Example Assistant");
+  });
+
+  it("normalizes imageView items into screenshot presentation metadata", () => {
+    const item = normalizeThreadItem("turn-1", {
+      type: "imageView",
+      id: "image-1",
+      path: "/workspace/capture.png",
+    });
+
+    expect(item).toMatchObject({
+      id: "image-1",
+      type: "imageView",
+      category: "activity",
+      title: "Screenshot",
+      imagePath: "/workspace/capture.png",
+    });
+  });
+
+  it("keeps dynamic tool image outputs available to the renderer", () => {
+    const item = normalizeThreadItem("turn-1", {
+      type: "dynamicToolCall",
+      id: "tool-1",
+      namespace: null,
+      tool: "browser.snapshot",
+      arguments: {},
+      status: "completed",
+      contentItems: [{ type: "inputImage", imageUrl: "data:image/png;base64,AA==" }],
+      success: true,
+      durationMs: 10,
+    });
+
+    expect(item.imageUrls).toEqual(["data:image/png;base64,AA=="]);
+  });
+
+  it("extracts a browser URL for an explicit external-browser action", () => {
+    const item = normalizeThreadItem("turn-1", {
+      type: "dynamicToolCall",
+      id: "tool-2",
+      namespace: "browser",
+      tool: "browser.navigate",
+      arguments: { url: "https://example.test/session" },
+      status: "completed",
+      contentItems: null,
+      success: true,
+      durationMs: 5,
+    });
+
+    expect(item.browserUrl).toBe("https://example.test/session");
+  });
+
+  it("extracts an explicit artifact output path from command JSON", () => {
+    const item = normalizeThreadItem("turn-1", {
+      type: "commandExecution",
+      id: "command-artifact-1",
+      pluginId: null,
+      scriptPath: null,
+      command: "ruxex-artifacts run /workspace/build.mjs",
+      cwd: "/workspace",
+      processId: null,
+      source: "agent",
+      status: "completed",
+      commandActions: [],
+      aggregatedOutput: '{"ok":true,"format":"xlsx","output":"/workspace/report.xlsx"}',
+      exitCode: 0,
+      durationMs: 12,
+    });
+
+    expect(item).toMatchObject({
+      artifactPath: "/workspace/report.xlsx",
+      artifactFormat: "xlsx",
+    });
+  });
+
+  it("lets the authoritative snapshot replace a stale live item during recovery", () => {
+    const items = mergeConversationItems(
+      [
+        {
+          turnId: "turn-1",
+          item: {
+            type: "agentMessage",
+            id: "item-1",
+            text: "current",
+            phase: null,
+            delivery: null,
+            questions: null,
+          },
+        },
+      ],
+      [
+        {
+          id: "item-1",
+          threadId: "thread-1",
+          turnId: "turn-1",
+          type: "agentMessage",
+          text: "stale live text",
+        },
+      ],
+      "running",
+      [],
+      { preferAuthoritative: true },
+    );
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.text).toBe("current");
+  });
+});

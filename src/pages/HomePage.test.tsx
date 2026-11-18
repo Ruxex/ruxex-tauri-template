@@ -1,16 +1,10 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const useCreateThread = vi.hoisted(() => vi.fn());
 const useModelList = vi.hoisted(() => vi.fn());
@@ -23,7 +17,7 @@ const useCollaborationModes = vi.hoisted(() => vi.fn());
 const useSkillsList = vi.hoisted(() => vi.fn());
 const createChatWorkspace = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useCreateThread,
   useModelList,
   useProject,
@@ -34,8 +28,8 @@ vi.mock("../app-server/hooks", () => ({
   useCollaborationModes,
   useSkillsList,
 }));
-vi.mock("../platform/chat-workspace", () => ({ createChatWorkspace }));
-vi.mock("../components/conversation/ComposerMessageInput", () => ({
+vi.mock("@/platform/chat-workspace", () => ({ createChatWorkspace }));
+vi.mock("@/components/feature/conversation/ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
     onChange,
@@ -60,10 +54,7 @@ vi.mock("../components/conversation/ComposerMessageInput", () => ({
   ),
 }));
 vi.mock("react-router-dom", async () => {
-  const actual =
-    await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
@@ -71,9 +62,7 @@ describe("HomePage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
-    createChatWorkspace
-      .mockReset()
-      .mockResolvedValue("/home/test/.ruxex/workspaces/chat-1");
+    createChatWorkspace.mockReset().mockResolvedValue("/home/test/.ruxex/workspaces/chat-1");
     useSkillsList.mockReturnValue({ data: { data: [] } });
     useCollaborationModes.mockReturnValue({
       data: { data: [] },
@@ -93,9 +82,7 @@ describe("HomePage", () => {
             model: "ruxex",
             displayName: "Ruxex",
             hidden: false,
-            supportedReasoningEfforts: [
-              { reasoningEffort: "medium", description: "Balanced" },
-            ],
+            supportedReasoningEfforts: [{ reasoningEffort: "medium", description: "Balanced" }],
           },
         ],
       },
@@ -142,12 +129,8 @@ describe("HomePage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Let's get started" }),
-    ).toBeTruthy();
-    const settings = screen
-      .getByLabelText("Model and effort")
-      .closest("details");
+    expect(screen.getByRole("heading", { name: "Let's get started" })).toBeTruthy();
+    const settings = screen.getByLabelText("Model and effort").closest("details");
     expect(settings).not.toBeNull();
     expect(settings?.open).toBe(false);
     expect(settings?.querySelectorAll("select")).toHaveLength(2);
@@ -169,10 +152,8 @@ describe("HomePage", () => {
         <HomePage />
       </MemoryRouter>,
     );
-    const createThread = useCreateThread.mock.results.at(-1)?.value
-      .mutateAsync as ReturnType<typeof vi.fn>;
-    const sendMessage = useSendMessage.mock.results.at(-1)?.value
-      .mutateAsync as ReturnType<typeof vi.fn>;
+    const createThread = useCreateThread.mock.results.at(-1)?.value.mutateAsync as ReturnType<typeof vi.fn>;
+    const sendMessage = useSendMessage.mock.results.at(-1)?.value.mutateAsync as ReturnType<typeof vi.fn>;
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Start from home" },
     });
@@ -217,8 +198,7 @@ describe("HomePage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    const createThread = useCreateThread.mock.results.at(-1)?.value
-      .mutateAsync as ReturnType<typeof vi.fn>;
+    const createThread = useCreateThread.mock.results.at(-1)?.value.mutateAsync as ReturnType<typeof vi.fn>;
     await waitFor(() => expect(createThread).toHaveBeenCalled());
     expect(createThread).toHaveBeenCalledWith({
       model: "ruxex",
@@ -245,17 +225,14 @@ describe("HomePage", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Goal mode" }));
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    const setGoal = useSetThreadGoal.mock.results.at(-1)?.value
-      .mutateAsync as ReturnType<typeof vi.fn>;
+    const setGoal = useSetThreadGoal.mock.results.at(-1)?.value.mutateAsync as ReturnType<typeof vi.fn>;
     await waitFor(() => expect(setGoal).toHaveBeenCalled());
     expect(setGoal).toHaveBeenCalledWith({
       threadId: "thread-new",
       objective: "Keep the project healthy",
       status: "active",
     });
-    expect(
-      useSendMessage.mock.results.at(-1)?.value.mutateAsync,
-    ).not.toHaveBeenCalled();
+    expect(useSendMessage.mock.results.at(-1)?.value.mutateAsync).not.toHaveBeenCalled();
   });
 
   it("uses the App Server Plan collaboration mode when Plan mode is selected", async () => {
@@ -273,8 +250,7 @@ describe("HomePage", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Plan mode" }));
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    const sendMessage = useSendMessage.mock.results.at(-1)?.value
-      .mutateAsync as ReturnType<typeof vi.fn>;
+    const sendMessage = useSendMessage.mock.results.at(-1)?.value.mutateAsync as ReturnType<typeof vi.fn>;
     await waitFor(() => expect(sendMessage).toHaveBeenCalled());
     expect(sendMessage).toHaveBeenCalledWith({
       threadId: "thread-new",
@@ -300,9 +276,7 @@ describe("HomePage", () => {
     );
 
     expect(useProject).toHaveBeenLastCalledWith("project-1");
-    expect(screen.getByLabelText("Project").textContent).toContain(
-      "Project Alpha",
-    );
+    expect(screen.getByLabelText("Project").textContent).toContain("Project Alpha");
   });
   it("localizes the home composer without translating project names", async () => {
     await i18n.changeLanguage("ja");
@@ -312,18 +286,12 @@ describe("HomePage", () => {
         <HomePage />
       </MemoryRouter>,
     );
-    expect(
-      screen.getByRole("heading", { name: "さあ、始めましょう" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "さあ、始めましょう" })).toBeTruthy();
     expect(screen.getByLabelText("入力オプション")).toBeTruthy();
-    expect(screen.getByLabelText("Message").getAttribute("placeholder")).toBe(
-      "アシスタントに作業を依頼…",
-    );
+    expect(screen.getByLabelText("Message").getAttribute("placeholder")).toBe("アシスタントに作業を依頼…");
     expect(screen.getByRole("button", { name: "送信" })).toBeTruthy();
     fireEvent.click(
-      screen
-        .getAllByLabelText("プロジェクト")
-        .find((element) => element.tagName === "SUMMARY") as HTMLElement,
+      screen.getAllByLabelText("プロジェクト").find((element) => element.tagName === "SUMMARY") as HTMLElement,
     );
     expect(screen.getByRole("option", { name: "Project Alpha" })).toBeTruthy();
   });

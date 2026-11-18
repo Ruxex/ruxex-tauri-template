@@ -8,13 +8,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const ensureAppServer = vi.hoisted(() => vi.fn());
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => ({
-  data: { appServerVersion: "test" } as
-    | { appServerVersion: string }
-    | undefined,
+  data: { appServerVersion: "test" } as { appServerVersion: string } | undefined,
 }));
 
-vi.mock("../api", () => ({ ensureAppServer, requestAppServerMethod }));
-vi.mock("../queries", () => ({
+vi.mock("@/app-server/api", () => ({ ensureAppServer, requestAppServerMethod }));
+vi.mock("@/app-server/queries", () => ({
   useAppServerStatus: () => appServerStatus,
 }));
 
@@ -24,9 +22,7 @@ function createWrapper(
   }),
 ) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -49,10 +45,7 @@ describe("account hooks", () => {
     await act(async () => result.current.mutateAsync(params));
 
     expect(ensureAppServer).toHaveBeenCalledTimes(1);
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "account/login/start",
-      params,
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("account/login/start", params);
     expect(ensureAppServer.mock.invocationCallOrder[0]).toBeLessThan(
       requestAppServerMethod.mock.invocationCallOrder[0],
     );
@@ -73,26 +66,17 @@ describe("account hooks", () => {
 
   it("maps cancel and logout to their dedicated methods", async () => {
     const { useCancelLogin, useLogout } = await import("./useAccount");
-    const { result } = renderHook(
-      () => ({ cancel: useCancelLogin(), logout: useLogout() }),
-      { wrapper: createWrapper() },
-    );
+    const { result } = renderHook(() => ({ cancel: useCancelLogin(), logout: useLogout() }), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.cancel.mutateAsync({ loginId: "login-1" });
       await result.current.logout.mutateAsync();
     });
 
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      1,
-      "account/login/cancel",
-      { loginId: "login-1" },
-    );
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      2,
-      "account/logout",
-      undefined,
-    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "account/login/cancel", { loginId: "login-1" });
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "account/logout", undefined);
   });
 
   it("invalidates account data after a successful login and logout", async () => {
@@ -104,10 +88,9 @@ describe("account hooks", () => {
     });
     const invalidateQueries = vi.spyOn(client, "invalidateQueries");
     const { useLogin, useLogout } = await import("./useAccount");
-    const { result } = renderHook(
-      () => ({ login: useLogin(), logout: useLogout() }),
-      { wrapper: createWrapper(client) },
-    );
+    const { result } = renderHook(() => ({ login: useLogin(), logout: useLogout() }), {
+      wrapper: createWrapper(client),
+    });
 
     await act(async () => {
       await result.current.login.mutateAsync({
@@ -129,11 +112,9 @@ describe("account hooks", () => {
       wrapper: createWrapper(),
     });
 
-    await expect(
-      act(async () =>
-        result.current.mutateAsync({ type: "apiKey", apiKey: "secret" }),
-      ),
-    ).rejects.toThrow("daemon unavailable");
+    await expect(act(async () => result.current.mutateAsync({ type: "apiKey", apiKey: "secret" }))).rejects.toThrow(
+      "daemon unavailable",
+    );
     expect(requestAppServerMethod).not.toHaveBeenCalled();
   });
 

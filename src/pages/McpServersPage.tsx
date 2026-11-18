@@ -1,21 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useMemo, useRef, useState } from "react";
 
-import { formatErrorMessage } from "../app/error-message";
-import { useAllMcpServerStatus, useGlobalMcpConfig } from "../app-server/hooks";
-import type {
-  McpServerDraft,
-  McpServerEntry,
-  McpServerJsonImportEntry,
-} from "../app-server/mcp-config";
-import { PageContainer } from "../components/layout/PageContainer";
-import { McpServerDialog } from "./mcp-servers/McpServerDialog";
-import { McpServerList } from "./mcp-servers/McpServerList";
-import {
-  createMcpServerForm,
-  type McpServerFormState,
-} from "./mcp-servers/mcp-server-form";
-import { useMcpServerConfigActions } from "./mcp-servers/useMcpServerConfigActions";
+import { formatErrorMessage } from "@/app/error-message";
+import { useAllMcpServerStatus, useGlobalMcpConfig } from "@/app-server/hooks";
+import type { McpServerDraft, McpServerEntry, McpServerJsonImportEntry } from "@/app-server/mcp-config";
+import { PageContainer } from "@/components/feature/layout/PageContainer";
+import { McpServerDialog } from "@/pages/mcp-servers/McpServerDialog";
+import { McpServerList } from "@/pages/mcp-servers/McpServerList";
+import { createMcpServerForm, type McpServerFormState } from "@/pages/mcp-servers/mcp-server-form";
+import { useMcpServerConfigActions } from "@/pages/mcp-servers/useMcpServerConfigActions";
 
 type OpenDialog = {
   entry?: McpServerEntry;
@@ -39,10 +32,7 @@ export function McpServersPage() {
 
   const entries = globalConfig.data?.servers ?? [];
   const dialogEntry = dialog?.entry;
-  const existingNames = useMemo(
-    () => entries.map((entry) => entry.name),
-    [entries],
-  );
+  const existingNames = useMemo(() => entries.map((entry) => entry.name), [entries]);
   function focusDialogTrigger() {
     queueMicrotask(() => {
       if (dialogTriggerRef.current?.isConnected) {
@@ -124,9 +114,7 @@ export function McpServersPage() {
       )}
 
       <div className="space-y-4">
-        {globalConfig.isLoading && (
-          <span className="loading loading-spinner" />
-        )}
+        {globalConfig.isLoading && <span className="loading loading-spinner" />}
         {globalConfig.isError && (
           <p className="text-error" role="alert">
             {t("unableToLoadGlobalMcpServers", {
@@ -141,22 +129,16 @@ export function McpServersPage() {
             })}
           </p>
         )}
-        {!globalConfig.isLoading &&
-          !globalConfig.isError &&
-          !entries.length && (
-            <p className="text-sm text-base-content/60">
-              {t("noGlobalMcpServersConfigured")}
-            </p>
-          )}
+        {!globalConfig.isLoading && !globalConfig.isError && !entries.length && (
+          <p className="text-sm text-base-content/60">{t("noGlobalMcpServersConfigured")}</p>
+        )}
         {entries.length > 0 && (
           <McpServerList
             entries={entries}
             statuses={statuses.data?.data ?? []}
             isWritePending={actions.writeConfig.isPending}
             onEdit={openEditDialog}
-            onEnabledChange={(entry, enabled) =>
-              void actions.setEnabled(entry, enabled)
-            }
+            onEnabledChange={(entry, enabled) => void actions.setEnabled(entry, enabled)}
           />
         )}
         {actions.higherLayerNotice && (
@@ -175,11 +157,7 @@ export function McpServersPage() {
               {actions.reloadError}
             </p>
             <button
-              aria-label={
-                actions.reloadMcp.isPending
-                  ? t("reloading")
-                  : t("retryMcpReload")
-              }
+              aria-label={actions.reloadMcp.isPending ? t("reloading") : t("retryMcpReload")}
               className="btn btn-ghost btn-sm"
               type="button"
               disabled={actions.reloadMcp.isPending}
@@ -200,9 +178,7 @@ export function McpServersPage() {
           isPending={actions.writeConfig.isPending}
           error={actions.writeError}
           originalName={dialog.originalName}
-          onDelete={
-            dialogEntry ? () => void handleDelete(dialogEntry) : undefined
-          }
+          onDelete={dialogEntry ? () => void handleDelete(dialogEntry) : undefined}
           onClose={closeDialog}
           onImportJson={(entries) => void handleImportJson(entries)}
           onSubmit={(draft) => void handleSave(draft)}

@@ -1,4 +1,4 @@
-import type { RequestId } from "../protocol";
+import type { RequestId } from "@/protocol";
 import type { EventState, ThreadExecutionState } from "./event-reducer";
 
 export function updateThread(

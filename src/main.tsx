@@ -1,15 +1,14 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { AppProviders } from "./app/providers";
-import { router } from "./app/router";
+import { AppProviders } from "@/app/providers";
+import { router } from "@/app/router";
 import { invoke } from "@tauri-apps/api/core";
-import "./styles/index.css";
+import "@/styles/index.css";
 
 if (import.meta.env.VITE_E2E === "1") {
   window.__RUXEX_E2E__ = {
-    captureScreenshot: (name) =>
-      invoke<void>("capture_ui_fixture_screenshot", { name }),
+    captureScreenshot: (name) => invoke<void>("capture_ui_fixture_screenshot", { name }),
   };
 }
 

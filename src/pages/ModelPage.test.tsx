@@ -11,7 +11,7 @@ const useModelProviderCapabilities = vi.hoisted(() => vi.fn());
 const usePermissionProfiles = vi.hoisted(() => vi.fn());
 const useAppServerStatus = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useAccount,
   useAppServerStatus,
   useModelList,
@@ -20,7 +20,7 @@ vi.mock("../app-server/hooks", () => ({
   usePermissionProfiles,
 }));
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("ModelPage", () => {
   it("renders Japanese provider framing while preserving provider details", async () => {
@@ -71,9 +71,7 @@ describe("ModelPage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Provider" })).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Provider and account" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Provider and account" })).toBeTruthy();
     expect(screen.getByText("Data directory")).toBeTruthy();
     expect(screen.getByText("/home/ada/.ruxex_desktop")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Capabilities" })).toBeTruthy();

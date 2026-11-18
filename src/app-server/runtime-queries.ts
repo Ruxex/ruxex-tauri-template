@@ -7,8 +7,7 @@ import { isDesktopRuntime } from "./runtime";
 export function useAppServerStatus() {
   return useQuery({
     queryKey: appServerQueryKeys.status,
-    queryFn: () =>
-      isDesktopRuntime ? ensureAppServerRuntime() : Promise.resolve(null),
+    queryFn: () => (isDesktopRuntime ? ensureAppServerRuntime() : Promise.resolve(null)),
     enabled: isDesktopRuntime,
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,

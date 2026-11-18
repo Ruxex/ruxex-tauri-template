@@ -2,14 +2,10 @@ import { useTranslation } from "react-i18next";
 import { PuzzlePieceIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useMemo, useState } from "react";
 
-import { formatErrorMessage } from "../app/error-message";
-import {
-  useConfig,
-  usePluginList,
-  useUpgradeMarketplace,
-} from "../app-server/hooks";
-import { SettingsPanel } from "../components/settings/SettingsCards";
-import { FormFieldRow } from "../components/common/FormFieldRow";
+import { formatErrorMessage } from "@/app/error-message";
+import { useConfig, usePluginList, useUpgradeMarketplace } from "@/app-server/hooks";
+import { SettingsPanel } from "@/components/feature/settings/SettingsCards";
+import { FormFieldRow } from "@/components/base/common/FormFieldRow";
 import { useMarketplaceSettingsActions } from "./useMarketplaceSettingsActions";
 
 export function MarketplaceSettingsPage() {
@@ -19,9 +15,7 @@ export function MarketplaceSettingsPage() {
   const [sparsePaths, setSparsePaths] = useState("");
   const [serverFormError, setServerFormError] = useState<string | null>(null);
   const [sourceRequired, setSourceRequired] = useState(false);
-  const formError = sourceRequired
-    ? t("marketplaceSourceIsRequired")
-    : serverFormError;
+  const formError = sourceRequired ? t("marketplaceSourceIsRequired") : serverFormError;
   const config = useConfig();
   const plugins = usePluginList();
   const actions = useMarketplaceSettingsActions(config.data?.config);
@@ -31,9 +25,9 @@ export function MarketplaceSettingsPage() {
     () => new Set(activeMarketplaces.map((marketplace) => marketplace.name)),
     [activeMarketplaces],
   );
-  const disabledMarketplaces = Object.entries(
-    actions.marketplacePreferences.disabled,
-  ).filter(([name]) => !activeMarketplaceNames.has(name));
+  const disabledMarketplaces = Object.entries(actions.marketplacePreferences.disabled).filter(
+    ([name]) => !activeMarketplaceNames.has(name),
+  );
   const isBusy =
     actions.pendingAction !== null ||
     actions.addMarketplace.isPending ||
@@ -72,34 +66,22 @@ export function MarketplaceSettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">
-        {t("pluginMarketplaces")}
-      </h2>
+      <h2 className="text-3xl font-semibold tracking-tight">{t("pluginMarketplaces")}</h2>
 
       <SettingsPanel icon={PuzzlePieceIcon} title={t("addMarketplace")}>
         <form onSubmit={handleSubmit}>
           <div className="text-sm">
-            <FormFieldRow
-              compact
-              label={t("source")}
-              controlId="marketplace-source"
-            >
+            <FormFieldRow compact label={t("source")} controlId="marketplace-source">
               <input
                 aria-label={t("source")}
                 id="marketplace-source"
                 className="input input-bordered input-sm w-full max-w-sm justify-self-end max-sm:max-w-none"
                 value={source}
                 onChange={(event) => setSource(event.target.value)}
-                placeholder={t(
-                  "httpsgithubcomexamplemarketplacegitOrPathtomarketplace",
-                )}
+                placeholder={t("httpsgithubcomexamplemarketplacegitOrPathtomarketplace")}
               />
             </FormFieldRow>
-            <FormFieldRow
-              compact
-              label={t("gitRefOptional")}
-              controlId="marketplace-ref"
-            >
+            <FormFieldRow compact label={t("gitRefOptional")} controlId="marketplace-ref">
               <input
                 aria-label={t("gitRefOptional")}
                 id="marketplace-ref"
@@ -109,11 +91,7 @@ export function MarketplaceSettingsPage() {
                 placeholder="main"
               />
             </FormFieldRow>
-            <FormFieldRow
-              compact
-              label={t("sparsePathsOptional")}
-              controlId="marketplace-sparse-paths"
-            >
+            <FormFieldRow compact label={t("sparsePathsOptional")} controlId="marketplace-sparse-paths">
               <input
                 aria-label={t("sparsePathsOptional")}
                 id="marketplace-sparse-paths"
@@ -124,9 +102,7 @@ export function MarketplaceSettingsPage() {
               />
             </FormFieldRow>
           </div>
-          {formError && (
-            <p className="px-5 pt-4 text-sm text-error">{formError}</p>
-          )}
+          {formError && <p className="px-5 pt-4 text-sm text-error">{formError}</p>}
           {actions.addMarketplace.isError && !formError && (
             <p className="px-5 pt-4 text-sm text-error">
               {t("unableToAddMarketplace", {
@@ -136,18 +112,12 @@ export function MarketplaceSettingsPage() {
           )}
           <div className="flex justify-end px-5 py-4">
             <button
-              aria-label={
-                actions.addMarketplace.isPending
-                  ? t("adding")
-                  : t("addMarketplace")
-              }
+              aria-label={actions.addMarketplace.isPending ? t("adding") : t("addMarketplace")}
               className="btn btn-primary btn-sm"
               type="submit"
               disabled={isBusy}
             >
-              {actions.addMarketplace.isPending
-                ? t("adding")
-                : t("addMarketplace")}
+              {actions.addMarketplace.isPending ? t("adding") : t("addMarketplace")}
             </button>
           </div>
         </form>
@@ -166,42 +136,28 @@ export function MarketplaceSettingsPage() {
             })}
           </p>
         )}
-        {!plugins.isLoading &&
-          !plugins.isError &&
-          !activeMarketplaces.length &&
-          !disabledMarketplaces.length && (
-            <p className="px-5 py-4 text-sm text-base-content/60">
-              {t("noPluginMarketplacesConfigured")}
-            </p>
-          )}
+        {!plugins.isLoading && !plugins.isError && !activeMarketplaces.length && !disabledMarketplaces.length && (
+          <p className="px-5 py-4 text-sm text-base-content/60">{t("noPluginMarketplacesConfigured")}</p>
+        )}
         {activeMarketplaces.length ? (
           <ul className="divide-y divide-base-300 text-sm">
             {activeMarketplaces.map((marketplace) => {
-              const displayName =
-                marketplace.interface?.displayName ?? marketplace.name;
-              const definition = actions.definitionForMarketplace(
-                marketplace.name,
-              );
+              const displayName = marketplace.interface?.displayName ?? marketplace.name;
+              const definition = actions.definitionForMarketplace(marketplace.name);
               const isPending = actions.pendingAction === marketplace.name;
 
               return (
-                <li
-                  className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
-                  key={marketplace.name}
-                >
+                <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4" key={marketplace.name}>
                   <div className="min-w-0">
                     <p className="font-medium">{displayName}</p>
                     <p className="text-xs text-base-content/60">
-                      {marketplace.name} ·{" "}
-                      {t("pluginCount", { count: marketplace.plugins.length })}
+                      {marketplace.name} · {t("pluginCount", { count: marketplace.plugins.length })}
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     <button
                       aria-label={
-                        upgradeMarketplace.isPending
-                          ? t("updating")
-                          : t("updateNamed", { name: marketplace.name })
+                        upgradeMarketplace.isPending ? t("updating") : t("updateNamed", { name: marketplace.name })
                       }
                       className="btn btn-ghost btn-sm"
                       type="button"
@@ -212,27 +168,17 @@ export function MarketplaceSettingsPage() {
                         })
                       }
                     >
-                      {upgradeMarketplace.isPending
-                        ? t("updating")
-                        : t("updateNamed", { name: marketplace.name })}
+                      {upgradeMarketplace.isPending ? t("updating") : t("updateNamed", { name: marketplace.name })}
                     </button>
                     {definition && (
                       <button
-                        aria-label={
-                          isPending
-                            ? t("disabling")
-                            : t("disableNamed", { name: marketplace.name })
-                        }
+                        aria-label={isPending ? t("disabling") : t("disableNamed", { name: marketplace.name })}
                         className="btn btn-outline btn-sm"
                         type="button"
                         disabled={isBusy}
-                        onClick={() =>
-                          void actions.disable(marketplace.name, definition)
-                        }
+                        onClick={() => void actions.disable(marketplace.name, definition)}
                       >
-                        {isPending
-                          ? t("disabling")
-                          : t("disableNamed", { name: marketplace.name })}
+                        {isPending ? t("disabling") : t("disableNamed", { name: marketplace.name })}
                       </button>
                     )}
                     <button
@@ -241,11 +187,7 @@ export function MarketplaceSettingsPage() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => {
-                        if (
-                          globalThis.confirm(
-                            t("removeConfirm", { name: marketplace.name }),
-                          )
-                        ) {
+                        if (globalThis.confirm(t("removeConfirm", { name: marketplace.name }))) {
                           void actions.removeMarketplace.mutateAsync({
                             marketplaceName: marketplace.name,
                           });
@@ -269,31 +211,20 @@ export function MarketplaceSettingsPage() {
               {disabledMarketplaces.map(([name, definition]) => {
                 const isPending = actions.pendingAction === name;
                 return (
-                  <li
-                    className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
-                    key={name}
-                  >
+                  <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4" key={name}>
                     <div className="min-w-0">
                       <p className="font-medium">{name}</p>
-                      <p className="text-xs text-base-content/60">
-                        {t("disabled")}
-                      </p>
+                      <p className="text-xs text-base-content/60">{t("disabled")}</p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
                       <button
-                        aria-label={
-                          isPending
-                            ? t("enabling")
-                            : t("enableNamed", { name: name })
-                        }
+                        aria-label={isPending ? t("enabling") : t("enableNamed", { name: name })}
                         className="btn btn-primary btn-sm"
                         type="button"
                         disabled={isBusy}
                         onClick={() => void actions.enable(name, definition)}
                       >
-                        {isPending
-                          ? t("enabling")
-                          : t("enableNamed", { name: name })}
+                        {isPending ? t("enabling") : t("enableNamed", { name: name })}
                       </button>
                       <button
                         aria-label={t("forgetNamed", { name: name })}

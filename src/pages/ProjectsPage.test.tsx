@@ -4,13 +4,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const useProjectList = vi.hoisted(() => vi.fn());
 const useCreateProject = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({ useCreateProject, useProjectList }));
+vi.mock("@/app-server/hooks", () => ({ useCreateProject, useProjectList }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
 
 function LocationProbe() {
@@ -60,9 +60,7 @@ describe("ProjectsPage", () => {
     expect(screen.getByRole("table", { name: "Projects" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Project" })).toBeTruthy();
     expect(screen.queryByRole("columnheader", { name: "Type" })).toBeNull();
-    expect(
-      screen.getByRole("columnheader", { name: "Workspace" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Workspace" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Roots" })).toBeTruthy();
     expect(screen.getByText("Project Alpha")).toBeTruthy();
     expect(screen.getByRole("button", { name: "New project" })).toBeTruthy();
@@ -73,9 +71,7 @@ describe("ProjectsPage", () => {
     expect(projectLink.getAttribute("href")).toBe("/projects/project-1");
     expect(screen.queryByText("Open")).toBeNull();
     fireEvent.click(projectLink);
-    expect(screen.getByTestId("location").textContent).toBe(
-      "/projects/project-1",
-    );
+    expect(screen.getByTestId("location").textContent).toBe("/projects/project-1");
   });
 
   it("opens project creation in a modal with visible overflow for metadata popovers", async () => {
@@ -127,11 +123,7 @@ describe("ProjectsPage", () => {
     expect(screen.getByText("Project Alpha")).toBeTruthy();
     expect(screen.getByText("/workspace/alpha")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "新規プロジェクト" }));
-    expect(
-      screen.getByRole("dialog", { name: "プロジェクトを作成" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("textbox", { name: "プロジェクト名" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "プロジェクトを作成" })).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "プロジェクト名" })).toBeTruthy();
   });
 });

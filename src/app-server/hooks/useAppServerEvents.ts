@@ -1,22 +1,22 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useUiPreferences } from "../../app/ui-preferences";
+import { useUiPreferences } from "@/app/ui-preferences";
 import {
   createNotificationDispatcher,
   listenForNotificationActions,
   sendDesktopNotification,
-} from "../../platform/notifications";
+} from "@/platform/notifications";
 import {
   retainThreadState,
   subscribeToAppServerEvents,
   useAppServerEventStore,
   useThreadActivity as useThreadActivitySnapshot,
-} from "../event-store";
-import { synchronizeAppServerQueries } from "../event-query-sync";
-import { appServerQueryKeys } from "../query-keys";
-import { isDesktopRuntime } from "../runtime";
-import type { v2 } from "../../protocol";
+} from "@/app-server/event-store";
+import { synchronizeAppServerQueries } from "@/app-server/event-query-sync";
+import { appServerQueryKeys } from "@/app-server/query-keys";
+import { isDesktopRuntime } from "@/app-server/runtime";
+import type { v2 } from "@/protocol";
 
 export function useAppServerEvents() {
   return useAppServerEventStore();
@@ -34,9 +34,7 @@ export function useRetainThreadState(threadId: string): void {
   useEffect(() => retainThreadState(threadId), [threadId]);
 }
 
-export function useAppServerNotifications(
-  openThread: (threadId: string) => void,
-) {
+export function useAppServerNotifications(openThread: (threadId: string) => void) {
   const queryClient = useQueryClient();
   const openThreadRef = useRef(openThread);
   openThreadRef.current = openThread;
@@ -57,8 +55,7 @@ export function useAppServerNotifications(
           { includeTurns: false },
         ])?.thread.name,
       isFocused: () => typeof document !== "undefined" && document.hasFocus(),
-      send: (candidate) =>
-        sendDesktopNotification(candidate, notificationSound.current),
+      send: (candidate) => sendDesktopNotification(candidate, notificationSound.current),
     }),
   ).current;
 
@@ -68,9 +65,7 @@ export function useAppServerNotifications(
     }
     let stop: (() => void) | undefined;
     let cancelled = false;
-    void listenForNotificationActions((threadId) =>
-      openThreadRef.current(threadId),
-    ).then((unlisten) => {
+    void listenForNotificationActions((threadId) => openThreadRef.current(threadId)).then((unlisten) => {
       if (cancelled) {
         unlisten();
       } else {

@@ -1,20 +1,10 @@
 import { useTranslation } from "react-i18next";
-import {
-  CalendarDaysIcon,
-  PencilIcon,
-  PlayIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { EmptyState } from "../../components/common/AsyncState";
-import { ProjectIcon } from "../../components/projects/ProjectIcon";
-import { projectColorClassName } from "../../components/projects/project-metadata";
-import type { ScheduleRecord } from "../../platform/schedules";
-import {
-  formatDateTime,
-  formatRelativeDateTime,
-  scheduleCadenceLabel,
-} from "./schedule-format";
+import { CalendarDaysIcon, PencilIcon, PlayIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { EmptyState } from "@/components/base/common/AsyncState";
+import { ProjectIcon } from "@/components/composite/projects/ProjectIcon";
+import { projectColorClassName } from "@/components/composite/projects/project-metadata";
+import type { ScheduleRecord } from "@/platform/schedules";
+import { formatDateTime, formatRelativeDateTime, scheduleCadenceLabel } from "./schedule-format";
 
 export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
   const { t } = useTranslation("schedules");
@@ -39,10 +29,7 @@ export function EmptyScheduleList({ onCreate }: { onCreate: () => void }) {
 }
 
 function isInteractiveTarget(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    target.closest("button, input, label, a, select, textarea") !== null
-  );
+  return target instanceof HTMLElement && target.closest("button, input, label, a, select, textarea") !== null;
 }
 
 export function ScheduleCard({
@@ -90,21 +77,13 @@ export function ScheduleCard({
           <div
             className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${enabledTone ? projectColorClassName(schedule.color) : "bg-base-200 text-base-content/45"}`}
           >
-            <ProjectIcon
-              aria-hidden="true"
-              className="size-5"
-              icon={schedule.icon}
-            />
+            <ProjectIcon aria-hidden="true" className="size-5" icon={schedule.icon} />
           </div>
           <div className="min-w-0">
-            <h3
-              className={`truncate font-semibold ${enabledTone ? "text-base-content" : "text-base-content/60"}`}
-            >
+            <h3 className={`truncate font-semibold ${enabledTone ? "text-base-content" : "text-base-content/60"}`}>
               {schedule.name}
             </h3>
-            <p
-              className={`mt-1 truncate text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}
-            >
+            <p className={`mt-1 truncate text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}>
               {t("nextRunValue", {
                 time: formatDateTime(schedule.nextRunAt, locale),
               })}
@@ -158,9 +137,7 @@ export function ScheduleCard({
               checked={schedule.enabled}
               className="toggle toggle-primary toggle-sm"
               disabled={isTogglePending}
-              onChange={(event) =>
-                onEnabledChange(schedule, event.target.checked)
-              }
+              onChange={(event) => onEnabledChange(schedule, event.target.checked)}
               type="checkbox"
             />
           </label>
@@ -185,10 +162,7 @@ export function ScheduleCard({
           <div
             className={`min-w-0 space-y-1 text-xs ${enabledTone ? "text-base-content/60" : "text-base-content/45"}`}
           >
-            <p
-              className="truncate"
-              title={formatDateTime(schedule.lastRun.at, locale)}
-            >
+            <p className="truncate" title={formatDateTime(schedule.lastRun.at, locale)}>
               {t("lastRunValue", {
                 time: formatRelativeDateTime(schedule.lastRun.at),
               })}

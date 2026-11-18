@@ -13,4 +13,4 @@ export {
   useModelProvider,
   useModelProviderCapabilities,
   usePermissionProfiles,
-} from "../queries";
+} from "@/app-server/queries";

@@ -1,16 +1,10 @@
 // @vitest-environment jsdom
 
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../../app/i18n";
-import type { McpServerDraft } from "../../app-server/mcp-config";
+import { i18n } from "@/app/i18n";
+import type { McpServerDraft } from "@/app-server/mcp-config";
 import { createMcpServerForm } from "./mcp-server-form";
 import { McpServerDialog } from "./McpServerDialog";
 
@@ -49,9 +43,7 @@ describe("McpServerDialog", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Add MCP server" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Add MCP server" })).toBeTruthy();
     expect(screen.queryByLabelText("Required")).toBeNull();
     fireEvent.change(screen.getByRole("textbox", { name: "Server name" }), {
       target: { value: "docs" },
@@ -61,15 +53,11 @@ describe("McpServerDialog", () => {
     });
     fireEvent.submit(screen.getByRole("button", { name: "Add MCP server" }));
 
-    expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "docs", command: "npx" }),
-    );
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ name: "docs", command: "npx" }));
   });
 
   it("switches transport fields and preserves edit input on an error", () => {
-    const form = createMcpServerForm(
-      draft({ name: "docs", command: "node", transport: "stdio" }),
-    );
+    const form = createMcpServerForm(draft({ name: "docs", command: "node", transport: "stdio" }));
     render(
       <McpServerDialog
         existingNames={["docs"]}
@@ -83,20 +71,13 @@ describe("McpServerDialog", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Edit MCP server" }),
-    ).toBeTruthy();
-    expect(
-      (screen.getByRole("textbox", { name: "Command" }) as HTMLInputElement)
-        .value,
-    ).toBe("node");
+    expect(screen.getByRole("heading", { name: "Edit MCP server" })).toBeTruthy();
+    expect((screen.getByRole("textbox", { name: "Command" }) as HTMLInputElement).value).toBe("node");
     fireEvent.change(screen.getByRole("combobox", { name: "Transport" }), {
       target: { value: "streamableHttp" },
     });
     expect(screen.getByRole("textbox", { name: "URL" })).toBeTruthy();
-    expect(
-      screen.getByText("The server configuration is invalid."),
-    ).toBeTruthy();
+    expect(screen.getByText("The server configuration is invalid.")).toBeTruthy();
   });
 
   it("disables save while pending and exposes an accessible close action", () => {
@@ -114,13 +95,8 @@ describe("McpServerDialog", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Saving…" })).toHaveProperty(
-      "disabled",
-      true,
-    );
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Close MCP server dialog" })[1],
-    );
+    expect(screen.getByRole("button", { name: "Saving…" })).toHaveProperty("disabled", true);
+    fireEvent.click(screen.getAllByRole("button", { name: "Close MCP server dialog" })[1]);
     expect(onClose).toHaveBeenCalledOnce();
   });
 

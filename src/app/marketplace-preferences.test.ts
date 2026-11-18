@@ -36,18 +36,12 @@ describe("marketplace preferences", () => {
   });
 
   it("adds and removes a disabled marketplace definition", () => {
-    const disabled = addDisabledMarketplace(
-      DEFAULT_MARKETPLACE_PREFERENCES,
-      "community",
-      {
-        source: "/tmp/community",
-        refName: "main",
-        sparsePaths: [],
-      },
-    );
+    const disabled = addDisabledMarketplace(DEFAULT_MARKETPLACE_PREFERENCES, "community", {
+      source: "/tmp/community",
+      refName: "main",
+      sparsePaths: [],
+    });
 
-    expect(removeDisabledMarketplace(disabled, "community")).toEqual(
-      DEFAULT_MARKETPLACE_PREFERENCES,
-    );
+    expect(removeDisabledMarketplace(disabled, "community")).toEqual(DEFAULT_MARKETPLACE_PREFERENCES);
   });
 });

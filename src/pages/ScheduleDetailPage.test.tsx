@@ -4,12 +4,12 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
-import type { ScheduleRecord } from "../platform/schedules";
+import { i18n } from "@/app/i18n";
+import type { ScheduleRecord } from "@/platform/schedules";
 import { ScheduleDetailPage } from "./ScheduleDetailPage";
 
 const useSchedules = vi.hoisted(() => vi.fn());
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useSchedules,
   useArchiveThread: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useThread: () => ({ data: null }),

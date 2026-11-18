@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { isNativeDesktopRuntime } from "../app-server/runtime";
-import { getBranding, type Branding } from "../platform/branding";
+import { isNativeDesktopRuntime } from "@/app-server/runtime";
+import { getBranding, type Branding } from "@/platform/branding";
 import { BrandingContext } from "./branding-context";
 
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
@@ -26,9 +26,5 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  return (
-    <BrandingContext.Provider value={branding}>
-      {children}
-    </BrandingContext.Provider>
-  );
+  return <BrandingContext.Provider value={branding}>{children}</BrandingContext.Provider>;
 }

@@ -4,11 +4,7 @@ const requestAppServerMethod = vi.hoisted(() => vi.fn());
 
 vi.mock("./api", () => ({ requestAppServerMethod }));
 
-import {
-  ensureThreadResumed,
-  markThreadStarted,
-  resetThreadSessionState,
-} from "./thread-session";
+import { ensureThreadResumed, markThreadStarted, resetThreadSessionState } from "./thread-session";
 
 describe("thread session coordinator", () => {
   beforeEach(() => {
@@ -34,20 +30,13 @@ describe("thread session coordinator", () => {
     });
 
     resolveResume({ response: {} });
-    await expect(Promise.all([first, second])).resolves.toEqual([
-      undefined,
-      undefined,
-    ]);
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
   });
 
   it("allows a later resume after an earlier resume failed", async () => {
-    requestAppServerMethod
-      .mockRejectedValueOnce(new Error("socket closed"))
-      .mockResolvedValueOnce({ response: {} });
+    requestAppServerMethod.mockRejectedValueOnce(new Error("socket closed")).mockResolvedValueOnce({ response: {} });
 
-    await expect(ensureThreadResumed("thread-1")).rejects.toThrow(
-      "socket closed",
-    );
+    await expect(ensureThreadResumed("thread-1")).rejects.toThrow("socket closed");
     await expect(ensureThreadResumed("thread-1")).resolves.toBeUndefined();
 
     expect(requestAppServerMethod).toHaveBeenCalledTimes(2);
@@ -106,9 +95,7 @@ describe("thread session coordinator", () => {
       code: -32601,
       message: "list_turns is not supported yet",
     };
-    requestAppServerMethod
-      .mockRejectedValueOnce(unsupported)
-      .mockRejectedValueOnce(unsupported);
+    requestAppServerMethod.mockRejectedValueOnce(unsupported).mockRejectedValueOnce(unsupported);
 
     await expect(ensureThreadResumed("thread-1")).resolves.toBeUndefined();
 

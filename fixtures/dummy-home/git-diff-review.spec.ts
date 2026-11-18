@@ -16,23 +16,17 @@ describe("Git diff review right pane", () => {
     }
 
     await waitForDesktopReady();
-    const projectId = await createWorkspaceProject(
-      "Git diff review fixture",
-      workspace,
-    );
+    const projectId = await createWorkspaceProject("Git diff review fixture", workspace);
     await browser.url(`tauri://localhost/#/projects/${projectId}`);
     await $("h1=Git diff review fixture").waitForDisplayed({ timeout: 15_000 });
     await $$("//main//a[normalize-space(.)='New chat']")[0].click();
     await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
       timeout: 10_000,
     });
-    await browser.waitUntil(
-      async () => (await browser.getUrl()).includes(`?projectId=${projectId}`),
-      {
-        timeout: 15_000,
-        timeoutMsg: "The new chat should load the selected workspace project",
-      },
-    );
+    await browser.waitUntil(async () => (await browser.getUrl()).includes(`?projectId=${projectId}`), {
+      timeout: 15_000,
+      timeoutMsg: "The new chat should load the selected workspace project",
+    });
     await $("summary[aria-label='Project']").waitForDisplayed({
       timeout: 10_000,
     });
@@ -51,9 +45,7 @@ describe("Git diff review right pane", () => {
     });
     await browser.waitUntil(
       async () => {
-        const reviewButtons = await $$(
-          "[data-testid='thread-summary-panel'] section button",
-        );
+        const reviewButtons = await $$("[data-testid='thread-summary-panel'] section button");
         for (const button of reviewButtons) {
           if (await button.isDisplayed().catch(() => false)) return true;
         }
@@ -64,9 +56,7 @@ describe("Git diff review right pane", () => {
         timeoutMsg: "The Git diff summary button should be visible",
       },
     );
-    const reviewButtons = await $$(
-      "[data-testid='thread-summary-panel'] section button",
-    );
+    const reviewButtons = await $$("[data-testid='thread-summary-panel'] section button");
     let reviewButton = reviewButtons[0];
     for (const button of reviewButtons) {
       if (await button.isDisplayed().catch(() => false)) {
@@ -75,9 +65,7 @@ describe("Git diff review right pane", () => {
       }
     }
     await reviewButton.click();
-    await $(
-      "[role='tabpanel'] section[aria-label='Code Changes']",
-    ).waitForDisplayed({
+    await $("[role='tabpanel'] section[aria-label='Code Changes']").waitForDisplayed({
       timeout: 10_000,
     });
 
@@ -85,16 +73,8 @@ describe("Git diff review right pane", () => {
       async () => {
         const controls = await inspectDiffFileControls();
         return (
-          controls.some(
-            (control) =>
-              control.label === "Collapse README.md" &&
-              control.expanded === "true",
-          ) &&
-          controls.some(
-            (control) =>
-              control.label === "Collapse src/main.ts" &&
-              control.expanded === "true",
-          )
+          controls.some((control) => control.label === "Collapse README.md" && control.expanded === "true") &&
+          controls.some((control) => control.label === "Collapse src/main.ts" && control.expanded === "true")
         );
       },
       {
@@ -108,9 +88,7 @@ describe("Git diff review right pane", () => {
     await browser.waitUntil(
       async () =>
         (await inspectDiffFileControls()).some(
-          (control) =>
-            control.label === "Expand README.md" &&
-            control.expanded === "false",
+          (control) => control.label === "Expand README.md" && control.expanded === "false",
         ),
       {
         timeout: 10_000,
@@ -121,9 +99,7 @@ describe("Git diff review right pane", () => {
     await browser.waitUntil(
       async () =>
         (await inspectDiffFileControls()).some(
-          (control) =>
-            control.label === "Collapse README.md" &&
-            control.expanded === "true",
+          (control) => control.label === "Collapse README.md" && control.expanded === "true",
         ),
       {
         timeout: 10_000,

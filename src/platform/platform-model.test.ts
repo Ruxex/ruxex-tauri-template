@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  normalizeDeepLink,
-  validateScheduleSpec,
-  validateWorktreePath,
-} from "./platform-model";
+import { normalizeDeepLink, validateScheduleSpec, validateWorktreePath } from "./platform-model";
 
 describe("platform model boundaries", () => {
   it("accepts only known ruxex deep-link targets", () => {
@@ -52,14 +48,8 @@ describe("platform model boundaries", () => {
   });
 
   it("keeps worktree destinations inside the selected workspace root", () => {
-    expect(
-      validateWorktreePath("/workspace/repo", "/workspace/repo/.worktrees/a"),
-    ).toBe(true);
-    expect(validateWorktreePath("/workspace/repo", "/workspace/other")).toBe(
-      false,
-    );
-    expect(
-      validateWorktreePath("/workspace/repo", "/workspace/repo/../other"),
-    ).toBe(false);
+    expect(validateWorktreePath("/workspace/repo", "/workspace/repo/.worktrees/a")).toBe(true);
+    expect(validateWorktreePath("/workspace/repo", "/workspace/other")).toBe(false);
+    expect(validateWorktreePath("/workspace/repo", "/workspace/repo/../other")).toBe(false);
   });
 });

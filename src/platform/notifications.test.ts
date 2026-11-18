@@ -10,12 +10,8 @@ vi.mock("@tauri-apps/plugin-notification", () => ({
   sendNotification,
 }));
 
-import type { AppServerEvent } from "../app-server/events";
-import {
-  classifyAppServerEvent,
-  createNotificationDispatcher,
-  sendDesktopNotification,
-} from "./notifications";
+import type { AppServerEvent } from "@/app-server/events";
+import { classifyAppServerEvent, createNotificationDispatcher, sendDesktopNotification } from "./notifications";
 
 const completed = (turnId = "turn-1"): AppServerEvent => ({
   type: "serverNotification",
@@ -166,12 +162,7 @@ describe("Japanese notification framing", () => {
       title: "App Server の接続が切れました",
       body: "provider/socket closed",
     });
-    expect(
-      classifyAppServerEvent(
-        { type: "serverRequest", data: { id: 7 } } as AppServerEvent,
-        "ja",
-      ),
-    ).toMatchObject({
+    expect(classifyAppServerEvent({ type: "serverRequest", data: { id: 7 } } as AppServerEvent, "ja")).toMatchObject({
       title: "操作が必要です",
       body: "App Server が承認または入力を待っています。",
     });

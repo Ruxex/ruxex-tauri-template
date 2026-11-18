@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useTranslation } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "./i18n";
@@ -37,8 +31,8 @@ function Probe() {
         })
       }
     >
-      {preferences.theme.preset}:{preferences.theme.accentColor}:
-      {preferences.chatFontSize}px:{preferences.uiFontSize}px:
+      {preferences.theme.preset}:{preferences.theme.accentColor}:{preferences.chatFontSize}px:{preferences.uiFontSize}
+      px:
       {preferences.chatFontFamily}:{preferences.uiFontFamily}
     </button>
   );
@@ -56,9 +50,7 @@ describe("UI preference persistence", () => {
   it("uses defaults for missing, malformed, and versioned data", () => {
     expect(parseUiPreferences(null)).toEqual(DEFAULT_UI_PREFERENCES);
     expect(parseUiPreferences("not json")).toEqual(DEFAULT_UI_PREFERENCES);
-    expect(parseUiPreferences(JSON.stringify({ version: 99 }))).toEqual(
-      DEFAULT_UI_PREFERENCES,
-    );
+    expect(parseUiPreferences(JSON.stringify({ version: 99 }))).toEqual(DEFAULT_UI_PREFERENCES);
   });
 
   it("clamps zoom to five-point steps between 75% and 125%", () => {
@@ -127,30 +119,16 @@ describe("UI preference persistence", () => {
       </UiPreferencesProvider>,
     );
 
-    expect(screen.getByRole("button").textContent).toBe(
-      "ruxex-light:emerald:14px:14px:system-ui:system-ui",
-    );
+    expect(screen.getByRole("button").textContent).toBe("ruxex-light:emerald:14px:14px:system-ui:system-ui");
     expect(document.documentElement.dataset.theme).toBe("light");
-    expect(
-      document.documentElement.style.getPropertyValue("--ruxex-ui-font-family"),
-    ).toBe("system-ui");
-    expect(
-      document.documentElement.style.getPropertyValue(
-        "--ruxex-chat-font-family",
-      ),
-    ).toBe("system-ui");
+    expect(document.documentElement.style.getPropertyValue("--ruxex-ui-font-family")).toBe("system-ui");
+    expect(document.documentElement.style.getPropertyValue("--ruxex-chat-font-family")).toBe("system-ui");
     expect(document.documentElement.dataset.accent).toBeUndefined();
-    expect(
-      document.documentElement.style.getPropertyValue("--color-primary"),
-    ).toBe("#123456");
+    expect(document.documentElement.style.getPropertyValue("--color-primary")).toBe("#123456");
     fireEvent.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("button").textContent).toBe(
-      "ruxex-dark:violet:24px:12px:Inter:Inter",
-    );
-    expect(
-      JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
-    ).toMatchObject({
+    expect(screen.getByRole("button").textContent).toBe("ruxex-dark:violet:24px:12px:Inter:Inter");
+    expect(JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}")).toMatchObject({
       theme: { accentColor: "violet" },
       chatFontSize: 24,
       chatFontFamily: "Inter",
@@ -159,14 +137,8 @@ describe("UI preference persistence", () => {
     });
     expect(document.documentElement.dataset.chatFontSize).toBeUndefined();
     expect(document.documentElement.dataset.uiFontSize).toBe("12");
-    expect(
-      document.documentElement.style.getPropertyValue("--ruxex-ui-font-family"),
-    ).toBe("Inter");
-    expect(
-      document.documentElement.style.getPropertyValue(
-        "--ruxex-chat-font-family",
-      ),
-    ).toBe("Inter");
+    expect(document.documentElement.style.getPropertyValue("--ruxex-ui-font-family")).toBe("Inter");
+    expect(document.documentElement.style.getPropertyValue("--ruxex-chat-font-family")).toBe("Inter");
   });
 
   it("applies a selected theme preset to DaisyUI variables", () => {
@@ -188,9 +160,7 @@ describe("UI preference persistence", () => {
       </UiPreferencesProvider>,
     );
 
-    expect(
-      document.documentElement.style.getPropertyValue("--color-base-100"),
-    ).toBe("#0d1117");
+    expect(document.documentElement.style.getPropertyValue("--color-base-100")).toBe("#0d1117");
     expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
   });
 
@@ -209,9 +179,7 @@ describe("UI preference persistence", () => {
 
     expect(matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: dark)");
     expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(
-      document.documentElement.style.getPropertyValue("--color-base-100"),
-    ).toBe("#1c2a40");
+    expect(document.documentElement.style.getPropertyValue("--color-base-100")).toBe("#1c2a40");
   });
 });
 
@@ -238,10 +206,7 @@ describe("UI language synchronization", () => {
   });
 
   it("loads persisted Japanese and synchronizes i18next with the document", () => {
-    window.localStorage.setItem(
-      UI_PREFERENCES_KEY,
-      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
-    );
+    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }));
     render(
       <UiPreferencesProvider>
         <LanguageProbe />
@@ -267,9 +232,7 @@ describe("UI language synchronization", () => {
   });
 
   it("follows languagechange only while system language is selected", () => {
-    const systemLanguage = vi
-      .spyOn(navigator, "language", "get")
-      .mockReturnValue("en-US");
+    const systemLanguage = vi.spyOn(navigator, "language", "get").mockReturnValue("en-US");
     const view = render(
       <UiPreferencesProvider>
         <LanguageProbe />
@@ -311,10 +274,7 @@ describe("cross-window UI preferences", () => {
     );
   }
 
-  function notifyStorage(
-    key: string | null = UI_PREFERENCES_KEY,
-    storageArea = window.localStorage,
-  ) {
+  function notifyStorage(key: string | null = UI_PREFERENCES_KEY, storageArea = window.localStorage) {
     act(() =>
       window.dispatchEvent(
         new StorageEvent("storage", {
@@ -352,18 +312,17 @@ describe("cross-window UI preferences", () => {
     window.localStorage.setItem(UI_PREFERENCES_KEY, newValue);
     const setItem = vi.spyOn(Storage.prototype, "setItem");
     notifyStorage();
-    expect(
-      JSON.parse(screen.getByTestId("preferences").textContent ?? "{}"),
-    ).toEqual(parseUiPreferences(newValue));
+    expect(JSON.parse(screen.getByTestId("preferences").textContent ?? "{}")).toEqual(parseUiPreferences(newValue));
     expect(i18n.resolvedLanguage).toBe("ja");
     expect(document.documentElement.lang).toBe("ja");
     expect(setItem).not.toHaveBeenCalled();
     expect(window.localStorage.getItem(UI_PREFERENCES_KEY)).toBe(newValue);
 
     fireEvent.click(screen.getByRole("button", { name: "English" }));
-    expect(
-      JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
-    ).toEqual({ ...parseUiPreferences(newValue), language: "en" });
+    expect(JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}")).toEqual({
+      ...parseUiPreferences(newValue),
+      language: "en",
+    });
     view.unmount();
     window.localStorage.setItem(UI_PREFERENCES_KEY, newValue);
     notifyStorage();
@@ -376,10 +335,7 @@ describe("cross-window UI preferences", () => {
         <PreferencesProbe />
       </UiPreferencesProvider>,
     );
-    window.localStorage.setItem(
-      UI_PREFERENCES_KEY,
-      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
-    );
+    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }));
     notifyStorage("other-key");
     notifyStorage(UI_PREFERENCES_KEY, window.sessionStorage);
     expect(i18n.resolvedLanguage).toBe("en");
@@ -410,9 +366,7 @@ describe("cross-window UI preferences", () => {
         }),
       ),
     );
-    expect(
-      JSON.parse(screen.getByTestId("preferences").textContent ?? "{}"),
-    ).toEqual(parseUiPreferences(latestValue));
+    expect(JSON.parse(screen.getByTestId("preferences").textContent ?? "{}")).toEqual(parseUiPreferences(latestValue));
     expect(window.localStorage.getItem(UI_PREFERENCES_KEY)).toBe(latestValue);
   });
 
@@ -430,19 +384,14 @@ describe("cross-window UI preferences", () => {
     };
     window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(external));
     fireEvent.click(screen.getByRole("button", { name: "English" }));
-    expect(
-      JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}"),
-    ).toEqual({
+    expect(JSON.parse(window.localStorage.getItem(UI_PREFERENCES_KEY) ?? "{}")).toEqual({
       ...parseUiPreferences(JSON.stringify(external)),
       language: "en",
     });
   });
 
   it("resets cleared preferences without restoring the removed key", () => {
-    window.localStorage.setItem(
-      UI_PREFERENCES_KEY,
-      JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }),
-    );
+    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify({ ...DEFAULT_UI_PREFERENCES, language: "ja" }));
     render(
       <UiPreferencesProvider>
         <PreferencesProbe />
@@ -450,9 +399,7 @@ describe("cross-window UI preferences", () => {
     );
     window.localStorage.clear();
     notifyStorage(null);
-    expect(
-      JSON.parse(screen.getByTestId("preferences").textContent ?? "{}"),
-    ).toEqual(DEFAULT_UI_PREFERENCES);
+    expect(JSON.parse(screen.getByTestId("preferences").textContent ?? "{}")).toEqual(DEFAULT_UI_PREFERENCES);
     expect(window.localStorage.getItem(UI_PREFERENCES_KEY)).toBeNull();
   });
 });

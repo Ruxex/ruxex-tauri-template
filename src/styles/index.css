@@ -217,6 +217,12 @@ body,
   user-select: text;
 }
 
+#root :is(.text-error, .alert-error, [role="alert"]),
+#root :is(.text-error, .alert-error, [role="alert"]) * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .milkdown-composer .milkdown {
   --crepe-color-background: transparent;
   --crepe-color-on-background: var(--color-base-content);

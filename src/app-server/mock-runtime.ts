@@ -1,4 +1,4 @@
-import { MockAppServer } from "../test-support/mock-app-server";
+import { MockAppServer } from "@/test-support/mock-app-server";
 
 let server: MockAppServer | undefined;
 

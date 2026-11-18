@@ -1,19 +1,14 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "files": {
-    "includes": [
-      "src/**/*.ts",
-      "src/**/*.tsx",
-      "fixtures/**/*.ts",
-      "*.ts",
-      "*.tsx"
-    ]
+    "includes": ["src/**/*.ts", "src/**/*.tsx", "fixtures/**/*.ts", "*.ts", "*.tsx"]
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
+    "lineWidth": 119,
     "lineEnding": "lf"
   },
   "javascript": {

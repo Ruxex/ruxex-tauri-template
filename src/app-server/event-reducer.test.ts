@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createInitialEventState,
-  pruneIdleThreadStates,
-  reduceAppServerEvent,
-} from "./event-reducer";
+import { createInitialEventState, pruneIdleThreadStates, reduceAppServerEvent } from "./event-reducer";
 import type { AppServerEvent } from "./events";
 
 const notification = (data: unknown): AppServerEvent => ({
@@ -18,9 +14,7 @@ const notification = (data: unknown): AppServerEvent => ({
 
 const serverRequest = (data: unknown): AppServerEvent => ({
   type: "serverRequest",
-  data: data as AppServerEvent extends { type: "serverRequest"; data: infer T }
-    ? T
-    : never,
+  data: data as AppServerEvent extends { type: "serverRequest"; data: infer T } ? T : never,
 });
 
 describe("reduceAppServerEvent", () => {
@@ -344,9 +338,7 @@ describe("reduceAppServerEvent", () => {
             threadId: "thread-1",
             turnId: "turn-1",
             itemId: `item-${itemType}`,
-            ...(method === "item/mcpToolCall/progress"
-              ? { message: delta }
-              : { delta }),
+            ...(method === "item/mcpToolCall/progress" ? { message: delta } : { delta }),
           },
         }),
       );
@@ -513,8 +505,7 @@ describe("reduceAppServerEvent", () => {
     state = reduceAppServerEvent(state, request);
 
     expect(state.pendingServerRequests["42"]).toMatchObject({
-      request: (request as Extract<AppServerEvent, { type: "serverRequest" }>)
-        .data,
+      request: (request as Extract<AppServerEvent, { type: "serverRequest" }>).data,
       requestId: 42,
       kind: "approval",
     });
@@ -652,26 +643,23 @@ describe("reduceAppServerEvent", () => {
   it.each([
     ["failed", "failed"],
     ["interrupted", "interrupted"],
-  ] as const)(
-    "maps a %s turn to its terminal thread status",
-    (status, expectedStatus) => {
-      const state = reduceAppServerEvent(
-        createInitialEventState(),
-        notification({
-          method: "turn/completed",
-          params: {
-            threadId: "thread-1",
-            turn: { id: "turn-1", status, items: [] },
-          },
-        }),
-      );
+  ] as const)("maps a %s turn to its terminal thread status", (status, expectedStatus) => {
+    const state = reduceAppServerEvent(
+      createInitialEventState(),
+      notification({
+        method: "turn/completed",
+        params: {
+          threadId: "thread-1",
+          turn: { id: "turn-1", status, items: [] },
+        },
+      }),
+    );
 
-      expect(state.threads["thread-1"]).toMatchObject({
-        activeTurnId: null,
-        status: expectedStatus,
-      });
-    },
-  );
+    expect(state.threads["thread-1"]).toMatchObject({
+      activeTurnId: null,
+      status: expectedStatus,
+    });
+  });
 
   it("marks active threads for resynchronization when the stream disconnects", () => {
     let state = reduceAppServerEvent(
@@ -854,9 +842,7 @@ describe("reduceAppServerEvent", () => {
             item: {
               type: "fileChange",
               id: item.id,
-              changes: [
-                { path: item.path, kind: { type: "add" }, diff: "before" },
-              ],
+              changes: [{ path: item.path, kind: { type: "add" }, diff: "before" }],
               status: "inProgress",
             },
           },
@@ -931,9 +917,7 @@ describe("reduceAppServerEvent", () => {
         id: "change-2",
         raw: {
           type: "fileChange",
-          changes: [
-            { path: "src/two.ts", kind: { type: "add" }, diff: "before" },
-          ],
+          changes: [{ path: "src/two.ts", kind: { type: "add" }, diff: "before" }],
         },
       },
       {
@@ -952,9 +936,7 @@ describe("reduceAppServerEvent", () => {
       },
       { id: "message-1", type: "agentMessage", text: "message text" },
     ]);
-    expect(
-      state.threads["thread-1"]?.items.find((item) => item.id === "message-1"),
-    ).not.toHaveProperty("raw");
+    expect(state.threads["thread-1"]?.items.find((item) => item.id === "message-1")).not.toHaveProperty("raw");
     expect(state.threads["thread-2"]?.items).toMatchObject([
       {
         id: "change-1",
@@ -1081,9 +1063,7 @@ describe("reduceAppServerEvent", () => {
       }),
     );
 
-    expect(state.threads["thread-1"]?.items).toMatchObject([
-      { id: "item-1", turnId: "turn-1", text: "complete" },
-    ]);
+    expect(state.threads["thread-1"]?.items).toMatchObject([{ id: "item-1", turnId: "turn-1", text: "complete" }]);
   });
 
   it("does not replace a streamed agent message from another turn", () => {
@@ -1210,13 +1190,7 @@ describe("reduceAppServerEvent", () => {
 
   it("prunes stale idle threads but keeps active and retained state", () => {
     let state = createInitialEventState();
-    for (const threadId of [
-      "idle",
-      "running",
-      "resync",
-      "pending",
-      "retained",
-    ]) {
+    for (const threadId of ["idle", "running", "resync", "pending", "retained"]) {
       state = reduceAppServerEvent(
         state,
         notification({

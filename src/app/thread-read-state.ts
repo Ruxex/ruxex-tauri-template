@@ -1,12 +1,4 @@
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, createElement, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 
 export const THREAD_READ_STATE_KEY = "ruxex.thread-read-state";
 
@@ -26,8 +18,7 @@ const DEFAULT_THREAD_READ_STATE: ThreadReadState = {
   readAtByThreadId: {},
 };
 
-const ThreadReadStateContext =
-  createContext<ThreadReadStateContextValue | null>(null);
+const ThreadReadStateContext = createContext<ThreadReadStateContextValue | null>(null);
 
 export function parseThreadReadState(raw: string | null): ThreadReadState {
   if (!raw) return DEFAULT_THREAD_READ_STATE;
@@ -43,14 +34,8 @@ export function parseThreadReadState(raw: string | null): ThreadReadState {
     }
 
     const readAtByThreadId: Record<string, number> = {};
-    for (const [threadId, updatedAt] of Object.entries(
-      parsed.readAtByThreadId,
-    )) {
-      if (
-        typeof updatedAt === "number" &&
-        Number.isFinite(updatedAt) &&
-        updatedAt >= 0
-      ) {
+    for (const [threadId, updatedAt] of Object.entries(parsed.readAtByThreadId)) {
+      if (typeof updatedAt === "number" && Number.isFinite(updatedAt) && updatedAt >= 0) {
         readAtByThreadId[threadId] = updatedAt;
       }
     }
@@ -65,9 +50,7 @@ export function readThreadReadState(): ThreadReadState {
   if (typeof window === "undefined") {
     return DEFAULT_THREAD_READ_STATE;
   }
-  return parseThreadReadState(
-    window.localStorage.getItem(THREAD_READ_STATE_KEY),
-  );
+  return parseThreadReadState(window.localStorage.getItem(THREAD_READ_STATE_KEY));
 }
 
 export function writeThreadReadState(state: ThreadReadState): void {
@@ -76,9 +59,7 @@ export function writeThreadReadState(state: ThreadReadState): void {
 }
 
 export function ThreadReadStateProvider({ children }: { children: ReactNode }) {
-  const [readAtByThreadId, setReadAtByThreadId] = useState(
-    () => readThreadReadState().readAtByThreadId,
-  );
+  const [readAtByThreadId, setReadAtByThreadId] = useState(() => readThreadReadState().readAtByThreadId);
 
   useEffect(() => {
     writeThreadReadState({ version: 1, readAtByThreadId });
@@ -115,9 +96,7 @@ export function ThreadReadStateProvider({ children }: { children: ReactNode }) {
 export function useThreadReadState(): ThreadReadStateContextValue {
   const value = useContext(ThreadReadStateContext);
   if (!value) {
-    throw new Error(
-      "useThreadReadState must be used within ThreadReadStateProvider",
-    );
+    throw new Error("useThreadReadState must be used within ThreadReadStateProvider");
   }
   return value;
 }

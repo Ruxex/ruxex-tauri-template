@@ -1,14 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getDesktopUiPolicy } from "../../platform/skill-policy";
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import { useAppServerStatus } from "../queries";
-import { appServerQueryKeys } from "../query-keys";
+import { getDesktopUiPolicy } from "@/platform/skill-policy";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { useAppServerStatus } from "@/app-server/queries";
+import { appServerQueryKeys } from "@/app-server/query-keys";
 
-export function useSkillsList(
-  params: v2.SkillsListParams = {},
-  enabled = true,
-) {
+export function useSkillsList(params: v2.SkillsListParams = {}, enabled = true) {
   const status = useAppServerStatus();
 
   return useQuery<v2.SkillsListResponse>({
@@ -39,10 +36,7 @@ export function useWriteSkillConfig() {
 
   return useMutation({
     mutationFn: async (params: v2.SkillsConfigWriteParams) => {
-      const response = await requestAppServerMethod(
-        "skills/config/write",
-        params,
-      );
+      const response = await requestAppServerMethod("skills/config/write", params);
       return response.response;
     },
     onSuccess: () => {
@@ -59,9 +53,7 @@ export function useSetSkillsExtraRoots() {
   return useMutation({
     mutationFn: async (params: v2.SkillsExtraRootsSetParams) => {
       const policy = await getDesktopUiPolicy();
-      const extraRoots = Array.from(
-        new Set([...params.extraRoots, ...policy.defaultSkillRoots]),
-      );
+      const extraRoots = Array.from(new Set([...params.extraRoots, ...policy.defaultSkillRoots]));
       const response = await requestAppServerMethod("skills/extraRoots/set", {
         ...params,
         extraRoots,

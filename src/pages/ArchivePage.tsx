@@ -1,24 +1,16 @@
 import { useTranslation } from "react-i18next";
-import {
-  ArchiveBoxIcon,
-  ArrowUturnLeftIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { ArchiveBoxIcon, ArrowUturnLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { formatErrorMessage } from "../app/error-message";
+import { formatErrorMessage } from "@/app/error-message";
 import {
   useArchivedThreadList,
   useDeleteAllArchivedThreads,
   useDeleteThread,
   useUnarchiveThread,
-} from "../app-server/hooks";
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from "../components/common/AsyncState";
-import { ThreadCard } from "../components/common/ThreadCard";
-import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
+} from "@/app-server/hooks";
+import { EmptyState, ErrorState, LoadingState } from "@/components/base/common/AsyncState";
+import { ThreadCard } from "@/components/base/common/ThreadCard";
+import { useNativeModalDialog } from "@/components/base/common/useNativeModalDialog";
 
 export function ArchivePage() {
   const { t } = useTranslation("chats");
@@ -135,9 +127,7 @@ export function ArchivePage() {
                   title={t("restore")}
                   type="button"
                   disabled={unarchive.isPending || deleteAll.isPending}
-                  onClick={() =>
-                    void unarchive.mutateAsync({ threadId: thread.id })
-                  }
+                  onClick={() => void unarchive.mutateAsync({ threadId: thread.id })}
                 >
                   <ArrowUturnLeftIcon aria-hidden="true" className="size-4" />
                 </button>
@@ -157,10 +147,7 @@ export function ArchivePage() {
         ))}
       </div>
       {archived.data && (pageNumber > 1 || archived.data.nextCursor) && (
-        <nav
-          aria-label={t("archivedChatPages")}
-          className="flex items-center justify-center gap-3"
-        >
+        <nav aria-label={t("archivedChatPages")} className="flex items-center justify-center gap-3">
           <button
             aria-label={t("previous")}
             className="btn btn-ghost btn-sm"
@@ -177,12 +164,7 @@ export function ArchivePage() {
             aria-label={t("next")}
             className="btn btn-ghost btn-sm"
             disabled={archived.isFetching || !archived.data.nextCursor}
-            onClick={() =>
-              setCursorHistory((history) => [
-                ...history,
-                archived.data?.nextCursor ?? "",
-              ])
-            }
+            onClick={() => setCursorHistory((history) => [...history, archived.data?.nextCursor ?? ""])}
             type="button"
           >
             {t("next")}
@@ -203,9 +185,7 @@ export function ArchivePage() {
             <h2 className="text-lg font-semibold" id="delete-chat-title">
               {t("deleteChat")}
             </h2>
-            <p className="py-4 text-sm text-base-content/70">
-              {t("deleteConfirmation", { name: deleteTarget.name })}
-            </p>
+            <p className="py-4 text-sm text-base-content/70">{t("deleteConfirmation", { name: deleteTarget.name })}</p>
             {deleteError && (
               <p className="alert alert-error mb-4" role="alert">
                 {t("deleteError", { error: deleteError })}
@@ -222,19 +202,13 @@ export function ArchivePage() {
                 {t("cancel")}
               </button>
               <button
-                aria-label={
-                  deleteThread.isPending
-                    ? t("deleting")
-                    : t("deletePermanently")
-                }
+                aria-label={deleteThread.isPending ? t("deleting") : t("deletePermanently")}
                 className="btn btn-error"
                 disabled={deleteThread.isPending}
                 onClick={deleteArchivedThread}
                 type="button"
               >
-                {deleteThread.isPending
-                  ? t("deleting")
-                  : t("deletePermanently")}
+                {deleteThread.isPending ? t("deleting") : t("deletePermanently")}
               </button>
             </div>
           </div>
@@ -251,10 +225,7 @@ export function ArchivePage() {
           }}
         >
           <div className="modal-box">
-            <h2
-              className="text-lg font-semibold"
-              id="delete-all-archived-chats-title"
-            >
+            <h2 className="text-lg font-semibold" id="delete-all-archived-chats-title">
               {t("deleteAllArchivedChatsTitle")}
             </h2>
             <p className="py-4 text-sm text-base-content/70">
@@ -276,19 +247,13 @@ export function ArchivePage() {
                 {t("cancel")}
               </button>
               <button
-                aria-label={
-                  deleteAll.isPending
-                    ? t("deletingAll")
-                    : t("deleteAllPermanently")
-                }
+                aria-label={deleteAll.isPending ? t("deletingAll") : t("deleteAllPermanently")}
                 className="btn btn-error"
                 disabled={deleteAll.isPending}
                 onClick={deleteAllArchivedThreads}
                 type="button"
               >
-                {deleteAll.isPending
-                  ? t("deletingAll")
-                  : t("deleteAllPermanently")}
+                {deleteAll.isPending ? t("deletingAll") : t("deleteAllPermanently")}
               </button>
             </div>
           </div>

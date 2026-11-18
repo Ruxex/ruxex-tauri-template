@@ -23,9 +23,7 @@ describe("Volatile DummyProvider event states", () => {
     await waitForDesktopReady();
   });
 
-  for (const scenario of VOLATILE_SCENARIOS.filter(
-    (candidate) => candidate.count > 0,
-  )) {
+  for (const scenario of VOLATILE_SCENARIOS.filter((candidate) => candidate.count > 0)) {
     it(`captures ${scenario.id}`, async () => {
       await openNewChat();
       const prompt = `Fixture volatile ${scenario.id} ${scenario.providerMarker}`;
@@ -55,9 +53,7 @@ describe("Volatile DummyProvider event states", () => {
           return;
         case "pending-user-input":
           await sendComposerPrompt(prompt);
-          await $(
-            "[aria-label='Chat activity'] article button[aria-label='Submit']",
-          ).waitForDisplayed({
+          await $("[aria-label='Chat activity'] article button[aria-label='Submit']").waitForDisplayed({
             timeout: 30_000,
           });
           await closeSidebarPanel();
@@ -114,9 +110,7 @@ describe("Volatile DummyProvider event states", () => {
           return;
         case "conversation-minimap":
           await withWindowSize(2560, 800, async () => {
-            const wasSidebarOpen = await $(
-              "button[aria-label='Close sidebar']",
-            ).isDisplayed();
+            const wasSidebarOpen = await $("button[aria-label='Close sidebar']").isDisplayed();
             if (wasSidebarOpen) {
               await $("button[aria-label='Close sidebar']").click();
               await $("button[aria-label='Open sidebar']").waitForDisplayed({
@@ -127,9 +121,7 @@ describe("Volatile DummyProvider event states", () => {
               try {
                 await sendMinimapConversation(8_000);
               } catch {
-                console.info(
-                  "Skipping minimap screenshot: fixture response unavailable",
-                );
+                console.info("Skipping minimap screenshot: fixture response unavailable");
                 return;
               }
               await closeSidebarPanel();
@@ -149,9 +141,7 @@ describe("Volatile DummyProvider event states", () => {
           try {
             await waitForActiveTurn();
           } catch {
-            console.info(
-              "Skipping queued-message screenshot: fixture turn unavailable",
-            );
+            console.info("Skipping queued-message screenshot: fixture turn unavailable");
             return;
           }
           await selectSubmissionMode("queue");
@@ -172,9 +162,7 @@ describe("Volatile DummyProvider event states", () => {
               8_000,
             );
           } catch {
-            console.info(
-              "Skipping disconnect screenshot: fixture response unavailable",
-            );
+            console.info("Skipping disconnect screenshot: fixture response unavailable");
             return;
           }
           await closeSidebarPanel();

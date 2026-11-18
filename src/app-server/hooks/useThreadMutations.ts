@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
 import {
   invalidateThreadAttachments,
   invalidateThreadConversation,
@@ -10,8 +10,8 @@ import {
   invalidateThreadMetadata,
   invalidateThreadQueue,
   upsertThreadInListCaches,
-} from "../query-invalidation";
-import { ensureThreadResumed, markThreadStarted } from "../thread-session";
+} from "@/app-server/query-invalidation";
+import { ensureThreadResumed, markThreadStarted } from "@/app-server/thread-session";
 import { archivedThreadListParams } from "./useThreadQueries";
 
 export function useCreateThread() {
@@ -95,21 +95,16 @@ export function useDeleteAllArchivedThreads() {
       let cursor: string | null = null;
 
       do {
-        const response: { response: v2.ThreadListResponse } =
-          await requestAppServerMethod(
-            "thread/list",
-            archivedThreadListParams(cursor),
-          );
+        const response: { response: v2.ThreadListResponse } = await requestAppServerMethod(
+          "thread/list",
+          archivedThreadListParams(cursor),
+        );
         threadIds.push(...response.response.data.map((thread) => thread.id));
         cursor = response.response.nextCursor;
       } while (cursor);
 
       const uniqueThreadIds = [...new Set(threadIds)];
-      await Promise.all(
-        uniqueThreadIds.map((threadId) =>
-          requestAppServerMethod("thread/delete", { threadId }),
-        ),
-      );
+      await Promise.all(uniqueThreadIds.map((threadId) => requestAppServerMethod("thread/delete", { threadId })));
 
       return { deletedCount: uniqueThreadIds.length };
     },
@@ -122,14 +117,10 @@ export function useCompactThread() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadCompactStartParams) => {
-      const response = await requestAppServerMethod(
-        "thread/compact/start",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/compact/start", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadConversation(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadConversation(queryClient, params.threadId),
   });
 }
 
@@ -172,8 +163,7 @@ export function useSetThreadGoal() {
       const response = await requestAppServerMethod("thread/goal/set", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadGoal(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadGoal(queryClient, params.threadId),
   });
 }
 
@@ -182,14 +172,10 @@ export function useClearThreadGoal() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadGoalClearParams) => {
-      const response = await requestAppServerMethod(
-        "thread/goal/clear",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/goal/clear", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadGoal(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadGoal(queryClient, params.threadId),
   });
 }
 
@@ -198,14 +184,10 @@ export function useAddThreadAttachment() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadAttachmentAddParams) => {
-      const response = await requestAppServerMethod(
-        "thread/attachment/add",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/attachment/add", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadAttachments(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadAttachments(queryClient, params.threadId),
   });
 }
 
@@ -214,14 +196,10 @@ export function useRemoveThreadAttachment() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadAttachmentRemoveParams) => {
-      const response = await requestAppServerMethod(
-        "thread/attachment/remove",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/attachment/remove", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadAttachments(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadAttachments(queryClient, params.threadId),
   });
 }
 
@@ -230,14 +208,10 @@ export function useUpdateThreadSettings() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadSettingsUpdateParams) => {
-      const response = await requestAppServerMethod(
-        "thread/settings/update",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/settings/update", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadMetadata(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadMetadata(queryClient, params.threadId),
   });
 }
 
@@ -246,14 +220,10 @@ export function useUpdateThreadQueue() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadQueueUpdateParams) => {
-      const response = await requestAppServerMethod(
-        "thread/queue/update",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/queue/update", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadQueue(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadQueue(queryClient, params.threadId),
   });
 }
 
@@ -262,14 +232,10 @@ export function useDeleteThreadQueueItem() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadQueueDeleteParams) => {
-      const response = await requestAppServerMethod(
-        "thread/queue/delete",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/queue/delete", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadQueue(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadQueue(queryClient, params.threadId),
   });
 }
 
@@ -278,14 +244,10 @@ export function useReorderThreadQueue() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadQueueReorderParams) => {
-      const response = await requestAppServerMethod(
-        "thread/queue/reorder",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/queue/reorder", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadQueue(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadQueue(queryClient, params.threadId),
   });
 }
 
@@ -294,13 +256,9 @@ export function useStartThreadQueue() {
 
   return useMutation({
     mutationFn: async (params: v2.ThreadQueueStartParams) => {
-      const response = await requestAppServerMethod(
-        "thread/queue/start",
-        params,
-      );
+      const response = await requestAppServerMethod("thread/queue/start", params);
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadQueue(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadQueue(queryClient, params.threadId),
   });
 }

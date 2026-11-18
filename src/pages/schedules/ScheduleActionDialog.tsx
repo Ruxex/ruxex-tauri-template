@@ -1,13 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
-import { formatErrorMessage } from "../../app/error-message";
-import {
-  DialogFooter,
-  DialogHeader,
-} from "../../components/common/DialogParts";
-import { useNativeModalDialog } from "../../components/common/useNativeModalDialog";
-import type { ScheduleRecord } from "../../platform/schedules";
+import { formatErrorMessage } from "@/app/error-message";
+import { DialogFooter, DialogHeader } from "@/components/base/common/DialogParts";
+import { useNativeModalDialog } from "@/components/base/common/useNativeModalDialog";
+import type { ScheduleRecord } from "@/platform/schedules";
 
 export type ScheduleAction = {
   kind: "run" | "delete";
@@ -42,9 +39,7 @@ export function ScheduleActionDialog({
       <div className="modal-box w-full max-w-md px-5 py-6">
         <DialogHeader
           icon={ExclamationTriangleIcon}
-          title={
-            action.kind === "run" ? t("runScheduleNow") : t("deleteSchedule")
-          }
+          title={action.kind === "run" ? t("runScheduleNow") : t("deleteSchedule")}
           titleId="schedule-action-dialog-title"
         />
         <p className="-mt-2 text-sm text-base-content/70">
@@ -58,12 +53,7 @@ export function ScheduleActionDialog({
           </p>
         )}
         <DialogFooter>
-          <button
-            aria-label={t("cancel")}
-            className="btn btn-ghost"
-            type="button"
-            onClick={onClose}
-          >
+          <button aria-label={t("cancel")} className="btn btn-ghost" type="button" onClick={onClose}>
             {t("cancel")}
           </button>
           <button

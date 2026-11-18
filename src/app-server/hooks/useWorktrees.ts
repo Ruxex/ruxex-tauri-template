@@ -1,14 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { appServerQueryKeys } from "../query-keys";
-import { isDesktopRuntime } from "../runtime";
+import { appServerQueryKeys } from "@/app-server/query-keys";
+import { isDesktopRuntime } from "@/app-server/runtime";
 import {
   createWorktree,
   listWorktrees,
   openWorktree,
   removeWorktree,
   type WorktreeCreateRequest,
-} from "../../platform/worktrees";
+} from "@/platform/worktrees";
 
 export function useWorktrees(root: string) {
   const queryClient = useQueryClient();
@@ -27,8 +27,7 @@ export function useWorktrees(root: string) {
     onSuccess: invalidate,
   });
   const remove = useMutation({
-    mutationFn: ({ path, force }: { path: string; force: boolean }) =>
-      removeWorktree({ root, path, force }),
+    mutationFn: ({ path, force }: { path: string; force: boolean }) => removeWorktree({ root, path, force }),
     onSuccess: invalidate,
   });
   const open = useMutation({

@@ -1,13 +1,6 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -56,7 +49,7 @@ const uninstallPlugin = vi.hoisted(() => ({
   error: null,
 }));
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useInstallPlugin,
   usePluginList,
   useSkillsList,
@@ -68,12 +61,12 @@ vi.mock("../app-server/hooks", () => ({
 
 const open = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
-vi.mock("../platform/skill-policy", () => ({
+vi.mock("@/platform/skill-policy", () => ({
   filterHiddenSkills,
   getDesktopUiPolicy,
 }));
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("CapabilitiesPage", () => {
   it("renders Japanese controls and preserves external names", async () => {
@@ -86,9 +79,7 @@ describe("CapabilitiesPage", () => {
         </MemoryRouter>,
       );
       expect(screen.getByRole("heading", { name: "プラグイン" })).toBeTruthy();
-      expect(
-        screen.getByRole("button", { name: "Lint Plugin をインストール" }),
-      ).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Lint Plugin をインストール" })).toBeTruthy();
       expect(screen.getByText("Official Plugins")).toBeTruthy();
     } finally {
       await i18n.changeLanguage("en");
@@ -251,54 +242,32 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Plugins", level: 1 }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Plugins", level: 1 })).toBeTruthy();
     expect(screen.queryByRole("tablist")).toBeNull();
     expect(screen.queryByText("docs")).toBeNull();
     expect(screen.getByText(/openai-curated ·/)).toBeTruthy();
     expect(screen.getByText("OpenAI Curated")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "developer-tools", level: 3 }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Productivity", level: 3 }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Uncategorized", level: 3 }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "developer-tools", level: 3 })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Productivity", level: 3 })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Uncategorized", level: 3 })).toBeTruthy();
     expect(screen.getAllByTestId("plugin-image-slot")).toHaveLength(3);
-    await waitFor(() =>
-      expect(
-        screen.getAllByRole("img", { name: "Plugin image unavailable" }),
-      ).toHaveLength(3),
-    );
-    expect(
-      screen.queryByRole("heading", { name: "Plugins", level: 2 }),
-    ).toBeNull();
+    await waitFor(() => expect(screen.getAllByRole("img", { name: "Plugin image unavailable" })).toHaveLength(3));
+    expect(screen.queryByRole("heading", { name: "Plugins", level: 2 })).toBeNull();
     expect(document.getElementById("plugins")?.closest("article")).toBeNull();
     expect(screen.getByText("Checks project files")).toBeTruthy();
     expect(screen.getByText(/developer-tools/)).toBeTruthy();
-    expect(
-      screen
-        .getByRole("link", { name: "View details for Lint Plugin" })
-        .getAttribute("href"),
-    ).toBe("/capabilities/plugins/openai-curated/lint");
+    expect(screen.getByRole("link", { name: "View details for Lint Plugin" }).getAttribute("href")).toBe(
+      "/capabilities/plugins/openai-curated/lint",
+    );
     expect(screen.queryAllByText("available")).toHaveLength(0);
     const officialInstallButton = screen.getByRole("button", {
       name: "Install Lint Plugin",
     });
-    const officialInstallTooltip = officialInstallButton.closest(
-      '[data-testid="official-app-install-tooltip"]',
-    );
+    const officialInstallTooltip = officialInstallButton.closest('[data-testid="official-app-install-tooltip"]');
     expect((officialInstallButton as HTMLButtonElement).disabled).toBe(true);
     expect(officialInstallTooltip).not.toBeNull();
-    expect(officialInstallTooltip?.getAttribute("title")).toBe(
-      "Official Apps are not supported in Ruxex.",
-    );
-    expect(officialInstallButton.getAttribute("title")).toBe(
-      "Official Apps are not supported in Ruxex.",
-    );
+    expect(officialInstallTooltip?.getAttribute("title")).toBe("Official Apps are not supported in Ruxex.");
+    expect(officialInstallButton.getAttribute("title")).toBe("Official Apps are not supported in Ruxex.");
     fireEvent.click(officialInstallButton);
     expect(installPlugin.mutateAsync).not.toHaveBeenCalled();
     const supportedInstallButton = screen.getByRole("button", {
@@ -306,15 +275,11 @@ describe("CapabilitiesPage", () => {
     });
     expect((supportedInstallButton as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByText("Remote Catalog")).toBeTruthy();
-    expect(
-      screen.getByText("Remote marketplace plugins cannot be installed here."),
-    ).toBeTruthy();
+    expect(screen.getByText("Remote marketplace plugins cannot be installed here.")).toBeTruthy();
     expect(screen.queryByText("reviewer")).toBeNull();
-    expect(
-      screen
-        .getByRole("link", { name: "Configure OpenAI Curated" })
-        .getAttribute("href"),
-    ).toBe("/settings/marketplaces");
+    expect(screen.getByRole("link", { name: "Configure OpenAI Curated" }).getAttribute("href")).toBe(
+      "/settings/marketplaces",
+    );
   });
 
   it("installs a local marketplace plugin and refreshes its marketplace", async () => {
@@ -361,11 +326,9 @@ describe("CapabilitiesPage", () => {
     const refreshButton = screen.getByRole("button", {
       name: "Refresh Community Plugins",
     });
-    expect(
-      screen
-        .getByRole("link", { name: "Configure Community Plugins" })
-        .getAttribute("href"),
-    ).toBe("/settings/marketplaces");
+    expect(screen.getByRole("link", { name: "Configure Community Plugins" }).getAttribute("href")).toBe(
+      "/settings/marketplaces",
+    );
     fireEvent.click(refreshButton);
 
     expect(installPlugin.mutateAsync).toHaveBeenCalledWith({
@@ -414,9 +377,7 @@ describe("CapabilitiesPage", () => {
     );
 
     expect(screen.getByText("Installed")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Uninstall Format Plugin" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Uninstall Format Plugin" }));
 
     expect(uninstallPlugin.mutateAsync).toHaveBeenCalledWith({
       pluginId: "format@community",
@@ -458,9 +419,7 @@ describe("CapabilitiesPage", () => {
         <CapabilitiesPage />
       </MemoryRouter>,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Uninstall Format Plugin" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Uninstall Format Plugin" }));
 
     expect(uninstallPlugin.mutateAsync).not.toHaveBeenCalled();
   });
@@ -498,9 +457,7 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.queryByRole("button", { name: "Uninstall Lint Plugin" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Uninstall Lint Plugin" })).toBeNull();
   });
 
   it("shows the uninstall error and disables the action while pending", async () => {
@@ -585,12 +542,8 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.queryByRole("button", { name: "Install Remote Tool" }),
-    ).toBeNull();
-    expect(
-      screen.getByText("Remote marketplace plugins cannot be installed here."),
-    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Install Remote Tool" })).toBeNull();
+    expect(screen.getByText("Remote marketplace plugins cannot be installed here.")).toBeTruthy();
   });
 
   it("collapses marketplaces and plugin categories independently", async () => {
@@ -617,9 +570,9 @@ describe("CapabilitiesPage", () => {
       .getByRole("heading", { name: "Productivity", level: 3 })
       .closest('[data-testid="plugin-category"]');
     expect(productivityCategory).not.toBeNull();
-    const productivityToggle = within(
-      productivityCategory as HTMLElement,
-    ).getByRole("checkbox", { name: "Productivity" }) as HTMLInputElement;
+    const productivityToggle = within(productivityCategory as HTMLElement).getByRole("checkbox", {
+      name: "Productivity",
+    }) as HTMLInputElement;
     expect(productivityToggle.checked).toBe(true);
     fireEvent.click(productivityToggle);
     expect(productivityToggle.checked).toBe(false);
@@ -651,11 +604,9 @@ describe("CapabilitiesPage", () => {
       }),
     ).toBeTruthy();
     expect(screen.queryByText(/No plugin marketplaces available\./)).toBeNull();
-    expect(
-      screen
-        .getByRole("link", { name: "Add plugin marketplace" })
-        .getAttribute("href"),
-    ).toBe("/settings/marketplaces");
+    expect(screen.getByRole("link", { name: "Add plugin marketplace" }).getAttribute("href")).toBe(
+      "/settings/marketplaces",
+    );
   });
 
   it("switches the main content when the skills sidebar route is selected", async () => {
@@ -667,16 +618,10 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Skills", level: 1 }),
-    ).toBeTruthy();
-    expect(
-      screen.queryByRole("heading", { name: "Skills", level: 2 }),
-    ).toBeNull();
+    expect(screen.getByRole("heading", { name: "Skills", level: 1 })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Skills", level: 2 })).toBeNull();
     expect(screen.queryByText("Additional Skill directories")).toBeNull();
-    expect(
-      screen.queryByText(/Skills are discovered from these directories/),
-    ).toBeNull();
+    expect(screen.queryByText(/Skills are discovered from these directories/)).toBeNull();
     expect(screen.getByText("review")).toBeTruthy();
     expect(screen.queryByText("official")).toBeNull();
     expect(screen.queryByText("docs")).toBeNull();
@@ -744,13 +689,9 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() =>
-      expect(screen.getAllByTestId("skills-source-group")).toHaveLength(3),
-    );
+    await waitFor(() => expect(screen.getAllByTestId("skills-source-group")).toHaveLength(3));
     const groups = screen.getAllByTestId("skills-source-group");
-    expect(
-      groups.map((group) => group.querySelector("summary")?.textContent),
-    ).toEqual([
+    expect(groups.map((group) => group.querySelector("summary")?.textContent)).toEqual([
       "Default1 skill",
       "~/.agents/skills1 skill",
       "/workspace/project2 skills",
@@ -843,9 +784,7 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("/workspace/.agents/skills")).toBeTruthy();
     expect(screen.getByText("Built-in review skill")).toBeTruthy();
     expect(screen.queryByText("Default long description")).toBeNull();
-    expect(screen.getByText(longDescription).getAttribute("title")).toBe(
-      longDescription,
-    );
+    expect(screen.getByText(longDescription).getAttribute("title")).toBe(longDescription);
     expect(screen.getAllByTestId("skills-source-group")).toHaveLength(2);
     fireEvent.click(reviewToggle);
 
@@ -865,9 +804,7 @@ describe("CapabilitiesPage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add Skill directory" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Add Skill directory" }));
 
     await waitFor(() =>
       expect(setSkillsExtraRoots.mutateAsync).toHaveBeenCalledWith({
@@ -882,9 +819,7 @@ describe("CapabilitiesPage", () => {
     expect(screen.getByText("/tmp/shared-skills")).toBeTruthy();
 
     open.mockResolvedValueOnce("/workspace/team-skills");
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add Skill directory" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Add Skill directory" }));
     await waitFor(() =>
       expect(setSkillsExtraRoots.mutateAsync).toHaveBeenLastCalledWith({
         extraRoots: ["/tmp/shared-skills", "/workspace/team-skills"],
@@ -907,9 +842,7 @@ describe("CapabilitiesPage", () => {
         <CapabilitiesPage />
       </MemoryRouter>,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add Skill directory" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Add Skill directory" }));
 
     await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
     expect(setSkillsExtraRoots.mutateAsync).not.toHaveBeenCalled();
@@ -1034,9 +967,7 @@ describe("CapabilitiesPage", () => {
   });
 
   it("keeps the server state after a failed Skill update", async () => {
-    const mutateAsync = vi
-      .fn()
-      .mockRejectedValue(new Error("Skill config rejected"));
+    const mutateAsync = vi.fn().mockRejectedValue(new Error("Skill config rejected"));
     useSkillsList.mockReturnValue({
       data: {
         data: [
@@ -1071,10 +1002,7 @@ describe("CapabilitiesPage", () => {
     const reviewToggle = screen.getByRole("switch", { name: "Enable review" });
     fireEvent.click(reviewToggle);
 
-    await waitFor(() =>
-      expect(document.body.textContent).toContain("Skill config rejected"),
-    );
+    await waitFor(() => expect(document.body.textContent).toContain("Skill config rejected"));
     expect((reviewToggle as HTMLInputElement).checked).toBe(true);
   });
-
 });

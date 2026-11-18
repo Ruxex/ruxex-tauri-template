@@ -77,7 +77,7 @@
 
 ## 現行コードとの対応
 
-標準 `btn` は [`ProjectsPage`](../../src/pages/ProjectsPage.tsx) や [`SchedulesPage`](../../src/pages/SchedulesPage.tsx) の主要操作で使われ、`min-h-11` を加えた44px以上の例もあります。標準 `input` と `select` は [`ChatsPage`](../../src/pages/ChatsPage.tsx)、コンパクトな入力欄は [`ProjectSelector`](../../src/components/chats/ProjectSelector.tsx) に例があります。
+標準 `btn` は [`ProjectsPage`](../../src/pages/ProjectsPage.tsx) や [`SchedulesPage`](../../src/pages/SchedulesPage.tsx) の主要操作で使われ、`min-h-11` を加えた44px以上の例もあります。標準 `input` と `select` は [`ChatsPage`](../../src/pages/ChatsPage.tsx)、コンパクトな入力欄は [`ProjectSelector`](../../src/components/composite/chats/ProjectSelector.tsx) に例があります。
 
 これらはガイドの寸法を説明する参照例です。全ての既存ボタン・入力欄を監査した結果ではなく、既存画面への適用は別の工程です。
 

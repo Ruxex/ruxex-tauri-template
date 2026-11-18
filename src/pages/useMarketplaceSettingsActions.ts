@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { formatErrorMessage } from "../app/error-message";
+import { formatErrorMessage } from "@/app/error-message";
 import {
   addDisabledMarketplace,
   readMarketplaceDefinition,
@@ -8,18 +8,14 @@ import {
   removeDisabledMarketplace,
   writeMarketplacePreferences,
   type MarketplaceDefinition,
-} from "../app/marketplace-preferences";
-import { useAddMarketplace, useRemoveMarketplace } from "../app-server/hooks";
+} from "@/app/marketplace-preferences";
+import { useAddMarketplace, useRemoveMarketplace } from "@/app-server/hooks";
 
 export function useMarketplaceSettingsActions(config: unknown) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const [marketplacePreferences, setMarketplacePreferences] = useState(
-    readMarketplacePreferences,
-  );
-  const [recentDefinitions, setRecentDefinitions] = useState<
-    Record<string, MarketplaceDefinition>
-  >({});
+  const [marketplacePreferences, setMarketplacePreferences] = useState(readMarketplacePreferences);
+  const [recentDefinitions, setRecentDefinitions] = useState<Record<string, MarketplaceDefinition>>({});
   const addMarketplace = useAddMarketplace();
   const removeMarketplace = useRemoveMarketplace();
 
@@ -44,12 +40,7 @@ export function useMarketplaceSettingsActions(config: unknown) {
         ...current,
         [response.marketplaceName]: definition,
       }));
-      updatePreferences(
-        removeDisabledMarketplace(
-          marketplacePreferences,
-          response.marketplaceName,
-        ),
-      );
+      updatePreferences(removeDisabledMarketplace(marketplacePreferences, response.marketplaceName));
     }
   }
 
@@ -77,9 +68,7 @@ export function useMarketplaceSettingsActions(config: unknown) {
         refName: definition.refName,
         sparsePaths: definition.sparsePaths,
       });
-      updatePreferences(
-        removeDisabledMarketplace(marketplacePreferences, name),
-      );
+      updatePreferences(removeDisabledMarketplace(marketplacePreferences, name));
     } catch (error) {
       setActionError(formatErrorMessage(error));
     } finally {

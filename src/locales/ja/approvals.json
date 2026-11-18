@@ -1,8 +1,5 @@
 {
-  "safety": "安全性",
-  "approvalCenter": "承認",
   "disconnected": "未接続",
-  "noPendingApprovals": "保留中の承認はありません。",
   "permissionRequested": "権限リクエスト",
   "mCPApprovalRequested": "MCP 承認リクエスト",
   "inputRequested": "入力リクエスト",

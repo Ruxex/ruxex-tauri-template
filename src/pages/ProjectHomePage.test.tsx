@@ -1,17 +1,10 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const useParams = vi.hoisted(() => vi.fn());
 const useProject = vi.hoisted(() => vi.fn());
@@ -20,18 +13,13 @@ const useArchiveThread = vi.hoisted(() => vi.fn());
 const useUpdateProject = vi.hoisted(() => vi.fn());
 const useDeleteProject = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
-const useAppServerEvents = vi.hoisted(() =>
-  vi.fn(() => ({ threads: {}, pendingServerRequests: {} })),
-);
+const useAppServerEvents = vi.hoisted(() => vi.fn(() => ({ threads: {}, pendingServerRequests: {} })));
 
 vi.mock("react-router-dom", async () => {
-  const actual =
-    await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return { ...actual, useParams };
 });
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useArchiveThread,
   useDeleteProject,
   useProject,
@@ -40,7 +28,7 @@ vi.mock("../app-server/hooks", () => ({
   useAppServerEvents,
 }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open }));
-vi.mock("../components/common/ThreadCard", () => ({
+vi.mock("@/components/base/common/ThreadCard", () => ({
   ThreadCard: ({
     thread,
     onArchive,
@@ -120,9 +108,7 @@ describe("ProjectHomePage", () => {
     expect(screen.getByText("/workspace")).toBeTruthy();
     expect(screen.getByText("Project chat")).toBeTruthy();
     expect(screen.getByRole("table", { name: "Chats" })).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "New chat" }).getAttribute("href"),
-    ).toBe("/?projectId=project-1");
+    expect(screen.getByRole("link", { name: "New chat" }).getAttribute("href")).toBe("/?projectId=project-1");
     const editButton = screen.getByRole("button", { name: "Edit project" });
     const deleteButton = screen.getByRole("button", { name: "Delete project" });
     expect(editButton.textContent?.trim()).toBe("");
@@ -164,9 +150,7 @@ describe("ProjectHomePage", () => {
     );
 
     expect(screen.getByText("2 minutes ago")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Archive Project chat" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Archive Project chat" }));
 
     expect(mutateAsync).toHaveBeenCalledWith({ threadId: "thread-1" });
   });
@@ -186,13 +170,9 @@ describe("ProjectHomePage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Project name" }), {
       target: { value: "  Updated Ruxex  " },
     });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Project icon: Folder" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Project icon: Folder" }));
     fireEvent.click(screen.getByRole("button", { name: "Code" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Project color: Blue" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Project color: Blue" }));
     fireEvent.click(screen.getByRole("button", { name: "Violet" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
@@ -300,9 +280,7 @@ describe("ProjectHomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete project" }));
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText(/Ruxex/)).toBeTruthy();
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Delete project" }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete project" }));
 
     expect(mutate).toHaveBeenCalledWith(
       { projectId: "project-1" },
@@ -312,9 +290,7 @@ describe("ProjectHomePage", () => {
   });
 
   it("keeps the delete dialog open and shows a mutation error", async () => {
-    const mutate = vi.fn((_params, options) =>
-      options.onError(new Error("delete failed")),
-    );
+    const mutate = vi.fn((_params, options) => options.onError(new Error("delete failed")));
     useDeleteProject.mockReturnValue({ isPending: false, mutate });
     const { ProjectHomePage } = await import("./ProjectHomePage");
 
@@ -326,9 +302,7 @@ describe("ProjectHomePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Delete project" }));
     const dialog = screen.getByRole("dialog");
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Delete project" }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete project" }));
 
     expect(screen.getByRole("alert").textContent).toContain("delete failed");
     expect(screen.getByRole("dialog")).toBeTruthy();
@@ -356,9 +330,7 @@ describe("ProjectHomePage", () => {
 
     const workspaceStatus = screen.getByRole("status");
     expect(screen.getByText("No workspace root configured")).toBeTruthy();
-    expect(workspaceStatus.querySelector("span")?.className).toContain(
-      "min-w-0",
-    );
+    expect(workspaceStatus.querySelector("span")?.className).toContain("min-w-0");
   });
 
   it("renders a stable error state when project loading fails", async () => {
@@ -389,11 +361,7 @@ describe("ProjectHomePage", () => {
     expect(screen.getByText("Project chat")).toBeTruthy();
     expect(screen.getByLabelText("プロジェクトのチャットを検索")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "プロジェクトを編集" }));
-    expect(
-      screen.getByRole("dialog", { name: "プロジェクトを編集" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "プロジェクトを保存" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "プロジェクトを編集" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "プロジェクトを保存" })).toBeTruthy();
   });
 });

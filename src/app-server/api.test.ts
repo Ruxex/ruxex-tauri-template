@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  ensureAppServer,
-  rejectServerRequestWithMessage,
-  requestAppServerMethod,
-  resolveServerRequest,
-} from "./api";
-import { MockAppServer } from "../test-support/mock-app-server";
+import { ensureAppServer, rejectServerRequestWithMessage, requestAppServerMethod, resolveServerRequest } from "./api";
+import { MockAppServer } from "@/test-support/mock-app-server";
 
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 
@@ -25,9 +20,7 @@ describe("requestAppServerMethod", () => {
       backwardsCursor: null,
     });
     invoke.mockReset();
-    invoke.mockImplementation((command: string, args: unknown) =>
-      server.invoke(command, args as never),
-    );
+    invoke.mockImplementation((command: string, args: unknown) => server.invoke(command, args as never));
   });
 
   it("builds a typed app-server request envelope", async () => {
@@ -52,9 +45,7 @@ describe("requestAppServerMethod", () => {
     await resolveServerRequest(42, { decision: "accept" });
     await rejectServerRequestWithMessage(43, "unsupported");
 
-    expect(server.resolutions).toEqual([
-      { requestId: 42, result: { decision: "accept" } },
-    ]);
+    expect(server.resolutions).toEqual([{ requestId: 42, result: { decision: "accept" } }]);
     expect(server.rejections).toEqual([
       {
         requestId: 43,
@@ -66,9 +57,7 @@ describe("requestAppServerMethod", () => {
   it("propagates transport failures to callers", async () => {
     invoke.mockRejectedValueOnce(new Error("socket closed"));
 
-    await expect(
-      requestAppServerMethod("thread/list", { limit: 1 }),
-    ).rejects.toThrow("socket closed");
+    await expect(requestAppServerMethod("thread/list", { limit: 1 })).rejects.toThrow("socket closed");
   });
 
   it("passes an already-built protocol request through the Tauri bridge", async () => {
@@ -84,23 +73,19 @@ describe("requestAppServerMethod", () => {
       id: "request-1",
       response: { data: [], nextCursor: null, backwardsCursor: null },
     });
-    expect(server.requests).toEqual([
-      { method: "thread/list", id: "request-1", params: { limit: 2 } },
-    ]);
+    expect(server.requests).toEqual([{ method: "thread/list", id: "request-1", params: { limit: 2 } }]);
   });
 
   it("rejects when the mock server has no response contract for a method", async () => {
-    await expect(
-      requestAppServerMethod("thread/read", { threadId: "thread-1" }),
-    ).rejects.toThrow("No mock response registered for thread/read");
+    await expect(requestAppServerMethod("thread/read", { threadId: "thread-1" })).rejects.toThrow(
+      "No mock response registered for thread/read",
+    );
   });
 
   it("preserves string request ids for server-request responses", async () => {
     await resolveServerRequest("approval-1", { decision: "accept" });
 
-    expect(server.resolutions).toEqual([
-      { requestId: "approval-1", result: { decision: "accept" } },
-    ]);
+    expect(server.resolutions).toEqual([{ requestId: "approval-1", result: { decision: "accept" } }]);
   });
 
   it("uses the standard JSON-RPC rejection envelope for arbitrary request ids", async () => {

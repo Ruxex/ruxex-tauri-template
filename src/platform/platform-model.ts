@@ -1,6 +1,4 @@
-export type DeepLinkTarget =
-  | { kind: "thread"; id: string }
-  | { kind: "project"; id: string };
+export type DeepLinkTarget = { kind: "thread"; id: string } | { kind: "project"; id: string };
 
 type ScheduleCadence =
   | { kind: "once"; at: string }
@@ -24,13 +22,7 @@ export function normalizeDeepLink(value: string): DeepLinkTarget | null {
     return null;
   }
 
-  if (
-    url.protocol !== "ruxex:" ||
-    url.username ||
-    url.password ||
-    url.search ||
-    url.hash
-  ) {
+  if (url.protocol !== "ruxex:" || url.username || url.password || url.search || url.hash) {
     return null;
   }
 
@@ -55,19 +47,13 @@ export function validateScheduleSpec(value: ScheduleSpec): boolean {
     case "weekly":
       return (
         value.cadence.weekdays.length > 0 &&
-        value.cadence.weekdays.every(
-          (weekday) =>
-            Number.isInteger(weekday) && weekday >= 0 && weekday <= 6,
-        ) &&
+        value.cadence.weekdays.every((weekday) => Number.isInteger(weekday) && weekday >= 0 && weekday <= 6) &&
         validTime(value.cadence.hour, value.cadence.minute)
       );
   }
 }
 
-export function validateWorktreePath(
-  root: string,
-  destination: string,
-): boolean {
+export function validateWorktreePath(root: string, destination: string): boolean {
   if (!root.startsWith("/") || !destination.startsWith("/")) {
     return false;
   }
@@ -79,10 +65,7 @@ export function validateWorktreePath(
   }
   const normalizedRoot = trimTrailingSlashes(root);
   const normalizedDestination = trimTrailingSlashes(destination);
-  return (
-    normalizedDestination.startsWith(`${normalizedRoot}/`) &&
-    normalizedDestination !== normalizedRoot
-  );
+  return normalizedDestination.startsWith(`${normalizedRoot}/`) && normalizedDestination !== normalizedRoot;
 }
 
 function decodePathSegment(pathname: string): string | null {
@@ -99,14 +82,7 @@ function decodePathSegment(pathname: string): string | null {
 }
 
 function validTime(hour: number, minute: number): boolean {
-  return (
-    Number.isInteger(hour) &&
-    hour >= 0 &&
-    hour <= 23 &&
-    Number.isInteger(minute) &&
-    minute >= 0 &&
-    minute <= 59
-  );
+  return Number.isInteger(hour) && hour >= 0 && hour <= 23 && Number.isInteger(minute) && minute >= 0 && minute <= 59;
 }
 
 function trimTrailingSlashes(value: string): string {

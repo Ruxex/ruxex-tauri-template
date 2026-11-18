@@ -2,50 +2,33 @@ import { useTranslation } from "react-i18next";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, useReducer, useState } from "react";
 
-import { formatErrorMessage } from "../app/error-message";
-import { useSchedules } from "../app-server/hooks";
-import { isDesktopRuntime } from "../app-server/runtime";
-import { PageContainer } from "../components/layout/PageContainer";
-import type { ScheduleRecord } from "../platform/schedules";
-import {
-  type ScheduleAction,
-  ScheduleActionDialog,
-} from "./schedules/ScheduleActionDialog";
-import { EmptyScheduleList, ScheduleCard } from "./schedules/ScheduleCard";
-import { ScheduleEditorDialog } from "./schedules/ScheduleEditorDialog";
+import { formatErrorMessage } from "@/app/error-message";
+import { useSchedules } from "@/app-server/hooks";
+import { isDesktopRuntime } from "@/app-server/runtime";
+import { PageContainer } from "@/components/feature/layout/PageContainer";
+import type { ScheduleRecord } from "@/platform/schedules";
+import { type ScheduleAction, ScheduleActionDialog } from "@/pages/schedules/ScheduleActionDialog";
+import { EmptyScheduleList, ScheduleCard } from "@/pages/schedules/ScheduleCard";
+import { ScheduleEditorDialog } from "@/pages/schedules/ScheduleEditorDialog";
 import {
   createScheduleFormState,
   scheduleFormReducer,
   scheduleInputFromForm,
   type ScheduleFormState,
-} from "./schedules/schedule-form";
-import { browserTimeZone } from "./schedules/schedule-format";
+} from "@/pages/schedules/schedule-form";
+import { browserTimeZone } from "@/pages/schedules/schedule-format";
 
 export function SchedulesPage() {
   const { t } = useTranslation("schedules");
   const schedules = useSchedules();
   const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<ScheduleRecord | null>(
-    null,
-  );
-  const [form, dispatch] = useReducer(
-    scheduleFormReducer,
-    createScheduleFormState(),
-  );
-  const [invalidForm, setInvalidForm] = useState<ScheduleFormState | null>(
-    null,
-  );
-  const invalidResult = invalidForm
-    ? scheduleInputFromForm(invalidForm, browserTimeZone())
-    : null;
-  const formError =
-    invalidResult && !invalidResult.ok ? invalidResult.message : null;
-  const [pendingAction, setPendingAction] = useState<ScheduleAction | null>(
-    null,
-  );
-  const [pendingScheduleIds, setPendingScheduleIds] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [editingSchedule, setEditingSchedule] = useState<ScheduleRecord | null>(null);
+  const [form, dispatch] = useReducer(scheduleFormReducer, createScheduleFormState());
+  const [invalidForm, setInvalidForm] = useState<ScheduleFormState | null>(null);
+  const invalidResult = invalidForm ? scheduleInputFromForm(invalidForm, browserTimeZone()) : null;
+  const formError = invalidResult && !invalidResult.ok ? invalidResult.message : null;
+  const [pendingAction, setPendingAction] = useState<ScheduleAction | null>(null);
+  const [pendingScheduleIds, setPendingScheduleIds] = useState<Set<string>>(() => new Set());
   const isScheduleModalOpen = isCreatePanelOpen || editingSchedule !== null;
 
   function openCreatePanel() {
@@ -77,10 +60,7 @@ export function SchedulesPage() {
       return;
     }
     if (editingSchedule) {
-      schedules.update.mutate(
-        { id: editingSchedule.id, input: result.input },
-        { onSuccess: closeEditor },
-      );
+      schedules.update.mutate({ id: editingSchedule.id, input: result.input }, { onSuccess: closeEditor });
     } else {
       schedules.create.mutate(result.input, { onSuccess: closeEditor });
     }
@@ -105,9 +85,7 @@ export function SchedulesPage() {
         return next;
       });
     };
-    void schedules.setEnabled
-      .mutateAsync({ id: target.id, enabled })
-      .then(finish, finish);
+    void schedules.setEnabled.mutateAsync({ id: target.id, enabled }).then(finish, finish);
   }
 
   const savedSchedules = schedules.query.data ?? [];
@@ -134,17 +112,13 @@ export function SchedulesPage() {
   return (
     <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("automation")}
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("automation")}</h1>
         <button
           aria-expanded={isScheduleModalOpen}
           aria-label={isScheduleModalOpen ? t("close") : t("newSchedule")}
           className="btn btn-primary min-h-11 gap-2"
           type="button"
-          onClick={() =>
-            isScheduleModalOpen ? closeEditor() : openCreatePanel()
-          }
+          onClick={() => (isScheduleModalOpen ? closeEditor() : openCreatePanel())}
         >
           {isScheduleModalOpen ? (
             <XMarkIcon aria-hidden="true" className="size-4" />
@@ -156,9 +130,7 @@ export function SchedulesPage() {
       </header>
 
       {!isDesktopRuntime && (
-        <p className="alert alert-info text-sm">
-          {t("schedulesAreAvailableInTheTauriDesktopRuntime")}
-        </p>
+        <p className="alert alert-info text-sm">{t("schedulesAreAvailableInTheTauriDesktopRuntime")}</p>
       )}
 
       {isScheduleModalOpen && (
@@ -176,16 +148,8 @@ export function SchedulesPage() {
       {pendingAction && (
         <ScheduleActionDialog
           action={pendingAction}
-          error={
-            pendingAction.kind === "run"
-              ? schedules.runNow.error
-              : schedules.remove.error
-          }
-          isPending={
-            pendingAction.kind === "run"
-              ? schedules.runNow.isPending
-              : schedules.remove.isPending
-          }
+          error={pendingAction.kind === "run" ? schedules.runNow.error : schedules.remove.error}
+          isPending={pendingAction.kind === "run" ? schedules.runNow.isPending : schedules.remove.isPending}
           onClose={() => setPendingAction(null)}
           onConfirm={confirmAction}
         />
@@ -225,13 +189,9 @@ export function SchedulesPage() {
               isTogglePending={pendingScheduleIds.has(schedule.id)}
               schedule={schedule}
               onEdit={openEditPanel}
-              onOpen={(target) =>
-                (window.location.hash = `/schedules/${target.id}`)
-              }
+              onOpen={(target) => (window.location.hash = `/schedules/${target.id}`)}
               onEnabledChange={changeScheduleEnabled}
-              onRequestAction={(kind, target) =>
-                setPendingAction({ kind, schedule: target })
-              }
+              onRequestAction={(kind, target) => setPendingAction({ kind, schedule: target })}
             />
           ))}
         </div>

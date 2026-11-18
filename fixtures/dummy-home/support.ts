@@ -1,11 +1,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 
-import {
-  buildScenarioMarker,
-  type PersistentScenario,
-  type ProjectFixture,
-} from "./catalog";
+import { buildScenarioMarker, type PersistentScenario, type ProjectFixture } from "./catalog";
 
 export const MINIMAP_TURN_COUNT = 7;
 
@@ -15,17 +11,12 @@ export type ScenarioExpectation = {
   alternatives?: readonly string[];
 };
 
-export function scenarioPrompt(
-  scenario: PersistentScenario,
-  occurrence: number,
-): string {
+export function scenarioPrompt(scenario: PersistentScenario, occurrence: number): string {
   const marker = buildScenarioMarker(scenario, occurrence);
   return marker;
 }
 
-export function scenarioExpectation(
-  scenario: PersistentScenario,
-): ScenarioExpectation {
+export function scenarioExpectation(scenario: PersistentScenario): ScenarioExpectation {
   if (scenario.kind === "goal") {
     return { kind: "goal", value: requireScenarioText(scenario.goalText) };
   }
@@ -50,12 +41,9 @@ export async function waitForDesktopReady(): Promise<void> {
         text: document.body?.innerText.slice(0, 500) ?? "<no body>",
       }))
       .catch(() => null);
-    throw new Error(
-      `Desktop UI did not render its main content: ${JSON.stringify(page)}`,
-      {
-        cause: error,
-      },
-    );
+    throw new Error(`Desktop UI did not render its main content: ${JSON.stringify(page)}`, {
+      cause: error,
+    });
   }
   await $("button[aria-label='Account']").click();
   await browser.waitUntil(
@@ -92,37 +80,26 @@ export async function waitForHomeReady(): Promise<void> {
   await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
-  await browser.waitUntil(
-    async () => !(await $("main").getText()).includes("Loading projects..."),
-    {
-      timeout: 10_000,
-      timeoutMsg: "The Home project sidebar should finish loading",
-    },
-  );
+  await browser.waitUntil(async () => !(await $("main").getText()).includes("Loading projects..."), {
+    timeout: 10_000,
+    timeoutMsg: "The Home project sidebar should finish loading",
+  });
 }
 
-export async function waitForRecentChatCount(
-  expectedCount: number,
-  timeout = 30_000,
-): Promise<void> {
+export async function waitForRecentChatCount(expectedCount: number, timeout = 30_000): Promise<void> {
   const sidebar = $('aside[aria-label="Chat sidebar"]');
   await sidebar.waitForDisplayed({ timeout });
 
   try {
-    await browser.waitUntil(
-      async () =>
-        (await $$("#recent-chats-list > ul > li").length) === expectedCount,
-      {
-        timeout,
-        timeoutMsg: `Expected ${expectedCount} recent chats in the sidebar`,
-      },
-    );
+    await browser.waitUntil(async () => (await $$("#recent-chats-list > ul > li").length) === expectedCount, {
+      timeout,
+      timeoutMsg: `Expected ${expectedCount} recent chats in the sidebar`,
+    });
   } catch (error) {
     const sidebarText = await sidebar.getText().catch(() => "<unavailable>");
-    throw new Error(
-      `Expected ${expectedCount} recent chats in the sidebar; current sidebar: ${sidebarText}`,
-      { cause: error },
-    );
+    throw new Error(`Expected ${expectedCount} recent chats in the sidebar; current sidebar: ${sidebarText}`, {
+      cause: error,
+    });
   }
 }
 
@@ -133,10 +110,7 @@ export async function closeSidebarPanel(): Promise<void> {
   }
 }
 
-export async function sendScenario(
-  scenario: PersistentScenario,
-  occurrence: number,
-): Promise<void> {
+export async function sendScenario(scenario: PersistentScenario, occurrence: number): Promise<void> {
   await openNewChat();
   await sendScenarioFromCurrentComposer(scenario, occurrence);
 }
@@ -150,22 +124,17 @@ export async function sendScenarioFromCurrentComposer(
 
   if (scenario.kind === "goal") {
     await setCurrentGoal(scenario.goalText ?? "");
-    await browser.waitUntil(
-      async () => (await browser.getUrl()).includes("/chat/"),
-      {
-        timeout: 10_000,
-        timeoutMsg: "The goal thread should open after it is created",
-      },
-    );
+    await browser.waitUntil(async () => (await browser.getUrl()).includes("/chat/"), {
+      timeout: 10_000,
+      timeoutMsg: "The goal thread should open after it is created",
+    });
     return;
   }
 
   await sendComposerMessage();
   if (scenario.kind === "approval") {
     await waitForPendingRequest();
-    await resolveApproval(
-      scenario.id === "approval-accepted" ? "accept" : "deny",
-    );
+    await resolveApproval(scenario.id === "approval-accepted" ? "accept" : "deny");
   }
 
   if (scenario.kind === "multiTurn") {
@@ -191,9 +160,7 @@ export async function sendScenarioFromCurrentComposer(
 }
 
 async function sendFollowUp(text: string): Promise<void> {
-  const previousCount = await $("[aria-label='Chat activity']").$$(
-    "article.chat-end",
-  ).length;
+  const previousCount = await $("[aria-label='Chat activity']").$$("article.chat-end").length;
   const message = $("[contenteditable='true'][aria-label='Message']");
   await message.waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(async () => message.isEnabled(), {
@@ -205,10 +172,7 @@ async function sendFollowUp(text: string): Promise<void> {
   await waitForUserMessageCount(previousCount + 1);
 }
 
-async function fillComposer(
-  message: WebdriverIO.Element,
-  text: string,
-): Promise<void> {
+async function fillComposer(message: WebdriverIO.Element, text: string): Promise<void> {
   await message.setValue(text);
   await browser.waitUntil(async () => (await message.getText()) === text, {
     timeout: 5_000,
@@ -218,9 +182,7 @@ async function fillComposer(
 
 async function waitForAssistantMessageCount(count: number): Promise<void> {
   await browser.waitUntil(
-    async () =>
-      (await $("[aria-label='Chat activity']").$$("article.chat-start")
-        .length) >= count,
+    async () => (await $("[aria-label='Chat activity']").$$("article.chat-start").length) >= count,
     {
       timeout: 45_000,
       timeoutMsg: `Expected at least ${count} assistant responses`,
@@ -239,9 +201,7 @@ export function minimapFixturePrompt(turn: number): string {
   return `Fixture minimap message ${String(turn).padStart(2, "0")} example:basic`;
 }
 
-export async function sendMinimapConversation(
-  timeout = 45_000,
-): Promise<void> {
+export async function sendMinimapConversation(timeout = 45_000): Promise<void> {
   const expectation = {
     kind: "text" as const,
     value: "This is a fixed response from the dummy provider.",
@@ -259,15 +219,10 @@ export async function sendMinimapConversation(
 }
 
 async function waitForUserMessageCount(count: number): Promise<void> {
-  await browser.waitUntil(
-    async () =>
-      (await $$(`[aria-label='Chat activity'] article.chat-end`)).length >=
-      count,
-    {
-      timeout: 15_000,
-      timeoutMsg: `Expected at least ${count} user messages in the conversation`,
-    },
-  );
+  await browser.waitUntil(async () => (await $$(`[aria-label='Chat activity'] article.chat-end`)).length >= count, {
+    timeout: 15_000,
+    timeoutMsg: `Expected at least ${count} user messages in the conversation`,
+  });
 }
 
 export async function expandCompletedTurnDetails(): Promise<void> {
@@ -275,20 +230,13 @@ export async function expandCompletedTurnDetails(): Promise<void> {
   const summary = $("[aria-label='Chat activity'] > details > summary");
   await details.waitForDisplayed({ timeout: 15_000 });
   await summary.click();
-  await browser.waitUntil(
-    async () => (await details.getAttribute("open")) !== null,
-    {
-      timeout: 5_000,
-      timeoutMsg: "The completed turn details should be expanded",
-    },
-  );
+  await browser.waitUntil(async () => (await details.getAttribute("open")) !== null, {
+    timeout: 5_000,
+    timeoutMsg: "The completed turn details should be expanded",
+  });
 }
 
-export async function withWindowSize<T>(
-  width: number,
-  height: number,
-  callback: () => Promise<T>,
-): Promise<T> {
+export async function withWindowSize<T>(width: number, height: number, callback: () => Promise<T>): Promise<T> {
   const original = await browser.getWindowSize();
   await browser.setWindowSize(width, height);
   try {
@@ -298,9 +246,7 @@ export async function withWindowSize<T>(
   }
 }
 
-export async function selectSubmissionMode(
-  mode: "send" | "queue",
-): Promise<void> {
+export async function selectSubmissionMode(mode: "send" | "queue"): Promise<void> {
   await $("summary[aria-label='Submission mode menu']").click();
   const label = mode === "queue" ? "Queue next message" : "Send";
   await $(`button[aria-label='${label}'][role='menuitem']`).click();
@@ -320,13 +266,9 @@ export async function waitForActiveTurn(): Promise<void> {
 }
 
 async function sendComposerMessage(): Promise<void> {
-  const submit = $(
-    "//*[@contenteditable='true' and @aria-label='Message']/ancestor::form[1]//button[@type='submit']",
-  );
+  const submit = $("//*[@contenteditable='true' and @aria-label='Message']/ancestor::form[1]//button[@type='submit']");
   await browser.waitUntil(
-    async () =>
-      (await submit.getAttribute("aria-label")) === "Send" &&
-      (await submit.isEnabled()),
+    async () => (await submit.getAttribute("aria-label")) === "Send" && (await submit.isEnabled()),
     {
       timeout: 10_000,
       timeoutMsg: "The composer should be ready to send a new turn",
@@ -335,16 +277,13 @@ async function sendComposerMessage(): Promise<void> {
   await submit.click();
 }
 
-export async function waitForCompletedTurn(
-  expectation: ScenarioExpectation,
-  timeout = 45_000,
-): Promise<void> {
+export async function waitForCompletedTurn(expectation: ScenarioExpectation, timeout = 45_000): Promise<void> {
   await browser.waitUntil(
     async () => {
       const text = await $(".workbench-main").getText();
       const normalized = text.toLowerCase();
-      return [expectation.value, ...(expectation.alternatives ?? [])].some(
-        (value) => normalized.includes(value.toLowerCase()),
+      return [expectation.value, ...(expectation.alternatives ?? [])].some((value) =>
+        normalized.includes(value.toLowerCase()),
       );
     },
     {
@@ -356,13 +295,10 @@ export async function waitForCompletedTurn(
 }
 
 export async function waitForTurnFinish(): Promise<void> {
-  await browser.waitUntil(
-    async () => !(await $("button[aria-label='Stop']").isExisting()),
-    {
-      timeout: 15_000,
-      timeoutMsg: "The fixture turn should finish before the helper returns",
-    },
-  );
+  await browser.waitUntil(async () => !(await $("button[aria-label='Stop']").isExisting()), {
+    timeout: 15_000,
+    timeoutMsg: "The fixture turn should finish before the helper returns",
+  });
 }
 
 export async function waitForPendingRequest(): Promise<void> {
@@ -370,13 +306,7 @@ export async function waitForPendingRequest(): Promise<void> {
     async () =>
       (
         await Promise.all(
-          [
-            "Approve once",
-            "Approve in this chat",
-            "Reject",
-            "Allow",
-            "Deny",
-          ].map(async (label) =>
+          ["Approve once", "Approve in this chat", "Reject", "Allow", "Deny"].map(async (label) =>
             $(`button[aria-label='${label}']`)
               .isDisplayed()
               .catch(() => false),
@@ -390,17 +320,13 @@ export async function waitForPendingRequest(): Promise<void> {
   );
 }
 
-export async function resolveApproval(
-  decision: "accept" | "deny",
-): Promise<void> {
+export async function resolveApproval(decision: "accept" | "deny"): Promise<void> {
   const label = decision === "accept" ? "Approve once" : "Reject";
   await $(`button[aria-label='${label}']`).click();
 }
 
 export async function submitUserInput(answer: string): Promise<void> {
-  const card = $(
-    "//*[@aria-label='Chat activity']//article[.//button[@aria-label='Submit']]",
-  );
+  const card = $("//*[@aria-label='Chat activity']//article[.//button[@aria-label='Submit']]");
   const otherOption = card.$("input[type='radio'][value='None of the above']");
   await otherOption.waitForDisplayed({ timeout: 30_000 });
   await otherOption.click();
@@ -408,12 +334,8 @@ export async function submitUserInput(answer: string): Promise<void> {
   await card.$("button[aria-label='Submit']").click();
 }
 
-export async function createRootlessProject(
-  project: ProjectFixture,
-): Promise<void> {
-  await $(
-    "nav[aria-label='Workspace navigation'] button[aria-label='Projects']",
-  ).click();
+export async function createRootlessProject(project: ProjectFixture): Promise<void> {
+  await $("nav[aria-label='Workspace navigation'] button[aria-label='Projects']").click();
   await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
   await waitForProjectsPageReady();
   await $("button[aria-label='New project']").click();
@@ -470,7 +392,9 @@ async function waitForProjectsPageReady(timeout = 30_000): Promise<void> {
       },
     );
   } catch (cause) {
-    const pageText = await $("main").getText().catch(() => "<unavailable>");
+    const pageText = await $("main")
+      .getText()
+      .catch(() => "<unavailable>");
     throw new Error(`Projects did not become ready. Page: ${pageText}`, {
       cause,
     });
@@ -481,9 +405,7 @@ export async function createFixtureSchedule(name: string): Promise<void> {
   await $("button[aria-label='New schedule']").click();
   await $("h2=Create a schedule").waitForDisplayed({ timeout: 10_000 });
   await $("input[aria-label='Schedule name']").setValue(name);
-  await $("textarea[aria-label='Instructions']").setValue(
-    `Review the fixture page density for ${name}.`,
-  );
+  await $("textarea[aria-label='Instructions']").setValue(`Review the fixture page density for ${name}.`);
   await $("select[aria-label='Cadence']").selectByAttribute("value", "weekly");
   const monday = $("button[aria-label='Monday']");
   if ((await monday.getAttribute("aria-pressed")) !== "true") {
@@ -495,28 +417,20 @@ export async function createFixtureSchedule(name: string): Promise<void> {
       timeout: 10_000,
     });
   } catch (error) {
-    const dialogText = await $(
-      "dialog[aria-labelledby='schedule-dialog-title']",
-    )
+    const dialogText = await $("dialog[aria-labelledby='schedule-dialog-title']")
       .getText()
       .catch(() => "<dialog closed>");
     const pageText = await $("main")
       .getText()
       .catch(() => "<main unavailable>");
-    throw new Error(
-      `Schedule ${name} was not listed after creation. Dialog: ${dialogText}. Page: ${pageText}`,
-      { cause: error },
-    );
+    throw new Error(`Schedule ${name} was not listed after creation. Dialog: ${dialogText}. Page: ${pageText}`, {
+      cause: error,
+    });
   }
 }
 
-export async function createWorkspaceProject(
-  name: string,
-  workspace: string,
-): Promise<string> {
-  await $(
-    "nav[aria-label='Workspace navigation'] button[aria-label='Projects']",
-  ).click();
+export async function createWorkspaceProject(name: string, workspace: string): Promise<string> {
+  await $("nav[aria-label='Workspace navigation'] button[aria-label='Projects']").click();
   await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
   await $("button[aria-label='New project']").click();
   await $("dialog").waitForDisplayed({ timeout: 10_000 });
@@ -531,14 +445,10 @@ export async function createWorkspaceProject(
   await $("button[aria-label='Select workspace folder']").click();
   const selectedFolder = $("button[aria-label^='Selected workspace folder: ']");
   await browser.waitUntil(
-    async () =>
-      (await selectedFolder.getAttribute("aria-label")) ===
-      `Selected workspace folder: ${workspace}`,
+    async () => (await selectedFolder.getAttribute("aria-label")) === `Selected workspace folder: ${workspace}`,
     {
       timeout: 5_000,
-      timeoutMsg: `The selected workspace folder did not match. Expected ${workspace}; dialog: ${await $(
-        "dialog",
-      )
+      timeoutMsg: `The selected workspace folder did not match. Expected ${workspace}; dialog: ${await $("dialog")
         .getText()
         .catch(() => "<closed>")}`,
     },
@@ -550,21 +460,15 @@ export async function createWorkspaceProject(
   return match[1];
 }
 
-export async function inspectDiffFileControls(): Promise<
-  Array<{ label: string; expanded: string | null }>
-> {
+export async function inspectDiffFileControls(): Promise<Array<{ label: string; expanded: string | null }>> {
   return browser.execute(() => {
     function findButtons(root: Document | ShadowRoot): HTMLButtonElement[] {
       const descendants = Array.from(root.querySelectorAll("*"));
       return [
         ...Array.from(
-          root.querySelectorAll<HTMLButtonElement>(
-            "button[aria-label^='Collapse '], button[aria-label^='Expand ']",
-          ),
+          root.querySelectorAll<HTMLButtonElement>("button[aria-label^='Collapse '], button[aria-label^='Expand ']"),
         ),
-        ...descendants.flatMap((element) =>
-          element.shadowRoot ? findButtons(element.shadowRoot) : [],
-        ),
+        ...descendants.flatMap((element) => (element.shadowRoot ? findButtons(element.shadowRoot) : [])),
       ];
     }
 
@@ -582,28 +486,19 @@ export async function clickDiffFileControl(label: string): Promise<void> {
 export async function openProjectChat(projectName: string): Promise<void> {
   const projectHeading = $(`h1=${projectName}`);
   if (!(await projectHeading.isDisplayed().catch(() => false))) {
-    await $(
-      "nav[aria-label='Workspace navigation'] button[aria-label='Projects']",
-    ).click();
+    await $("nav[aria-label='Workspace navigation'] button[aria-label='Projects']").click();
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
-    await $(
-      `//table[@aria-label='Projects']//a[normalize-space(.)='${projectName}']`,
-    ).click();
+    await $(`//table[@aria-label='Projects']//a[normalize-space(.)='${projectName}']`).click();
     await projectHeading.waitForDisplayed({ timeout: 10_000 });
   }
 
-  const newChat = $(
-    "(//section[contains(@class, 'workbench-main')]//a[normalize-space(.)='New chat'])[1]",
-  );
+  const newChat = $("(//section[contains(@class, 'workbench-main')]//a[normalize-space(.)='New chat'])[1]");
   await newChat.waitForDisplayed({ timeout: 10_000 });
   await newChat.click();
-  await browser.waitUntil(
-    async () => (await browser.getUrl()).includes("?projectId="),
-    {
-      timeout: 10_000,
-      timeoutMsg: "The project-scoped new chat route should open",
-    },
-  );
+  await browser.waitUntil(async () => (await browser.getUrl()).includes("?projectId="), {
+    timeout: 10_000,
+    timeoutMsg: "The project-scoped new chat route should open",
+  });
   await $("[contenteditable='true'][aria-label='Message']").waitForDisplayed({
     timeout: 10_000,
   });
@@ -613,13 +508,10 @@ export async function archiveCurrentThread(): Promise<void> {
   const message = $("[contenteditable='true'][aria-label='Message']");
   await message.setValue("/archive");
   await $("button[aria-label='Archive']").click();
-  await browser.waitUntil(
-    async () => !(await $("button[aria-label='Archive']").isExisting()),
-    {
-      timeout: 10_000,
-      timeoutMsg: "The archive command should clear the composer action",
-    },
-  );
+  await browser.waitUntil(async () => !(await $("button[aria-label='Archive']").isExisting()), {
+    timeout: 10_000,
+    timeoutMsg: "The archive command should clear the composer action",
+  });
 }
 
 async function setCurrentGoal(objective: string): Promise<void> {
@@ -654,17 +546,11 @@ export async function saveFixtureScreenshot(name: string): Promise<void> {
   await browser.pause(300);
 }
 
-async function chooseProjectMetadata(
-  kind: "icon" | "color",
-  value: string,
-): Promise<void> {
+async function chooseProjectMetadata(kind: "icon" | "color", value: string): Promise<void> {
   const current = kind === "icon" ? "Folder" : "Blue";
-  const selected =
-    kind === "icon" ? projectIconLabel(value) : capitalize(value);
+  const selected = kind === "icon" ? projectIconLabel(value) : capitalize(value);
   await $(`button[aria-label='Project ${kind}: ${current}']`).click();
-  await $(
-    `fieldset[aria-label='Project ${kind} options'] button[aria-label='${selected}']`,
-  ).click();
+  await $(`fieldset[aria-label='Project ${kind} options'] button[aria-label='${selected}']`).click();
 }
 
 function projectIconLabel(value: string): string {

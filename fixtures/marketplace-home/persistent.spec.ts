@@ -44,11 +44,7 @@ describe("real plugin marketplace home", () => {
     await browser.waitUntil(
       async () => {
         const text = await marketplace.getText();
-        return (
-          text.includes("Codex official") &&
-          text.includes(MARKETPLACE_NAME) &&
-          text.includes("plugins")
-        );
+        return text.includes("Codex official") && text.includes(MARKETPLACE_NAME) && text.includes("plugins");
       },
       {
         timeout: 30_000,
@@ -88,32 +84,22 @@ describe("real plugin marketplace home", () => {
     await $("button[aria-label='Uninstall Build Web Apps']").waitForDisplayed({
       timeout: 10_000,
     });
-    if (
-      await $("button[aria-label='Install Build Web Apps']").isDisplayed()
-    ) {
+    if (await $("button[aria-label='Install Build Web Apps']").isDisplayed()) {
       throw new Error("Installed plugin should not show its install action");
     }
     await saveMarketplaceScreenshot("marketplace-build-web-apps-detail.png");
 
     const capabilitiesSidebar = $("aside[aria-label='Capabilities sidebar']");
     if (!(await capabilitiesSidebar.isDisplayed().catch(() => false))) {
-      await $(
-        "nav[aria-label='Workspace navigation'] button[aria-label='Plugins']",
-      ).click();
+      await $("nav[aria-label='Workspace navigation'] button[aria-label='Plugins']").click();
     }
     await capabilitiesSidebar.waitForDisplayed({ timeout: 10_000 });
     await capabilitiesSidebar.$("summary").click();
-    await capabilitiesSidebar
-      .$("button[aria-label='Build Web Apps']")
-      .waitForDisplayed({ timeout: 10_000 });
-    if (
-      await capabilitiesSidebar.$("button[aria-label='Notion']").isExisting()
-    ) {
+    await capabilitiesSidebar.$("button[aria-label='Build Web Apps']").waitForDisplayed({ timeout: 10_000 });
+    if (await capabilitiesSidebar.$("button[aria-label='Notion']").isExisting()) {
       throw new Error("Notion should remain uninstalled in the fixture");
     }
-    await capabilitiesSidebar
-      .$("button[aria-label='Build Web Apps']")
-      .waitForDisplayed({ timeout: 10_000 });
+    await capabilitiesSidebar.$("button[aria-label='Build Web Apps']").waitForDisplayed({ timeout: 10_000 });
   });
 });
 
@@ -122,10 +108,7 @@ async function waitForMarketplaceDesktopReady(): Promise<void> {
   await browser.waitUntil(
     async () => {
       const text = (await $("main").getText()).toLowerCase();
-      return (
-        text.includes("modelabc") &&
-        !text.includes("app-server is not connected")
-      );
+      return text.includes("modelabc") && !text.includes("app-server is not connected");
     },
     {
       timeout: 30_000,

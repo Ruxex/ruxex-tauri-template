@@ -1,26 +1,20 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AppProviders } from "../app/providers";
-import { AccountPage } from "../pages/AccountPage";
-import { HomePage } from "../pages/HomePage";
-import { MockAppServer } from "../test-support/mock-app-server";
+import { AppProviders } from "@/app/providers";
+import { AccountPage } from "@/pages/AccountPage";
+import { HomePage } from "@/pages/HomePage";
+import { MockAppServer } from "@/test-support/mock-app-server";
 
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 const { listen } = vi.hoisted(() => ({ listen: vi.fn() }));
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
-vi.mock("../components/conversation/ComposerMessageInput", () => ({
+vi.mock("@/components/feature/conversation/ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
     onChange,
@@ -92,14 +86,9 @@ describe("desktop app-server flow", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe("/chat/thread-created"),
-    );
+    await waitFor(() => expect(router.state.location.pathname).toBe("/chat/thread-created"));
 
-    expect(server.requests.map((request) => request.method)).toEqual([
-      "thread/start",
-      "turn/start",
-    ]);
+    expect(server.requests.map((request) => request.method)).toEqual(["thread/start", "turn/start"]);
     expect(server.requests[0]).toMatchObject({
       method: "thread/start",
       params: {
@@ -112,20 +101,15 @@ describe("desktop app-server flow", () => {
       method: "turn/start",
       params: {
         threadId: "thread-created",
-        input: [
-          { type: "text", text: "Review this project", text_elements: [] },
-        ],
+        input: [{ type: "text", text: "Review this project", text_elements: [] }],
       },
     });
   });
 
   it("logs in with an API key and refreshes account data", async () => {
-    const router = createMemoryRouter(
-      [
-        { path: "/settings/account", element: <AccountPage /> },
-      ],
-      { initialEntries: ["/settings/account"] },
-    );
+    const router = createMemoryRouter([{ path: "/settings/account", element: <AccountPage /> }], {
+      initialEntries: ["/settings/account"],
+    });
 
     render(<AppProviders router={router} />);
 
@@ -134,15 +118,10 @@ describe("desktop app-server flow", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe("/settings/account"),
-    );
+    await waitFor(() => expect(router.state.location.pathname).toBe("/settings/account"));
 
     expect(invoke).toHaveBeenCalledWith("ensure_app_server");
-    expect(server.requests.map((request) => request.method)).toEqual([
-      "account/login/start",
-      "account/read",
-    ]);
+    expect(server.requests.map((request) => request.method)).toEqual(["account/login/start", "account/read"]);
     expect(server.requests[0]).toMatchObject({
       method: "account/login/start",
       params: { type: "apiKey", apiKey: "test-api-key" },

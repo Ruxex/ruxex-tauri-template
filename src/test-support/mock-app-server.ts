@@ -1,13 +1,10 @@
-import type { AppServerEvent } from "../app-server/events";
-import type { AppServerRequestError, AppServerStatus } from "../app-server/api";
-import type { ClientRequest, ClientResponse, RequestId } from "../protocol";
+import type { AppServerEvent } from "@/app-server/events";
+import type { AppServerRequestError, AppServerStatus } from "@/app-server/api";
+import type { ClientRequest, ClientResponse, RequestId } from "@/protocol";
 
 type Method = ClientRequest["method"];
 type RequestForMethod<M extends Method> = Extract<ClientRequest, { method: M }>;
-type ResponseForMethod<M extends Method> = Extract<
-  ClientResponse,
-  { method: M }
->;
+type ResponseForMethod<M extends Method> = Extract<ClientResponse, { method: M }>;
 
 type InvokeArgs = {
   request?: ClientRequest;
@@ -40,10 +37,7 @@ export class MockAppServer {
   private readonly responses = new Map<Method, unknown>();
   private readonly listeners = new Set<(event: AppServerEvent) => void>();
 
-  respond<MethodName extends Method>(
-    method: MethodName,
-    response: ResponseForMethod<MethodName>["response"],
-  ): void {
+  respond<MethodName extends Method>(method: MethodName, response: ResponseForMethod<MethodName>["response"]): void {
     this.responses.set(method, response);
   }
 
@@ -72,9 +66,7 @@ export class MockAppServer {
         this.requests.push(args.request);
         const response = this.responses.get(args.request.method);
         if (response === undefined) {
-          throw new Error(
-            `No mock response registered for ${args.request.method}`,
-          );
+          throw new Error(`No mock response registered for ${args.request.method}`);
         }
         return {
           method: args.request.method,
@@ -84,9 +76,7 @@ export class MockAppServer {
       }
       case "app_server_resolve_server_request":
         if (args.requestId === undefined) {
-          throw new Error(
-            "app_server_resolve_server_request requires requestId",
-          );
+          throw new Error("app_server_resolve_server_request requires requestId");
         }
         this.resolutions.push({
           requestId: args.requestId,
@@ -95,9 +85,7 @@ export class MockAppServer {
         return undefined;
       case "app_server_reject_server_request":
         if (args.requestId === undefined || !args.error) {
-          throw new Error(
-            "app_server_reject_server_request requires requestId and error",
-          );
+          throw new Error("app_server_reject_server_request requires requestId and error");
         }
         this.rejections.push({ requestId: args.requestId, error: args.error });
         return undefined;

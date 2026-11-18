@@ -14,9 +14,7 @@ describe("formatErrorMessage", () => {
   });
 
   it("preserves regular Error messages", () => {
-    expect(formatErrorMessage(new Error("socket closed"))).toBe(
-      "Error: socket closed",
-    );
+    expect(formatErrorMessage(new Error("socket closed"))).toBe("Error: socket closed");
   });
 });
 

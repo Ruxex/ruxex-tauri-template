@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const invoke = vi.hoisted(() => vi.fn());
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
-vi.mock("../app-server/runtime", () => ({ isDesktopRuntime: true }));
+vi.mock("@/app-server/runtime", () => ({ isDesktopRuntime: true }));
 
 import { useGitDiffDetails, useGitDiffSummary } from "./git-diff";
 
@@ -42,16 +42,9 @@ describe("Git diff queries", () => {
     const summaryQuery = renderHook(() => useGitDiffSummary("/workspace"), {
       wrapper,
     });
-    await waitFor(() =>
-      expect(summaryQuery.result.current.data).toEqual(summary),
-    );
-    const detailQuery = renderHook(
-      () => useGitDiffDetails("/workspace", true),
-      { wrapper },
-    );
-    await waitFor(() =>
-      expect(detailQuery.result.current.data).toEqual(details),
-    );
+    await waitFor(() => expect(summaryQuery.result.current.data).toEqual(summary));
+    const detailQuery = renderHook(() => useGitDiffDetails("/workspace", true), { wrapper });
+    await waitFor(() => expect(detailQuery.result.current.data).toEqual(details));
 
     expect(invoke.mock.calls).toEqual([
       ["git_diff_summary", { workspace: "/workspace" }],

@@ -1,18 +1,12 @@
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 import { useTranslation } from "react-i18next";
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { type ReactNode, useState } from "react";
-import { formatErrorMessage } from "../app/error-message";
-import { useAccount, useLogin, useLogout } from "../app-server/hooks";
-import { PasswordInput } from "../components/common/PasswordInput";
-import { StateBadge } from "../components/common/StateBadge";
-import {
-  SettingRow,
-  SettingsPanel,
-} from "../components/settings/SettingsCards";
+import { formatErrorMessage } from "@/app/error-message";
+import { useAccount, useLogin, useLogout } from "@/app-server/hooks";
+import { PasswordInput } from "@/components/base/common/PasswordInput";
+import { StateBadge } from "@/components/base/common/StateBadge";
+import { SettingRow, SettingsPanel } from "@/components/feature/settings/SettingsCards";
 
 export function AccountPage() {
   const { t } = useTranslation("settings");
@@ -60,23 +54,15 @@ export function AccountPage() {
               onChange={(event) => setApiKey(event.target.value)}
               required
             />
-            {login.isError && (
-              <p className="text-error">{formatErrorMessage(login.error)}</p>
-            )}
+            {login.isError && <p className="text-error">{formatErrorMessage(login.error)}</p>}
             <div className="flex justify-end">
               <button
-                aria-label={
-                  login.isPending
-                    ? t("settings:loggingIn")
-                    : t("settings:logIn")
-                }
+                aria-label={login.isPending ? t("settings:loggingIn") : t("settings:logIn")}
                 className="btn btn-primary"
                 type="submit"
                 disabled={login.isPending}
               >
-                {login.isPending
-                  ? t("settings:loggingIn")
-                  : t("settings:logIn")}
+                {login.isPending ? t("settings:loggingIn") : t("settings:logIn")}
               </button>
             </div>
           </form>
@@ -91,29 +77,19 @@ export function AccountPage() {
         <dl className="divide-y divide-base-300 text-sm">
           <SettingRow label={t("settings:status")}>
             <StateBadge
-              icon={
-                data?.authStatus === "authenticated"
-                  ? CheckCircleIcon
-                  : ExclamationTriangleIcon
-              }
-              tone={
-                data?.authStatus === "authenticated" ? "success" : "warning"
-              }
+              icon={data?.authStatus === "authenticated" ? CheckCircleIcon : ExclamationTriangleIcon}
+              tone={data?.authStatus === "authenticated" ? "success" : "warning"}
             >
               {data?.authStatus === "authenticated"
                 ? t("settings:authenticated")
                 : t("settings:authenticationRequired")}
             </StateBadge>
           </SettingRow>
-          <SettingRow label={t("settings:accountType")}>
-            {formatAccountType(data?.account?.type)}
-          </SettingRow>
+          <SettingRow label={t("settings:accountType")}>{formatAccountType(data?.account?.type)}</SettingRow>
         </dl>
         <div className="flex justify-end px-5 py-4">
           <button
-            aria-label={
-              logout.isPending ? t("settings:loggingOut") : t("settings:logOut")
-            }
+            aria-label={logout.isPending ? t("settings:loggingOut") : t("settings:logOut")}
             className="btn btn-outline"
             disabled={logout.isPending}
             type="button"
@@ -147,9 +123,7 @@ function AccountPageLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation("settings");
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">
-        {t("settings:account")}
-      </h2>
+      <h2 className="text-3xl font-semibold tracking-tight">{t("settings:account")}</h2>
       {children}
     </div>
   );

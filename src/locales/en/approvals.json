@@ -1,8 +1,5 @@
 {
-  "safety": "Safety",
-  "approvalCenter": "Approval center",
   "disconnected": "Disconnected",
-  "noPendingApprovals": "No pending approvals.",
   "permissionRequested": "Permission requested",
   "mCPApprovalRequested": "MCP approval requested",
   "inputRequested": "Input requested",

@@ -1,10 +1,4 @@
-export const UI_ACCENT_COLORS = [
-  "blue",
-  "violet",
-  "emerald",
-  "amber",
-  "rose",
-] as const;
+export const UI_ACCENT_COLORS = ["blue", "violet", "emerald", "amber", "rose"] as const;
 type UiAccentColor = (typeof UI_ACCENT_COLORS)[number];
 export const UI_THEME_COLOR_KEYS = [
   "base-100",
@@ -398,17 +392,12 @@ const DARK_THEME_PRESET_IDS = new Set<UiThemePresetId>([
   "one-dark",
 ]);
 
-export function getUiThemePresetMode(
-  preset: UiThemePresetId,
-): UiThemePresetMode {
+export function getUiThemePresetMode(preset: UiThemePresetId): UiThemePresetMode {
   if (preset === "system") return "system";
   return DARK_THEME_PRESET_IDS.has(preset) ? "dark" : "light";
 }
 
-function getUiThemePresetColors(
-  preset: UiThemePreset,
-  mode: "light" | "dark",
-): UiThemeColors {
+function getUiThemePresetColors(preset: UiThemePreset, mode: "light" | "dark"): UiThemeColors {
   if (preset.id === "system") {
     return mode === "dark" ? RUXEX_DARK_COLORS : RUXEX_LIGHT_COLORS;
   }
@@ -441,9 +430,7 @@ export type UiTheme = {
 };
 
 export function applyUiTheme(theme: UiTheme, mode: "light" | "dark"): void {
-  const preset =
-    UI_THEME_PRESETS.find((preset) => preset.id === theme.preset) ??
-    UI_THEME_PRESETS[0];
+  const preset = UI_THEME_PRESETS.find((preset) => preset.id === theme.preset) ?? UI_THEME_PRESETS[0];
   const presetColors = getUiThemePresetColors(preset, mode);
   const colors = { ...presetColors, ...(theme.colors ?? {}) };
 

@@ -1,0 +1,390 @@
+// @vitest-environment jsdom
+
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { i18n } from "@/app/i18n";
+import type { PendingServerRequest } from "@/app-server/event-reducer";
+import { ServerRequestCard } from "./ServerRequestCard";
+
+const pending = {
+  requestId: 17,
+  kind: "approval",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: "item-1",
+  request: {
+    method: "item/commandExecution/requestApproval",
+    id: 17,
+    params: {
+      command: "pnpm check",
+      cwd: "/workspace",
+      threadId: "thread-1",
+      turnId: "turn-1",
+      itemId: "item-1",
+    },
+  },
+} as never as PendingServerRequest;
+
+const mcpPending = {
+  requestId: 23,
+  kind: "elicitation",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: null,
+  request: {
+    method: "mcpServer/elicitation/request",
+    id: 23,
+    params: {
+      threadId: "thread-1",
+      turnId: "turn-1",
+      serverName: "ruxex_smoke",
+      mode: "form",
+      _meta: {
+        ruxex_approval_kind: "mcp_tool_call",
+        tool_title: "Echo",
+        tool_params_display: [{ name: "message", displayName: "message", value: "smoke-v1" }],
+      },
+      message: 'Allow the ruxex_smoke MCP server to run tool "echo"?',
+      requestedSchema: { type: "object", properties: {} },
+    },
+  },
+} as never as PendingServerRequest;
+
+const permissionsPending = {
+  requestId: 31,
+  kind: "approval",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: "item-1",
+  request: {
+    method: "item/permissions/requestApproval",
+    id: 31,
+    params: {
+      threadId: "thread-1",
+      turnId: "turn-1",
+      itemId: "item-1",
+      environmentId: null,
+      startedAtMs: 123,
+      cwd: "/workspace",
+      reason: "Need to inspect the project",
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          globScanMaxDepth: 3,
+        },
+      },
+    },
+  },
+} as never as PendingServerRequest;
+
+const mixedPermissionsPending = {
+  ...permissionsPending,
+  request: {
+    ...permissionsPending.request,
+    params: {
+      ...permissionsPending.request.params,
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          entries: [
+            {
+              access: "write",
+              path: { type: "path", path: "/workspace/write" },
+            },
+          ],
+          globScanMaxDepth: 3,
+        },
+      },
+    },
+  },
+} as never as PendingServerRequest;
+
+const userInputPending = {
+  requestId: 41,
+  kind: "userInput",
+  threadId: "thread-1",
+  turnId: "turn-1",
+  itemId: "item-1",
+  request: {
+    method: "item/tool/requestUserInput",
+    id: 41,
+    params: {
+      questions: [
+        {
+          id: "answer",
+          header: "Answer",
+          question: "What should I use?",
+        },
+      ],
+    },
+  },
+} as never as PendingServerRequest;
+
+describe("ServerRequestCard", () => {
+  afterEach(cleanup);
+
+  it("shows the command and approval actions without a generic request summary", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard connected onReject={vi.fn(async () => undefined)} onResolve={onResolve} pending={pending} />,
+    );
+
+    expect(screen.getByText("pnpm check")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
+    expect(screen.queryByText("Request details")).toBeNull();
+    expect(screen.queryByText("Request 17")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Approval requested" }).querySelector("svg")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Approve once" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Approve in this chat" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Approve once" }));
+
+    expect(onResolve).toHaveBeenCalledWith({ decision: "accept" });
+  });
+
+  it("resolves a command approval for the current chat", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard connected onReject={vi.fn(async () => undefined)} onResolve={onResolve} pending={pending} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Approve in this chat" }));
+
+    expect(onResolve).toHaveBeenCalledWith({ decision: "acceptForSession" });
+  });
+
+  it("does not expose approval actions while disconnected", () => {
+    render(
+      <ServerRequestCard
+        connected={false}
+        onReject={vi.fn(async () => undefined)}
+        onResolve={vi.fn(async () => undefined)}
+        pending={pending}
+      />,
+    );
+
+    expect(screen.getByText("Disconnected")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve in this chat" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
+  });
+
+  it("submits the answer to a user-input request", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={userInputPending}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "What should I use?" }), {
+      target: { value: "the workspace cache" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      answers: { answer: { answers: ["the workspace cache"] } },
+    });
+  });
+
+  it("shows each requested permission once and resolves an allowed session grant", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={permissionsPending}
+      />,
+    );
+
+    const summary = screen.getByRole("region", {
+      name: "Requested access",
+    });
+    expect(within(summary).getByText("Need to inspect the project")).toBeTruthy();
+    expect(within(summary).getByText("Network access")).toBeTruthy();
+    expect(within(summary).getByText("Read: /workspace/read")).toBeTruthy();
+    expect(within(summary).getByText("Write: /workspace/write")).toBeTruthy();
+    expect(screen.getAllByText("Need to inspect the project")).toHaveLength(1);
+    expect(screen.getByText("Requested access")).toBeTruthy();
+    expect(screen.queryByText("Network access:")).toBeNull();
+    expect(screen.queryByText("Access details")).toBeNull();
+    expect(screen.getByRole("region", { name: "Requested access" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Request summary" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: "This session" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Approve in this chat" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          globScanMaxDepth: 3,
+        },
+      },
+      scope: "session",
+    });
+  });
+
+  it("deduplicates permissions represented by both legacy arrays and entries", () => {
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={vi.fn(async () => undefined)}
+        pending={mixedPermissionsPending}
+      />,
+    );
+
+    const summary = screen.getByRole("region", {
+      name: "Requested access",
+    });
+    expect(within(summary).getAllByText(/^write:/i)).toHaveLength(1);
+    expect(within(summary).queryByText(/type.*path/)).toBeNull();
+  });
+
+  it("denies permission requests without granting access", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={permissionsPending}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      permissions: {},
+      scope: "turn",
+    });
+  });
+
+  it("does not expose permission controls while disconnected", () => {
+    render(
+      <ServerRequestCard
+        connected={false}
+        onReject={vi.fn(async () => undefined)}
+        onResolve={vi.fn(async () => undefined)}
+        pending={permissionsPending}
+      />,
+    );
+
+    expect(screen.queryByRole("radio", { name: "This turn" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve in this chat" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
+  });
+
+  it("renders MCP tool approval elicitation and resolves Allow", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={mcpPending}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "MCP approval requested" })).toBeTruthy();
+    expect(screen.getByText("ruxex_smoke")).toBeTruthy();
+    expect(screen.getByText("smoke-v1")).toBeTruthy();
+    expect(screen.queryByText('Allow the ruxex_smoke MCP server to run tool "echo"?')).toBeNull();
+    expect(screen.queryByText("thread-1")).toBeNull();
+    expect(screen.queryByText("turn-1")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      action: "accept",
+      content: null,
+      _meta: null,
+    });
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
+  });
+
+  it("resolves MCP tool approval cancellation", () => {
+    const onResolve = vi.fn(async () => undefined);
+    render(
+      <ServerRequestCard
+        connected
+        onReject={vi.fn(async () => undefined)}
+        onResolve={onResolve}
+        pending={mcpPending}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      action: "cancel",
+      content: null,
+      _meta: null,
+    });
+  });
+  it("localizes permissions while preserving server reasons, paths, and the session grant", async () => {
+    await i18n.changeLanguage("ja");
+    const onResolve = vi.fn(async () => undefined);
+    render(<ServerRequestCard connected onReject={vi.fn()} onResolve={onResolve} pending={permissionsPending} />);
+    expect(screen.getByRole("region", { name: "要求されたアクセス" })).toBeTruthy();
+    expect(screen.getByText("読み取り: /workspace/read")).toBeTruthy();
+    expect(screen.getByText("書き込み: /workspace/write")).toBeTruthy();
+    expect(screen.getByText("Need to inspect the project")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "このチャットで承認" }));
+    expect(onResolve).toHaveBeenCalledWith({
+      permissions: {
+        network: { enabled: true },
+        fileSystem: {
+          read: ["/workspace/read"],
+          write: ["/workspace/write"],
+          globScanMaxDepth: 3,
+        },
+      },
+      scope: "session",
+    });
+  });
+
+  it("localizes the other-answer label and sends the canonical server answer", async () => {
+    await i18n.changeLanguage("ja");
+    const onResolve = vi.fn(async () => undefined);
+    const choiceRequest = {
+      ...userInputPending,
+      request: {
+        ...userInputPending.request,
+        params: {
+          questions: [
+            {
+              id: "answer",
+              header: "Answer",
+              question: "Server question?",
+              options: [{ label: "Server option", description: "Server description" }],
+              isOther: true,
+            },
+          ],
+        },
+      },
+    } as unknown as PendingServerRequest;
+    render(<ServerRequestCard connected onReject={vi.fn()} onResolve={onResolve} pending={choiceRequest} />);
+    expect(screen.getByRole("radio", { name: /Server option/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "上記以外" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "追加の詳細 (任意)" }), { target: { value: "User note" } });
+    fireEvent.click(screen.getByRole("button", { name: "送信" }));
+    expect(onResolve).toHaveBeenCalledWith({
+      answers: {
+        answer: { answers: ["None of the above", "user_note: User note"] },
+      },
+    });
+  });
+});

@@ -4,12 +4,12 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const useAppServerDaemon = vi.hoisted(() => vi.fn());
 const useAppServerStatus = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useAppServerDaemon,
   useAppServerStatus,
 }));

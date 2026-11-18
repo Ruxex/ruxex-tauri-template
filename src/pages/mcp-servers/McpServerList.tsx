@@ -2,11 +2,11 @@ import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 
-import type { McpServerEntry } from "../../app-server/mcp-config";
-import type { v2 } from "../../protocol";
-import { McpOAuthLoginAction } from "../../components/mcp/McpOAuthLoginAction";
-import { StateBadge } from "../../components/common/StateBadge";
-import { mcpConnectionStatusLabel } from "../../components/mcp/mcp-status-labels";
+import type { McpServerEntry } from "@/app-server/mcp-config";
+import type { v2 } from "@/protocol";
+import { McpOAuthLoginAction } from "@/components/composite/mcp/McpOAuthLoginAction";
+import { StateBadge } from "@/components/base/common/StateBadge";
+import { mcpConnectionStatusLabel } from "@/components/composite/mcp/mcp-status-labels";
 
 export function McpServerList({
   entries,
@@ -22,10 +22,7 @@ export function McpServerList({
   onEnabledChange: (entry: McpServerEntry, enabled: boolean) => void;
 }) {
   const { t } = useTranslation("mcp");
-  const statusByName = useMemo(
-    () => new Map(statuses.map((status) => [status.name, status])),
-    [statuses],
-  );
+  const statusByName = useMemo(() => new Map(statuses.map((status) => [status.name, status])), [statuses]);
 
   return (
     <ul>
@@ -33,10 +30,8 @@ export function McpServerList({
         const status = statusByName.get(entry.name);
         const enabled = entry.draft?.enabled ?? false;
         const needsAuthentication =
-          status?.authStatus === "notLoggedIn" ||
-          status?.runtimeStatus === "authenticationRequired";
-        const canLogIn =
-          needsAuthentication && entry.draft?.transport === "streamableHttp";
+          status?.authStatus === "notLoggedIn" || status?.runtimeStatus === "authenticationRequired";
+        const canLogIn = needsAuthentication && entry.draft?.transport === "streamableHttp";
 
         return (
           <li
@@ -56,9 +51,7 @@ export function McpServerList({
                 <StateBadge tone="warning">{t("unauthenticated")}</StateBadge>
               ) : (
                 <span className="text-xs text-base-content/60">
-                  {status
-                    ? mcpConnectionStatusLabel(status.runtimeStatus)
-                    : t("statusUnavailable")}
+                  {status ? mcpConnectionStatusLabel(status.runtimeStatus) : t("statusUnavailable")}
                 </span>
               )}
 
@@ -76,13 +69,8 @@ export function McpServerList({
               )}
 
               {entry.draft && (
-                <label
-                  className="flex items-center"
-                  title={enabled ? t("disableServer") : t("enableServer")}
-                >
-                  <span className="sr-only">
-                    {enabled ? t("enabled") : t("disabled")}
-                  </span>
+                <label className="flex items-center" title={enabled ? t("disableServer") : t("enableServer")}>
+                  <span className="sr-only">{enabled ? t("enabled") : t("disabled")}</span>
                   <input
                     aria-label={t("enableNamedServer", {
                       name: entry.name,
@@ -91,9 +79,7 @@ export function McpServerList({
                     checked={enabled}
                     className="toggle toggle-primary toggle-sm"
                     disabled={isWritePending}
-                    onChange={(event) =>
-                      onEnabledChange(entry, event.target.checked)
-                    }
+                    onChange={(event) => onEnabledChange(entry, event.target.checked)}
                     role="switch"
                     type="checkbox"
                   />

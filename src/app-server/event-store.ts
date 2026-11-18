@@ -108,17 +108,12 @@ export function retainThreadState(threadId: string): () => void {
   return () => retainedThreadIds.delete(threadId);
 }
 
-export function clearThreadLiveItems(
-  threadId: string,
-  staleItems?: ReadonlySet<LiveConversationItem>,
-): void {
+export function clearThreadLiveItems(threadId: string, staleItems?: ReadonlySet<LiveConversationItem>): void {
   const thread = snapshot.threads[threadId];
   if (!thread || thread.items.length === 0) {
     return;
   }
-  const items = staleItems
-    ? thread.items.filter((item) => !staleItems.has(item))
-    : [];
+  const items = staleItems ? thread.items.filter((item) => !staleItems.has(item)) : [];
   if (items.length === thread.items.length) {
     return;
   }
@@ -132,9 +127,7 @@ export function clearThreadLiveItems(
   notify();
 }
 
-export function subscribeToAppServerEvents(
-  listener: (event: AppServerEvent) => void,
-): () => void {
+export function subscribeToAppServerEvents(listener: (event: AppServerEvent) => void): () => void {
   eventSubscribers.add(listener);
   return () => eventSubscribers.delete(listener);
 }
@@ -181,10 +174,7 @@ function getThreadActivitySnapshot(threadId: string): ThreadActivitySnapshot {
     (request) => request.threadId === threadId,
   );
   const previous = threadActivitySnapshots.get(threadId);
-  if (
-    previous?.status === status &&
-    previous?.waitingForRequest === waitingForRequest
-  ) {
+  if (previous?.status === status && previous?.waitingForRequest === waitingForRequest) {
     return previous;
   }
   const next = { status, waitingForRequest };

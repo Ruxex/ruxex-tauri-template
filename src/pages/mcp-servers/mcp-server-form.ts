@@ -1,10 +1,10 @@
-import { i18n } from "../../app/i18n";
+import { i18n } from "@/app/i18n";
 import type {
   McpEnvironmentVariableDraft,
   McpServerDraft,
   McpServerEntry,
   McpServerTransport,
-} from "../../app-server/mcp-config";
+} from "@/app-server/mcp-config";
 
 export type McpServerFormState = {
   draft: McpServerDraft;
@@ -13,9 +13,7 @@ export type McpServerFormState = {
   envHeadersText: string;
 };
 
-export type McpServerFormErrors = Partial<
-  Record<"name" | "command" | "url" | "envHeaders", string>
->;
+export type McpServerFormErrors = Partial<Record<"name" | "command" | "url" | "envHeaders", string>>;
 
 function emptyDraft(): McpServerDraft {
   return {
@@ -33,19 +31,13 @@ function emptyDraft(): McpServerDraft {
   };
 }
 
-function environmentVariablesToText(
-  variables: McpEnvironmentVariableDraft[],
-): string {
+function environmentVariablesToText(variables: McpEnvironmentVariableDraft[]): string {
   return variables
-    .map((variable) =>
-      variable.source ? `${variable.name} (${variable.source})` : variable.name,
-    )
+    .map((variable) => (variable.source ? `${variable.name} (${variable.source})` : variable.name))
     .join("\n");
 }
 
-function parseEnvironmentVariableLines(
-  value: string,
-): McpEnvironmentVariableDraft[] {
+function parseEnvironmentVariableLines(value: string): McpEnvironmentVariableDraft[] {
   return value
     .split("\n")
     .map((line) => line.trim())
@@ -59,17 +51,9 @@ function parseEnvironmentVariableLines(
     .filter((variable) => variable.name);
 }
 
-export function createMcpServerForm(
-  initial?: McpServerDraft | McpServerEntry,
-): McpServerFormState {
-  const initialDraft = initial
-    ? "draft" in initial
-      ? initial.draft
-      : initial
-    : null;
-  const draft = initialDraft
-    ? { ...initialDraft, required: false }
-    : emptyDraft();
+export function createMcpServerForm(initial?: McpServerDraft | McpServerEntry): McpServerFormState {
+  const initialDraft = initial ? ("draft" in initial ? initial.draft : initial) : null;
+  const draft = initialDraft ? { ...initialDraft, required: false } : emptyDraft();
   return {
     draft,
     argsText: draft.args.join("\n"),
@@ -80,10 +64,7 @@ export function createMcpServerForm(
   };
 }
 
-export function switchMcpServerTransport(
-  form: McpServerFormState,
-  transport: McpServerTransport,
-): McpServerFormState {
+export function switchMcpServerTransport(form: McpServerFormState, transport: McpServerTransport): McpServerFormState {
   return {
     ...form,
     draft: { ...form.draft, transport },
@@ -98,9 +79,7 @@ export function parseKeyValueLines(value: string): Record<string, string> {
       .filter(Boolean)
       .map((line) => {
         const separator = line.indexOf("=");
-        return separator === -1
-          ? [line, ""]
-          : [line.slice(0, separator).trim(), line.slice(separator + 1).trim()];
+        return separator === -1 ? [line, ""] : [line.slice(0, separator).trim(), line.slice(separator + 1).trim()];
       })
       .filter(([name]) => name),
   );
@@ -135,10 +114,7 @@ export function validateMcpServerForm(
       ns: "mcp",
       lng: i18n.resolvedLanguage,
     });
-  } else if (
-    existingNames.includes(draft.name) &&
-    draft.name !== originalName
-  ) {
+  } else if (existingNames.includes(draft.name) && draft.name !== originalName) {
     errors.name = i18n.t("aServerWithThisNameAlreadyExists", {
       ns: "mcp",
       lng: i18n.resolvedLanguage,

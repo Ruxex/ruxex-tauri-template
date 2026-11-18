@@ -5,11 +5,11 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetThreadSessionState } from "../thread-session";
+import { resetThreadSessionState } from "@/app-server/thread-session";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 
-vi.mock("../api", () => ({ requestAppServerMethod }));
+vi.mock("@/app-server/api", () => ({ requestAppServerMethod }));
 
 function createWrapper(
   client = new QueryClient({
@@ -17,9 +17,7 @@ function createWrapper(
   }),
 ) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -32,30 +30,14 @@ describe("thread mutation hooks", () => {
 
   it.each([
     ["thread/start", "useCreateThread", {}],
-    [
-      "thread/fork",
-      "useForkThread",
-      { threadId: "thread-1", excludeTurns: true },
-    ],
+    ["thread/fork", "useForkThread", { threadId: "thread-1", excludeTurns: true }],
     ["thread/archive", "useArchiveThread", { threadId: "thread-1" }],
     ["thread/unarchive", "useUnarchiveThread", { threadId: "thread-1" }],
     ["thread/delete", "useDeleteThread", { threadId: "thread-1" }],
     ["thread/compact/start", "useCompactThread", { threadId: "thread-1" }],
-    [
-      "thread/name/set",
-      "useRenameThread",
-      { threadId: "thread-1", name: "Renamed" },
-    ],
-    [
-      "thread/revert",
-      "useRevertThread",
-      { threadId: "thread-1", beforeTurnId: "turn-1" },
-    ],
-    [
-      "thread/goal/set",
-      "useSetThreadGoal",
-      { threadId: "thread-1", objective: "Ship safely" },
-    ],
+    ["thread/name/set", "useRenameThread", { threadId: "thread-1", name: "Renamed" }],
+    ["thread/revert", "useRevertThread", { threadId: "thread-1", beforeTurnId: "turn-1" }],
+    ["thread/goal/set", "useSetThreadGoal", { threadId: "thread-1", objective: "Ship safely" }],
     ["thread/goal/clear", "useClearThreadGoal", { threadId: "thread-1" }],
     [
       "thread/attachment/add",
@@ -76,11 +58,7 @@ describe("thread mutation hooks", () => {
         identityKey: "image-1",
       },
     ],
-    [
-      "thread/settings/update",
-      "useUpdateThreadSettings",
-      { threadId: "thread-1", model: "ruxex" },
-    ],
+    ["thread/settings/update", "useUpdateThreadSettings", { threadId: "thread-1", model: "ruxex" }],
     [
       "thread/queue/update",
       "useUpdateThreadQueue",
@@ -106,55 +84,42 @@ describe("thread mutation hooks", () => {
         queuedSubmissionIds: ["queued-1"],
       },
     ],
-    [
-      "thread/queue/start",
-      "useStartThreadQueue",
-      { threadId: "thread-1", queuedSubmissionId: "queued-1" },
-    ],
-  ] as const)(
-    "maps %s to the App Server request",
-    async (method, hookName, params) => {
-      const hooks = await import("./useThreadMutations");
-      const hook = hooks[hookName] as () => {
-        mutateAsync: (value: never) => Promise<unknown>;
-      };
-      const { result } = renderHook(() => hook(), { wrapper: createWrapper() });
+    ["thread/queue/start", "useStartThreadQueue", { threadId: "thread-1", queuedSubmissionId: "queued-1" }],
+  ] as const)("maps %s to the App Server request", async (method, hookName, params) => {
+    const hooks = await import("./useThreadMutations");
+    const hook = hooks[hookName] as () => {
+      mutateAsync: (value: never) => Promise<unknown>;
+    };
+    const { result } = renderHook(() => hook(), { wrapper: createWrapper() });
 
-      await act(async () => result.current.mutateAsync(params as never));
+    await act(async () => result.current.mutateAsync(params as never));
 
-      expect(requestAppServerMethod).toHaveBeenCalledWith(method, params);
-    },
-  );
+    expect(requestAppServerMethod).toHaveBeenCalledWith(method, params);
+  });
 
   it("deletes every archived thread across pages only once", async () => {
-    requestAppServerMethod.mockImplementation(
-      async (method: string, params: { cursor?: string }) => {
-        if (method === "thread/list") {
-          return {
-            response: params.cursor
-              ? {
-                  data: [{ id: "thread-2" }, { id: "thread-1" }],
-                  nextCursor: null,
-                }
-              : {
-                  data: [{ id: "thread-1" }],
-                  nextCursor: "cursor-next",
-                },
-          };
-        }
-        return { response: {} };
-      },
-    );
-    const { useDeleteAllArchivedThreads } = await import(
-      "./useThreadMutations"
-    );
+    requestAppServerMethod.mockImplementation(async (method: string, params: { cursor?: string }) => {
+      if (method === "thread/list") {
+        return {
+          response: params.cursor
+            ? {
+                data: [{ id: "thread-2" }, { id: "thread-1" }],
+                nextCursor: null,
+              }
+            : {
+                data: [{ id: "thread-1" }],
+                nextCursor: "cursor-next",
+              },
+        };
+      }
+      return { response: {} };
+    });
+    const { useDeleteAllArchivedThreads } = await import("./useThreadMutations");
     const { result } = renderHook(() => useDeleteAllArchivedThreads(), {
       wrapper: createWrapper(),
     });
 
-    await expect(
-      act(async () => result.current.mutateAsync()),
-    ).resolves.toEqual({ deletedCount: 2 });
+    await expect(act(async () => result.current.mutateAsync())).resolves.toEqual({ deletedCount: 2 });
 
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/delete", {
       threadId: "thread-1",
@@ -172,9 +137,7 @@ describe("thread mutation hooks", () => {
       wrapper: createWrapper(),
     });
 
-    await expect(
-      act(async () => result.current.mutateAsync({})),
-    ).resolves.toEqual(response);
+    await expect(act(async () => result.current.mutateAsync({}))).resolves.toEqual(response);
   });
 
   it("does not resume a newly created thread before its first turn", async () => {
@@ -188,7 +151,7 @@ describe("thread mutation hooks", () => {
 
     await act(async () => result.current.mutateAsync({}));
 
-    const { ensureThreadResumed } = await import("../thread-session");
+    const { ensureThreadResumed } = await import("@/app-server/thread-session");
     await ensureThreadResumed("thread-new");
 
     expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
@@ -305,9 +268,7 @@ describe("thread mutation hooks", () => {
   });
 
   it("does not invalidate after a failed rename", async () => {
-    requestAppServerMethod.mockRejectedValueOnce(
-      new Error("thread unavailable"),
-    );
+    requestAppServerMethod.mockRejectedValueOnce(new Error("thread unavailable"));
     const { useRenameThread } = await import("./useThreadMutations");
     const client = new QueryClient({
       defaultOptions: {

@@ -18,11 +18,7 @@ type PersistentScenarioId =
   | "subagent"
   | "parallel-subagents";
 
-type PersistentScenarioKind =
-  | "conversation"
-  | "multiTurn"
-  | "approval"
-  | "goal";
+type PersistentScenarioKind = "conversation" | "multiTurn" | "approval" | "goal";
 
 export type PersistentScenario = {
   readonly id: PersistentScenarioId;
@@ -199,9 +195,7 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     kind: "conversation",
     providerMarker: "example:plan",
     completionText: "The fixed plan fixture is complete.",
-    alternateCompletionTexts: [
-      "The update_plan tool is unavailable in this request.",
-    ],
+    alternateCompletionTexts: ["The update_plan tool is unavailable in this request."],
   },
   {
     id: "reasoning",
@@ -223,9 +217,7 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     kind: "conversation",
     providerMarker: "example:subagent",
     completionText: "The Example subagent fixture is complete.",
-    alternateCompletionTexts: [
-      "The spawn_agent tool is unavailable in this request.",
-    ],
+    alternateCompletionTexts: ["The spawn_agent tool is unavailable in this request."],
   },
   {
     id: "parallel-subagents",
@@ -233,9 +225,7 @@ export const PERSISTENT_SCENARIOS: readonly PersistentScenario[] = [
     kind: "conversation",
     providerMarker: "example:parallel-subagents",
     completionText: "The Example parallel subagent fixture is complete.",
-    alternateCompletionTexts: [
-      "The spawn_agent tool is unavailable in this request.",
-    ],
+    alternateCompletionTexts: ["The spawn_agent tool is unavailable in this request."],
   },
 ];
 
@@ -335,10 +325,7 @@ export const VOLATILE_SCENARIOS: readonly VolatileScenario[] = [
   },
 ];
 
-export function buildScenarioTitle(
-  scenario: Pick<PersistentScenario, "id">,
-  occurrence: number,
-): string {
+export function buildScenarioTitle(scenario: Pick<PersistentScenario, "id">, occurrence: number): string {
   return `Fixture ${scenario.id.replaceAll("-", " ")} ${formatOccurrence(occurrence)}`;
 }
 
@@ -354,14 +341,8 @@ export function persistentFixtureCounts(): {
   active: number;
   archived: number;
 } {
-  const total = PERSISTENT_SCENARIOS.reduce(
-    (sum, scenario) => sum + scenario.count,
-    0,
-  );
-  const archived = PERSISTENT_SCENARIOS.reduce(
-    (sum, scenario) => sum + (scenario.archiveOccurrences?.length ?? 0),
-    0,
-  );
+  const total = PERSISTENT_SCENARIOS.reduce((sum, scenario) => sum + scenario.count, 0);
+  const archived = PERSISTENT_SCENARIOS.reduce((sum, scenario) => sum + (scenario.archiveOccurrences?.length ?? 0), 0);
   return { total, active: total - archived, archived };
 }
 

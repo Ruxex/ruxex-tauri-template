@@ -52,10 +52,7 @@ describe("app-server event query synchronization", () => {
 
     synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
 
-    expect(queryClient.setQueryData).toHaveBeenCalledWith(
-      appServerQueryKeys.threadGoal("thread-1"),
-      { goal },
-    );
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(appServerQueryKeys.threadGoal("thread-1"), { goal });
   });
 
   it("clears the thread goal cache from goal cleared notifications", () => {
@@ -70,10 +67,7 @@ describe("app-server event query synchronization", () => {
 
     synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
 
-    expect(queryClient.setQueryData).toHaveBeenCalledWith(
-      appServerQueryKeys.threadGoal("thread-1"),
-      { goal: null },
-    );
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(appServerQueryKeys.threadGoal("thread-1"), { goal: null });
   });
 
   it("patches metadata and thread-list caches for status changes", () => {
@@ -305,13 +299,10 @@ describe("app-server event query synchronization", () => {
   it("ignores events that are not server notifications", async () => {
     const queryClient = createQueryClient();
 
-    await synchronizeAppServerQueries(
-      queryClient as unknown as QueryClient,
-      {
-        type: "disconnected",
-        data: { message: "offline" },
-      },
-    );
+    await synchronizeAppServerQueries(queryClient as unknown as QueryClient, {
+      type: "disconnected",
+      data: { message: "offline" },
+    });
 
     expect(queryClient.setQueryData).not.toHaveBeenCalled();
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -328,9 +319,7 @@ describe("app-server event query synchronization", () => {
       },
     } as AppServerEvent;
 
-    await expect(
-      synchronizeAppServerQueries(queryClient as unknown as QueryClient, event),
-    ).resolves.toBeUndefined();
+    await expect(synchronizeAppServerQueries(queryClient as unknown as QueryClient, event)).resolves.toBeUndefined();
     expect(requestAppServerMethod).toHaveBeenCalledOnce();
   });
 
@@ -459,14 +448,8 @@ describe("app-server event query synchronization", () => {
       },
     } as AppServerEvent;
 
-    const first = synchronizeAppServerQueries(
-      queryClient as unknown as QueryClient,
-      event,
-    );
-    const second = synchronizeAppServerQueries(
-      queryClient as unknown as QueryClient,
-      event,
-    );
+    const first = synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
+    const second = synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
 
     expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
     resolveResponse?.({
@@ -511,14 +494,8 @@ describe("app-server event query synchronization", () => {
         },
       }) as AppServerEvent;
 
-    const first = synchronizeAppServerQueries(
-      queryClient as unknown as QueryClient,
-      eventForTurn("turn-1"),
-    );
-    const second = synchronizeAppServerQueries(
-      queryClient as unknown as QueryClient,
-      eventForTurn("turn-2"),
-    );
+    const first = synchronizeAppServerQueries(queryClient as unknown as QueryClient, eventForTurn("turn-1"));
+    const second = synchronizeAppServerQueries(queryClient as unknown as QueryClient, eventForTurn("turn-2"));
 
     expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
     resolveFirst?.({
@@ -545,10 +522,7 @@ describe("app-server event query synchronization", () => {
     const queryClient = new RealQueryClient({
       defaultOptions: { queries: { retry: false, gcTime: Infinity } },
     });
-    const metadataKey = [
-      ...appServerQueryKeys.threadMetadata("thread-1"),
-      { includeTurns: false },
-    ];
+    const metadataKey = [...appServerQueryKeys.threadMetadata("thread-1"), { includeTurns: false }];
     queryClient.setQueryData(metadataKey, {
       thread: {
         id: "thread-1",
@@ -607,10 +581,7 @@ describe("app-server event query synchronization", () => {
     const queryClient = new RealQueryClient({
       defaultOptions: { queries: { retry: false, gcTime: Infinity } },
     });
-    const metadataKey = [
-      ...appServerQueryKeys.threadMetadata("thread-1"),
-      { includeTurns: false },
-    ];
+    const metadataKey = [...appServerQueryKeys.threadMetadata("thread-1"), { includeTurns: false }];
     const metadataQuery = queryClient
       .fetchQuery({
         queryKey: metadataKey,

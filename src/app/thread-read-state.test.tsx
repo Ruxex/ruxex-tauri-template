@@ -13,16 +13,13 @@ import {
 } from "./thread-read-state";
 
 function Probe() {
-  const { isThreadUnread, markThreadRead, readAtByThreadId } =
-    useThreadReadState();
+  const { isThreadUnread, markThreadRead, readAtByThreadId } = useThreadReadState();
   const readAt = readAtByThreadId["thread-1"] ?? null;
 
   return (
     <div>
       <span data-testid="read-at">{readAt ?? "none"}</span>
-      <span data-testid="unread">
-        {isThreadUnread("thread-1", 10) ? "unread" : "read"}
-      </span>
+      <span data-testid="unread">{isThreadUnread("thread-1", 10) ? "unread" : "read"}</span>
       <button type="button" onClick={() => markThreadRead("thread-1", 10)}>
         Mark read
       </button>
@@ -76,9 +73,7 @@ describe("thread read state", () => {
     const state = { version: 1 as const, readAtByThreadId: { "thread-1": 7 } };
     writeThreadReadState(state);
 
-    expect(window.localStorage.getItem(THREAD_READ_STATE_KEY)).toBe(
-      JSON.stringify(state),
-    );
+    expect(window.localStorage.getItem(THREAD_READ_STATE_KEY)).toBe(JSON.stringify(state));
     expect(readThreadReadState()).toEqual(state);
   });
 

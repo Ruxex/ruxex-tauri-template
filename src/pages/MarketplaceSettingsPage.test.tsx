@@ -1,16 +1,10 @@
 // @vitest-environment jsdom
 
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MARKETPLACE_PREFERENCES_KEY } from "../app/marketplace-preferences";
+import { MARKETPLACE_PREFERENCES_KEY } from "@/app/marketplace-preferences";
 
 const useAddMarketplace = vi.hoisted(() => vi.fn());
 const useConfig = vi.hoisted(() => vi.fn());
@@ -36,7 +30,7 @@ const upgradeMarketplace = vi.hoisted(() => ({
   error: null,
 }));
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useAddMarketplace,
   useConfig,
   usePluginList,
@@ -44,23 +38,19 @@ vi.mock("../app-server/hooks", () => ({
   useUpgradeMarketplace,
 }));
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("MarketplaceSettingsPage", () => {
   it("renders Japanese controls and preserves external names", async () => {
     await i18n.changeLanguage("ja");
     try {
-      const { MarketplaceSettingsPage } = await import(
-        "./MarketplaceSettingsPage"
-      );
+      const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
       render(
         <MemoryRouter>
           <MarketplaceSettingsPage />
         </MemoryRouter>,
       );
-      expect(
-        screen.getByRole("button", { name: "マーケットプレイスを追加" }),
-      ).toBeTruthy();
+      expect(screen.getByRole("button", { name: "マーケットプレイスを追加" })).toBeTruthy();
       expect(screen.getByLabelText("ソース")).toBeTruthy();
       expect(screen.getByText("Community Plugins")).toBeTruthy();
     } finally {
@@ -116,9 +106,7 @@ describe("MarketplaceSettingsPage", () => {
   });
 
   it("validates a blank source before calling the server", async () => {
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
 
     render(
       <MemoryRouter>
@@ -133,9 +121,7 @@ describe("MarketplaceSettingsPage", () => {
   });
 
   it("adds a marketplace with its ref and sparse paths", async () => {
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
 
     render(
       <MemoryRouter>
@@ -161,9 +147,7 @@ describe("MarketplaceSettingsPage", () => {
   });
 
   it("lists marketplaces and exposes upgrade and remove actions", async () => {
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
 
     render(
       <MemoryRouter>
@@ -177,9 +161,7 @@ describe("MarketplaceSettingsPage", () => {
         name: "Plugin marketplaces",
       }),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Add marketplace" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Add marketplace" })).toBeTruthy();
     expect(
       screen.getByRole("heading", {
         level: 2,
@@ -200,9 +182,7 @@ describe("MarketplaceSettingsPage", () => {
   });
 
   it("disables a configured marketplace after preserving its source settings", async () => {
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
 
     render(
       <MemoryRouter>
@@ -215,9 +195,7 @@ describe("MarketplaceSettingsPage", () => {
     expect(removeMarketplace.mutateAsync).toHaveBeenCalledWith({
       marketplaceName: "community",
     });
-    expect(
-      JSON.parse(localStorage.getItem(MARKETPLACE_PREFERENCES_KEY) ?? "{}"),
-    ).toMatchObject({
+    expect(JSON.parse(localStorage.getItem(MARKETPLACE_PREFERENCES_KEY) ?? "{}")).toMatchObject({
       version: 1,
       disabled: {
         community: {
@@ -249,9 +227,7 @@ describe("MarketplaceSettingsPage", () => {
       isError: false,
     });
 
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
     render(
       <MemoryRouter>
         <MarketplaceSettingsPage />
@@ -283,9 +259,7 @@ describe("MarketplaceSettingsPage", () => {
       isError: false,
     });
 
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
     render(
       <MemoryRouter>
         <MarketplaceSettingsPage />
@@ -294,17 +268,16 @@ describe("MarketplaceSettingsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Forget community" }));
 
-    expect(
-      JSON.parse(localStorage.getItem(MARKETPLACE_PREFERENCES_KEY) ?? "{}"),
-    ).toMatchObject({ version: 1, disabled: {} });
+    expect(JSON.parse(localStorage.getItem(MARKETPLACE_PREFERENCES_KEY) ?? "{}")).toMatchObject({
+      version: 1,
+      disabled: {},
+    });
     expect(addMarketplace.mutateAsync).not.toHaveBeenCalled();
     expect(removeMarketplace.mutateAsync).not.toHaveBeenCalled();
   });
 
   it("updates an existing validation error when the language changes", async () => {
-    const { MarketplaceSettingsPage } = await import(
-      "./MarketplaceSettingsPage"
-    );
+    const { MarketplaceSettingsPage } = await import("./MarketplaceSettingsPage");
     render(
       <MemoryRouter>
         <MarketplaceSettingsPage />
@@ -315,8 +288,6 @@ describe("MarketplaceSettingsPage", () => {
     await act(async () => {
       await i18n.changeLanguage("ja");
     });
-    expect(
-      screen.getByText("マーケットプレイスのソースは必須です。"),
-    ).toBeTruthy();
+    expect(screen.getByText("マーケットプレイスのソースは必須です。")).toBeTruthy();
   });
 });

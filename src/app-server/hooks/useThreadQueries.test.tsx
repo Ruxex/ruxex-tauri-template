@@ -5,19 +5,17 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { v2 } from "../../protocol";
-import { appServerQueryKeys } from "../query-keys";
-import { markThreadStarted, resetThreadSessionState } from "../thread-session";
+import type { v2 } from "@/protocol";
+import { appServerQueryKeys } from "@/app-server/query-keys";
+import { markThreadStarted, resetThreadSessionState } from "@/app-server/thread-session";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => ({
-  data: { appServerVersion: "test" } as
-    | { appServerVersion: string }
-    | undefined,
+  data: { appServerVersion: "test" } as { appServerVersion: string } | undefined,
 }));
 
-vi.mock("../api", () => ({ requestAppServerMethod }));
-vi.mock("../queries", () => ({
+vi.mock("@/app-server/api", () => ({ requestAppServerMethod }));
+vi.mock("@/app-server/queries", () => ({
   useAppServerStatus: () => appServerStatus,
 }));
 
@@ -67,10 +65,7 @@ describe("thread query hooks", () => {
 
   it("lists direct child threads with a parent-scoped query", async () => {
     const { useSubagentThreadList } = await import("./useThreadQueries");
-    const { result } = renderHook(
-      () => useSubagentThreadList("parent-1"),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useSubagentThreadList("parent-1"), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -122,14 +117,12 @@ describe("thread query hooks", () => {
       turns: { data: [], nextCursor: null, backwardsCursor: null },
       items: { data: [], nextCursor: null, backwardsCursor: null },
     });
-    expect(requestAppServerMethod.mock.calls.map(([method]) => method)).toEqual(
-      [
-        "thread/resume",
-        "thread/read",
-        "thread/turns/list",
-        "thread/items/list",
-      ],
-    );
+    expect(requestAppServerMethod.mock.calls.map(([method]) => method)).toEqual([
+      "thread/resume",
+      "thread/read",
+      "thread/turns/list",
+      "thread/items/list",
+    ]);
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/resume", {
       threadId: "thread-1",
       excludeTurns: true,
@@ -147,9 +140,7 @@ describe("thread query hooks", () => {
 
   it("does not consume a started session while loading read-only queries", async () => {
     markThreadStarted("thread-new");
-    const { useThread, useThreadConversation } = await import(
-      "./useThreadQueries"
-    );
+    const { useThread, useThreadConversation } = await import("./useThreadQueries");
     const { result } = renderHook(
       () => ({
         metadata: useThread("thread-new"),
@@ -158,15 +149,9 @@ describe("thread query hooks", () => {
       { wrapper },
     );
 
-    await waitFor(() =>
-      expect(result.current.conversation.isSuccess).toBe(true),
-    );
+    await waitFor(() => expect(result.current.conversation.isSuccess).toBe(true));
 
-    expect(
-      requestAppServerMethod.mock.calls.some(
-        ([method]) => method === "thread/resume",
-      ),
-    ).toBe(false);
+    expect(requestAppServerMethod.mock.calls.some(([method]) => method === "thread/resume")).toBe(false);
   });
 
   it("keeps a canceled enabled query pending until it has data or an error", async () => {
@@ -204,9 +189,7 @@ describe("thread query hooks", () => {
   });
 
   it("resumes before shared metadata and conversation queries load together", async () => {
-    const { useThread, useThreadConversation } = await import(
-      "./useThreadQueries"
-    );
+    const { useThread, useThreadConversation } = await import("./useThreadQueries");
     renderHook(
       () => ({
         metadata: useThread("thread-1"),
@@ -216,22 +199,14 @@ describe("thread query hooks", () => {
     );
 
     await waitFor(() =>
-      expect(
-        requestAppServerMethod.mock.calls.some(
-          ([method]) => method === "thread/items/list",
-        ),
-      ).toBe(true),
+      expect(requestAppServerMethod.mock.calls.some(([method]) => method === "thread/items/list")).toBe(true),
     );
 
     expect(requestAppServerMethod.mock.calls[0]).toEqual([
       "thread/resume",
       { threadId: "thread-1", excludeTurns: true },
     ]);
-    expect(
-      requestAppServerMethod.mock.calls.filter(
-        ([method]) => method === "thread/read",
-      ),
-    ).toHaveLength(1);
+    expect(requestAppServerMethod.mock.calls.filter(([method]) => method === "thread/read")).toHaveLength(1);
   });
 
   it("defines one active thread list parameter set for every consumer", async () => {
@@ -280,8 +255,7 @@ describe("thread query hooks", () => {
       expect(result.current.data?.thread.model).toBe("model-1");
     });
     const conversationRequestCount = requestAppServerMethod.mock.calls.filter(
-      ([method]) =>
-        method === "thread/turns/list" || method === "thread/items/list",
+      ([method]) => method === "thread/turns/list" || method === "thread/items/list",
     ).length;
 
     await queryClient.invalidateQueries({
@@ -293,8 +267,7 @@ describe("thread query hooks", () => {
     });
     expect(
       requestAppServerMethod.mock.calls.filter(
-        ([method]) =>
-          method === "thread/turns/list" || method === "thread/items/list",
+        ([method]) => method === "thread/turns/list" || method === "thread/items/list",
       ),
     ).toHaveLength(conversationRequestCount);
   });
@@ -307,33 +280,24 @@ describe("thread query hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     const initialCounts = new Map(
-      ["thread/read", "thread/turns/list", "thread/items/list"].map(
-        (method) => [
-          method,
-          requestAppServerMethod.mock.calls.filter(
-            ([calledMethod]) => calledMethod === method,
-          ).length,
-        ],
-      ),
+      ["thread/read", "thread/turns/list", "thread/items/list"].map((method) => [
+        method,
+        requestAppServerMethod.mock.calls.filter(([calledMethod]) => calledMethod === method).length,
+      ]),
     );
 
     await result.current.resync();
 
     for (const [method, count] of initialCounts) {
-      expect(
-        requestAppServerMethod.mock.calls.filter(
-          ([calledMethod]) => calledMethod === method,
-        ),
-      ).toHaveLength(count + 1);
+      expect(requestAppServerMethod.mock.calls.filter(([calledMethod]) => calledMethod === method)).toHaveLength(
+        count + 1,
+      );
     }
   });
 
   it("follows every conversation page before reporting success", async () => {
     requestAppServerMethod.mockImplementation(
-      async (
-        method: string,
-        params: { threadId: string; cursor?: string | null },
-      ) => {
+      async (method: string, params: { threadId: string; cursor?: string | null }) => {
         if (method === "thread/read") {
           return { response: { thread: { id: "thread-1" } } };
         }
@@ -383,14 +347,8 @@ describe("thread query hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data?.turns.data.map((turn) => turn.id)).toEqual([
-      "turn-1",
-      "turn-2",
-    ]);
-    expect(result.current.data?.items.data.map(({ item }) => item.id)).toEqual([
-      "item-1",
-      "item-2",
-    ]);
+    expect(result.current.data?.turns.data.map((turn) => turn.id)).toEqual(["turn-1", "turn-2"]);
+    expect(result.current.data?.items.data.map(({ item }) => item.id)).toEqual(["item-1", "item-2"]);
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/turns/list", {
       threadId: "thread-1",
       cursor: "turn-2",
@@ -402,8 +360,7 @@ describe("thread query hooks", () => {
   });
 
   it("passes thread-specific parameters to goal, attachment, and queue queries", async () => {
-    const { useThreadAttachments, useThreadGoal, useThreadQueue } =
-      await import("./useThreadQueries");
+    const { useThreadAttachments, useThreadGoal, useThreadQueue } = await import("./useThreadQueries");
     const { result } = renderHook(
       () => ({
         goal: useThreadGoal("thread-1"),
@@ -422,13 +379,10 @@ describe("thread query hooks", () => {
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/goal/get", {
       threadId: "thread-1",
     });
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "thread/attachment/list",
-      {
-        threadId: "thread-1",
-        limit: 10,
-      },
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/attachment/list", {
+      threadId: "thread-1",
+      limit: 10,
+    });
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/queue/list", {
       threadId: "thread-1",
       limit: 5,
@@ -436,9 +390,7 @@ describe("thread query hooks", () => {
   });
 
   it("uses the archived list contract and its stable default filters", async () => {
-    const { archivedThreadListParams, useArchivedThreadList } = await import(
-      "./useThreadQueries"
-    );
+    const { archivedThreadListParams, useArchivedThreadList } = await import("./useThreadQueries");
     const { result } = renderHook(() => useArchivedThreadList(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -449,20 +401,12 @@ describe("thread query hooks", () => {
       sortKey: "updated_at",
       sortDirection: "desc",
     });
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "thread/list",
-      archivedThreadListParams(),
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/list", archivedThreadListParams());
   });
 
   it("passes an opaque cursor when loading the next archived page", async () => {
-    const { archivedThreadListParams, useArchivedThreadList } = await import(
-      "./useThreadQueries"
-    );
-    const { result } = renderHook(
-      () => useArchivedThreadList("opaque-next-cursor"),
-      { wrapper },
-    );
+    const { archivedThreadListParams, useArchivedThreadList } = await import("./useThreadQueries");
+    const { result } = renderHook(() => useArchivedThreadList("opaque-next-cursor"), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -473,16 +417,11 @@ describe("thread query hooks", () => {
       sortKey: "updated_at",
       sortDirection: "desc",
     });
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "thread/list",
-      archivedThreadListParams("opaque-next-cursor"),
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/list", archivedThreadListParams("opaque-next-cursor"));
   });
 
   it("does not request an empty thread id", async () => {
-    const { useThread, useThreadConversation } = await import(
-      "./useThreadQueries"
-    );
+    const { useThread, useThreadConversation } = await import("./useThreadQueries");
     renderHook(
       () => ({
         thread: useThread(""),
@@ -497,9 +436,7 @@ describe("thread query hooks", () => {
   });
 
   it("surfaces a conversation subrequest failure", async () => {
-    requestAppServerMethod.mockRejectedValueOnce(
-      new Error("thread read failed"),
-    );
+    requestAppServerMethod.mockRejectedValueOnce(new Error("thread read failed"));
     const { useThreadConversation } = await import("./useThreadQueries");
     const { result } = renderHook(() => useThreadConversation("thread-1"), {
       wrapper,

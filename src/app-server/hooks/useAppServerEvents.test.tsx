@@ -5,34 +5,30 @@ import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AppServerEvent } from "../events";
+import type { AppServerEvent } from "@/app-server/events";
 
-const { subscribeToAppServerEvents, synchronizeAppServerQueries } = vi.hoisted(
-  () => ({
-    subscribeToAppServerEvents: vi.fn(),
-    synchronizeAppServerQueries: vi.fn(),
-  }),
-);
+const { subscribeToAppServerEvents, synchronizeAppServerQueries } = vi.hoisted(() => ({
+  subscribeToAppServerEvents: vi.fn(),
+  synchronizeAppServerQueries: vi.fn(),
+}));
 
-vi.mock("../event-store", () => ({
+vi.mock("@/app-server/event-store", () => ({
   retainThreadState: vi.fn(),
   subscribeToAppServerEvents,
   useAppServerEventStore: vi.fn(),
   useThreadActivity: vi.fn(),
 }));
-vi.mock("../event-query-sync", () => ({ synchronizeAppServerQueries }));
-vi.mock("../runtime", () => ({ isDesktopRuntime: true }));
-vi.mock("../../platform/notifications", () => ({
+vi.mock("@/app-server/event-query-sync", () => ({ synchronizeAppServerQueries }));
+vi.mock("@/app-server/runtime", () => ({ isDesktopRuntime: true }));
+vi.mock("@/platform/notifications", () => ({
   createNotificationDispatcher: vi.fn(),
   sendDesktopNotification: vi.fn(),
 }));
-vi.mock("../../app/ui-preferences", () => ({ useUiPreferences: vi.fn() }));
+vi.mock("@/app/ui-preferences", () => ({ useUiPreferences: vi.fn() }));
 
 function createWrapper(client: QueryClient) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -54,9 +50,7 @@ describe("useAppServerQuerySync", () => {
       type: "lagged",
       data: { skipped: 2 },
     };
-    const listener = subscribeToAppServerEvents.mock.calls[0]?.[0] as
-      | ((event: AppServerEvent) => void)
-      | undefined;
+    const listener = subscribeToAppServerEvents.mock.calls[0]?.[0] as ((event: AppServerEvent) => void) | undefined;
 
     expect(subscribeToAppServerEvents).toHaveBeenCalledOnce();
     expect(synchronizeAppServerQueries).not.toHaveBeenCalled();

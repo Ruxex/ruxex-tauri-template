@@ -1,10 +1,6 @@
-import type { ServerNotification, v2 } from "../protocol";
+import type { ServerNotification, v2 } from "@/protocol";
 import { requestKey, updateThread } from "./event-thread-state";
-import type {
-  EventState,
-  LiveConversationItem,
-  ThreadExecutionState,
-} from "./event-reducer";
+import type { EventState, LiveConversationItem, ThreadExecutionState } from "./event-reducer";
 
 export function reduceNotification(
   state: EventState,
@@ -120,12 +116,7 @@ export function reduceNotification(
     case "item/completed":
       return upsertStructuredItem(state, notification.params, activityAt, true);
     case "item/commandExecution/outputDelta":
-      return addDelta(
-        state,
-        notification.params,
-        "commandExecution",
-        activityAt,
-      );
+      return addDelta(state, notification.params, "commandExecution", activityAt);
     case "item/fileChange/outputDelta":
       return addDelta(state, notification.params, "fileChange", activityAt);
     case "item/fileChange/patchUpdated":
@@ -172,9 +163,7 @@ function updateFileChangeItem(
     (thread) => ({
       ...thread,
       items: thread.items.map((item) =>
-        item.id === params.itemId &&
-        item.turnId === params.turnId &&
-        item.raw?.type === "fileChange"
+        item.id === params.itemId && item.turnId === params.turnId && item.raw?.type === "fileChange"
           ? { ...item, raw: { ...item.raw, changes: params.changes } }
           : item,
       ),
@@ -193,23 +182,13 @@ function upsertStructuredItem(
     state,
     params.threadId,
     (thread) => {
-      const index = thread.items.findIndex(
-        (item) => item.id === params.item.id && item.turnId === params.turnId,
-      );
+      const index = thread.items.findIndex((item) => item.id === params.item.id && item.turnId === params.turnId);
       if (index === -1) {
         if (completed && params.item.type === "agentMessage") {
           let streamedIndex = -1;
-          for (
-            let itemIndex = thread.items.length - 1;
-            itemIndex >= 0;
-            itemIndex -= 1
-          ) {
+          for (let itemIndex = thread.items.length - 1; itemIndex >= 0; itemIndex -= 1) {
             const item = thread.items[itemIndex];
-            if (
-              item.turnId === params.turnId &&
-              item.type === "agentMessage" &&
-              item.raw === undefined
-            ) {
+            if (item.turnId === params.turnId && item.type === "agentMessage" && item.raw === undefined) {
               streamedIndex = itemIndex;
               break;
             }
@@ -230,9 +209,7 @@ function upsertStructuredItem(
         const completedWithoutActiveTurn = completed && !thread.activeTurnId;
         return {
           ...thread,
-          activeTurnId: completedWithoutActiveTurn
-            ? null
-            : (thread.activeTurnId ?? params.turnId),
+          activeTurnId: completedWithoutActiveTurn ? null : (thread.activeTurnId ?? params.turnId),
           status: completedWithoutActiveTurn ? "completed" : "running",
           items: [
             ...thread.items,
@@ -241,10 +218,7 @@ function upsertStructuredItem(
               threadId: params.threadId,
               turnId: params.turnId,
               type: params.item.type,
-              text:
-                completed && params.item.type === "agentMessage"
-                  ? params.item.text
-                  : "",
+              text: completed && params.item.type === "agentMessage" ? params.item.text : "",
               raw: params.item,
             },
           ],
@@ -256,9 +230,7 @@ function upsertStructuredItem(
         ...items[index],
         raw: params.item,
         type: params.item.type,
-        ...(completed && params.item.type === "agentMessage"
-          ? { text: params.item.text }
-          : {}),
+        ...(completed && params.item.type === "agentMessage" ? { text: params.item.text } : {}),
       };
       return { ...thread, items };
     },
@@ -276,9 +248,7 @@ function addDelta(
     state,
     params.threadId,
     (thread) => {
-      const index = thread.items.findIndex(
-        (item) => item.id === params.itemId && item.turnId === params.turnId,
-      );
+      const index = thread.items.findIndex((item) => item.id === params.itemId && item.turnId === params.turnId);
       if (index === -1) {
         return {
           ...thread,

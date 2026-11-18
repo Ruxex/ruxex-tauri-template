@@ -1,11 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import {
-  createMemoryRouter,
-  RouterProvider,
-  useLocation,
-} from "react-router-dom";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { NewChatRedirect } from "./NewChatRedirect";
@@ -34,9 +30,7 @@ describe("NewChatRedirect", () => {
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("location").textContent).toBe("/"),
-    );
+    await waitFor(() => expect(screen.getByTestId("location").textContent).toBe("/"));
   });
 
   it("preserves the project when redirecting a project legacy route", async () => {
@@ -53,10 +47,6 @@ describe("NewChatRedirect", () => {
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("location").textContent).toBe(
-        "/?projectId=project-1",
-      ),
-    );
+    await waitFor(() => expect(screen.getByTestId("location").textContent).toBe("/?projectId=project-1"));
   });
 });

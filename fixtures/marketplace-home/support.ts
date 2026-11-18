@@ -4,27 +4,17 @@ import { fileURLToPath } from "node:url";
 
 export const MARKETPLACE_SOURCE_RELATIVE_PATH = "../../openai-plugins";
 
-const repositoryRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../..",
-);
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-export function resolveMarketplaceSource(
-  root: string = repositoryRoot,
-): string {
+export function resolveMarketplaceSource(root: string = repositoryRoot): string {
   const resolved = path.resolve(root, MARKETPLACE_SOURCE_RELATIVE_PATH);
   if (!existsSync(resolved) || !statSync(resolved).isDirectory()) {
-    throw new Error(
-      `Marketplace checkout not found at resolved path: ${resolved}`,
-    );
+    throw new Error(`Marketplace checkout not found at resolved path: ${resolved}`);
   }
   return resolved;
 }
 
-export function marketplacePluginDetailPath(
-  marketplaceName: string,
-  pluginName: string,
-): string {
+export function marketplacePluginDetailPath(marketplaceName: string, pluginName: string): string {
   return `/capabilities/plugins/${encodeURIComponent(marketplaceName)}/${encodeURIComponent(pluginName)}`;
 }
 

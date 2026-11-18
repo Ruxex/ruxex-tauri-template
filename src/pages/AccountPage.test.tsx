@@ -1,21 +1,15 @@
 // @vitest-environment jsdom
 
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const useAccount = vi.hoisted(() => vi.fn());
 const useLogin = vi.hoisted(() => vi.fn());
 const useLogout = vi.hoisted(() => vi.fn());
-vi.mock("../app-server/hooks", () => ({ useAccount, useLogin, useLogout }));
+vi.mock("@/app-server/hooks", () => ({ useAccount, useLogin, useLogout }));
 
 describe("AccountPage", () => {
   afterEach(cleanup);
@@ -93,9 +87,7 @@ describe("AccountPage", () => {
 
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeTruthy();
     expect(screen.getByLabelText("API key")).toBeTruthy();
-    expect(
-      screen.queryByText("API key", { selector: ".label-text" }),
-    ).toBeNull();
+    expect(screen.queryByText("API key", { selector: ".label-text" })).toBeNull();
     expect(screen.getByRole("button", { name: "Log in" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Back home" })).toBeNull();
   });
@@ -128,9 +120,6 @@ describe("AccountPage", () => {
     await act(() => i18n.changeLanguage("ja"));
     expect(screen.getByRole("heading", { name: "アカウント" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "ログイン" })).toBeTruthy();
-    expect(screen.getByLabelText("APIキー")).toHaveProperty(
-      "value",
-      "user-secret",
-    );
+    expect(screen.getByLabelText("APIキー")).toHaveProperty("value", "user-secret");
   });
 });

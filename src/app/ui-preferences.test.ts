@@ -66,9 +66,7 @@ describe("ui preferences", () => {
   });
 
   it("exposes the optional Ink & Mint preset as a dark original palette", () => {
-    const inkAndMint = UI_THEME_PRESETS.find(
-      (preset) => preset.id === "ruxex-ink-mint",
-    );
+    const inkAndMint = UI_THEME_PRESETS.find((preset) => preset.id === "ruxex-ink-mint");
 
     expect(inkAndMint).toBeTruthy();
     if (!inkAndMint) throw new Error("Ink & Mint theme preset missing");
@@ -78,9 +76,7 @@ describe("ui preferences", () => {
 
   it("keeps the default theme preview independent from the active CSS theme", () => {
     const system = UI_THEME_PRESETS.find((preset) => preset.id === "system");
-    const catppuccin = UI_THEME_PRESETS.find(
-      (preset) => preset.id === "catppuccin-mocha",
-    );
+    const catppuccin = UI_THEME_PRESETS.find((preset) => preset.id === "catppuccin-mocha");
 
     expect(system).toBeTruthy();
     expect(catppuccin).toBeTruthy();
@@ -97,9 +93,7 @@ describe("ui preferences", () => {
     const dracula = UI_THEME_PRESETS.find((preset) => preset.id === "dracula");
     expect(dracula).toBeTruthy();
     if (!dracula) throw new Error("Theme preset missing");
-    expect(getUiThemePresetPreview(dracula).muted).not.toBe(
-      getUiThemePresetPreview(dracula).card,
-    );
+    expect(getUiThemePresetPreview(dracula).muted).not.toBe(getUiThemePresetPreview(dracula).card);
   });
 
   it("uses a modern Ruxex palette for the default theme", () => {
@@ -117,11 +111,9 @@ describe("ui preferences", () => {
   });
 
   it("rejects a preference record from an unknown version", () => {
-    expect(
-      parseUiPreferences(
-        JSON.stringify({ version: 99, sidebarCollapsed: true }),
-      ),
-    ).toEqual(DEFAULT_UI_PREFERENCES);
+    expect(parseUiPreferences(JSON.stringify({ version: 99, sidebarCollapsed: true }))).toEqual(
+      DEFAULT_UI_PREFERENCES,
+    );
   });
 
   it("applies only supported presentation preference updates", () => {
@@ -138,9 +130,7 @@ describe("ui preferences", () => {
   });
 
   it("migrates the previous light-dark theme value", () => {
-    expect(
-      parseUiPreferences(JSON.stringify({ version: 1, theme: "dark" })),
-    ).toMatchObject({
+    expect(parseUiPreferences(JSON.stringify({ version: 1, theme: "dark" }))).toMatchObject({
       theme: { accentColor: "blue", preset: "ruxex-dark" },
     });
   });

@@ -11,32 +11,28 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { formatErrorMessage } from "../app/error-message";
+import { formatErrorMessage } from "@/app/error-message";
 import {
   useArchiveThread,
   useDeleteProject,
   useProject,
   useProjectThreads,
   useUpdateProject,
-} from "../app-server/hooks";
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from "../components/common/AsyncState";
-import { ChatTable } from "../components/chats/ChatTable";
-import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
-import { PageContainer } from "../components/layout/PageContainer";
-import { ProjectIcon } from "../components/projects/ProjectIcon";
-import { ProjectMetadataFields } from "../components/projects/ProjectMetadataFields";
+} from "@/app-server/hooks";
+import { EmptyState, ErrorState, LoadingState } from "@/components/base/common/AsyncState";
+import { ChatTable } from "@/components/composite/chats/ChatTable";
+import { useNativeModalDialog } from "@/components/base/common/useNativeModalDialog";
+import { PageContainer } from "@/components/feature/layout/PageContainer";
+import { ProjectIcon } from "@/components/composite/projects/ProjectIcon";
+import { ProjectMetadataFields } from "@/components/composite/projects/ProjectMetadataFields";
 import {
   DEFAULT_PROJECT_METADATA,
   type ProjectMetadata,
   parseProjectMetadata,
   projectColorClassName,
   projectMetadataToRecord,
-} from "../components/projects/project-metadata";
-import type { v2 } from "../protocol";
+} from "@/components/composite/projects/project-metadata";
+import type { v2 } from "@/protocol";
 
 type ProjectChatSortKey = NonNullable<v2.ThreadListParams["sortKey"]>;
 
@@ -59,10 +55,7 @@ export function ProjectHomePage() {
   const [sortKey, setSortKey] = useState<ProjectChatSortKey>("recency_at");
 
   useEffect(() => {
-    const timeout = window.setTimeout(
-      () => setDebouncedSearchTerm(searchTerm),
-      300,
-    );
+    const timeout = window.setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
     return () => window.clearTimeout(timeout);
   }, [searchTerm]);
 
@@ -81,14 +74,10 @@ export function ProjectHomePage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editRoot, setEditRoot] = useState("");
-  const [editMetadata, setEditMetadata] = useState<ProjectMetadata>(
-    DEFAULT_PROJECT_METADATA,
-  );
+  const [editMetadata, setEditMetadata] = useState<ProjectMetadata>(DEFAULT_PROJECT_METADATA);
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [rootSelectionError, setRootSelectionError] = useState<string | null>(
-    null,
-  );
+  const [rootSelectionError, setRootSelectionError] = useState<string | null>(null);
   const editDialogRef = useNativeModalDialog(isEditDialogOpen);
   const deleteDialogRef = useNativeModalDialog(isDeleteDialogOpen);
 
@@ -158,9 +147,7 @@ export function ProjectHomePage() {
       {
         projectId,
         name,
-        roots: editRoot.trim()
-          ? [{ path: editRoot.trim() }, ...details.roots.slice(1)]
-          : details.roots.slice(1),
+        roots: editRoot.trim() ? [{ path: editRoot.trim() }, ...details.roots.slice(1)] : details.roots.slice(1),
         metadata: projectMetadataToRecord(editMetadata, details.metadata),
       },
       {
@@ -198,33 +185,22 @@ export function ProjectHomePage() {
           <span
             className={`mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl ${projectColorClassName(projectMetadata.color)}`}
           >
-            <ProjectIcon
-              aria-hidden="true"
-              className="size-6"
-              icon={projectMetadata.icon}
-            />
+            <ProjectIcon aria-hidden="true" className="size-6" icon={projectMetadata.icon} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium uppercase tracking-wide text-primary">
-              {t("project")}
-            </p>
+            <p className="text-sm font-medium uppercase tracking-wide text-primary">{t("project")}</p>
             <h1 className="min-w-0 text-3xl font-semibold">{details.name}</h1>
             <p
               className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-base-200 px-2 py-1 text-xs text-base-content/70"
               role="status"
             >
               <FolderIcon aria-hidden="true" className="size-3.5 shrink-0" />
-              <span className="min-w-0 truncate">
-                {details.roots[0]?.path ?? t("noWorkspaceRootConfigured")}
-              </span>
+              <span className="min-w-0 truncate">{details.roots[0]?.path ?? t("noWorkspaceRootConfigured")}</span>
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Link
-            className="btn btn-primary"
-            to={`/?projectId=${encodeURIComponent(projectId)}`}
-          >
+          <Link className="btn btn-primary" to={`/?projectId=${encodeURIComponent(projectId)}`}>
             {t("newChat")}
           </Link>
           <button
@@ -291,19 +267,14 @@ export function ProjectHomePage() {
                 <div className="flex min-w-0 w-full gap-2">
                   <button
                     aria-label={
-                      editRoot
-                        ? t("selectedWorkspaceFolder", { path: editRoot })
-                        : t("selectWorkspaceFolder")
+                      editRoot ? t("selectedWorkspaceFolder", { path: editRoot }) : t("selectWorkspaceFolder")
                     }
                     className="btn btn-outline min-h-11 min-w-0 flex-1 justify-start gap-2 overflow-hidden font-normal"
                     title={editRoot || t("selectWorkspaceFolder")}
                     type="button"
                     onClick={() => void handleSelectRoot()}
                   >
-                    <FolderIcon
-                      aria-hidden="true"
-                      className="size-4 shrink-0"
-                    />
+                    <FolderIcon aria-hidden="true" className="size-4 shrink-0" />
                     <span
                       className={`min-w-0 flex-1 truncate text-left ${editRoot ? "font-mono text-xs" : "text-base-content/65"}`}
                     >
@@ -331,15 +302,10 @@ export function ProjectHomePage() {
                   </p>
                 )}
               </div>
-              <ProjectMetadataFields
-                value={editMetadata}
-                onChange={setEditMetadata}
-              />
+              <ProjectMetadataFields value={editMetadata} onChange={setEditMetadata} />
               <div className="flex justify-end">
                 <button
-                  aria-label={
-                    updateProject.isPending ? t("saving") : t("saveProject")
-                  }
+                  aria-label={updateProject.isPending ? t("saving") : t("saveProject")}
                   className="btn btn-primary min-h-11 whitespace-nowrap"
                   disabled={updateProject.isPending}
                   type="submit"
@@ -355,11 +321,7 @@ export function ProjectHomePage() {
             </form>
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button
-              aria-label={t("closeEditProjectDialog")}
-              type="button"
-              onClick={handleCloseEditDialog}
-            >
+            <button aria-label={t("closeEditProjectDialog")} type="button" onClick={handleCloseEditDialog}>
               {t("close")}
             </button>
           </form>
@@ -402,9 +364,7 @@ export function ProjectHomePage() {
                 {t("cancel")}
               </button>
               <button
-                aria-label={
-                  deleteProject.isPending ? t("deleting") : t("deleteProject")
-                }
+                aria-label={deleteProject.isPending ? t("deleting") : t("deleteProject")}
                 className="btn btn-error"
                 disabled={deleteProject.isPending}
                 type="button"
@@ -415,11 +375,7 @@ export function ProjectHomePage() {
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button
-              aria-label={t("close")}
-              type="button"
-              onClick={handleCloseDeleteDialog}
-            >
+            <button aria-label={t("close")} type="button" onClick={handleCloseDeleteDialog}>
               {t("close")}
             </button>
           </form>
@@ -429,10 +385,7 @@ export function ProjectHomePage() {
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2">
             <label className="input input-bordered input-sm flex min-w-48 flex-1 items-center gap-2 sm:max-w-72">
-              <MagnifyingGlassIcon
-                aria-hidden="true"
-                className="size-4 shrink-0"
-              />
+              <MagnifyingGlassIcon aria-hidden="true" className="size-4 shrink-0" />
               <input
                 aria-label={t("searchProjectChats")}
                 className="min-w-0 grow bg-transparent outline-none"
@@ -447,9 +400,7 @@ export function ProjectHomePage() {
               <select
                 aria-label={t("sortProjectChats")}
                 value={sortKey}
-                onChange={(event) =>
-                  setSortKey(event.target.value as ProjectChatSortKey)
-                }
+                onChange={(event) => setSortKey(event.target.value as ProjectChatSortKey)}
               >
                 {PROJECT_CHAT_SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -477,48 +428,30 @@ export function ProjectHomePage() {
             {t("unableToLoadProjectChats")}
           </ErrorState>
         )}
-        {!threads.isLoading &&
-          !isSearchPending &&
-          !threads.isFetching &&
-          !threads.data?.data.length && (
-            <EmptyState
-              action={
-                trimmedSearchTerm ? (
-                  <button
-                    className="btn btn-sm btn-ghost"
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    {t("clearSearch")}
-                  </button>
-                ) : (
-                  <Link
-                    className="btn btn-sm btn-primary"
-                    to={`/?projectId=${encodeURIComponent(projectId)}`}
-                  >
-                    {t("newChat")}
-                  </Link>
-                )
-              }
-              description={
-                trimmedSearchTerm
-                  ? t("tryADifferentTitle")
-                  : t("startANewChatToKeepWorkForThisProjectTogether")
-              }
-              icon={ChatBubbleLeftRightIcon}
-              title={
-                trimmedSearchTerm
-                  ? t("noMatchingChatsInThisProject")
-                  : t("noChatsInThisProjectYet")
-              }
-            />
-          )}
+        {!threads.isLoading && !isSearchPending && !threads.isFetching && !threads.data?.data.length && (
+          <EmptyState
+            action={
+              trimmedSearchTerm ? (
+                <button className="btn btn-sm btn-ghost" type="button" onClick={() => setSearchTerm("")}>
+                  {t("clearSearch")}
+                </button>
+              ) : (
+                <Link className="btn btn-sm btn-primary" to={`/?projectId=${encodeURIComponent(projectId)}`}>
+                  {t("newChat")}
+                </Link>
+              )
+            }
+            description={
+              trimmedSearchTerm ? t("tryADifferentTitle") : t("startANewChatToKeepWorkForThisProjectTogether")
+            }
+            icon={ChatBubbleLeftRightIcon}
+            title={trimmedSearchTerm ? t("noMatchingChatsInThisProject") : t("noChatsInThisProjectYet")}
+          />
+        )}
         {threads.data?.data.length ? (
           <ChatTable
             isArchiving={archiveThread.isPending}
-            onArchive={(threadId) =>
-              void archiveThread.mutateAsync({ threadId })
-            }
+            onArchive={(threadId) => void archiveThread.mutateAsync({ threadId })}
             threads={threads.data.data}
           />
         ) : null}

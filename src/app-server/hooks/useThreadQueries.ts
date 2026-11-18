@@ -1,21 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import { useAppServerStatus } from "../queries";
-import { appServerQueryKeys } from "../query-keys";
-import { ensureThreadResumed } from "../thread-session";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { useAppServerStatus } from "@/app-server/queries";
+import { appServerQueryKeys } from "@/app-server/query-keys";
+import { ensureThreadResumed } from "@/app-server/thread-session";
 
 export type ThreadListOptions = {
   enabled?: boolean;
   queryKey?: readonly unknown[];
 };
 
-export function useThreadList(
-  params: v2.ThreadListParams = {},
-  options: ThreadListOptions = {},
-) {
+export function useThreadList(params: v2.ThreadListParams = {}, options: ThreadListOptions = {}) {
   const status = useAppServerStatus();
 
   return useQuery({
@@ -28,10 +25,7 @@ export function useThreadList(
   });
 }
 
-export function useAllThreadList(
-  params: Omit<v2.ThreadListParams, "cursor"> = {},
-  enabled = true,
-) {
+export function useAllThreadList(params: Omit<v2.ThreadListParams, "cursor"> = {}, enabled = true) {
   const status = useAppServerStatus();
 
   return useQuery({
@@ -64,15 +58,9 @@ export function useSubagentThreadList(parentThreadId: string) {
   );
 }
 
-export type ThreadSearchOptions = Omit<
-  v2.ThreadSearchParams,
-  "cursor" | "searchTerm"
->;
+export type ThreadSearchOptions = Omit<v2.ThreadSearchParams, "cursor" | "searchTerm">;
 
-function threadSearchParams(
-  searchTerm: string,
-  options: ThreadSearchOptions,
-): v2.ThreadSearchParams {
+function threadSearchParams(searchTerm: string, options: ThreadSearchOptions): v2.ThreadSearchParams {
   return {
     ...options,
     searchTerm,
@@ -82,10 +70,7 @@ function threadSearchParams(
   };
 }
 
-export function useThreadSearch(
-  searchTerm: string,
-  options: ThreadSearchOptions = {},
-) {
+export function useThreadSearch(searchTerm: string, options: ThreadSearchOptions = {}) {
   const status = useAppServerStatus();
   const params = threadSearchParams(searchTerm, options);
 
@@ -99,11 +84,7 @@ export function useThreadSearch(
   });
 }
 
-export function useAllThreadSearch(
-  searchTerm: string,
-  options: ThreadSearchOptions = {},
-  enabled = true,
-) {
+export function useAllThreadSearch(searchTerm: string, options: ThreadSearchOptions = {}, enabled = true) {
   const status = useAppServerStatus();
   const params = threadSearchParams(searchTerm, options);
 
@@ -121,9 +102,7 @@ export function useAllThreadSearch(
   });
 }
 
-export function archivedThreadListParams(
-  cursor: string | null = null,
-): v2.ThreadListParams {
+export function archivedThreadListParams(cursor: string | null = null): v2.ThreadListParams {
   return {
     archived: true,
     ...(cursor === null ? {} : { cursor }),
@@ -147,15 +126,9 @@ export function activeThreadListParams(): v2.ThreadListParams {
   };
 }
 
-function threadMetadataQueryOptions(
-  threadId: string,
-  includeTurns = false,
-) {
+function threadMetadataQueryOptions(threadId: string, includeTurns = false) {
   return {
-    queryKey: [
-      ...appServerQueryKeys.threadMetadata(threadId),
-      { includeTurns },
-    ],
+    queryKey: [...appServerQueryKeys.threadMetadata(threadId), { includeTurns }],
     queryFn: async () => {
       const request = {
         threadId,
@@ -192,10 +165,7 @@ export function useThreadGoal(threadId: string) {
   });
 }
 
-export function useThreadAttachments(
-  threadId: string,
-  params: Omit<v2.ThreadAttachmentListParams, "threadId"> = {},
-) {
+export function useThreadAttachments(threadId: string, params: Omit<v2.ThreadAttachmentListParams, "threadId"> = {}) {
   const status = useAppServerStatus();
 
   return useQuery({
@@ -211,10 +181,7 @@ export function useThreadAttachments(
   });
 }
 
-export function useThreadQueue(
-  threadId: string,
-  params: Omit<v2.ThreadQueueListParams, "threadId"> = {},
-) {
+export function useThreadQueue(threadId: string, params: Omit<v2.ThreadQueueListParams, "threadId"> = {}) {
   const status = useAppServerStatus();
 
   return useQuery({
@@ -299,10 +266,7 @@ async function fetchAllThreadItems(
   });
 }
 
-export function useThreadConversation(
-  threadId: string,
-  options: ThreadConversationOptions = {},
-) {
+export function useThreadConversation(threadId: string, options: ThreadConversationOptions = {}) {
   const status = useAppServerStatus();
   const turns = options.turns ?? EMPTY_TURNS_PARAMS;
   const items = options.items ?? EMPTY_ITEMS_PARAMS;
@@ -330,18 +294,13 @@ export function useThreadConversation(
         }
       : undefined;
   const resync = useCallback(async () => {
-    const results = await Promise.all([
-      threadQuery.refetch(),
-      turnsQuery.refetch(),
-      itemsQuery.refetch(),
-    ]);
+    const results = await Promise.all([threadQuery.refetch(), turnsQuery.refetch(), itemsQuery.refetch()]);
     const failed = results.find((result) => result.error);
     if (failed?.error) {
       throw failed.error;
     }
   }, [itemsQuery.refetch, threadQuery.refetch, turnsQuery.refetch]);
-  const isError =
-    threadQuery.isError || turnsQuery.isError || itemsQuery.isError;
+  const isError = threadQuery.isError || turnsQuery.isError || itemsQuery.isError;
   const isPending =
     enabled &&
     !isError &&
@@ -353,13 +312,10 @@ export function useThreadConversation(
     data,
     error: threadQuery.error ?? turnsQuery.error ?? itemsQuery.error,
     isError,
-    isFetching:
-      threadQuery.isFetching || turnsQuery.isFetching || itemsQuery.isFetching,
-    isLoading:
-      threadQuery.isLoading || turnsQuery.isLoading || itemsQuery.isLoading,
+    isFetching: threadQuery.isFetching || turnsQuery.isFetching || itemsQuery.isFetching,
+    isLoading: threadQuery.isLoading || turnsQuery.isLoading || itemsQuery.isLoading,
     isPending,
-    isSuccess:
-      threadQuery.isSuccess && turnsQuery.isSuccess && itemsQuery.isSuccess,
+    isSuccess: threadQuery.isSuccess && turnsQuery.isSuccess && itemsQuery.isSuccess,
     resync,
   };
 }

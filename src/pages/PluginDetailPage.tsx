@@ -1,27 +1,17 @@
 import { useTranslation } from "react-i18next";
-import {
-  ArrowTopRightOnSquareIcon,
-  PlusIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { formatErrorMessage } from "../app/error-message";
-import {
-  useInstallPlugin,
-  usePluginList,
-  usePluginRead,
-  useUninstallPlugin,
-} from "../app-server/hooks";
-import { SkillIcon } from "../components/common/SkillIcon";
-import { useNativeModalDialog } from "../components/common/useNativeModalDialog";
-import { PageContainer } from "../components/layout/PageContainer";
-import { MarketplaceAssetImage } from "../components/plugins/MarketplaceAssetImage";
-import { PluginInformationItem } from "../components/plugins/PluginInformationItem";
-import { getPluginActionPolicy } from "../components/plugins/plugin-policy";
-import type { v2 } from "../protocol";
+import { formatErrorMessage } from "@/app/error-message";
+import { useInstallPlugin, usePluginList, usePluginRead, useUninstallPlugin } from "@/app-server/hooks";
+import { SkillIcon } from "@/components/base/common/SkillIcon";
+import { useNativeModalDialog } from "@/components/base/common/useNativeModalDialog";
+import { PageContainer } from "@/components/feature/layout/PageContainer";
+import { MarketplaceAssetImage } from "@/components/composite/plugins/MarketplaceAssetImage";
+import { PluginInformationItem } from "@/components/composite/plugins/PluginInformationItem";
+import { getPluginActionPolicy } from "@/components/composite/plugins/plugin-policy";
+import type { v2 } from "@/protocol";
 
 function isHttpUrl(value: string | null | undefined): value is string {
   try {
@@ -55,43 +45,21 @@ export function PluginDetailPage() {
   const plugins = usePluginList();
   const installPlugin = useInstallPlugin();
   const uninstallPlugin = useUninstallPlugin();
-  const marketplace = plugins.data?.marketplaces.find(
-    (entry) => entry.name === marketplaceName,
-  );
-  const summary = marketplace?.plugins.find(
-    (plugin) => plugin.name === pluginName,
-  );
+  const marketplace = plugins.data?.marketplaces.find((entry) => entry.name === marketplaceName);
+  const summary = marketplace?.plugins.find((plugin) => plugin.name === pluginName);
   const details = usePluginRead(
-    marketplace?.path && pluginName
-      ? { marketplacePath: marketplace.path, pluginName }
-      : null,
+    marketplace?.path && pluginName ? { marketplacePath: marketplace.path, pluginName } : null,
   );
-  const [selectedSkill, setSelectedSkill] = useState<v2.SkillSummary | null>(
-    null,
-  );
+  const [selectedSkill, setSelectedSkill] = useState<v2.SkillSummary | null>(null);
   const skillDialogRef = useNativeModalDialog(Boolean(selectedSkill));
   const plugin = details.data?.plugin;
   const interfaceData = plugin?.summary.interface ?? summary?.interface;
-  const displayName =
-    interfaceData?.displayName ??
-    plugin?.summary.name ??
-    summary?.name ??
-    pluginName;
-  const description =
-    plugin?.description ??
-    interfaceData?.longDescription ??
-    interfaceData?.shortDescription;
+  const displayName = interfaceData?.displayName ?? plugin?.summary.name ?? summary?.name ?? pluginName;
+  const description = plugin?.description ?? interfaceData?.longDescription ?? interfaceData?.shortDescription;
   const pluginSummary = plugin?.summary ?? summary;
-  const actionPolicy = getPluginActionPolicy(
-    pluginSummary ?? null,
-    marketplace?.path ?? null,
-  );
+  const actionPolicy = getPluginActionPolicy(pluginSummary ?? null, marketplace?.path ?? null);
   const detailSectionCount = plugin
-    ? [
-        plugin.skills.length,
-        plugin.mcpServers.length,
-        plugin.hooks.length,
-      ].filter((count) => count > 0).length
+    ? [plugin.skills.length, plugin.mcpServers.length, plugin.hooks.length].filter((count) => count > 0).length
     : 0;
   const detailGridClassName =
     detailSectionCount === 1
@@ -137,9 +105,7 @@ export function PluginDetailPage() {
           },
         ]
       : []),
-  ].filter((item): item is { href?: string; label: string; value: string } =>
-    Boolean(item.value),
-  );
+  ].filter((item): item is { href?: string; label: string; value: string } => Boolean(item.value));
 
   if (plugins.isLoading) {
     return (
@@ -183,9 +149,7 @@ export function PluginDetailPage() {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-base-content/60">
-            {marketplace.interface?.displayName ?? marketplace.name}
-          </p>
+          <p className="text-sm text-base-content/60">{marketplace.interface?.displayName ?? marketplace.name}</p>
           <h1 className="text-3xl font-semibold">{displayName}</h1>
           {(interfaceData?.developerName || description) && (
             <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -195,9 +159,7 @@ export function PluginDetailPage() {
                 </p>
               )}
               {description && (
-                <p className="min-w-0 break-words whitespace-pre-wrap text-sm text-base-content/80">
-                  {description}
-                </p>
+                <p className="min-w-0 break-words whitespace-pre-wrap text-sm text-base-content/80">{description}</p>
               )}
             </div>
           )}
@@ -209,10 +171,7 @@ export function PluginDetailPage() {
               target="_blank"
             >
               {t("openWebsite")}
-              <ArrowTopRightOnSquareIcon
-                aria-hidden="true"
-                className="size-3.5"
-              />
+              <ArrowTopRightOnSquareIcon aria-hidden="true" className="size-3.5" />
             </a>
           )}
         </div>
@@ -222,14 +181,9 @@ export function PluginDetailPage() {
               <button
                 aria-label={t("installNamed", { name: displayName })}
                 className="btn btn-primary btn-sm gap-1"
-                disabled={
-                  installPlugin.isPending || actionPolicy.installDisabled
-                }
+                disabled={installPlugin.isPending || actionPolicy.installDisabled}
                 type="button"
-                title={
-                  actionPolicy.installTitle ??
-                  t("installNamed", { name: displayName })
-                }
+                title={actionPolicy.installTitle ?? t("installNamed", { name: displayName })}
                 onClick={() => {
                   if (marketplace.path && !actionPolicy.official) {
                     void installPlugin.mutateAsync({
@@ -240,10 +194,7 @@ export function PluginDetailPage() {
                 }}
               >
                 {installPlugin.isPending ? (
-                  <span
-                    aria-hidden="true"
-                    className="loading loading-spinner loading-xs"
-                  />
+                  <span aria-hidden="true" className="loading loading-spinner loading-xs" />
                 ) : (
                   <PlusIcon aria-hidden="true" className="size-4" />
                 )}
@@ -257,9 +208,7 @@ export function PluginDetailPage() {
                 disabled={uninstallPlugin.isPending}
                 type="button"
                 onClick={() => {
-                  if (
-                    window.confirm(t("uninstallConfirm", { name: displayName }))
-                  ) {
+                  if (window.confirm(t("uninstallConfirm", { name: displayName }))) {
                     void uninstallPlugin.mutateAsync({
                       pluginId: pluginSummary.id,
                     });
@@ -267,10 +216,7 @@ export function PluginDetailPage() {
                 }}
               >
                 {uninstallPlugin.isPending ? (
-                  <span
-                    aria-hidden="true"
-                    className="loading loading-spinner loading-xs"
-                  />
+                  <span aria-hidden="true" className="loading loading-spinner loading-xs" />
                 ) : (
                   <TrashIcon aria-hidden="true" className="size-4" />
                 )}
@@ -294,11 +240,7 @@ export function PluginDetailPage() {
           })}
         </p>
       )}
-      {details.isLoading && (
-        <p className="text-sm text-base-content/60">
-          {t("loadingPluginDetails")}
-        </p>
-      )}
+      {details.isLoading && <p className="text-sm text-base-content/60">{t("loadingPluginDetails")}</p>}
       {details.isError && (
         <p className="alert alert-error">
           {t("unableToLoadFullPluginDetails", {
@@ -307,9 +249,7 @@ export function PluginDetailPage() {
         </p>
       )}
       {!marketplace.path && !plugin && (
-        <p className="alert alert-info">
-          {t("detailedPluginMetadataIsUnavailableForRemoteonlyMarketplaces")}
-        </p>
+        <p className="alert alert-info">{t("detailedPluginMetadataIsUnavailableForRemoteonlyMarketplaces")}</p>
       )}
       {plugin && (
         <div className={detailGridClassName}>
@@ -326,18 +266,11 @@ export function PluginDetailPage() {
                       onClick={() => setSelectedSkill(skill)}
                     >
                       <span className="flex items-start gap-2">
-                        <SkillIcon
-                          className="mt-0.5 size-5 shrink-0"
-                          skill={skill}
-                        />
+                        <SkillIcon className="mt-0.5 size-5 shrink-0" skill={skill} />
                         <span className="min-w-0">
-                          <span className="block font-medium">
-                            {skill.name}
-                          </span>
+                          <span className="block font-medium">{skill.name}</span>
                           {getSkillShortDescription(skill) && (
-                            <span className="mt-1 block text-base-content/70">
-                              {getSkillShortDescription(skill)}
-                            </span>
+                            <span className="mt-1 block text-base-content/70">{getSkillShortDescription(skill)}</span>
                           )}
                         </span>
                       </span>
@@ -391,10 +324,7 @@ export function PluginDetailPage() {
         >
           <div className="modal-box w-full max-w-2xl px-5 py-7">
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h2
-                className="flex items-center gap-2 font-semibold"
-                id="skill-details-title"
-              >
+              <h2 className="flex items-center gap-2 font-semibold" id="skill-details-title">
                 <SkillIcon className="size-5" skill={selectedSkill} />
                 {selectedSkill.name}
               </h2>
@@ -407,16 +337,10 @@ export function PluginDetailPage() {
                 <XMarkIcon aria-hidden="true" className="size-4" />
               </button>
             </div>
-            <p className="whitespace-pre-wrap text-base-content/80">
-              {selectedSkill.description}
-            </p>
+            <p className="whitespace-pre-wrap text-base-content/80">{selectedSkill.description}</p>
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button
-              aria-label={t("close")}
-              type="button"
-              onClick={() => setSelectedSkill(null)}
-            >
+            <button aria-label={t("close")} type="button" onClick={() => setSelectedSkill(null)}>
               {t("close")}
             </button>
           </form>

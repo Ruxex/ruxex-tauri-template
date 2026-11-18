@@ -16,9 +16,7 @@ export const DEFAULT_MARKETPLACE_PREFERENCES: MarketplacePreferences = {
   disabled: {},
 };
 
-export function parseMarketplacePreferences(
-  raw: string | null,
-): MarketplacePreferences {
+export function parseMarketplacePreferences(raw: string | null): MarketplacePreferences {
   if (!raw) return DEFAULT_MARKETPLACE_PREFERENCES;
 
   try {
@@ -43,19 +41,12 @@ export function parseMarketplacePreferences(
 
 export function readMarketplacePreferences(): MarketplacePreferences {
   if (typeof window === "undefined") return DEFAULT_MARKETPLACE_PREFERENCES;
-  return parseMarketplacePreferences(
-    window.localStorage.getItem(MARKETPLACE_PREFERENCES_KEY),
-  );
+  return parseMarketplacePreferences(window.localStorage.getItem(MARKETPLACE_PREFERENCES_KEY));
 }
 
-export function writeMarketplacePreferences(
-  preferences: MarketplacePreferences,
-): void {
+export function writeMarketplacePreferences(preferences: MarketplacePreferences): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    MARKETPLACE_PREFERENCES_KEY,
-    JSON.stringify(preferences),
-  );
+  window.localStorage.setItem(MARKETPLACE_PREFERENCES_KEY, JSON.stringify(preferences));
 }
 
 export function addDisabledMarketplace(
@@ -69,48 +60,32 @@ export function addDisabledMarketplace(
   };
 }
 
-export function removeDisabledMarketplace(
-  preferences: MarketplacePreferences,
-  name: string,
-): MarketplacePreferences {
+export function removeDisabledMarketplace(preferences: MarketplacePreferences, name: string): MarketplacePreferences {
   const { [name]: _removed, ...disabled } = preferences.disabled;
   return { version: 1, disabled };
 }
 
-export function readMarketplaceDefinition(
-  config: unknown,
-  marketplaceName: string,
-): MarketplaceDefinition | null {
+export function readMarketplaceDefinition(config: unknown, marketplaceName: string): MarketplaceDefinition | null {
   if (!isRecord(config) || !isRecord(config.marketplaces)) return null;
   const entry = config.marketplaces[marketplaceName];
   if (!isRecord(entry) || typeof entry.source !== "string") return null;
 
   const refName =
-    typeof entry.refName === "string"
-      ? entry.refName
-      : typeof entry.ref === "string"
-        ? entry.ref
-        : undefined;
+    typeof entry.refName === "string" ? entry.refName : typeof entry.ref === "string" ? entry.ref : undefined;
   const sparsePathsValue = entry.sparsePaths ?? entry.sparse_paths;
   const sparsePaths = Array.isArray(sparsePathsValue)
-    ? sparsePathsValue.filter(
-        (path): path is string => typeof path === "string",
-      )
+    ? sparsePathsValue.filter((path): path is string => typeof path === "string")
     : undefined;
 
   return { source: entry.source, refName, sparsePaths };
 }
 
-function parseMarketplaceDefinition(
-  value: unknown,
-): MarketplaceDefinition | null {
+function parseMarketplaceDefinition(value: unknown): MarketplaceDefinition | null {
   if (!isRecord(value) || typeof value.source !== "string") return null;
 
   const refName = typeof value.refName === "string" ? value.refName : undefined;
   const sparsePaths = Array.isArray(value.sparsePaths)
-    ? value.sparsePaths.filter(
-        (path): path is string => typeof path === "string",
-      )
+    ? value.sparsePaths.filter((path): path is string => typeof path === "string")
     : undefined;
 
   return { source: value.source, refName, sparsePaths };

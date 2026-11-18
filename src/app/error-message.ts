@@ -19,12 +19,7 @@ export class AppUiError extends Error {
 }
 
 export function formatErrorMessage(error: unknown): string {
-  if (
-    error &&
-    typeof error === "object" &&
-    "code" in error &&
-    appErrorCodes.some((code) => code === error.code)
-  ) {
+  if (error && typeof error === "object" && "code" in error && appErrorCodes.some((code) => code === error.code)) {
     return i18n.t(error.code as AppUiErrorCode, {
       ns: "errors",
       lng: i18n.resolvedLanguage,

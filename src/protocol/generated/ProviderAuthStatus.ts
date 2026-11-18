@@ -5,7 +5,4 @@
 /**
  * Authentication state for the mounted model provider.
  */
-export type ProviderAuthStatus =
-  | "authenticated"
-  | "unauthenticated"
-  | "invalid";
+export type ProviderAuthStatus = "authenticated" | "unauthenticated" | "invalid";

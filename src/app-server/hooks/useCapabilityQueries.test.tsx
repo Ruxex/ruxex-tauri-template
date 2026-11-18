@@ -4,17 +4,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { i18n } from "../../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => vi.fn());
 const desktopUiPolicy = vi.hoisted(() => vi.fn());
 
-vi.mock("../api", () => ({ requestAppServerMethod }));
-vi.mock("../queries", () => ({
+vi.mock("@/app-server/api", () => ({ requestAppServerMethod }));
+vi.mock("@/app-server/queries", () => ({
   useAppServerStatus: appServerStatus,
 }));
-vi.mock("../../platform/skill-policy", () => ({
+vi.mock("@/platform/skill-policy", () => ({
   getDesktopUiPolicy: desktopUiPolicy,
 }));
 
@@ -24,9 +24,7 @@ function createWrapper(
   }),
 ) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -56,21 +54,13 @@ describe("capability query and mutation hooks", () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () =>
-      result.current.mutateAsync({ extraRoots: [userRoot, vendoredRoot] }),
-    );
+    await act(async () => result.current.mutateAsync({ extraRoots: [userRoot, vendoredRoot] }));
     await act(async () => result.current.mutateAsync({ extraRoots: [] }));
 
     const addedRoots = requestAppServerMethod.mock.calls[0][1].extraRoots;
-    expect(addedRoots).toEqual(
-      expect.arrayContaining([vendoredRoot, userRoot]),
-    );
+    expect(addedRoots).toEqual(expect.arrayContaining([vendoredRoot, userRoot]));
     expect(addedRoots).toHaveLength(2);
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      2,
-      "skills/extraRoots/set",
-      { extraRoots: [vendoredRoot] },
-    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "skills/extraRoots/set", { extraRoots: [vendoredRoot] });
   });
 
   it.each([
@@ -78,16 +68,8 @@ describe("capability query and mutation hooks", () => {
     ["useHooksList", "hooks/list", {}],
     ["useMcpServerStatus", "mcpServerStatus/list", { limit: 10 }],
     ["usePluginList", "plugin/list", {}],
-    [
-      "usePluginRead",
-      "plugin/read",
-      { marketplacePath: "/tmp/community", pluginName: "example" },
-    ],
-    [
-      "useMcpResource",
-      "mcpServer/resource/read",
-      { server: "docs", uri: "resource://guide" },
-    ],
+    ["usePluginRead", "plugin/read", { marketplacePath: "/tmp/community", pluginName: "example" }],
+    ["useMcpResource", "mcpServer/resource/read", { server: "docs", uri: "resource://guide" }],
     ["useCollaborationModes", "collaborationMode/list", {}],
     ["useConfig", "config/read", { includeLayers: true }],
     ["useConfigRequirements", "configRequirements/read", undefined],
@@ -120,29 +102,22 @@ describe("capability query and mutation hooks", () => {
     ["usePluginList", {}],
     ["useCollaborationModes", undefined],
     ["useSkillsList", {}],
-  ] as const)(
-    "does not query capability data before App Server is ready for %s",
-    async (hookName, params) => {
-      appServerStatus.mockReturnValue({ data: undefined });
-      const hooks = await import("./useCapabilityQueries");
-      const hook = hooks[hookName] as (value?: never) => {
-        fetchStatus: string;
-      };
-      const { result } = renderHook(() => hook(params as never), {
-        wrapper: createWrapper(),
-      });
+  ] as const)("does not query capability data before App Server is ready for %s", async (hookName, params) => {
+    appServerStatus.mockReturnValue({ data: undefined });
+    const hooks = await import("./useCapabilityQueries");
+    const hook = hooks[hookName] as (value?: never) => {
+      fetchStatus: string;
+    };
+    const { result } = renderHook(() => hook(params as never), {
+      wrapper: createWrapper(),
+    });
 
-      expect(result.current.fetchStatus).toBe("idle");
-      expect(requestAppServerMethod).not.toHaveBeenCalled();
-    },
-  );
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(requestAppServerMethod).not.toHaveBeenCalled();
+  });
 
   it.each([
-    [
-      "useCallMcpTool",
-      "mcpServer/tool/call",
-      { threadId: "thread-1", server: "docs", tool: "search", arguments: {} },
-    ],
+    ["useCallMcpTool", "mcpServer/tool/call", { threadId: "thread-1", server: "docs", tool: "search", arguments: {} }],
     [
       "useAddMarketplace",
       "marketplace/add",
@@ -152,64 +127,31 @@ describe("capability query and mutation hooks", () => {
         sparsePaths: ["plugins/example"],
       },
     ],
-    [
-      "useUpgradeMarketplace",
-      "marketplace/upgrade",
-      { marketplaceName: "community" },
-    ],
-    [
-      "useRemoveMarketplace",
-      "marketplace/remove",
-      { marketplaceName: "community" },
-    ],
-    [
-      "useInstallPlugin",
-      "plugin/install",
-      { marketplacePath: "/tmp/community", pluginName: "example" },
-    ],
-    [
-      "useUninstallPlugin",
-      "plugin/uninstall",
-      { pluginId: "example@community" },
-    ],
-    [
-      "useWriteSkillConfig",
-      "skills/config/write",
-      { path: "/workspace/.agents/skills/review", enabled: false },
-    ],
+    ["useUpgradeMarketplace", "marketplace/upgrade", { marketplaceName: "community" }],
+    ["useRemoveMarketplace", "marketplace/remove", { marketplaceName: "community" }],
+    ["useInstallPlugin", "plugin/install", { marketplacePath: "/tmp/community", pluginName: "example" }],
+    ["useUninstallPlugin", "plugin/uninstall", { pluginId: "example@community" }],
+    ["useWriteSkillConfig", "skills/config/write", { path: "/workspace/.agents/skills/review", enabled: false }],
     [
       "useSetSkillsExtraRoots",
       "skills/extraRoots/set",
       { extraRoots: ["/workspace/.agents/skills", "/tmp/shared-skills"] },
     ],
     ["useStartReview", "review/start", { threadId: "thread-1", target: {} }],
-    [
-      "useUpdateTurnSettings",
-      "turn/settings/update",
-      { threadId: "thread-1", turnId: "turn-1", effort: "high" },
-    ],
-    [
-      "useMcpOauthLogin",
-      "mcpServer/oauth/login",
-      { name: "docs", scopes: ["read"] },
-    ],
-  ] as const)(
-    "maps %s to %s and returns the server payload",
-    async (hookName, method, params) => {
-      const response = { accepted: true };
-      requestAppServerMethod.mockResolvedValueOnce({ response });
-      const hooks = await import("./useCapabilityQueries");
-      const hook = hooks[hookName] as () => {
-        mutateAsync: (value: never) => Promise<unknown>;
-      };
-      const { result } = renderHook(() => hook(), { wrapper: createWrapper() });
+    ["useUpdateTurnSettings", "turn/settings/update", { threadId: "thread-1", turnId: "turn-1", effort: "high" }],
+    ["useMcpOauthLogin", "mcpServer/oauth/login", { name: "docs", scopes: ["read"] }],
+  ] as const)("maps %s to %s and returns the server payload", async (hookName, method, params) => {
+    const response = { accepted: true };
+    requestAppServerMethod.mockResolvedValueOnce({ response });
+    const hooks = await import("./useCapabilityQueries");
+    const hook = hooks[hookName] as () => {
+      mutateAsync: (value: never) => Promise<unknown>;
+    };
+    const { result } = renderHook(() => hook(), { wrapper: createWrapper() });
 
-      await expect(
-        act(async () => result.current.mutateAsync(params as never)),
-      ).resolves.toEqual(response);
-      expect(requestAppServerMethod).toHaveBeenCalledWith(method, params);
-    },
-  );
+    await expect(act(async () => result.current.mutateAsync(params as never))).resolves.toEqual(response);
+    expect(requestAppServerMethod).toHaveBeenCalledWith(method, params);
+  });
 
   it("invalidates MCP status after a successful reload", async () => {
     const client = new QueryClient({
@@ -260,33 +202,29 @@ describe("capability query and mutation hooks", () => {
     expect(requestAppServerMethod).toHaveBeenCalledWith("config/read", {
       includeLayers: true,
     });
-    expect(result.current.data?.servers.map((server) => server.name)).toEqual([
-      "docs",
-    ]);
+    expect(result.current.data?.servers.map((server) => server.name)).toEqual(["docs"]);
   });
 
   it("fetches all MCP status pages and combines them", async () => {
-    requestAppServerMethod.mockImplementation(
-      async (method: string, params: { cursor?: string }) => {
-        if (method !== "mcpServerStatus/list") {
-          return { response: { data: [] } };
-        }
-        if (params.cursor === "next") {
-          return {
-            response: {
-              data: [{ name: "second" }],
-              nextCursor: null,
-            },
-          };
-        }
+    requestAppServerMethod.mockImplementation(async (method: string, params: { cursor?: string }) => {
+      if (method !== "mcpServerStatus/list") {
+        return { response: { data: [] } };
+      }
+      if (params.cursor === "next") {
         return {
           response: {
-            data: [{ name: "first" }],
-            nextCursor: "next",
+            data: [{ name: "second" }],
+            nextCursor: null,
           },
         };
-      },
-    );
+      }
+      return {
+        response: {
+          data: [{ name: "first" }],
+          nextCursor: "next",
+        },
+      };
+    });
     const { useAllMcpServerStatus } = await import("./useCapabilityQueries");
     const { result } = renderHook(() => useAllMcpServerStatus(), {
       wrapper: createWrapper(),
@@ -294,20 +232,12 @@ describe("capability query and mutation hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data?.data.map((server) => server.name)).toEqual([
-      "first",
-      "second",
-    ]);
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      1,
-      "mcpServerStatus/list",
-      { detail: "full" },
-    );
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      2,
-      "mcpServerStatus/list",
-      { detail: "full", cursor: "next" },
-    );
+    expect(result.current.data?.data.map((server) => server.name)).toEqual(["first", "second"]);
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "mcpServerStatus/list", { detail: "full" });
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "mcpServerStatus/list", {
+      detail: "full",
+      cursor: "next",
+    });
   });
 
   it("does not read an MCP Resource before one is selected", async () => {
@@ -345,10 +275,7 @@ describe("capability query and mutation hooks", () => {
 
     await act(async () => result.current.mutateAsync(params));
 
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "config/batchWrite",
-      params,
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("config/batchWrite", params);
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "config"],
     });
@@ -357,42 +284,40 @@ describe("capability query and mutation hooks", () => {
     });
   });
 
-  it.each([
-    "useAddMarketplace",
-    "useUpgradeMarketplace",
-    "useRemoveMarketplace",
-    "useInstallPlugin",
-  ] as const)("invalidates plugins after %s succeeds", async (hookName) => {
-    const client = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
-      },
-    });
-    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
-    const hooks = await import("./useCapabilityQueries");
-    const hook = hooks[hookName] as () => {
-      mutateAsync: (value: never) => Promise<unknown>;
-    };
-    const params = {
-      useAddMarketplace: { source: "https://example.com/marketplace.git" },
-      useUpgradeMarketplace: { marketplaceName: "community" },
-      useRemoveMarketplace: { marketplaceName: "community" },
-      useInstallPlugin: {
-        marketplacePath: "/tmp/community",
-        pluginName: "example",
-      },
-    }[hookName];
+  it.each(["useAddMarketplace", "useUpgradeMarketplace", "useRemoveMarketplace", "useInstallPlugin"] as const)(
+    "invalidates plugins after %s succeeds",
+    async (hookName) => {
+      const client = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+      const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+      const hooks = await import("./useCapabilityQueries");
+      const hook = hooks[hookName] as () => {
+        mutateAsync: (value: never) => Promise<unknown>;
+      };
+      const params = {
+        useAddMarketplace: { source: "https://example.com/marketplace.git" },
+        useUpgradeMarketplace: { marketplaceName: "community" },
+        useRemoveMarketplace: { marketplaceName: "community" },
+        useInstallPlugin: {
+          marketplacePath: "/tmp/community",
+          pluginName: "example",
+        },
+      }[hookName];
 
-    const { result } = renderHook(() => hook(), {
-      wrapper: createWrapper(client),
-    });
-    await act(async () => result.current.mutateAsync(params as never));
+      const { result } = renderHook(() => hook(), {
+        wrapper: createWrapper(client),
+      });
+      await act(async () => result.current.mutateAsync(params as never));
 
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["app-server", "plugins"],
-    });
-  });
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ["app-server", "plugins"],
+      });
+    },
+  );
 
   it("does not invalidate plugins after a failed marketplace mutation", async () => {
     const client = new QueryClient({
@@ -402,9 +327,7 @@ describe("capability query and mutation hooks", () => {
       },
     });
     const invalidateQueries = vi.spyOn(client, "invalidateQueries");
-    requestAppServerMethod.mockRejectedValueOnce(
-      new Error("marketplace unavailable"),
-    );
+    requestAppServerMethod.mockRejectedValueOnce(new Error("marketplace unavailable"));
     const { useAddMarketplace } = await import("./useCapabilityQueries");
     const { result } = renderHook(() => useAddMarketplace(), {
       wrapper: createWrapper(client),
@@ -433,9 +356,7 @@ describe("capability query and mutation hooks", () => {
       wrapper: createWrapper(client),
     });
 
-    await act(async () =>
-      result.current.mutateAsync({ pluginId: "example@community" }),
-    );
+    await act(async () => result.current.mutateAsync({ pluginId: "example@community" }));
 
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "plugins"],
@@ -474,39 +395,28 @@ describe("capability query and mutation hooks", () => {
   });
 
   it.each([
-    [
-      "useMcpOauthLogin",
-      { name: "docs", scopes: ["read"] },
-      ["app-server", "mcp-servers"],
-    ],
-    [
-      "useSetSkillsExtraRoots",
-      { extraRoots: ["/workspace/.agents/skills"] },
-      ["app-server", "skills"],
-    ],
-  ] as const)(
-    "invalidates the related query after %s succeeds",
-    async (hookName, params, queryKey) => {
-      const client = new QueryClient({
-        defaultOptions: {
-          queries: { retry: false },
-          mutations: { retry: false },
-        },
-      });
-      const invalidateQueries = vi.spyOn(client, "invalidateQueries");
-      const hooks = await import("./useCapabilityQueries");
-      const hook = hooks[hookName] as () => {
-        mutateAsync: (value: never) => Promise<unknown>;
-      };
-      const { result } = renderHook(() => hook(), {
-        wrapper: createWrapper(client),
-      });
+    ["useMcpOauthLogin", { name: "docs", scopes: ["read"] }, ["app-server", "mcp-servers"]],
+    ["useSetSkillsExtraRoots", { extraRoots: ["/workspace/.agents/skills"] }, ["app-server", "skills"]],
+  ] as const)("invalidates the related query after %s succeeds", async (hookName, params, queryKey) => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    const hooks = await import("./useCapabilityQueries");
+    const hook = hooks[hookName] as () => {
+      mutateAsync: (value: never) => Promise<unknown>;
+    };
+    const { result } = renderHook(() => hook(), {
+      wrapper: createWrapper(client),
+    });
 
-      await act(async () => result.current.mutateAsync(params as never));
+    await act(async () => result.current.mutateAsync(params as never));
 
-      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey });
-    },
-  );
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey });
+  });
 
   it("invalidates config after marketplace mutations succeed", async () => {
     const client = new QueryClient({
@@ -572,17 +482,11 @@ describe("capability query and mutation hooks", () => {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.servers[0]?.error).toBe(
-      "args must be an array of strings",
-    );
+    expect(result.current.data?.servers[0]?.error).toBe("args must be an array of strings");
     await act(async () => {
       await i18n.changeLanguage("ja");
     });
-    await waitFor(() =>
-      expect(result.current.data?.servers[0]?.error).toBe(
-        "args は文字列の配列で指定してください",
-      ),
-    );
+    await waitFor(() => expect(result.current.data?.servers[0]?.error).toBe("args は文字列の配列で指定してください"));
     expect(requestAppServerMethod).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,13 +1,6 @@
-import { i18n } from "../../app/i18n";
-import type {
-  ScheduleCadence,
-  ScheduleInput,
-  ScheduleRecord,
-} from "../../platform/schedules";
-import {
-  DEFAULT_PROJECT_METADATA,
-  type ProjectMetadata,
-} from "../../components/projects/project-metadata";
+import { i18n } from "@/app/i18n";
+import type { ScheduleCadence, ScheduleInput, ScheduleRecord } from "@/platform/schedules";
+import { DEFAULT_PROJECT_METADATA, type ProjectMetadata } from "@/components/composite/projects/project-metadata";
 
 export type ScheduleFormState = {
   name: string;
@@ -31,13 +24,9 @@ export type ScheduleFormAction =
   | { type: "onceAtChanged"; value: string }
   | { type: "enabledChanged"; value: boolean };
 
-export type ScheduleFormResult =
-  | { ok: true; input: ScheduleInput }
-  | { ok: false; message: string };
+export type ScheduleFormResult = { ok: true; input: ScheduleInput } | { ok: false; message: string };
 
-export function createScheduleFormState(
-  schedule?: ScheduleRecord,
-): ScheduleFormState {
+export function createScheduleFormState(schedule?: ScheduleRecord): ScheduleFormState {
   if (!schedule) {
     return {
       name: "",
@@ -70,19 +59,13 @@ export function createScheduleFormState(
     metadata: { icon: schedule.icon, color: schedule.color },
     cadenceKind: schedule.cadence.kind,
     runAtTime: `${pad(schedule.cadence.hour)}:${pad(schedule.cadence.minute)}`,
-    weekdays:
-      schedule.cadence.kind === "weekly"
-        ? schedule.cadence.weekdays.map(String)
-        : ["1"],
+    weekdays: schedule.cadence.kind === "weekly" ? schedule.cadence.weekdays.map(String) : ["1"],
     onceAt: "",
     enabled: schedule.enabled,
   };
 }
 
-export function scheduleFormReducer(
-  state: ScheduleFormState,
-  action: ScheduleFormAction,
-): ScheduleFormState {
+export function scheduleFormReducer(state: ScheduleFormState, action: ScheduleFormAction): ScheduleFormState {
   switch (action.type) {
     case "reset":
       return createScheduleFormState(action.schedule);
@@ -105,10 +88,7 @@ export function scheduleFormReducer(
   }
 }
 
-export function scheduleInputFromForm(
-  state: ScheduleFormState,
-  timeZone: string,
-): ScheduleFormResult {
+export function scheduleInputFromForm(state: ScheduleFormState, timeZone: string): ScheduleFormResult {
   const onceTimestamp = state.onceAt ? Date.parse(state.onceAt) : Number.NaN;
   if (state.cadenceKind === "once" && !Number.isFinite(onceTimestamp)) {
     return {

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 const useArchivedThreadList = vi.hoisted(() => vi.fn());
 const useUnarchiveThread = vi.hoisted(() => vi.fn());
@@ -14,13 +14,13 @@ const mutateAsync = vi.hoisted(() => vi.fn());
 const deleteMutateAsync = vi.hoisted(() => vi.fn());
 const deleteAllMutateAsync = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useArchivedThreadList,
   useDeleteAllArchivedThreads,
   useDeleteThread,
   useUnarchiveThread,
 }));
-vi.mock("../components/common/ThreadCard", () => ({
+vi.mock("@/components/base/common/ThreadCard", () => ({
   ThreadCard: ({
     thread,
     actions,
@@ -61,9 +61,7 @@ describe("ArchivePage", () => {
       isLoading: false,
       isError: false,
       data: {
-        data: [
-          { id: "thread-old", name: "Old chat", updatedAt: 1_735_689_600 },
-        ],
+        data: [{ id: "thread-old", name: "Old chat", updatedAt: 1_735_689_600 }],
         nextCursor: null,
       },
     });
@@ -83,17 +81,11 @@ describe("ArchivePage", () => {
     expect(screen.getByText("1735689600")).toBeTruthy();
     expect(mutateAsync).toHaveBeenCalledWith({ threadId: "thread-old" });
     expect(screen.queryByRole("link", { name: "Open" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Restore" }).textContent).toBe(
-      "",
-    );
+    expect(screen.getByRole("button", { name: "Restore" }).textContent).toBe("");
     expect(screen.getByRole("button", { name: "Delete" }).textContent).toBe("");
-    expect(
-      screen.getByRole("button", { name: "Delete" }).className,
-    ).not.toContain("text-error");
+    expect(screen.getByRole("button", { name: "Delete" }).className).not.toContain("text-error");
     expect(screen.queryByText("History")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Delete all archived chats" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Delete all archived chats" })).toBeTruthy();
   });
 
   it("confirms before deleting every archived chat", async () => {
@@ -105,17 +97,11 @@ describe("ArchivePage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Delete all archived chats" }),
-    );
-    expect(
-      screen.getByRole("heading", { name: "Delete all archived chats?" }),
-    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Delete all archived chats" }));
+    expect(screen.getByRole("heading", { name: "Delete all archived chats?" })).toBeTruthy();
     expect(deleteAllMutateAsync).not.toHaveBeenCalled();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Delete all permanently" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete all permanently" }));
 
     expect(deleteAllMutateAsync).toHaveBeenCalledWith();
   });
@@ -205,15 +191,11 @@ describe("ArchivePage", () => {
         <ArchivePage />
       </MemoryRouter>,
     );
-    expect(
-      screen.getByRole("heading", { name: "アーカイブ済みのチャット" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "アーカイブ済みのチャット" })).toBeTruthy();
     expect(screen.getByText("Old chat")).toBeTruthy();
     expect(screen.getByRole("button", { name: "復元" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "削除" }));
-    expect(
-      screen.getByRole("heading", { name: "チャットを削除しますか？" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "チャットを削除しますか？" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "完全に削除" })).toBeTruthy();
     expect(screen.getAllByText(/Old chat/)).toHaveLength(2);
   });

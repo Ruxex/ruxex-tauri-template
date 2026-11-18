@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { AppServerEvent } from "../app-server/events";
+import type { AppServerEvent } from "@/app-server/events";
 import { MockAppServer } from "./mock-app-server";
 
 describe("MockAppServer", () => {
@@ -21,9 +21,7 @@ describe("MockAppServer", () => {
       id: 7,
       response: { data: [], nextCursor: null, backwardsCursor: null },
     });
-    expect(server.requests).toEqual([
-      { method: "thread/list", id: 7, params: { limit: 25 } },
-    ]);
+    expect(server.requests).toEqual([{ method: "thread/list", id: 7, params: { limit: 25 } }]);
   });
 
   it("creates distinct chat workspaces under the mock data home", async () => {
@@ -60,12 +58,8 @@ describe("MockAppServer", () => {
       error: { code: -32000, message: "declined" },
     });
 
-    expect(server.resolutions).toEqual([
-      { requestId: 4, result: { decision: "accept" } },
-    ]);
-    expect(server.rejections).toEqual([
-      { requestId: 5, error: { code: -32000, message: "declined" } },
-    ]);
+    expect(server.resolutions).toEqual([{ requestId: 4, result: { decision: "accept" } }]);
+    expect(server.rejections).toEqual([{ requestId: 5, error: { code: -32000, message: "declined" } }]);
   });
 
   it("fails loudly when a test forgets to register a response", async () => {

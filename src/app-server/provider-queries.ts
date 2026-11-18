@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import type { v2 } from "../protocol";
+import type { v2 } from "@/protocol";
 import { requestAppServerMethod } from "./api";
 import { appServerQueryKeys } from "./query-keys";
 import { useAppServerStatus } from "./runtime-queries";
@@ -42,10 +42,7 @@ export function useModelProviderCapabilities() {
   return useQuery<v2.ModelProviderCapabilitiesReadResponse | null>({
     queryKey: appServerQueryKeys.providerCapabilities,
     queryFn: async () => {
-      const response = await requestAppServerMethod(
-        "modelProvider/capabilities/read",
-        {},
-      );
+      const response = await requestAppServerMethod("modelProvider/capabilities/read", {});
       return response.response;
     },
     enabled: Boolean(status.data),
@@ -59,10 +56,7 @@ export function usePermissionProfiles() {
   return useQuery<v2.PermissionProfileListResponse | null>({
     queryKey: appServerQueryKeys.permissionProfiles,
     queryFn: async () => {
-      const response = await requestAppServerMethod(
-        "permissionProfile/list",
-        {},
-      );
+      const response = await requestAppServerMethod("permissionProfile/list", {});
       return response.response;
     },
     enabled: Boolean(status.data),

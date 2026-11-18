@@ -3,18 +3,16 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { v2 } from "../protocol";
+import type { v2 } from "@/protocol";
 import { HooksPage } from "./HooksPage";
 
 const useHooksList = vi.hoisted(() => vi.fn());
 const useAppServerStatus = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({ useHooksList }));
-vi.mock("../app-server/queries", () => ({ useAppServerStatus }));
+vi.mock("@/app-server/hooks", () => ({ useHooksList }));
+vi.mock("@/app-server/queries", () => ({ useAppServerStatus }));
 
-function hookResult(
-  overrides: Partial<ReturnType<typeof defaultHookResult>> = {},
-) {
+function hookResult(overrides: Partial<ReturnType<typeof defaultHookResult>> = {}) {
   return { ...defaultHookResult(), ...overrides };
 }
 
@@ -28,11 +26,7 @@ function defaultHookResult() {
 }
 
 function baseHook(
-  metadata: Partial<v2.HookMetadata> &
-    Pick<
-      v2.HookMetadata,
-      "eventName" | "handlerType" | "source" | "trustStatus"
-    >,
+  metadata: Partial<v2.HookMetadata> & Pick<v2.HookMetadata, "eventName" | "handlerType" | "source" | "trustStatus">,
 ): v2.HookMetadata {
   return {
     key: `${metadata.eventName}-${metadata.handlerType}`,
@@ -117,7 +111,7 @@ function populatedResponse(): v2.HooksListResponse {
   };
 }
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("HooksPage", () => {
   it("renders Japanese hook framing and retains commands and event identifiers", async () => {
@@ -133,9 +127,7 @@ describe("HooksPage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
-    useHooksList
-      .mockReset()
-      .mockReturnValue(hookResult({ data: populatedResponse() }));
+    useHooksList.mockReset().mockReturnValue(hookResult({ data: populatedResponse() }));
     useAppServerStatus.mockReset().mockReturnValue({
       data: { homeDataDir: "/home/user/.ruxex" },
     });
@@ -144,19 +136,16 @@ describe("HooksPage", () => {
   it.each([
     ["en", "1,234s", "12,345 tokens"],
     ["ja", "1,234 秒", "12,345 トークン"],
-  ] as const)(
-    "formats hook numeric details in %s",
-    async (locale, timeout, tokens) => {
-      await i18n.changeLanguage(locale);
-      const response = populatedResponse();
-      response.data[0].hooks[0].timeoutSec = 1234n;
-      response.data[0].hooks[0].additionalContextLimit = 12345;
-      useHooksList.mockReturnValue(hookResult({ data: response }));
-      render(<HooksPage />);
-      expect(screen.getByText(timeout)).toBeTruthy();
-      expect(screen.getByText(tokens)).toBeTruthy();
-    },
-  );
+  ] as const)("formats hook numeric details in %s", async (locale, timeout, tokens) => {
+    await i18n.changeLanguage(locale);
+    const response = populatedResponse();
+    response.data[0].hooks[0].timeoutSec = 1234n;
+    response.data[0].hooks[0].additionalContextLimit = 12345;
+    useHooksList.mockReturnValue(hookResult({ data: response }));
+    render(<HooksPage />);
+    expect(screen.getByText(timeout)).toBeTruthy();
+    expect(screen.getByText(tokens)).toBeTruthy();
+  });
 
   it("lists hooks from the App Server data home", () => {
     render(<HooksPage />);
@@ -183,9 +172,7 @@ describe("HooksPage", () => {
     expect(screen.getByText("System")).toBeTruthy();
     expect(screen.getByText("Session flags")).toBeTruthy();
     expect(screen.getAllByText("Review required").length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText("Modified — review required").length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Modified — review required").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Trusted").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Managed").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Enabled").length).toBeGreaterThan(0);
@@ -196,11 +183,7 @@ describe("HooksPage", () => {
     expect(screen.getAllByText("Agent").length).toBeGreaterThan(0);
     expect(screen.getByText("Hook configuration warning")).toBeTruthy();
     expect(screen.getByText("Hook configuration error")).toBeTruthy();
-    expect(
-      screen.queryByText(
-        /Review or edit the source configuration outside the desktop app/,
-      ),
-    ).toBeNull();
+    expect(screen.queryByText(/Review or edit the source configuration outside the desktop app/)).toBeNull();
     expect(document.querySelectorAll("details")[0]?.open).toBe(false);
 
     const summaries = Array.from(document.querySelectorAll("summary"));
@@ -208,9 +191,7 @@ describe("HooksPage", () => {
     fireEvent.click(summaries[0]);
 
     expect(screen.getByText("python3 /workspace/app/check.py")).toBeTruthy();
-    expect(
-      screen.getAllByText("/workspace/.ruxex/hooks.json").length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("/workspace/.ruxex/hooks.json").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Bash").length).toBeGreaterThan(0);
     expect(screen.getByText("policy-plugin")).toBeTruthy();
 
@@ -227,15 +208,11 @@ describe("HooksPage", () => {
   });
 
   it("shows an error when the hook catalog cannot be loaded", () => {
-    useHooksList.mockReturnValue(
-      hookResult({ isError: true, error: new Error("socket closed") }),
-    );
+    useHooksList.mockReturnValue(hookResult({ isError: true, error: new Error("socket closed") }));
 
     render(<HooksPage />);
 
-    expect(screen.getByRole("alert").textContent).toContain(
-      "Unable to load hooks:",
-    );
+    expect(screen.getByRole("alert").textContent).toContain("Unable to load hooks:");
   });
 
   it("shows a loading state while the hook catalog is pending", () => {

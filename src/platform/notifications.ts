@@ -1,14 +1,9 @@
-import {
-  isPermissionGranted,
-  onAction,
-  requestPermission,
-  sendNotification,
-} from "@tauri-apps/plugin-notification";
+import { isPermissionGranted, onAction, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 
-import { i18n, resolveUiLanguage } from "../app/i18n";
-import type { UiLanguage } from "../app/ui-preferences";
-import type { AppServerEvent } from "../app-server/events";
-import type { UiNotificationSound } from "../app/ui-preferences";
+import { i18n, resolveUiLanguage } from "@/app/i18n";
+import type { UiLanguage } from "@/app/ui-preferences";
+import type { AppServerEvent } from "@/app-server/events";
+import type { UiNotificationSound } from "@/app/ui-preferences";
 
 export type NotificationCandidate = {
   id: string;
@@ -29,16 +24,11 @@ function notificationIdFor(candidate: NotificationCandidate): number {
   return hash | 0;
 }
 
-export async function listenForNotificationActions(
-  openThread: (threadId: string) => void,
-): Promise<() => void> {
+export async function listenForNotificationActions(openThread: (threadId: string) => void): Promise<() => void> {
   // The installed guest package predates ActionPerformed's type, but its
   // listener event payload is provided by the upgraded Rust plugin.
   const listen = onAction as unknown as (
-    callback: (event: {
-      actionId: string;
-      notification: { id: number } | null;
-    }) => void,
+    callback: (event: { actionId: string; notification: { id: number } | null }) => void,
   ) => Promise<{ unregister: () => void }>;
   const listener = await listen(({ actionId, notification }) => {
     if (actionId !== "tap" || !notification) {
@@ -74,22 +64,12 @@ export function classifyAppServerEvent(
       body: t("notificationWaiting"),
     };
   }
-  if (
-    event.type === "serverNotification" &&
-    event.data.method === "turn/completed"
-  ) {
+  if (event.type === "serverNotification" && event.data.method === "turn/completed") {
     const { threadId, turn } = event.data.params;
-    const lastReply = [...turn.items]
-      .reverse()
-      .find((item) => item.type === "agentMessage" && item.text.trim());
-    const reply =
-      lastReply?.type === "agentMessage"
-        ? lastReply.text.replace(/\s+/g, " ").trim()
-        : "";
+    const lastReply = [...turn.items].reverse().find((item) => item.type === "agentMessage" && item.text.trim());
+    const reply = lastReply?.type === "agentMessage" ? lastReply.text.replace(/\s+/g, " ").trim() : "";
     const replyCharacters = Array.from(reply);
-    const replyPreview = replyCharacters
-      .slice(0, NOTIFICATION_PREVIEW_LENGTH)
-      .join("");
+    const replyPreview = replyCharacters.slice(0, NOTIFICATION_PREVIEW_LENGTH).join("");
     const emptyReplyMessage =
       turn.status === "failed"
         ? t("notificationFailed")
@@ -132,18 +112,11 @@ export function createNotificationDispatcher({
       const candidate = classifyAppServerEvent(
         event,
         language(),
-        event.type === "serverNotification" &&
-          event.data.method === "turn/completed"
+        event.type === "serverNotification" && event.data.method === "turn/completed"
           ? threadName(event.data.params.threadId)
           : undefined,
       );
-      if (
-        !candidate ||
-        !enabled() ||
-        isFocused() ||
-        delivered.has(candidate.id) ||
-        pending.has(candidate.id)
-      ) {
+      if (!candidate || !enabled() || isFocused() || delivered.has(candidate.id) || pending.has(candidate.id)) {
         return false;
       }
       pending.add(candidate.id);

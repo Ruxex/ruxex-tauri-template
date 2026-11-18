@@ -3,16 +3,10 @@ import { useEffect } from "react";
 import { I18nextProvider } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
-import {
-  startAppServerEventStore,
-  stopAppServerEventStore,
-} from "../app-server/event-store";
-import {
-  useAppServerNotifications,
-  useAppServerQuerySync,
-} from "../app-server/hooks";
-import { isDesktopRuntime } from "../app-server/runtime";
-import { pathForDeepLink, startDeepLinkListener } from "../platform/deep-links";
+import { startAppServerEventStore, stopAppServerEventStore } from "@/app-server/event-store";
+import { useAppServerNotifications, useAppServerQuerySync } from "@/app-server/hooks";
+import { isDesktopRuntime } from "@/app-server/runtime";
+import { pathForDeepLink, startDeepLinkListener } from "@/platform/deep-links";
 import { BrandingProvider } from "./branding";
 import { i18n } from "./i18n";
 import { queryClient } from "./query-client";

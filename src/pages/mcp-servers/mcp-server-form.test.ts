@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { McpServerDraft } from "../../app-server/mcp-config";
+import type { McpServerDraft } from "@/app-server/mcp-config";
 import {
   createMcpServerForm,
   formStateToDraft,
@@ -43,9 +43,7 @@ describe("MCP server form model", () => {
   });
 
   it("preserves transport-specific values when switching transports", () => {
-    const form = createMcpServerForm(
-      draft({ url: "https://example.com/mcp", transport: "stdio" }),
-    );
+    const form = createMcpServerForm(draft({ url: "https://example.com/mcp", transport: "stdio" }));
 
     const switched = switchMcpServerTransport(form, "streamableHttp");
 
@@ -63,9 +61,7 @@ describe("MCP server form model", () => {
 
   it("requires a name and the selected transport's endpoint", () => {
     const errors = validateMcpServerForm(
-      createMcpServerForm(
-        draft({ name: "", command: "", url: "", transport: "stdio" }),
-      ),
+      createMcpServerForm(draft({ name: "", command: "", url: "", transport: "stdio" })),
       [],
     );
 

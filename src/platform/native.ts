@@ -33,10 +33,7 @@ export function openArtifact(path: string): Promise<void> {
   return invoke("open_artifact", { path });
 }
 
-export function openWorkspaceInEditor(
-  workspace: string,
-  editorCommand: string,
-): Promise<void> {
+export function openWorkspaceInEditor(workspace: string, editorCommand: string): Promise<void> {
   return invoke("open_workspace_in_editor", { workspace, editorCommand });
 }
 
@@ -44,10 +41,7 @@ export function detectEditorCommand(): Promise<string | null> {
   return invoke<string | null>("detect_editor_command");
 }
 
-export function saveArtifact(
-  path: string,
-  destination: string,
-): Promise<string> {
+export function saveArtifact(path: string, destination: string): Promise<string> {
   return invoke<string>("save_artifact", { path, destination });
 }
 
@@ -79,9 +73,7 @@ export function readQuickPanelShortcut(): Promise<QuickPanelShortcutSettings> {
   return invoke<QuickPanelShortcutSettings>("quick_panel_shortcut_read");
 }
 
-export function updateQuickPanelShortcut(
-  shortcut: string,
-): Promise<QuickPanelShortcutSettings> {
+export function updateQuickPanelShortcut(shortcut: string): Promise<QuickPanelShortcutSettings> {
   return invoke<QuickPanelShortcutSettings>("quick_panel_shortcut_update", {
     shortcut,
   });

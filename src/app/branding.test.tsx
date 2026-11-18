@@ -8,8 +8,8 @@ import { useBranding } from "./branding-context";
 
 const getBranding = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/runtime", () => ({ isNativeDesktopRuntime: true }));
-vi.mock("../platform/branding", () => ({ getBranding }));
+vi.mock("@/app-server/runtime", () => ({ isNativeDesktopRuntime: true }));
+vi.mock("@/platform/branding", () => ({ getBranding }));
 
 function BrandingConsumer() {
   const branding = useBranding();

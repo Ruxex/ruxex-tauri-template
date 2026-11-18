@@ -7,8 +7,7 @@ describe("worktree native bridge", () => {
   beforeEach(() => invoke.mockReset().mockResolvedValue(undefined));
 
   it("uses structured argv-backed worktree commands", async () => {
-    const { createWorktree, listWorktrees, openWorktree, removeWorktree } =
-      await import("./worktrees");
+    const { createWorktree, listWorktrees, openWorktree, removeWorktree } = await import("./worktrees");
     const request = {
       root: "/repo",
       destination: "/repo/.worktrees/feature",

@@ -6,12 +6,8 @@ import {
   useModelProvider,
   useModelProviderCapabilities,
   usePermissionProfiles,
-} from "../app-server/hooks";
-import {
-  CapabilitiesCard,
-  ProviderAccountCard,
-  RuntimeSummary,
-} from "../components/settings/SettingsCards";
+} from "@/app-server/hooks";
+import { CapabilitiesCard, ProviderAccountCard, RuntimeSummary } from "@/components/feature/settings/SettingsCards";
 
 export function ModelPage() {
   const { t } = useTranslation("capabilities");
@@ -26,9 +22,7 @@ export function ModelPage() {
     <div className="space-y-6">
       <h2 className="text-3xl font-semibold tracking-tight">{t("provider")}</h2>
       <ProviderAccountCard
-        provider={
-          provider.data?.name ?? account.data?.providerId ?? t("unavailable")
-        }
+        provider={provider.data?.name ?? account.data?.providerId ?? t("unavailable")}
         authStatus={account.data?.authStatus ?? t("unknown")}
         account={account.data?.displayName ?? t("notSignedIn")}
         dataDirectory={appServerStatus.data?.homeDataDir ?? t("unavailable")}

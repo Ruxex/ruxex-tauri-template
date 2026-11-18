@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import { invalidateThreadQueue } from "../query-invalidation";
-import { ensureThreadResumed } from "../thread-session";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { invalidateThreadQueue } from "@/app-server/query-invalidation";
+import { ensureThreadResumed } from "@/app-server/thread-session";
 
 export function useSendMessage() {
   return useMutation({
@@ -36,16 +36,13 @@ export function useSteerTurn() {
 export function useQueueMessage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (
-      params: Omit<v2.ThreadQueueAddParams, "clientUserMessageId">,
-    ) => {
+    mutationFn: async (params: Omit<v2.ThreadQueueAddParams, "clientUserMessageId">) => {
       const response = await requestAppServerMethod("thread/queue/add", {
         ...params,
         clientUserMessageId: `desktop-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       });
       return response.response;
     },
-    onSuccess: (_response, params) =>
-      invalidateThreadQueue(queryClient, params.threadId),
+    onSuccess: (_response, params) => invalidateThreadQueue(queryClient, params.threadId),
   });
 }

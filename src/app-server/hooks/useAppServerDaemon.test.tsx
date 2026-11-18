@@ -5,21 +5,18 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AppServerStatus } from "../api";
-import type {
-  AppServerDaemonAction,
-  AppServerDaemonOutput,
-} from "../daemon-api";
-import { appServerQueryKeys } from "../query-keys";
+import type { AppServerStatus } from "@/app-server/api";
+import type { AppServerDaemonAction, AppServerDaemonOutput } from "@/app-server/daemon-api";
+import { appServerQueryKeys } from "@/app-server/query-keys";
 
 const controlAppServerDaemon = vi.hoisted(() => vi.fn());
 const ensureAppServer = vi.hoisted(() => vi.fn());
 const startAppServerEventStore = vi.hoisted(() => vi.fn());
 
-vi.mock("../daemon-api", () => ({ controlAppServerDaemon }));
-vi.mock("../api", () => ({ ensureAppServer }));
-vi.mock("../event-store", () => ({ startAppServerEventStore }));
-vi.mock("../runtime", () => ({
+vi.mock("@/app-server/daemon-api", () => ({ controlAppServerDaemon }));
+vi.mock("@/app-server/api", () => ({ ensureAppServer }));
+vi.mock("@/app-server/event-store", () => ({ startAppServerEventStore }));
+vi.mock("@/app-server/runtime", () => ({
   isDesktopRuntime: true,
   isMockAppServerRuntime: false,
   isNativeDesktopRuntime: true,
@@ -27,9 +24,7 @@ vi.mock("../runtime", () => ({
 
 function createWrapper(client: QueryClient) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -165,27 +160,19 @@ describe("useAppServerDaemon", () => {
         mutations: { retry: false },
       },
     });
-    controlAppServerDaemon
-      .mockResolvedValueOnce(startedDaemon)
-      .mockResolvedValueOnce(stoppedDaemon);
+    controlAppServerDaemon.mockResolvedValueOnce(startedDaemon).mockResolvedValueOnce(stoppedDaemon);
     client.setQueryData(appServerQueryKeys.status, connectedStatus);
 
     const { result } = renderHook(() => useAppServerDaemon(), {
       wrapper: createWrapper(client),
     });
 
-    await act(async () =>
-      result.current.control.mutateAsync("start" as AppServerDaemonAction),
-    );
+    await act(async () => result.current.control.mutateAsync("start" as AppServerDaemonAction));
     expect(controlAppServerDaemon).toHaveBeenCalledWith("start");
     expect(ensureAppServer).toHaveBeenCalledOnce();
-    expect(client.getQueryData(appServerQueryKeys.status)).toEqual(
-      connectedStatus,
-    );
+    expect(client.getQueryData(appServerQueryKeys.status)).toEqual(connectedStatus);
 
-    await act(async () =>
-      result.current.control.mutateAsync("stop" as AppServerDaemonAction),
-    );
+    await act(async () => result.current.control.mutateAsync("stop" as AppServerDaemonAction));
     expect(controlAppServerDaemon).toHaveBeenCalledWith("stop");
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
   });
@@ -203,9 +190,7 @@ describe("useAppServerDaemon", () => {
       wrapper: createWrapper(client),
     });
 
-    await act(async () =>
-      result.current.control.mutateAsync("forceStop" as AppServerDaemonAction),
-    );
+    await act(async () => result.current.control.mutateAsync("forceStop" as AppServerDaemonAction));
 
     expect(controlAppServerDaemon).toHaveBeenCalledWith("forceStop");
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
@@ -227,9 +212,7 @@ describe("useAppServerDaemon", () => {
     await waitFor(() => expect(result.current.status.isSuccess).toBe(true));
     controlAppServerDaemon.mockReset();
     ensureAppServer.mockClear();
-    controlAppServerDaemon
-      .mockResolvedValueOnce(stoppedDaemon)
-      .mockResolvedValueOnce(startedDaemon);
+    controlAppServerDaemon.mockResolvedValueOnce(stoppedDaemon).mockResolvedValueOnce(startedDaemon);
 
     await act(async () => result.current.update.mutateAsync());
 
@@ -252,9 +235,7 @@ describe("useAppServerDaemon", () => {
       wrapper: createWrapper(client),
     });
 
-    await expect(
-      act(async () => result.current.update.mutateAsync()),
-    ).rejects.toBe(error);
+    await expect(act(async () => result.current.update.mutateAsync())).rejects.toBe(error);
     expect(controlAppServerDaemon).toHaveBeenCalledWith("stop");
     expect(controlAppServerDaemon).not.toHaveBeenCalledWith("start");
   });
@@ -274,14 +255,10 @@ describe("useAppServerDaemon", () => {
     await waitFor(() => expect(result.current.status.isSuccess).toBe(true));
     controlAppServerDaemon.mockReset();
     ensureAppServer.mockClear();
-    controlAppServerDaemon
-      .mockResolvedValueOnce(stoppedDaemon)
-      .mockRejectedValueOnce(error);
+    controlAppServerDaemon.mockResolvedValueOnce(stoppedDaemon).mockRejectedValueOnce(error);
     client.setQueryData(appServerQueryKeys.status, connectedStatus);
 
-    await expect(
-      act(async () => result.current.update.mutateAsync()),
-    ).rejects.toBe(error);
+    await expect(act(async () => result.current.update.mutateAsync())).rejects.toBe(error);
     expect(controlAppServerDaemon).toHaveBeenNthCalledWith(1, "stop");
     expect(controlAppServerDaemon).toHaveBeenNthCalledWith(2, "start");
     expect(ensureAppServer).not.toHaveBeenCalled();
@@ -323,9 +300,7 @@ describe("useAppServerDaemon", () => {
     });
 
     await act(async () => {
-      await expect(result.current.control.mutateAsync("restart")).rejects.toBe(
-        error,
-      );
+      await expect(result.current.control.mutateAsync("restart")).rejects.toBe(error);
     });
     expect(client.getQueryData(appServerQueryKeys.status)).toBeNull();
   });

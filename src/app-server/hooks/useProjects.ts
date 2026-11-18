@@ -1,19 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import {
-  invalidateProjectList,
-  invalidateProjectQueries,
-} from "../query-invalidation";
-import { useAppServerStatus } from "../queries";
-import { appServerQueryKeys } from "../query-keys";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { invalidateProjectList, invalidateProjectQueries } from "@/app-server/query-invalidation";
+import { useAppServerStatus } from "@/app-server/queries";
+import { appServerQueryKeys } from "@/app-server/query-keys";
 import { useAllThreadList } from "./useThreadQueries";
 
-export function useProjectList(
-  params: v2.ProjectListParams = {},
-  allPages = false,
-) {
+export function useProjectList(params: v2.ProjectListParams = {}, allPages = false) {
   const status = useAppServerStatus();
 
   return useQuery<v2.ProjectListResponse>({
@@ -45,9 +39,7 @@ export function useProjectList(
   });
 }
 
-export function useAllProjectList(
-  params: Omit<v2.ProjectListParams, "cursor"> = {},
-) {
+export function useAllProjectList(params: Omit<v2.ProjectListParams, "cursor"> = {}) {
   return useProjectList(params, true);
 }
 
@@ -66,9 +58,7 @@ export function useProject(projectId: string) {
   });
 }
 
-export function projectThreadListParams(
-  projectId: string,
-): v2.ThreadListParams {
+export function projectThreadListParams(projectId: string): v2.ThreadListParams {
   return {
     projectId,
     archived: false,
@@ -80,10 +70,7 @@ export function projectThreadListParams(
 
 export function useProjectThreads(
   projectId: string,
-  options: Pick<
-    v2.ThreadListParams,
-    "searchTerm" | "sortKey" | "sortDirection"
-  > = {},
+  options: Pick<v2.ThreadListParams, "searchTerm" | "sortKey" | "sortDirection"> = {},
 ) {
   return useAllThreadList(
     {
@@ -92,9 +79,7 @@ export function useProjectThreads(
       limit: 50,
       sortKey: options.sortKey ?? "recency_at",
       sortDirection: options.sortDirection ?? "desc",
-      ...(options.searchTerm?.trim()
-        ? { searchTerm: options.searchTerm.trim() }
-        : {}),
+      ...(options.searchTerm?.trim() ? { searchTerm: options.searchTerm.trim() } : {}),
     },
     Boolean(projectId),
   );
@@ -120,8 +105,7 @@ export function useUpdateProject() {
       const response = await requestAppServerMethod("project/update", params);
       return response.response;
     },
-    onSuccess: (_data, params) =>
-      invalidateProjectQueries(queryClient, params.projectId),
+    onSuccess: (_data, params) => invalidateProjectQueries(queryClient, params.projectId),
   });
 }
 

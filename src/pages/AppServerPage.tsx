@@ -4,9 +4,9 @@ import {
   useAppServerStatus,
   useConfig,
   useConfigRequirements,
-} from "../app-server/hooks";
-import { BrowserComputerUseCard } from "../components/capabilities/BrowserComputerUseCard";
-import { AppServerCard } from "../components/settings/SettingsCards";
+} from "@/app-server/hooks";
+import { BrowserComputerUseCard } from "@/components/composite/capabilities/BrowserComputerUseCard";
+import { AppServerCard } from "@/components/feature/settings/SettingsCards";
 
 export function AppServerPage() {
   const daemon = useAppServerDaemon();

@@ -10,13 +10,13 @@ const createWorktree = vi.hoisted(() => vi.fn());
 const removeWorktree = vi.hoisted(() => vi.fn());
 const openWorktree = vi.hoisted(() => vi.fn());
 
-vi.mock("../../platform/worktrees", () => ({
+vi.mock("@/platform/worktrees", () => ({
   listWorktrees,
   createWorktree,
   removeWorktree,
   openWorktree,
 }));
-vi.mock("../runtime", () => ({ isDesktopRuntime: true }));
+vi.mock("@/app-server/runtime", () => ({ isDesktopRuntime: true }));
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
@@ -38,9 +38,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe("useWorktrees", () => {
   beforeEach(() => {
     listWorktrees.mockReset().mockResolvedValue([]);
-    createWorktree
-      .mockReset()
-      .mockResolvedValue({ path: "/repo/.worktrees/a" });
+    createWorktree.mockReset().mockResolvedValue({ path: "/repo/.worktrees/a" });
     removeWorktree.mockReset().mockResolvedValue(undefined);
     openWorktree.mockReset().mockResolvedValue(undefined);
   });

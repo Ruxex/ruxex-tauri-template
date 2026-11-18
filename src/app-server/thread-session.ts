@@ -11,10 +11,7 @@ export function markThreadStarted(threadId: string): void {
   skipNextResumeThreadIds.add(threadId);
 }
 
-export function ensureThreadResumed(
-  threadId: string,
-  options: EnsureThreadResumedOptions = {},
-): Promise<void> {
+export function ensureThreadResumed(threadId: string, options: EnsureThreadResumedOptions = {}): Promise<void> {
   if (skipNextResumeThreadIds.has(threadId)) {
     if (options.consumeStarted !== false) {
       skipNextResumeThreadIds.delete(threadId);

@@ -31,13 +31,8 @@ describe("router", () => {
   });
 
   it("resolves plugin detail routes", () => {
-    const matches = matchRoutes(
-      router.routes,
-      "/capabilities/plugins/community/example",
-    );
+    const matches = matchRoutes(router.routes, "/capabilities/plugins/community/example");
 
-    expect(matches?.at(-1)?.route.path).toBe(
-      "capabilities/plugins/:marketplaceName/:pluginName",
-    );
+    expect(matches?.at(-1)?.route.path).toBe("capabilities/plugins/:marketplaceName/:pluginName");
   });
 });

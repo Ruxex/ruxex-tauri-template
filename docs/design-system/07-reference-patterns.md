@@ -89,7 +89,7 @@
 </dialog>
 ```
 
-この抜粋には開閉、フォーカス管理、背面の不活性化を含めていません。実装では [`DialogShell`](../../src/components/common/DialogShell.tsx) またはネイティブ`<dialog>`の既存パターンを使い、削除・アーカイブの実際の結果を対象に合わせて説明します。
+この抜粋には開閉、フォーカス管理、背面の不活性化を含めていません。実装では [`DialogShell`](../../src/components/base/common/DialogShell.tsx) またはネイティブ`<dialog>`の既存パターンを使い、削除・アーカイブの実際の結果を対象に合わせて説明します。
 
 ## 参照パターンを更新するとき
 

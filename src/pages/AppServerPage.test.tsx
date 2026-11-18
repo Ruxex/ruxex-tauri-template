@@ -1,18 +1,12 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AppServerStatus } from "../app-server/api";
-import type { AppServerDaemonOutput } from "../app-server/daemon-api";
-import { SettingsSidebar } from "../components/sidebar/SettingsSidebar";
+import type { AppServerStatus } from "@/app-server/api";
+import type { AppServerDaemonOutput } from "@/app-server/daemon-api";
+import { SettingsSidebar } from "@/components/feature/sidebar/SettingsSidebar";
 import { AppServerPage } from "./AppServerPage";
 
 const useAppServerDaemon = vi.hoisted(() => vi.fn());
@@ -21,7 +15,7 @@ const useAppServerStatus = vi.hoisted(() => vi.fn());
 const useConfig = vi.hoisted(() => vi.fn());
 const useConfigRequirements = vi.hoisted(() => vi.fn());
 
-vi.mock("../app-server/hooks", () => ({
+vi.mock("@/app-server/hooks", () => ({
   useAppServerDaemon,
   useAppServerEvents,
   useAppServerStatus,
@@ -40,9 +34,7 @@ const runningDaemon: AppServerDaemonOutput = {
   appServerVersion: "daemon-version",
 };
 
-function useDaemonResult(
-  overrides: Partial<ReturnType<typeof createDaemonResult>> = {},
-) {
+function useDaemonResult(overrides: Partial<ReturnType<typeof createDaemonResult>> = {}) {
   return { ...createDaemonResult(), ...overrides };
 }
 
@@ -99,9 +91,7 @@ describe("AppServerPage", () => {
     });
     useAppServerStatus.mockReset().mockReturnValue(createStatusResult());
     useConfig.mockReset().mockReturnValue({ data: { config: null } });
-    useConfigRequirements
-      .mockReset()
-      .mockReturnValue({ data: { requirements: null } });
+    useConfigRequirements.mockReset().mockReturnValue({ data: { requirements: null } });
   });
 
   it("renders local connection and daemon details in one panel", () => {
@@ -112,9 +102,7 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    expect(screen.getAllByRole("heading", { name: "App Server" })).toHaveLength(
-      2,
-    );
+    expect(screen.getAllByRole("heading", { name: "App Server" })).toHaveLength(2);
     expect(screen.getByText("Running")).toBeTruthy();
     expect(screen.getByText("0.4.10")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
@@ -128,9 +116,7 @@ describe("AppServerPage", () => {
       name: "Restart App Server?",
     });
     expect(daemon.control.mutate).not.toHaveBeenCalled();
-    fireEvent.click(
-      within(confirmation).getByRole("button", { name: "Restart" }),
-    );
+    fireEvent.click(within(confirmation).getByRole("button", { name: "Restart" }));
     expect(daemon.control.mutate).toHaveBeenCalledWith("restart");
 
     fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
@@ -138,8 +124,7 @@ describe("AppServerPage", () => {
   });
 
   it("keeps the full Unix socket path available on hover", () => {
-    const socketPath =
-      "/home/ada/.ruxex_desktop/runtime/app-server/control.sock";
+    const socketPath = "/home/ada/.ruxex_desktop/runtime/app-server/control.sock";
     useAppServerDaemon.mockReturnValue(
       useDaemonResult({
         status: {
@@ -189,9 +174,7 @@ describe("AppServerPage", () => {
 
     render(<AppServerPage />);
 
-    expect(
-      screen.getByRole("heading", { name: "Browser and Computer Use" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Browser and Computer Use" })).toBeTruthy();
     expect(screen.getByText("Browser use")).toBeTruthy();
     expect(screen.getByText("Computer use")).toBeTruthy();
   });
@@ -211,14 +194,9 @@ describe("AppServerPage", () => {
     render(<AppServerPage />);
 
     for (const name of ["Reconnect", "Restart", "Stop"]) {
-      expect(screen.getByRole("button", { name })).toHaveProperty(
-        "disabled",
-        true,
-      );
+      expect(screen.getByRole("button", { name })).toHaveProperty("disabled", true);
     }
-    expect(
-      screen.getByLabelText("Stop options").getAttribute("aria-disabled"),
-    ).toBe("true");
+    expect(screen.getByLabelText("Stop options").getAttribute("aria-disabled")).toBe("true");
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
@@ -250,9 +228,7 @@ describe("AppServerPage", () => {
   });
 
   it("renders InProcess mode without daemon lifecycle controls", () => {
-    useAppServerDaemon.mockReturnValue(
-      useDaemonResult({ mode: "inprocess", isAvailable: false }),
-    );
+    useAppServerDaemon.mockReturnValue(useDaemonResult({ mode: "inprocess", isAvailable: false }));
 
     render(<AppServerPage />);
 
@@ -298,13 +274,8 @@ describe("AppServerPage", () => {
     render(<AppServerPage />);
 
     expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText("Error: in-process initialization failed"),
-    ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty(
-      "disabled",
-      false,
-    );
+    expect(screen.getByText("Error: in-process initialization failed")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", false);
     for (const name of ["Reconnect", "Restart", "Stop"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
@@ -341,9 +312,7 @@ describe("SettingsSidebar AppServer navigation", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "App Server" }).getAttribute("href"),
-    ).toBe("/settings/app-server");
+    expect(screen.getByRole("link", { name: "App Server" }).getAttribute("href")).toBe("/settings/app-server");
   });
 
   it("groups settings navigation into personal and system sections", () => {
@@ -359,9 +328,7 @@ describe("SettingsSidebar AppServer navigation", () => {
     expect(screen.getByRole("link", { name: "General" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Appearance" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Version" })).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Plugin" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Plugin" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Provider" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "App Server" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Hooks" })).toBeTruthy();
@@ -374,9 +341,7 @@ describe("SettingsSidebar AppServer navigation", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Version" }).getAttribute("href"),
-    ).toBe("/settings/version");
+    expect(screen.getByRole("link", { name: "Version" }).getAttribute("href")).toBe("/settings/version");
   });
 
   it("links to the Hooks settings section", () => {
@@ -386,9 +351,7 @@ describe("SettingsSidebar AppServer navigation", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Hooks" }).getAttribute("href"),
-    ).toBe("/settings/hooks");
+    expect(screen.getByRole("link", { name: "Hooks" }).getAttribute("href")).toBe("/settings/hooks");
   });
 
   it("links to the plugin marketplace settings section", () => {
@@ -398,10 +361,6 @@ describe("SettingsSidebar AppServer navigation", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen
-        .getByRole("link", { name: "Plugin" })
-        .getAttribute("href"),
-    ).toBe("/settings/marketplaces");
+    expect(screen.getByRole("link", { name: "Plugin" }).getAttribute("href")).toBe("/settings/marketplaces");
   });
 });

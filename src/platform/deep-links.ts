@@ -4,9 +4,7 @@ import { normalizeDeepLink, type DeepLinkTarget } from "./platform-model";
 
 export type DeepLinkHandler = (target: DeepLinkTarget) => void;
 
-export async function startDeepLinkListener(
-  handler: DeepLinkHandler,
-): Promise<() => void> {
+export async function startDeepLinkListener(handler: DeepLinkHandler): Promise<() => void> {
   const handled = new Set<string>();
   const process = (urls: string[]) => {
     for (const value of urls) {
@@ -32,7 +30,5 @@ export async function startDeepLinkListener(
 }
 
 export function pathForDeepLink(target: DeepLinkTarget): string {
-  return target.kind === "thread"
-    ? `/chat/${target.id}`
-    : `/projects/${target.id}`;
+  return target.kind === "thread" ? `/chat/${target.id}` : `/projects/${target.id}`;
 }

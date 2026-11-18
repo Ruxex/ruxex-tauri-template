@@ -17,13 +17,10 @@ describe("UI language", () => {
     ["system", "en-US", "en"],
     ["system", "fr-FR", "en"],
     ["system", "", "en"],
-  ] as const)(
-    "resolves %s with system %s to %s",
-    (language, system, expected) => {
-      expect(localization.resolveUiLanguage).toBeTypeOf("function");
-      expect(localization.resolveUiLanguage(language, system)).toBe(expected);
-    },
-  );
+  ] as const)("resolves %s with system %s to %s", (language, system, expected) => {
+    expect(localization.resolveUiLanguage).toBeTypeOf("function");
+    expect(localization.resolveUiLanguage(language, system)).toBe(expected);
+  });
 
   it("uses the browser language for system formatting", () => {
     vi.stubGlobal("navigator", { language: "ja-JP" });
@@ -44,22 +41,16 @@ describe("localization runtime", () => {
     expect(localization.i18n).toBeDefined();
     expect(localization.i18n.isInitialized).toBe(true);
     expect(localization.i18n.resolvedLanguage).toBe("en");
-    expect(localization.i18n.t("actions.cancel", { ns: "common" })).toBe(
-      "Cancel",
-    );
+    expect(localization.i18n.t("actions.cancel", { ns: "common" })).toBe("Cancel");
   });
 
   it("selects Japanese and falls back to English for an unsupported locale", async () => {
     expect(localization.i18n).toBeDefined();
     try {
       await localization.i18n.changeLanguage("ja");
-      expect(localization.i18n.t("actions.cancel", { ns: "common" })).toBe(
-        "キャンセル",
-      );
+      expect(localization.i18n.t("actions.cancel", { ns: "common" })).toBe("キャンセル");
       await localization.i18n.changeLanguage("fr");
-      expect(localization.i18n.t("actions.cancel", { ns: "common" })).toBe(
-        "Cancel",
-      );
+      expect(localization.i18n.t("actions.cancel", { ns: "common" })).toBe("Cancel");
     } finally {
       await localization.i18n.changeLanguage("en");
     }
@@ -75,18 +66,13 @@ describe("localization runtime", () => {
 describe("catalog validation", () => {
   const checker = join(process.cwd(), "scripts/check-i18n-catalogs.mjs");
 
-  function checkFixture(
-    english: unknown,
-    japanese: unknown,
-    extraNamespace = false,
-  ) {
+  function checkFixture(english: unknown, japanese: unknown, extraNamespace = false) {
     const root = mkdtempSync(join(tmpdir(), "ruxex-i18n-"));
     try {
       for (const locale of ["en", "ja"]) mkdirSync(join(root, locale));
       writeFileSync(join(root, "en/common.json"), JSON.stringify(english));
       writeFileSync(join(root, "ja/common.json"), JSON.stringify(japanese));
-      if (extraNamespace)
-        writeFileSync(join(root, "ja/extra.json"), '{"title":"追加"}');
+      if (extraNamespace) writeFileSync(join(root, "ja/extra.json"), '{"title":"追加"}');
       return spawnSync(process.execPath, [checker, root], { encoding: "utf8" });
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -100,10 +86,7 @@ describe("catalog validation", () => {
   });
 
   it("accepts complete nested messages", () => {
-    const result = checkFixture(
-      { actions: { cancel: "Cancel" } },
-      { actions: { cancel: "キャンセル" } },
-    );
+    const result = checkFixture({ actions: { cancel: "Cancel" } }, { actions: { cancel: "キャンセル" } });
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
   });
@@ -111,40 +94,22 @@ describe("catalog validation", () => {
   it.each([
     [{ actions: { cancel: "Cancel" } }, {}, "missing key: actions.cancel"],
     [{}, { actions: { cancel: "キャンセル" } }, "extra key: actions.cancel"],
-    [
-      { actions: { cancel: "Cancel" } },
-      { actions: { cancel: "  " } },
-      "empty message: actions.cancel",
-    ],
-    [
-      { actions: { cancel: "Cancel" } },
-      { actions: { cancel: null } },
-      "invalid message: actions.cancel",
-    ],
-  ])(
-    "rejects catalog drift or unusable messages (%s / %s)",
-    (en, ja, diagnostic) => {
-      const result = checkFixture(en, ja);
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(diagnostic);
-    },
-  );
+    [{ actions: { cancel: "Cancel" } }, { actions: { cancel: "  " } }, "empty message: actions.cancel"],
+    [{ actions: { cancel: "Cancel" } }, { actions: { cancel: null } }, "invalid message: actions.cancel"],
+  ])("rejects catalog drift or unusable messages (%s / %s)", (en, ja, diagnostic) => {
+    const result = checkFixture(en, ja);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(diagnostic);
+  });
 
   it("rejects translations that drop named interpolation values", () => {
-    const result = checkFixture(
-      { selected: "Selected: {{name}}" },
-      { selected: "選択済み" },
-    );
+    const result = checkFixture({ selected: "Selected: {{name}}" }, { selected: "選択済み" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("interpolation mismatch: selected");
   });
 
   it("rejects extra Japanese namespaces", () => {
-    const result = checkFixture(
-      { title: "Title" },
-      { title: "タイトル" },
-      true,
-    );
+    const result = checkFixture({ title: "Title" }, { title: "タイトル" }, true);
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("extra namespace: extra");
   });

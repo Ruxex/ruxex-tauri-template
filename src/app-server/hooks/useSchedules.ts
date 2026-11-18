@@ -8,9 +8,9 @@ import {
   setScheduleEnabled,
   updateSchedule,
   type ScheduleInput,
-} from "../../platform/schedules";
-import { appServerQueryKeys } from "../query-keys";
-import { isDesktopRuntime } from "../runtime";
+} from "@/platform/schedules";
+import { appServerQueryKeys } from "@/app-server/query-keys";
+import { isDesktopRuntime } from "@/app-server/runtime";
 
 export function useSchedules() {
   const queryClient = useQueryClient();
@@ -30,13 +30,11 @@ export function useSchedules() {
     onSuccess: invalidate,
   });
   const update = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: ScheduleInput }) =>
-      updateSchedule(id, input),
+    mutationFn: ({ id, input }: { id: string; input: ScheduleInput }) => updateSchedule(id, input),
     onSuccess: invalidate,
   });
   const setEnabled = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      setScheduleEnabled(id, enabled),
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => setScheduleEnabled(id, enabled),
     onSuccess: invalidate,
   });
   const remove = useMutation({

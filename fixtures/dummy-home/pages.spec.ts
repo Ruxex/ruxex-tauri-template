@@ -137,15 +137,11 @@ describe("DummyProvider page screenshots", () => {
 
     await browser.url("tauri://localhost/#/projects");
     await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
-    await $(
-      "//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']",
-    ).click();
+    await $("//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']").click();
     await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
     await closeSidebarPanel();
     await browser.waitUntil(
-      async () =>
-        (await $$('section[aria-label="Chats"] a').length) >=
-        PAGE_DENSITY_COUNTS.ordinary.projectThreads,
+      async () => (await $$('section[aria-label="Chats"] a').length) >= PAGE_DENSITY_COUNTS.ordinary.projectThreads,
       {
         timeout: 10_000,
         timeoutMsg: "Ordinary project chats should be visible",
@@ -161,13 +157,10 @@ async function captureChatTabs(): Promise<void> {
   await browser.url("tauri://localhost/#/chats");
   await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
   const selectedTab = $('button[role="tab"][aria-selected="true"]');
-  await browser.waitUntil(
-    async () => (await selectedTab.getText()) === "No project",
-    {
-      timeout: 10_000,
-      timeoutMsg: "No project should be the default Chats tab",
-    },
-  );
+  await browser.waitUntil(async () => (await selectedTab.getText()) === "No project", {
+    timeout: 10_000,
+    timeoutMsg: "No project should be the default Chats tab",
+  });
   await browser.waitUntil(
     async () =>
       isOrdinaryThreadCount(
@@ -233,27 +226,19 @@ async function captureChatSearchOverflow(): Promise<void> {
     await openSidebar.click();
   }
 
-  const sidebarSearch = $(
-    'aside[aria-label="Chat sidebar"] input[aria-label="Search chats"]',
-  );
+  const sidebarSearch = $('aside[aria-label="Chat sidebar"] input[aria-label="Search chats"]');
   await sidebarSearch.waitForDisplayed({ timeout: 10_000 });
   await sidebarSearch.setValue("Fixture");
   const viewAll = $("a=View all results");
   await viewAll.waitForDisplayed({ timeout: 15_000 });
   await saveFixtureScreenshot("chats-sidebar-search-overflow.png");
   await viewAll.click();
+  await browser.waitUntil(async () => (await browser.getUrl()).includes("scope=all"), {
+    timeout: 10_000,
+    timeoutMsg: "Sidebar search should open global Chats results",
+  });
   await browser.waitUntil(
-    async () => (await browser.getUrl()).includes("scope=all"),
-    {
-      timeout: 10_000,
-      timeoutMsg: "Sidebar search should open global Chats results",
-    },
-  );
-  await browser.waitUntil(
-    async () =>
-      (await $(
-        'section.workbench-main input[aria-label="Search chats"]',
-      ).getValue()) === "Fixture",
+    async () => (await $('section.workbench-main input[aria-label="Search chats"]').getValue()) === "Fixture",
     {
       timeout: 10_000,
       timeoutMsg: "The Chats page should restore the sidebar search term",
@@ -276,14 +261,9 @@ async function captureChatSearchOverflow(): Promise<void> {
 async function captureProjectSort(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });
-  await $("select[aria-label='Sort projects']").selectByAttribute(
-    "value",
-    "recencyAt",
-  );
+  await $("select[aria-label='Sort projects']").selectByAttribute("value", "recencyAt");
   await browser.waitUntil(
-    async () =>
-      (await $$('table[aria-label="Projects"] tbody tr').length) ===
-      PAGE_DENSITY_COUNTS.ordinary.projects,
+    async () => (await $$('table[aria-label="Projects"] tbody tr').length) === PAGE_DENSITY_COUNTS.ordinary.projects,
     {
       timeout: 15_000,
       timeoutMsg: "Project sorting should preserve the complete list",
@@ -293,10 +273,7 @@ async function captureProjectSort(): Promise<void> {
 }
 
 async function captureProjectChatSearch(): Promise<void> {
-  await $("select[aria-label='Sort project chats']").selectByAttribute(
-    "value",
-    "updated_at",
-  );
+  await $("select[aria-label='Sort project chats']").selectByAttribute("value", "updated_at");
   await browser.waitUntil(
     async () =>
       (await $$('section[aria-label="Chats"] a[href*="/chat/"]').length) ===
@@ -310,23 +287,17 @@ async function captureProjectChatSearch(): Promise<void> {
 
   const search = $('input[aria-label="Search project chats"]');
   await search.setValue("Fixture basic 01");
-  await browser.waitUntil(
-    async () =>
-      (await $$('section[aria-label="Chats"] a[href*="/chat/"]').length) === 1,
-    {
-      timeout: 15_000,
-      timeoutMsg: "Project chat title search should filter to a matching chat",
-    },
-  );
+  await browser.waitUntil(async () => (await $$('section[aria-label="Chats"] a[href*="/chat/"]').length) === 1, {
+    timeout: 15_000,
+    timeoutMsg: "Project chat title search should filter to a matching chat",
+  });
   await saveFixtureScreenshot("project-detail-search-ordinary.png");
 }
 
 async function waitForPageContent(path: string): Promise<void> {
   if (path === "/") {
     await waitForHomeReady();
-    await waitForRecentChatCount(
-      Math.min(PAGE_DENSITY_COUNTS.ordinary.activeThreads, 8),
-    );
+    await waitForRecentChatCount(Math.min(PAGE_DENSITY_COUNTS.ordinary.activeThreads, 8));
     return;
   }
 
@@ -346,8 +317,7 @@ async function waitForPageContent(path: string): Promise<void> {
   if (path === "/projects") {
     await browser.waitUntil(
       async () =>
-        (await $$('table[aria-label="Projects"] tbody tr').length) ===
-          PAGE_DENSITY_COUNTS.ordinary.projects ||
+        (await $$('table[aria-label="Projects"] tbody tr').length) === PAGE_DENSITY_COUNTS.ordinary.projects ||
         (await $("main").getText()).includes("Unable to load projects."),
       {
         timeout: 10_000,
@@ -363,8 +333,7 @@ async function waitForPageContent(path: string): Promise<void> {
         isOrdinaryThreadCount(
           await $$('section[aria-label="Chats"] tbody tr').length,
           PAGE_DENSITY_COUNTS.ordinary.unassignedThreads,
-        ) ||
-        (await $("main").getText()).includes("Unable to load chats"),
+        ) || (await $("main").getText()).includes("Unable to load chats"),
       {
         timeout: 15_000,
         timeoutMsg: "Ordinary active chats should finish loading",
@@ -376,8 +345,7 @@ async function waitForPageContent(path: string): Promise<void> {
   if (path === "/projects") {
     await browser.waitUntil(
       async () =>
-        (await $$('table[aria-label="Projects"] tbody tr').length) ===
-          PAGE_DENSITY_COUNTS.ordinary.projects ||
+        (await $$('table[aria-label="Projects"] tbody tr').length) === PAGE_DENSITY_COUNTS.ordinary.projects ||
         (await $("main").getText()).includes("Unable to load projects."),
       {
         timeout: 15_000,
@@ -388,8 +356,7 @@ async function waitForPageContent(path: string): Promise<void> {
   }
 
   const loadedStates: Record<string, () => Promise<boolean>> = {
-    "/settings/provider": async () =>
-      (await $("main").getText()).includes("Data directory"),
+    "/settings/provider": async () => (await $("main").getText()).includes("Data directory"),
     "/settings/hooks": async () =>
       (await $("main").getText()).includes("No hooks configured.") ||
       (await $("main").getText()).includes("No hooks in this directory.") ||
@@ -400,9 +367,7 @@ async function waitForPageContent(path: string): Promise<void> {
       return (
         text.includes("No plugin marketplaces configured.") ||
         text.includes("Unable to load marketplaces:") ||
-        (await $$(
-          'button[aria-label^="Update "], button[aria-label^="Remove "]',
-        ).length) > 0
+        (await $$('button[aria-label^="Update "], button[aria-label^="Remove "]').length) > 0
       );
     },
     "/settings/mcp-servers": async () => {
@@ -415,8 +380,7 @@ async function waitForPageContent(path: string): Promise<void> {
       );
     },
     "/settings/account": async () =>
-      (await $("main").getText()).includes("Authenticated") ||
-      (await $("button[aria-label='Log in']").isExisting()),
+      (await $("main").getText()).includes("Authenticated") || (await $("button[aria-label='Log in']").isExisting()),
     "/schedules": async () => {
       const text = await $("main").getText();
       return (

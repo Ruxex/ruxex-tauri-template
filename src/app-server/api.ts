@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { ClientRequest, ClientResponse, RequestId } from "../protocol";
+import type { ClientRequest, ClientResponse, RequestId } from "@/protocol";
 import { getMockAppServer } from "./mock-runtime";
 import { isMockAppServerRuntime } from "./runtime";
 
@@ -11,20 +11,11 @@ export type AppServerStatus = {
   mode?: "daemon" | "inprocess";
 };
 
-type ResponseFor<Request extends ClientRequest> = Extract<
-  ClientResponse,
-  { method: Request["method"] }
->;
+type ResponseFor<Request extends ClientRequest> = Extract<ClientResponse, { method: Request["method"] }>;
 
-type RequestForMethod<Method extends ClientRequest["method"]> = Extract<
-  ClientRequest,
-  { method: Method }
->;
+type RequestForMethod<Method extends ClientRequest["method"]> = Extract<ClientRequest, { method: Method }>;
 
-type ResponseForMethod<Method extends ClientRequest["method"]> = Extract<
-  ClientResponse,
-  { method: Method }
->;
+type ResponseForMethod<Method extends ClientRequest["method"]> = Extract<ClientResponse, { method: Method }>;
 
 let requestId = 0;
 
@@ -40,17 +31,13 @@ export function ensureAppServer(): Promise<AppServerStatus> {
   return invoke<AppServerStatus>("ensure_app_server");
 }
 
-export function requestAppServer<Request extends ClientRequest>(
-  request: Request,
-): Promise<ResponseFor<Request>> {
+export function requestAppServer<Request extends ClientRequest>(request: Request): Promise<ResponseFor<Request>> {
   if (isMockAppServerRuntime) {
     return getMockAppServer().invoke("app_server_request", {
       request,
     }) as Promise<ResponseFor<Request>>;
   }
-  return invoke<ClientResponse>("app_server_request", { request }) as Promise<
-    ResponseFor<Request>
-  >;
+  return invoke<ClientResponse>("app_server_request", { request }) as Promise<ResponseFor<Request>>;
 }
 
 export function requestAppServerMethod<Method extends ClientRequest["method"]>(
@@ -65,10 +52,7 @@ export function requestAppServerMethod<Method extends ClientRequest["method"]>(
   return requestAppServer(request) as Promise<ResponseForMethod<Method>>;
 }
 
-export function resolveServerRequest(
-  requestId: RequestId,
-  result: unknown,
-): Promise<void> {
+export function resolveServerRequest(requestId: RequestId, result: unknown): Promise<void> {
   return invoke("app_server_resolve_server_request", { requestId, result });
 }
 
@@ -78,16 +62,10 @@ export type AppServerRequestError = {
   message: string;
 };
 
-function rejectServerRequest(
-  requestId: RequestId,
-  error: AppServerRequestError,
-): Promise<void> {
+function rejectServerRequest(requestId: RequestId, error: AppServerRequestError): Promise<void> {
   return invoke("app_server_reject_server_request", { requestId, error });
 }
 
-export function rejectServerRequestWithMessage(
-  requestId: RequestId,
-  message: string,
-): Promise<void> {
+export function rejectServerRequestWithMessage(requestId: RequestId, message: string): Promise<void> {
   return rejectServerRequest(requestId, { code: -32000, message });
 }

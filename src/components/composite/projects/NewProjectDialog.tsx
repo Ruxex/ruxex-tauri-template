@@ -1,0 +1,191 @@
+import { useTranslation } from "react-i18next";
+import { FolderIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { type FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { formatErrorMessage } from "@/app/error-message";
+import { useCreateProject } from "@/app-server/hooks";
+import { DialogFooter } from "@/components/base/common/DialogParts";
+import { DialogShell } from "@/components/base/common/DialogShell";
+import { ProjectMetadataFields } from "./ProjectMetadataFields";
+import { DEFAULT_PROJECT_METADATA, type ProjectMetadata, projectMetadataToRecord } from "./project-metadata";
+
+type NewProjectDialogProps = {
+  initialName?: string;
+  initialRoot?: string;
+  onClose: () => void;
+  onCreated?: (projectId: string) => void;
+  open?: boolean;
+};
+
+function newIdempotencyKey() {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+}
+
+export function NewProjectDialog({
+  initialName = "",
+  initialRoot = "",
+  onClose,
+  onCreated,
+  open = true,
+}: NewProjectDialogProps) {
+  const { t } = useTranslation("projects");
+
+  const navigate = useNavigate();
+  const createProject = useCreateProject();
+  const [name, setName] = useState(initialName);
+  const [root, setRoot] = useState(initialRoot);
+  const [metadata, setMetadata] = useState<ProjectMetadata>(DEFAULT_PROJECT_METADATA);
+  const [nameValidationError, setNameValidationError] = useState(false);
+  const [rootSelectionError, setRootSelectionError] = useState<string | null>(null);
+
+  async function handleSelectRoot() {
+    setRootSelectionError(null);
+    if (import.meta.env.VITE_E2E === "1") {
+      const e2eHooks = window.__RUXEX_E2E__;
+      const selectedForE2E = e2eHooks?.selectedWorkspaceFolder;
+      if (selectedForE2E) {
+        e2eHooks.selectedWorkspaceFolder = undefined;
+        setRoot(selectedForE2E);
+        return;
+      }
+    }
+    try {
+      const selected = await openDialog({
+        directory: true,
+        multiple: false,
+        title: t("selectWorkspaceFolder"),
+      });
+      if (typeof selected === "string") {
+        setRoot(selected);
+      }
+    } catch (error) {
+      setRootSelectionError(formatErrorMessage(error));
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const projectName = name.trim();
+    if (!projectName) {
+      setNameValidationError(true);
+      return;
+    }
+    setNameValidationError(false);
+
+    createProject.mutate(
+      {
+        name: projectName,
+        roots: root.trim() ? [{ path: root.trim() }] : [],
+        metadata: projectMetadataToRecord(metadata),
+        idempotencyKey: newIdempotencyKey(),
+      },
+      {
+        onSuccess: (data) => {
+          onClose();
+          if (onCreated) {
+            onCreated(data.project.id);
+          } else {
+            navigate(`/projects/${data.project.id}`);
+          }
+        },
+      },
+    );
+  }
+
+  return (
+    <DialogShell
+      closeLabel={t("closeCreateProjectDialog")}
+      icon={PlusIcon}
+      onClose={onClose}
+      open={open}
+      title={t("createAProject")}
+      titleId="new-project-title"
+    >
+      <form className="grid w-full gap-4" noValidate onSubmit={handleSubmit}>
+        <div className="form-control w-full">
+          <input
+            aria-label={t("projectName")}
+            aria-invalid={nameValidationError || undefined}
+            className="input input-bordered w-full"
+            id="new-project-name"
+            onChange={(event) => {
+              setName(event.target.value);
+              if (event.target.value.trim()) {
+                setNameValidationError(false);
+              }
+            }}
+            placeholder={t("projectName")}
+            required
+            value={name}
+          />
+          {nameValidationError && (
+            <p className="mt-1 text-xs text-error" role="alert">
+              {t("enterAProjectName")}
+            </p>
+          )}
+        </div>
+
+        <div className="form-control w-full">
+          <div className="flex min-w-0 w-full gap-2">
+            <button
+              aria-label={root ? t("selectedWorkspaceFolder", { path: root }) : t("selectWorkspaceFolder")}
+              className="btn min-h-11 min-w-0 flex-1 justify-start gap-2 overflow-hidden border-base-300 bg-base-100 font-normal hover:border-base-content/30 hover:bg-base-200"
+              title={root || t("selectWorkspaceFolder")}
+              type="button"
+              onClick={() => void handleSelectRoot()}
+            >
+              <FolderIcon aria-hidden="true" className="size-4 shrink-0" />
+              <span
+                className={`min-w-0 flex-1 truncate text-left ${root ? "font-mono text-xs" : "text-base-content/65"}`}
+              >
+                {root || t("selectWorkspaceFolder")}
+              </span>
+            </button>
+            {root && (
+              <button
+                aria-label={t("clearWorkspaceFolder")}
+                className="btn btn-ghost btn-square min-h-11 shrink-0 text-error hover:bg-error/10"
+                title={t("clearWorkspaceFolder")}
+                type="button"
+                onClick={() => {
+                  setRoot("");
+                  setRootSelectionError(null);
+                }}
+              >
+                <XMarkIcon aria-hidden="true" className="size-4" />
+              </button>
+            )}
+          </div>
+          {rootSelectionError && (
+            <p className="mt-1 text-xs text-error" role="alert">
+              {t("selectFolderError", { error: rootSelectionError })}
+            </p>
+          )}
+        </div>
+
+        <ProjectMetadataFields value={metadata} onChange={setMetadata} />
+
+        <DialogFooter>
+          <button
+            aria-label={t("createProject")}
+            className="btn btn-primary min-h-11 whitespace-nowrap"
+            disabled={createProject.isPending}
+            type="submit"
+          >
+            <PlusIcon aria-hidden="true" className="size-4" />
+            {createProject.isPending ? t("creating") : t("createProject")}
+          </button>
+        </DialogFooter>
+        {createProject.isError && (
+          <p className="text-sm text-error" role="alert">
+            {t("createError", {
+              error: formatErrorMessage(createProject.error),
+            })}
+          </p>
+        )}
+      </form>
+    </DialogShell>
+  );
+}

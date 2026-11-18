@@ -1,34 +1,18 @@
-import {
-  type KeyboardEvent as ReactKeyboardEvent,
-  useEffect,
-  useState,
-} from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useUiPreferences } from "../app/ui-preferences";
+import { useUiPreferences } from "@/app/ui-preferences";
 import {
   EditorCommandCard,
   LanguageCard,
   NotificationsCard,
   QuickPanelCard,
   TerminalSessionCard,
-} from "../components/settings/SettingsCards";
-import {
-  readQuickPanelShortcut,
-  updateQuickPanelShortcut,
-} from "../platform/native";
+} from "@/components/feature/settings/SettingsCards";
+import { readQuickPanelShortcut, updateQuickPanelShortcut } from "@/platform/native";
 
-function shortcutKeyFromEvent(
-  event: ReactKeyboardEvent<HTMLInputElement>,
-): string | null {
-  const modifierOnlyKeys = new Set([
-    "Alt",
-    "AltGraph",
-    "Control",
-    "Meta",
-    "OS",
-    "Shift",
-  ]);
+function shortcutKeyFromEvent(event: ReactKeyboardEvent<HTMLInputElement>): string | null {
+  const modifierOnlyKeys = new Set(["Alt", "AltGraph", "Control", "Meta", "OS", "Shift"]);
   if (modifierOnlyKeys.has(event.key)) {
     return null;
   }
@@ -65,9 +49,7 @@ export function SettingsOverviewPage() {
   const [defaultShortcut, setDefaultShortcut] = useState("");
   const [isLoadingShortcut, setIsLoadingShortcut] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
-  const [shortcutError, setShortcutError] = useState<
-    Error | "load" | "update" | null
-  >(null);
+  const [shortcutError, setShortcutError] = useState<Error | "load" | "update" | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -115,13 +97,8 @@ export function SettingsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-semibold tracking-tight">
-        {t("settings:general")}
-      </h2>
-      <LanguageCard
-        language={preferences.language}
-        onLanguageChange={(language) => update({ language })}
-      />
+      <h2 className="text-3xl font-semibold tracking-tight">{t("settings:general")}</h2>
+      <LanguageCard language={preferences.language} onLanguageChange={(language) => update({ language })} />
       <EditorCommandCard
         command={preferences.editorCommand}
         onCommandChange={(editorCommand) => update({ editorCommand })}
@@ -134,11 +111,7 @@ export function SettingsOverviewPage() {
           shortcutError instanceof Error
             ? shortcutError.message
             : shortcutError
-              ? t(
-                  shortcutError === "load"
-                    ? "settings:shortcutLoadError"
-                    : "settings:shortcutSaveError",
-                )
+              ? t(shortcutError === "load" ? "settings:shortcutLoadError" : "settings:shortcutSaveError")
               : null
         }
         isLoading={isLoadingShortcut}
@@ -150,12 +123,8 @@ export function SettingsOverviewPage() {
       />
       <NotificationsCard
         enabled={preferences.notifications.desktop}
-        onEnabledChange={(desktop) =>
-          update({ notifications: { ...preferences.notifications, desktop } })
-        }
-        onSoundChange={(sound) =>
-          update({ notifications: { ...preferences.notifications, sound } })
-        }
+        onEnabledChange={(desktop) => update({ notifications: { ...preferences.notifications, desktop } })}
+        onSoundChange={(sound) => update({ notifications: { ...preferences.notifications, sound } })}
         sound={preferences.notifications.sound}
       />
     </div>

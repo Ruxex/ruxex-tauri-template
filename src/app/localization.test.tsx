@@ -1,21 +1,15 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ChatsPage } from "../pages/ChatsPage";
-import { HomePage } from "../pages/HomePage";
-import { ProjectsPage } from "../pages/ProjectsPage";
-import { SettingsOverviewPage } from "../pages/SettingsOverviewPage";
-import { QuickPanelPage } from "../components/quick-panel/QuickPanelPage";
+import { ChatsPage } from "@/pages/ChatsPage";
+import { HomePage } from "@/pages/HomePage";
+import { ProjectsPage } from "@/pages/ProjectsPage";
+import { SettingsOverviewPage } from "@/pages/SettingsOverviewPage";
+import { QuickPanelPage } from "@/components/composite/quick-panel/QuickPanelPage";
 import { i18n } from "./i18n";
 import { UiPreferencesProvider } from "./ui-preferences";
 
@@ -54,17 +48,13 @@ describe("Japanese UI smoke", () => {
     expect(document.documentElement.lang).toBe("ja");
     await act(() => router.navigate("/projects"));
     expect(screen.getByRole("heading", { name: "プロジェクト" })).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "新規プロジェクト" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "新規プロジェクト" })).toBeTruthy();
     await act(() => router.navigate("/chats"));
     expect(screen.getByRole("heading", { name: "チャット" })).toBeTruthy();
     await act(() => router.navigate("/"));
     expect(screen.getByRole("button", { name: "送信" })).toBeTruthy();
     await act(() => router.navigate("/quick-panel"));
-    expect(
-      screen.getByRole("textbox", { name: "クイックリクエスト" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "クイックリクエスト" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "画像を添付" })).toBeTruthy();
     client.clear();
     router.dispose();

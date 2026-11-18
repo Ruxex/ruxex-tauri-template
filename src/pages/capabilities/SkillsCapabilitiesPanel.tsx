@@ -3,28 +3,18 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { formatErrorMessage } from "../../app/error-message";
-import {
-  useSetSkillsExtraRoots,
-  useSkillsList,
-  useWriteSkillConfig,
-} from "../../app-server/hooks";
-import { SkillIcon } from "../../components/common/SkillIcon";
-import {
-  filterHiddenSkills,
-  getDesktopUiPolicy,
-} from "../../platform/skill-policy";
-import type { v2 } from "../../protocol";
-import { skillDescription, skillGroupLabel } from "../capabilities-model";
+import { formatErrorMessage } from "@/app/error-message";
+import { useSetSkillsExtraRoots, useSkillsList, useWriteSkillConfig } from "@/app-server/hooks";
+import { SkillIcon } from "@/components/base/common/SkillIcon";
+import { filterHiddenSkills, getDesktopUiPolicy } from "@/platform/skill-policy";
+import type { v2 } from "@/protocol";
+import { skillDescription, skillGroupLabel } from "@/pages/capabilities-model";
 
 function isWithinSkillRoot(path: string, root: string): boolean {
   if (typeof path !== "string" || typeof root !== "string") return false;
   const normalizedPath = path.replaceAll("\\", "/").replace(/\/+$/, "");
   const normalizedRoot = root.replaceAll("\\", "/").replace(/\/+$/, "");
-  return (
-    normalizedPath === normalizedRoot ||
-    normalizedPath.startsWith(`${normalizedRoot}/`)
-  );
+  return normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`);
 }
 
 export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
@@ -32,13 +22,9 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
   const skills = useSkillsList({}, active);
   const setSkillsExtraRootsMutation = useSetSkillsExtraRoots();
   const writeSkillConfig = useWriteSkillConfig();
-  const [skillMutationPath, setSkillMutationPath] = useState<string | null>(
-    null,
-  );
+  const [skillMutationPath, setSkillMutationPath] = useState<string | null>(null);
   const [skillErrors, setSkillErrors] = useState<Record<string, string>>({});
-  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [hiddenSkills, setHiddenSkills] = useState<Set<string>>(() => new Set());
   const [defaultSkillRoots, setDefaultSkillRoots] = useState<string[]>([]);
   const [userSkillRoots, setUserSkillRoots] = useState<string[]>([]);
   const [skillExtraRoots, setSkillExtraRoots] = useState<string[]>([]);
@@ -95,8 +81,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
       : []),
     ...visibleEntries.flatMap((entry) => {
       const otherSkills = entry.skills.filter(
-        (skill) =>
-          !vendoredSkills.includes(skill) && !userSkills.includes(skill),
+        (skill) => !vendoredSkills.includes(skill) && !userSkills.includes(skill),
       );
       return otherSkills.length > 0
         ? [
@@ -165,9 +150,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
   }
 
   function removeSkillDirectory(root: string) {
-    void updateSkillExtraRoots(
-      skillExtraRoots.filter((candidate) => candidate !== root),
-    );
+    void updateSkillExtraRoots(skillExtraRoots.filter((candidate) => candidate !== root));
   }
 
   return active ? (
@@ -181,10 +164,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
           type="button"
         >
           {setSkillsExtraRootsMutation.isPending ? (
-            <span
-              aria-hidden="true"
-              className="loading loading-spinner loading-xs"
-            />
+            <span aria-hidden="true" className="loading loading-spinner loading-xs" />
           ) : (
             <FolderIcon aria-hidden="true" className="size-4" />
           )}
@@ -199,10 +179,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
               key={root}
             >
               <span className="flex min-w-0 items-center gap-2">
-                <FolderIcon
-                  aria-hidden="true"
-                  className="size-4 shrink-0 text-base-content/55"
-                />
+                <FolderIcon aria-hidden="true" className="size-4 shrink-0 text-base-content/55" />
                 <span className="min-w-0 truncate" title={root}>
                   {root}
                 </span>
@@ -234,9 +211,7 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
         </p>
       )}
       {!skills.isLoading && !visibleSkillGroups.length && (
-        <p className="text-sm text-base-content/60">
-          {t("noSkillsDiscovered")}
-        </p>
+        <p className="text-sm text-base-content/60">{t("noSkillsDiscovered")}</p>
       )}
       <ul className="space-y-2">
         {visibleSkillGroups.map((entry) => (
@@ -255,53 +230,32 @@ export function SkillsCapabilitiesPanel({ active }: { active: boolean }) {
                 <ul className="space-y-2 border-t border-base-300 px-4 py-3">
                   {entry.skills.map((skill) => {
                     const pendingPath =
-                      skillMutationPath ??
-                      (writeSkillConfig.isPending
-                        ? writeSkillConfig.variables?.path
-                        : null);
+                      skillMutationPath ?? (writeSkillConfig.isPending ? writeSkillConfig.variables?.path : null);
                     const isPending = pendingPath === skill.path;
                     const error = skillErrors[skill.path];
                     const description = skillDescription(skill);
                     return (
-                      <li
-                        className="rounded-box border border-base-300 bg-base-100 px-4 py-3"
-                        key={skill.path}
-                      >
+                      <li className="rounded-box border border-base-300 bg-base-100 px-4 py-3" key={skill.path}>
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex min-w-0 items-start gap-3">
-                            <SkillIcon
-                              className="mt-0.5 size-6 shrink-0"
-                              skill={skill}
-                            />
+                            <SkillIcon className="mt-0.5 size-6 shrink-0" skill={skill} />
                             <div className="min-w-0">
                               <p className="font-medium">{skill.name}</p>
                               {description && (
-                                <p
-                                  className="line-clamp-2 text-sm text-base-content/70"
-                                  title={description.fullText}
-                                >
+                                <p className="line-clamp-2 text-sm text-base-content/70" title={description.fullText}>
                                   {description.text}
                                 </p>
                               )}
                               {skill.scope !== "system" && (
-                                <p
-                                  className="mt-1 truncate text-xs text-base-content/60"
-                                  title={skill.path}
-                                >
+                                <p className="mt-1 truncate text-xs text-base-content/60" title={skill.path}>
                                   {skill.scope} · {skill.path}
                                 </p>
                               )}
-                              {skill.pluginId && (
-                                <p className="text-xs text-base-content/60">
-                                  {skill.pluginId}
-                                </p>
-                              )}
+                              {skill.pluginId && <p className="text-xs text-base-content/60">{skill.pluginId}</p>}
                             </div>
                           </div>
                           <label className="flex shrink-0 items-center gap-2 text-sm">
-                            <span className="sr-only">
-                              {t("enableSkillNamed", { name: skill.name })}
-                            </span>
+                            <span className="sr-only">{t("enableSkillNamed", { name: skill.name })}</span>
                             <input
                               aria-label={t("enableSkillNamed", {
                                 name: skill.name,

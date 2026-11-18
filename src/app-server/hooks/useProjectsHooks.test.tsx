@@ -5,17 +5,15 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { v2 } from "../../protocol";
+import type { v2 } from "@/protocol";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 const appServerStatus = vi.hoisted(() => ({
-  data: { appServerVersion: "test" } as
-    | { appServerVersion: string }
-    | undefined,
+  data: { appServerVersion: "test" } as { appServerVersion: string } | undefined,
 }));
 
-vi.mock("../api", () => ({ requestAppServerMethod }));
-vi.mock("../queries", () => ({
+vi.mock("@/app-server/api", () => ({ requestAppServerMethod }));
+vi.mock("@/app-server/queries", () => ({
   useAppServerStatus: () => appServerStatus,
 }));
 
@@ -25,9 +23,7 @@ function createWrapper(
   }),
 ) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -76,13 +72,8 @@ describe("project hooks", () => {
       wrapper: createWrapper(),
     });
 
-    await expect(
-      act(async () => result.current.mutateAsync(params)),
-    ).resolves.toEqual(response);
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "project/create",
-      params,
-    );
+    await expect(act(async () => result.current.mutateAsync(params))).resolves.toEqual(response);
+    expect(requestAppServerMethod).toHaveBeenCalledWith("project/create", params);
   });
 
   it("invalidates the project collection after creation", async () => {
@@ -131,10 +122,7 @@ describe("project hooks", () => {
 
     await act(async () => result.current.mutateAsync(params));
 
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "project/update",
-      params,
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("project/update", params);
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "project", "project-1"],
     });
@@ -159,19 +147,14 @@ describe("project hooks", () => {
 
     await act(async () => result.current.mutateAsync(params));
 
-    expect(requestAppServerMethod).toHaveBeenCalledWith(
-      "project/delete",
-      params,
-    );
+    expect(requestAppServerMethod).toHaveBeenCalledWith("project/delete", params);
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "projects"],
     });
   });
 
   it("surfaces project read failures", async () => {
-    requestAppServerMethod.mockRejectedValueOnce(
-      new Error("project unavailable"),
-    );
+    requestAppServerMethod.mockRejectedValueOnce(new Error("project unavailable"));
     const { useProject } = await import("./useProjects");
     const { result } = renderHook(() => useProject("project-1"), {
       wrapper: createWrapper(),

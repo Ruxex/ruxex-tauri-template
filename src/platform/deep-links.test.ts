@@ -14,10 +14,7 @@ describe("deep-link adapter", () => {
   it("routes only valid Ruxex links and deduplicates startup/current events", async () => {
     let callback: ((urls: string[]) => void) | undefined;
     const unlisten = vi.fn();
-    getCurrent.mockResolvedValue([
-      "ruxex://thread/thread-1",
-      "https://evil.test",
-    ]);
+    getCurrent.mockResolvedValue(["ruxex://thread/thread-1", "https://evil.test"]);
     onOpenUrl.mockImplementation(async (next: (urls: string[]) => void) => {
       callback = next;
       return unlisten;

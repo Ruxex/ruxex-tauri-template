@@ -1,8 +1,4 @@
-import {
-  LARGE_DATA_ADDITIONS,
-  PAGE_DENSITY_COUNTS,
-  PERSISTENT_SCENARIOS,
-} from "./catalog";
+import { LARGE_DATA_ADDITIONS, PAGE_DENSITY_COUNTS, PERSISTENT_SCENARIOS } from "./catalog";
 import {
   archiveCurrentThread,
   closeSidebarPanel,
@@ -18,16 +14,13 @@ import {
 } from "./support";
 
 const FIRST_LARGE_OCCURRENCE = 3;
-const FIRST_PROJECT_THREAD_OCCURRENCE =
-  FIRST_LARGE_OCCURRENCE + LARGE_DATA_ADDITIONS.archivedThreads;
+const FIRST_PROJECT_THREAD_OCCURRENCE = FIRST_LARGE_OCCURRENCE + LARGE_DATA_ADDITIONS.archivedThreads;
 
 describe("Large page-density screenshots", () => {
   it("extends the ordinary home through the UI and captures crowded pages", async function () {
     this.timeout(9 * 60_000);
     await waitForDesktopReady();
-    const basicScenario = PERSISTENT_SCENARIOS.find(
-      (scenario) => scenario.id === "basic",
-    );
+    const basicScenario = PERSISTENT_SCENARIOS.find((scenario) => scenario.id === "basic");
     if (!basicScenario) {
       throw new Error("The basic DummyProvider scenario is missing");
     }
@@ -52,10 +45,8 @@ async function captureLargeChats(): Promise<void> {
   await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
     async () =>
-      (await $$('section[aria-label="Chats"] tbody tr').length) ===
-        PAGE_DENSITY_COUNTS.large.unassignedThreads ||
-      (await $$('section[aria-label="Chats"] tbody tr').length) ===
-        PAGE_DENSITY_COUNTS.large.unassignedThreads + 1,
+      (await $$('section[aria-label="Chats"] tbody tr').length) === PAGE_DENSITY_COUNTS.large.unassignedThreads ||
+      (await $$('section[aria-label="Chats"] tbody tr').length) === PAGE_DENSITY_COUNTS.large.unassignedThreads + 1,
     {
       timeout: 20_000,
       timeoutMsg: "The No project tab should load every unassigned thread",
@@ -70,8 +61,7 @@ async function captureLargeChats(): Promise<void> {
   await $("button=In projects").click();
   await browser.waitUntil(
     async () =>
-      (await $$('section[aria-label="Chats"] tbody tr').length) ===
-      PAGE_DENSITY_COUNTS.large.projectAssignedThreads,
+      (await $$('section[aria-label="Chats"] tbody tr').length) === PAGE_DENSITY_COUNTS.large.projectAssignedThreads,
     {
       timeout: 20_000,
       timeoutMsg: "The In projects tab should load every assigned thread",
@@ -99,41 +89,23 @@ async function createLargeProjects(): Promise<void> {
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
 }
 
-async function createLargeThreadCatalog(
-  basicScenario: (typeof PERSISTENT_SCENARIOS)[number],
-): Promise<void> {
-  const archivedEnd =
-    FIRST_LARGE_OCCURRENCE + LARGE_DATA_ADDITIONS.archivedThreads;
-  for (
-    let occurrence = FIRST_LARGE_OCCURRENCE;
-    occurrence < archivedEnd;
-    occurrence += 1
-  ) {
+async function createLargeThreadCatalog(basicScenario: (typeof PERSISTENT_SCENARIOS)[number]): Promise<void> {
+  const archivedEnd = FIRST_LARGE_OCCURRENCE + LARGE_DATA_ADDITIONS.archivedThreads;
+  for (let occurrence = FIRST_LARGE_OCCURRENCE; occurrence < archivedEnd; occurrence += 1) {
     await sendScenario(basicScenario, occurrence);
     await archiveCurrentThread();
   }
 
-  for (
-    let offset = 0;
-    offset < LARGE_DATA_ADDITIONS.projectThreads;
-    offset += 1
-  ) {
+  for (let offset = 0; offset < LARGE_DATA_ADDITIONS.projectThreads; offset += 1) {
     await openProjectChat("Product planning");
-    await sendScenarioFromCurrentComposer(
-      basicScenario,
-      FIRST_PROJECT_THREAD_OCCURRENCE + offset,
-    );
+    await sendScenarioFromCurrentComposer(basicScenario, FIRST_PROJECT_THREAD_OCCURRENCE + offset);
   }
 
   await browser.url("tauri://localhost/#/");
   await waitForHomeReady();
 
-  const activeStart =
-    FIRST_PROJECT_THREAD_OCCURRENCE + LARGE_DATA_ADDITIONS.projectThreads;
-  const activeEnd =
-    activeStart +
-    LARGE_DATA_ADDITIONS.activeThreads -
-    LARGE_DATA_ADDITIONS.projectThreads;
+  const activeStart = FIRST_PROJECT_THREAD_OCCURRENCE + LARGE_DATA_ADDITIONS.projectThreads;
+  const activeEnd = activeStart + LARGE_DATA_ADDITIONS.activeThreads - LARGE_DATA_ADDITIONS.projectThreads;
   for (let occurrence = activeStart; occurrence < activeEnd; occurrence += 1) {
     await sendScenario(basicScenario, occurrence);
   }
@@ -142,38 +114,23 @@ async function createLargeThreadCatalog(
 async function createLargeSchedules(): Promise<void> {
   await browser.url("tauri://localhost/#/schedules");
   await $("h1=Automation").waitForDisplayed({ timeout: 10_000 });
-  for (
-    let index = 2;
-    index <= PAGE_DENSITY_COUNTS.large.schedules;
-    index += 1
-  ) {
-    await createFixtureSchedule(
-      `Fixture schedule ${String(index).padStart(2, "0")}`,
-    );
+  for (let index = 2; index <= PAGE_DENSITY_COUNTS.large.schedules; index += 1) {
+    await createFixtureSchedule(`Fixture schedule ${String(index).padStart(2, "0")}`);
   }
 }
 
 async function createLargeMcpServerList(): Promise<void> {
   await browser.url("tauri://localhost/#/settings/mcp-servers");
   await $("h1=MCP servers").waitForDisplayed({ timeout: 10_000 });
-  for (
-    let index = 1;
-    index <= PAGE_DENSITY_COUNTS.large.mcpServers;
-    index += 1
-  ) {
+  for (let index = 1; index <= PAGE_DENSITY_COUNTS.large.mcpServers; index += 1) {
     const name = `fixture-mcp-${String(index).padStart(2, "0")}`;
     await $$("button[aria-label='Add MCP server']")[0].click();
     await $("h2=Add MCP server").waitForDisplayed({ timeout: 10_000 });
     await $("input[aria-label='Server name']").setValue(name);
-    await $("select[aria-label='Transport']").selectByAttribute(
-      "value",
-      "streamableHttp",
-    );
+    await $("select[aria-label='Transport']").selectByAttribute("value", "streamableHttp");
     await $("input[aria-label='URL']").setValue("http://127.0.0.1:3920/mcp");
     await $("dialog .modal-box button[aria-label='Add MCP server']").click();
-    await $(
-      `details[data-testid='mcp-server-details-${name}']`,
-    ).waitForDisplayed({
+    await $(`details[data-testid='mcp-server-details-${name}']`).waitForDisplayed({
       timeout: 10_000,
     });
   }
@@ -196,19 +153,14 @@ async function captureLargeProjects(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
   await saveFixtureScreenshot("projects-many-top.png");
-  await $(
-    "//table[@aria-label='Projects']//a[normalize-space(.)='Large project 117']/ancestor::tr",
-  ).scrollIntoView({ block: "center" });
+  await $("//table[@aria-label='Projects']//a[normalize-space(.)='Large project 117']/ancestor::tr").scrollIntoView({
+    block: "center",
+  });
   await saveFixtureScreenshot("projects-many-bottom.png");
 
-  await $("select[aria-label='Sort projects']").selectByAttribute(
-    "value",
-    "recencyAt",
-  );
+  await $("select[aria-label='Sort projects']").selectByAttribute("value", "recencyAt");
   await browser.waitUntil(
-    async () =>
-      (await $$('table[aria-label="Projects"] tbody tr').length) ===
-      PAGE_DENSITY_COUNTS.large.projects,
+    async () => (await $$('table[aria-label="Projects"] tbody tr').length) === PAGE_DENSITY_COUNTS.large.projects,
     {
       timeout: 20_000,
       timeoutMsg: "All projects should remain visible when sorted by activity",
@@ -223,14 +175,10 @@ async function captureLargeProjects(): Promise<void> {
 async function captureLargeProjectDetail(): Promise<void> {
   await browser.url("tauri://localhost/#/projects");
   await waitForProjectCount(PAGE_DENSITY_COUNTS.large.projects);
-  await $(
-    "//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']",
-  ).click();
+  await $("//table[@aria-label='Projects']//a[normalize-space(.)='Product planning']").click();
   await $("h1=Product planning").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
-    async () =>
-      (await $$('section[aria-label="Chats"] a').length) ===
-      PAGE_DENSITY_COUNTS.large.projectThreads,
+    async () => (await $$('section[aria-label="Chats"] a').length) === PAGE_DENSITY_COUNTS.large.projectThreads,
     {
       timeout: 20_000,
       timeoutMsg: "The project detail should load every project chat",
@@ -261,9 +209,7 @@ async function captureLargeSchedules(): Promise<void> {
   await browser.url("tauri://localhost/#/schedules");
   await $("h1=Automation").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
-    async () =>
-      (await $$('article[aria-label^="Open schedule:"]').length) ===
-      PAGE_DENSITY_COUNTS.large.schedules,
+    async () => (await $$('article[aria-label^="Open schedule:"]').length) === PAGE_DENSITY_COUNTS.large.schedules,
     {
       timeout: 10_000,
       timeoutMsg: "The large Automation list should show all schedule cards",
@@ -281,8 +227,7 @@ async function captureLargeMcpServers(): Promise<void> {
   await $("h1=MCP servers").waitForDisplayed({ timeout: 10_000 });
   await browser.waitUntil(
     async () =>
-      (await $$('details[data-testid^="mcp-server-details-"]').length) ===
-      PAGE_DENSITY_COUNTS.large.mcpServers,
+      (await $$('details[data-testid^="mcp-server-details-"]').length) === PAGE_DENSITY_COUNTS.large.mcpServers,
     {
       timeout: 10_000,
       timeoutMsg: "The MCP settings page should show every configured server",
@@ -296,22 +241,15 @@ async function captureLargeMcpServers(): Promise<void> {
 }
 
 async function waitForProjectCount(count: number): Promise<void> {
-  await browser.waitUntil(
-    async () =>
-      (await $$('table[aria-label="Projects"] tbody tr').length) === count,
-    {
-      timeout: 10_000,
-      timeoutMsg: `Expected ${count} visible projects`,
-    },
-  );
+  await browser.waitUntil(async () => (await $$('table[aria-label="Projects"] tbody tr').length) === count, {
+    timeout: 10_000,
+    timeoutMsg: `Expected ${count} visible projects`,
+  });
 }
 
 async function waitForArchivedCount(count: number): Promise<void> {
-  await browser.waitUntil(
-    async () => (await $$('main a[href*="/chat/"]').length) === count,
-    {
-      timeout: 10_000,
-      timeoutMsg: `Expected ${count} archived chat cards on the current page`,
-    },
-  );
+  await browser.waitUntil(async () => (await $$('main a[href*="/chat/"]').length) === count, {
+    timeout: 10_000,
+    timeoutMsg: `Expected ${count} archived chat cards on the current page`,
+  });
 }

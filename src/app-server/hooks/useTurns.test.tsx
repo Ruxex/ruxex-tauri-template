@@ -5,12 +5,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { v2 } from "../../protocol";
-import { markThreadStarted, resetThreadSessionState } from "../thread-session";
+import type { v2 } from "@/protocol";
+import { markThreadStarted, resetThreadSessionState } from "@/app-server/thread-session";
 
 const requestAppServerMethod = vi.hoisted(() => vi.fn());
 
-vi.mock("../api", () => ({ requestAppServerMethod }));
+vi.mock("@/app-server/api", () => ({ requestAppServerMethod }));
 
 function createWrapper(
   client = new QueryClient({
@@ -18,9 +18,7 @@ function createWrapper(
   }),
 ) {
   return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
 
@@ -47,11 +45,7 @@ describe("turn mutation hooks", () => {
       threadId: "thread-1",
       excludeTurns: true,
     });
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      2,
-      "turn/start",
-      params,
-    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "turn/start", params);
   });
 
   it("resumes a newly created thread again before its second turn", async () => {
@@ -70,11 +64,7 @@ describe("turn mutation hooks", () => {
       await result.current.mutateAsync({ ...params, input: [] });
     });
 
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      1,
-      "turn/start",
-      params,
-    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "turn/start", params);
     expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "thread/resume", {
       threadId: "thread-new",
       excludeTurns: true,
@@ -87,7 +77,7 @@ describe("turn mutation hooks", () => {
 
   it("does not consume the started session for read-only callers", async () => {
     markThreadStarted("thread-new");
-    const { ensureThreadResumed } = await import("../thread-session");
+    const { ensureThreadResumed } = await import("@/app-server/thread-session");
 
     await Promise.all([
       ensureThreadResumed("thread-new", { consumeStarted: false }),
@@ -101,15 +91,10 @@ describe("turn mutation hooks", () => {
 
   it("interrupts and steers the selected active turn", async () => {
     const { useInterruptTurn, useSteerTurn } = await import("./useTurns");
-    const input = [
-      { type: "text", text: "change direction", text_elements: [] },
-    ] as v2.UserInput[];
-    const { result } = renderHook(
-      () => ({ interrupt: useInterruptTurn(), steer: useSteerTurn() }),
-      {
-        wrapper: createWrapper(),
-      },
-    );
+    const input = [{ type: "text", text: "change direction", text_elements: [] }] as v2.UserInput[];
+    const { result } = renderHook(() => ({ interrupt: useInterruptTurn(), steer: useSteerTurn() }), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.interrupt.mutateAsync({
@@ -123,14 +108,10 @@ describe("turn mutation hooks", () => {
       });
     });
 
-    expect(requestAppServerMethod).toHaveBeenNthCalledWith(
-      1,
-      "turn/interrupt",
-      {
-        threadId: "thread-1",
-        turnId: "turn-1",
-      },
-    );
+    expect(requestAppServerMethod).toHaveBeenNthCalledWith(1, "turn/interrupt", {
+      threadId: "thread-1",
+      turnId: "turn-1",
+    });
     expect(requestAppServerMethod).toHaveBeenNthCalledWith(2, "turn/steer", {
       threadId: "thread-1",
       expectedTurnId: "turn-1",
@@ -147,10 +128,9 @@ describe("turn mutation hooks", () => {
       },
     });
     const invalidateQueries = vi.spyOn(client, "invalidateQueries");
-    const { result } = renderHook(
-      () => ({ interrupt: useInterruptTurn(), steer: useSteerTurn() }),
-      { wrapper: createWrapper(client) },
-    );
+    const { result } = renderHook(() => ({ interrupt: useInterruptTurn(), steer: useSteerTurn() }), {
+      wrapper: createWrapper(client),
+    });
 
     await act(async () => {
       await result.current.interrupt.mutateAsync({

@@ -1,23 +1,16 @@
-import { formatNumber } from "../app/locale-format";
+import { formatNumber } from "@/app/locale-format";
 import { useTranslation } from "react-i18next";
 import { FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useProjectList } from "../app-server/hooks";
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from "../components/common/AsyncState";
-import { PageContainer } from "../components/layout/PageContainer";
-import { NewProjectDialog } from "../components/projects/NewProjectDialog";
-import { ProjectIcon } from "../components/projects/ProjectIcon";
-import {
-  parseProjectMetadata,
-  projectColorClassName,
-} from "../components/projects/project-metadata";
-import type { v2 } from "../protocol";
+import { useProjectList } from "@/app-server/hooks";
+import { EmptyState, ErrorState, LoadingState } from "@/components/base/common/AsyncState";
+import { PageContainer } from "@/components/feature/layout/PageContainer";
+import { NewProjectDialog } from "@/components/composite/projects/NewProjectDialog";
+import { ProjectIcon } from "@/components/composite/projects/ProjectIcon";
+import { parseProjectMetadata, projectColorClassName } from "@/components/composite/projects/project-metadata";
+import type { v2 } from "@/protocol";
 
 type ProjectSortKey = NonNullable<v2.ProjectListParams["sortKey"]>;
 
@@ -45,9 +38,7 @@ export function ProjectsPage() {
     <PageContainer>
       <header className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {t("projects")}
-          </h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("projects")}</h1>
         </div>
         <button
           aria-label={t("newProject")}
@@ -79,26 +70,24 @@ export function ProjectsPage() {
               {t("unableToLoadProjects")}
             </ErrorState>
           )}
-          {!projects.isLoading &&
-            !projects.isError &&
-            !projects.data?.data.length && (
-              <EmptyState
-                action={
-                  <button
-                    aria-label={t("createProject")}
-                    className="btn btn-sm btn-primary gap-1"
-                    type="button"
-                    onClick={() => setIsCreateDialogOpen(true)}
-                  >
-                    <PlusIcon aria-hidden="true" className="size-4" />
-                    {t("createProject")}
-                  </button>
-                }
-                description={t("createAProjectToOrganizeChatsAndWorkspaces")}
-                icon={FolderIcon}
-                title={t("noProjectsYet")}
-              />
-            )}
+          {!projects.isLoading && !projects.isError && !projects.data?.data.length && (
+            <EmptyState
+              action={
+                <button
+                  aria-label={t("createProject")}
+                  className="btn btn-sm btn-primary gap-1"
+                  type="button"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                >
+                  <PlusIcon aria-hidden="true" className="size-4" />
+                  {t("createProject")}
+                </button>
+              }
+              description={t("createAProjectToOrganizeChatsAndWorkspaces")}
+              icon={FolderIcon}
+              title={t("noProjectsYet")}
+            />
+          )}
           {projects.data?.data.length ? (
             <div className="space-y-3">
               <div className="flex justify-end">
@@ -107,9 +96,7 @@ export function ProjectsPage() {
                   <select
                     aria-label={t("sortProjects")}
                     value={sortKey}
-                    onChange={(event) =>
-                      setSortKey(event.target.value as ProjectSortKey)
-                    }
+                    onChange={(event) => setSortKey(event.target.value as ProjectSortKey)}
                   >
                     {PROJECT_SORT_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -130,18 +117,13 @@ export function ProjectsPage() {
                   </thead>
                   <tbody>
                     {projects.data?.data.map((project) => {
-                      const projectMetadata = parseProjectMetadata(
-                        project.metadata,
-                      );
+                      const projectMetadata = parseProjectMetadata(project.metadata);
                       return (
                         <tr
                           className="cursor-pointer transition-colors hover:bg-base-200/60"
                           key={project.id}
                           onClick={(event) => {
-                            if (
-                              event.target instanceof Element &&
-                              event.target.closest("a, button")
-                            ) {
+                            if (event.target instanceof Element && event.target.closest("a, button")) {
                               return;
                             }
                             navigate(`/projects/${project.id}`);
@@ -152,11 +134,7 @@ export function ProjectsPage() {
                               <span
                                 className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${projectColorClassName(projectMetadata.color)}`}
                               >
-                                <ProjectIcon
-                                  aria-hidden="true"
-                                  className="size-4"
-                                  icon={projectMetadata.icon}
-                                />
+                                <ProjectIcon aria-hidden="true" className="size-4" icon={projectMetadata.icon} />
                               </span>
                               <Link
                                 className="truncate rounded-sm underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -168,8 +146,7 @@ export function ProjectsPage() {
                           </td>
                           <td className="max-w-80">
                             <span className="block truncate font-mono text-xs text-base-content/65">
-                              {project.roots[0]?.path ??
-                                t("noWorkspaceRootConfigured")}
+                              {project.roots[0]?.path ?? t("noWorkspaceRootConfigured")}
                             </span>
                           </td>
                           <td className="text-sm text-base-content/70">
@@ -186,10 +163,7 @@ export function ProjectsPage() {
         </div>
       </section>
       {isCreateDialogOpen && (
-        <NewProjectDialog
-          onClose={() => setIsCreateDialogOpen(false)}
-          open={isCreateDialogOpen}
-        />
+        <NewProjectDialog onClose={() => setIsCreateDialogOpen(false)} open={isCreateDialogOpen} />
       )}
     </PageContainer>
   );

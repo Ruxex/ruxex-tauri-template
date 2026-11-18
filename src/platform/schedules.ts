@@ -1,8 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type {
-  ProjectColor,
-  ProjectIcon,
-} from "../components/projects/project-metadata";
+import type { ProjectColor, ProjectIcon } from "@/components/composite/projects/project-metadata";
 
 export type ScheduleCadence =
   | { kind: "once"; at: string }
@@ -47,17 +44,11 @@ export function createSchedule(input: ScheduleInput): Promise<ScheduleRecord> {
   return invoke<ScheduleRecord>("schedule_create", { input });
 }
 
-export function updateSchedule(
-  id: string,
-  input: ScheduleInput,
-): Promise<ScheduleRecord> {
+export function updateSchedule(id: string, input: ScheduleInput): Promise<ScheduleRecord> {
   return invoke<ScheduleRecord>("schedule_update", { id, input });
 }
 
-export function setScheduleEnabled(
-  id: string,
-  enabled: boolean,
-): Promise<ScheduleRecord> {
+export function setScheduleEnabled(id: string, enabled: boolean): Promise<ScheduleRecord> {
   return invoke<ScheduleRecord>("schedule_set_enabled", { id, enabled });
 }
 

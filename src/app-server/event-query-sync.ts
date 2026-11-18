@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../protocol";
+import type { v2 } from "@/protocol";
 import { requestAppServerMethod } from "./api";
 import type { AppServerEvent } from "./events";
 import {
@@ -22,10 +22,7 @@ type PreviewRefreshState = {
 
 const inFlightPreviewRefreshes = new Map<string, PreviewRefreshState>();
 
-export function synchronizeAppServerQueries(
-  queryClient: QueryClient,
-  event: AppServerEvent,
-): Promise<void> {
+export function synchronizeAppServerQueries(queryClient: QueryClient, event: AppServerEvent): Promise<void> {
   if (event.type !== "serverNotification") {
     return Promise.resolve();
   }
@@ -34,9 +31,7 @@ export function synchronizeAppServerQueries(
     case "thread/started":
       queryClient.setQueriesData<v2.ThreadReadResponse>(
         {
-          queryKey: appServerQueryKeys.threadMetadata(
-            event.data.params.thread.id,
-          ),
+          queryKey: appServerQueryKeys.threadMetadata(event.data.params.thread.id),
         },
         { thread: event.data.params.thread },
       );
@@ -78,29 +73,19 @@ export function synchronizeAppServerQueries(
       invalidateThreadQueue(queryClient, event.data.params.threadId);
       return Promise.resolve();
     case "thread/goal/updated":
-      queryClient.setQueryData(
-        appServerQueryKeys.threadGoal(event.data.params.threadId),
-        { goal: event.data.params.goal },
-      );
+      queryClient.setQueryData(appServerQueryKeys.threadGoal(event.data.params.threadId), {
+        goal: event.data.params.goal,
+      });
       return Promise.resolve();
     case "thread/goal/cleared":
-      queryClient.setQueryData(
-        appServerQueryKeys.threadGoal(event.data.params.threadId),
-        { goal: null },
-      );
+      queryClient.setQueryData(appServerQueryKeys.threadGoal(event.data.params.threadId), { goal: null });
       return Promise.resolve();
     case "turn/completed":
-      return refreshThreadPreview(
-        queryClient,
-        event.data.params.threadId,
-        event.data.params.turn.id,
-      );
+      return refreshThreadPreview(queryClient, event.data.params.threadId, event.data.params.turn.id);
     case "item/completed":
       if (event.data.params.item.type === "subAgentActivity") {
         void queryClient.invalidateQueries({
-          queryKey: appServerQueryKeys.subagentThreadList(
-            event.data.params.threadId,
-          ),
+          queryKey: appServerQueryKeys.subagentThreadList(event.data.params.threadId),
         });
       }
       return Promise.resolve();
@@ -116,11 +101,7 @@ export function synchronizeAppServerQueries(
   }
 }
 
-function refreshThreadPreview(
-  queryClient: QueryClient,
-  threadId: string,
-  turnId: string,
-): Promise<void> {
+function refreshThreadPreview(queryClient: QueryClient, threadId: string, turnId: string): Promise<void> {
   const existing = inFlightPreviewRefreshes.get(threadId);
   if (existing) {
     if (existing.activeTurnId !== turnId) {
@@ -145,10 +126,7 @@ function refreshThreadPreview(
         threadId,
       });
       queryClient.setQueryData(
-        [
-          ...appServerQueryKeys.threadMetadata(threadId),
-          { includeTurns: false },
-        ],
+        [...appServerQueryKeys.threadMetadata(threadId), { includeTurns: false }],
         response.response,
       );
       const { name: _name, ...previewPatch } = response.response.thread;
@@ -196,50 +174,40 @@ function patchThreadCaches(
       };
     },
   );
-  queryClient.setQueriesData<v2.ThreadListResponse>(
-    { queryKey: appServerQueryKeys.threadListRoot },
-    (data) =>
-      data
-        ? {
-            ...data,
-            data: data.data.map((thread) =>
-              thread.id === threadId
-                ? mergeThreadPatch(thread, patch, options)
-                : thread,
-            ),
-          }
-        : data,
+  queryClient.setQueriesData<v2.ThreadListResponse>({ queryKey: appServerQueryKeys.threadListRoot }, (data) =>
+    data
+      ? {
+          ...data,
+          data: data.data.map((thread) =>
+            thread.id === threadId ? mergeThreadPatch(thread, patch, options) : thread,
+          ),
+        }
+      : data,
   );
-  queryClient.setQueriesData<v2.ThreadListResponse>(
-    { queryKey: appServerQueryKeys.subagentThreadListRoot },
-    (data) =>
-      data
-        ? {
-            ...data,
-            data: data.data.map((thread) =>
-              thread.id === threadId
-                ? mergeThreadPatch(thread, patch, options)
-                : thread,
-            ),
-          }
-        : data,
+  queryClient.setQueriesData<v2.ThreadListResponse>({ queryKey: appServerQueryKeys.subagentThreadListRoot }, (data) =>
+    data
+      ? {
+          ...data,
+          data: data.data.map((thread) =>
+            thread.id === threadId ? mergeThreadPatch(thread, patch, options) : thread,
+          ),
+        }
+      : data,
   );
-  queryClient.setQueriesData<v2.ThreadSearchResponse>(
-    { queryKey: appServerQueryKeys.threadSearchRoot },
-    (data) =>
-      data
-        ? {
-            ...data,
-            data: data.data.map((result) =>
-              result.thread.id === threadId
-                ? {
-                    ...result,
-                    thread: mergeThreadPatch(result.thread, patch, options),
-                  }
-                : result,
-            ),
-          }
-        : data,
+  queryClient.setQueriesData<v2.ThreadSearchResponse>({ queryKey: appServerQueryKeys.threadSearchRoot }, (data) =>
+    data
+      ? {
+          ...data,
+          data: data.data.map((result) =>
+            result.thread.id === threadId
+              ? {
+                  ...result,
+                  thread: mergeThreadPatch(result.thread, patch, options),
+                }
+              : result,
+          ),
+        }
+      : data,
   );
 }
 
@@ -248,11 +216,7 @@ function mergeThreadPatch<T extends { updatedAt: number; name: string | null }>(
   patch: Partial<v2.Thread>,
   options: { onlyIfNewer?: boolean },
 ): T {
-  if (
-    options.onlyIfNewer &&
-    patch.updatedAt !== undefined &&
-    patch.updatedAt < thread.updatedAt
-  ) {
+  if (options.onlyIfNewer && patch.updatedAt !== undefined && patch.updatedAt < thread.updatedAt) {
     return thread;
   }
 

@@ -1,21 +1,13 @@
 // @vitest-environment jsdom
 
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const useSchedules = vi.hoisted(() => vi.fn());
-vi.mock("../app-server/hooks", () => ({ useSchedules }));
-vi.mock("../app-server/runtime", () => ({ isDesktopRuntime: true }));
+vi.mock("@/app-server/hooks", () => ({ useSchedules }));
+vi.mock("@/app-server/runtime", () => ({ isDesktopRuntime: true }));
 
-import { i18n } from "../app/i18n";
+import { i18n } from "@/app/i18n";
 
 describe("SchedulesPage", () => {
   it("renders Japanese schedule actions while preserving user content", async () => {
@@ -25,17 +17,13 @@ describe("SchedulesPage", () => {
     expect(screen.getByRole("heading", { name: "自動化" })).toBeTruthy();
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     expect(screen.getByText("run checks")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "今すぐ実行: Nightly checks" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "今すぐ実行: Nightly checks" }));
     expect(
       screen.getByRole("heading", {
         name: "スケジュールを今すぐ実行しますか？",
       }),
     ).toBeTruthy();
-    expect(
-      screen.getByText("「Nightly checks」を今すぐ実行しますか？"),
-    ).toBeTruthy();
+    expect(screen.getByText("「Nightly checks」を今すぐ実行しますか？")).toBeTruthy();
     expect(screen.getByRole("button", { name: "キャンセル" })).toBeTruthy();
   });
 
@@ -87,9 +75,7 @@ describe("SchedulesPage", () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
 
-    expect(
-      screen.queryByRole("heading", { name: "Your schedules" }),
-    ).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Your schedules" })).toBeNull();
     expect(screen.getByText("Nightly checks")).toBeTruthy();
     const card = screen.getByText("Nightly checks").closest("article");
     expect(card).toBeTruthy();
@@ -98,21 +84,11 @@ describe("SchedulesPage", () => {
     expect(cardView.queryByText("Enabled")).toBeNull();
     expect(cardView.queryByText("Schedule")).toBeNull();
     expect(cardView.getByText(/^Next run:/)).toBeTruthy();
-    expect(
-      cardView.getByRole("button", { name: "Run now: Nightly checks" })
-        .textContent,
-    ).toBe("");
-    expect(
-      cardView.getByRole("button", { name: "Delete: Nightly checks" })
-        .textContent,
-    ).toBe("");
+    expect(cardView.getByRole("button", { name: "Run now: Nightly checks" }).textContent).toBe("");
+    expect(cardView.getByRole("button", { name: "Delete: Nightly checks" }).textContent).toBe("");
     expect(cardView.getByText(/^Last run:/)).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Run now: Nightly checks" }),
-    );
-    expect(
-      screen.getByRole("heading", { name: "Run schedule now?" }),
-    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Run now: Nightly checks" }));
+    expect(screen.getByRole("heading", { name: "Run schedule now?" })).toBeTruthy();
     const schedule = useSchedules.mock.results[0]?.value;
     expect(schedule.runNow.mutate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Run now" }));
@@ -122,12 +98,8 @@ describe("SchedulesPage", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Delete: Nightly checks" }),
-    );
-    expect(
-      screen.getByRole("heading", { name: "Delete schedule?" }),
-    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Delete: Nightly checks" }));
+    expect(screen.getByRole("heading", { name: "Delete schedule?" })).toBeTruthy();
     expect(schedule.remove.mutate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(schedule.remove.mutate).toHaveBeenCalledWith(
@@ -140,9 +112,7 @@ describe("SchedulesPage", () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Edit schedule: Nightly checks" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit schedule: Nightly checks" }));
     expect(screen.getByRole("heading", { name: "Edit schedule" })).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Schedule name"), {
       target: { value: "Morning checks" },
@@ -177,10 +147,7 @@ describe("SchedulesPage", () => {
     window.location.hash = "";
     render(<SchedulesPage />);
 
-    fireEvent.keyDown(
-      screen.getByRole("link", { name: "Open schedule: Nightly checks" }),
-      { key: "Enter" },
-    );
+    fireEvent.keyDown(screen.getByRole("link", { name: "Open schedule: Nightly checks" }), { key: "Enter" });
 
     expect(window.location.hash).toBe("#/schedules/schedule-1");
   });
@@ -189,9 +156,7 @@ describe("SchedulesPage", () => {
     const { SchedulesPage } = await import("./SchedulesPage");
     render(<SchedulesPage />);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Edit schedule: Nightly checks" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit schedule: Nightly checks" }));
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     const schedule = useSchedules.mock.results[0]?.value;
@@ -279,19 +244,11 @@ describe("SchedulesPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Monday" }));
     fireEvent.click(screen.getByRole("button", { name: "Create schedule" }));
-    expect(
-      screen.getByText("Choose at least one weekday for the weekly schedule."),
-    ).toBeTruthy();
+    expect(screen.getByText("Choose at least one weekday for the weekly schedule.")).toBeTruthy();
     await act(async () => {
       await i18n.changeLanguage("ja");
     });
-    expect(
-      screen.getByText(
-        "毎週のスケジュールには曜日を 1 つ以上指定してください。",
-      ),
-    ).toBeTruthy();
-    expect(
-      (screen.getByLabelText("スケジュール名") as HTMLInputElement).value,
-    ).toBe("Morning checks");
+    expect(screen.getByText("毎週のスケジュールには曜日を 1 つ以上指定してください。")).toBeTruthy();
+    expect((screen.getByLabelText("スケジュール名") as HTMLInputElement).value).toBe("Morning checks");
   });
 });

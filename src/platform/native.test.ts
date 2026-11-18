@@ -44,15 +44,9 @@ describe("native Tauri command adapters", () => {
     expect(invoke.mock.calls).toEqual([
       ["preview_artifact", { path: "/tmp/report.xlsx" }],
       ["open_artifact", { path: "/tmp/report.xlsx" }],
-      [
-        "open_workspace_in_editor",
-        { workspace: "/workspace", editorCommand: "code" },
-      ],
+      ["open_workspace_in_editor", { workspace: "/workspace", editorCommand: "code" }],
       ["detect_editor_command"],
-      [
-        "save_artifact",
-        { path: "/tmp/report.xlsx", destination: "/workspace/report.xlsx" },
-      ],
+      ["save_artifact", { path: "/tmp/report.xlsx", destination: "/workspace/report.xlsx" }],
       ["read_image_file", { path: "/workspace/image.png" }],
       ["read_visualization_file", { path: "/workspace/chart.html" }],
       ["read_marketplace_asset", { url: "https://example.com/image.png" }],

@@ -1,15 +1,7 @@
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  useContext,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, createElement, type ReactNode, useContext, useCallback, useEffect, useState } from "react";
 
 import { i18n, resolveUiLanguage } from "./i18n";
-import { detectEditorCommand } from "../platform/native";
+import { detectEditorCommand } from "@/platform/native";
 
 import {
   applyUiTheme,
@@ -51,28 +43,22 @@ export type UiFontSize = number;
 
 export function clampUiFontSize(value: number): UiFontSize {
   if (!Number.isFinite(value)) return DEFAULT_UI_FONT_SIZE;
-  return Math.min(
-    UI_FONT_SIZE_MAX,
-    Math.max(UI_FONT_SIZE_MIN, Math.round(value)),
-  );
+  return Math.min(UI_FONT_SIZE_MAX, Math.max(UI_FONT_SIZE_MIN, Math.round(value)));
 }
 
 export function clampUiZoom(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_UI_ZOOM;
-  return Math.min(
-    UI_ZOOM_MAX,
-    Math.max(UI_ZOOM_MIN, Math.round(value / 5) * 5),
-  );
+  return Math.min(UI_ZOOM_MAX, Math.max(UI_ZOOM_MIN, Math.round(value / 5) * 5));
 }
 export const UI_NOTIFICATION_SOUND_OPTIONS = [
   { value: "system", label: "System default" },
   { value: "Ping", label: "Ping (macOS)" },
   { value: "message-new-instant", label: "Message (Linux)" },
 ] as const;
-export type UiNotificationSound =
-  (typeof UI_NOTIFICATION_SOUND_OPTIONS)[number]["value"];
-export const UI_NOTIFICATION_SOUNDS: readonly UiNotificationSound[] =
-  UI_NOTIFICATION_SOUND_OPTIONS.map((option) => option.value);
+export type UiNotificationSound = (typeof UI_NOTIFICATION_SOUND_OPTIONS)[number]["value"];
+export const UI_NOTIFICATION_SOUNDS: readonly UiNotificationSound[] = UI_NOTIFICATION_SOUND_OPTIONS.map(
+  (option) => option.value,
+);
 type UiNotifications = {
   desktop: boolean;
   sound: UiNotificationSound;
@@ -112,14 +98,9 @@ type UiPreferencesContextValue = {
   update: (patch: UiPreferencePatch) => void;
 };
 
-const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(
-  null,
-);
+const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(null);
 
-export function updateUiPreferences(
-  preferences: UiPreferences,
-  patch: UiPreferencePatch,
-): UiPreferences {
+export function updateUiPreferences(preferences: UiPreferences, patch: UiPreferencePatch): UiPreferences {
   return {
     ...preferences,
     ...patch,
@@ -157,10 +138,7 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
           ? parsed.theme
           : undefined;
     const storedTheme = isRecord(parsed.theme) ? parsed.theme : undefined;
-    const storedPreset = readOptionalEnum(
-      storedTheme?.preset,
-      UI_THEME_PRESET_IDS,
-    );
+    const storedPreset = readOptionalEnum(storedTheme?.preset, UI_THEME_PRESET_IDS);
     const legacyPreset =
       legacyColorScheme === "dark"
         ? "ruxex-dark"
@@ -174,62 +152,30 @@ export function parseUiPreferences(raw: string | null): UiPreferences {
 
     return {
       version: UI_PREFERENCES_VERSION,
-      sidebarCollapsed: readBoolean(
-        parsed.sidebarCollapsed,
-        DEFAULT_UI_PREFERENCES.sidebarCollapsed,
-      ),
+      sidebarCollapsed: readBoolean(parsed.sidebarCollapsed, DEFAULT_UI_PREFERENCES.sidebarCollapsed),
       editorCommand: readEditorCommand(parsed.editorCommand),
-      language: readEnum(
-        parsed.language,
-        ["system", "en", "ja"],
-        DEFAULT_UI_PREFERENCES.language,
-      ),
+      language: readEnum(parsed.language, ["system", "en", "ja"], DEFAULT_UI_PREFERENCES.language),
       notifications: {
         desktop: readBoolean(
-          isRecord(parsed.notifications)
-            ? parsed.notifications.desktop
-            : undefined,
+          isRecord(parsed.notifications) ? parsed.notifications.desktop : undefined,
           DEFAULT_UI_PREFERENCES.notifications.desktop,
         ),
         sound: readEnum(
-          isRecord(parsed.notifications)
-            ? parsed.notifications.sound
-            : undefined,
+          isRecord(parsed.notifications) ? parsed.notifications.sound : undefined,
           UI_NOTIFICATION_SOUNDS,
           DEFAULT_UI_PREFERENCES.notifications.sound,
         ),
       },
       theme: {
-        accentColor: readEnum(
-          storedTheme?.accentColor,
-          UI_ACCENT_COLORS,
-          DEFAULT_UI_PREFERENCES.theme.accentColor,
-        ),
-        preset:
-          storedPreset ?? legacyPreset ?? DEFAULT_UI_PREFERENCES.theme.preset,
+        accentColor: readEnum(storedTheme?.accentColor, UI_ACCENT_COLORS, DEFAULT_UI_PREFERENCES.theme.accentColor),
+        preset: storedPreset ?? legacyPreset ?? DEFAULT_UI_PREFERENCES.theme.preset,
         colors: readThemeColors(storedTheme?.colors),
       },
-      chatFontSize: readFontSize(
-        parsed.chatFontSize,
-        DEFAULT_UI_PREFERENCES.chatFontSize,
-      ),
-      uiFontSize: readFontSize(
-        parsed.uiFontSize,
-        DEFAULT_UI_PREFERENCES.uiFontSize,
-      ),
-      chatFontFamily: readFontFamily(
-        parsed.chatFontFamily,
-        DEFAULT_UI_PREFERENCES.chatFontFamily,
-      ),
-      uiFontFamily: readFontFamily(
-        parsed.uiFontFamily,
-        DEFAULT_UI_PREFERENCES.uiFontFamily,
-      ),
-      uiZoom: clampUiZoom(
-        typeof parsed.uiZoom === "number"
-          ? parsed.uiZoom
-          : DEFAULT_UI_PREFERENCES.uiZoom,
-      ),
+      chatFontSize: readFontSize(parsed.chatFontSize, DEFAULT_UI_PREFERENCES.chatFontSize),
+      uiFontSize: readFontSize(parsed.uiFontSize, DEFAULT_UI_PREFERENCES.uiFontSize),
+      chatFontFamily: readFontFamily(parsed.chatFontFamily, DEFAULT_UI_PREFERENCES.chatFontFamily),
+      uiFontFamily: readFontFamily(parsed.uiFontFamily, DEFAULT_UI_PREFERENCES.uiFontFamily),
+      uiZoom: clampUiZoom(typeof parsed.uiZoom === "number" ? parsed.uiZoom : DEFAULT_UI_PREFERENCES.uiZoom),
     };
   } catch {
     return DEFAULT_UI_PREFERENCES;
@@ -244,30 +190,16 @@ function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function readEnum<T extends string>(
-  value: unknown,
-  values: readonly T[],
-  fallback: T,
-): T {
-  return typeof value === "string" && values.includes(value as T)
-    ? (value as T)
-    : fallback;
+function readEnum<T extends string>(value: unknown, values: readonly T[], fallback: T): T {
+  return typeof value === "string" && values.includes(value as T) ? (value as T) : fallback;
 }
 
-function readOptionalEnum<T extends string>(
-  value: unknown,
-  values: readonly T[],
-): T | undefined {
-  return typeof value === "string" && values.includes(value as T)
-    ? (value as T)
-    : undefined;
+function readOptionalEnum<T extends string>(value: unknown, values: readonly T[]): T | undefined {
+  return typeof value === "string" && values.includes(value as T) ? (value as T) : undefined;
 }
 
 function readFontSize(value: unknown, fallback: UiFontSize): UiFontSize {
-  return typeof value === "number" &&
-    Number.isInteger(value) &&
-    value >= UI_FONT_SIZE_MIN &&
-    value <= UI_FONT_SIZE_MAX
+  return typeof value === "number" && Number.isInteger(value) && value >= UI_FONT_SIZE_MIN && value <= UI_FONT_SIZE_MAX
     ? value
     : fallback;
 }
@@ -312,8 +244,7 @@ function resolvedThemeMode(preset: UiThemePresetId): "light" | "dark" {
     return mode;
   }
 
-  return typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
+  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
@@ -334,11 +265,7 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
     let active = true;
     void detectEditorCommand()
       .then((command) => {
-        if (
-          active &&
-          command &&
-          !readStoredPreferences().editorCommand
-        ) {
+        if (active && command && !readStoredPreferences().editorCommand) {
           update({ editorCommand: command });
         }
       })
@@ -352,10 +279,7 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (
-        event.storageArea !== window.localStorage ||
-        (event.key !== UI_PREFERENCES_KEY && event.key !== null)
-      )
+      if (event.storageArea !== window.localStorage || (event.key !== UI_PREFERENCES_KEY && event.key !== null))
         return;
       // Read the latest value: a queued event may describe an older write.
       setPreferences(readStoredPreferences());
@@ -365,25 +289,11 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.uiFontSize = String(
-      preferences.uiFontSize,
-    );
-    document.documentElement.style.setProperty(
-      "--ruxex-ui-font-size",
-      `${preferences.uiFontSize}px`,
-    );
-    document.documentElement.style.setProperty(
-      "--ruxex-chat-font-size",
-      `${preferences.chatFontSize}px`,
-    );
-    document.documentElement.style.setProperty(
-      "--ruxex-ui-font-family",
-      preferences.uiFontFamily,
-    );
-    document.documentElement.style.setProperty(
-      "--ruxex-chat-font-family",
-      preferences.chatFontFamily,
-    );
+    document.documentElement.dataset.uiFontSize = String(preferences.uiFontSize);
+    document.documentElement.style.setProperty("--ruxex-ui-font-size", `${preferences.uiFontSize}px`);
+    document.documentElement.style.setProperty("--ruxex-chat-font-size", `${preferences.chatFontSize}px`);
+    document.documentElement.style.setProperty("--ruxex-ui-font-family", preferences.uiFontFamily);
+    document.documentElement.style.setProperty("--ruxex-chat-font-family", preferences.chatFontFamily);
     document.documentElement.style.zoom = `${preferences.uiZoom}%`;
   }, [preferences]);
 
@@ -409,10 +319,7 @@ function useStoredUiPreferences(): UiPreferencesContextValue {
     };
 
     applyTheme();
-    if (
-      getUiThemePresetMode(preset) !== "system" ||
-      typeof window.matchMedia !== "function"
-    ) {
+    if (getUiThemePresetMode(preset) !== "system" || typeof window.matchMedia !== "function") {
       return;
     }
 
@@ -433,9 +340,7 @@ export function UiPreferencesProvider({ children }: { children: ReactNode }) {
 export function useUiPreferences(): UiPreferencesContextValue {
   const value = useContext(UiPreferencesContext);
   if (!value) {
-    throw new Error(
-      "useUiPreferences must be used within UiPreferencesProvider",
-    );
+    throw new Error("useUiPreferences must be used within UiPreferencesProvider");
   }
   return value;
 }

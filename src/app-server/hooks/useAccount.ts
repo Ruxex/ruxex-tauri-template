@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import { ensureAppServerRuntime } from "../app-server-runtime";
-import { useAppServerStatus } from "../queries";
-import { appServerQueryKeys } from "../query-keys";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { ensureAppServerRuntime } from "@/app-server/app-server-runtime";
+import { useAppServerStatus } from "@/app-server/queries";
+import { appServerQueryKeys } from "@/app-server/query-keys";
 
 export function useAccount(params: v2.GetAccountParams = {}) {
   const status = useAppServerStatus();
@@ -26,10 +26,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (params: v2.LoginAccountParams) => {
       await ensureAppServerRuntime();
-      const response = await requestAppServerMethod(
-        "account/login/start",
-        params,
-      );
+      const response = await requestAppServerMethod("account/login/start", params);
       return response.response;
     },
     onSuccess: () => {
@@ -43,10 +40,7 @@ export function useLogin() {
 export function useCancelLogin() {
   return useMutation({
     mutationFn: async (params: v2.CancelLoginAccountParams) => {
-      const response = await requestAppServerMethod(
-        "account/login/cancel",
-        params,
-      );
+      const response = await requestAppServerMethod("account/login/cancel", params);
       return response.response;
     },
   });
@@ -57,10 +51,7 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await requestAppServerMethod(
-        "account/logout",
-        undefined,
-      );
+      const response = await requestAppServerMethod("account/logout", undefined);
       return response.response;
     },
     onSuccess: () => {

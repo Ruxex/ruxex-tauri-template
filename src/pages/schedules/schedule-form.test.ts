@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { ScheduleRecord } from "../../platform/schedules";
-import {
-  createScheduleFormState,
-  scheduleFormReducer,
-  scheduleInputFromForm,
-} from "./schedule-form";
+import type { ScheduleRecord } from "@/platform/schedules";
+import { createScheduleFormState, scheduleFormReducer, scheduleInputFromForm } from "./schedule-form";
 
 const record = (overrides: Partial<ScheduleRecord> = {}): ScheduleRecord => ({
   id: "schedule-1",
@@ -68,11 +64,9 @@ describe("schedule form model", () => {
       weekdays: ["2", "4"],
     });
 
-    expect(
-      createScheduleFormState(
-        record({ cadence: { kind: "once", at: "2026-10-22T02:30:00Z" } }),
-      ).onceAt,
-    ).not.toBe("");
+    expect(createScheduleFormState(record({ cadence: { kind: "once", at: "2026-10-22T02:30:00Z" } })).onceAt).not.toBe(
+      "",
+    );
   });
 
   it("updates fields through discriminated reducer actions", () => {
@@ -142,10 +136,7 @@ describe("schedule form model", () => {
     });
 
     expect(
-      scheduleInputFromForm(
-        { ...createScheduleFormState(), cadenceKind: "weekly", weekdays: [] },
-        "Asia/Tokyo",
-      ),
+      scheduleInputFromForm({ ...createScheduleFormState(), cadenceKind: "weekly", weekdays: [] }, "Asia/Tokyo"),
     ).toEqual({
       ok: false,
       message: "Choose at least one weekday for the weekly schedule.",
@@ -167,10 +158,7 @@ describe("schedule form model", () => {
     });
 
     expect(
-      scheduleInputFromForm(
-        { ...createScheduleFormState(), cadenceKind: "once", onceAt: "" },
-        "Asia/Tokyo",
-      ),
+      scheduleInputFromForm({ ...createScheduleFormState(), cadenceKind: "once", onceAt: "" }, "Asia/Tokyo"),
     ).toEqual({
       ok: false,
       message: "Choose a valid time for the one-time schedule.",

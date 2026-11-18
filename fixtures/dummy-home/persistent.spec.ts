@@ -1,8 +1,4 @@
-import {
-  PERSISTENT_SCENARIOS,
-  PROJECT_FIXTURES,
-  persistentFixtureCounts,
-} from "./catalog";
+import { PERSISTENT_SCENARIOS, PROJECT_FIXTURES, persistentFixtureCounts } from "./catalog";
 import {
   archiveCurrentThread,
   createRootlessProject,
@@ -18,11 +14,7 @@ describe("Persistent DummyProvider home", () => {
     await waitForDesktopReady();
     let representativeThreadId: string | undefined;
 
-    const projectScenarioOccurrences = new Set([
-      "basic:1",
-      "multi-turn:1",
-      "command-success:1",
-    ]);
+    const projectScenarioOccurrences = new Set(["basic:1", "multi-turn:1", "command-success:1"]);
 
     for (const project of PROJECT_FIXTURES) {
       await createRootlessProject(project);
@@ -32,9 +24,7 @@ describe("Persistent DummyProvider home", () => {
         await openProjectChat(project.name);
         await sendScenarioFromCurrentComposer(scenario, occurrence);
         if (!representativeThreadId) {
-          representativeThreadId = (await browser.getUrl())
-            .split("/chat/")
-            .at(-1);
+          representativeThreadId = (await browser.getUrl()).split("/chat/").at(-1);
         }
       }
     }
@@ -54,18 +44,14 @@ describe("Persistent DummyProvider home", () => {
     await assertListCounts();
     await assertProjectCounts();
     if (!representativeThreadId) {
-      throw new Error(
-        "The fixture did not create a representative project chat",
-      );
+      throw new Error("The fixture did not create a representative project chat");
     }
     await assertRepresentativeHistory(representativeThreadId);
   });
 });
 
 function findScenario(id: string) {
-  const scenario = PERSISTENT_SCENARIOS.find(
-    (candidate) => candidate.id === id,
-  );
+  const scenario = PERSISTENT_SCENARIOS.find((candidate) => candidate.id === id);
   if (!scenario) {
     throw new Error(`Missing persistent fixture scenario: ${id}`);
   }
@@ -76,10 +62,7 @@ async function assertListCounts(): Promise<void> {
   const { active } = persistentFixtureCounts();
   // Rate-limit responses can finish the scenario without persisting a thread.
   const unassigned =
-    active - 1 - PROJECT_FIXTURES.reduce(
-      (count, project) => count + project.threadScenarioIds.length,
-      0,
-    );
+    active - 1 - PROJECT_FIXTURES.reduce((count, project) => count + project.threadScenarioIds.length, 0);
   await browser.url("tauri://localhost/#/chats");
   await $("h1=Chats").waitForDisplayed({ timeout: 10_000 });
   try {
@@ -94,7 +77,9 @@ async function assertListCounts(): Promise<void> {
       },
     );
   } catch (error) {
-    const pageText = await $("main").getText().catch(() => "<unavailable>");
+    const pageText = await $("main")
+      .getText()
+      .catch(() => "<unavailable>");
     const rowCount = await $$('section[aria-label="Chats"] tbody tr').length;
     throw new Error(
       `Expected ${unassigned} or ${unassigned + 1} unassigned chats; found ${rowCount}. Chats page: ${pageText}`,
@@ -118,20 +103,14 @@ async function assertProjectCounts(): Promise<void> {
   });
 
   for (const [index, project] of PROJECT_FIXTURES.entries()) {
-    await $(
-      `//table[@aria-label='Projects']//a[normalize-space(.)='${project.name}']`,
-    ).click();
+    await $(`//table[@aria-label='Projects']//a[normalize-space(.)='${project.name}']`).click();
     await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
     await browser.refresh();
     await $(`h1=${project.name}`).waitForDisplayed({ timeout: 10_000 });
-    await browser.waitUntil(
-      async () =>
-        (await $$("//main//a[normalize-space(.)='New chat']").length) > 0,
-      {
-        timeout: 10_000,
-        timeoutMsg: `Expected a New chat action in ${project.name}`,
-      },
-    );
+    await browser.waitUntil(async () => (await $$("//main//a[normalize-space(.)='New chat']").length) > 0, {
+      timeout: 10_000,
+      timeoutMsg: `Expected a New chat action in ${project.name}`,
+    });
     if (index < PROJECT_FIXTURES.length - 1) {
       await browser.url("tauri://localhost/#/projects");
       await $("h1=Projects").waitForDisplayed({ timeout: 10_000 });

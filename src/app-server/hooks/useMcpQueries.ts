@@ -1,24 +1,18 @@
-import { AppUiError } from "../../app/error-message";
+import { AppUiError } from "@/app/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { v2 } from "../../protocol";
-import { requestAppServerMethod } from "../api";
-import { useAppServerStatus } from "../queries";
-import { appServerQueryKeys } from "../query-keys";
+import type { v2 } from "@/protocol";
+import { requestAppServerMethod } from "@/app-server/api";
+import { useAppServerStatus } from "@/app-server/queries";
+import { appServerQueryKeys } from "@/app-server/query-keys";
 
-export function useMcpServerStatus(
-  params: v2.ListMcpServerStatusParams = {},
-  enabled = true,
-) {
+export function useMcpServerStatus(params: v2.ListMcpServerStatusParams = {}, enabled = true) {
   const status = useAppServerStatus();
 
   return useQuery<v2.ListMcpServerStatusResponse>({
     queryKey: [...appServerQueryKeys.mcpServers, params],
     queryFn: async () => {
-      const response = await requestAppServerMethod(
-        "mcpServerStatus/list",
-        params,
-      );
+      const response = await requestAppServerMethod("mcpServerStatus/list", params);
       return response.response;
     },
     enabled: Boolean(status.data && enabled),
@@ -39,10 +33,7 @@ export function useAllMcpServerStatus() {
         if (cursor !== null) {
           params.cursor = cursor;
         }
-        const response = await requestAppServerMethod(
-          "mcpServerStatus/list",
-          params,
-        );
+        const response = await requestAppServerMethod("mcpServerStatus/list", params);
         data.push(...response.response.data);
         cursor = response.response.nextCursor;
       } while (cursor !== null);
@@ -72,10 +63,7 @@ export function useMcpResource(params: v2.McpResourceReadParams | null) {
       if (params.threadId) {
         requestParams.threadId = params.threadId;
       }
-      const response = await requestAppServerMethod(
-        "mcpServer/resource/read",
-        requestParams,
-      );
+      const response = await requestAppServerMethod("mcpServer/resource/read", requestParams);
       return response.response;
     },
     enabled: Boolean(status.data && params?.server && params.uri),
@@ -85,10 +73,7 @@ export function useMcpResource(params: v2.McpResourceReadParams | null) {
 export function useCallMcpTool() {
   return useMutation({
     mutationFn: async (params: v2.McpServerToolCallParams) => {
-      const response = await requestAppServerMethod(
-        "mcpServer/tool/call",
-        params,
-      );
+      const response = await requestAppServerMethod("mcpServer/tool/call", params);
       return response.response;
     },
   });
@@ -99,10 +84,7 @@ export function useReloadMcpServers() {
 
   return useMutation({
     mutationFn: async (params?: v2.McpServerRefreshParams) => {
-      const response = await requestAppServerMethod(
-        "config/mcpServer/reload",
-        params,
-      );
+      const response = await requestAppServerMethod("config/mcpServer/reload", params);
       return response.response;
     },
     onSuccess: () => {
@@ -118,10 +100,7 @@ export function useMcpOauthLogin() {
 
   return useMutation({
     mutationFn: async (params: v2.McpServerOauthLoginParams) => {
-      const response = await requestAppServerMethod(
-        "mcpServer/oauth/login",
-        params,
-      );
+      const response = await requestAppServerMethod("mcpServer/oauth/login", params);
       return response.response;
     },
     onSuccess: () => {

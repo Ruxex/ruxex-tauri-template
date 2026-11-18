@@ -2,20 +2,11 @@ import { useTranslation } from "react-i18next";
 import { CalendarDaysIcon, PlusIcon } from "@heroicons/react/24/outline";
 import type { Dispatch, FormEvent } from "react";
 
-import {
-  DialogFooter,
-  DialogHeader,
-} from "../../components/common/DialogParts";
-import { useNativeModalDialog } from "../../components/common/useNativeModalDialog";
-import { ProjectMetadataFields } from "../../components/projects/ProjectMetadataFields";
+import { DialogFooter, DialogHeader } from "@/components/base/common/DialogParts";
+import { useNativeModalDialog } from "@/components/base/common/useNativeModalDialog";
+import { ProjectMetadataFields } from "@/components/composite/projects/ProjectMetadataFields";
 import type { ScheduleFormAction, ScheduleFormState } from "./schedule-form";
-import {
-  cadenceLabel,
-  systemTimeZoneLabel,
-  TIME_OPTIONS,
-  WEEKDAYS,
-  weekdayName,
-} from "./schedule-format";
+import { cadenceLabel, systemTimeZoneLabel, TIME_OPTIONS, WEEKDAYS, weekdayName } from "./schedule-format";
 
 export function ScheduleEditorDialog({
   form,
@@ -60,9 +51,7 @@ export function ScheduleEditorDialog({
             <input
               aria-label={t("scheduleName")}
               className="input input-bordered mt-1 w-full"
-              onChange={(event) =>
-                dispatch({ type: "nameChanged", value: event.target.value })
-              }
+              onChange={(event) => dispatch({ type: "nameChanged", value: event.target.value })}
               placeholder={t("egMorningChecks")}
               value={form.name}
             />
@@ -71,9 +60,7 @@ export function ScheduleEditorDialog({
             <textarea
               aria-label={t("instructions")}
               className="textarea textarea-bordered mt-1 min-h-28 w-full"
-              onChange={(event) =>
-                dispatch({ type: "promptChanged", value: event.target.value })
-              }
+              onChange={(event) => dispatch({ type: "promptChanged", value: event.target.value })}
               placeholder={t("enterInstructions")}
               value={form.prompt}
             />
@@ -81,9 +68,7 @@ export function ScheduleEditorDialog({
           <ProjectMetadataFields
             entityLabel={t("automation")}
             value={form.metadata}
-            onChange={(metadata) =>
-              dispatch({ type: "metadataChanged", value: metadata })
-            }
+            onChange={(metadata) => dispatch({ type: "metadataChanged", value: metadata })}
           />
           <div className="grid grid-cols-2 items-start gap-3">
             <label className="form-control">
@@ -93,15 +78,12 @@ export function ScheduleEditorDialog({
                 onChange={(event) =>
                   dispatch({
                     type: "cadenceChanged",
-                    value: event.target
-                      .value as ScheduleFormState["cadenceKind"],
+                    value: event.target.value as ScheduleFormState["cadenceKind"],
                   })
                 }
                 value={form.cadenceKind}
               >
-                {isEditing && form.cadenceKind === "once" && (
-                  <option value="once">{t("oneTime")}</option>
-                )}
+                {isEditing && form.cadenceKind === "once" && <option value="once">{t("oneTime")}</option>}
                 <option value="daily">{t("everyDay")}</option>
                 <option value="weekly">{t("everyWeek")}</option>
               </select>
@@ -156,9 +138,7 @@ export function ScheduleEditorDialog({
                         const value = String(index);
                         const weekdays = form.weekdays.includes(value)
                           ? form.weekdays.filter((weekday) => weekday !== value)
-                          : [...form.weekdays, value].sort(
-                              (left, right) => Number(left) - Number(right),
-                            );
+                          : [...form.weekdays, value].sort((left, right) => Number(left) - Number(right));
                         dispatch({
                           type: "weekdaysChanged",
                           value: weekdays,
@@ -172,15 +152,9 @@ export function ScheduleEditorDialog({
               </fieldset>
             )}
           </div>
-          <div
-            aria-live="polite"
-            className="rounded-lg bg-base-200/60 px-3 py-3"
-          >
+          <div aria-live="polite" className="rounded-lg bg-base-200/60 px-3 py-3">
             <div className="flex items-center gap-2">
-              <CalendarDaysIcon
-                aria-hidden="true"
-                className="size-5 text-primary"
-              />
+              <CalendarDaysIcon aria-hidden="true" className="size-5 text-primary" />
               <p className="text-base font-semibold">{cadenceLabel(form)}</p>
             </div>
             <p className="mt-1 pl-7 text-xs text-base-content/60">
@@ -220,11 +194,7 @@ export function ScheduleEditorDialog({
         </form>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button
-          aria-label={t("closeScheduleDialog")}
-          type="button"
-          onClick={onClose}
-        >
+        <button aria-label={t("closeScheduleDialog")} type="button" onClick={onClose}>
           {t("close")}
         </button>
       </form>

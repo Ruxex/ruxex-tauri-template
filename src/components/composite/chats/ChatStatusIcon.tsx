@@ -1,0 +1,50 @@
+import { ExclamationCircleIcon, PauseCircleIcon, StopCircleIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
+
+import { type ChatStatus, chatStatusLabel } from "./chat-status";
+
+export function ChatStatusIcon({ status }: { status: ChatStatus }) {
+  const { t } = useTranslation("chats");
+  if (status === "completed") return null;
+  const label = chatStatusLabel(status);
+
+  return (
+    <span
+      aria-label={t("chatStatus", { status: label })}
+      className={`inline-flex size-4 shrink-0 items-center justify-center ${statusColorClassName(status)}`}
+      role="status"
+    >
+      {statusIcon(status)}
+    </span>
+  );
+}
+
+function statusColorClassName(status: ChatStatus): string {
+  switch (status) {
+    case "completed":
+      return "text-success";
+    case "waiting":
+      return "text-warning";
+    case "failed":
+      return "text-error";
+    case "stopped":
+      return "text-base-content/50";
+    case "running":
+      return "text-info";
+  }
+}
+
+function statusIcon(status: ChatStatus) {
+  switch (status) {
+    case "running":
+      return <span aria-hidden="true" className="loading loading-spinner loading-xs" />;
+    case "completed":
+      return <span aria-hidden="true" className="size-2 rounded-full bg-current" />;
+    case "waiting":
+      return <PauseCircleIcon aria-hidden="true" className="size-4" />;
+    case "failed":
+      return <ExclamationCircleIcon aria-hidden="true" className="size-4" />;
+    case "stopped":
+      return <StopCircleIcon aria-hidden="true" className="size-4" />;
+  }
+}
