@@ -238,6 +238,23 @@ and `make run` starts the Tauri development application.
 
 The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.
+Use `make release` to build the artifact helper binaries, stage the runtime
+package, and create the Tauri release bundle in that order. Provide the
+platform-matching Ruxex executable, code-mode host, Node runtime directory, and
+artifact SDK directory:
+
+```sh
+make release \
+  RUXEX_BIN=/path/to/ruxex \
+  CODE_MODE_HOST=/path/to/ruxex-code-mode-host \
+  NODE_RUNTIME=/path/to/node-runtime \
+  ARTIFACT_SDK=artifact-tool
+```
+
+The Node runtime directory must include `node/bin/node` and the required
+`docx` and `pptxgenjs` packages. `rg` and `ruxex-artifacts` are discovered or
+built by the release target; the artifact engine is built by the target as
+well. Run the command on the platform and architecture you intend to package.
 
 ## Tauri agent E2E
 

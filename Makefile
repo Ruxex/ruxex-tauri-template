@@ -6,7 +6,7 @@ export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
 CARGO_LLVM_COV_VERSION := 0.9.1
 
-.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -29,6 +29,7 @@ help:
 	@printf '%s\n' '  make mcp-python-fixture Python製HTTP MCPサーバーを起動'
 	@printf '%s\n' '  make mcp-python-fixture-config 認証パターン別のMCP設定例を表示'
 	@printf '%s\n' '  make build              フロントエンドをビルド'
+	@printf '%s\n' '  make release            ランタイムをステージして配布用アプリをビルド'
 	@printf '%s\n' '  make verify             全検証とビルドを実行'
 	@printf '%s\n' '  make format-check       フォーマット検査'
 	@printf '%s\n' '  make run                Tauri開発アプリを起動'
@@ -103,6 +104,22 @@ mcp-python-fixture-config:
 
 build:
 	pnpm build
+
+release:
+	@if [ -z "$(RUXEX_BIN)" ] || [ -z "$(CODE_MODE_HOST)" ] || [ -z "$(NODE_RUNTIME)" ] || [ -z "$(ARTIFACT_SDK)" ]; then \
+		echo 'Usage: make release RUXEX_BIN=<ruxex> CODE_MODE_HOST=<ruxex-code-mode-host> NODE_RUNTIME=<node-runtime-dir> ARTIFACT_SDK=<artifact-sdk-dir>' >&2; \
+		exit 2; \
+	fi
+	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts --bin ruxex-artifacts-engine
+	python3 scripts/stage-ruxex-package.py \
+		--output src-tauri/resources/ruxex-package \
+		--ruxex-bin "$(RUXEX_BIN)" \
+		--code-mode-host "$(CODE_MODE_HOST)" \
+		--node-runtime "$(NODE_RUNTIME)" \
+		--artifact-sdk "$(ARTIFACT_SDK)" \
+		--artifact-tools target/release/ruxex-artifacts \
+		--artifact-engine target/release/ruxex-artifacts-engine
+	pnpm tauri build
 
 format-check:
 	pnpm format:check
