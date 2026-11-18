@@ -7,10 +7,9 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { i18n } from "../../app/i18n";
-
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "../../app/i18n";
 
 import { ChatListItem, ChatUpdatedAt } from "./ChatListItem";
 
@@ -261,7 +260,7 @@ describe("ChatListItem", () => {
     expect(screen.getByText("Untitled chat")).toBeTruthy();
   });
 
-  it("shows a long chat title and its status", () => {
+  it("shows a long chat title without a completion marker", () => {
     const title =
       "A very long chat title that should stay inside the sidebar width";
 
@@ -280,9 +279,7 @@ describe("ChatListItem", () => {
     );
 
     expect(screen.getByText(title)).toBeTruthy();
-    expect(
-      screen.getByRole("status", { name: "Chat status: Completed" }),
-    ).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("renders an archive action without nesting it in the chat link", () => {

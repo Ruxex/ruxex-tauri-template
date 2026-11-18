@@ -1,14 +1,15 @@
-import { useTranslation } from "react-i18next";
 import {
   ExclamationCircleIcon,
   PauseCircleIcon,
   StopCircleIcon,
 } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
 
 import { type ChatStatus, chatStatusLabel } from "./chat-status";
 
 export function ChatStatusIcon({ status }: { status: ChatStatus }) {
   const { t } = useTranslation("chats");
+  if (status === "completed") return null;
   const label = chatStatusLabel(status);
 
   return (
