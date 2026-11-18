@@ -177,6 +177,8 @@ pub fn run_with_config(config: DesktopConfig) {
             terminal::terminal_write,
             terminal::terminal_resize,
             terminal::terminal_close,
+            terminal::terminal_session_timeout_read,
+            terminal::terminal_session_timeout_update,
             worktree_commands::worktree_list,
             worktree_commands::worktree_create,
             worktree_commands::worktree_remove,

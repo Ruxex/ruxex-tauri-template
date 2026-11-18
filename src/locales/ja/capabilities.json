@@ -53,6 +53,7 @@
   "terminal": "ターミナル",
   "unableToStartTerminal": "ターミナルを起動できません: {{details}}",
   "terminalProcessExited": "ターミナルのプロセスが終了しました",
+  "terminalSessionExpired": "非表示の間にターミナルセッションが終了したため、新しいセッションを開始しました。",
   "browserAndComputerUse": "ブラウザーとコンピューターの操作",
   "disabledByPolicy": "ポリシーにより無効",
   "browserUse": "ブラウザーの操作",

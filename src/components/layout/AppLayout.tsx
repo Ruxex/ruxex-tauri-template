@@ -16,6 +16,13 @@ import { useUiPreferences } from "../../app/ui-preferences";
 import { useProject, useThread } from "../../app-server/hooks";
 import { handleTabListKeyDown } from "../common/tab-keyboard";
 import {
+  closeManagedTerminalSession,
+  DEFAULT_TERMINAL_SESSION_TIMEOUT,
+  readTerminalSessionTimeout,
+  setTerminalSessionIdleTimeout,
+  terminalSessionTimeoutMs,
+} from "../../platform/terminal";
+import {
   GitDiffReviewPane,
   type GitDiffReviewTarget,
 } from "../git-diff/GitDiffReviewPane";
@@ -40,6 +47,7 @@ type RightPaneTab =
   | {
       id: string;
       kind: "git-diff";
+      ownerThreadId: string;
       target: GitDiffReviewTarget;
     }
   | {
@@ -50,6 +58,7 @@ type RightPaneTab =
   | {
       id: string;
       kind: "subagent-chat";
+      ownerThreadId: string;
       threadId: string;
       label: string;
     };
@@ -94,13 +103,35 @@ export function AppLayout() {
     t("navigation:conversation");
   const [activePanel, setActivePanel] = useState<SidebarPanel>(routePanel);
   const [rightPaneOpen, setRightPaneOpen] = useState(false);
-  const [rightPaneTabs, setRightPaneTabs] = useState<RightPaneTab[]>([]);
-  const [activeRightPaneTabId, setActiveRightPaneTabId] = useState<
-    string | null
-  >(null);
+  const [chatTabsByThread, setChatTabsByThread] = useState<
+    Record<string, RightPaneTab[]>
+  >({});
+  const [terminalTabs, setTerminalTabs] = useState<RightPaneTab[]>([]);
+  const [activeChatTabIds, setActiveChatTabIds] = useState<
+    Record<string, string>
+  >({});
+  const [activeTerminalTabId, setActiveTerminalTabId] = useState<string | null>(
+    null,
+  );
+  const [terminalSessionTimeout, setTerminalSessionTimeout] = useState(
+    DEFAULT_TERMINAL_SESSION_TIMEOUT,
+  );
+  const chatScopeId = isChatRoute ? (threadId ?? "new-chat") : "non-chat";
+  const chatTabs = chatTabsByThread[chatScopeId] ?? [];
+  const rightPaneTabs = [...chatTabs, ...terminalTabs];
+  const activeRightPaneTabId =
+    (activeTerminalTabId &&
+    terminalTabs.some((tab) => tab.id === activeTerminalTabId)
+      ? activeTerminalTabId
+      : null) ??
+    activeChatTabIds[chatScopeId] ??
+    rightPaneTabs[0]?.id ??
+    null;
   const leftPaneRef = usePanelRef();
   const rightPaneRef = usePanelRef();
   const previousRoutePanel = useRef<SidebarPanel | null>(null);
+  const visibleTabsRef = useRef(rightPaneTabs);
+  visibleTabsRef.current = rightPaneTabs;
   const handleLeftPaneResize = useCallback<PanelResizeHandler>(
     (size, _id, previousSize) => {
       if (previousSize === undefined) return;
@@ -124,21 +155,40 @@ export function AppLayout() {
   const openThreadDiff = useCallback(
     (target: GitDiffReviewTarget) => {
       const id = gitDiffTabId(target);
-      if (!rightPaneTabs.some((tab) => tab.id === id)) {
-        setRightPaneTabs((tabs) => [...tabs, { id, kind: "git-diff", target }]);
-      }
-      setActiveRightPaneTabId(id);
+      const ownerThreadId = chatScopeId;
+      setChatTabsByThread((tabsByThread) => {
+        const tabs = tabsByThread[ownerThreadId] ?? [];
+        return tabs.some((tab) => tab.id === id)
+          ? tabsByThread
+          : {
+              ...tabsByThread,
+              [ownerThreadId]: [
+                ...tabs,
+                {
+                  id,
+                  kind: "git-diff",
+                  ownerThreadId,
+                  target,
+                },
+              ],
+            };
+      });
+      setActiveChatTabIds((active) => ({
+        ...active,
+        [ownerThreadId]: id,
+      }));
+      setActiveTerminalTabId(null);
       if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
       setRightPaneOpen(true);
     },
-    [rightPaneOpen, rightPaneRef, rightPaneTabs],
+    [chatScopeId, rightPaneOpen, rightPaneRef],
   );
 
   const openThreadTerminal = useCallback(
     ({ cwd }: { threadId: string; cwd: string | null }) => {
       const id = `terminal-tab-${crypto.randomUUID()}`;
-      setRightPaneTabs((tabs) => [...tabs, { id, kind: "terminal", cwd }]);
-      setActiveRightPaneTabId(id);
+      setTerminalTabs((tabs) => [...tabs, { id, kind: "terminal", cwd }]);
+      setActiveTerminalTabId(id);
       if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
       setRightPaneOpen(true);
     },
@@ -153,40 +203,96 @@ export function AppLayout() {
       threadId: string;
       label: string;
     }) => {
+      if (!isChatRoute || !threadId) return;
+      const ownerThreadId = chatScopeId;
       const id = `subagent-chat:${encodeURIComponent(subagentThreadId)}`;
-      setRightPaneTabs((tabs) =>
-        tabs.some((tab) => tab.id === id)
-          ? tabs
-          : [
-              ...tabs,
-              { id, kind: "subagent-chat", threadId: subagentThreadId, label },
-            ],
-      );
-      setActiveRightPaneTabId(id);
+      setChatTabsByThread((tabsByThread) => {
+        const tabs = tabsByThread[ownerThreadId] ?? [];
+        return tabs.some((tab) => tab.id === id)
+          ? tabsByThread
+          : {
+              ...tabsByThread,
+              [ownerThreadId]: [
+                ...tabs,
+                {
+                  id,
+                  kind: "subagent-chat",
+                  ownerThreadId,
+                  threadId: subagentThreadId,
+                  label,
+                },
+              ],
+            };
+      });
+      setActiveChatTabIds((active) => ({ ...active, [ownerThreadId]: id }));
+      setActiveTerminalTabId(null);
       if (!rightPaneOpen) rightPaneRef.current?.resize("40%");
       setRightPaneOpen(true);
     },
-    [rightPaneOpen, rightPaneRef],
+    [chatScopeId, isChatRoute, rightPaneOpen, rightPaneRef, threadId],
   );
 
   const closeRightPaneTab = useCallback(
     (tabId: string) => {
-      const tabIndex = rightPaneTabs.findIndex((tab) => tab.id === tabId);
+      const tabIndex = visibleTabsRef.current.findIndex(
+        (tab) => tab.id === tabId,
+      );
       if (tabIndex === -1) return;
 
-      const remainingTabs = rightPaneTabs.filter((tab) => tab.id !== tabId);
-      setRightPaneTabs(remainingTabs);
-      if (remainingTabs.length === 0) {
-        setActiveRightPaneTabId(null);
-        setRightPaneOpen(false);
-      } else if (activeRightPaneTabId === tabId) {
-        setActiveRightPaneTabId(
-          remainingTabs[Math.max(0, tabIndex - 1)]?.id ?? remainingTabs[0].id,
+      const tab = visibleTabsRef.current[tabIndex];
+      if (tab.kind === "terminal") {
+        setTerminalTabs((tabs) => tabs.filter((item) => item.id !== tabId));
+        void closeManagedTerminalSession(tabId);
+        if (activeTerminalTabId === tabId) setActiveTerminalTabId(null);
+      } else {
+        const ownerTabs = chatTabsByThread[tab.ownerThreadId] ?? [];
+        const ownerTabIndex = ownerTabs.findIndex((item) => item.id === tabId);
+        const remainingOwnerTabs = ownerTabs.filter(
+          (item) => item.id !== tabId,
         );
+        setChatTabsByThread((tabsByThread) => {
+          const tabs = tabsByThread[tab.ownerThreadId] ?? [];
+          return {
+            ...tabsByThread,
+            [tab.ownerThreadId]: tabs.filter((item) => item.id !== tabId),
+          };
+        });
+        if (activeChatTabIds[tab.ownerThreadId] === tabId) {
+          setActiveChatTabIds((active) => {
+            const next = { ...active };
+            const nextTab =
+              remainingOwnerTabs[Math.max(0, ownerTabIndex - 1)]?.id ??
+              remainingOwnerTabs[0]?.id;
+            if (nextTab) next[tab.ownerThreadId] = nextTab;
+            else delete next[tab.ownerThreadId];
+            return next;
+          });
+        }
+      }
+      if (visibleTabsRef.current.length === 1) {
+        setRightPaneOpen(false);
       }
     },
-    [activeRightPaneTabId, rightPaneTabs],
+    [activeChatTabIds, activeTerminalTabId, chatTabsByThread],
   );
+
+  useEffect(() => {
+    setTerminalSessionIdleTimeout(
+      terminalSessionTimeoutMs(terminalSessionTimeout),
+    );
+  }, [terminalSessionTimeout]);
+
+  useEffect(() => {
+    let active = true;
+    void readTerminalSessionTimeout()
+      .then((timeout) => {
+        if (active) setTerminalSessionTimeout(timeout);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const loadedThread = thread.data?.thread;
@@ -390,7 +496,17 @@ export function AppLayout() {
                           aria-selected={selected}
                           className="max-w-52 truncate px-3 py-2 text-xs"
                           id={`right-pane-tab-${tab.id}`}
-                          onClick={() => setActiveRightPaneTabId(tab.id)}
+                          onClick={() => {
+                            if (tab.kind === "terminal") {
+                              setActiveTerminalTabId(tab.id);
+                            } else {
+                              setActiveTerminalTabId(null);
+                              setActiveChatTabIds((active) => ({
+                                ...active,
+                                [tab.ownerThreadId]: tab.id,
+                              }));
+                            }
+                          }}
                           role="tab"
                           tabIndex={selected ? 0 : -1}
                           type="button"
@@ -420,21 +536,17 @@ export function AppLayout() {
                       key={tab.id}
                       role="tabpanel"
                     >
-                      {tab.kind === "git-diff" && (
-                        <GitDiffReviewPane
-                          isOpen={rightPaneOpen && selected}
-                          target={tab.target}
-                        />
+                      {rightPaneOpen && selected && tab.kind === "git-diff" && (
+                        <GitDiffReviewPane isOpen target={tab.target} />
                       )}
-                      {tab.kind === "terminal" && (
-                        <TerminalPane
-                          cwd={tab.cwd}
-                          isOpen={rightPaneOpen && selected}
-                        />
+                      {rightPaneOpen && selected && tab.kind === "terminal" && (
+                        <TerminalPane tabId={tab.id} cwd={tab.cwd} />
                       )}
-                      {tab.kind === "subagent-chat" && (
-                        <SubagentConversationPane threadId={tab.threadId} />
-                      )}
+                      {rightPaneOpen &&
+                        selected &&
+                        tab.kind === "subagent-chat" && (
+                          <SubagentConversationPane threadId={tab.threadId} />
+                        )}
                     </div>
                   );
                 })}

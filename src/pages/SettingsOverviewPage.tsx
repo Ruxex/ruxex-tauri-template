@@ -11,6 +11,7 @@ import {
   LanguageCard,
   NotificationsCard,
   QuickPanelCard,
+  TerminalSessionCard,
 } from "../components/settings/SettingsCards";
 import {
   readQuickPanelShortcut,
@@ -125,6 +126,7 @@ export function SettingsOverviewPage() {
         command={preferences.editorCommand}
         onCommandChange={(editorCommand) => update({ editorCommand })}
       />
+      <TerminalSessionCard />
       <QuickPanelCard
         defaultShortcut={defaultShortcut}
         disabled={isLoadingShortcut || isSavingShortcut}

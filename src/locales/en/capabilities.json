@@ -53,6 +53,7 @@
   "terminal": "Terminal",
   "unableToStartTerminal": "Unable to start terminal: {{details}}",
   "terminalProcessExited": "Terminal process exited",
+  "terminalSessionExpired": "This terminal session expired after being hidden. A new session has started.",
   "browserAndComputerUse": "Browser and Computer Use",
   "disabledByPolicy": "Disabled by policy",
   "browserUse": "Browser use",

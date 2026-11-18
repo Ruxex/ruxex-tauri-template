@@ -8,5 +8,6 @@ export { QuickPanelCard } from "./QuickPanelCard";
 export { RuntimeSummary } from "./RuntimeSummary";
 export { SettingRow, SettingsPanel } from "./SettingsPanel";
 export { ThemeColorsCard } from "./ThemeColorsCard";
+export { TerminalSessionCard } from "./TerminalSessionCard";
 export { TypographyCard } from "./TypographyCard";
 export { UiPreferencesCard } from "./UiPreferencesCard";

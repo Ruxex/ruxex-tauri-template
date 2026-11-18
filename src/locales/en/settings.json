@@ -47,6 +47,17 @@
   "dataDirectory": "Data directory",
   "quickPanel": "Quick panel",
   "editor": "Editor",
+  "terminal": "Terminal",
+  "terminalSessionTimeout": "End session after it is hidden for",
+  "terminalTimeoutLoadError": "Unable to load the terminal timeout.",
+  "terminalTimeoutSaveError": "Unable to save the terminal timeout.",
+  "terminalTimeouts": {
+    "1h": "1 hour",
+    "6h": "6 hours",
+    "24h": "24 hours (default)",
+    "72h": "72 hours",
+    "never": "Never"
+  },
   "editorCommand": "Editor command",
   "editorCommandAuto": "Automatic (Lapce, Geany, Kate, Gedit, Zed, Sublime, VSCodium, JetBrains, VS Code)",
   "editorCommandHelp": "Leave blank to check niche editors first, then VS Code Insiders and VS Code. Arguments are supported; the workspace path is added automatically.",

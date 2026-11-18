@@ -1,16 +1,90 @@
 use std::collections::HashMap;
 use std::ffi::OsString;
+use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
-use serde::Serialize;
-use tauri::State;
+use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
+use tauri::{AppHandle, Manager, Runtime, State};
 
 static NEXT_TERMINAL_ID: AtomicU64 = AtomicU64::new(1);
+const TERMINAL_SESSION_PREFERENCES_FILE: &str = "terminal-session.json";
+const DEFAULT_TERMINAL_IDLE_TIMEOUT_HOURS: u64 = 24;
+
+#[derive(Deserialize, Serialize)]
+struct TerminalSessionPreferences {
+    #[serde(default = "default_terminal_idle_timeout_hours")]
+    idle_timeout_hours: Option<u64>,
+}
+
+fn default_terminal_idle_timeout_hours() -> Option<u64> {
+    Some(DEFAULT_TERMINAL_IDLE_TIMEOUT_HOURS)
+}
+
+fn terminal_session_preferences_path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    app.path()
+        .app_data_dir()
+        .map(|directory| directory.join(TERMINAL_SESSION_PREFERENCES_FILE))
+        .map_err(|error| format!("failed to resolve terminal session preferences: {error}"))
+}
+
+fn read_terminal_idle_timeout(path: &Path) -> Option<u64> {
+    fs::read_to_string(path)
+        .ok()
+        .and_then(|contents| serde_json::from_str::<TerminalSessionPreferences>(&contents).ok())
+        .and_then(|preferences| match preferences.idle_timeout_hours {
+            Some(hours @ (1 | 6 | 24 | 72)) => Some(Some(hours)),
+            None => Some(None),
+            _ => None,
+        })
+        .unwrap_or(Some(DEFAULT_TERMINAL_IDLE_TIMEOUT_HOURS))
+}
+
+fn write_terminal_idle_timeout(path: &Path, hours: Option<u64>) -> Result<(), String> {
+    if !matches!(hours, Some(1 | 6 | 24 | 72) | None) {
+        return Err("unsupported terminal session timeout".to_string());
+    }
+    let parent = path
+        .parent()
+        .ok_or_else(|| "terminal session preference path has no parent".to_string())?;
+    fs::create_dir_all(parent).map_err(|error| {
+        format!(
+            "failed to create terminal session preference directory `{}`: {error}",
+            parent.display()
+        )
+    })?;
+    let temporary_path = path.with_extension("json.tmp");
+    let contents = serde_json::to_vec_pretty(&TerminalSessionPreferences {
+        idle_timeout_hours: hours,
+    })
+    .map_err(|error| format!("failed to serialize terminal session preference: {error}"))?;
+    fs::write(&temporary_path, contents).map_err(|error| {
+        format!(
+            "failed to write terminal session preference `{}`: {error}",
+            temporary_path.display()
+        )
+    })?;
+    #[cfg(windows)]
+    if path.exists() {
+        fs::remove_file(path).map_err(|error| {
+            format!(
+                "failed to replace terminal session preference `{}`: {error}",
+                path.display()
+            )
+        })?;
+    }
+    fs::rename(&temporary_path, path).map_err(|error| {
+        let _ = fs::remove_file(&temporary_path);
+        format!(
+            "failed to commit terminal session preference `{}`: {error}",
+            path.display()
+        )
+    })
+}
 
 #[derive(Clone, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
@@ -316,6 +390,24 @@ pub(crate) fn terminal_close(
     session_id: String,
 ) -> Result<(), String> {
     state.close(&session_id)
+}
+
+#[tauri::command]
+pub(crate) fn terminal_session_timeout_read<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<Option<u64>, String> {
+    let path = terminal_session_preferences_path(&app)?;
+    Ok(read_terminal_idle_timeout(&path))
+}
+
+#[tauri::command]
+pub(crate) fn terminal_session_timeout_update<R: Runtime>(
+    app: AppHandle<R>,
+    hours: Option<u64>,
+) -> Result<Option<u64>, String> {
+    let path = terminal_session_preferences_path(&app)?;
+    write_terminal_idle_timeout(&path, hours)?;
+    Ok(hours)
 }
 
 #[cfg(test)]

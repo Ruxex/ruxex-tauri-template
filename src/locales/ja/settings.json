@@ -47,6 +47,17 @@
   "dataDirectory": "データディレクトリ",
   "quickPanel": "クイックパネル",
   "editor": "エディタ",
+  "terminal": "ターミナル",
+  "terminalSessionTimeout": "非表示時にセッションを終了するまで",
+  "terminalTimeoutLoadError": "ターミナルの終了時間を読み込めませんでした。",
+  "terminalTimeoutSaveError": "ターミナルの終了時間を保存できませんでした。",
+  "terminalTimeouts": {
+    "1h": "1時間",
+    "6h": "6時間",
+    "24h": "24時間（既定）",
+    "72h": "72時間",
+    "never": "無期限"
+  },
   "editorCommand": "エディタコマンド",
   "editorCommandAuto": "自動（Lapce、Geany、Kate、Gedit、Zed、Sublime、VSCodium、JetBrains、VS Code）",
   "editorCommandHelp": "空欄の場合、マイナーなエディタから順に確認し、最後にVS Code Insiders、VS Codeを使います。引数も指定でき、ワークスペースのパスは自動で追加されます。",
