@@ -50,16 +50,14 @@ export function buildSubagentRows(
       .filter((threadId): threadId is string => Boolean(threadId)),
   );
 
+  const threadById = new Map(threads.map((thread) => [thread.id, thread]));
   const rows = new Map<string, SubagentRow>();
 
   for (const thread of threads) {
     const live = liveThreads[thread.id];
     rows.set(thread.id, {
       threadId: thread.id,
-      label:
-        thread.agentNickname ??
-        thread.agentRole ??
-        t("agentFallback", { id: thread.id.slice(0, 8) }),
+      label: subagentLabel(thread.id, t, thread, live),
       role: thread.agentRole,
       task: thread.preview,
       status: subagentStatus(thread.status, live?.status),
@@ -96,17 +94,15 @@ export function buildSubagentRows(
     const threadId = agentActivity.threadId;
     const existing = rows.get(threadId);
     const live = liveThreads[threadId];
-    const labelFromPath = agentActivity.agentPath
-      ?.split(/[\\/]/)
-      .filter(Boolean)
-      .at(-1);
-
     rows.set(threadId, {
       threadId,
-      label:
-        existing?.label ??
-        labelFromPath ??
-        t("agentFallback", { id: threadId.slice(0, 8) }),
+      label: subagentLabel(
+        threadId,
+        t,
+        threadById.get(threadId),
+        live,
+        agentActivity.agentPath,
+      ),
       role: existing?.role ?? null,
       task: existing?.task || agentActivity.task || "",
       status:
@@ -123,6 +119,24 @@ export function buildSubagentRows(
 
   return [...rows.values()]
     .sort((left, right) => right.updatedAt - left.updatedAt);
+}
+
+function subagentLabel(
+  threadId: string,
+  t: TFunction,
+  thread?: v2.Thread,
+  live?: ThreadExecutionState,
+  agentPath?: string,
+): string {
+  const pathLabel = agentPath?.split(/[\\/]/).filter(Boolean).at(-1);
+  return (
+    live?.threadName?.trim() ||
+    thread?.name?.trim() ||
+    thread?.agentNickname?.trim() ||
+    thread?.agentRole?.trim() ||
+    pathLabel?.trim() ||
+    t("agentFallback", { id: threadId.slice(0, 8) })
+  );
 }
 
 function mergeParentActivityItems(

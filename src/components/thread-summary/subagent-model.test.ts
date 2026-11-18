@@ -146,6 +146,22 @@ describe("buildSubagentRows", () => {
     });
   });
 
+  it("uses the subagent thread name before the ID fallback", () => {
+    const rows = buildSubagentRows(
+      [
+        thread({
+          name: "Research helper",
+          agentNickname: null,
+          agentRole: null,
+        }),
+      ],
+      {},
+      [],
+    );
+
+    expect(rows[0]?.label).toBe("Research helper");
+  });
+
   it("marks a child with a pending request as waiting for approval", () => {
     const rows = buildSubagentRows([thread()], {}, [pending("child-1")]);
 
