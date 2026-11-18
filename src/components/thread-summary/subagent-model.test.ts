@@ -167,4 +167,152 @@ describe("buildSubagentRows", () => {
 
     expect(rows[0]?.waitingForApproval).toBe(true);
   });
+
+  it("adds a subagent found only in parent activity and keeps its activity label", () => {
+    const rows = buildSubagentRows(
+      [],
+      {},
+      [pending("activity-child")],
+      undefined,
+      {
+        parentUpdatedAt: 500,
+        history: [
+          {
+            turnId: "parent-turn",
+            item: {
+              type: "subAgentActivity",
+              id: "activity-1",
+              kind: "started",
+              agentThreadId: "activity-child",
+              agentPath: "root/workers/Researcher",
+            },
+          },
+        ],
+      },
+    );
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        threadId: "activity-child",
+        label: "Researcher",
+        status: "active",
+        task: "",
+        updatedAt: 500,
+        waitingForApproval: true,
+      }),
+    ]);
+  });
+
+  it("uses spawn-agent task and per-agent results, including archived agents", () => {
+    const spawn = {
+      type: "collabAgentToolCall",
+      id: "spawn-call",
+      tool: "spawnAgent",
+      status: "completed",
+      senderThreadId: "parent-1",
+      receiverThreadIds: [
+        "active",
+        "done",
+        "failed",
+        "interrupted",
+        "archived",
+      ],
+      prompt: "Review this patch",
+      model: null,
+      reasoningEffort: null,
+      agentsStates: {
+        active: { status: "running" },
+        done: { status: "completed" },
+        failed: { status: "errored" },
+        interrupted: { status: "shutdown" },
+        archived: { status: "pendingInit" },
+      },
+    } as unknown as v2.ThreadItem;
+    const rows = buildSubagentRows(
+      [],
+      { archived: live({ archived: true }) },
+      [],
+      undefined,
+      {
+        live: [
+          { id: "live-spawn", turnId: "parent-turn", raw: spawn } as never,
+        ],
+      },
+    );
+
+    expect(
+      rows.map(({ threadId, status, task }) => [threadId, status, task]),
+    ).toEqual([
+      ["active", "active", "Review this patch"],
+      ["done", "done", "Review this patch"],
+      ["failed", "failed", "Review this patch"],
+      ["interrupted", "interrupted", "Review this patch"],
+    ]);
+  });
+
+  it("keeps the latest status when an agent reports interaction", () => {
+    const rows = buildSubagentRows([], {}, [], undefined, {
+      history: [
+        {
+          turnId: "parent-turn",
+          item: {
+            type: "subAgentActivity",
+            id: "started",
+            kind: "started",
+            agentThreadId: "child-1",
+            agentPath: "root/child-1",
+          },
+        },
+        {
+          turnId: "parent-turn",
+          item: {
+            type: "subAgentActivity",
+            id: "interacted",
+            kind: "interacted",
+            agentThreadId: "child-1",
+            agentPath: "root/child-1",
+          },
+        },
+      ],
+    });
+
+    expect(rows[0]).toMatchObject({ threadId: "child-1", status: "active" });
+  });
+
+  it("prefers a live agent summary and ignores blank trailing messages", () => {
+    const liveState = live({
+      items: [
+        {
+          id: "message-1",
+          threadId: "child-1",
+          turnId: "turn-1",
+          type: "agentMessage",
+          text: "Useful summary",
+          raw: { type: "agentMessage" } as never,
+        },
+      ],
+    });
+    const rows = buildSubagentRows([thread()], { "child-1": liveState }, []);
+
+    expect(rows[0]?.summary).toBe("Useful summary");
+  });
+
+  it("returns no summary when the latest agent message is blank", () => {
+    const liveState = live({
+      items: [
+        {
+          id: "message-1",
+          threadId: "child-1",
+          turnId: "turn-1",
+          type: "agentMessage",
+          text: "  ",
+          raw: { type: "agentMessage" } as never,
+        },
+      ],
+    });
+
+    expect(
+      buildSubagentRows([thread()], { "child-1": liveState }, [])[0]?.summary,
+    ).toBeNull();
+  });
 });

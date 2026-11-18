@@ -245,6 +245,95 @@ describe("app-server event query synchronization", () => {
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
+  it("handles name, archive, queue, OAuth, and unrelated notifications", async () => {
+    const queryClient = createQueryClient();
+    const notifications = [
+      {
+        method: "thread/name/updated",
+        params: { threadId: "thread-1", threadName: "Renamed" },
+      },
+      {
+        method: "thread/name/updated",
+        params: { threadId: "thread-1" },
+      },
+      { method: "thread/archived", params: { threadId: "thread-1" } },
+      { method: "thread/unarchived", params: { threadId: "thread-1" } },
+      { method: "thread/queue/changed", params: { threadId: "thread-1" } },
+      {
+        method: "item/completed",
+        params: {
+          threadId: "thread-1",
+          turnId: "turn-1",
+          item: { type: "agentMessage", id: "item-1" },
+          completedAtMs: 1,
+        },
+      },
+      {
+        method: "mcpServer/oauthLogin/completed",
+        params: { name: "server", success: false },
+      },
+      {
+        method: "mcpServer/oauthLogin/completed",
+        params: { name: "server", success: true },
+      },
+      { method: "future/notification", params: {} },
+    ];
+
+    for (const data of notifications) {
+      await synchronizeAppServerQueries(
+        queryClient as unknown as QueryClient,
+        {
+          type: "serverNotification",
+          data,
+        } as AppServerEvent,
+      );
+    }
+
+    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(4);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "threads"],
+    });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: appServerQueryKeys.mcpServers,
+    });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["app-server", "thread", "thread-1", "queue"],
+    });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(6);
+  });
+
+  it("ignores events that are not server notifications", async () => {
+    const queryClient = createQueryClient();
+
+    await synchronizeAppServerQueries(
+      queryClient as unknown as QueryClient,
+      {
+        type: "disconnected",
+        message: "offline",
+      } as AppServerEvent,
+    );
+
+    expect(queryClient.setQueryData).not.toHaveBeenCalled();
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("swallows a failed preview refresh and allows a later retry", async () => {
+    requestAppServerMethod.mockRejectedValueOnce(new Error("server offline"));
+    const queryClient = createQueryClient();
+    const event = {
+      type: "serverNotification",
+      data: {
+        method: "turn/completed",
+        params: { threadId: "thread-retry", turn: {} },
+      },
+    } as AppServerEvent;
+
+    await expect(
+      synchronizeAppServerQueries(queryClient as unknown as QueryClient, event),
+    ).resolves.toBeUndefined();
+    expect(requestAppServerMethod).toHaveBeenCalledOnce();
+  });
+
   it("updates preview caches after a completed turn without replacing a name", async () => {
     requestAppServerMethod.mockResolvedValueOnce({
       response: {

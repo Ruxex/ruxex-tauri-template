@@ -8,9 +8,9 @@ pub mod artifacts;
 mod branding;
 mod desktop;
 mod desktop_config;
-mod editor;
 #[cfg(all(feature = "e2e", target_os = "linux"))]
 mod e2e_screenshot;
+mod editor;
 mod error;
 mod git_diff;
 mod git_diff_commands;

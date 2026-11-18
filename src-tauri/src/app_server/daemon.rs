@@ -405,3 +405,84 @@ pub(super) fn terminate_process(pid: u32) -> Result<(), String> {
         Err(error.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        DaemonSocketProbe, canonicalize_existing_prefix, client_physical_socket_path,
+        force_terminate_process, recovered_daemon_output, stop_recovered_daemon, terminate_process,
+    };
+    use ruxex::desktop::daemon::{BackendKind, LifecycleStatus};
+    use ruxex::desktop::utils::absolute_path::AbsolutePathBuf;
+    use std::fs;
+
+    fn temp_dir(label: &str) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "ruxex-daemon-unit-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn resolves_a_socket_path_with_not_yet_created_parent_directories() {
+        let root = temp_dir("canonical-path");
+        let missing_path = root.join("nested").join("app-server.sock");
+        let canonical = canonicalize_existing_prefix(&missing_path).unwrap();
+        assert_eq!(canonical, missing_path);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn derives_a_stable_physical_socket_for_a_logical_home() {
+        let root = temp_dir("physical-socket");
+        let first = client_physical_socket_path(&root).unwrap();
+        let second = client_physical_socket_path(&root).unwrap();
+        assert_eq!(first, second);
+        assert!(first.is_absolute());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn reports_recovered_daemon_metadata_and_rejects_missing_owner() {
+        let path = AbsolutePathBuf::from_absolute_path(
+            std::env::temp_dir().join("ruxex-recovered-daemon.sock"),
+        )
+        .unwrap();
+        let probe = DaemonSocketProbe {
+            socket_path: path.clone(),
+            app_server_version: Some("test-version".to_string()),
+            peer_pid: None,
+        };
+        let output = recovered_daemon_output(LifecycleStatus::Running, &probe);
+        assert_eq!(output.status, LifecycleStatus::Running);
+        assert_eq!(output.backend, Some(BackendKind::Pid));
+        assert_eq!(output.socket_path.as_path(), path.as_path());
+        assert_eq!(output.app_server_version.as_deref(), Some("test-version"));
+
+        let result = stop_recovered_daemon(&probe).await;
+        assert!(result.is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn process_termination_rejects_zero_and_out_of_range_ids() {
+        assert!(
+            terminate_process(0)
+                .unwrap_err()
+                .contains("greater than zero")
+        );
+        assert!(
+            force_terminate_process(0)
+                .unwrap_err()
+                .contains("greater than zero")
+        );
+        assert!(terminate_process(u32::MAX).is_err());
+        assert!(force_terminate_process(u32::MAX).is_err());
+    }
+}

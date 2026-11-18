@@ -121,3 +121,132 @@ pub(super) fn reject_unknown_flags(args: &[String]) -> Result<(), ArtifactError>
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::run;
+    use serde_json::Value;
+    use std::ffi::OsString;
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn command(args: &[&str]) -> Result<Value, super::ArtifactError> {
+        run(args.iter().map(OsString::from).collect())
+    }
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "ruxex-artifact-cli-unit-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn dispatches_capabilities_and_rejects_missing_or_unknown_commands() {
+        let capabilities = command(&["capabilities"]).unwrap();
+        assert_eq!(capabilities["commands"]["xlsx"][0], "create");
+        assert_eq!(command(&[]).unwrap_err().code, "invalid_arguments");
+        assert_eq!(command(&["unknown"]).unwrap_err().code, "invalid_arguments");
+        assert_eq!(
+            command(&["capabilities", "--unknown"]).unwrap_err().code,
+            "invalid_arguments"
+        );
+    }
+
+    #[test]
+    fn creates_reads_and_validates_a_workbook_in_process() {
+        let directory = temp_dir("xlsx-roundtrip");
+        let input = directory.join("input.json");
+        let workbook = directory.join("report.xlsx");
+        fs::write(
+            &input,
+            r#"{"sheets":[{"name":"Summary","rows":[["name","Ada"],["count",3],["enabled",true],["empty",null]]},{"name":"Details","rows":[["id",1]]}]}"#,
+        )
+        .unwrap();
+        let input = input.to_str().unwrap();
+        let workbook = workbook.to_str().unwrap();
+
+        command(&["xlsx", "create", "--input", input, "--output", workbook]).unwrap();
+        let result = command(&["xlsx", "read", "--input", workbook]).unwrap();
+        assert_eq!(result["sheets"][0]["name"], "Summary");
+        assert_eq!(result["sheets"][0]["rows"][1][1], 3);
+        assert_eq!(result["sheets"][0]["rows"][2][1], true);
+        assert_eq!(result["sheets"][0]["rows"][3][1], Value::Null);
+        assert_eq!(result["sheets"][1]["name"], "Details");
+
+        let validation = command(&["xlsx", "validate", "--input", workbook]).unwrap();
+        assert_eq!(validation["valid"], true);
+        assert_eq!(validation["sheets"][0]["rows"], 4);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn rejects_invalid_xlsx_arguments_and_cell_values_without_output() {
+        let directory = temp_dir("xlsx-errors");
+        let input = directory.join("input.json");
+        let output = directory.join("unsupported.xlsx");
+        fs::write(
+            &input,
+            r#"{"sheets":[{"name":"Summary","rows":[[{"nested":true}]]}]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            command(&["xlsx", "validate", "--unknown", "value"])
+                .unwrap_err()
+                .code,
+            "invalid_arguments"
+        );
+        assert_eq!(
+            command(&["xlsx", "create", "--input", "missing.json"])
+                .unwrap_err()
+                .code,
+            "invalid_arguments"
+        );
+        let error = command(&[
+            "xlsx",
+            "create",
+            "--input",
+            input.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .unwrap_err();
+        assert_eq!(error.code, "unsupported_cell_value");
+        assert!(!output.exists());
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn handles_pdf_create_read_and_validation_errors() {
+        let directory = temp_dir("pdf-roundtrip");
+        let input = directory.join("input.json");
+        let output = directory.join("report.pdf");
+        fs::write(
+            &input,
+            r#"{"pages":[{"width":595,"height":842,"blocks":[{"text":"First page","x":48,"y":780,"size":18}]},{"width":595,"height":842,"blocks":[{"text":"Second page","x":48,"y":780,"size":18}]}]}"#,
+        )
+        .unwrap();
+        command(&[
+            "pdf",
+            "create",
+            "--input",
+            input.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .unwrap();
+        let validation =
+            command(&["pdf", "validate", "--input", output.to_str().unwrap()]).unwrap();
+        assert_eq!(validation["pages"], 2);
+        let read = command(&["pdf", "read", "--input", output.to_str().unwrap()]).unwrap();
+        assert_eq!(read["pages"], 2);
+        assert!(command(&["pdf", "read"]).is_err());
+        fs::remove_dir_all(directory).unwrap();
+    }
+}

@@ -670,11 +670,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::{
-        ScheduleCadence, ScheduleFile, ScheduleInput, apply_run_result, load, new_record,
-        next_run_after, save,
+        ScheduleCadence, ScheduleDispatcher, ScheduleFile, ScheduleInput, SchedulerState,
+        apply_run_result, load, new_record, next_run_after, save,
     };
     use chrono::{DateTime, Utc};
     use std::fs;
+    use std::future::Future;
     use std::path::PathBuf;
 
     fn now() -> DateTime<Utc> {
@@ -809,6 +810,149 @@ mod tests {
 
         assert_eq!(load(&home).unwrap().schedules, vec![record]);
         let _ = fs::remove_dir_all(home);
+    }
+
+    #[tokio::test]
+    async fn scheduler_state_supports_create_update_enable_and_delete() {
+        let home = temp_home("crud");
+        let state = SchedulerState::default();
+        let cadence = ScheduleCadence::Daily {
+            hour: 9,
+            minute: 30,
+            time_zone: Some("UTC".to_string()),
+        };
+        let created = state.create(&home, input(cadence.clone())).await.unwrap();
+        assert_eq!(state.list(&home).await.unwrap(), vec![created.clone()]);
+
+        let mut replacement = input(cadence);
+        replacement.name = "Updated checks".to_string();
+        let updated = state.update(&home, &created.id, replacement).await.unwrap();
+        assert_eq!(updated.name, "Updated checks");
+
+        let disabled = state.set_enabled(&home, &created.id, false).await.unwrap();
+        assert!(!disabled.enabled);
+        state.delete(&home, &created.id).await.unwrap();
+        assert!(state.list(&home).await.unwrap().is_empty());
+        fs::remove_dir_all(home).unwrap();
+    }
+
+    #[tokio::test]
+    async fn scheduler_state_reports_missing_ids_and_records_unavailable_dispatch() {
+        let home = temp_home("missing-and-unavailable");
+        let state = SchedulerState::default();
+        let missing = "not-present";
+        assert_eq!(
+            state
+                .update(
+                    &home,
+                    missing,
+                    input(ScheduleCadence::Daily {
+                        hour: 9,
+                        minute: 0,
+                        time_zone: Some("UTC".to_string()),
+                    })
+                )
+                .await
+                .unwrap_err(),
+            "schedule not found"
+        );
+        assert_eq!(
+            state.set_enabled(&home, missing, false).await.unwrap_err(),
+            "schedule not found"
+        );
+        assert_eq!(
+            state.delete(&home, missing).await.unwrap_err(),
+            "schedule not found"
+        );
+
+        let schedule = state
+            .create(
+                &home,
+                input(ScheduleCadence::Once {
+                    at: (Utc::now() + chrono::Duration::days(1)).to_rfc3339(),
+                }),
+            )
+            .await
+            .unwrap();
+        let result = state
+            .run_now::<TestDispatcher>(&home, &schedule.id, None)
+            .await
+            .unwrap();
+        assert!(!result.last_run.as_ref().unwrap().success);
+        assert_eq!(result.last_run.unwrap().message, "app server unavailable");
+        assert!(!result.enabled);
+        fs::remove_dir_all(home).unwrap();
+    }
+
+    #[tokio::test]
+    async fn due_schedules_record_dispatch_results_and_skip_disabled_entries() {
+        let home = temp_home("due-runs");
+        let state = SchedulerState::default();
+        let mut due = state
+            .create(
+                &home,
+                input(ScheduleCadence::Daily {
+                    hour: 9,
+                    minute: 0,
+                    time_zone: Some("UTC".to_string()),
+                }),
+            )
+            .await
+            .unwrap();
+        due.next_run_at = (Utc::now() - chrono::Duration::minutes(1)).to_rfc3339();
+        let mut disabled = due.clone();
+        disabled.id = "disabled".to_string();
+        disabled.enabled = false;
+        save(
+            &home,
+            &ScheduleFile {
+                schedules: vec![due.clone(), disabled],
+                ..ScheduleFile::default()
+            },
+        )
+        .unwrap();
+
+        state
+            .run_due(
+                &home,
+                Some(&TestDispatcher(Err("dispatch failed".to_string()))),
+            )
+            .await
+            .unwrap();
+        let saved = load(&home).unwrap();
+        assert_eq!(saved.schedules.len(), 2);
+        let completed = saved
+            .schedules
+            .iter()
+            .find(|schedule| schedule.id == due.id)
+            .unwrap();
+        assert_eq!(
+            completed.last_run.as_ref().unwrap().message,
+            "dispatch failed"
+        );
+        assert!(completed.enabled);
+        assert!(
+            saved
+                .schedules
+                .iter()
+                .find(|schedule| schedule.id == "disabled")
+                .unwrap()
+                .last_run
+                .is_none()
+        );
+        fs::remove_dir_all(home).unwrap();
+    }
+
+    struct TestDispatcher(Result<Option<String>, String>);
+
+    impl ScheduleDispatcher for TestDispatcher {
+        fn dispatch(
+            &self,
+            _schedule: super::ScheduleRecord,
+        ) -> impl Future<Output = Result<Option<String>, String>> + Send {
+            let result = self.0.clone();
+            async move { result }
+        }
     }
 
     #[test]

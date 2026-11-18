@@ -133,3 +133,76 @@ pub(crate) fn open_workspace_in_editor(
             )
         })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{detect_editor_command, open_workspace_in_editor, resolve_editor_command};
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn test_workspace(label: &str) -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "ruxex-editor-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn parses_a_configured_editor_with_arguments() {
+        assert_eq!(
+            resolve_editor_command(Some("code --reuse-window")).unwrap(),
+            ["code", "--reuse-window"]
+        );
+    }
+
+    #[test]
+    fn rejects_a_malformed_configured_editor() {
+        let error = resolve_editor_command(Some("code 'unfinished")).unwrap_err();
+        assert!(error.starts_with("invalid editor command:"));
+    }
+
+    #[test]
+    fn editor_detection_matches_path_lookup() {
+        assert_eq!(
+            detect_editor_command().is_some(),
+            resolve_editor_command(None).is_ok()
+        );
+    }
+
+    #[test]
+    fn rejects_a_workspace_that_is_not_a_directory() {
+        let missing =
+            std::env::temp_dir().join(format!("ruxex-editor-missing-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&missing);
+        assert!(
+            open_workspace_in_editor(missing.display().to_string(), Some("true".into())).is_err()
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn launches_the_configured_editor_from_the_workspace() {
+        let workspace = test_workspace("launch");
+        open_workspace_in_editor(workspace.display().to_string(), Some("/bin/true".into()))
+            .unwrap();
+        fs::remove_dir_all(workspace).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn reports_a_configured_editor_that_cannot_be_started() {
+        let workspace = test_workspace("missing-editor");
+        let result = open_workspace_in_editor(
+            workspace.display().to_string(),
+            Some("ruxex-editor-does-not-exist".into()),
+        );
+        assert!(result.is_err());
+        fs::remove_dir_all(workspace).unwrap();
+    }
+}

@@ -44,3 +44,40 @@ pub(crate) fn worktree_open(root: String, path: String) -> CommandResult<()> {
         )
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{worktree_create, worktree_list, worktree_open, worktree_remove};
+    use crate::worktree::{WorktreeCreateRequest, WorktreeRemoveRequest};
+    use std::fs;
+
+    #[test]
+    fn commands_return_repository_errors_as_command_errors() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-worktree-command-test-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let root = root.display().to_string();
+        assert!(worktree_list(root.clone()).is_err());
+        assert!(worktree_open(root.clone(), "/tmp/unknown-worktree".into()).is_err());
+        assert!(
+            worktree_create(WorktreeCreateRequest {
+                root: root.clone(),
+                destination: "/tmp/new-worktree".into(),
+                branch: "test-branch".into(),
+            })
+            .is_err()
+        );
+        assert!(
+            worktree_remove(WorktreeRemoveRequest {
+                root: root.clone(),
+                path: "/tmp/old-worktree".into(),
+                force: false,
+            })
+            .is_err()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+}
