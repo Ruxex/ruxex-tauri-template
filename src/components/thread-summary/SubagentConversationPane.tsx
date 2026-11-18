@@ -103,7 +103,7 @@ export function SubagentConversationPane({ threadId }: { threadId: string }) {
 
   return (
     <div
-      className="h-full overflow-y-auto overscroll-contain"
+      className="h-full min-h-full overflow-y-auto overscroll-contain"
       data-conversation-scroll="true"
     >
       <ChatActivityTimeline

@@ -345,10 +345,10 @@ export function AppLayout() {
                     const selected = tab.id === activeRightPaneTabId;
                     return (
                       <div
-                        className={`flex shrink-0 items-center rounded-t-md ${
+                        className={`flex shrink-0 items-center rounded-t-lg border border-b-0 border-base-300 ${
                           selected
                             ? "bg-base-100 text-base-content"
-                            : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
+                            : "bg-base-200 text-base-content/70 hover:text-base-content"
                         }`}
                         key={tab.id}
                         role="presentation"
