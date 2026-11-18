@@ -20,6 +20,7 @@ export function EditorCommandCard({
           label={t("settings:editorCommand")}
         >
           <input
+            aria-label={t("settings:editorCommand")}
             aria-describedby="settings-editor-command-help"
             autoCapitalize="none"
             autoCorrect="off"
