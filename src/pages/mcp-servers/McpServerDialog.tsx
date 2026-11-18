@@ -360,18 +360,6 @@ export function McpServerDialog({
                     />
                     <span className="label-text">{t("enabled")}</span>
                   </label>
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input
-                      aria-label={t("required")}
-                      checked={localForm.draft.required}
-                      className="toggle toggle-primary toggle-sm"
-                      type="checkbox"
-                      onChange={(event) =>
-                        updateDraft({ required: event.target.checked })
-                      }
-                    />
-                    <span className="label-text">{t("required")}</span>
-                  </label>
                 </div>
               </div>
             )}

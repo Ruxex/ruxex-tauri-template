@@ -52,6 +52,7 @@ describe("McpServerDialog", () => {
     expect(
       screen.getByRole("heading", { name: "Add MCP server" }),
     ).toBeTruthy();
+    expect(screen.queryByLabelText("Required")).toBeNull();
     fireEvent.change(screen.getByRole("textbox", { name: "Server name" }), {
       target: { value: "docs" },
     });

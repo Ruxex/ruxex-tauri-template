@@ -67,7 +67,9 @@ export function createMcpServerForm(
       ? initial.draft
       : initial
     : null;
-  const draft = initialDraft ? { ...initialDraft } : emptyDraft();
+  const draft = initialDraft
+    ? { ...initialDraft, required: false }
+    : emptyDraft();
   return {
     draft,
     argsText: draft.args.join("\n"),

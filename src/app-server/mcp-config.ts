@@ -215,22 +215,6 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
         }),
     };
   }
-  const required = readBoolean(raw, "required", false);
-  if ("error" in required) {
-    return {
-      name,
-      raw,
-      draft: null,
-      error:
-        required.error ??
-        i18n.t("fieldBoolean", {
-          ns: "mcp",
-          lng: i18n.resolvedLanguage,
-          field: "required",
-        }),
-    };
-  }
-
   const hasCommand = raw.command !== undefined;
   const hasUrl = raw.url !== undefined;
   if (hasCommand === hasUrl) {
@@ -313,7 +297,7 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
       draft: {
         name,
         enabled: enabled.value,
-        required: required.value,
+        required: false,
         transport: "stdio",
         command: command.value,
         args: args.value,
@@ -378,7 +362,7 @@ function normalizeEntry(name: string, raw: JsonObject): McpServerEntry {
     draft: {
       name,
       enabled: enabled.value,
-      required: required.value,
+      required: false,
       transport: "streamableHttp",
       command: "",
       args: [],
@@ -490,7 +474,7 @@ export function parseMcpServerDictionaryJson(value: string): {
         }),
       };
     }
-    entries.push({ name, value: config });
+    entries.push({ name, value: { ...config, required: false } });
   }
 
   if (entries.length === 0) {
@@ -615,18 +599,14 @@ export function serializeMcpServerDraft(
 
   if (original) {
     serialized.enabled = draft.enabled;
-    serialized.required = draft.required;
+    serialized.required = false;
   } else {
     if (draft.enabled) {
       delete serialized.enabled;
     } else {
       serialized.enabled = false;
     }
-    if (draft.required) {
-      serialized.required = true;
-    } else {
-      delete serialized.required;
-    }
+    serialized.required = false;
   }
 
   return serialized;

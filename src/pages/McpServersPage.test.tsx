@@ -306,7 +306,7 @@ describe("McpServersPage", () => {
       edits: [
         {
           keyPath: 'mcp_servers."docs"',
-          value: { command: "npx" },
+          value: { command: "npx", required: false },
           mergeStrategy: "replace",
         },
       ],
@@ -333,7 +333,11 @@ describe("McpServersPage", () => {
       edits: [
         {
           keyPath: 'mcp_servers."docs-new"',
-          value: { command: "node", oauth: { client_id: "keep" } },
+          value: {
+            command: "node",
+            oauth: { client_id: "keep" },
+            required: false,
+          },
         },
         {
           keyPath: 'mcp_servers."docs"',

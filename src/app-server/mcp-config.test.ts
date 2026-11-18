@@ -6,6 +6,7 @@ import {
   draftFromEntry,
   extractGlobalMcpConfig,
   mcpServerKeyPath,
+  parseMcpServerDictionaryJson,
   serializeMcpServerDraft,
   type McpServerDraft,
 } from "./mcp-config";
@@ -166,6 +167,7 @@ describe("global MCP configuration adapter", () => {
     expect(serializeMcpServerDraft(stdioDraft())).toEqual({
       command: "npx",
       args: ["-y", "@example/docs"],
+      required: false,
     });
 
     expect(
@@ -187,8 +189,31 @@ describe("global MCP configuration adapter", () => {
       bearer_token_env_var: "MCP_TOKEN",
       env_http_headers: { "X-Workspace": "WORKSPACE_ID" },
       enabled: false,
-      required: true,
+      required: false,
     });
+  });
+
+  it("forces required to false when editing a legacy required server", () => {
+    expect(
+      serializeMcpServerDraft(
+        stdioDraft({ required: true }),
+        { command: "node", required: true },
+      ),
+    ).toMatchObject({ required: false });
+  });
+
+  it("forces required to false for imported MCP server JSON", () => {
+    const result = parseMcpServerDictionaryJson(
+      JSON.stringify({
+        mcpServers: {
+          docs: { command: "node", required: true },
+        },
+      }),
+    );
+
+    expect(result.entries).toEqual([
+      { name: "docs", value: { command: "node", required: false } },
+    ]);
   });
 
   it("removes incompatible transport fields when switching an existing entry", () => {
