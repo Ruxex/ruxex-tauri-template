@@ -71,7 +71,7 @@ export const ConversationItem = memo(function ConversationItem({
 
   return (
     <article
-      className={`group chat ${isUser ? "chat-end w-fit max-w-full ms-auto" : "chat-start w-full"}`}
+      className={`group chat min-w-0 ${isUser ? "chat-end w-fit max-w-full ms-auto" : "chat-start w-full"}`}
       data-conversation-item-id={item.id}
     >
       {isEditing ? (
@@ -111,7 +111,7 @@ export const ConversationItem = memo(function ConversationItem({
           className={
             isUser
               ? "rounded-box border border-base-300 bg-base-200 px-3 py-1.5 text-base-content"
-              : "w-full border-0 bg-transparent px-0 py-2"
+              : "col-start-2 min-w-0 w-full border-0 bg-transparent px-0 py-2"
           }
         >
           <MessageContent isAnimating={isStreaming} text={item.text || "…"} />

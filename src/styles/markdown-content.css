@@ -234,8 +234,8 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  white-space: pre;
-  word-wrap: normal;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .selectable-content [data-streamdown="code-block-body"] pre code {
@@ -400,7 +400,8 @@
   font-family: var(--markdown-font-mono);
   font-size: 12px;
   line-height: 1.45;
-  white-space: pre;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .selectable-content code[data-language="diff"] [data-testid="diff-added"] {

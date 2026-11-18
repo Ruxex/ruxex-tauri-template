@@ -136,7 +136,7 @@
   "subagentRunning": "実行中",
   "subagentCompleted": "完了",
   "tokenUsage": "トークン使用量",
-  "tokensIO": "トークン (I/O)",
+  "tokens": "トークン",
   "amount": "金額",
   "askAssistant": "アシスタントに作業を依頼…",
   "askNamedAssistant": "{{name}}に作業を依頼…",

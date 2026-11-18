@@ -136,7 +136,7 @@
   "subagentRunning": "Running",
   "subagentCompleted": "Completed",
   "tokenUsage": "Token Usage",
-  "tokensIO": "Tokens (I/O)",
+  "tokens": "Tokens",
   "amount": "Amount",
   "askAssistant": "Ask the assistant to work on something…",
   "askNamedAssistant": "Ask {{name}} to work on something…",

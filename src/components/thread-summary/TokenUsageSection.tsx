@@ -32,7 +32,7 @@ export function TokenUsageSection({ usage }: TokenUsageSectionProps) {
       <dl className="flex min-w-0 items-center gap-2 rounded px-1 py-1 text-xs">
         <dt className="flex shrink-0 items-center gap-1.5 font-medium text-base-content/80">
           <CircleStackIcon aria-hidden="true" className="size-4" />
-          <span>{t("tokensIO")}</span>
+          <span>{t("tokens")}</span>
         </dt>
         <dd className="ml-auto flex min-w-0 items-center gap-1.5 font-medium tabular-nums">
           <span
@@ -44,11 +44,6 @@ export function TokenUsageSection({ usage }: TokenUsageSectionProps) {
           >
             <span aria-hidden="true">
               {formatCompactTokens(usage.total.totalTokens)}
-              {" ("}
-              {formatCompactTokens(usage.total.inputTokens)}
-              {"/"}
-              {formatCompactTokens(usage.total.outputTokens)}
-              {")"}
             </span>
             <span className="sr-only">
               {t("tokenSummaryAccessible", {
