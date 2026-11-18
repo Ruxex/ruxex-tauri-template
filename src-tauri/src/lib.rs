@@ -50,13 +50,14 @@ pub fn run_host_app_server_daemon_with_config(config: DesktopConfig) -> anyhow::
         let provider_factory = config.provider_factory.clone();
         let product_identity = config.product_identity();
         let exit =
-            ruxex::desktop::host::run_host_app_server_daemon_with_provider_factory_and_identity(
+            ruxex::desktop::host::run_host_app_server_daemon_with_provider_factory_and_identity_and_system_prompt_profile(
                 arg0_paths,
                 Default::default(),
                 Default::default(),
                 false,
                 provider_factory,
                 product_identity,
+                config.system_prompt_profile.clone(),
             )
             .await?;
         if exit == ruxex::desktop::AppServerExit::Forced {

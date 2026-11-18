@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use serde::Serialize;
 use tauri::State;
@@ -22,6 +23,7 @@ pub struct DesktopConfig {
     pub branding: Branding,
     pub provider_factory: ProviderRuntimeFactory,
     pub skill_policy: SkillPolicy,
+    pub system_prompt_profile: Option<Arc<dyn ruxex::SystemPromptProfile>>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -60,6 +62,7 @@ pub struct DesktopConfigBuilder {
     branding: Branding,
     provider_factory: ProviderRuntimeFactory,
     skill_policy: SkillPolicy,
+    system_prompt_profile: Option<Arc<dyn ruxex::SystemPromptProfile>>,
 }
 
 impl DesktopConfig {
@@ -69,6 +72,7 @@ impl DesktopConfig {
             branding: Branding::ruxex(),
             provider_factory,
             skill_policy: SkillPolicy::default(),
+            system_prompt_profile: None,
         }
     }
 
@@ -151,12 +155,26 @@ impl DesktopConfigBuilder {
         self
     }
 
+    /// Set an optional product-specific system prompt profile.
+    ///
+    /// When omitted, the App Server uses its default model-specific
+    /// instructions. A provided profile supplies the base instructions for
+    /// newly created threads.
+    pub fn system_prompt_profile(
+        mut self,
+        profile: Arc<dyn ruxex::SystemPromptProfile>,
+    ) -> Self {
+        self.system_prompt_profile = Some(profile);
+        self
+    }
+
     /// Finish building the runtime configuration.
     pub fn build(self) -> DesktopConfig {
         DesktopConfig {
             branding: self.branding,
             provider_factory: self.provider_factory,
             skill_policy: self.skill_policy,
+            system_prompt_profile: self.system_prompt_profile,
         }
     }
 }
@@ -250,6 +268,7 @@ pub fn default_config() -> DesktopConfig {
 mod tests {
     use super::{DesktopConfig, DesktopRuntimeState, SkillPolicy};
     use serde_json::json;
+    use std::sync::Arc;
 
     #[cfg(not(feature = "example"))]
     use super::default_config;
@@ -264,6 +283,34 @@ mod tests {
         {
             default_config()
         }
+    }
+
+    struct TestSystemPromptProfile;
+
+    impl ruxex::SystemPromptProfile for TestSystemPromptProfile {
+        fn base_instructions(&self) -> Option<&str> {
+            Some("You are a test assistant.")
+        }
+    }
+
+    #[test]
+    fn default_config_uses_the_app_server_system_prompt() {
+        assert!(test_default_config().system_prompt_profile.is_none());
+    }
+
+    #[test]
+    fn builder_accepts_an_external_system_prompt_profile() {
+        let config = DesktopConfig::builder(test_default_config().provider_factory.clone())
+            .system_prompt_profile(Arc::new(TestSystemPromptProfile))
+            .build();
+
+        assert_eq!(
+            config
+                .system_prompt_profile
+                .as_ref()
+                .and_then(|profile| profile.base_instructions()),
+            Some("You are a test assistant.")
+        );
     }
 
     #[cfg(feature = "example")]
