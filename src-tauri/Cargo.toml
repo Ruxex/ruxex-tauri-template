@@ -91,3 +91,5 @@ webkit2gtk = { version = "2.0.2", optional = true }
 
 [dev-dependencies]
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+tauri = { version = "2.12.0", features = ["test"] }
+tower = { version = "0.5.3", features = ["util"] }

@@ -11,6 +11,31 @@ use crate::desktop_config::DesktopConfig;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 use crate::platform;
 
+#[cfg(test)]
+pub(crate) static TEST_RUXEX_HOME_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+#[cfg(test)]
+pub(crate) struct TestRuxexHomeOverride(Option<std::ffi::OsString>);
+
+#[cfg(test)]
+impl TestRuxexHomeOverride {
+    pub(crate) fn set(home: &Path) -> Self {
+        let previous = std::env::var_os("RUXEX_HOME");
+        unsafe { std::env::set_var("RUXEX_HOME", home) };
+        Self(previous)
+    }
+}
+
+#[cfg(test)]
+impl Drop for TestRuxexHomeOverride {
+    fn drop(&mut self) {
+        match self.0.take() {
+            Some(previous) => unsafe { std::env::set_var("RUXEX_HOME", previous) },
+            None => unsafe { std::env::remove_var("RUXEX_HOME") },
+        }
+    }
+}
+
 pub(crate) fn product_identity(config: &DesktopConfig) -> ProductIdentity {
     ProductIdentity::new(
         &config.branding.window_title,
@@ -118,12 +143,6 @@ pub(crate) fn read_image_file(path: String) -> CommandResult<String> {
             "image path must be absolute",
         ));
     }
-    let canonical = requested.canonicalize().map_err(|error| {
-        command_error(
-            DesktopAppServerErrorKind::Initialization,
-            format!("image path cannot be opened: {error}"),
-        )
-    })?;
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let user_home = dirs::home_dir().ok_or_else(|| {
@@ -138,7 +157,22 @@ pub(crate) fn read_image_file(path: String) -> CommandResult<String> {
             format!("failed to resolve workspace root: {error}"),
         )
     })?;
-    let roots = [home, user_home, workspace];
+    read_image_file_from_roots(&requested, &[&home, &user_home, &workspace])
+}
+
+fn read_image_file_from_roots(requested: &Path, roots: &[&Path]) -> CommandResult<String> {
+    if !requested.is_absolute() {
+        return Err(command_error(
+            DesktopAppServerErrorKind::Initialization,
+            "image path must be absolute",
+        ));
+    }
+    let canonical = requested.canonicalize().map_err(|error| {
+        command_error(
+            DesktopAppServerErrorKind::Initialization,
+            format!("image path cannot be opened: {error}"),
+        )
+    })?;
     let canonical_roots = roots
         .iter()
         .filter_map(|root| root.canonicalize().ok())
@@ -405,7 +439,8 @@ mod tests {
     use std::path::Path;
 
     use super::{
-        product_identity, ruxex_home_from_user_home, select_vendored_skills_source,
+        TEST_RUXEX_HOME_LOCK, TestRuxexHomeOverride, product_identity, read_image_file,
+        read_image_file_from_roots, ruxex_home_from_user_home, select_vendored_skills_source,
         sync_vendored_skills,
     };
     use crate::desktop_config::DesktopConfig;
@@ -439,6 +474,73 @@ mod tests {
             fs::write(skill.join("SKILL.md"), file_content).unwrap();
             fs::write(skill.join("agents/ruxex.yaml"), "interface: {}\n").unwrap();
         }
+    }
+
+    #[test]
+    fn image_file_reader_enforces_allowed_roots_types_and_size() {
+        let root = std::env::temp_dir().join(format!(
+            "ruxex-image-reader-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let outside = root.with_extension("outside");
+        fs::create_dir_all(&root).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+
+        let png = root.join("logo.png");
+        fs::write(&png, b"\x89PNG\r\n\x1a\n").unwrap();
+        assert_eq!(
+            read_image_file_from_roots(&png, &[&root]).unwrap(),
+            "data:image/png;base64,iVBORw0KGgo="
+        );
+
+        let unsupported = root.join("unsupported.svg");
+        fs::write(&unsupported, b"<svg/>").unwrap();
+        assert!(read_image_file_from_roots(&unsupported, &[&root]).is_err());
+        assert!(read_image_file_from_roots(Path::new("relative.png"), &[&root]).is_err());
+
+        let outside_png = outside.join("outside.png");
+        fs::write(&outside_png, b"\x89PNG\r\n\x1a\n").unwrap();
+        assert!(read_image_file_from_roots(&outside_png, &[&root]).is_err());
+
+        let oversized = root.join("large.png");
+        fs::write(&oversized, vec![b'x'; 16 * 1024 * 1024 + 1]).unwrap();
+        assert!(
+            read_image_file_from_roots(&oversized, &[&root])
+                .unwrap_err()
+                .message
+                .contains("16 MiB")
+        );
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(outside).unwrap();
+    }
+
+    #[test]
+    fn image_file_command_reads_from_the_configured_desktop_home() {
+        let _env_lock = TEST_RUXEX_HOME_LOCK.lock().unwrap();
+        let home = std::env::temp_dir().join(format!(
+            "ruxex-image-command-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&home).unwrap();
+        let _home_override = TestRuxexHomeOverride::set(&home);
+        let image = home.join("command.png");
+        fs::write(&image, b"\x89PNG\r\n\x1a\n").unwrap();
+
+        assert_eq!(
+            read_image_file(image.display().to_string()).unwrap(),
+            "data:image/png;base64,iVBORw0KGgo="
+        );
+
+        drop(_home_override);
+        fs::remove_dir_all(home).unwrap();
     }
 
     #[test]

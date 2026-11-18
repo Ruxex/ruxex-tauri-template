@@ -560,9 +560,11 @@ mod tests {
     use super::{
         AppServerDaemonAction, AppServerMode, AppServerState, AppServerStatus,
         DESKTOP_EXPERIMENTAL_API, DesktopAppServerEvent, HOST_APP_SERVER_DAEMON_MODE_ARG,
+        app_server_reject_server_request, app_server_request, app_server_resolve_server_request,
         clear_connection_state, create_chat_workspace_in, desktop_app_server_daemon_args,
         parse_app_server_mode, resolve_in_process_paths,
     };
+    use tauri::Manager;
 
     #[test]
     fn chat_workspaces_are_unique_children_of_the_data_home() {
@@ -967,5 +969,38 @@ mod tests {
 
         assert!(shutdown_rx.recv().await.is_some());
         assert_eq!(*state.user_skill_roots.lock().await, roots);
+    }
+
+    #[tokio::test]
+    async fn app_server_commands_report_disconnected_state_before_sending_requests() {
+        let app = tauri::test::mock_app();
+        app.manage(AppServerState::default());
+        let state = app.state::<AppServerState>();
+
+        let request = serde_json::from_value(json!({
+            "method": "initialize",
+            "id": 1,
+            "params": {"clientInfo": {"name": "coverage", "version": "1"}}
+        }))
+        .unwrap();
+        assert!(app_server_request(state.clone(), request).await.is_err());
+        assert!(
+            app_server_resolve_server_request(
+                state.clone(),
+                serde_json::from_value(json!(2)).unwrap(),
+                json!({"accepted": true})
+            )
+            .await
+            .is_err()
+        );
+        assert!(
+            app_server_reject_server_request(
+                state,
+                serde_json::from_value(json!(3)).unwrap(),
+                serde_json::from_value(json!({"code": -1, "message": "rejected"})).unwrap()
+            )
+            .await
+            .is_err()
+        );
     }
 }

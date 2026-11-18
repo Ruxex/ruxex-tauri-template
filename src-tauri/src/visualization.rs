@@ -9,7 +9,6 @@ pub(crate) const MAX_VISUALIZATION_BYTES: usize = 1_048_576;
 
 #[tauri::command]
 pub(crate) fn read_visualization_file(path: String) -> CommandResult<String> {
-    let requested = PathBuf::from(path);
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let user_home = dirs::home_dir().ok_or_else(|| {
@@ -24,11 +23,17 @@ pub(crate) fn read_visualization_file(path: String) -> CommandResult<String> {
             format!("failed to resolve workspace root: {error}"),
         )
     })?;
-    let canonical = validate_visualization_path(
-        &requested,
-        &[home.as_path(), user_home.as_path(), workspace.as_path()],
-    )
-    .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    read_visualization_file_at(Path::new(&path), &home, &user_home, &workspace)
+}
+
+fn read_visualization_file_at(
+    requested: &Path,
+    home: &Path,
+    user_home: &Path,
+    workspace: &Path,
+) -> CommandResult<String> {
+    let canonical = validate_visualization_path(requested, &[home, user_home, workspace])
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
     let bytes = fs::read(&canonical).map_err(|error| {
         command_error(
             DesktopAppServerErrorKind::Initialization,
@@ -89,7 +94,11 @@ fn is_html_path(path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{MAX_VISUALIZATION_BYTES, validate_visualization_path};
+    use super::{
+        MAX_VISUALIZATION_BYTES, read_visualization_file, read_visualization_file_at,
+        validate_visualization_path,
+    };
+    use crate::desktop::{TEST_RUXEX_HOME_LOCK, TestRuxexHomeOverride};
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -164,5 +173,53 @@ mod tests {
             validate_visualization_path(&valid, &roots(&root)).unwrap(),
             valid.canonicalize().unwrap()
         );
+    }
+
+    #[test]
+    fn reads_only_bounded_utf8_html_files_under_an_allowed_root() {
+        let root = TestRoot::new();
+        let valid = root.path("valid.html");
+        fs::write(&valid, "<main>chart ✓</main>").unwrap();
+        assert_eq!(
+            read_visualization_file_at(&valid, &root.0, &root.0, &root.0).unwrap(),
+            "<main>chart ✓</main>"
+        );
+
+        let invalid_utf8 = root.path("invalid.html");
+        fs::write(&invalid_utf8, [0xff, 0xfe]).unwrap();
+        assert!(
+            read_visualization_file_at(&invalid_utf8, &root.0, &root.0, &root.0)
+                .unwrap_err()
+                .message
+                .contains("valid UTF-8")
+        );
+
+        let missing = root.path("missing.html");
+        assert!(read_visualization_file_at(&missing, &root.0, &root.0, &root.0).is_err());
+
+        let oversized = root.path("oversized.html");
+        fs::write(&oversized, vec![b'x'; MAX_VISUALIZATION_BYTES + 1]).unwrap();
+        assert!(
+            read_visualization_file_at(&oversized, &root.0, &root.0, &root.0)
+                .unwrap_err()
+                .message
+                .contains("1 MiB limit")
+        );
+    }
+
+    #[test]
+    fn visualization_command_reads_from_the_configured_desktop_home() {
+        let _env_lock = TEST_RUXEX_HOME_LOCK.lock().unwrap();
+        let home = TestRoot::new();
+        let _home_override = TestRuxexHomeOverride::set(&home.0);
+        let html = home.path("command.html");
+        fs::write(&html, "<main>preview</main>").unwrap();
+
+        assert_eq!(
+            read_visualization_file(html.display().to_string()).unwrap(),
+            "<main>preview</main>"
+        );
+
+        drop(_home_override);
     }
 }

@@ -10037,6 +10037,7 @@ dependencies = [
  "tauri-plugin-wdio",
  "tauri-runtime",
  "tokio",
+ "tower",
  "url",
  "webkit2gtk",
  "zip 7.4.0",

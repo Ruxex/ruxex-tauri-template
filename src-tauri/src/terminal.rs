@@ -414,10 +414,13 @@ pub(crate) fn terminal_session_timeout_update<R: Runtime>(
 mod tests {
     use super::{
         TerminalEvent, TerminalState, default_terminal_idle_timeout_hours, pty_size,
-        read_terminal_idle_timeout, resolve_working_directory, write_terminal_idle_timeout,
+        read_terminal_idle_timeout, resolve_default_shell, resolve_working_directory,
+        terminal_close, terminal_resize, terminal_start, terminal_write,
+        write_terminal_idle_timeout,
     };
     use std::sync::mpsc;
     use std::time::Duration;
+    use tauri::Manager;
     use tauri::ipc::{Channel, InvokeResponseBody};
 
     #[test]
@@ -444,6 +447,22 @@ mod tests {
             resolve_working_directory(Some(missing.to_string_lossy().into_owned())).unwrap_err();
         assert!(error.contains("Workspace directory does not exist"));
         assert!(resolve_working_directory(Some("  ".into())).is_ok());
+        assert!(std::path::Path::new(&resolve_default_shell()).is_file());
+
+        let state = TerminalState::default();
+        assert!(
+            state
+                .write("missing", "data")
+                .unwrap_err()
+                .contains("closed")
+        );
+        assert!(
+            state
+                .resize("missing", 80, 24)
+                .unwrap_err()
+                .contains("closed")
+        );
+        state.close("missing").unwrap();
     }
 
     #[test]
@@ -520,14 +539,8 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn terminal_sessions_write_resize_and_stream_shell_output() {
-        let (events_tx, events_rx) = mpsc::channel();
-        let channel = Channel::<TerminalEvent>::new(move |body| {
-            if let InvokeResponseBody::Json(payload) = body {
-                let _ = events_tx.send(payload);
-            }
-            Ok(())
-        });
+    fn dropping_terminal_state_terminates_any_remaining_shells() {
+        let channel = Channel::<TerminalEvent>::new(|_| Ok(()));
         let state = TerminalState::default();
         let id = state
             .start(
@@ -537,8 +550,39 @@ mod tests {
                 channel,
             )
             .unwrap();
-        state.resize(&id, 100, 40).unwrap();
-        state.write(&id, "printf 'coverage-marker\\n'\n").unwrap();
+        state.write(&id, "sleep 30\n").unwrap();
+
+        drop(state);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn terminal_sessions_write_resize_and_stream_shell_output() {
+        let (events_tx, events_rx) = mpsc::channel();
+        let channel = Channel::<TerminalEvent>::new(move |body| {
+            if let InvokeResponseBody::Json(payload) = body {
+                let _ = events_tx.send(payload);
+            }
+            Ok(())
+        });
+        let app = tauri::test::mock_app();
+        app.manage(TerminalState::default());
+        let state = app.state::<TerminalState>();
+        let id = terminal_start(
+            state.clone(),
+            Some(std::env::temp_dir().to_string_lossy().into_owned()),
+            80,
+            24,
+            channel,
+        )
+        .unwrap();
+        terminal_resize(state.clone(), id.clone(), 100, 40).unwrap();
+        terminal_write(
+            state.clone(),
+            id.clone(),
+            "printf 'coverage-marker\\n'\n".to_string(),
+        )
+        .unwrap();
 
         let deadline = std::time::Instant::now() + Duration::from_secs(5);
         let mut saw_marker = false;
@@ -560,7 +604,7 @@ mod tests {
             }
         }
         assert!(saw_marker, "the terminal should stream shell output");
-        state.close(&id).unwrap();
-        assert!(state.close(&id).is_ok());
+        terminal_close(state.clone(), id.clone()).unwrap();
+        terminal_close(state, id).unwrap();
     }
 }

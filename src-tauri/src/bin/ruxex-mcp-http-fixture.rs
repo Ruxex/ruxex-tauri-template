@@ -595,9 +595,23 @@ fn request_mcp_method(body: &[u8]) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        ArmSessionPostFailureRequest, ArmedFailureTarget, PostFailureState, StatusCode,
-        arm_post_failure, request_mcp_method,
+        ArmSessionPostFailureRequest, ArmedFailureTarget, INITIALIZE_POST_FAILURE_CONTROL_PATH,
+        INITIALIZED_NOTIFICATION_POST_FAILURE_CONTROL_PATH, MAX_MCP_POST_BODY_BYTES,
+        PostFailureState, SESSION_POST_FAILURE_CONTROL_PATH, StatusCode,
+        arm_initialize_post_failure, arm_initialized_notification_post_failure, arm_post_failure,
+        arm_session_post_failure, fail_mcp_post_when_armed, request_mcp_method, require_bearer,
+        require_gateway_bearer,
     };
+    use axum::body::{Body, to_bytes};
+    use axum::http::{Request, header};
+    use axum::middleware;
+    use axum::routing::{get, post};
+    use axum::{Json, Router};
+    use rmcp::transport::StreamableHttpServerConfig;
+    use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
+    use serde_json::json;
+    use std::sync::Arc;
+    use tower::ServiceExt;
 
     #[test]
     fn extracts_only_string_methods_from_json_rpc_bodies() {
@@ -676,5 +690,226 @@ mod tests {
             Ok(StatusCode::NO_CONTENT)
         );
         assert!(state.armed_failure.lock().await.is_none());
+    }
+
+    fn service_test_router(bearer: Option<&str>, gateway_bearer: Option<&str>) -> Router {
+        let state = PostFailureState::default();
+        let router = Router::new()
+            .route(
+                SESSION_POST_FAILURE_CONTROL_PATH,
+                post(arm_session_post_failure),
+            )
+            .route(
+                INITIALIZE_POST_FAILURE_CONTROL_PATH,
+                post(arm_initialize_post_failure),
+            )
+            .route(
+                INITIALIZED_NOTIFICATION_POST_FAILURE_CONTROL_PATH,
+                post(arm_initialized_notification_post_failure),
+            )
+            .route(
+                "/.well-known/oauth-authorization-server/mcp",
+                get(|| async { Json(json!({"issuer":"http://test/mcp"})) }),
+            )
+            .route(
+                "/oauth/token",
+                post(|| async {
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(json!({"error":"invalid_grant"})),
+                    )
+                }),
+            )
+            .nest_service(
+                "/mcp",
+                super::StreamableHttpService::new(
+                    || Ok(super::TestToolServer::new()),
+                    Arc::new(LocalSessionManager::default()),
+                    StreamableHttpServerConfig::default(),
+                ),
+            )
+            .layer(middleware::from_fn_with_state(
+                state.clone(),
+                fail_mcp_post_when_armed,
+            ))
+            .with_state(state);
+        let router = if let Some(token) = bearer {
+            router.layer(middleware::from_fn_with_state(
+                Arc::new(format!("Bearer {token}")),
+                require_bearer,
+            ))
+        } else {
+            router
+        };
+        if let Some(token) = gateway_bearer {
+            router.layer(middleware::from_fn_with_state(
+                Arc::new(format!("Bearer {token}")),
+                require_gateway_bearer,
+            ))
+        } else {
+            router
+        }
+    }
+
+    async fn call(
+        router: Router,
+        method: &str,
+        path: &str,
+        headers: &[(&str, &str)],
+        body: impl Into<Body>,
+    ) -> axum::response::Response {
+        let mut request = Request::builder().method(method).uri(path);
+        for (name, value) in headers {
+            request = request.header(*name, *value);
+        }
+        router
+            .oneshot(request.body(body.into()).unwrap())
+            .await
+            .unwrap()
+    }
+
+    fn mcp_headers() -> [(&'static str, &'static str); 4] {
+        [
+            ("content-type", "application/json"),
+            ("accept", "application/json, text/event-stream"),
+            ("authorization", "Bearer user-token"),
+            ("host", "localhost"),
+        ]
+    }
+
+    #[tokio::test]
+    async fn http_middleware_and_control_routes_cover_auth_body_limits_and_failure_targets() {
+        let router = service_test_router(Some("user-token"), Some("gateway-token"));
+        assert_eq!(
+            call(router.clone(), "GET", "/private", &[], "")
+                .await
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            call(
+                router.clone(),
+                "GET",
+                "/.well-known/oauth-authorization-server/mcp",
+                &[],
+                ""
+            )
+            .await
+            .status(),
+            StatusCode::OK
+        );
+        assert_eq!(
+            call(router.clone(), "POST", "/oauth/token", &[], "{}")
+                .await
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+
+        let body = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"coverage","version":"1"}}}"#;
+        let mut headers = mcp_headers().to_vec();
+        assert_eq!(
+            call(router.clone(), "POST", "/mcp", &headers[..2], body)
+                .await
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        headers[2] = ("authorization", "Bearer user-token");
+        assert_eq!(
+            call(router.clone(), "POST", "/mcp", &headers, body)
+                .await
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        headers.push(("proxy-authorization", "Bearer gateway-token"));
+        let initialized = call(router.clone(), "POST", "/mcp", &headers, body).await;
+        let initialized_status = initialized.status();
+        let session_id = initialized
+            .headers()
+            .get("mcp-session-id")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let initialized_body = to_bytes(initialized.into_body(), 4096).await.unwrap();
+        assert_eq!(initialized_status, StatusCode::OK, "{initialized_body:?}");
+
+        assert_eq!(
+            call(router.clone(), "GET", "/mcp", &headers, "")
+                .await
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            call(router.clone(), "POST", "/unmatched", &headers, "{}")
+                .await
+                .status(),
+            StatusCode::NOT_FOUND
+        );
+
+        let arm_session = call(
+            router.clone(),
+            "POST",
+            SESSION_POST_FAILURE_CONTROL_PATH,
+            &headers,
+            r#"{"status":503,"remaining":1,"www_authenticate_headers":["Bearer realm=\"mcp\""],"content_type":"text/plain","body":"session failure"}"#,
+        )
+        .await;
+        assert_eq!(arm_session.status(), StatusCode::NO_CONTENT);
+        let session_call =
+            format!(r#"{{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{{}}}}"#);
+        let mut session_headers = headers.clone();
+        session_headers.push(("mcp-session-id", session_id.as_str()));
+        let failed = call(
+            router.clone(),
+            "POST",
+            "/mcp",
+            &session_headers,
+            session_call,
+        )
+        .await;
+        assert_eq!(failed.status(), StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            failed.headers().get(header::CONTENT_TYPE).unwrap(),
+            "text/plain"
+        );
+        assert!(failed.headers().contains_key(header::WWW_AUTHENTICATE));
+        let failed_body = to_bytes(failed.into_body(), 1024).await.unwrap();
+        assert_eq!(&failed_body[..], b"session failure");
+
+        for request in [
+            json!({"jsonrpc":"2.0","id":3,"method":"tools/list","params":{}}),
+            json!({"jsonrpc":"2.0","id":4,"method":"resources/list","params":{}}),
+            json!({"jsonrpc":"2.0","id":5,"method":"resources/templates/list","params":{}}),
+            json!({"jsonrpc":"2.0","id":6,"method":"resources/read","params":{"uri":"memo://ruxex/example-note"}}),
+            json!({"jsonrpc":"2.0","id":7,"method":"resources/read","params":{"uri":"memo://ruxex/missing"}}),
+            json!({"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"echo","arguments":{"message":"hello"}}}),
+            json!({"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"unknown","arguments":{}}}),
+            json!({"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"echo","arguments":{"message":4}}}),
+            json!({"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"echo"}}),
+        ] {
+            let response = call(
+                router.clone(),
+                "POST",
+                "/mcp",
+                &session_headers,
+                request.to_string(),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::OK);
+            let response_body = to_bytes(response.into_body(), 16 * 1024).await.unwrap();
+            let response_text = String::from_utf8(response_body.to_vec()).unwrap();
+            assert!(
+                response_text.contains("\"result\"") || response_text.contains("\"error\""),
+                "unexpected MCP response: {response_text}"
+            );
+        }
+
+        let large_body = vec![b'x'; MAX_MCP_POST_BODY_BYTES + 1];
+        assert_eq!(
+            call(router, "POST", "/mcp", &headers, large_body)
+                .await
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
     }
 }
