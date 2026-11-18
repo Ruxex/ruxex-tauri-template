@@ -93,10 +93,20 @@ export function ConversationWorkspace({
         events.threads,
         Object.values(events.pendingServerRequests),
         t,
+        {
+          history: conversation.data?.items.data,
+          live: liveThread?.items,
+          parentUpdatedAt:
+            conversation.data?.thread.updatedAt ?? liveThread?.lastActivityAt,
+        },
       ),
     [
       events.pendingServerRequests,
       events.threads,
+      conversation.data?.items.data,
+      conversation.data?.thread.updatedAt,
+      liveThread?.items,
+      liveThread?.lastActivityAt,
       subagentThreadList.data?.data,
       t,
     ],
@@ -317,6 +327,7 @@ export function ConversationWorkspace({
   const hasMinimap = items.some((item) => item.type === "userMessage");
   const gitDiff = gitDiffQuery.data ?? null;
   const workspacePath = conversation.data.thread.cwd;
+  // Three-column order: minimap column, main chat column, thread summary column.
   const chatGridClasses = hasMinimap
     ? [
         "grid-cols-[minmax(0,1fr)]",
@@ -343,8 +354,10 @@ export function ConversationWorkspace({
       data-testid="chat-workspace"
     >
       {hasMinimap && (
+        /* Left column: minimap column; this component is the minimap. */
         <ConversationMinimap items={items} timelineRef={timelineRef} />
       )}
+      {/* Center column: main chat column. */}
       <div className="chat-main-column flex w-full min-w-0 max-w-[53rem] justify-self-center self-stretch flex-col gap-4">
         {turnError && (
           <p className="alert alert-error" role="alert">
@@ -388,6 +401,7 @@ export function ConversationWorkspace({
           />
         </div>
       </div>
+      {/* Right column: thread summary column; this component is the thread summary panel. */}
       <ThreadSummaryPanel
         gitDiff={gitDiff}
         onReviewGitDiff={() => {

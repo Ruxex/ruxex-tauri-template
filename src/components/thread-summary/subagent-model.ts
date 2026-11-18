@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { i18n } from "../../app/i18n";
 import type {
+  LiveConversationItem,
   PendingServerRequest,
   ThreadExecutionState,
 } from "../../app-server/event-reducer";
@@ -19,11 +20,29 @@ export type SubagentRow = {
   waitingForApproval: boolean;
 };
 
+type ParentActivityItem = {
+  turnId: string;
+  item: v2.ThreadItem;
+};
+
+type SubagentActivity = {
+  threadId: string;
+  status: SubagentStatus;
+  agentPath?: string;
+  task?: string;
+  order: number;
+};
+
 export function buildSubagentRows(
   threads: v2.Thread[],
   liveThreads: Record<string, ThreadExecutionState>,
   pendingRequests: PendingServerRequest[],
   t: TFunction = i18n.getFixedT(null, "conversation"),
+  activity: {
+    history?: readonly ParentActivityItem[];
+    live?: readonly LiveConversationItem[];
+    parentUpdatedAt?: number;
+  } = {},
 ): SubagentRow[] {
   const waitingThreadIds = new Set(
     pendingRequests
@@ -31,27 +50,172 @@ export function buildSubagentRows(
       .filter((threadId): threadId is string => Boolean(threadId)),
   );
 
-  return [...threads]
-    .sort((left, right) => right.updatedAt - left.updatedAt)
-    .map((thread) => {
-      const live = liveThreads[thread.id];
-      const status = subagentStatus(thread.status, live?.status);
-      const summary = latestAgentSummary(live);
+  const rows = new Map<string, SubagentRow>();
 
-      return {
-        threadId: thread.id,
-        label:
-          thread.agentNickname ??
-          thread.agentRole ??
-          t("agentFallback", { id: thread.id.slice(0, 8) }),
-        role: thread.agentRole,
-        task: thread.preview,
-        status,
-        summary,
-        updatedAt: thread.updatedAt,
-        waitingForApproval: waitingThreadIds.has(thread.id),
-      };
+  for (const thread of threads) {
+    const live = liveThreads[thread.id];
+    rows.set(thread.id, {
+      threadId: thread.id,
+      label:
+        thread.agentNickname ??
+        thread.agentRole ??
+        t("agentFallback", { id: thread.id.slice(0, 8) }),
+      role: thread.agentRole,
+      task: thread.preview,
+      status: subagentStatus(thread.status, live?.status),
+      summary: latestAgentSummary(live),
+      updatedAt: thread.updatedAt,
+      waitingForApproval: waitingThreadIds.has(thread.id),
     });
+  }
+
+  const activityItems = mergeParentActivityItems(
+    activity.history ?? [],
+    activity.live ?? [],
+  );
+  const latestActivityByThread = new Map<string, SubagentActivity>();
+
+  activityItems.forEach(({ item }, order) => {
+    for (const agentActivity of getSubagentActivities(item, order)) {
+      if (liveThreads[agentActivity.threadId]?.archived === true) {
+        continue;
+      }
+      const previous = latestActivityByThread.get(agentActivity.threadId);
+      latestActivityByThread.set(
+        agentActivity.threadId,
+        item.type === "subAgentActivity" &&
+          item.kind === "interacted" &&
+          previous
+          ? { ...agentActivity, status: previous.status }
+          : agentActivity,
+      );
+    }
+  });
+
+  for (const agentActivity of latestActivityByThread.values()) {
+    const threadId = agentActivity.threadId;
+    const existing = rows.get(threadId);
+    const live = liveThreads[threadId];
+    const labelFromPath = agentActivity.agentPath
+      ?.split(/[\\/]/)
+      .filter(Boolean)
+      .at(-1);
+
+    rows.set(threadId, {
+      threadId,
+      label:
+        existing?.label ??
+        labelFromPath ??
+        t("agentFallback", { id: threadId.slice(0, 8) }),
+      role: existing?.role ?? null,
+      task: existing?.task || agentActivity.task || "",
+      status: agentActivity.status,
+      summary: existing?.summary ?? latestAgentSummary(live),
+      updatedAt:
+        existing?.updatedAt ?? activity.parentUpdatedAt ?? agentActivity.order,
+      waitingForApproval:
+        existing?.waitingForApproval ?? waitingThreadIds.has(threadId),
+    });
+  }
+
+  return [...rows.values()]
+    .sort((left, right) => right.updatedAt - left.updatedAt);
+}
+
+function mergeParentActivityItems(
+  history: readonly ParentActivityItem[],
+  live: readonly LiveConversationItem[],
+): ParentActivityItem[] {
+  const merged = new Map<string, ParentActivityItem>();
+  for (const entry of history) {
+    const key = `${entry.turnId}:${entry.item.id}`;
+    merged.delete(key);
+    merged.set(key, entry);
+  }
+  for (const entry of live) {
+    if (entry.raw) {
+      const key = `${entry.turnId}:${entry.raw.id}`;
+      merged.delete(key);
+      merged.set(key, {
+        turnId: entry.turnId,
+        item: entry.raw,
+      });
+    }
+  }
+  return [...merged.values()];
+}
+
+function getSubagentActivities(
+  item: v2.ThreadItem,
+  order: number,
+): SubagentActivity[] {
+  if (item.type === "subAgentActivity") {
+    return [
+      {
+        threadId: item.agentThreadId,
+        status: statusForActivityKind(item.kind),
+        agentPath: item.agentPath,
+        order,
+      },
+    ];
+  }
+
+  if (item.type !== "collabAgentToolCall" || item.tool !== "spawnAgent") {
+    return [];
+  }
+
+  return item.receiverThreadIds.map((threadId) => ({
+    threadId,
+    status: statusForCollabAgent(item, threadId),
+    task: item.prompt ?? undefined,
+    order,
+  }));
+}
+
+function statusForActivityKind(
+  kind: v2.SubAgentActivityKind,
+): SubagentStatus {
+  switch (kind) {
+    case "started":
+      return "active";
+    case "interrupted":
+      return "interrupted";
+    case "completed":
+      return "done";
+    case "interacted":
+      return "active";
+  }
+}
+
+function statusForCollabAgent(
+  item: Extract<v2.ThreadItem, { type: "collabAgentToolCall" }>,
+  threadId: string,
+): SubagentStatus {
+  const agentStatus = item.agentsStates[threadId]?.status;
+  switch (agentStatus) {
+    case "pendingInit":
+    case "running":
+      return "active";
+    case "interrupted":
+    case "shutdown":
+      return "interrupted";
+    case "completed":
+      return "done";
+    case "errored":
+    case "notFound":
+      return "failed";
+  }
+
+  switch (item.status) {
+    case "inProgress":
+      return "active";
+    case "completed":
+      return "done";
+    case "failed":
+      return "failed";
+    case "interrupted":
+      return "interrupted";
+  }
 }
 
 function subagentStatus(
