@@ -47,10 +47,11 @@ def copy_directory(source: Path, destination: Path) -> None:
     shutil.copytree(source, destination)
 
 
-def validate_package(root: Path, version: str, target: str) -> None:
+def validate_package(
+    root: Path, version: str, target: str, desktop_host: bool = False
+) -> None:
     required = [
         "ruxex-package.json",
-        "bin/ruxex",
         "bin/ruxex-code-mode-host",
         "ruxex-path/rg",
         "ruxex-path/ruxex-artifacts",
@@ -66,6 +67,8 @@ def validate_package(root: Path, version: str, target: str) -> None:
             for relative in ("SKILL.md", "agents/ruxex.yaml", "ruxex-artifacts")
         ],
     ]
+    if not desktop_host:
+        required.append("bin/ruxex")
     if sys.platform == "linux":
         required.append("ruxex-resources/bwrap")
     executable_files = {
@@ -88,7 +91,8 @@ def validate_package(root: Path, version: str, target: str) -> None:
             raise SystemExit(f"staged Ruxex package file is not executable: {relative}")
 
     manifest = json.loads((root / "ruxex-package.json").read_text(encoding="utf-8"))
-    if manifest != {"version": version, "target": target, "entrypoint": "bin/ruxex"}:
+    entrypoint = "desktop-host" if desktop_host else "bin/ruxex"
+    if manifest != {"version": version, "target": target, "entrypoint": entrypoint}:
         raise SystemExit(f"unexpected staged Ruxex package manifest: {manifest!r}")
 
 
@@ -100,7 +104,12 @@ def discover_tool(name: str) -> Path | None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--ruxex-bin", type=Path, required=True)
+    parser.add_argument("--ruxex-bin", type=Path)
+    parser.add_argument(
+        "--desktop-host",
+        action="store_true",
+        help="stage resources for a desktop host that embeds the Ruxex runtime",
+    )
     parser.add_argument("--code-mode-host", type=Path, required=True)
     parser.add_argument("--rg", type=Path, default=discover_tool("rg"))
     parser.add_argument("--artifact-tools", type=Path, default=discover_tool("ruxex-artifacts"))
@@ -112,6 +121,10 @@ def main() -> None:
     parser.add_argument("--target", default=target_triple())
     args = parser.parse_args()
 
+    if not args.desktop_host and args.ruxex_bin is None:
+        raise SystemExit("missing --ruxex-bin (or use --desktop-host)")
+    if args.desktop_host and args.ruxex_bin is not None:
+        raise SystemExit("--ruxex-bin cannot be combined with --desktop-host")
     if args.rg is None:
         raise SystemExit("missing rg: install ripgrep or pass --rg")
     if args.artifact_tools is None:
@@ -133,7 +146,8 @@ def main() -> None:
     (output / "ruxex-path").mkdir(parents=True)
     (output / "ruxex-resources").mkdir(parents=True)
 
-    copy_executable(args.ruxex_bin, output / "bin/ruxex")
+    if args.ruxex_bin is not None:
+        copy_executable(args.ruxex_bin, output / "bin/ruxex")
     copy_executable(args.code_mode_host, output / "bin/ruxex-code-mode-host")
     copy_executable(args.rg, output / "ruxex-path/rg")
     copy_executable(args.artifact_tools, output / "ruxex-path/ruxex-artifacts")
@@ -155,14 +169,14 @@ def main() -> None:
             {
                 "version": args.version,
                 "target": args.target,
-                "entrypoint": "bin/ruxex",
+                "entrypoint": "desktop-host" if args.desktop_host else "bin/ruxex",
             },
             indent=2,
         )
         + "\n",
         encoding="utf-8",
     )
-    validate_package(output, args.version, args.target)
+    validate_package(output, args.version, args.target, args.desktop_host)
     print(output)
 
 

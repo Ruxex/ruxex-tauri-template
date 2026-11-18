@@ -106,14 +106,14 @@ build:
 	pnpm build
 
 release:
-	@if [ -z "$(RUXEX_BIN)" ] || [ -z "$(CODE_MODE_HOST)" ] || [ -z "$(NODE_RUNTIME)" ] || [ -z "$(ARTIFACT_SDK)" ]; then \
-		echo 'Usage: make release RUXEX_BIN=<ruxex> CODE_MODE_HOST=<ruxex-code-mode-host> NODE_RUNTIME=<node-runtime-dir> ARTIFACT_SDK=<artifact-sdk-dir>' >&2; \
+	@if [ -z "$(CODE_MODE_HOST)" ] || [ -z "$(NODE_RUNTIME)" ] || [ -z "$(ARTIFACT_SDK)" ]; then \
+		echo 'Usage: make release CODE_MODE_HOST=<ruxex-code-mode-host> NODE_RUNTIME=<node-runtime-dir> ARTIFACT_SDK=<artifact-sdk-dir>' >&2; \
 		exit 2; \
 	fi
 	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts --bin ruxex-artifacts-engine
 	python3 scripts/stage-ruxex-package.py \
 		--output src-tauri/resources/ruxex-package \
-		--ruxex-bin "$(RUXEX_BIN)" \
+		--desktop-host \
 		--code-mode-host "$(CODE_MODE_HOST)" \
 		--node-runtime "$(NODE_RUNTIME)" \
 		--artifact-sdk "$(ARTIFACT_SDK)" \

@@ -240,12 +240,12 @@ The existing Tauri configuration expects the staged package at
 `src-tauri/resources/ruxex-package` before creating a distributable build.
 Use `make release` to build the artifact helper binaries, stage the runtime
 package, and create the Tauri release bundle in that order. Provide the
-platform-matching Ruxex executable, code-mode host, Node runtime directory, and
-artifact SDK directory:
+platform-matching code-mode host, Node runtime directory, and artifact SDK
+directory. The App Server is embedded in the Tauri executable, so a separate
+Ruxex CLI executable is not required:
 
 ```sh
 make release \
-  RUXEX_BIN=/path/to/ruxex \
   CODE_MODE_HOST=/path/to/ruxex-code-mode-host \
   NODE_RUNTIME=/path/to/node-runtime \
   ARTIFACT_SDK=artifact-tool
