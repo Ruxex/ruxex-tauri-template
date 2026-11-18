@@ -54,7 +54,7 @@ describe("settings and composer selectors", () => {
       theme: { accentColor: "violet", preset: "ruxex-dark" },
       uiFontSize: 12,
       uiFontFamily: "Inter",
-      version: 9,
+      version: DEFAULT_UI_PREFERENCES.version,
     });
   });
 });

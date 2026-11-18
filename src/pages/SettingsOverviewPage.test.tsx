@@ -11,10 +11,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const readQuickPanelShortcut = vi.hoisted(() => vi.fn());
 const updateQuickPanelShortcut = vi.hoisted(() => vi.fn());
+const detectEditorCommand = vi.hoisted(() => vi.fn());
 
 vi.mock("../platform/native", () => ({
   readQuickPanelShortcut,
   updateQuickPanelShortcut,
+  detectEditorCommand,
 }));
 
 import {
@@ -39,6 +41,7 @@ describe("SettingsOverviewPage", () => {
     window.localStorage.clear();
     readQuickPanelShortcut.mockReset();
     updateQuickPanelShortcut.mockReset();
+    detectEditorCommand.mockReset().mockResolvedValue(null);
     readQuickPanelShortcut.mockResolvedValue({
       shortcut: "CmdOrCtrl+Alt+R",
       defaultShortcut: "CmdOrCtrl+Shift+Space",

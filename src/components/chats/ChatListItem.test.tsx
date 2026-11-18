@@ -140,7 +140,6 @@ describe("ChatListItem", () => {
 
   it.each([
     ["running", "Running"],
-    ["completed", "Completed"],
     ["waiting", "Waiting"],
     ["failed", "Failed"],
     ["stopped", "Stopped"],
@@ -164,17 +163,31 @@ describe("ChatListItem", () => {
     });
     expect(statusIcon).toBeTruthy();
     expect(screen.queryByText(label)).toBeNull();
-    if (status === "completed") {
-      expect(statusIcon.className).toContain("text-success");
-      expect(statusIcon.querySelector(".rounded-full")).toBeTruthy();
-    }
     if (status === "running") {
       expect(statusIcon.querySelector(".loading-spinner")).toBeTruthy();
-    } else if (status !== "completed") {
+    } else {
       expect(statusIcon.querySelector("svg")).toBeTruthy();
     }
 
     unmount();
+  });
+
+  it("does not render a completion marker", () => {
+    render(
+      <MemoryRouter>
+        <ChatListItem
+          status="completed"
+          thread={{
+            id: "thread-completed",
+            name: "Build the sidebar",
+            preview: null,
+            updatedAt: 1_735_689_600,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("does not render a status region when the chat has no status", () => {

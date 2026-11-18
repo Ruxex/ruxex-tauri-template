@@ -38,6 +38,7 @@ export function McpServersPage() {
   });
 
   const entries = globalConfig.data?.servers ?? [];
+  const dialogEntry = dialog?.entry;
   const existingNames = useMemo(
     () => entries.map((entry) => entry.name),
     [entries],
@@ -200,7 +201,7 @@ export function McpServersPage() {
           error={actions.writeError}
           originalName={dialog.originalName}
           onDelete={
-            dialog.entry ? () => void handleDelete(dialog.entry!) : undefined
+            dialogEntry ? () => void handleDelete(dialogEntry) : undefined
           }
           onClose={closeDialog}
           onImportJson={(entries) => void handleImportJson(entries)}

@@ -211,7 +211,7 @@ describe("UI preference persistence", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(
       document.documentElement.style.getPropertyValue("--color-base-100"),
-    ).toBe("#111827");
+    ).toBe("#1c2a40");
   });
 });
 

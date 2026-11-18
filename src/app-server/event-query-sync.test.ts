@@ -91,7 +91,7 @@ describe("app-server event query synchronization", () => {
 
     synchronizeAppServerQueries(queryClient as unknown as QueryClient, event);
 
-    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(3);
+    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(4);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
@@ -211,7 +211,7 @@ describe("app-server event query synchronization", () => {
       } as AppServerEvent,
     );
 
-    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(3);
+    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(4);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
@@ -243,7 +243,7 @@ describe("app-server event query synchronization", () => {
     expect(requestAppServerMethod).toHaveBeenCalledWith("thread/read", {
       threadId: "thread-1",
     });
-    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(3);
+    expect(queryClient.setQueriesData).toHaveBeenCalledTimes(4);
 
     const metadataCall = queryClient.setQueriesData.mock.calls.find(
       ([options]) =>

@@ -33,6 +33,7 @@ vi.mock("@tauri-apps/api/window", () => ({ getCurrentWindow }));
 const createThread = vi.hoisted(() => vi.fn());
 const sendMessage = vi.hoisted(() => vi.fn());
 const closeQuickPanel = vi.hoisted(() => vi.fn());
+const detectEditorCommand = vi.hoisted(() => vi.fn());
 
 vi.mock("../../app-server/hooks", () => ({
   useCreateThread: () => ({ mutateAsync: createThread, isPending: false }),
@@ -43,7 +44,10 @@ vi.mock("../../app/branding-context", () => ({
   useBranding: () => ({ assistantName: "Ruxex" }),
 }));
 
-vi.mock("../../platform/native", () => ({ closeQuickPanel }));
+vi.mock("../../platform/native", () => ({
+  closeQuickPanel,
+  detectEditorCommand,
+}));
 
 describe("QuickPanelPage", () => {
   afterEach(() => {
@@ -60,6 +64,7 @@ describe("QuickPanelPage", () => {
     createThread.mockReset();
     sendMessage.mockReset();
     closeQuickPanel.mockReset();
+    detectEditorCommand.mockReset().mockResolvedValue(null);
     createThread.mockResolvedValue({ thread: { id: "thread-1" } });
     sendMessage.mockResolvedValue({});
     Object.defineProperty(navigator, "mediaDevices", {

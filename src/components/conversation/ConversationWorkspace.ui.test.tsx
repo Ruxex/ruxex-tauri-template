@@ -19,6 +19,7 @@ const useThreadConversation = vi.hoisted(() => vi.fn());
 const useThreadGoal = vi.hoisted(() => vi.fn());
 const useThreadQueue = vi.hoisted(() => vi.fn());
 const useSubagentThreadList = vi.hoisted(() => vi.fn());
+const useAllThreadList = vi.hoisted(() => vi.fn());
 const useServerRequests = vi.hoisted(() => vi.fn());
 const useRevertThread = vi.hoisted(() => vi.fn());
 const useSendMessage = vi.hoisted(() => vi.fn());
@@ -57,6 +58,7 @@ vi.mock("../../app-server/hooks", () => ({
   useThreadGoal,
   useThreadQueue,
   useSubagentThreadList,
+  useAllThreadList,
   useServerRequests,
   useRevertThread,
   useSendMessage,
@@ -130,6 +132,7 @@ describe("ConversationWorkspace", () => {
       isLoading: false,
       isError: false,
     });
+    useAllThreadList.mockReturnValue({ data: { data: [] } });
     useServerRequests.mockReturnValue([]);
     revertMutation.mockReset();
     revertMutation.mockResolvedValue({});
@@ -337,11 +340,9 @@ describe("ConversationWorkspace", () => {
       "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
     );
     expect(workspace.className).toContain(
-      "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
+      "@min-[80rem]/chat:grid-cols-[minmax(3rem,1fr)_minmax(0,53rem)_minmax(16rem,1fr)]",
     );
-    expect(workspace.className).toContain(
-      "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)_minmax(0,1fr)]",
-    );
+    expect(workspace.className).not.toContain("@min-[96rem]/chat:grid-cols-");
     expect(workspace.className).not.toContain("min-[1360px]");
     expect(workspace.className).not.toContain("min-[1680px]");
     expect(
