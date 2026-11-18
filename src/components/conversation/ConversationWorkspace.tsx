@@ -316,33 +316,19 @@ export function ConversationWorkspace({
     !sendMessage.isPending;
   const hasMinimap = items.some((item) => item.type === "userMessage");
   const gitDiff = gitDiffQuery.data ?? null;
-  const hasSummary =
-    tokenUsage !== null || gitDiff !== null || subagents.length > 0;
   const workspacePath = conversation.data.thread.cwd;
   const chatGridClasses = hasMinimap
-    ? hasSummary
-      ? [
-          "grid-cols-[minmax(0,1fr)]",
-          "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
-          "@min-[80rem]/chat:grid-cols-[minmax(3rem,1fr)_minmax(0,53rem)_minmax(16rem,1fr)]",
-        ]
-      : [
-          "grid-cols-[minmax(0,1fr)]",
-          "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
-          "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)]",
-          "@min-[96rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
-        ]
-    : hasSummary
-      ? [
-          "grid-cols-[minmax(0,1fr)]",
-          "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
-          "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
-          "@min-[96rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
-        ]
-      : [
-          "grid-cols-[minmax(0,1fr)]",
-          "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
-        ];
+    ? [
+        "grid-cols-[minmax(0,1fr)]",
+        "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
+        "@min-[80rem]/chat:grid-cols-[minmax(3rem,1fr)_minmax(0,53rem)_minmax(16rem,1fr)]",
+      ]
+    : [
+        "grid-cols-[minmax(0,1fr)]",
+        "@min-[64rem]/chat:grid-cols-[minmax(0,53rem)]",
+        "@min-[80rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,24rem)]",
+        "@min-[96rem]/chat:grid-cols-[minmax(0,53rem)_minmax(0,1fr)]",
+      ];
 
   return (
     <div
@@ -350,7 +336,7 @@ export function ConversationWorkspace({
         "chat-workspace mx-auto grid min-h-full w-full justify-center gap-4 px-4 pt-4 sm:px-6 sm:pt-6",
         ...chatGridClasses,
         ...(hasMinimap ? ["chat-workspace--has-minimap"] : []),
-        ...(hasSummary ? ["chat-workspace--has-summary"] : []),
+        "chat-workspace--has-summary",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -402,46 +388,44 @@ export function ConversationWorkspace({
           />
         </div>
       </div>
-      {hasSummary && (
-        <ThreadSummaryPanel
-          gitDiff={gitDiff}
-          onReviewGitDiff={() => {
-            if (workspacePath) {
-              onOpenThreadDiff?.({ threadId, workspace: workspacePath });
-            }
-          }}
-          onOpenTerminal={() =>
-            onOpenThreadTerminal?.({
-              threadId,
-              cwd: workspacePath ?? null,
-            })
+      <ThreadSummaryPanel
+        gitDiff={gitDiff}
+        onReviewGitDiff={() => {
+          if (workspacePath) {
+            onOpenThreadDiff?.({ threadId, workspace: workspacePath });
           }
-          onOpenSubagent={onOpenSubagent}
-          onOpenWorkspace={
-            workspacePath
-              ? () => {
-                  void openPath(workspacePath).catch((error) => {
-                    console.error(
-                      "Unable to open workspace in file manager.",
-                      error,
-                    );
-                  });
-                }
-              : undefined
-          }
-          onOpenEditor={
-            workspacePath
-              ? () =>
-                  openWorkspaceInEditor(
-                    workspacePath,
-                    getEditorCommandPreference(),
-                  )
-              : undefined
-          }
-          tokenUsage={tokenUsage}
-          subagents={subagents}
-        />
-      )}
+        }}
+        onOpenTerminal={() =>
+          onOpenThreadTerminal?.({
+            threadId,
+            cwd: workspacePath ?? null,
+          })
+        }
+        onOpenSubagent={onOpenSubagent}
+        onOpenWorkspace={
+          workspacePath
+            ? () => {
+                void openPath(workspacePath).catch((error) => {
+                  console.error(
+                    "Unable to open workspace in file manager.",
+                    error,
+                  );
+                });
+              }
+            : undefined
+        }
+        onOpenEditor={
+          workspacePath
+            ? () =>
+                openWorkspaceInEditor(
+                  workspacePath,
+                  getEditorCommandPreference(),
+                )
+            : undefined
+        }
+        tokenUsage={tokenUsage}
+        subagents={subagents}
+      />
     </div>
   );
 }

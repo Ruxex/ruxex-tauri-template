@@ -42,10 +42,6 @@ export function ThreadSummaryPanel({
   const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
   const [editorError, setEditorError] = useState(false);
 
-  if (!tokenUsage && !gitDiff && subagents.length === 0) {
-    return null;
-  }
-
   return (
     <div className="chat-thread-summary-column chat-side-column sticky top-6 z-10 hidden w-full min-w-0 justify-self-end self-start overflow-hidden @container/summary @min-[80rem]/chat:block">
       <aside

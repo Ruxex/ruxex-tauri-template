@@ -255,7 +255,7 @@ describe("ConversationWorkspace", () => {
     expect(mainChat?.className).toContain("self-stretch");
   });
 
-  it("does not reserve a summary column when token usage is unavailable", async () => {
+  it("reserves a summary column when token usage is unavailable", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
     useAppServerEvents.mockReturnValueOnce({
       connected: true,
@@ -278,12 +278,15 @@ describe("ConversationWorkspace", () => {
     render(<ConversationWorkspace threadId="thread-1" />);
 
     const workspace = screen.getByTestId("chat-workspace");
-    expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
-    expect(workspace.className).not.toContain("chat-workspace--has-summary");
+    expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
+    expect(workspace.className).toContain("chat-workspace--has-summary");
     expect(workspace.className).toContain("chat-workspace--has-minimap");
     expect(workspace.className).toContain("grid-cols-[minmax(0,1fr)]");
     expect(workspace.className).toContain(
       "@min-[64rem]/chat:grid-cols-[minmax(0,1fr)_minmax(0,53rem)]",
+    );
+    expect(workspace.className).toContain(
+      "@min-[80rem]/chat:grid-cols-[minmax(3rem,1fr)_minmax(0,53rem)_minmax(16rem,1fr)]",
     );
   });
 

@@ -46,12 +46,29 @@ describe("ThreadSummaryPanel", () => {
     expect(screen.queryByText("TBD")).toBeNull();
   });
 
-  it("hides the summary when token usage is unavailable", async () => {
+  it("shows workspace actions when token usage is unavailable", async () => {
     const { ThreadSummaryPanel } = await import("./ThreadSummaryPanel");
 
-    render(<ThreadSummaryPanel tokenUsage={null} gitDiff={null} />);
+    render(
+      <ThreadSummaryPanel
+        tokenUsage={null}
+        gitDiff={null}
+        onOpenTerminal={() => {}}
+        onOpenWorkspace={() => {}}
+        onOpenEditor={async () => {}}
+      />,
+    );
 
-    expect(screen.queryByTestId("thread-summary-panel")).toBeNull();
+    expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Open terminal in right pane" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Open workspace in file manager" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Open workspace in editor" }),
+    ).toBeTruthy();
   });
 
   it("renders code additions and deletions without token usage", async () => {
