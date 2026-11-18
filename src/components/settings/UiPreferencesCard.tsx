@@ -24,6 +24,19 @@ export function UiPreferencesCard({
   onThemePresetChange,
 }: UiPreferencesCardProps) {
   const { t } = useTranslation("settings");
+  const brandName = t("common:brandName");
+  const getPresetLabel = (option: UiThemePreset) => {
+    switch (option.id) {
+      case "ruxex-light":
+        return t("settings:themePresetRuxexLight", { brandName });
+      case "ruxex-dark":
+        return t("settings:themePresetRuxexDark", { brandName });
+      case "ruxex-ink-mint":
+        return t("settings:themePresetRuxexInkMint", { brandName });
+      default:
+        return option.label;
+    }
+  };
   const selectedPreset =
     UI_THEME_PRESETS.find((option) => option.id === preset) ??
     UI_THEME_PRESETS[0];
@@ -49,7 +62,7 @@ export function UiPreferencesCard({
                   <span className="block truncate font-medium">
                     {selectedPreset.id === "system"
                       ? t("settings:system")
-                      : selectedPreset.label}
+                      : getPresetLabel(selectedPreset)}
                   </span>
                 </span>
                 <ChevronDownIcon
@@ -74,7 +87,7 @@ export function UiPreferencesCard({
                       aria-hidden="true"
                       className="mt-0.5 size-3.5 shrink-0 text-base-content/55"
                     />
-                    {t("settings:themeAttribution")}
+                    {t("settings:themeAttribution", { brandName })}
                   </p>
                   {UI_THEME_PRESETS.map((option) => {
                     const selected = preset === option.id;
@@ -84,7 +97,7 @@ export function UiPreferencesCard({
                         aria-label={
                           option.id === "system"
                             ? t("settings:system")
-                            : option.label
+                            : getPresetLabel(option)
                         }
                         aria-pressed={selected}
                         className={`flex min-h-32 flex-col justify-between gap-1.5 rounded-lg border p-2 text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-base-300 bg-base-100 hover:border-primary/60"}`}
@@ -92,7 +105,7 @@ export function UiPreferencesCard({
                         title={
                           option.id === "system"
                             ? t("settings:system")
-                            : option.label
+                            : getPresetLabel(option)
                         }
                         type="button"
                         onClick={(event) => {
@@ -107,7 +120,7 @@ export function UiPreferencesCard({
                           <span className="min-w-0 truncate font-medium leading-tight">
                             {option.id === "system"
                               ? t("settings:system")
-                              : option.label}
+                              : getPresetLabel(option)}
                           </span>
                           {selected && (
                             <span

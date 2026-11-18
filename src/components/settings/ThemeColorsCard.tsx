@@ -79,10 +79,17 @@ export function ThemeColorsCard({
   preset?: UiThemePresetId;
 }) {
   const { t } = useTranslation("settings");
+  const brandName = t("common:brandName");
+  const brandedPresetLabels: Record<string, string> = {
+    "ruxex-light": t("settings:themePresetRuxexLight", { brandName }),
+    "ruxex-dark": t("settings:themePresetRuxexDark", { brandName }),
+    "ruxex-ink-mint": t("settings:themePresetRuxexInkMint", { brandName }),
+  };
   const presetLabel =
     preset === "system"
       ? t("settings:system")
-      : (UI_THEME_PRESETS.find((option) => option.id === preset)?.label ??
+      : (brandedPresetLabels[preset] ??
+        UI_THEME_PRESETS.find((option) => option.id === preset)?.label ??
         t("settings:system"));
 
   return (

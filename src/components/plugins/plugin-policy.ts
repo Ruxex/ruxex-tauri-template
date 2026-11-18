@@ -25,6 +25,10 @@ export function getPluginActionPolicy(
       ? i18n.t("officialAppsAreNotSupportedInRuxex", {
           ns: "plugins",
           lng: i18n.resolvedLanguage,
+          brandName: i18n.t("brandName", {
+            ns: "common",
+            lng: i18n.resolvedLanguage,
+          }),
         })
       : remote
         ? i18n.t("remoteMarketplacePluginsCannotBeInstalledHere", {

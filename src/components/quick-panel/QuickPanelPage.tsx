@@ -201,7 +201,7 @@ export function QuickPanelPage() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <h1 className="text-lg font-semibold">{t("windowTitle")}</h1>
           <span className="text-xs text-base-content/60">
-            {branding?.assistantName ?? "Ruxex"}
+            {branding?.assistantName ?? t("common:brandName")}
           </span>
         </div>
         <textarea

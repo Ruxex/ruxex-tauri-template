@@ -70,6 +70,6 @@ describe("VersionPage", () => {
     await act(() => i18n.changeLanguage("ja"));
     expect(screen.getByRole("heading", { name: "バージョン" })).toBeTruthy();
     expect(screen.getAllByText("利用不可")).toHaveLength(3);
-    expect(screen.getByText("Ruxex Desktop")).toBeTruthy();
+    expect(screen.getByText("Ruxex デスクトップ")).toBeTruthy();
   });
 });

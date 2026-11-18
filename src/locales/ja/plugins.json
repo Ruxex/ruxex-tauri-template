@@ -34,7 +34,7 @@
   "pluginDetailsRequireALocalMarketplace": "プラグインの詳細にはローカルマーケットプレイスが必要です。",
   "thisMarketplaceImageSourceIsNotAllowed": "このマーケットプレイス画像のソースは許可されていません。",
   "thisMarketplaceImagePathIsNotAllowed": "このマーケットプレイス画像のパスは許可されていません。",
-  "officialAppsAreNotSupportedInRuxex": "Ruxex は公式アプリに対応していません。",
+  "officialAppsAreNotSupportedInRuxex": "{{brandName}} は公式アプリに対応していません。",
   "loadingPluginImage": "プラグイン画像を読み込み中",
   "pluginImageUnavailable": "プラグイン画像を利用できません",
   "marketplaceSourceIsRequired": "マーケットプレイスのソースは必須です。",

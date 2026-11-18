@@ -34,7 +34,7 @@
   "pluginDetailsRequireALocalMarketplace": "Plugin details require a local marketplace.",
   "thisMarketplaceImageSourceIsNotAllowed": "This marketplace image source is not allowed.",
   "thisMarketplaceImagePathIsNotAllowed": "This marketplace image path is not allowed.",
-  "officialAppsAreNotSupportedInRuxex": "Official Apps are not supported in Ruxex.",
+  "officialAppsAreNotSupportedInRuxex": "Official Apps are not supported in {{brandName}}.",
   "loadingPluginImage": "Loading plugin image",
   "pluginImageUnavailable": "Plugin image unavailable",
   "marketplaceSourceIsRequired": "Marketplace source is required.",

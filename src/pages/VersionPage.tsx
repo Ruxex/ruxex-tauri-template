@@ -14,6 +14,7 @@ function displayVersion(version: string | null | undefined): string {
 
 export function VersionPage() {
   const { t } = useTranslation("settings");
+  const brandName = t("common:brandName");
   const appServerStatus = useAppServerStatus();
   const daemon = useAppServerDaemon();
   const daemonVersion = daemon.status.data;
@@ -25,13 +26,17 @@ export function VersionPage() {
       </h2>
       <SettingsPanel title={t("settings:installedVersions")}>
         <dl>
-          <SettingRow label="Ruxex Desktop">
+          <SettingRow
+            label={t("settings:desktopProductName", { brandName })}
+          >
             {displayVersion(packageJson.version)}
           </SettingRow>
           <SettingRow label={t("settings:appServer")}>
             {displayVersion(appServerStatus.data?.appServerVersion)}
           </SettingRow>
-          <SettingRow label={t("settings:managedRuxex")}>
+          <SettingRow
+            label={t("settings:managedRuxex", { brandName })}
+          >
             {displayVersion(daemonVersion?.managedRuxexVersion)}
           </SettingRow>
           <SettingRow label="CLI">
