@@ -101,6 +101,31 @@ describe("buildSubagentRows", () => {
     expect(rows[0]?.task).toBe("Run the test suite");
   });
 
+  it("stops the running indicator when the child thread has completed", () => {
+    const rows = buildSubagentRows(
+      [thread({ status: { type: "idle" } })],
+      { "child-1": live({ status: "completed" }) },
+      [],
+      undefined,
+      {
+        history: [
+          {
+            turnId: "parent-turn-1",
+            item: {
+              type: "subAgentActivity",
+              id: "spawn-1",
+              kind: "started",
+              agentThreadId: "child-1",
+              agentPath: "root/scout",
+            },
+          },
+        ],
+      },
+    );
+
+    expect(rows[0]?.status).toBe("done");
+  });
+
   it("falls back to a stable label and keeps failure status", () => {
     const rows = buildSubagentRows(
       [

@@ -109,7 +109,10 @@ export function buildSubagentRows(
         t("agentFallback", { id: threadId.slice(0, 8) }),
       role: existing?.role ?? null,
       task: existing?.task || agentActivity.task || "",
-      status: agentActivity.status,
+      status:
+        agentActivity.status === "active"
+          ? (existing?.status ?? liveSubagentStatus(live) ?? "active")
+          : agentActivity.status,
       summary: existing?.summary ?? latestAgentSummary(live),
       updatedAt:
         existing?.updatedAt ?? activity.parentUpdatedAt ?? agentActivity.order,
@@ -241,6 +244,29 @@ function subagentStatus(
       return "failed";
     case "idle":
     case "notLoaded":
+      return "done";
+  }
+}
+
+function liveSubagentStatus(
+  live: ThreadExecutionState | undefined,
+): SubagentStatus | null {
+  if (!live) {
+    return null;
+  }
+  if (live.threadStatus) {
+    return subagentStatus(live.threadStatus, live.status);
+  }
+  switch (live.status) {
+    case "running":
+    case "resynchronizing":
+      return "active";
+    case "failed":
+      return "failed";
+    case "interrupted":
+      return "interrupted";
+    case "completed":
+    case "idle":
       return "done";
   }
 }
