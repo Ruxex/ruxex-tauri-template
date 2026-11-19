@@ -38,6 +38,7 @@
   "queue": "キューに追加",
   "steer": "方向を指示",
   "send": "送信",
+  "signInToStartChatting": "ログインしてチャットを開始",
   "sendingHereWillAnswerThePendingQuestion": "ここから送信すると、保留中の質問への回答になります。",
   "message": "メッセージ",
   "composerOptions": "入力オプション",

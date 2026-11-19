@@ -8,10 +8,11 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useBranding } from "@/app/branding-context";
 import { formatErrorMessage } from "@/app/error-message";
 import type { PendingServerRequest } from "@/app-server/event-reducer";
-import { useCollaborationModes, useModelList } from "@/app-server/hooks";
+import { useAccount, useCollaborationModes, useModelList } from "@/app-server/hooks";
 import type { v2 } from "@/protocol";
 import { buildChatUserInputResponse } from "@/components/composite/approvals/approval-model";
 import { useImageAttachment } from "@/components/base/common/useImageAttachment";
@@ -58,6 +59,8 @@ export function Composer({
   const { t } = useTranslation("conversation");
 
   const branding = useBranding();
+  const account = useAccount();
+  const loginRequired = account.data?.authStatus === "unauthenticated";
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<SubmissionMode>("send");
   const [goalMode, setGoalMode] = useState(false);
@@ -114,6 +117,7 @@ export function Composer({
     : null;
   const composerInputBlocked =
     pendingUserInputRequests.length > 0 && (!canAnswerFromComposer || Boolean(inputRequestBlockReason));
+  const composerDisabled = isPending || composerInputBlocked || loginRequired;
   const showSlashCommands = slashCommandInput !== null && !goalMode;
 
   const setSlashContext = useCallback(
@@ -253,7 +257,7 @@ export function Composer({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
-    if ((!text && !imageFile) || isPending || composerInputBlocked || (goalMode && !text)) {
+    if ((!text && !imageFile) || composerDisabled || (goalMode && !text)) {
       return;
     }
     if (pendingInputRequest && onResolveUserInput) {
@@ -333,7 +337,7 @@ export function Composer({
     <div>
       {showSlashCommands && (
         <SlashCommandPalette
-          disabled={isPending || composerInputBlocked}
+          disabled={composerDisabled}
           id="slash-command-palette"
           key={slashCommandInput.query}
           onActiveOptionChange={handleActiveOptionChange}
@@ -353,7 +357,7 @@ export function Composer({
       >
         <ComposerTextInput
           attachmentInput={attachmentInput}
-          disabled={isPending || composerInputBlocked}
+          disabled={composerDisabled}
           handleAttachmentChange={handleAttachmentChange}
           imageFile={imageFile}
           onChange={setMessage}
@@ -384,7 +388,7 @@ export function Composer({
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <ComposerOptions
-              disabled={isPending || composerInputBlocked}
+              disabled={composerDisabled}
               goalMode={goalMode}
               onGoalModeChange={() => {
                 setGoalMode((value) => !value);
@@ -397,7 +401,7 @@ export function Composer({
             />
             {selectedSkill && <SelectedComposerSkill onRemove={() => setSelectedSkill(null)} skill={selectedSkill} />}
             <PermissionMenu
-              disabled={isPending || composerInputBlocked}
+              disabled={composerDisabled}
               mode={permissionMode}
               onModeChange={handlePermissionChange}
             />
@@ -430,7 +434,7 @@ export function Composer({
           </div>
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <ComposerSettings
-              disabled={isPending || composerInputBlocked}
+              disabled={composerDisabled}
               effort={effort}
               model={model}
               models={models.data?.data ?? []}
@@ -464,16 +468,16 @@ export function Composer({
                           ? t("steer")
                           : t("send")
                 }
-                className="btn btn-primary btn-sm btn-square join-item"
+                className="btn btn-primary btn-sm btn-square w-16 min-w-16 join-item"
                 type="submit"
-                disabled={isPending || composerInputBlocked || (!message.trim() && !imageFile)}
+                disabled={composerDisabled || (!message.trim() && !imageFile)}
               >
                 <SubmitIcon aria-hidden="true" className={`size-4 ${isPending ? "animate-spin" : ""}`} />
               </button>
               {activeTurnId && pendingUserInputRequests.length === 0 && (
                 <SubmissionModeMenu
                   activeTurnId={activeTurnId}
-                  disabled={isPending || composerInputBlocked}
+                  disabled={composerDisabled}
                   mode={mode}
                   onModeChange={setMode}
                 />
@@ -484,6 +488,13 @@ export function Composer({
         {pendingUserInputRequests.length > 0 && (
           <p className="mt-2 text-sm text-base-content/70" role="status">
             {inputRequestBlockReason ?? t("sendingHereWillAnswerThePendingQuestion")}
+          </p>
+        )}
+        {loginRequired && (
+          <p className="mt-2 text-sm">
+            <Link className="link link-primary" to="/settings/account">
+              {t("signInToStartChatting")}
+            </Link>
           </p>
         )}
         {(attachmentError || actions.error || inputRequestError) && (

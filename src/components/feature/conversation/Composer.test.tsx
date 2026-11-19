@@ -32,6 +32,7 @@ vi.mock("@/app/branding-context", () => ({
 }));
 
 vi.mock("@/app-server/hooks", () => ({
+  useAccount: () => ({ data: { authStatus: "authenticated" } }),
   useModelList: () => ({
     data: {
       data: [
@@ -91,6 +92,14 @@ vi.mock("@/app-server/hooks", () => ({
   }),
   useCollaborationModes,
   useSkillsList,
+}));
+
+vi.mock("react-router-dom", () => ({
+  Link: ({ children, to, className }: React.PropsWithChildren<{ to: string; className?: string }>) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@/platform/skill-policy", () => ({

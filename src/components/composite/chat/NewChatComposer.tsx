@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useBranding } from "@/app/branding-context";
 import { formatErrorMessage } from "@/app/error-message";
 import { createChatWorkspace } from "@/platform/chat-workspace";
 import {
   useAllProjectList,
+  useAccount,
   useCollaborationModes,
   useCreateThread,
   useModelList,
@@ -47,6 +48,8 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
 
   const branding = useBranding();
   const navigate = useNavigate();
+  const account = useAccount();
+  const loginRequired = account.data?.authStatus === "unauthenticated";
   const models = useModelList();
   const { skills, visibleSkills } = useComposerSkills();
   const collaborationModes = useCollaborationModes();
@@ -93,7 +96,8 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
       (goalMode && !text) ||
       createThread.isPending ||
       sendMessage.isPending ||
-      setGoal.isPending
+      setGoal.isPending ||
+      loginRequired
     ) {
       return;
     }
@@ -203,6 +207,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   }
 
   const isPending = createThread.isPending || sendMessage.isPending || setGoal.isPending;
+  const composerDisabled = isPending || loginRequired;
   const isProjectLoading = Boolean(selectedProjectId && project.isLoading);
   const error = workspaceError ?? attachmentError ?? createThread.error ?? sendMessage.error ?? setGoal.error;
   const canSubmit = Boolean(message.trim() || imageFile) && !(goalMode && !message.trim());
@@ -215,7 +220,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
       <div className="mx-auto w-full max-w-3xl">
         <div className="mb-1 w-fit max-w-full rounded-box border border-base-300 bg-base-100 px-2 py-0.5">
           <ProjectSelector
-            disabled={isPending}
+            disabled={composerDisabled}
             isError={projects.isError}
             isLoading={projects.isLoading}
             isRetrying={projects.isFetching}
@@ -229,7 +234,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         {showSlashCommands && (
           <SlashCommandPalette
             commands={["goal"]}
-            disabled={isPending}
+            disabled={composerDisabled}
             onDismiss={() => editorRef.current?.focus()}
             onSelect={handleSlashCommandSelect}
             onSelectSkill={handleSlashSkillSelect}
@@ -245,7 +250,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
         >
           <ComposerTextInput
             attachmentInput={attachmentInput}
-            disabled={isPending}
+            disabled={composerDisabled}
             handleAttachmentChange={handleAttachmentChange}
             imageFile={imageFile}
             onChange={setMessage}
@@ -260,7 +265,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <ComposerOptions
-                disabled={isPending}
+                disabled={composerDisabled}
                 goalMode={goalMode}
                 onAttach={() => attachmentInput.current?.click()}
                 onGoalModeChange={() => {
@@ -291,7 +296,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
                   {t("goal")}
                 </span>
               )}
-              <PermissionMenu disabled={isPending} mode={permissionMode} onModeChange={setPermissionMode} />
+              <PermissionMenu disabled={composerDisabled} mode={permissionMode} onModeChange={setPermissionMode} />
               {planMode && (
                 <span aria-label={t("planModeActive")} className="badge badge-secondary badge-sm gap-1" role="status">
                   <button
@@ -308,7 +313,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
             </div>
             <div className="ml-auto flex min-w-0 items-center gap-2">
               <ComposerSettings
-                disabled={isPending}
+                disabled={composerDisabled}
                 effort={effort}
                 model={model}
                 models={models.data?.data ?? []}
@@ -317,8 +322,8 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
               />
               <button
                 aria-label={t("send")}
-                className="btn btn-primary btn-square btn-sm"
-                disabled={isPending || isProjectLoading || !canSubmit}
+                className="btn btn-primary btn-square btn-sm w-16 min-w-16"
+                disabled={composerDisabled || isProjectLoading || !canSubmit}
                 title={t("send")}
                 type="submit"
               >
@@ -326,6 +331,13 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
               </button>
             </div>
           </div>
+          {loginRequired && (
+            <p className="mt-2 text-sm">
+              <Link className="link link-primary" to="/settings/account">
+                {t("signInToStartChatting")}
+              </Link>
+            </p>
+          )}
           {error && (
             <p className="mt-2 text-sm text-error" role="alert">
               {formatErrorMessage(error)}

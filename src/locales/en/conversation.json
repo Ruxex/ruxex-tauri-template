@@ -38,6 +38,7 @@
   "queue": "Queue",
   "steer": "Steer",
   "send": "Send",
+  "signInToStartChatting": "Sign in to start chatting",
   "sendingHereWillAnswerThePendingQuestion": "Sending here will answer the pending question.",
   "message": "Message",
   "composerOptions": "Composer options",

@@ -12,6 +12,11 @@ const useProject = vi.hoisted(() => vi.fn());
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigate,
+  Link: ({ children, to, className }: React.PropsWithChildren<{ to: string; className?: string }>) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@/platform/chat-workspace", () => ({ createChatWorkspace }));
@@ -21,6 +26,7 @@ vi.mock("@/app/branding-context", () => ({
 }));
 
 vi.mock("@/app-server/hooks", () => ({
+  useAccount: () => ({ data: { authStatus: "authenticated" } }),
   useCollaborationModes: () => ({ data: { data: [] } }),
   useCreateThread: () => ({
     error: null,
