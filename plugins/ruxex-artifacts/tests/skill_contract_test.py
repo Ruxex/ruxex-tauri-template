@@ -62,6 +62,140 @@ class ArtifactSkillContractTest(unittest.TestCase):
             self.assertNotIn("npm", skill.lower())
             self.assertNotIn("excel", skill.lower())
 
+    def test_presentation_skill_covers_codex_quality_workflow_without_hosted_routes(self) -> None:
+        skill = (SKILLS_ROOT / "presentations" / "SKILL.md").read_text(
+            encoding="utf-8",
+        ).lower()
+        for phrase in (
+            "read-only",
+            "existing deck",
+            "template",
+            "factual claims",
+            "speaker notes",
+            "slide count",
+            "pixel",
+            "local images",
+            "native charts",
+            "editable",
+            "diagnostics",
+            "api-compatibility.md",
+            "package structure",
+            "pixel-accurate slide rendering",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, skill)
+        self.assertNotIn("google slides", skill)
+        self.assertNotIn("artifact session", skill)
+
+    def test_spreadsheet_skill_covers_codex_quality_guidance(self) -> None:
+        skill_dir = SKILLS_ROOT / "spreadsheets"
+        skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("workflows/verification.md", skill)
+        self.assertIn("references/formula_guidance.md", skill)
+        self.assertIn("references/template_workflow.md", skill)
+
+        required_files = (
+            "workflows/verification.md",
+            "references/formula_guidance.md",
+            "references/template_workflow.md",
+        )
+        for relative_path in required_files:
+            with self.subTest(file=relative_path):
+                self.assertTrue((skill_dir / relative_path).is_file())
+
+        template = (skill_dir / "references/template_workflow.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "screenshot and image references",
+            "formula-derived",
+            "antialiasing",
+            "preserve numeric and date values",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, template)
+
+        formulas = (skill_dir / "references/formula_guidance.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "duplicate keys",
+            "blank versus zero",
+            "one-time override",
+            "do not blanket-wrap",
+            "flow",
+            "stock",
+            "terminal",
+            "evaluates both branches of `if`",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, formulas)
+
+        verification = (skill_dir / "workflows/verification.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "first, middle, and last",
+            "next period",
+            "duplicate keys",
+            "blank versus zero",
+            "reconciliation",
+            "chart",
+            "cached formula values",
+            "structural file check",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, verification)
+
+        charts = (skill_dir / "features/charts.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "missing observations blank",
+            "point counts",
+            "baseline",
+            "units",
+            "category and value ranges aligned",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, charts)
+
+        finance = (skill_dir / "domain_guidance/financial_models.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "retained earnings",
+            "accumulated depreciation",
+            "favorable/unfavorable",
+            "terminal-value method",
+            "finance checks",
+            "pressure point",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, finance)
+
+        style = (skill_dir / "style_guidelines.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "selected case",
+            "active assumption row",
+            "dark, high-contrast header",
+            "gridline visibility",
+            "tab colors",
+            "internal file paths",
+            "required user actions",
+            "generic disclaimers",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, style)
+
+        design = (skill_dir / "references/workbook_design.md").read_text(encoding="utf-8").lower()
+        self.assertIn("terminal review outputs", design)
+        self.assertIn("no assumption, build, summary", design)
+
+    def test_spreadsheet_edit_workflow_warns_about_cached_results_and_xlsx_fidelity(self) -> None:
+        skill_dir = SKILLS_ROOT / "spreadsheets"
+        edit = (skill_dir / "workflows/edit_workflows.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "cached formula results",
+            "unsupported formulas",
+            "styles",
+            "charts",
+            "images",
+            "do not round-trip",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, edit)
+
 
 if __name__ == "__main__":
     unittest.main()
