@@ -95,6 +95,7 @@ import type { ThreadQueueReorderResponse } from "@/protocol/generated/v2/ThreadQ
 import type { ThreadQueueStartResponse } from "@/protocol/generated/v2/ThreadQueueStartResponse";
 import type { ThreadQueueUpdateResponse } from "@/protocol/generated/v2/ThreadQueueUpdateResponse";
 import type { ThreadReadResponse } from "@/protocol/generated/v2/ThreadReadResponse";
+import type { ThreadTokenUsageReadResponse } from "@/protocol/generated/v2/ThreadTokenUsageReadResponse";
 import type { ThreadResumeResponse } from "@/protocol/generated/v2/ThreadResumeResponse";
 import type { ThreadRevertResponse } from "@/protocol/generated/v2/ThreadRevertResponse";
 import type { ThreadSearchOccurrencesResponse } from "@/protocol/generated/v2/ThreadSearchOccurrencesResponse";
@@ -333,6 +334,11 @@ export type ClientResponse =
       response: ThreadLoadedListResponse;
     }
   | { method: "thread/read"; id: RequestId; response: ThreadReadResponse }
+  | {
+      method: "thread/tokenUsage/read";
+      id: RequestId;
+      response: ThreadTokenUsageReadResponse;
+    }
   | {
       method: "thread/turns/list";
       id: RequestId;

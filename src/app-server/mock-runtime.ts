@@ -15,6 +15,7 @@ export function getMockAppServer(): MockAppServer {
     nextCursor: null,
     backwardsCursor: null,
   });
+  server.respond("thread/tokenUsage/read", { tokenUsage: null });
   server.respond("account/read", {
     providerId: "mock",
     account: null,

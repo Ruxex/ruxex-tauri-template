@@ -138,6 +138,42 @@ describe("thread query hooks", () => {
     });
   });
 
+  it("loads persisted token usage for an opened thread", async () => {
+    const usage: v2.ThreadTokenUsage = {
+      total: {
+        inputTokens: 120,
+        cachedInputTokens: 20,
+        cacheWriteInputTokens: 0,
+        outputTokens: 30,
+        reasoningOutputTokens: 10,
+        totalTokens: 150,
+      },
+      last: {
+        inputTokens: 70,
+        cachedInputTokens: 10,
+        cacheWriteInputTokens: 0,
+        outputTokens: 20,
+        reasoningOutputTokens: 5,
+        totalTokens: 90,
+      },
+      totalAmount: 0.56,
+      lastAmount: 0.03,
+      modelContextWindow: 200_000,
+    };
+    requestAppServerMethod.mockResolvedValue({ response: { tokenUsage: usage } });
+    const { useThreadTokenUsage } = await import("./useThreadQueries");
+    const { result } = renderHook(() => useThreadTokenUsage("thread-1"), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(requestAppServerMethod).toHaveBeenCalledWith("thread/tokenUsage/read", {
+      threadId: "thread-1",
+    });
+    expect(result.current.data).toEqual(usage);
+  });
+
   it("does not consume a started session while loading read-only queries", async () => {
     markThreadStarted("thread-new");
     const { useThread, useThreadConversation } = await import("./useThreadQueries");

@@ -36,6 +36,7 @@ export const appServerQueryKeys = {
   threadSearch: (params: v2.ThreadSearchParams) => ["app-server", "threads", "search", params] as const,
   thread: (threadId: string) => ["app-server", "thread", threadId] as const,
   threadMetadata: (threadId: string) => ["app-server", "thread", threadId, "metadata"] as const,
+  threadTokenUsage: (threadId: string) => ["app-server", "thread", threadId, "token-usage"] as const,
   threadConversationRoot: (threadId: string) => ["app-server", "thread", threadId, "conversation"] as const,
   threadTurnsRoot: (threadId: string) => ["app-server", "thread", threadId, "conversation", "turns"] as const,
   threadTurns: (threadId: string, params: object) =>

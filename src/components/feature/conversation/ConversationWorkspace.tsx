@@ -14,6 +14,7 @@ import {
   useSendMessage,
   useSubagentThreadList,
   useThreadConversation,
+  useThreadTokenUsage,
 } from "@/app-server/hooks";
 import { useGitDiffSummary } from "@/platform/git-diff";
 import { openWorkspaceInEditor } from "@/platform/native";
@@ -44,6 +45,7 @@ export function ConversationWorkspace({
   const branding = useBranding();
   const timelineRef = useRef<HTMLElement | null>(null);
   const conversation = useThreadConversation(threadId);
+  const tokenUsageQuery = useThreadTokenUsage(threadId);
   const gitDiffQuery = useGitDiffSummary(conversation.data?.thread.cwd ?? null);
   const events = useAppServerEvents();
   const [isRecovering, setIsRecovering] = useState(false);
@@ -53,7 +55,7 @@ export function ConversationWorkspace({
   const revertThread = useRevertThread();
   const sendMessage = useSendMessage();
   const liveThread = events.threads[threadId];
-  const tokenUsage = liveThread?.tokenUsage ?? null;
+  const tokenUsage = liveThread?.tokenUsage ?? tokenUsageQuery.data ?? null;
   const subagentThreadList = useSubagentThreadList(threadId);
   const subagentDescendantList = useAllThreadList({
     ancestorThreadId: threadId,

@@ -11,6 +11,7 @@ const useRetainThreadState = vi.hoisted(() => vi.fn());
 const useThreadConversation = vi.hoisted(() => vi.fn());
 const useThreadGoal = vi.hoisted(() => vi.fn());
 const useThreadQueue = vi.hoisted(() => vi.fn());
+const useThreadTokenUsage = vi.hoisted(() => vi.fn());
 const useSubagentThreadList = vi.hoisted(() => vi.fn());
 const useAllThreadList = vi.hoisted(() => vi.fn());
 const useServerRequests = vi.hoisted(() => vi.fn());
@@ -44,6 +45,7 @@ vi.mock("@/app-server/hooks", () => ({
   useThreadConversation,
   useThreadGoal,
   useThreadQueue,
+  useThreadTokenUsage,
   useSubagentThreadList,
   useAllThreadList,
   useServerRequests,
@@ -112,6 +114,7 @@ describe("ConversationWorkspace", () => {
       },
     });
     useThreadGoal.mockReturnValue({ data: { goal: null } });
+    useThreadTokenUsage.mockReturnValue({ data: undefined });
     useSubagentThreadList.mockReturnValue({
       data: { data: [] },
       isLoading: false,
@@ -195,6 +198,32 @@ describe("ConversationWorkspace", () => {
     expect(screen.queryByRole("button", { name: "Open Thread Summary" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Close Thread Summary" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Thread Summary" })).toBeNull();
+  });
+
+  it("shows persisted token usage when no live usage event is available", async () => {
+    useThreadTokenUsage.mockReturnValueOnce({
+      data: {
+        total: { totalTokens: 2400 },
+        last: { totalTokens: 800 },
+        totalAmount: 1.25,
+        lastAmount: 0.2,
+        modelContextWindow: 8192,
+      },
+    });
+    useAppServerEvents.mockReturnValueOnce({
+      connected: true,
+      pendingServerRequests: {},
+      resynchronizing: false,
+      skippedEvents: 0,
+      lastError: null,
+      threads: { "thread-1": { items: [], tokenUsage: null } },
+    });
+    const { ConversationWorkspace } = await import("./ConversationWorkspace");
+
+    render(<ConversationWorkspace threadId="thread-1" />);
+
+    expect(screen.getByTitle(/Total tokens: 2,400$/).textContent).toContain("2.4k");
+    expect(screen.getByTitle("Total amount: 1.25").textContent).toContain("1.25");
   });
 
   it("shows the thread summary for Git changes when token usage is unavailable", async () => {

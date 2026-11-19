@@ -94,6 +94,7 @@ import type { ThreadQueueReorderParams } from "@/protocol/generated/v2/ThreadQue
 import type { ThreadQueueStartParams } from "@/protocol/generated/v2/ThreadQueueStartParams";
 import type { ThreadQueueUpdateParams } from "@/protocol/generated/v2/ThreadQueueUpdateParams";
 import type { ThreadReadParams } from "@/protocol/generated/v2/ThreadReadParams";
+import type { ThreadTokenUsageReadParams } from "@/protocol/generated/v2/ThreadTokenUsageReadParams";
 import type { ThreadResumeParams } from "@/protocol/generated/v2/ThreadResumeParams";
 import type { ThreadRevertParams } from "@/protocol/generated/v2/ThreadRevertParams";
 import type { ThreadSearchOccurrencesParams } from "@/protocol/generated/v2/ThreadSearchOccurrencesParams";
@@ -308,6 +309,11 @@ export type ClientRequest =
       params: ThreadLoadedListParams;
     }
   | { method: "thread/read"; id: RequestId; params: ThreadReadParams }
+  | {
+      method: "thread/tokenUsage/read";
+      id: RequestId;
+      params: ThreadTokenUsageReadParams;
+    }
   | {
       method: "thread/turns/list";
       id: RequestId;

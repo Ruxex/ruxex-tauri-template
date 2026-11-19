@@ -150,6 +150,21 @@ export function useThread(threadId: string, includeTurns = false) {
   });
 }
 
+export function useThreadTokenUsage(threadId: string) {
+  const status = useAppServerStatus();
+
+  return useQuery({
+    queryKey: appServerQueryKeys.threadTokenUsage(threadId),
+    queryFn: async () => {
+      const response = await requestAppServerMethod("thread/tokenUsage/read", {
+        threadId,
+      });
+      return response.response.tokenUsage;
+    },
+    enabled: Boolean(status.data && threadId),
+  });
+}
+
 export function useThreadGoal(threadId: string) {
   const status = useAppServerStatus();
 

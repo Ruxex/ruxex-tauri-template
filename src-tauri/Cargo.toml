@@ -41,9 +41,9 @@ anyhow = "1"
 base64 = "0.22"
 calamine = "0.31"
 ruxex-scheduler = { path = "../crates/ruxex-scheduler" }
-# Pin runtime and example-provider dependencies to the same Ruxex 0.8.0 revision.
-ruxex = { git = "https://github.com/Ruxex/ruxex.git", rev = "4a0f7b513f613d0e9ae7235d4c79ce2cd43ee06b", version = "=0.8.0", default-features = false, features = ["desktop"] }
-ruxex-provider-host-example = { git = "https://github.com/Ruxex/ruxex.git", rev = "4a0f7b513f613d0e9ae7235d4c79ce2cd43ee06b", package = "ruxex-provider-host-example", version = "=0.8.0", features = ["dummy-provider", "cloudflare-provider"], optional = true }
+# Pin runtime and example-provider dependencies to the same Ruxex 0.9.0 revision.
+ruxex = { git = "https://github.com/Ruxex/ruxex.git", rev = "36dcd6c9183001e89f6853d96239e9f74b4273ba", version = "=0.9.0", default-features = false, features = ["desktop"] }
+ruxex-provider-host-example = { git = "https://github.com/Ruxex/ruxex.git", rev = "36dcd6c9183001e89f6853d96239e9f74b4273ba", package = "ruxex-provider-host-example", version = "=0.8.0", features = ["dummy-provider", "cloudflare-provider"], optional = true }
 dirs = "6"
 futures = "0.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
