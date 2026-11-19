@@ -48,6 +48,9 @@ export function synchronizeAppServerQueries(queryClient: QueryClient, event: App
       if (event.data.params.threadName === undefined) {
         invalidateThreadMetadata(queryClient, event.data.params.threadId);
         invalidateThreadList(queryClient);
+        void queryClient.invalidateQueries({
+          queryKey: appServerQueryKeys.subagentThreadListRoot,
+        });
         return Promise.resolve();
       }
       patchThreadCaches(queryClient, event.data.params.threadId, {

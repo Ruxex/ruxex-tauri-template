@@ -8,6 +8,7 @@
     "core:window:allow-set-title",
     "dialog:default",
     "notification:default",
-    "opener:default"
+    "opener:default",
+    "opener:allow-open-path"
   ]
 }

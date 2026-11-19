@@ -215,7 +215,7 @@ describe("QuickPanelPage", () => {
     expect(setTitle).not.toHaveBeenCalled();
   });
 
-  it("grants only title-setting permission while preserving capability targets and main branding", () => {
+  it("grants required permissions while preserving capability targets and main branding", () => {
     expect(defaultCapability.identifier).toBe("default");
     expect(defaultCapability.windows).toEqual(["main", "quick-panel"]);
     expect(defaultCapability.permissions).toEqual([
@@ -224,6 +224,7 @@ describe("QuickPanelPage", () => {
       "dialog:default",
       "notification:default",
       "opener:default",
+      "opener:allow-open-path",
     ]);
     expect(tauriConfig.app.windows[0].title).toBe("Ruxex Desktop");
   });

@@ -169,6 +169,25 @@ describe("app-server event query synchronization", () => {
     expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
   });
 
+  it("refreshes parent subagent lists when a thread name event requires a server lookup", () => {
+    const queryClient = createQueryClient();
+
+    synchronizeAppServerQueries(
+      queryClient as unknown as QueryClient,
+      {
+        type: "serverNotification",
+        data: {
+          method: "thread/name/updated",
+          params: { threadId: "agent-1" },
+        },
+      } as AppServerEvent,
+    );
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: appServerQueryKeys.subagentThreadListRoot,
+    });
+  });
+
   it("refreshes child metadata after a live subagent activity item", () => {
     const queryClient = createQueryClient();
 
@@ -293,7 +312,7 @@ describe("app-server event query synchronization", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["app-server", "thread", "thread-1", "queue"],
     });
-    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(6);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(7);
   });
 
   it("ignores events that are not server notifications", async () => {
