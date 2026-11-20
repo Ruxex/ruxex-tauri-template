@@ -395,7 +395,6 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
     let path_source = package_root.join("ruxex-path");
     for path in [
         resources_source.join("node"),
-        resources_source.join("python"),
         resources_source.join("native"),
         resources_source.join("bin"),
         resources_source.join("licenses"),
@@ -430,7 +429,6 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
             .map_err(|error| format!("failed to create artifact runtime resources: {error}"))?;
         for name in [
             "node",
-            "python",
             "native",
             "bin",
             "licenses",
@@ -463,6 +461,9 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
 }
 
 fn artifact_runtime_matches(source: &Path, destination: &Path) -> Result<bool, String> {
+    if destination.join("python").exists() {
+        return Ok(false);
+    }
     let source_manifest = fs::read(source.join("runtime-manifest.json"))
         .map_err(|error| format!("failed to read artifact runtime manifest: {error}"))?;
     let destination_manifest = match fs::read(destination.join("runtime-manifest.json")) {
@@ -480,7 +481,6 @@ fn artifact_runtime_matches(source: &Path, destination: &Path) -> Result<bool, S
     let manifest: serde_json::Value = serde_json::from_slice(&source_manifest)
         .map_err(|error| format!("failed to parse artifact runtime manifest: {error}"))?;
     for (manifest_path, relative) in [
-        ("inputs/pythonRuntimeSha256", "python"),
         ("inputs/libreOfficeRuntimeSha256", "native/libreoffice"),
         ("inputs/popplerRuntimeSha256", "native/poppler"),
         ("inputs/overrideRuntimeSha256", "bin/override"),
@@ -501,7 +501,6 @@ fn artifact_runtime_matches(source: &Path, destination: &Path) -> Result<bool, S
     }
     for relative in [
         "node/bin/node",
-        "python/bin/python3",
         "licenses/THIRD_PARTY_NOTICES.md",
         "ruxex-artifact-tool/src/loader.mjs",
         "ruxex-artifact-tool/src/runner.mjs",
@@ -512,7 +511,7 @@ fn artifact_runtime_matches(source: &Path, destination: &Path) -> Result<bool, S
             return Ok(false);
         }
     }
-    for name in ["python", "soffice", "pdfinfo", "pdftoppm"] {
+    for name in ["soffice", "pdfinfo", "pdftoppm"] {
         let Some(relative) = manifest
             .get("executables")
             .and_then(|executables| executables.get(name))
@@ -708,7 +707,6 @@ mod tests {
 
     fn write_artifact_runtime_fixture(resources: &Path) {
         for relative in [
-            "python/bin/python3",
             "native/libreoffice/program/soffice",
             "native/poppler/bin/pdftoppm",
             "native/poppler/bin/pdfinfo",
@@ -722,19 +720,16 @@ mod tests {
             fs::write(path, "runtime fixture").unwrap();
         }
         let manifest = serde_json::json!({
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "target": "x86_64-unknown-linux-gnu",
-            "pythonVersion": "3.12.14",
             "nodeVersion": "24.22.1",
             "native": {"libreofficeVersion": "test", "popplerVersion": "test"},
             "executables": {
-                "python": "python/bin/python3",
                 "soffice": "native/libreoffice/program/soffice",
                 "pdfinfo": "native/poppler/bin/pdfinfo",
                 "pdftoppm": "native/poppler/bin/pdftoppm"
             },
             "inputs": {
-                "pythonRuntimeSha256": hash_artifact_runtime_tree(&resources.join("python")).unwrap(),
                 "libreOfficeRuntimeSha256": hash_artifact_runtime_tree(&resources.join("native/libreoffice")).unwrap(),
                 "popplerRuntimeSha256": hash_artifact_runtime_tree(&resources.join("native/poppler")).unwrap(),
                 "overrideRuntimeSha256": hash_artifact_runtime_tree(&resources.join("bin/override")).unwrap(),
@@ -945,10 +940,7 @@ mod tests {
             fs::read_to_string(staged.join("ruxex-resources/node/bin/node")).unwrap(),
             "runtime"
         );
-        assert_eq!(
-            fs::read_to_string(staged.join("ruxex-resources/python/bin/python3")).unwrap(),
-            "runtime fixture"
-        );
+        assert!(!staged.join("ruxex-resources/python").exists());
         assert_eq!(
             fs::read_to_string(staged.join("RUNTIME.md")).unwrap(),
             "shared runtime contract\n"
@@ -966,16 +958,19 @@ mod tests {
         fs::write(&runtime_marker, "preserved").unwrap();
         sync_vendored_skills(&source, &home).unwrap();
         assert_eq!(fs::read_to_string(&runtime_marker).unwrap(), "preserved");
-        fs::write(
-            staged.join("ruxex-resources/python/bin/python3"),
-            "corrupted runtime",
-        )
-        .unwrap();
+        let stale_python = staged.join("ruxex-resources/python/bin/python3");
+        fs::create_dir_all(stale_python.parent().unwrap()).unwrap();
+        fs::write(&stale_python, "old runtime").unwrap();
+        sync_vendored_skills(&source, &home).unwrap();
+        assert!(!stale_python.exists());
+        assert!(!runtime_marker.exists());
+        fs::write(&runtime_marker, "preserved").unwrap();
+        fs::write(staged.join("ruxex-resources/node/bin/node"), "corrupted runtime").unwrap();
         sync_vendored_skills(&source, &home).unwrap();
         assert!(!runtime_marker.exists());
         assert_eq!(
-            fs::read_to_string(staged.join("ruxex-resources/python/bin/python3")).unwrap(),
-            "runtime fixture"
+            fs::read_to_string(staged.join("ruxex-resources/node/bin/node")).unwrap(),
+            "runtime"
         );
         fs::write(&runtime_marker, "preserved").unwrap();
         fs::write(resources.join("runtime-manifest.json"), "updated runtime\n").unwrap();

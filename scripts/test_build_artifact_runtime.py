@@ -3,10 +3,7 @@ import importlib.util
 import json
 import os
 import subprocess
-import shutil
-import sys
 import tempfile
-import tomllib
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -45,37 +42,7 @@ class BuildArtifactRuntimeTest(unittest.TestCase):
                     Path("/runtime"),
                 )
 
-    def test_python_version_probe_imports_every_locked_runtime_package(self) -> None:
-        expected_python = (MODULE.PROJECT / ".python-version").read_text(encoding="utf-8").strip()
-        actual_python = ".".join(str(part) for part in sys.version_info[:3])
-        if actual_python != expected_python:
-            self.skipTest(
-                f"package import smoke test requires locked Python {expected_python}, "
-                f"current test interpreter is {actual_python}"
-            )
-        versions = MODULE.package_versions(Path(sys.executable))
-        self.assertEqual(
-            set(versions),
-            {"lxml", "numpy", "Pillow", "pdf2image", "python-pptx"},
-        )
-        self.assertTrue(all(version for version in versions.values()))
-
-    def test_uv_version_is_explicitly_pinned_for_development_and_release(self) -> None:
-        expected = (MODULE.PROJECT / ".uv-version").read_text(encoding="utf-8").strip()
-        actual = MODULE.run(["uv", "--version"]).split()
-        self.assertGreaterEqual(len(actual), 2)
-        self.assertEqual(actual[1], expected)
-        project = tomllib.loads((MODULE.PROJECT / "pyproject.toml").read_text(encoding="utf-8"))
-        self.assertEqual(project["tool"]["uv"]["required-version"], f"=={expected}")
-
-    def test_assembles_and_validates_a_standalone_runtime_for_the_current_target(self) -> None:
-        expected_python = (MODULE.PROJECT / ".python-version").read_text(encoding="utf-8").strip()
-        actual_python = ".".join(str(part) for part in sys.version_info[:3])
-        if actual_python != expected_python:
-            self.skipTest(
-                f"runtime assembly requires locked Python {expected_python}, current is {actual_python}"
-            )
-
+    def test_assembles_a_runtime_without_python_or_python_package_metadata(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ruxex-runtime-assembly-test-") as temporary:
             root = Path(temporary)
             native = root / "native"
@@ -118,7 +85,6 @@ class BuildArtifactRuntimeTest(unittest.TestCase):
                 output=output,
                 node_runtime=node.parent.parent,
                 native_runtime=native,
-                uv=Path(shutil.which("uv") or "uv"),
                 target=target,
                 libreoffice_version="24.2.7.2",
                 poppler_version="24.02.0",
@@ -126,28 +92,15 @@ class BuildArtifactRuntimeTest(unittest.TestCase):
 
             STAGE_MODULE.validate_artifact_runtime(output, target)
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(manifest["pythonVersion"], expected_python)
-            self.assertEqual(set(manifest["pythonPackages"]), set(MODULE.REQUIRED_PACKAGES))
+            self.assertFalse((output / "python").exists())
+            self.assertNotIn("pythonVersion", manifest)
+            self.assertNotIn("pythonPackages", manifest)
+            self.assertNotIn("uvVersion", manifest)
+            self.assertNotIn("python", manifest["executables"])
+            self.assertNotIn("pythonRuntimeSha256", manifest["inputs"])
             self.assertEqual(manifest["target"], target)
             self.assertEqual(manifest["native"]["libreofficeVersion"], "24.2.7.2")
             self.assertEqual(manifest["native"]["popplerVersion"], "24.02.0")
-            python_wrapper = (output / "python/bin/python3").read_text(encoding="utf-8")
-            self.assertIn(
-                f'"$HERE/python{".".join(expected_python.split(".")[:2])}" -B "$@"',
-                python_wrapper,
-            )
-            subprocess.run(
-                [
-                    str(output / "python/bin/python3"),
-                    "-c",
-                    "import lxml.etree, numpy, PIL, pdf2image, pptx",
-                ],
-                check=True,
-            )
-            self.assertEqual(
-                MODULE.hash_tree(output / "python"),
-                manifest["inputs"]["pythonRuntimeSha256"],
-            )
 
     def test_hashes_runtime_tree_contents_and_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,5 +1,9 @@
 # Managed document runtime design
 
+> **Superseded:** This records the earlier Python-bundled design. The current
+> Python-free runtime design is in
+> `2026-11-20-python-free-artifact-runtime-design.md`.
+
 ## Goal
 
 Bundle the Python runtime and libraries used by Ruxex artifact helpers outside

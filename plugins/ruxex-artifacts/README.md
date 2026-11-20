@@ -10,14 +10,15 @@ workflows. It also provides JSON read and validation commands for each format.
 The helper is staged beside each Skill so the Skill can invoke it by absolute
 path without relying on the managed command environment. The desktop syncs the
 shared JS API and artifact runtime once beside the vendored Skill directories.
-The plugin contains the workflow contract; the runtime resources ship with the
-desktop package.
+The plugin contains the workflow contract; the Node.js and native runtime
+resources ship with the desktop package. CPython and Python packages are not
+bundled.
 
 The runtime layout, build inputs, manifest, and install location are defined in
-[`skills/RUNTIME.md`](skills/RUNTIME.md). Presentation tooling uses the bundled
-Node.js runtime, a lock-built Python environment, and target-native LibreOffice
-and Poppler assets. Skills invoke these through the sibling `ruxex-artifacts`
-launcher and do not resolve tools from the host `PATH`.
+[`skills/RUNTIME.md`](skills/RUNTIME.md). Artifact tooling uses the bundled
+Node.js runtime and target-native LibreOffice and Poppler assets. Skills invoke
+these through the sibling `ruxex-artifacts` launcher and do not resolve tools
+from the host `PATH`.
 The documents Skill routes local DOCX reading and review, creation and editing,
 focused structure and accessibility audits, and core-properties metadata
 cleanup. It also includes local workflows for page rendering and comparison,

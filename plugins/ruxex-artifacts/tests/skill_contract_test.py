@@ -81,9 +81,9 @@ class ArtifactSkillContractTest(unittest.TestCase):
         contract = runtime_contract.read_text(encoding="utf-8").lower()
         for phrase in (
             "`node/`",
-            "`python/`",
             "`native/`",
-            "must not fall back to host tools",
+            "does not bundle cpython or python packages",
+            "do not fall back to host tools",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, contract)

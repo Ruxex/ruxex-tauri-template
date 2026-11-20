@@ -364,7 +364,6 @@ def main() -> None:
             output=assembled,
             node_runtime=node_path.parent.parent,
             native_runtime=native,
-            uv=Path(shutil.which("uv") or "uv"),
             libreoffice_version=libreoffice_version,
             poppler_version=poppler_version,
         ))

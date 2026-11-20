@@ -78,8 +78,9 @@ def validate_tree_hash(root: Path, expected: object, label: str) -> None:
 def validate_artifact_runtime(
     root: Path, target: str, *, require_bundled_inputs: bool = False
 ) -> None:
+    if (root / "python").exists():
+        raise SystemExit("artifact runtime must not contain a Python runtime")
     required_files = (
-        "python/bin/python3",
         "bin/override/soffice",
         "bin/override/pdftoppm",
         "bin/override/pdfinfo",
@@ -94,17 +95,26 @@ def validate_artifact_runtime(
         manifest = json.loads((root / "runtime-manifest.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise SystemExit(f"invalid artifact runtime manifest: {error}") from error
-    if not isinstance(manifest, dict) or manifest.get("schemaVersion") != 1:
+    if not isinstance(manifest, dict) or manifest.get("schemaVersion") != 2:
         raise SystemExit("artifact runtime manifest has an unsupported schema")
+    if any(key in manifest for key in ("pythonVersion", "pythonPackages", "uvVersion")):
+        raise SystemExit("artifact runtime manifest must not describe Python")
+    manifest_executables = manifest.get("executables")
+    manifest_inputs = manifest.get("inputs")
+    if (
+        isinstance(manifest_executables, dict) and "python" in manifest_executables
+    ) or (
+        isinstance(manifest_inputs, dict)
+        and any(key.startswith("python") for key in manifest_inputs)
+    ):
+        raise SystemExit("artifact runtime manifest must not describe Python")
     if manifest.get("target") != target:
         raise SystemExit(
             f"artifact runtime target {manifest.get('target')!r} does not match {target!r}"
         )
-    for key in ("pythonVersion", "nodeVersion"):
+    for key in ("nodeVersion",):
         if not isinstance(manifest.get(key), str) or not manifest[key].strip():
             raise SystemExit(f"artifact runtime manifest is missing {key}")
-    if not isinstance(manifest.get("uvVersion"), str) or not manifest["uvVersion"].strip():
-        raise SystemExit("artifact runtime manifest is missing uvVersion")
     native = manifest.get("native")
     if not isinstance(native, dict) or any(
         not isinstance(native.get(key), str) or not native[key].strip()
@@ -121,41 +131,8 @@ def validate_artifact_runtime(
         )
     ):
         raise SystemExit("artifact runtime source manifest does not match the assembled runtime")
-    python_packages = manifest.get("pythonPackages")
-    if not isinstance(python_packages, dict) or any(
-        not isinstance(python_packages.get(name), str) or not python_packages[name].strip()
-        for name in ("lxml", "numpy", "Pillow", "pdf2image", "python-pptx")
-    ):
-        raise SystemExit("artifact runtime manifest is missing locked Python package versions")
-    python_probe = (
-        "import importlib, importlib.metadata as metadata, json, sys; "
-        "modules = {'lxml': 'lxml.etree', 'numpy': 'numpy', 'Pillow': 'PIL', "
-        "'pdf2image': 'pdf2image', 'python-pptx': 'pptx'}; "
-        "[importlib.import_module(module) for module in modules.values()]; "
-        "print(json.dumps({'pythonVersion': '.'.join(map(str, sys.version_info[:3])), "
-        "'pythonPackages': {name: metadata.version(name) for name in modules}}, sort_keys=True))"
-    )
-    try:
-        python_result = subprocess.run(
-            [str(root / "python/bin/python3"), "-c", python_probe],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        python_runtime = json.loads(python_result.stdout)
-    except (OSError, subprocess.CalledProcessError, json.JSONDecodeError) as error:
-        detail = getattr(error, "stderr", "") or str(error)
-        raise SystemExit(f"bundled Python runtime failed its import/version check: {detail}") from error
-    if python_runtime.get("pythonVersion") != manifest["pythonVersion"]:
-        raise SystemExit(
-            "bundled Python version does not match its runtime manifest: "
-            f"{python_runtime.get('pythonVersion')!r} != {manifest['pythonVersion']!r}"
-        )
-    if python_runtime.get("pythonPackages") != python_packages:
-        raise SystemExit("bundled Python package versions do not match the runtime manifest")
     executables = manifest.get("executables")
     expected_executables = {
-        "python": "python/bin/python3",
         "soffice": None,
         "pdfinfo": None,
         "pdftoppm": None,
@@ -182,7 +159,6 @@ def validate_artifact_runtime(
     if not isinstance(inputs, dict):
         raise SystemExit("artifact runtime manifest is missing input hashes")
     for key, relative, label in (
-        ("pythonRuntimeSha256", "python", "Python runtime"),
         ("libreOfficeRuntimeSha256", "native/libreoffice", "LibreOffice runtime"),
         ("popplerRuntimeSha256", "native/poppler", "Poppler runtime"),
         ("overrideRuntimeSha256", "bin/override", "native tool wrappers"),
@@ -224,7 +200,6 @@ def validate_package(
         "ruxex-path/ruxex-artifacts",
         "ruxex-path/ruxex-artifacts-engine",
         "ruxex-resources/node/bin/node",
-        "ruxex-resources/python/bin/python3",
         "ruxex-resources/bin/override/soffice",
         "ruxex-resources/bin/override/pdftoppm",
         "ruxex-resources/bin/override/pdfinfo",
@@ -234,7 +209,6 @@ def validate_package(
         "ruxex-resources/node/node_modules/sharp/package.json",
         "ruxex-resources/node/node_modules/pdf-lib/package.json",
         "ruxex-resources/node/node_modules/jsonpath-plus/package.json",
-        "ruxex-resources/python/bin/python3",
         "ruxex-resources/bin/override/soffice",
         "ruxex-resources/bin/override/pdftoppm",
         "ruxex-resources/bin/override/pdfinfo",
@@ -262,7 +236,6 @@ def validate_package(
         "ruxex-path/ruxex-artifacts",
         "ruxex-path/ruxex-artifacts-engine",
         "ruxex-resources/node/bin/node",
-        "ruxex-resources/python/bin/python3",
         "ruxex-resources/bin/override/soffice",
         "ruxex-resources/bin/override/pdftoppm",
         "ruxex-resources/bin/override/pdfinfo",
@@ -352,7 +325,7 @@ def main() -> None:
     validate_node_runtime(args.node_runtime, runtime_manifest["nodeVersion"])
     copy_directory(args.node_runtime, output / "ruxex-resources/node")
     copy_directory(args.artifact_sdk, output / "ruxex-resources/ruxex-artifact-tool")
-    for name in ("python", "native", "bin", "licenses"):
+    for name in ("native", "bin", "licenses"):
         copy_directory(args.artifact_runtime / name, output / f"ruxex-resources/{name}")
     shutil.copy2(
         args.artifact_runtime / "runtime-manifest.json",

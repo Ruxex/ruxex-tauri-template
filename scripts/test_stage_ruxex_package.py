@@ -15,6 +15,16 @@ SPEC.loader.exec_module(MODULE)
 
 
 class StageRuxexPackageTest(unittest.TestCase):
+    def test_artifact_runtime_rejects_a_bundled_python_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            runtime = self._artifact_resources(Path(temporary))["artifact-runtime"]
+            python = runtime / "python/bin/python3"
+            python.parent.mkdir(parents=True, exist_ok=True)
+            python.write_text("python runtime must not be bundled", encoding="utf-8")
+
+            with self.assertRaisesRegex(SystemExit, "must not contain a Python runtime"):
+                MODULE.validate_artifact_runtime(runtime, "x86_64-unknown-linux-gnu")
+
     def test_rejects_a_node_runtime_that_does_not_match_the_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -51,7 +61,6 @@ class StageRuxexPackageTest(unittest.TestCase):
 
         artifact_runtime = resources / "artifact-runtime"
         for relative in (
-            "python/bin/python3",
             "native/libreoffice/program/soffice",
             "native/poppler/bin/pdftoppm",
             "native/poppler/bin/pdfinfo",
@@ -63,34 +72,15 @@ class StageRuxexPackageTest(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("runtime fixture", encoding="utf-8")
             path.chmod(0o755)
-        python = artifact_runtime / "python/bin/python3"
-        python.write_text(
-            "#!/bin/sh\n"
-            "printf '%s\\n' '{\"pythonVersion\":\"3.12.14\","
-            "\"pythonPackages\":{\"lxml\":\"6.1.1\",\"numpy\":\"2.3.5\","
-            "\"Pillow\":\"13.0.0\",\"pdf2image\":\"1.17.0\","
-            "\"python-pptx\":\"1.0.2\"}}'\n",
-            encoding="utf-8",
-        )
-        python.chmod(0o755)
         licenses = artifact_runtime / "licenses/THIRD_PARTY_NOTICES.md"
         licenses.parent.mkdir(parents=True, exist_ok=True)
         licenses.write_text("test license notices\n", encoding="utf-8")
         (artifact_runtime / "runtime-manifest.json").write_text(
             json.dumps(
                 {
-                    "schemaVersion": 1,
+                    "schemaVersion": 2,
                     "target": "x86_64-unknown-linux-gnu",
-                    "pythonVersion": "3.12.14",
-                    "uvVersion": "0.13.5",
                     "nodeVersion": "24.22.1",
-                    "pythonPackages": {
-                        "lxml": "6.1.1",
-                        "numpy": "2.3.5",
-                        "Pillow": "13.0.0",
-                        "pdf2image": "1.17.0",
-                        "python-pptx": "1.0.2",
-                    },
                     "native": {"libreofficeVersion": "test", "popplerVersion": "test"},
                     "nativeSource": {
                         "target": "x86_64-unknown-linux-gnu",
@@ -98,14 +88,12 @@ class StageRuxexPackageTest(unittest.TestCase):
                         "popplerVersion": "test",
                     },
                     "inputs": {
-                        "pythonRuntimeSha256": MODULE.directory_sha256(artifact_runtime / "python"),
                         "libreOfficeRuntimeSha256": MODULE.directory_sha256(artifact_runtime / "native/libreoffice"),
                         "popplerRuntimeSha256": MODULE.directory_sha256(artifact_runtime / "native/poppler"),
                         "overrideRuntimeSha256": MODULE.directory_sha256(artifact_runtime / "bin/override"),
                         "licenseRuntimeSha256": MODULE.directory_sha256(artifact_runtime / "licenses"),
                     },
                     "executables": {
-                        "python": "python/bin/python3",
                         "soffice": "native/libreoffice/program/soffice",
                         "pdfinfo": "native/poppler/bin/pdfinfo",
                         "pdftoppm": "native/poppler/bin/pdftoppm",
@@ -318,7 +306,6 @@ class StageRuxexPackageTest(unittest.TestCase):
                     "ruxex-resources/node/node_modules/pptxgenjs/package.json",
                     "ruxex-resources/node/node_modules/sharp",
                     "ruxex-resources/node/node_modules/sharp/package.json",
-                    "ruxex-resources/python/bin/python3",
                     "ruxex-resources/native/libreoffice/program/soffice",
                     "ruxex-resources/native/poppler/bin/pdftoppm",
                     "ruxex-resources/native/poppler/bin/pdfinfo",
@@ -403,6 +390,7 @@ class StageRuxexPackageTest(unittest.TestCase):
                 "the staged Presentations Skill must not contain Python helpers",
             )
             self.assertTrue(os.access(output / "bin/ruxex", os.X_OK))
+            self.assertFalse((output / "ruxex-resources/python").exists())
             MODULE.validate_package(output, "0.1.0", "x86_64-unknown-linux-gnu")
             runtime_manifest = json.loads(
                 (output / "ruxex-resources/runtime-manifest.json").read_text(encoding="utf-8")
@@ -457,20 +445,25 @@ class StageRuxexPackageTest(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "does not match"):
                 MODULE.validate_artifact_runtime(runtime, "aarch64-apple-darwin")
 
-    def test_rejects_python_version_or_package_versions_that_do_not_match_the_manifest(self) -> None:
+    def test_rejects_legacy_python_runtime_manifest_fields(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             runtime = self._artifact_resources(Path(temporary))["artifact-runtime"]
             manifest_path = runtime / "runtime-manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["pythonVersion"] = "3.12.13"
+            manifest["pythonVersion"] = "3.12.14"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            with self.assertRaisesRegex(SystemExit, "Python version"):
+            with self.assertRaisesRegex(SystemExit, "must not describe Python"):
                 MODULE.validate_artifact_runtime(runtime, "x86_64-unknown-linux-gnu")
 
-            manifest["pythonVersion"] = "3.12.14"
-            manifest["pythonPackages"]["Pillow"] = "12.0.0"
+    def test_rejects_python_paths_in_runtime_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            runtime = self._artifact_resources(Path(temporary))["artifact-runtime"]
+            manifest_path = runtime / "runtime-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["executables"]["python"] = "python/bin/python3"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            with self.assertRaisesRegex(SystemExit, "package versions"):
+
+            with self.assertRaisesRegex(SystemExit, "must not describe Python"):
                 MODULE.validate_artifact_runtime(runtime, "x86_64-unknown-linux-gnu")
 
     def test_rejects_a_missing_runtime_binary(self) -> None:
@@ -538,9 +531,13 @@ class StageRuxexPackageTest(unittest.TestCase):
                 path.chmod(0o755)
             runtime_skills = root / "ruxex-resources/vendored/skills/RUNTIME.md"
             runtime_skills.write_text("contract", encoding="utf-8")
+            requirements_skill = root / "ruxex-resources/vendored/skills/requirements-planning"
+            (requirements_skill / "agents").mkdir(parents=True)
+            (requirements_skill / "SKILL.md").write_text("requirements", encoding="utf-8")
+            (requirements_skill / "agents/ruxex.yaml").write_text("interface: {}\n", encoding="utf-8")
             runtime_assets = self._artifact_resources(root)
             runtime_fixture = runtime_assets["artifact-runtime"]
-            for name in ("python", "native", "bin", "licenses"):
+            for name in ("native", "bin", "licenses"):
                 shutil.copytree(runtime_fixture / name, root / f"ruxex-resources/{name}")
             for name, source_key in (
                 ("node", "node-runtime"),

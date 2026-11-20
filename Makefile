@@ -6,7 +6,7 @@ export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
 CARGO_LLVM_COV_VERSION := 0.9.1
 
-.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-python-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-build-artifact-engine rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-runtime-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-build-artifact-engine rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -23,7 +23,7 @@ help:
 	@printf '%s\n' '  make rust-coverage      Rust workspaceのカバレッジを測定'
 	@printf '%s\n' '  make install-coverage-tools cargo-llvm-covをインストール'
 	@printf '%s\n' '  make package-test       ランタイムパッケージのテストを実行'
-	@printf '%s\n' '  make artifact-python-test uv lock環境でローカル成果物ヘルパーをテスト'
+	@printf '%s\n' '  make artifact-runtime-test ローカル成果物ランタイムのパッケージとSkill契約をテスト'
 	@printf '%s\n' '  make rust-test          Rust/Tauriのテストを実行'
 	@printf '%s\n' '  make mcp-fixture-build  テスト用MCPサーバーをビルド'
 	@printf '%s\n' '  make mcp-fixture-test   テスト用MCPサーバーの疎通を確認'
@@ -85,11 +85,11 @@ check-tests: check test
 
 package-test:
 	python3 -m unittest discover -s scripts -p 'test_*.py' -v
-	$(MAKE) artifact-python-test
+	$(MAKE) artifact-runtime-test
 
-artifact-python-test:
-	uv run --project runtime/python --locked python -m unittest scripts.test_build_artifact_runtime -v
-	uv run --project runtime/python --locked python -m unittest discover -s plugins/ruxex-artifacts/tests -p '*_test.py' -v
+artifact-runtime-test:
+	python3 -m unittest scripts.test_build_artifact_runtime scripts.test_stage_ruxex_package scripts.test_ci_native_artifact_runtime -v
+	uv run --project plugins/ruxex-artifacts/tests --locked python -m unittest discover -s plugins/ruxex-artifacts/tests -p '*_test.py' -v
 
 rust-test:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml
@@ -136,7 +136,7 @@ release:
 		--native-runtime "$(ARTIFACT_NATIVE_RUNTIME)" \
 		--libreoffice-version "$(LIBREOFFICE_VERSION)" \
 		--poppler-version "$(POPPLER_VERSION)"
-	uv run --project runtime/python --locked python scripts/ci_test_native_artifact_runtime.py \
+	python3 scripts/ci_test_native_artifact_runtime.py \
 		--output target/artifact-runtime --validate-existing-runtime
 	python3 scripts/stage-ruxex-package.py \
 		--output src-tauri/resources/ruxex-package \

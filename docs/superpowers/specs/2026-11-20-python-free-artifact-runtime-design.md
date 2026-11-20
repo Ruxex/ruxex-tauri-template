@@ -1,5 +1,13 @@
 # Python-free artifact runtime design
 
+## Implementation status
+
+Completed 2026-11-20: Documents and Presentations helper workflows now use the
+Rust artifact CLI; all four artifact Skills use JavaScript/Rust/native tools;
+the shared release package, runtime manifest, launcher, and desktop sync no
+longer include Python. The developer-only Python scripts in `scripts/` remain
+outside the installed runtime.
+
 ## Goal
 
 Remove CPython and all Python packages from Ruxex's shipped shared artifact
@@ -21,7 +29,7 @@ longer invoke Python and all four Skills pass the no-Python contract.
   of scope until that work is complete; this design only records and later
   verifies the existing no-Python boundary.
 
-## Current state
+## Initial state
 
 - `runtime/python/` pins CPython 3.12.14, uv 0.13.5, and
   `lxml`, `numpy`, Pillow, `pdf2image`, and `python-pptx`.

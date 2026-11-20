@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  artifact-python:
-    name: Artifact Python (${{ matrix.os }})
+  artifact-runtime:
+    name: Native artifact runtime (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -21,10 +21,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install pinned uv
+      - name: Install pinned test Python tools
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          version-file: runtime/python/pyproject.toml
+          version-file: plugins/ruxex-artifacts/tests/pyproject.toml
           enable-cache: true
 
       - name: Install native renderers (Linux)
@@ -44,12 +44,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate locked document runtime and helpers
-        run: make artifact-python-test
+      - name: Validate runtime assembly and Skill contracts
+        run: make artifact-runtime-test
 
       - name: Assemble and render with target-native tools
         run: |
-          uv run --project runtime/python --locked python scripts/ci_test_native_artifact_runtime.py \
+          python3 scripts/ci_test_native_artifact_runtime.py \
             --output "$RUNNER_TEMP/ruxex-artifact-runtime"
 
   rust:
