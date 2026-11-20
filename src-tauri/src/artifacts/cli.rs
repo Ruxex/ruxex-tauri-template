@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use std::ffi::OsString;
 
 use super::{ArtifactError, print_json};
-use super::{ooxml, pdf, xlsx};
+use super::{docx, ooxml, pdf, xlsx};
 
 pub fn run_cli<I>(args: I) -> std::process::ExitCode
 where
@@ -42,7 +42,7 @@ fn run(args: Vec<OsString>) -> Result<Value, ArtifactError> {
     match args.first().map(String::as_str) {
         Some("capabilities") => capabilities(&args[1..]),
         Some("xlsx") => xlsx::run_xlsx(&args[1..]),
-        Some("docx") => ooxml::run_ooxml("docx", &args[1..]),
+        Some("docx") => docx::run_docx(&args[1..]),
         Some("pptx") => ooxml::run_ooxml("pptx", &args[1..]),
         Some("pdf") => pdf::run_pdf(&args[1..]),
         Some(command) => Err(ArtifactError::new(

@@ -2,6 +2,7 @@ use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
 mod cli;
+mod docx;
 mod engine;
 mod ooxml;
 mod pdf;
