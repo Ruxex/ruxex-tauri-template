@@ -100,9 +100,10 @@ fn capabilities_reports_the_supported_artifact_commands() {
     assert_eq!(value["commands"]["xlsx"][0], "create");
     assert_eq!(value["commands"]["xlsx"][1], "read");
     assert_eq!(value["commands"]["xlsx"][2], "validate");
-    assert_eq!(value["commands"]["docx"][0], "create");
-    assert_eq!(value["commands"]["docx"][1], "read");
-    assert_eq!(value["commands"]["docx"][2], "validate");
+    assert_eq!(
+        value["commands"]["docx"],
+        serde_json::json!(["read", "validate", "audit", "privacy-scrub", "helper"])
+    );
     assert_eq!(value["commands"]["pptx"][0], "create");
     assert_eq!(value["commands"]["pptx"][1], "read");
     assert_eq!(value["commands"]["pptx"][2], "validate");
@@ -356,6 +357,24 @@ fn xlsx_create_and_read_preserve_scalar_cells_and_sheet_names() {
     assert_eq!(value["sheets"][0]["rows"][2][1], true);
     assert_eq!(value["sheets"][0]["rows"][3][1], serde_json::Value::Null);
     assert_eq!(value["sheets"][1]["name"], "Details");
+}
+
+#[test]
+fn xlsx_read_imports_legacy_xls_sources_with_calamine() {
+    let input = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/legacy-source.xls");
+    let output = run(&["xlsx", "read", "--input", input.to_str().unwrap(), "--json"]);
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["format"], "xls");
+    assert_eq!(value["sheets"][0]["rows"][0][0], "Name");
+    assert_eq!(value["sheets"][0]["rows"][0][1], "Amount");
+    assert_eq!(value["sheets"][0]["rows"][1][0], "Ada");
+    assert_eq!(value["sheets"][0]["rows"][1][1], 4.5);
 }
 
 #[test]

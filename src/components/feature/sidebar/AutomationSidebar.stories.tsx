@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider } from "../../../../.ladle/support/catalog-providers";
 import { AutomationSidebar } from "./AutomationSidebar";
 
+export default { title: "Feature / Sidebar / Automation Sidebar" };
+
 export const RecentRuns: Story = () => (
   <CatalogQueryProvider
     seeds={[

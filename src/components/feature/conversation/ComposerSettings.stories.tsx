@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ComposerSettings } from "./ComposerSettings";
 
+export default { title: "Feature / Conversation / Composer Settings" };
+
 export const EmptyModelList: Story = () => (
   <ComposerSettings
     disabled={false}

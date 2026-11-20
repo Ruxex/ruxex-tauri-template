@@ -5,6 +5,8 @@ import { DocumentMagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outli
 
 import { EmptyState, ErrorState as ErrorStateView, LoadingState } from "./AsyncState";
 
+export default { title: "Base / Common / Async State" };
+
 function Surface({ children }: { children: ReactNode }) {
   return <div className="min-w-80 max-w-xl bg-base-200 p-4">{children}</div>;
 }

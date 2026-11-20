@@ -4,6 +4,8 @@ import type { v2 } from "@/protocol";
 import { CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { SlashCommandPalette } from "./SlashCommandPalette";
 
+export default { title: "Feature / Conversation / Slash Command Palette" };
+
 const skills: v2.SkillMetadata[] = [
   {
     name: "review",

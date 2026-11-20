@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { ChatSearchBox } from "./ChatSearchBox";
 
+export default { title: "Composite / Chats / Chat Search Box" };
+
 const searchParams = {
   searchTerm: "compiler",
   limit: 50,

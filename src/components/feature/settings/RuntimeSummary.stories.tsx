@@ -1,6 +1,8 @@
 import type { Story } from "@ladle/react";
 import { RuntimeSummary } from "./RuntimeSummary";
 
+export default { title: "Feature / Settings / Runtime Summary" };
+
 export const WithModels: Story = () => (
   <div className="max-w-3xl p-4">
     <RuntimeSummary

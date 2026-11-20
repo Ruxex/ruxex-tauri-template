@@ -4,6 +4,8 @@ import { CatalogQueryProvider } from "../../../../.ladle/support/catalog-provide
 import { gitDiffDetailsQueryKey } from "@/platform/git-diff";
 import { GitDiffReviewPane } from "./GitDiffReviewPane";
 
+export default { title: "Composite / Git Diff / Git Diff Review Pane" };
+
 export const ChangedFiles: Story = () => (
   <CatalogQueryProvider
     seeds={[

@@ -5,10 +5,11 @@ description: Use when creating, editing, analyzing, or answering questions about
 
 # Spreadsheets
 
-Use the bundled `ruxex-artifacts` command and the Ruxex-owned JavaScript API for local `.xlsx` work. The skill supports creating and importing `.xlsx` files. Treat other spreadsheet formats as source material only when the active runtime can read them. Do not install packages or depend on a system office application.
+Use the bundled `ruxex-artifacts` command and the Ruxex-owned JavaScript API for local spreadsheet work. The skill supports creating and importing `.xlsx`, `.csv`, and `.tsv` files. The bundled engine can read legacy `.xls` values as source data; it does not export `.xls`. Do not install packages or depend on a system office application.
 
 ## Choose the workflow
 
+- For the supported local API and format limitations, read [local API reference](references/local_api.md).
 - For a new workbook, follow [create workflow](workflows/create_workflows.md).
 - For an existing workbook or follow-up edit, follow [edit workflow](workflows/edit_workflows.md).
 - For a question or audit without requested edits, follow [read-only Q&A](references/read_only_qna.md). Do not modify or export the workbook.
@@ -25,7 +26,7 @@ Use the bundled `ruxex-artifacts` command and the Ruxex-owned JavaScript API for
 1. Find the sibling `ruxex-artifacts` executable from the absolute path to this `SKILL.md`. Invoke the executable by its full path; do not rely on `PATH`.
 2. Check available operations with `"/absolute/path/to/skill/ruxex-artifacts" capabilities --json`.
 3. Write one `.mjs` builder that imports `@ruxex/artifact-tool`. Use only documented Ruxex APIs and the capabilities reported by the executable. Do not inspect package internals or prototypes to discover APIs.
-4. For a new file, create a `Workbook`. For an existing `.xlsx`, use `SpreadsheetFile.importXlsx`, inspect the sheet summary, and read relevant ranges before editing.
+4. For a new file, create a `Workbook`. For an existing `.xlsx`, use `SpreadsheetFile.importXlsx`; use `SpreadsheetFile.import` for CSV/TSV or legacy XLS source data. Inspect the sheet summary and read relevant ranges before editing.
 5. Populate or update values, formulas, formats, tables, and supported charts. Keep changes within the user's requested scope.
 6. Recalculate only when safe for the workbook, then inspect it following [verification workflow](workflows/verification.md). For imported workbooks, follow [edit workflow](workflows/edit_workflows.md) before recalculating or exporting. Review formula and unsupported counts instead of assuming every formula was evaluated.
 7. Run the builder with `"/absolute/path/to/skill/ruxex-artifacts" run /absolute/path/build.mjs`.
@@ -53,7 +54,7 @@ const output = SpreadsheetFile.exportXlsx(workbook);
 await output.save("/absolute/path/report.xlsx");
 ```
 
-`Workbook.inspect()` currently returns sheet-level dimensions and object counts. It does not inspect cell values or formulas. `Workbook.render()` is not available in this runtime. Use the Ruxex application preview when it is available, and report when visual inspection could not be performed. `xlsx validate` checks the saved file's supported structure; it does not prove formula correctness or behavior in a native spreadsheet application.
+`Workbook.inspect()` currently returns sheet-level dimensions and object counts. It does not inspect cell values or formulas. `Workbook.render({sheetName})` uses the bundled LibreOffice and Poppler runtimes to render the selected worksheet's first printed page to PNG; it does not provide auto-cropping or print-layout controls. `xlsx validate` checks the saved file's supported structure; it does not prove formula correctness or behavior in a native spreadsheet application.
 
 ## Workbook design and writing
 
@@ -72,9 +73,9 @@ Financial planning and valuation use Finance guidance in any industry. Add indus
 
 ## Runtime limits
 
-- The bundled formula evaluator supports a limited formula subset. Unsupported formulas and circular references may remain unevaluated. Check `Workbook.recalculate()` results and independently verify consequential calculations where possible.
+- The bundled formula evaluator supports common math, text, logical, conditional aggregation, lookup, and range formula families. Unsupported formulas and circular references may remain unevaluated; cached values are retained. Check `Workbook.recalculate()` results and independently verify consequential calculations where possible.
 - `Workbook.inspect()` provides sheet-level summaries only. Read values and formulas from relevant ranges in the builder when supported by the API.
-- `Workbook.render()` is unavailable. Do not claim visual verification from a successful export or validation.
+- Rendered workbook previews cover the first printed page of a selected worksheet. Do not claim full-sheet visual verification from a single preview.
 - Do not claim that unsupported workbook features were preserved or verified. If an import/export fidelity issue or unsupported feature affects the result, report it clearly.
 
 ## Error recovery

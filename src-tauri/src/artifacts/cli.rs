@@ -67,9 +67,58 @@ fn capabilities(args: &[String]) -> Result<Value, ArtifactError> {
         "ok": true,
         "commands": {
             "xlsx": ["create", "read", "validate"],
-            "docx": ["create", "read", "validate"],
+            "docx": ["read", "validate", "audit", "privacy-scrub", "helper"],
             "pptx": ["create", "read", "validate", "helper"],
             "pdf": ["create", "read", "validate"],
+        },
+        "documentApis": {
+            "docx": {
+                "authoring": ["Document.create", "Document.load", "exportDocx"],
+                "authoringMethods": [
+                    "addParagraph", "addHeading", "addTitle", "addSubtitle", "addListItem",
+                    "addPageBreak", "addTableOfContents", "addImage", "addTable", "addSection", "setHeader",
+                    "setFooter", "setWatermark", "setProtection", "addBookmark", "addInternalLink",
+                    "addReferenceField", "addSequenceField", "addExternalLink",
+                    "addComment", "addTrackedReplacement", "addFootnote", "addEndnote"
+                ],
+                "formattingOptions": [
+                    "pageSize", "orientation", "margins", "alignment", "spacingBefore",
+                    "spacingAfter", "fontFace", "fontSize", "color", "bold", "italic",
+                    "keepWithNext", "pageBreakBefore", "headerRow", "borders", "cellPadding",
+                    "columnWidths", "width", "indent", "layout"
+                ],
+                "watermarkOptions": [
+                    "font", "fontSize", "bold", "italics", "color", "opacity",
+                    "layout", "rotation", "width", "height"
+                ],
+                "protectionTypes": ["readOnly", "comments", "trackedChanges", "forms"],
+                "tableOfContentsOptions": ["title", "headingStyleRange", "hyperlink"],
+                "helpers": [
+                    "render_docx.py", "compare_docx.py", "style_lint.py",
+                    "docx_tables_to_csv.py", "content_controls.py", "inspect_review_markup.py",
+                    "redact_docx_text.py", "process_tracked_changes.py", "merge_docx_text.py",
+                    "manage_comments.py", "style_normalize.py", "apply_template_styles.py",
+                    "distill_template.py", "audit_docx_features.py", "remove_publishing_controls.py",
+                    "process_fields.py", "add_comment.py", "extract_comments.py",
+                    "apply_comment_patches.py", "a11y_fixes.py", "strip_rsid_attributes.py",
+                    "add_tracked_replacements.py", "merge_docx_append.py",
+                    "insert_captions.py", "insert_ref_fields.py", "internal_nav.py",
+                    "set_protection.py", "insert_toc.py", "insert_note.py",
+                    "replace_docx_text.py", "set_table_geometry.py",
+                    "edit_docx_content.py", "watermark_add.py", "template_fidelity.py"
+                ],
+                "helperOperations": [
+                    "audit-features", "distill-template", "inspect-review-markup",
+                    "protection-set", "publishing-controls-remove", "rsid-strip", "style-lint",
+                    "style-normalize", "tables-to-csv", "watermark-add", "merge-text",
+                    "text-replace", "tracked-process", "redact-text", "merge-append",
+                    "template-fidelity", "a11y-fixes", "comments-extract", "content-controls",
+                    "comments-manage", "comments-add", "comments-apply-patches",
+                    "tracked-add-replacements", "table-geometry-set", "fields-process",
+                    "reference-fields-insert", "captions-insert", "toc-insert",
+                    "internal-nav", "note-insert", "template-styles-apply", "content-edit"
+                ]
+            }
         },
         "presentationApis": {
             "authoring": [
@@ -164,7 +213,7 @@ pub(super) fn reject_unknown_flags(args: &[String]) -> Result<(), ArtifactError>
 #[cfg(test)]
 mod tests {
     use super::run;
-    use serde_json::Value;
+    use serde_json::{Value, json};
     use std::ffi::OsString;
     use std::fs;
     use std::path::PathBuf;
@@ -190,6 +239,211 @@ mod tests {
     fn dispatches_capabilities_and_rejects_missing_or_unknown_commands() {
         let capabilities = command(&["capabilities"]).unwrap();
         assert_eq!(capabilities["commands"]["xlsx"][0], "create");
+        assert_eq!(
+            capabilities["commands"]["docx"],
+            json!(["read", "validate", "audit", "privacy-scrub", "helper"])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["authoring"],
+            json!(["Document.create", "Document.load", "exportDocx"])
+        );
+        assert_eq!(
+            capabilities["presentationApis"]["authoring"],
+            json!([
+                "Presentation.create",
+                "PresentationFile.importPptx",
+                "PresentationFile.exportPptx",
+                "presentation.inspect",
+                "presentation.render",
+                "presentation.export"
+            ])
+        );
+        assert_eq!(
+            capabilities["presentationApis"]["helpers"]
+                .as_array()
+                .unwrap()
+                .len(),
+            11
+        );
+        assert_eq!(
+            capabilities["presentationApis"]["references"]
+                .as_array()
+                .unwrap()
+                .len(),
+            32
+        );
+        assert_eq!(
+            capabilities["presentationApis"]["domainGuidance"],
+            json!(["domain-guidance/finance.md"])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["authoringMethods"],
+            json!([
+                "addParagraph",
+                "addHeading",
+                "addTitle",
+                "addSubtitle",
+                "addListItem",
+                "addPageBreak",
+                "addTableOfContents",
+                "addImage",
+                "addTable",
+                "addSection",
+                "setHeader",
+                "setFooter",
+                "setWatermark",
+                "setProtection",
+                "addBookmark",
+                "addInternalLink",
+                "addReferenceField",
+                "addSequenceField",
+                "addExternalLink",
+                "addComment",
+                "addTrackedReplacement",
+                "addFootnote",
+                "addEndnote"
+            ])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["formattingOptions"],
+            json!([
+                "pageSize",
+                "orientation",
+                "margins",
+                "alignment",
+                "spacingBefore",
+                "spacingAfter",
+                "fontFace",
+                "fontSize",
+                "color",
+                "bold",
+                "italic",
+                "keepWithNext",
+                "pageBreakBefore",
+                "headerRow",
+                "borders",
+                "cellPadding",
+                "columnWidths",
+                "width",
+                "indent",
+                "layout"
+            ])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["watermarkOptions"],
+            json!([
+                "font", "fontSize", "bold", "italics", "color", "opacity", "layout", "rotation",
+                "width", "height"
+            ])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["protectionTypes"],
+            json!(["readOnly", "comments", "trackedChanges", "forms"])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["tableOfContentsOptions"],
+            json!(["title", "headingStyleRange", "hyperlink"])
+        );
+        assert_eq!(
+            capabilities["documentApis"]["docx"]["helpers"],
+            json!([
+                "render_docx.py",
+                "compare_docx.py",
+                "style_lint.py",
+                "docx_tables_to_csv.py",
+                "content_controls.py",
+                "inspect_review_markup.py",
+                "redact_docx_text.py",
+                "process_tracked_changes.py",
+                "merge_docx_text.py",
+                "manage_comments.py",
+                "style_normalize.py",
+                "apply_template_styles.py",
+                "distill_template.py",
+                "audit_docx_features.py",
+                "remove_publishing_controls.py",
+                "process_fields.py",
+                "add_comment.py",
+                "extract_comments.py",
+                "apply_comment_patches.py",
+                "a11y_fixes.py",
+                "strip_rsid_attributes.py",
+                "add_tracked_replacements.py",
+                "merge_docx_append.py",
+                "insert_captions.py",
+                "insert_ref_fields.py",
+                "internal_nav.py",
+                "set_protection.py",
+                "insert_toc.py",
+                "insert_note.py",
+                "replace_docx_text.py",
+                "set_table_geometry.py",
+                "edit_docx_content.py",
+                "watermark_add.py",
+                "template_fidelity.py"
+            ])
+        );
+        assert!(
+            capabilities["documentApis"]["docx"]["helperOperations"]
+                .as_array()
+                .is_some_and(|operations| operations
+                    .iter()
+                    .any(|operation| operation == "watermark-add")
+                    && operations.iter().any(|operation| operation == "merge-text")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "redact-text")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "merge-append")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "template-fidelity")
+                    && operations.iter().any(|operation| operation == "a11y-fixes")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "comments-extract")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "content-controls")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "comments-manage")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "comments-add")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "comments-apply-patches")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "tracked-add-replacements")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "table-geometry-set")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "fields-process")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "reference-fields-insert")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "captions-insert")
+                    && operations.iter().any(|operation| operation == "toc-insert")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "internal-nav")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "note-insert")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "template-styles-apply")
+                    && operations
+                        .iter()
+                        .any(|operation| operation == "content-edit"))
+        );
         assert_eq!(command(&[]).unwrap_err().code, "invalid_arguments");
         assert_eq!(command(&["unknown"]).unwrap_err().code, "invalid_arguments");
         assert_eq!(
@@ -287,5 +541,19 @@ mod tests {
         assert_eq!(read["pages"], 2);
         assert!(command(&["pdf", "read"]).is_err());
         fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn pptx_helper_catalog_lists_python_free_workflows() {
+        let catalog = command(&["pptx", "helper", "list"]).unwrap();
+        assert_eq!(catalog["ok"], true);
+        assert_eq!(catalog["helpers"].as_array().unwrap().len(), 11);
+        assert!(
+            catalog["helpers"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|helper| helper.as_str().is_some_and(|name| !name.ends_with(".py")))
+        );
     }
 }

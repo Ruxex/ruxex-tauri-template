@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { AttachmentPreview } from "./AttachmentPreview";
 
+export default { title: "Base / Common / Attachment Preview" };
+
 export const Selected: Story = () => (
   <AttachmentPreview
     disabled={false}

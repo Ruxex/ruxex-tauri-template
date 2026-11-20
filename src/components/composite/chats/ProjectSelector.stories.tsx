@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ProjectSelector } from "./ProjectSelector";
 
+export default { title: "Composite / Chats / Project Selector" };
+
 const projects = [
   { id: "project-catalog", name: "Ruxex" },
   { id: "project-design", name: "Design system" },

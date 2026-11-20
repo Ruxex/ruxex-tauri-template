@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 import { StoryVariantList } from "../../../../.ladle/support/StoryVariantList";
 import { ExecutionStatusSummary, ExitCodeDisplay } from "./ExecutionStatusSummary";
 
+export default { title: "Feature / Conversation / Execution Status Summary" };
+
 export const States: Story = () => (
   <StoryVariantList
     variants={[

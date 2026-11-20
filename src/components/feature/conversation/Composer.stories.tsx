@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { Composer } from "./Composer";
 
+export default { title: "Feature / Conversation / Composer" };
+
 export const Empty: Story = () => (
   <CatalogSurface>
     <Composer activeTurnId={null} threadId="thread-catalog" />

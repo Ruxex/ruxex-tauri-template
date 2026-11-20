@@ -521,14 +521,18 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
         if xml.len() as u64 > PREVIEW_MAX_XML_BYTES {
             return Err(format!("{entry_name} exceeds the preview text limit"));
         }
-        let lines = ooxml::text_values(&xml, tag)
-            .into_iter()
-            .map(|line| truncate_text(&line, 80))
-            .collect::<Vec<_>>();
-        let cells = if lines.is_empty() {
-            vec![vec!["(no text found)".to_string()]]
+        let cells = if format == "docx" {
+            docx_preview_rows(&xml)
         } else {
-            lines.into_iter().map(|line| vec![line]).collect()
+            let lines = ooxml::text_values(&xml, tag)
+                .into_iter()
+                .map(|line| truncate_text(&line, 80))
+                .collect::<Vec<_>>();
+            if lines.is_empty() {
+                vec![vec!["(no text found)".to_string()]]
+            } else {
+                lines.into_iter().map(|line| vec![line]).collect()
+            }
         };
         let annotations = ooxml_preview_annotations(format, &xml);
         sections.push(PreviewSheet {
@@ -544,9 +548,75 @@ fn read_ooxml_sections(path: &Path, format: &str) -> Result<Vec<PreviewSheet>, S
     Ok(sections)
 }
 
+fn docx_preview_rows(xml: &str) -> Vec<Vec<String>> {
+    let mut tables = ordered_docx_blocks(xml, "w:tbl");
+    let table_ranges = tables
+        .iter()
+        .map(|(start, block)| *start..*start + block.len())
+        .collect::<Vec<_>>();
+    let mut table_range_index = 0;
+    let mut content = ordered_docx_blocks(xml, "w:p")
+        .into_iter()
+        .filter_map(|(offset, paragraph)| {
+            while table_range_index < table_ranges.len()
+                && offset >= table_ranges[table_range_index].end
+            {
+                table_range_index += 1;
+            }
+            if table_ranges
+                .get(table_range_index)
+                .is_some_and(|range| range.contains(&offset))
+            {
+                return None;
+            }
+            let text = ooxml::text_values(&paragraph, "w:t").join("");
+            Some((offset, vec![vec![truncate_text(&text, 80)]]))
+        })
+        .collect::<Vec<_>>();
+    for (offset, table) in tables.drain(..) {
+        let rows = ooxml::blocks(&table, "w:tr")
+            .into_iter()
+            .map(|row| {
+                ooxml::blocks(&row, "w:tc")
+                    .into_iter()
+                    .map(|cell| truncate_text(&ooxml::text_values(&cell, "w:t").join(""), 80))
+                    .collect::<Vec<_>>()
+            })
+            .filter(|row| !row.is_empty())
+            .collect::<Vec<_>>();
+        if !rows.is_empty() {
+            content.push((offset, rows));
+        }
+    }
+    content.sort_by_key(|(offset, _)| *offset);
+    let rows = content
+        .into_iter()
+        .flat_map(|(_, rows)| rows)
+        .collect::<Vec<_>>();
+    if rows.is_empty() {
+        vec![vec!["(no text found)".to_string()]]
+    } else {
+        rows
+    }
+}
+
+fn ordered_docx_blocks(xml: &str, tag: &str) -> Vec<(usize, String)> {
+    let mut cursor = 0;
+    ooxml::blocks(xml, tag)
+        .into_iter()
+        .filter_map(|block| {
+            let offset = xml[cursor..].find(&block)? + cursor;
+            cursor = offset + block.len();
+            Some((offset, block))
+        })
+        .collect()
+}
+
 fn ooxml_preview_annotations(format: &str, xml: &str) -> Vec<String> {
     let mut annotations = Vec::new();
     if format == "docx" {
+        annotations
+            .push("Content preview: pagination and Word layout are not rendered".to_string());
         let tables = xml.matches("<w:tbl>").count();
         if tables > 0 {
             annotations.push(format!("Tables: {tables}"));
@@ -951,6 +1021,7 @@ mod tests {
         assert_eq!(
             docx,
             [
+                "Content preview: pagination and Word layout are not rendered",
                 "Tables: 1",
                 "Styled paragraphs: 1",
                 "Images: preview-only",
@@ -966,7 +1037,10 @@ mod tests {
                 "Images: preview-only",
             ]
         );
-        assert!(ooxml_preview_annotations("docx", "<w:p/>").is_empty());
+        assert_eq!(
+            ooxml_preview_annotations("docx", "<w:p/>"),
+            ["Content preview: pagination and Word layout are not rendered"]
+        );
         assert!(ooxml_preview_annotations("pptx", "<p:sld/>").is_empty());
     }
 

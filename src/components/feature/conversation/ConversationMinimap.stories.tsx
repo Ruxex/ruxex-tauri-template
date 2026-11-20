@@ -4,6 +4,8 @@ import { useRef } from "react";
 import type { ConversationViewItem } from "./conversation-model";
 import { ConversationMinimap } from "./ConversationMinimap";
 
+export default { title: "Feature / Conversation / Conversation Minimap" };
+
 const items: ConversationViewItem[] = [1, 2, 3].map((index) => ({
   id: `user-${index}`,
   turnId: "turn-catalog",

@@ -1,6 +1,8 @@
 import type { Story } from "@ladle/react";
 import { TypographyCard } from "./TypographyCard";
 
+export default { title: "Feature / Settings / Typography Card" };
+
 export const SystemTypography: Story = () => (
   <div className="max-w-3xl p-4">
     <TypographyCard

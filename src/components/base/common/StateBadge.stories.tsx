@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { StateBadge } from "./StateBadge";
 
+export default { title: "Base / Common / State Badge" };
+
 function Surface({ children }: { children: ReactNode }) {
   return <div className="grid gap-3 bg-base-100 p-6">{children}</div>;
 }

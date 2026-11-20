@@ -88,12 +88,14 @@ vi.mock("@/components/feature/conversation/ComposerMessageInput", () => ({
   ComposerMessageInput: ({
     disabled,
     onChange,
+    onEditorReady,
     onKeyDown,
     placeholder,
     value,
   }: {
     disabled: boolean;
     onChange: (value: string) => void;
+    onEditorReady?: (element: HTMLElement) => void;
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
     placeholder: string;
     value: string;
@@ -104,6 +106,9 @@ vi.mock("@/components/feature/conversation/ComposerMessageInput", () => ({
       onChange={(event) => onChange(event.target.value)}
       onKeyDown={onKeyDown}
       placeholder={placeholder}
+      ref={(element) => {
+        if (element) onEditorReady?.(element);
+      }}
       value={value}
     />
   ),
@@ -177,6 +182,35 @@ describe("NewChatComposer", () => {
 
     await waitFor(() => expect(createThreadMutation).toHaveBeenCalled());
     expect(sendMessageMutation).toHaveBeenCalled();
+  });
+
+  it("selects slash palette options with Enter", async () => {
+    const { NewChatComposer } = await import("./NewChatComposer");
+
+    render(<NewChatComposer />);
+    const message = screen.getByLabelText("Message");
+    fireEvent.change(message, { target: { value: "/goal" } });
+
+    expect(message.getAttribute("role")).toBe("combobox");
+    expect(message.getAttribute("aria-activedescendant")).toBe("slash-command-option-0");
+
+    fireEvent.keyDown(message, { key: "Enter" });
+
+    expect(screen.getByRole("status", { name: "Goal mode active" })).toBeTruthy();
+  });
+
+  it("dismisses and reopens slash suggestions with Escape and subsequent input", async () => {
+    const { NewChatComposer } = await import("./NewChatComposer");
+
+    render(<NewChatComposer />);
+    const message = screen.getByLabelText("Message");
+    fireEvent.change(message, { target: { value: "/goal" } });
+
+    fireEvent.keyDown(message, { key: "Escape" });
+    expect(screen.queryByRole("listbox", { name: "Slash commands" })).toBeNull();
+
+    fireEvent.change(message, { target: { value: "/goal " } });
+    expect(screen.getByRole("listbox", { name: "Slash commands" })).toBeTruthy();
   });
 
   it("starts a Projectless chat in its data-home workspace", async () => {

@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -7,10 +8,15 @@ ROOT = Path(__file__).parents[1]
 MANIFEST = ROOT / ".ruxex-plugin/plugin.json"
 SKILLS_ROOT = ROOT / "skills"
 SKILL_NAMES = {
-    "documents": ("docx", "Document.create", "exportDocx"),
-    "presentations": ("pptx", "Presentation.create", "exportPptx"),
-    "spreadsheets": ("xlsx", "Workbook.create", "exportXlsx"),
-    "pdf": ("pdf", "PdfDocument.create", "exportPdf"),
+    "documents": ("docx", "Document.create", "exportDocx", "word-skill.svg"),
+    "presentations": (
+        "pptx",
+        "Presentation.create",
+        "exportPptx",
+        "presentation-skill.svg",
+    ),
+    "spreadsheets": ("xlsx", "Workbook.create", "exportXlsx", "excel-skill.svg"),
+    "pdf": ("pdf", "PdfDocument.create", "exportPdf", "pdf-skill.svg"),
 }
 
 
@@ -28,8 +34,8 @@ class ArtifactSkillContractTest(unittest.TestCase):
             self.assertTrue((skill_dir / "agents/ruxex.yaml").is_file())
             self.assertFalse((skill_dir / "agents/openai.yaml").exists())
 
-    def test_each_skill_has_ruxex_interface_metadata_without_bundled_icons(self) -> None:
-        for skill_name in SKILL_NAMES:
+    def test_each_skill_uses_its_bundled_svg_logo(self) -> None:
+        for skill_name, (_, _, _, expected_logo) in SKILL_NAMES.items():
             skill_dir = SKILLS_ROOT / skill_name
             metadata = (skill_dir / "agents/ruxex.yaml").read_text(
                 encoding="utf-8",
@@ -37,13 +43,19 @@ class ArtifactSkillContractTest(unittest.TestCase):
             self.assertIn("interface:", metadata)
             self.assertIn("display_name:", metadata)
             self.assertIn("short_description:", metadata)
-            self.assertNotIn("icon_small:", metadata)
-            self.assertNotIn("icon_large:", metadata)
+            self.assertIn("icon_small:", metadata)
+            self.assertIn("icon_large:", metadata)
             self.assertFalse((skill_dir / "assets/icon-small.svg").exists())
             self.assertFalse((skill_dir / "assets/icon-large.svg").exists())
+            icon = metadata.split("icon_small:", 1)[1].splitlines()[0].strip().strip('"')
+            large_icon = metadata.split("icon_large:", 1)[1].splitlines()[0].strip().strip('"')
+            self.assertEqual(icon, large_icon)
+            self.assertEqual(icon, f"./assets/{expected_logo}")
+            self.assertTrue((skill_dir / icon.removeprefix("./")).is_file())
+            self.assertTrue(icon.endswith(".svg"))
 
     def test_each_skill_uses_only_its_format_workflow(self) -> None:
-        for skill_name, (format_name, constructor, export_method) in SKILL_NAMES.items():
+        for skill_name, (format_name, constructor, export_method, _logo) in SKILL_NAMES.items():
             skill = (SKILLS_ROOT / skill_name / "SKILL.md").read_text(
                 encoding="utf-8",
             )
@@ -57,10 +69,41 @@ class ArtifactSkillContractTest(unittest.TestCase):
             for other_format in {"docx", "pptx", "xlsx", "pdf"} - {format_name}:
                 self.assertNotIn(f"{other_format} validate", skill)
 
-            self.assertNotIn("python", skill.lower())
+            if skill_name != "presentations":
+                self.assertNotIn("python", skill.lower())
             self.assertNotIn("pip", skill.lower())
             self.assertNotIn("npm", skill.lower())
             self.assertNotIn("excel", skill.lower())
+
+    def test_presentation_skill_references_the_shared_runtime_contract(self) -> None:
+        runtime_contract = SKILLS_ROOT / "RUNTIME.md"
+        self.assertTrue(runtime_contract.is_file())
+        contract = runtime_contract.read_text(encoding="utf-8").lower()
+        for phrase in (
+            "`node/`",
+            "`python/`",
+            "`native/`",
+            "must not fall back to host tools",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, contract)
+
+        skill = (SKILLS_ROOT / "presentations" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("../RUNTIME.md", skill)
+
+    def test_document_skill_matches_portable_title_and_opening_guidance(self) -> None:
+        skill = (SKILLS_ROOT / "documents" / "SKILL.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "word's `title` paragraph style",
+            "black",
+            "underlining",
+            "paragraph borders",
+            "what the document covers",
+            "why it matters",
+            "main conclusion",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, skill)
 
     def test_presentation_skill_covers_codex_quality_workflow_without_hosted_routes(self) -> None:
         skill = (SKILLS_ROOT / "presentations" / "SKILL.md").read_text(
@@ -86,6 +129,51 @@ class ArtifactSkillContractTest(unittest.TestCase):
                 self.assertIn(phrase, skill)
         self.assertNotIn("google slides", skill)
         self.assertNotIn("artifact session", skill)
+
+    def test_presentation_skill_documents_template_and_quality_helpers(self) -> None:
+        skill_dir = SKILLS_ROOT / "presentations"
+        skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "inspect-template",
+            "validate-template-plan",
+            "check-template-fidelity",
+            "prepare-template-starter-deck",
+            "inspect-package-integrity",
+            "inspect-layout-geometry",
+            "native-chart-title-gate",
+            "native-quantitative-chart-gate",
+            "native-table-arithmetic-gate",
+            "make-contact-sheet",
+        ):
+            with self.subTest(helper=phrase):
+                self.assertIn(phrase, skill)
+        self.assertNotIn("ruxex-artifacts python", skill)
+        self.assertFalse(list((skill_dir / "scripts").glob("*.py")))
+
+        for relative_path in (
+            "references/api-reference-map.md",
+            "references/api-quick-start.md",
+            "references/template-workflow.md",
+            "references/native-evidence.md",
+            "references/rendering-review.md",
+            "references/writing-guidance.md",
+            "references/accessibility-review.md",
+        ):
+            with self.subTest(guide=relative_path):
+                self.assertTrue((skill_dir / relative_path).is_file())
+
+    def test_presentation_reference_links_resolve_and_match_capability_index(self) -> None:
+        skill_dir = SKILLS_ROOT / "presentations"
+        markdown_files = sorted(skill_dir.rglob("*.md"))
+        self.assertEqual(len(markdown_files), 34)
+        for source in markdown_files:
+            content = source.read_text(encoding="utf-8")
+            for link in re.findall(r"\]\(([^)#]+\.md)(?:#[^)]*)?\)", content):
+                with self.subTest(source=source.relative_to(skill_dir), link=link):
+                    self.assertTrue((source.parent / link).is_file())
+
+        capability_source = (ROOT.parent.parent / "src-tauri/src/artifacts/cli.rs").read_text(encoding="utf-8")
+        self.assertIn('"domainGuidance": ["domain-guidance/finance.md"]', capability_source)
 
     def test_spreadsheet_skill_covers_codex_quality_guidance(self) -> None:
         skill_dir = SKILLS_ROOT / "spreadsheets"

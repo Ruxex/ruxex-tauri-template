@@ -5,5 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.mjs"
+  },
+  "scripts": {
+    "test:document-writer": "node --test --test-name-pattern='^Document ' tests/document-presentation.test.mjs"
   }
 }

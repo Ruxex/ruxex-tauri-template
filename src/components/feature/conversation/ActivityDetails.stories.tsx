@@ -4,6 +4,8 @@ import { CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import type { ConversationViewItem } from "./conversation-model";
 import { ActivityDetails } from "./ActivityDetails";
 
+export default { title: "Feature / Conversation / Activity Details" };
+
 const item: ConversationViewItem = {
   id: "activity-details",
   turnId: "turn-catalog",

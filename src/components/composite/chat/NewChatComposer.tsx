@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useBranding } from "@/app/branding-context";
 import { formatErrorMessage } from "@/app/error-message";
@@ -28,7 +28,7 @@ import { ComposerTextInput } from "@/components/feature/conversation/ComposerTex
 import { planCollaborationMode } from "@/components/feature/conversation/collaboration-model";
 import { isComposerSubmitShortcut } from "@/components/feature/conversation/composer-model";
 import { SelectedComposerSkill } from "@/components/feature/conversation/SelectedComposerSkill";
-import { SlashCommandPalette } from "@/components/feature/conversation/SlashCommandPalette";
+import { SlashCommandPalette, type SlashCommandPaletteHandle } from "@/components/feature/conversation/SlashCommandPalette";
 import {
   getSlashCommandInput,
   type SlashCommandId,
@@ -59,6 +59,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   });
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const [message, setMessage] = useState("");
+  const [slashCommandsDismissed, setSlashCommandsDismissed] = useState(false);
   const [goalMode, setGoalMode] = useState(false);
   const [planMode, setPlanMode] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask");
@@ -68,6 +69,7 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   );
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const editorRef = useRef<HTMLElement>(null);
+  const slashPaletteRef = useRef<SlashCommandPaletteHandle>(null);
   const project = useProject(selectedProjectId);
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
@@ -75,7 +77,31 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   const { effort, model, setEffort, setModel } = useComposerSelection(models.data?.data ?? []);
   const planModeRequest = planCollaborationMode(collaborationModes.data?.data ?? [], model, effort);
   const slashCommandInput = getSlashCommandInput(message);
-  const showSlashCommands = slashCommandInput !== null && !goalMode;
+  const showSlashCommands = slashCommandInput !== null && !goalMode && !slashCommandsDismissed;
+
+  const handleActiveOptionChange = useCallback((id: string | null) => {
+    if (id) editorRef.current?.setAttribute("aria-activedescendant", id);
+    else editorRef.current?.removeAttribute("aria-activedescendant");
+  }, []);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (!showSlashCommands) {
+      editor.removeAttribute("role");
+      editor.removeAttribute("aria-haspopup");
+      editor.removeAttribute("aria-autocomplete");
+      editor.removeAttribute("aria-expanded");
+      editor.removeAttribute("aria-controls");
+      editor.removeAttribute("aria-activedescendant");
+      return;
+    }
+    editor.setAttribute("role", "combobox");
+    editor.setAttribute("aria-haspopup", "listbox");
+    editor.setAttribute("aria-autocomplete", "list");
+    editor.setAttribute("aria-expanded", "true");
+    editor.setAttribute("aria-controls", "slash-command-palette");
+  }, [showSlashCommands]);
 
   const {
     attachmentError,
@@ -177,6 +203,10 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
   }
 
   function handleMessageKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (showSlashCommands) {
+      slashPaletteRef.current?.handleKeyDown(event);
+      if (event.defaultPrevented) return;
+    }
     if (!isComposerSubmitShortcut(event)) {
       return;
     }
@@ -235,10 +265,16 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
           <SlashCommandPalette
             commands={["goal"]}
             disabled={composerDisabled}
-            onDismiss={() => editorRef.current?.focus()}
+            id="slash-command-palette"
+            onActiveOptionChange={handleActiveOptionChange}
+            onDismiss={() => {
+              setSlashCommandsDismissed(true);
+              editorRef.current?.focus();
+            }}
             onSelect={handleSlashCommandSelect}
             onSelectSkill={handleSlashSkillSelect}
             query={slashCommandInput?.query}
+            ref={slashPaletteRef}
             skills={visibleSkills}
             skillsError={skills.isError ? formatErrorMessage(skills.error) : null}
             skillsLoading={skills.isLoading}
@@ -253,7 +289,10 @@ export function NewChatComposer({ projectId }: NewChatComposerProps) {
             disabled={composerDisabled}
             handleAttachmentChange={handleAttachmentChange}
             imageFile={imageFile}
-            onChange={setMessage}
+            onChange={(value) => {
+              setSlashCommandsDismissed(false);
+              setMessage(value);
+            }}
             onEditorReady={(element) => {
               editorRef.current = element;
             }}

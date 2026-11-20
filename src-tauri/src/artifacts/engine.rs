@@ -3,7 +3,7 @@ use std::io::Read;
 use serde_json::{Value, json};
 
 use super::{ArtifactError, print_json};
-use super::{ooxml, pdf, xlsx};
+use super::{docx, ooxml, pdf, xlsx};
 
 #[derive(Debug, serde::Deserialize)]
 struct EngineRequest {
@@ -94,7 +94,7 @@ fn process_request(request_json: &str) -> Result<Value, ArtifactError> {
             .input_path
             .as_deref()
             .ok_or_else(|| ArtifactError::new("invalid_request", "docx_read requires input_path"))
-            .and_then(|input| ooxml::read_ooxml("docx", input)),
+            .and_then(docx::read_docx),
         "pptx_read" => request
             .input_path
             .as_deref()
@@ -266,12 +266,19 @@ mod tests {
             &[
                 ("[Content_Types].xml", b"<types />"),
                 ("_rels/.rels", b"<rels />"),
-                ("ppt/_rels/presentation.xml.rels", b"<rels />"),
-                ("ppt/presentation.xml", b"<p:presentation />"),
+                (
+                    "ppt/_rels/presentation.xml.rels",
+                    br#"<Relationships><Relationship Id="rId1" Target="slides/slide1.xml"/><Relationship Id="rId2" Target="slides/slide2.xml"/></Relationships>"#,
+                ),
+                (
+                    "ppt/presentation.xml",
+                    br#"<p:presentation><p:sldIdLst><p:sldId r:id="rId1"/><p:sldId r:id="rId2"/></p:sldIdLst><p:sldSz cx="9144000" cy="5143500"/></p:presentation>"#,
+                ),
                 (
                     "ppt/slides/slide1.xml",
-                    br#"<p:sld><p:sp><a:t>Quarterly Review</a:t></p:sp><p:graphicFrame /></p:sld>"#,
+                    br#"<p:sld><p:sp><a:t>Quarterly Review</a:t></p:sp><p:graphicFrame><a:graphicData><a:tbl /></a:graphicData></p:graphicFrame><p:graphicFrame><a:graphicData><c:chart /></a:graphicData></p:graphicFrame></p:sld>"#,
                 ),
+                ("ppt/slides/slide2.xml", br#"<p:sld><p:sp><a:t>Second slide</a:t></p:sp></p:sld>"#),
             ],
         );
 
@@ -288,8 +295,11 @@ mod tests {
         assert_eq!(docx["items"][0]["text"], "Quarterly Review");
         assert_eq!(docx["items"][1]["kind"], "table");
         assert_eq!(docx["diagnostics"][0]["code"], "unsupported_images");
+        assert_eq!(pptx["slideSize"], json!({"width": 960.0, "height": 540.0}));
         assert_eq!(pptx["slides"][0]["objects"][0]["text"], "Quarterly Review");
+        assert_eq!(pptx["slides"][1]["objects"][0]["text"], "Second slide");
         assert_eq!(pptx["diagnostics"][0]["code"], "unsupported_slide_objects");
+        assert_eq!(pptx["diagnostics"][0]["count"], 1);
         fs::remove_dir_all(directory).unwrap();
     }
 }

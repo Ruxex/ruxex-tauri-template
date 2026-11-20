@@ -1,5 +1,7 @@
 import { ChatTitle } from "./ChatTitle";
 
+export default { title: "Composite / Chats / Chat Title" };
+
 export const Short = () => (
   <div className="w-64 rounded-box border border-base-300 bg-base-100 p-2">
     <ChatTitle isHovered={false} title="Short chat title" />

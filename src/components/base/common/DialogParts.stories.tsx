@@ -3,6 +3,8 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { DialogFooter, DialogHeader } from "./DialogParts";
 
+export default { title: "Base / Common / Dialog Parts" };
+
 export const HeaderAndFooter: Story = () => (
   <section className="max-w-xl rounded-box bg-base-100 p-5 shadow-sm">
     <DialogHeader

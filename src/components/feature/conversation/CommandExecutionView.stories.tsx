@@ -4,6 +4,8 @@ import { StoryVariantList } from "../../../../.ladle/support/StoryVariantList";
 
 import { CommandExecutionView } from "./CommandExecutionView";
 
+export default { title: "Feature / Conversation / Command Execution View" };
+
 export const States: Story = () => (
   <StoryVariantList
     variants={[

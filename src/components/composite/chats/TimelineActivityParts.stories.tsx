@@ -4,6 +4,8 @@ import { StoryVariantList } from "../../../../.ladle/support/StoryVariantList";
 import type { ConversationViewItem } from "@/components/feature/conversation/conversation-model";
 import { CompletedTurnGroup, WorkingIndicator } from "./TimelineActivityParts";
 
+export default { title: "Composite / Chats / Timeline Activity Parts" };
+
 const items: ConversationViewItem[] = [
   {
     id: "user-1",

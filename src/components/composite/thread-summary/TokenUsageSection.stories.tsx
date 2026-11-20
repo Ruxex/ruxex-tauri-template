@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 import type { v2 } from "@/protocol";
 import { TokenUsageSection } from "./TokenUsageSection";
 
+export default { title: "Composite / Thread Summary / Token Usage Section" };
+
 const usage = {
   total: {
     totalTokens: 123456,

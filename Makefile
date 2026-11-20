@@ -6,7 +6,7 @@ export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
 CARGO_LLVM_COV_VERSION := 0.9.1
 
-.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test rust-test mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-python-test rust-test rust-test-artifacts-cli rust-build-artifact-engine rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -23,6 +23,7 @@ help:
 	@printf '%s\n' '  make rust-coverage      Rust workspaceのカバレッジを測定'
 	@printf '%s\n' '  make install-coverage-tools cargo-llvm-covをインストール'
 	@printf '%s\n' '  make package-test       ランタイムパッケージのテストを実行'
+	@printf '%s\n' '  make artifact-python-test uv lock環境でローカル成果物ヘルパーをテスト'
 	@printf '%s\n' '  make rust-test          Rust/Tauriのテストを実行'
 	@printf '%s\n' '  make mcp-fixture-build  テスト用MCPサーバーをビルド'
 	@printf '%s\n' '  make mcp-fixture-test   テスト用MCPサーバーの疎通を確認'
@@ -84,9 +85,23 @@ check-tests: check test
 
 package-test:
 	python3 -m unittest discover -s scripts -p 'test_*.py' -v
+	$(MAKE) artifact-python-test
+
+artifact-python-test:
+	uv run --project runtime/python --locked python -m unittest scripts.test_build_artifact_runtime -v
+	uv run --project runtime/python --locked python -m unittest discover -s plugins/ruxex-artifacts/tests -p '*_test.py' -v
 
 rust-test:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+rust-test-artifacts-cli:
+	cargo test --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts
+
+rust-build-artifact-engine:
+	cargo build --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts-engine
+
+rust-test-artifact-engine:
+	cargo test --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts-engine
 
 mcp-fixture-build:
 	cargo build --locked --manifest-path src-tauri/Cargo.toml \
@@ -106,19 +121,33 @@ build:
 	pnpm build
 
 release:
-	@if [ -z "$(CODE_MODE_HOST)" ] || [ -z "$(NODE_RUNTIME)" ] || [ -z "$(ARTIFACT_SDK)" ]; then \
-		echo 'Usage: make release CODE_MODE_HOST=<ruxex-code-mode-host> NODE_RUNTIME=<node-runtime-dir> ARTIFACT_SDK=<artifact-sdk-dir>' >&2; \
+	@if [ -z "$(CODE_MODE_HOST)" ] || [ -z "$(NODE_RUNTIME)" ] || [ -z "$(ARTIFACT_SDK)" ] || [ -z "$(ARTIFACT_NATIVE_RUNTIME)" ] || [ -z "$(LIBREOFFICE_VERSION)" ] || [ -z "$(POPPLER_VERSION)" ]; then \
+		echo 'Usage: make release CODE_MODE_HOST=<ruxex-code-mode-host> NODE_RUNTIME=<node-runtime-dir> ARTIFACT_SDK=<artifact-sdk-dir> ARTIFACT_NATIVE_RUNTIME=<native-runtime-dir> LIBREOFFICE_VERSION=<version> POPPLER_VERSION=<version>' >&2; \
 		exit 2; \
 	fi
 	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts --bin ruxex-artifacts-engine
+	python3 scripts/build_artifact_runtime.py \
+		--output target/artifact-runtime \
+		--node-runtime "$(NODE_RUNTIME)" \
+		--native-runtime "$(ARTIFACT_NATIVE_RUNTIME)" \
+		--libreoffice-version "$(LIBREOFFICE_VERSION)" \
+		--poppler-version "$(POPPLER_VERSION)"
+	uv run --project runtime/python --locked python scripts/ci_test_native_artifact_runtime.py \
+		--output target/artifact-runtime --validate-existing-runtime
 	python3 scripts/stage-ruxex-package.py \
 		--output src-tauri/resources/ruxex-package \
 		--desktop-host \
 		--code-mode-host "$(CODE_MODE_HOST)" \
 		--node-runtime "$(NODE_RUNTIME)" \
 		--artifact-sdk "$(ARTIFACT_SDK)" \
+		--artifact-runtime target/artifact-runtime \
 		--artifact-tools target/release/ruxex-artifacts \
 		--artifact-engine target/release/ruxex-artifacts-engine
+	RUXEX_RUNTIME_ROOT="$(CURDIR)/src-tauri/resources/ruxex-package/ruxex-resources" \
+	RUXEX_RUNTIME_BIN_DIR="$(CURDIR)/src-tauri/resources/ruxex-package/ruxex-resources/bin/override" \
+		"$(CURDIR)/src-tauri/resources/ruxex-package/ruxex-resources/python/bin/python3" \
+		-m unittest discover -s plugins/ruxex-artifacts/tests \
+		-p 'docx_render_integration_test.py' -v
 	pnpm tauri build
 
 format-check:

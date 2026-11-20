@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { ConversationWorkspace } from "./ConversationWorkspace";
 
+export default { title: "Feature / Conversation / Conversation Workspace" };
+
 export const LoadingConversation: Story = () => (
   <CatalogSurface>
     <ConversationWorkspace threadId="thread-catalog" />

@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./resizable";
 
+export default { title: "Base / UI / Resizable" };
+
 export const Horizontal: Story = () => (
   <div className="h-64 min-w-96 p-4">
     <ResizablePanelGroup orientation="horizontal">

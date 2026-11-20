@@ -5,6 +5,8 @@ import { StoryVariantList } from "../../../../.ladle/support/StoryVariantList";
 import { ExecutionStatusIcon } from "./ExecutionStatusIcon";
 import { ExecutionStatusSummary } from "./ExecutionStatusSummary";
 
+export default { title: "Feature / Conversation / Execution Status Icon" };
+
 export const States: Story = () => (
   <StoryVariantList
     variants={[

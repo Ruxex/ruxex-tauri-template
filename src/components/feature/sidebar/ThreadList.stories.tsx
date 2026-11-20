@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { ThreadList } from "./ThreadList";
 
+export default { title: "Feature / Sidebar / Thread List" };
+
 export const Empty: Story = () => <ThreadList />;
 
 export const ProjectThreads: Story = () => <ThreadList projectId="project-catalog" />;

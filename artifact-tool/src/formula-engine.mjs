@@ -29,6 +29,31 @@ function tokenize(source) {
       index = end + 1;
       continue;
     }
+    if (character === "'") {
+      let cursor = index + 1;
+      let sheetName = "";
+      while (cursor < source.length) {
+        if (source[cursor] === "'" && source[cursor + 1] === "'") {
+          sheetName += "'";
+          cursor += 2;
+        } else if (source[cursor] === "'") break;
+        else sheetName += source[cursor++];
+      }
+      if (source[cursor] !== "'" || source[cursor + 1] !== "!") throw new FormulaEvaluationError("invalid_formula", "quoted sheet reference must end with '!'");
+      const cell = /^\$?[A-Za-z]{1,3}\$?[1-9][0-9]*/.exec(source.slice(cursor + 2));
+      if (!cell) throw new FormulaEvaluationError("invalid_formula", "quoted sheet reference requires a cell address");
+      tokens.push({ type: "identifier", value: `'${sheetName}'!${cell[0]}` });
+      index = cursor + 2 + cell[0].length;
+      continue;
+    }
+    if (character === "$" || /[A-Za-z_]/.test(character)) {
+      const cell = /^\$?[A-Za-z]{1,3}\$?[1-9][0-9]*/.exec(source.slice(index));
+      if (cell) {
+        tokens.push({ type: "identifier", value: cell[0] });
+        index += cell[0].length;
+        continue;
+      }
+    }
     if (/[A-Za-z_]/.test(character)) {
       const match = /^[A-Za-z_][A-Za-z0-9_]*/.exec(source.slice(index));
       tokens.push({ type: "identifier", value: match[0] });
@@ -41,7 +66,7 @@ function tokenize(source) {
       index += 2;
       continue;
     }
-    if ("+-*/(),:<>=\\".includes(character)) {
+    if ("+-*/(),:<>=!\\".includes(character)) {
       tokens.push({
         type: character === "(" || character === ")" || character === "," || character === ":" ? character : "operator",
         value: character,
@@ -56,7 +81,7 @@ function tokenize(source) {
 }
 
 function isCellReference(value) {
-  return /^[A-Za-z]{1,3}[1-9][0-9]*$/.test(value);
+  return /^\$?[A-Za-z]{1,3}\$?[1-9][0-9]*$/.test(value);
 }
 
 function flatten(value) {
@@ -74,6 +99,87 @@ function numberValue(value) {
 
 function truthy(value) {
   return Boolean(value) && value !== 0 && value !== "";
+}
+
+function criterionMatches(value, criterion) {
+  if (typeof criterion !== "string") return value === criterion;
+  const operator = /^(<=|>=|<>|=|<|>)(.*)$/.exec(criterion);
+  const compare = operator?.[2] ?? criterion;
+  const expected = compare !== "" && Number.isFinite(Number(compare)) ? Number(compare) : compare;
+  if (!operator || operator[1] === "=") return value === expected;
+  switch (operator[1]) {
+    case "<>": return value !== expected;
+    case "<": return value < expected;
+    case "<=": return value <= expected;
+    case ">": return value > expected;
+    case ">=": return value >= expected;
+    default: return false;
+  }
+}
+
+function roundExcel(value, digits = 0, mode = "nearest") {
+  const number = numberValue(value);
+  const precision = Math.trunc(numberValue(digits));
+  const factor = 10 ** Math.min(308, Math.abs(precision));
+  const scaled = precision >= 0 ? number * factor : number / factor;
+  const rounded = mode === "up"
+    ? Math.ceil(Math.abs(scaled)) * Math.sign(scaled)
+    : mode === "down"
+      ? Math.trunc(scaled)
+      : Math.sign(scaled) * Math.floor(Math.abs(scaled) + 0.5 + 1e-10 * Math.max(1, Math.abs(scaled)));
+  return precision >= 0 ? rounded / factor : rounded * factor;
+}
+
+function columnIndex(label) {
+  let value = 0;
+  for (const character of label.toUpperCase()) value = value * 26 + character.charCodeAt(0) - 64;
+  return value - 1;
+}
+
+function columnName(index) {
+  let value = index + 1;
+  let result = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+  return result;
+}
+
+const CELL_REFERENCE = /(?<![A-Za-z0-9_.])(?:(?:'[^']+'|[A-Za-z_][A-Za-z0-9_.]*)!)?(\$?)([A-Za-z]{1,3})(\$?)([1-9][0-9]*)(?![A-Za-z0-9_(])/g;
+
+export function translateFormula(formula, rowDelta, columnDelta) {
+  if (typeof formula !== "string" || !Number.isInteger(rowDelta) || !Number.isInteger(columnDelta)) {
+    throw new FormulaEvaluationError("invalid_formula", "formula translation requires a formula and integer offsets");
+  }
+  let output = "";
+  let index = 0;
+  while (index < formula.length) {
+    if (formula[index] === '"') {
+      const start = index;
+      index += 1;
+      while (index < formula.length) {
+        if (formula[index] === '"' && formula[index + 1] === '"') index += 2;
+        else if (formula[index++] === '"') break;
+      }
+      output += formula.slice(start, index);
+      continue;
+    }
+    const nextQuote = formula.indexOf('"', index);
+    const end = nextQuote < 0 ? formula.length : nextQuote;
+    const unquoted = formula.slice(index, end).replace(CELL_REFERENCE, (match, absoluteColumn, letters, absoluteRow, rowText) => {
+      let row = Number(rowText) - 1;
+      let column = columnIndex(letters);
+      if (!absoluteRow) row += rowDelta;
+      if (!absoluteColumn) column += columnDelta;
+      if (row < 0 || row >= 1_048_576 || column < 0 || column >= 16_384) return "#REF!";
+      return `${absoluteColumn}${columnName(column)}${absoluteRow}${row + 1}`;
+    });
+    output += unquoted;
+    index = end;
+  }
+  return output;
 }
 
 class FormulaParser {
@@ -166,12 +272,22 @@ class FormulaParser {
     if (token.type !== "identifier") {
       throw new FormulaEvaluationError("invalid_formula", "expected a value");
     }
-    const identifier = this.consume("identifier").value;
+    let identifier = this.consume("identifier").value;
     if (this.current().type === "(") {
       return this.parseFunction(identifier);
     }
     if (identifier.toUpperCase() === "TRUE") return true;
     if (identifier.toUpperCase() === "FALSE") return false;
+    let sheetName;
+    if (identifier.includes("!")) {
+      const separator = identifier.lastIndexOf("!");
+      sheetName = identifier.slice(0, separator).replace(/^'|'$/g, "").replaceAll("''", "'");
+      identifier = identifier.slice(separator + 1);
+    } else if (this.current().type === "operator" && this.current().value === "!") {
+      sheetName = identifier;
+      this.consume("operator", "!");
+      identifier = this.consume("identifier").value;
+    }
     if (!isCellReference(identifier)) {
       throw new FormulaEvaluationError("unsupported_formula", "unsupported identifier: " + identifier);
     }
@@ -179,9 +295,9 @@ class FormulaParser {
       this.consume(":");
       const end = this.consume("identifier").value;
       if (!isCellReference(end)) throw new FormulaEvaluationError("invalid_formula", "range endpoint must be a cell");
-      return this.context.getRange(identifier, end);
+      return this.context.getRange(identifier, end, sheetName);
     }
-    return this.context.getCell(identifier);
+    return this.context.getCell(identifier, sheetName);
   }
 
   parseFunction(name) {
@@ -212,9 +328,80 @@ class FormulaParser {
         return values.filter((value) => typeof value === "number" && Number.isFinite(value)).length;
       case "COUNTA":
         return values.filter((value) => value !== null && value !== undefined && value !== "").length;
+      case "AND": return values.every(truthy);
+      case "OR": return values.some(truthy);
+      case "NOT":
+        if (args.length !== 1) throw new FormulaEvaluationError("invalid_formula", "NOT requires one argument");
+        return !truthy(args[0]);
       case "IF":
         if (args.length !== 3) throw new FormulaEvaluationError("invalid_formula", "IF requires three arguments");
         return truthy(args[0]) ? args[1] : args[2];
+      case "ABS": return Math.abs(numberValue(args[0]));
+      case "INT": return Math.floor(numberValue(args[0]));
+      case "TRUNC": return Math.trunc(numberValue(args[0]));
+      case "ROUND": return roundExcel(args[0], args[1] ?? 0);
+      case "ROUNDUP": return roundExcel(args[0], args[1] ?? 0, "up");
+      case "ROUNDDOWN": return roundExcel(args[0], args[1] ?? 0, "down");
+      case "MOD": return numberValue(args[0]) - numberValue(args[1]) * Math.floor(numberValue(args[0]) / numberValue(args[1]));
+      case "POWER": return numberValue(args[0]) ** numberValue(args[1]);
+      case "SQRT": return Math.sqrt(numberValue(args[0]));
+      case "LEFT": return String(args[0] ?? "").slice(0, Math.max(0, Math.trunc(numberValue(args[1] ?? 1))));
+      case "RIGHT": {
+        const text = String(args[0] ?? "");
+        const count = Math.max(0, Math.trunc(numberValue(args[1] ?? 1)));
+        return text.slice(Math.max(0, text.length - count));
+      }
+      case "MID": {
+        const text = String(args[0] ?? "");
+        const start = Math.max(0, Math.trunc(numberValue(args[1])) - 1);
+        const count = Math.max(0, Math.trunc(numberValue(args[2])));
+        return text.slice(start, start + count);
+      }
+      case "LEN": return String(args[0] ?? "").length;
+      case "LOWER": return String(args[0] ?? "").toLowerCase();
+      case "UPPER": return String(args[0] ?? "").toUpperCase();
+      case "TRIM": return String(args[0] ?? "").trim().replace(/\s+/g, " ");
+      case "CONCAT": return values.map((value) => value ?? "").join("");
+      case "COUNTIF": {
+        if (args.length !== 2) throw new FormulaEvaluationError("invalid_formula", "COUNTIF requires two arguments");
+        return flatten(args[0]).filter((value) => criterionMatches(value, args[1])).length;
+      }
+      case "SUMIF": {
+        if (args.length < 2 || args.length > 3) throw new FormulaEvaluationError("invalid_formula", "SUMIF requires two or three arguments");
+        const criteria = flatten(args[0]);
+        const sumRange = flatten(args[2] ?? args[0]);
+        return criteria.reduce((total, value, index) => criterionMatches(value, args[1]) ? total + numberValue(sumRange[index]) : total, 0);
+      }
+      case "MATCH": {
+        const list = flatten(args[0] ?? []);
+        const matchType = numberValue(args[2] ?? 0);
+        const exact = list.findIndex((value) => value === args[1]);
+        if (exact >= 0) return exact + 1;
+        if (matchType === 0) throw new FormulaEvaluationError("unsupported_formula", "MATCH value not found");
+        const candidates = list.map((value, index) => ({ value, index })).filter(({ value }) => matchType > 0 ? value <= args[1] : value >= args[1]);
+        const found = matchType > 0 ? candidates.at(-1) : candidates[0];
+        if (!found) throw new FormulaEvaluationError("unsupported_formula", "MATCH value not found");
+        return found.index + 1;
+      }
+      case "INDEX": {
+        const matrix = args[0];
+        if (!Array.isArray(matrix)) throw new FormulaEvaluationError("invalid_formula", "INDEX requires a range");
+        const row = Math.trunc(numberValue(args[1] ?? 1)) - 1;
+        const column = Math.trunc(numberValue(args[2] ?? 1)) - 1;
+        const result = Array.isArray(matrix[row]) ? matrix[row][column] : flatten(matrix)[row];
+        if (result === undefined) throw new FormulaEvaluationError("unsupported_formula", "INDEX is outside the supplied range");
+        return result;
+      }
+      case "VLOOKUP": {
+        const matrix = args[1];
+        if (!Array.isArray(matrix) || !matrix.every(Array.isArray)) throw new FormulaEvaluationError("invalid_formula", "VLOOKUP requires a rectangular range");
+        const exact = args[3] === false || args[3] === 0;
+        let found = matrix.find((row) => row[0] === args[0]);
+        if (!found && !exact) found = matrix.filter((row) => row[0] <= args[0]).at(-1);
+        const column = Math.trunc(numberValue(args[2] ?? 1)) - 1;
+        if (!found || column < 0 || column >= found.length) throw new FormulaEvaluationError("unsupported_formula", "VLOOKUP value or column not found");
+        return found[column];
+      }
       default:
         throw new FormulaEvaluationError("unsupported_formula", "unsupported function: " + name);
     }

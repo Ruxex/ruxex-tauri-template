@@ -1,6 +1,8 @@
 import type { Story } from "@ladle/react";
 import { QuickPanelCard } from "./QuickPanelCard";
 
+export default { title: "Feature / Settings / Quick Panel Card" };
+
 export const Configured: Story = () => (
   <div className="max-w-3xl p-4">
     <QuickPanelCard

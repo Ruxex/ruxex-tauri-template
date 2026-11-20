@@ -5,6 +5,8 @@ import { StoryVariantList } from "../../../../.ladle/support/StoryVariantList";
 import { ActivityItem } from "./ActivityItem";
 import type { ConversationViewItem } from "./conversation-model";
 
+export default { title: "Feature / Conversation / Activity Item" };
+
 const commandItem: ConversationViewItem = {
   id: "activity-command",
   turnId: "turn-catalog",

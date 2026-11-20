@@ -57,6 +57,20 @@ describe("SlashCommandPalette", () => {
     expect(onSelect).toHaveBeenCalledWith("compact");
   });
 
+  it("scrolls the active option into view during keyboard navigation", () => {
+    const ref = createRef<SlashCommandPaletteHandle>();
+    render(<SlashCommandPalette disabled={false} onSelect={vi.fn()} ref={ref} />);
+
+    const compact = screen.getByRole("option", { name: "Compact" }) as HTMLButtonElement & {
+      scrollIntoView: (options?: ScrollIntoViewOptions) => void;
+    };
+    compact.scrollIntoView = vi.fn();
+
+    act(() => ref.current?.handleKeyDown({ key: "ArrowDown", preventDefault: vi.fn() }));
+
+    expect(compact.scrollIntoView).toHaveBeenCalledWith({ block: "nearest", inline: "nearest" });
+  });
+
   it("disables every command while the Composer is busy", () => {
     render(<SlashCommandPalette disabled onSelect={vi.fn()} />);
 

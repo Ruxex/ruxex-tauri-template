@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 import { useRef } from "react";
 import { ComposerTextInput } from "./ComposerTextInput";
 
+export default { title: "Feature / Conversation / Composer Text Input" };
+
 export const Empty: Story = () => {
   const attachmentInput = useRef<HTMLInputElement>(null);
   return (

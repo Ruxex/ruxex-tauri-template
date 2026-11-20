@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import type { PendingServerRequest } from "@/app-server/event-reducer";
 import { ServerRequestCard } from "./ServerRequestCard";
 
+export default { title: "Composite / Approvals / Server Request Card" };
+
 function Surface({ children }: { children: ReactNode }) {
   return <div className="max-w-2xl bg-base-200 p-4">{children}</div>;
 }

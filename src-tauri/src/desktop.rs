@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use std::fs::OpenOptions;
@@ -6,6 +7,7 @@ use std::io::{ErrorKind, Write};
 
 use base64::Engine;
 use ruxex::ProductIdentity;
+use sha2::{Digest, Sha256};
 
 use crate::desktop_config::DesktopConfig;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
@@ -271,6 +273,12 @@ fn validate_vendored_skills(source_root: &Path) -> Result<(), String> {
             }
         }
     }
+    if !source_root.join("RUNTIME.md").is_file() {
+        return Err(format!(
+            "bundled artifact runtime contract is missing: {}",
+            source_root.join("RUNTIME.md").display()
+        ));
+    }
     Ok(())
 }
 
@@ -321,6 +329,15 @@ pub(crate) fn sync_vendored_skills(source_root: &Path, home: &Path) -> Result<Pa
             )
         })?;
     }
+    let runtime_contract = source_root.join("RUNTIME.md");
+    let runtime_contract_destination = skills_dir.join("RUNTIME.md");
+    reject_symlink(&runtime_contract_destination)?;
+    fs::copy(&runtime_contract, &runtime_contract_destination).map_err(|error| {
+        format!(
+            "failed to sync artifact runtime contract to {}: {error}",
+            runtime_contract_destination.display()
+        )
+    })?;
 
     sync_vendored_artifact_runtime(source_root, &skills_dir)?;
 
@@ -378,6 +395,10 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
     let path_source = package_root.join("ruxex-path");
     for path in [
         resources_source.join("node"),
+        resources_source.join("python"),
+        resources_source.join("native"),
+        resources_source.join("bin"),
+        resources_source.join("licenses"),
         resources_source.join("ruxex-artifact-tool"),
     ] {
         if !path.is_dir() {
@@ -386,6 +407,12 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
                 path.display()
             ));
         }
+    }
+    if !resources_source.join("runtime-manifest.json").is_file() {
+        return Err(format!(
+            "bundled artifact runtime asset is missing: {}",
+            resources_source.join("runtime-manifest.json").display()
+        ));
     }
     let engine_source = path_source.join("ruxex-artifacts-engine");
     if !engine_source.is_file() {
@@ -397,15 +424,31 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
 
     let resources_destination = skills_dir.join("ruxex-resources");
     reject_symlink(&resources_destination)?;
-    remove_path_if_exists(&resources_destination)?;
-    fs::create_dir_all(&resources_destination)
-        .map_err(|error| format!("failed to create artifact runtime resources: {error}"))?;
-    for name in ["node", "ruxex-artifact-tool"] {
-        copy_directory_tree(
-            &resources_source.join(name),
-            &resources_destination.join(name),
+    if !artifact_runtime_matches(&resources_source, &resources_destination)? {
+        remove_path_if_exists(&resources_destination)?;
+        fs::create_dir_all(&resources_destination)
+            .map_err(|error| format!("failed to create artifact runtime resources: {error}"))?;
+        for name in [
+            "node",
+            "python",
+            "native",
+            "bin",
+            "licenses",
+            "ruxex-artifact-tool",
+        ] {
+            copy_directory_tree(
+                &resources_source.join(name),
+                &resources_destination.join(name),
+            )
+            .map_err(|error| {
+                format!("failed to sync artifact runtime resource `{name}`: {error}")
+            })?;
+        }
+        fs::copy(
+            resources_source.join("runtime-manifest.json"),
+            resources_destination.join("runtime-manifest.json"),
         )
-        .map_err(|error| format!("failed to sync artifact runtime resource `{name}`: {error}"))?;
+        .map_err(|error| format!("failed to sync artifact runtime manifest: {error}"))?;
     }
 
     let path_destination = skills_dir.join("ruxex-path");
@@ -417,6 +460,152 @@ fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Resu
     fs::copy(engine_source, &engine_destination)
         .map_err(|error| format!("failed to sync artifact runtime engine: {error}"))?;
     Ok(())
+}
+
+fn artifact_runtime_matches(source: &Path, destination: &Path) -> Result<bool, String> {
+    let source_manifest = fs::read(source.join("runtime-manifest.json"))
+        .map_err(|error| format!("failed to read artifact runtime manifest: {error}"))?;
+    let destination_manifest = match fs::read(destination.join("runtime-manifest.json")) {
+        Ok(manifest) => manifest,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => {
+            return Err(format!(
+                "failed to read installed artifact runtime manifest: {error}"
+            ));
+        }
+    };
+    if source_manifest != destination_manifest {
+        return Ok(false);
+    }
+    let manifest: serde_json::Value = serde_json::from_slice(&source_manifest)
+        .map_err(|error| format!("failed to parse artifact runtime manifest: {error}"))?;
+    for (manifest_path, relative) in [
+        ("inputs/pythonRuntimeSha256", "python"),
+        ("inputs/libreOfficeRuntimeSha256", "native/libreoffice"),
+        ("inputs/popplerRuntimeSha256", "native/poppler"),
+        ("inputs/overrideRuntimeSha256", "bin/override"),
+        ("inputs/licenseRuntimeSha256", "licenses"),
+        ("bundledInputs/nodeRuntimeSha256", "node"),
+        ("bundledInputs/artifactSdkSha256", "ruxex-artifact-tool"),
+    ] {
+        let Some(expected) = manifest
+            .pointer(&format!("/{manifest_path}"))
+            .and_then(serde_json::Value::as_str)
+        else {
+            return Ok(false);
+        };
+        let tree = destination.join(relative);
+        if !tree.is_dir() || hash_artifact_runtime_tree(&tree)? != expected {
+            return Ok(false);
+        }
+    }
+    for relative in [
+        "node/bin/node",
+        "python/bin/python3",
+        "licenses/THIRD_PARTY_NOTICES.md",
+        "ruxex-artifact-tool/src/loader.mjs",
+        "ruxex-artifact-tool/src/runner.mjs",
+        "node/node_modules/pptxgenjs/package.json",
+        "node/node_modules/docx/package.json",
+    ] {
+        if !destination.join(relative).is_file() {
+            return Ok(false);
+        }
+    }
+    for name in ["python", "soffice", "pdfinfo", "pdftoppm"] {
+        let Some(relative) = manifest
+            .get("executables")
+            .and_then(|executables| executables.get(name))
+            .and_then(serde_json::Value::as_str)
+        else {
+            return Ok(false);
+        };
+        let path = Path::new(relative);
+        if path.is_absolute()
+            || path
+                .components()
+                .any(|component| matches!(component, std::path::Component::ParentDir))
+            || !destination.join(path).is_file()
+        {
+            return Ok(false);
+        }
+        let wrapper = match name {
+            "soffice" | "pdfinfo" | "pdftoppm" => Some(format!("bin/override/{name}")),
+            _ => None,
+        };
+        if wrapper.is_some_and(|relative| !destination.join(relative).is_file()) {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn hash_artifact_runtime_tree(root: &Path) -> Result<String, String> {
+    fn collect_files(root: &Path, current: &Path, files: &mut Vec<PathBuf>) -> std::io::Result<()> {
+        for entry in fs::read_dir(current)? {
+            let entry = entry?;
+            let path = entry.path();
+            let file_type = entry.file_type()?;
+            if file_type.is_dir() {
+                collect_files(root, &path, files)?;
+            } else if file_type.is_file() {
+                files.push(path.strip_prefix(root).unwrap_or(&path).to_path_buf());
+            }
+        }
+        Ok(())
+    }
+
+    let mut files = Vec::new();
+    collect_files(root, root, &mut files).map_err(|error| {
+        format!(
+            "failed to enumerate runtime tree {}: {error}",
+            root.display()
+        )
+    })?;
+    files.sort_by_key(|path| path.to_string_lossy().replace('\\', "/"));
+
+    let mut digest = Sha256::new();
+    for relative in files {
+        let path = root.join(&relative);
+        let relative = relative
+            .to_str()
+            .ok_or_else(|| format!("runtime path is not valid UTF-8: {}", path.display()))?
+            .replace('\\', "/");
+        let metadata = fs::metadata(&path).map_err(|error| {
+            format!("failed to inspect runtime file {}: {error}", path.display())
+        })?;
+        digest.update(relative.as_bytes());
+        digest.update([0]);
+        digest.update(runtime_file_mode(&metadata).to_be_bytes());
+
+        let mut file = fs::File::open(&path)
+            .map_err(|error| format!("failed to read runtime file {}: {error}", path.display()))?;
+        let mut buffer = [0; 64 * 1024];
+        let mut file_digest = Sha256::new();
+        loop {
+            let read = file.read(&mut buffer).map_err(|error| {
+                format!("failed to read runtime file {}: {error}", path.display())
+            })?;
+            if read == 0 {
+                break;
+            }
+            file_digest.update(&buffer[..read]);
+        }
+        digest.update(file_digest.finalize());
+        digest.update([0]);
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+
+#[cfg(unix)]
+fn runtime_file_mode(metadata: &fs::Metadata) -> u16 {
+    use std::os::unix::fs::PermissionsExt;
+    (metadata.permissions().mode() & 0o7777) as u16
+}
+
+#[cfg(not(unix))]
+fn runtime_file_mode(metadata: &fs::Metadata) -> u16 {
+    u16::from(metadata.permissions().readonly())
 }
 
 fn reject_symlink(path: &Path) -> Result<(), String> {
@@ -478,9 +667,9 @@ mod tests {
     use std::path::Path;
 
     use super::{
-        TEST_RUXEX_HOME_LOCK, TestRuxexHomeOverride, product_identity, read_image_file,
-        read_image_file_from_roots, ruxex_home_from_user_home, select_vendored_skills_source,
-        sync_vendored_skills,
+        TEST_RUXEX_HOME_LOCK, TestRuxexHomeOverride, hash_artifact_runtime_tree, product_identity,
+        read_image_file, read_image_file_from_roots, ruxex_home_from_user_home,
+        select_vendored_skills_source, sync_vendored_skills,
     };
     use crate::desktop_config::DesktopConfig;
     use crate::marketplace_assets::{
@@ -507,12 +696,60 @@ mod tests {
     }
 
     fn write_vendored_skill_fixture(root: &Path, file_content: &str) {
+        fs::create_dir_all(root).unwrap();
+        fs::write(root.join("RUNTIME.md"), "shared runtime contract\n").unwrap();
         for name in ["documents", "presentations", "spreadsheets", "pdf"] {
             let skill = root.join(name);
             fs::create_dir_all(skill.join("agents")).unwrap();
             fs::write(skill.join("SKILL.md"), file_content).unwrap();
             fs::write(skill.join("agents/ruxex.yaml"), "interface: {}\n").unwrap();
         }
+    }
+
+    fn write_artifact_runtime_fixture(resources: &Path) {
+        for relative in [
+            "python/bin/python3",
+            "native/libreoffice/program/soffice",
+            "native/poppler/bin/pdftoppm",
+            "native/poppler/bin/pdfinfo",
+            "bin/override/soffice",
+            "bin/override/pdftoppm",
+            "bin/override/pdfinfo",
+            "licenses/THIRD_PARTY_NOTICES.md",
+        ] {
+            let path = resources.join(relative);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, "runtime fixture").unwrap();
+        }
+        let manifest = serde_json::json!({
+            "schemaVersion": 1,
+            "target": "x86_64-unknown-linux-gnu",
+            "pythonVersion": "3.12.14",
+            "nodeVersion": "24.22.1",
+            "native": {"libreofficeVersion": "test", "popplerVersion": "test"},
+            "executables": {
+                "python": "python/bin/python3",
+                "soffice": "native/libreoffice/program/soffice",
+                "pdfinfo": "native/poppler/bin/pdfinfo",
+                "pdftoppm": "native/poppler/bin/pdftoppm"
+            },
+            "inputs": {
+                "pythonRuntimeSha256": hash_artifact_runtime_tree(&resources.join("python")).unwrap(),
+                "libreOfficeRuntimeSha256": hash_artifact_runtime_tree(&resources.join("native/libreoffice")).unwrap(),
+                "popplerRuntimeSha256": hash_artifact_runtime_tree(&resources.join("native/poppler")).unwrap(),
+                "overrideRuntimeSha256": hash_artifact_runtime_tree(&resources.join("bin/override")).unwrap(),
+                "licenseRuntimeSha256": hash_artifact_runtime_tree(&resources.join("licenses")).unwrap()
+            },
+            "bundledInputs": {
+                "nodeRuntimeSha256": hash_artifact_runtime_tree(&resources.join("node")).unwrap(),
+                "artifactSdkSha256": hash_artifact_runtime_tree(&resources.join("ruxex-artifact-tool")).unwrap()
+            }
+        });
+        fs::write(
+            resources.join("runtime-manifest.json"),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
     }
 
     #[test]
@@ -609,6 +846,10 @@ mod tests {
         let result = sync_vendored_skills(&source, &home);
 
         assert_eq!(result.unwrap(), home.join("vendored/skills"));
+        assert_eq!(
+            fs::read_to_string(home.join("vendored/skills/RUNTIME.md")).unwrap(),
+            "shared runtime contract\n"
+        );
         for name in ["documents", "presentations", "spreadsheets", "pdf"] {
             assert_eq!(
                 fs::read_to_string(home.join(format!("vendored/skills/{name}/SKILL.md"))).unwrap(),
@@ -676,8 +917,25 @@ mod tests {
         fs::write(package.join("ruxex-package.json"), "{}").unwrap();
         fs::create_dir_all(resources.join("node/bin")).unwrap();
         fs::write(resources.join("node/bin/node"), "runtime").unwrap();
-        fs::create_dir_all(resources.join("ruxex-artifact-tool")).unwrap();
+        for package in ["pptxgenjs", "docx"] {
+            let package_manifest =
+                resources.join(format!("node/node_modules/{package}/package.json"));
+            fs::create_dir_all(package_manifest.parent().unwrap()).unwrap();
+            fs::write(package_manifest, "{}\n").unwrap();
+        }
+        fs::create_dir_all(resources.join("ruxex-artifact-tool/src")).unwrap();
+        fs::write(
+            resources.join("ruxex-artifact-tool/src/loader.mjs"),
+            "loader",
+        )
+        .unwrap();
+        fs::write(
+            resources.join("ruxex-artifact-tool/src/runner.mjs"),
+            "runner",
+        )
+        .unwrap();
         fs::write(resources.join("ruxex-artifact-tool/index.mjs"), "tool").unwrap();
+        write_artifact_runtime_fixture(&resources);
         fs::create_dir_all(engine.parent().unwrap()).unwrap();
         fs::write(&engine, "engine").unwrap();
 
@@ -688,6 +946,14 @@ mod tests {
             "runtime"
         );
         assert_eq!(
+            fs::read_to_string(staged.join("ruxex-resources/python/bin/python3")).unwrap(),
+            "runtime fixture"
+        );
+        assert_eq!(
+            fs::read_to_string(staged.join("RUNTIME.md")).unwrap(),
+            "shared runtime contract\n"
+        );
+        assert_eq!(
             fs::read_to_string(staged.join("ruxex-resources/ruxex-artifact-tool/index.mjs"))
                 .unwrap(),
             "tool"
@@ -696,6 +962,25 @@ mod tests {
             fs::read_to_string(staged.join("ruxex-path/ruxex-artifacts-engine")).unwrap(),
             "engine"
         );
+        let runtime_marker = staged.join("ruxex-resources/install-sentinel");
+        fs::write(&runtime_marker, "preserved").unwrap();
+        sync_vendored_skills(&source, &home).unwrap();
+        assert_eq!(fs::read_to_string(&runtime_marker).unwrap(), "preserved");
+        fs::write(
+            staged.join("ruxex-resources/python/bin/python3"),
+            "corrupted runtime",
+        )
+        .unwrap();
+        sync_vendored_skills(&source, &home).unwrap();
+        assert!(!runtime_marker.exists());
+        assert_eq!(
+            fs::read_to_string(staged.join("ruxex-resources/python/bin/python3")).unwrap(),
+            "runtime fixture"
+        );
+        fs::write(&runtime_marker, "preserved").unwrap();
+        fs::write(resources.join("runtime-manifest.json"), "updated runtime\n").unwrap();
+        sync_vendored_skills(&source, &home).unwrap();
+        assert!(!runtime_marker.exists());
         let _ = fs::remove_dir_all(root);
     }
 
@@ -721,6 +1006,7 @@ mod tests {
 
         fs::create_dir_all(resources.join("node")).unwrap();
         fs::create_dir_all(resources.join("ruxex-artifact-tool")).unwrap();
+        write_artifact_runtime_fixture(&resources);
         let missing_engine = sync_vendored_skills(&source, &home).unwrap_err();
         assert!(missing_engine.contains("ruxex-artifacts-engine"));
 

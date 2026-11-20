@@ -9,9 +9,25 @@ workflows. It also provides JSON read and validation commands for each format.
 
 The helper is staged beside each Skill so the Skill can invoke it by absolute
 path without relying on the managed command environment. The desktop syncs the
-shared JS API and format engine once beside the vendored Skill directories.
+shared JS API and artifact runtime once beside the vendored Skill directories.
 The plugin contains the workflow contract; the runtime resources ship with the
 desktop package.
+
+The runtime layout, build inputs, manifest, and install location are defined in
+[`skills/RUNTIME.md`](skills/RUNTIME.md). Presentation tooling uses the bundled
+Node.js runtime, a lock-built Python environment, and target-native LibreOffice
+and Poppler assets. Skills invoke these through the sibling `ruxex-artifacts`
+launcher and do not resolve tools from the host `PATH`.
+The documents Skill routes local DOCX reading and review, creation and editing,
+focused structure and accessibility audits, and core-properties metadata
+cleanup. It also includes local workflows for page rendering and comparison,
+styles and templates, comments and revisions, fields and navigation, redaction,
+and constrained document merging. DOCX validation confirms package parts; the
+structure audit reports a limited set of heading, image-alt, link-text, and
+table-header findings. Neither is a complete Word or WCAG validator. The
+desktop's DOCX SVG preview is content-oriented and does not reproduce Word
+pagination or exact page layout.
+
 The file facades are the canonical local file boundaries. Imports are bounded
 and loss-aware: supported workbook, document, and presentation elements are
 reconstructed, while unsupported content is retained as diagnostics instead of

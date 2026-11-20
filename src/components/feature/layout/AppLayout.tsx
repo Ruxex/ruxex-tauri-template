@@ -335,6 +335,7 @@ export function AppLayout() {
           collapsedSize={LEFT_PANE_COLLAPSED_SIZE}
           collapsible
           defaultSize={320}
+          groupResizeBehavior="preserve-pixel-size"
           id="left-sidebar"
           maxSize={480}
           minSize={240}
@@ -388,6 +389,7 @@ export function AppLayout() {
           data-pane-open={rightPaneOpen}
           data-testid="right-pane-panel"
           defaultSize={320}
+          groupResizeBehavior="preserve-pixel-size"
           id="right-pane"
           maxSize={MAX_RIGHT_PANE_WIDTH}
           minSize={240}

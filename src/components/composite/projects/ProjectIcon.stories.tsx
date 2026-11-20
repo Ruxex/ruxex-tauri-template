@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ProjectIcon } from "./ProjectIcon";
 
+export default { title: "Composite / Projects / Project Icon" };
+
 export const CommonIcons: Story = () => (
   <div className="flex flex-wrap gap-4 text-primary">
     <ProjectIcon aria-label="Folder" className="size-6" icon="folder" />

@@ -4,6 +4,8 @@ import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support
 import { appServerQueryKeys } from "@/app-server/query-keys";
 import { SubagentsSection } from "./SubagentsSection";
 
+export default { title: "Composite / Thread Summary / Subagents Section" };
+
 export const Empty: Story = () => (
   <CatalogQueryProvider
     seeds={[

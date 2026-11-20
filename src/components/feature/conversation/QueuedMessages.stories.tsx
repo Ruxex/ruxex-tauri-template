@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { QueuedMessages } from "./QueuedMessages";
 
+export default { title: "Feature / Conversation / Queued Messages" };
+
 export const Empty: Story = () => (
   <CatalogSurface>
     <QueuedMessages threadId="thread-catalog" />

@@ -153,7 +153,7 @@ export function ChatSidebarSections({
                     </div>
                     {expandedProjects[project.id] && (
                       <div className="pl-8" id={`project-chats-${project.id}`}>
-                        <ThreadList onSelect={onClose} projectId={project.id} selectedThreadId={selectedThreadId} />
+                        <ThreadList projectId={project.id} selectedThreadId={selectedThreadId} />
                       </div>
                     )}
                   </li>

@@ -3,6 +3,8 @@ import type { Story } from "@ladle/react";
 import { LadleDialogTrigger } from "../../../../.ladle/support/LadleDialogTrigger";
 import { NewProjectDialog } from "./NewProjectDialog";
 
+export default { title: "Composite / Projects / New Project Dialog" };
+
 export const EmptyForm: Story = () => (
   <LadleDialogTrigger
     label="Open empty project dialog"

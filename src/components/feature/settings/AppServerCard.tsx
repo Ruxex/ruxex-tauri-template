@@ -303,7 +303,9 @@ export function AppServerCard({
         >
           <div className="modal-box w-full max-w-md px-5 py-6">
             <DialogHeader
+              closeLabel={t("settings:closeConfirmation")}
               icon={ExclamationTriangleIcon}
+              onClose={() => setConfirmationAction(null)}
               titleId="app-server-action-title"
               title={
                 confirmationAction === "restart"

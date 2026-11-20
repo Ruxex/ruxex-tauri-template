@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { MarkdownContent } from "./MarkdownContent";
 
+export default { title: "Feature / Conversation / Markdown Content" };
+
 export const RichText: Story = () => (
   <MarkdownContent
     text={

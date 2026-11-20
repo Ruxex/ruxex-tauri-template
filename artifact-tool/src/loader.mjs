@@ -5,6 +5,10 @@ const nodeModulesRoot = process.env.RUXEX_ARTIFACT_NODE_MODULES;
 const runtimeEntries = {
   docx: "dist/index.mjs",
   pptxgenjs: "dist/pptxgen.es.js",
+  jszip: "lib/index.js",
+  sharp: "lib/index.js",
+  "pdf-lib": "es/index.js",
+  "jsonpath-plus": "dist/index-node-esm.js",
 };
 
 export function resolve(specifier, context, nextResolve) {

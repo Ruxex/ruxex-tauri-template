@@ -4,6 +4,8 @@ import { CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import type { v2 } from "@/protocol";
 import { ChatTable } from "./ChatTable";
 
+export default { title: "Composite / Chats / Chat Table" };
+
 const threads = [
   {
     id: "thread-catalog",

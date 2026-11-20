@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ChatStatusIcon } from "./ChatStatusIcon";
 
+export default { title: "Composite / Chats / Chat Status Icon" };
+
 export const AllStatuses: Story = () => (
   <div className="flex items-center gap-4">
     <ChatStatusIcon status="running" />

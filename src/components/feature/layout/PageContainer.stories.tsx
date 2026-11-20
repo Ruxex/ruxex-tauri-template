@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { PageContainer } from "./PageContainer";
 
+export default { title: "Feature / Layout / Page Container" };
+
 export const Default: Story = () => (
   <PageContainer>
     <div className="rounded-box bg-base-100 p-5 shadow-sm">

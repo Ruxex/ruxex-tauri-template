@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { McpStatusSummary } from "./McpStatusSummary";
 
+export default { title: "Composite / MCP / MCP Status Summary" };
+
 function Surface({ children }: { children: ReactNode }) {
   return <div className="max-w-2xl bg-base-100 p-6">{children}</div>;
 }

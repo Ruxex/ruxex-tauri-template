@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ArtifactViewer } from "./ArtifactViewer";
 
+export default { title: "Feature / Conversation / Artifact Viewer" };
+
 const preview = {
   mimeType: "image/svg+xml" as const,
   dataUrl:

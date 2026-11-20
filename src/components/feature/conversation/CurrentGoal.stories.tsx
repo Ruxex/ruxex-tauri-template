@@ -4,6 +4,8 @@ import { appServerQueryKeys } from "@/app-server/query-keys";
 import { CatalogQueryProvider, CatalogSurface } from "../../../../.ladle/support/catalog-providers";
 import { CurrentGoal } from "./CurrentGoal";
 
+export default { title: "Feature / Conversation / Current Goal" };
+
 export const Active: Story = () => (
   <CatalogQueryProvider
     seeds={[

@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { VisualizeFrame } from "./VisualizeFrame";
 
+export default { title: "Composite / Visualize / Visualize Frame" };
+
 export const InlineHtml: Story = () => (
   <VisualizeFrame
     loadHtml={async () =>

@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { ChatListItem } from "./ChatListItem";
 
+export default { title: "Composite / Chats / Chat List Item" };
+
 function Surface({ children }: { children: ReactNode }) {
   return <div className="w-96 bg-base-100 p-4">{children}</div>;
 }

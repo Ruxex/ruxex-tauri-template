@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { McpResourceViewer } from "./McpResourceViewer";
 
+export default { title: "Composite / MCP / MCP Resource Viewer" };
+
 const textResponse = {
   contents: [
     {

@@ -3,6 +3,8 @@ import type { Story } from "@ladle/react";
 import { SIDEBAR_PANELS } from "./navigation";
 import { RouteSidebar, SidebarContextPanel } from "./RouteSidebar";
 
+export default { title: "Feature / Sidebar / Route Sidebar" };
+
 const panel = SIDEBAR_PANELS.find((item) => item.id === "automation") ?? SIDEBAR_PANELS[0];
 
 export const Route: Story = () => (

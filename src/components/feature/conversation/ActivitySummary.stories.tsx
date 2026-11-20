@@ -3,6 +3,8 @@ import { getActivityPresentation } from "./activity-presentation";
 import type { ConversationViewItem } from "./conversation-model";
 import { ActivitySummary } from "./ActivitySummary";
 
+export default { title: "Feature / Conversation / Activity Summary" };
+
 const item: ConversationViewItem = {
   id: "activity-summary",
   turnId: "turn-catalog",

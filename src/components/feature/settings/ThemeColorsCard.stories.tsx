@@ -1,6 +1,8 @@
 import type { Story } from "@ladle/react";
 import { ThemeColorsCard } from "./ThemeColorsCard";
 
+export default { title: "Feature / Settings / Theme Colors Card" };
+
 export const PrimaryColor: Story = () => (
   <div className="max-w-3xl p-4">
     <ThemeColorsCard colors={{ primary: "oklch(57% 0.22 255)" }} onColorChange={() => undefined} />

@@ -1,6 +1,8 @@
 import type { Story } from "@ladle/react";
 import { ThreadSummaryPanel } from "./ThreadSummaryPanel";
 
+export default { title: "Composite / Thread Summary / Thread Summary Panel" };
+
 const tokenUsage = {
   total: {
     totalTokens: 123456,

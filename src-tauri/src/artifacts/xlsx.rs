@@ -3,8 +3,13 @@ use std::io::Read;
 use std::path::Path;
 
 use crate::ooxml;
-use calamine::{Data, Reader, Xlsx, open_workbook};
-use rust_xlsxwriter::{Chart, ChartType, Color, Format, FormatAlign, Formula, Table, Workbook};
+use base64::Engine;
+use calamine::{Data, Reader, Xls, Xlsx, open_workbook};
+use rust_xlsxwriter::{
+    Chart, ChartType, Color, ConditionalFormatCell, ConditionalFormatCellRule, DataValidation,
+    DataValidationRule, Format, FormatAlign, Formula, Image, IntoDataValidationValue, Note, Table,
+    Workbook,
+};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -31,6 +36,14 @@ struct SheetInput {
     tables: Vec<TableInput>,
     #[serde(default)]
     charts: Vec<ChartInput>,
+    #[serde(default)]
+    data_validations: Vec<Value>,
+    #[serde(default)]
+    conditional_formats: Vec<Value>,
+    #[serde(default)]
+    images: Vec<Value>,
+    #[serde(default)]
+    notes: Vec<Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -79,6 +92,16 @@ struct TableInput {
     range: String,
     #[serde(default = "default_true")]
     has_headers: bool,
+    #[serde(default = "default_table_style")]
+    style: String,
+    #[serde(default)]
+    show_totals: bool,
+    #[serde(default)]
+    show_banded_columns: bool,
+    #[serde(default = "default_true")]
+    show_banded_rows: bool,
+    #[serde(default = "default_true")]
+    show_filter_button: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,6 +122,10 @@ struct ChartSeriesInput {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_table_style() -> String {
+    "TableStyleMedium2".to_owned()
 }
 
 pub(super) fn run_xlsx(args: &[String]) -> Result<Value, ArtifactError> {
@@ -327,6 +354,316 @@ fn formula_result(value: Option<&Value>) -> Option<String> {
     }
 }
 
+fn write_data_validation(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    input: &Value,
+) -> Result<(), ArtifactError> {
+    let range_text = input.get("range").and_then(Value::as_str).ok_or_else(|| {
+        ArtifactError::new("invalid_data_validation", "validation range is required")
+    })?;
+    let range = parse_a1_range(range_text)?;
+    let rule = input
+        .get("rule")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_data_validation", "validation rule is required")
+        })?;
+    let kind = rule.get("type").and_then(Value::as_str).unwrap_or_default();
+    let validation = match kind {
+        "list" => {
+            if let Some(values) = rule.get("values").and_then(Value::as_array) {
+                let strings = values
+                    .iter()
+                    .map(|value| {
+                        value.as_str().map(str::to_owned).ok_or_else(|| {
+                            ArtifactError::new(
+                                "invalid_data_validation",
+                                "list values must be strings",
+                            )
+                        })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                DataValidation::new()
+                    .allow_list_strings(&strings)
+                    .map_err(|error| {
+                        ArtifactError::new("invalid_data_validation", error.to_string())
+                    })?
+            } else {
+                let formula = rule
+                    .get("formula1")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| {
+                        ArtifactError::new(
+                            "invalid_data_validation",
+                            "list source formula is required",
+                        )
+                    })?;
+                let formula = if formula.starts_with('=') {
+                    formula.to_owned()
+                } else {
+                    format!("={formula}")
+                };
+                DataValidation::new().allow_list_formula(Formula::new(formula))
+            }
+        }
+        "whole" | "decimal" => {
+            let operator = rule
+                .get("operator")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let first = rule
+                .get("formula1")
+                .and_then(Value::as_f64)
+                .ok_or_else(|| {
+                    ArtifactError::new(
+                        "invalid_data_validation",
+                        "numeric validation formula1 must be a number",
+                    )
+                })?;
+            let second = rule.get("formula2").and_then(Value::as_f64);
+            if (operator == "between" || operator == "notBetween") && second.is_none() {
+                return Err(ArtifactError::new(
+                    "invalid_data_validation",
+                    "between validation requires formula2",
+                ));
+            }
+            if kind == "whole" {
+                let first = first as i32;
+                let second = second.map(|value| value as i32);
+                let rule = validation_rule(operator, first, second)?;
+                DataValidation::new().allow_whole_number(rule)
+            } else {
+                let rule = validation_rule(operator, first, second)?;
+                DataValidation::new().allow_decimal_number(rule)
+            }
+        }
+        _ => {
+            return Err(ArtifactError::new(
+                "invalid_data_validation",
+                format!("unsupported validation type: {kind}"),
+            ));
+        }
+    };
+    worksheet
+        .add_data_validation(
+            range.first_row,
+            range.first_col,
+            range.last_row,
+            range.last_col,
+            &validation,
+        )
+        .map(|_| ())
+        .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+}
+
+fn validation_rule<T: Copy + IntoDataValidationValue>(
+    operator: &str,
+    first: T,
+    second: Option<T>,
+) -> Result<DataValidationRule<T>, ArtifactError> {
+    use DataValidationRule as Rule;
+    match (operator, second) {
+        ("between", Some(second)) => Ok(Rule::Between(first, second)),
+        ("notBetween", Some(second)) => Ok(Rule::NotBetween(first, second)),
+        ("equal", _) => Ok(Rule::EqualTo(first)),
+        ("notEqual", _) => Ok(Rule::NotEqualTo(first)),
+        ("greaterThan", _) => Ok(Rule::GreaterThan(first)),
+        ("greaterThanOrEqual", _) => Ok(Rule::GreaterThanOrEqualTo(first)),
+        ("lessThan", _) => Ok(Rule::LessThan(first)),
+        ("lessThanOrEqual", _) => Ok(Rule::LessThanOrEqualTo(first)),
+        _ => Err(ArtifactError::new(
+            "invalid_data_validation",
+            format!("unsupported validation operator: {operator}"),
+        )),
+    }
+}
+
+fn write_conditional_format(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    input: &Value,
+) -> Result<(), ArtifactError> {
+    let range_text = input.get("range").and_then(Value::as_str).ok_or_else(|| {
+        ArtifactError::new(
+            "invalid_conditional_format",
+            "conditional format range is required",
+        )
+    })?;
+    let range = parse_a1_range(range_text)?;
+    let operator = input
+        .get("operator")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let first = input
+        .get("formula")
+        .and_then(Value::as_f64)
+        .ok_or_else(|| {
+            ArtifactError::new(
+                "invalid_conditional_format",
+                "conditional formula must be numeric",
+            )
+        })?;
+    let second = input.get("formula2").and_then(Value::as_f64);
+    let rule = match (operator, second) {
+        ("between", Some(second)) => ConditionalFormatCellRule::Between(first, second),
+        ("notBetween", Some(second)) => ConditionalFormatCellRule::NotBetween(first, second),
+        ("equal", _) => ConditionalFormatCellRule::EqualTo(first),
+        ("notEqual", _) => ConditionalFormatCellRule::NotEqualTo(first),
+        ("greaterThan", _) => ConditionalFormatCellRule::GreaterThan(first),
+        ("greaterThanOrEqual", _) => ConditionalFormatCellRule::GreaterThanOrEqualTo(first),
+        ("lessThan", _) => ConditionalFormatCellRule::LessThan(first),
+        ("lessThanOrEqual", _) => ConditionalFormatCellRule::LessThanOrEqualTo(first),
+        _ => {
+            return Err(ArtifactError::new(
+                "invalid_conditional_format",
+                format!("unsupported conditional format operator: {operator}"),
+            ));
+        }
+    };
+    if matches!(operator, "between" | "notBetween") && second.is_none() {
+        return Err(ArtifactError::new(
+            "invalid_conditional_format",
+            "between rules require formula2",
+        ));
+    }
+    let format_value = input.get("format").cloned().unwrap_or_else(|| json!({}));
+    let format_input: FormatInput = serde_json::from_value(json!({
+        "range": range_text,
+        "font": format_value.get("font"),
+        "fill": format_value.get("fill"),
+        "number_format": format_value.get("numberFormat"),
+    }))
+    .map_err(|error| ArtifactError::new("invalid_conditional_format", error.to_string()))?;
+    let format = build_format(&format_input)?;
+    let conditional = ConditionalFormatCell::new()
+        .set_rule(rule)
+        .set_format(format);
+    worksheet
+        .add_conditional_format(
+            range.first_row,
+            range.first_col,
+            range.last_row,
+            range.last_col,
+            &conditional,
+        )
+        .map(|_| ())
+        .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+}
+
+fn write_image(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    input: &Value,
+) -> Result<(), ArtifactError> {
+    let data_url = input
+        .get("dataUrl")
+        .and_then(Value::as_str)
+        .ok_or_else(|| {
+            ArtifactError::new(
+                "invalid_image",
+                "image data URL is required for XLSX export",
+            )
+        })?;
+    let (header, encoded) = data_url
+        .split_once(',')
+        .ok_or_else(|| ArtifactError::new("invalid_image", "image data URL is malformed"))?;
+    if !header.eq_ignore_ascii_case("data:image/png;base64")
+        && !header.eq_ignore_ascii_case("data:image/jpeg;base64")
+        && !header.eq_ignore_ascii_case("data:image/jpg;base64")
+    {
+        return Err(ArtifactError::new(
+            "invalid_image",
+            "only PNG and JPEG images are supported",
+        ));
+    }
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(encoded)
+        .map_err(|error| ArtifactError::new("invalid_image", error.to_string()))?;
+    let anchor = input
+        .get("anchor")
+        .and_then(Value::as_object)
+        .ok_or_else(|| ArtifactError::new("invalid_image", "image anchor is required"))?;
+    let from = anchor
+        .get("from")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_image", "image anchor from position is required")
+        })?;
+    let extent = anchor
+        .get("extent")
+        .and_then(Value::as_object)
+        .ok_or_else(|| ArtifactError::new("invalid_image", "image anchor extent is required"))?;
+    let row = from
+        .get("row")
+        .and_then(Value::as_u64)
+        .and_then(|value| u32::try_from(value).ok())
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_image", "image row must be a non-negative integer")
+        })?;
+    let column = from
+        .get("col")
+        .and_then(Value::as_u64)
+        .and_then(|value| u16::try_from(value).ok())
+        .ok_or_else(|| {
+            ArtifactError::new(
+                "invalid_image",
+                "image column must be a non-negative integer",
+            )
+        })?;
+    let width = extent
+        .get("widthPx")
+        .and_then(Value::as_u64)
+        .and_then(|value| u32::try_from(value).ok())
+        .filter(|value| *value > 0)
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_image", "image width must be a positive integer")
+        })?;
+    let height = extent
+        .get("heightPx")
+        .and_then(Value::as_u64)
+        .and_then(|value| u32::try_from(value).ok())
+        .filter(|value| *value > 0)
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_image", "image height must be a positive integer")
+        })?;
+    let image = Image::new_from_buffer(&bytes)
+        .map_err(|error| ArtifactError::new("invalid_image", error.to_string()))?
+        .set_width(width)
+        .set_height(height);
+    worksheet
+        .insert_image(row, column, &image)
+        .map(|_| ())
+        .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+}
+
+fn write_note(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    input: &Value,
+) -> Result<(), ArtifactError> {
+    let address = input
+        .get("cell")
+        .and_then(Value::as_str)
+        .ok_or_else(|| ArtifactError::new("invalid_note", "note cell address is required"))?;
+    let range = parse_a1_range(address)?;
+    if range.first_row != range.last_row || range.first_col != range.last_col {
+        return Err(ArtifactError::new(
+            "invalid_note",
+            "note target must be a single cell",
+        ));
+    }
+    let text = input
+        .get("text")
+        .and_then(Value::as_str)
+        .ok_or_else(|| ArtifactError::new("invalid_note", "note text is required"))?;
+    let author = input
+        .get("author")
+        .and_then(Value::as_str)
+        .unwrap_or("Author");
+    let note = Note::new(text).set_author(author);
+    worksheet
+        .insert_note(range.first_row, range.first_col, &note)
+        .map(|_| ())
+        .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))
+}
+
 fn chart_type(value: &str) -> Result<ChartType, ArtifactError> {
     match value {
         "column" => Ok(ChartType::Column),
@@ -512,11 +849,33 @@ pub(super) fn create_xlsx(input_path: &str, output_path: &str) -> Result<Value, 
                     .map_err(|error| ArtifactError::new("xlsx_write_error", error.to_string()))?;
             }
         }
+        for validation in &sheet_input.data_validations {
+            write_data_validation(worksheet, validation)?;
+        }
+        for conditional_format in &sheet_input.conditional_formats {
+            write_conditional_format(worksheet, conditional_format)?;
+        }
+        for image in &sheet_input.images {
+            write_image(worksheet, image)?;
+        }
+        for note in &sheet_input.notes {
+            write_note(worksheet, note)?;
+        }
         for table_input in &sheet_input.tables {
             let range = parse_a1_range(&table_input.range)?;
+            if table_input.style != "TableStyleMedium2" {
+                return Err(ArtifactError::new(
+                    "unsupported_table_style",
+                    format!("unsupported table style: {}", table_input.style),
+                ));
+            }
             let table = Table::new()
                 .set_name(&table_input.name)
-                .set_header_row(table_input.has_headers);
+                .set_header_row(table_input.has_headers)
+                .set_total_row(table_input.show_totals)
+                .set_banded_columns(table_input.show_banded_columns)
+                .set_banded_rows(table_input.show_banded_rows)
+                .set_autofilter(table_input.show_filter_button);
             worksheet
                 .add_table(
                     range.first_row,
@@ -660,6 +1019,21 @@ fn open_xlsx(path: &str) -> Result<Xlsx<std::io::BufReader<fs::File>>, ArtifactE
 }
 
 pub(super) fn read_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
+    if Path::new(input_path)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("xls"))
+    {
+        let mut workbook: Xls<std::io::BufReader<fs::File>> =
+            open_workbook(input_path).map_err(|error| {
+                ArtifactError::new(
+                    "xls_read_error",
+                    format!("failed to read {input_path}: {error}"),
+                )
+            })?;
+        let sheets = read_legacy_xls_sheets(&mut workbook)?;
+        return Ok(json!({ "ok": true, "format": "xls", "sheets": sheets }));
+    }
     let mut workbook = open_xlsx(input_path)?;
     let sheets = read_sheets(&mut workbook, input_path)?;
     Ok(json!({
@@ -670,6 +1044,31 @@ pub(super) fn read_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
 }
 
 pub(super) fn validate_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
+    if Path::new(input_path)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("xls"))
+    {
+        let mut workbook: Xls<std::io::BufReader<fs::File>> =
+            open_workbook(input_path).map_err(|error| {
+                ArtifactError::new(
+                    "xls_read_error",
+                    format!("failed to read {input_path}: {error}"),
+                )
+            })?;
+        let sheets = workbook
+            .sheet_names()
+            .iter()
+            .map(|name| {
+                let range = workbook.worksheet_range(name).map_err(|error| {
+                    ArtifactError::new("xls_read_error", format!("failed to read {name}: {error}"))
+                })?;
+                let (rows, columns) = range.get_size();
+                Ok(json!({ "name": name, "rows": rows, "columns": columns }))
+            })
+            .collect::<Result<Vec<_>, ArtifactError>>()?;
+        return Ok(json!({ "ok": true, "valid": true, "format": "xls", "sheets": sheets }));
+    }
     let mut workbook = open_xlsx(input_path)?;
     let sheets = workbook
         .sheet_names()
@@ -692,6 +1091,41 @@ pub(super) fn validate_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
         "format": "xlsx",
         "sheets": sheets,
     }))
+}
+
+fn read_legacy_xls_sheets(
+    workbook: &mut Xls<std::io::BufReader<fs::File>>,
+) -> Result<Vec<Value>, ArtifactError> {
+    workbook
+        .sheet_names()
+        .iter()
+        .map(|name| {
+            let range = workbook.worksheet_range(name).map_err(|error| {
+                ArtifactError::new("xls_read_error", format!("failed to read {name}: {error}"))
+            })?;
+            let (row_count, column_count) = range.get_size();
+            let rows = (0..row_count)
+                .map(|row_index| {
+                    Value::Array(
+                        (0..column_count)
+                            .map(|column_index| data_to_json(range.get((row_index, column_index))))
+                            .collect(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Ok(json!({
+                "name": name,
+                "rows": rows,
+                "formulas": [],
+                "formats": [],
+                "merges": [],
+                "tables": [],
+                "charts": [],
+                "images": [],
+                "columnWidths": [],
+            }))
+        })
+        .collect()
 }
 
 fn read_sheets<R: std::io::Read + std::io::Seek>(
@@ -783,10 +1217,19 @@ fn read_xlsx_sheet_metadata(
             let table_path = ooxml::normalize_target(&target, "xl/worksheets");
             if let Some(table_xml) = read_xlsx_zip_text(input_path, &table_path)? {
                 if let Some(table) = ooxml::elements(&table_xml, "table").first() {
+                    let table_style = ooxml::elements(&table_xml, "tableStyleInfo")
+                        .first()
+                        .cloned()
+                        .unwrap_or_default();
                     metadata.tables.push(json!({
                         "name": table.get("name").cloned().unwrap_or_else(|| "Table".to_string()),
                         "range": table.get("ref").cloned().unwrap_or_default(),
                         "hasHeaders": table.get("headerRowCount").map_or(true, |value| value != "0"),
+                        "style": table_style.get("name").cloned().unwrap_or_else(default_table_style),
+                        "showTotals": table.get("totalsRowCount").is_some_and(|value| value == "1"),
+                        "showBandedColumns": table_style.get("showColumnStripes").is_some_and(|value| value == "1"),
+                        "showBandedRows": table_style.get("showRowStripes").is_none_or(|value| value != "0"),
+                        "showFilterButton": table_xml.contains("<autoFilter"),
                     }));
                 }
             }
@@ -1165,6 +1608,40 @@ mod tests {
         assert!(write_cell(worksheet, 1, 2, &json!(3.5), None).is_ok());
         assert!(write_cell(worksheet, 1, 3, &json!([]), None).is_err());
         assert!(write_cell(worksheet, 1, 4, &json!({}), None).is_err());
+    }
+
+    #[test]
+    fn writes_list_and_numeric_data_validation_parts() {
+        let directory = temp_path("validations");
+        fs::create_dir_all(&directory).unwrap();
+        let input = directory.join("workbook.json");
+        let output = directory.join("validations.xlsx");
+        fs::write(
+            &input,
+            serde_json::to_vec(&json!({
+                "sheets": [{
+                    "name": "Inputs",
+                    "rows": [["Status"]],
+                    "data_validations": [
+                        {"range":"A2:A20","rule":{"type":"list","values":["Ready","Blocked"]}},
+                        {"range":"B2:B10","rule":{"type":"whole","operator":"between","formula1":1,"formula2":5}}
+                    ]
+                }]
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+
+        create_xlsx(input.to_str().unwrap(), output.to_str().unwrap()).unwrap();
+        let xml = read_xlsx_zip_text(output.to_str().unwrap(), "xl/worksheets/sheet1.xml")
+            .unwrap()
+            .unwrap();
+        assert!(xml.contains("<dataValidations count=\"2\">"));
+        assert!(xml.contains("sqref=\"A2:A20\""));
+        assert!(xml.contains("<formula1>\"Ready,Blocked\"</formula1>"));
+        assert!(xml.contains("sqref=\"B2:B10\""));
+        assert!(xml.contains("<formula2>5</formula2>"));
+        let _ = fs::remove_dir_all(directory);
     }
 
     #[test]

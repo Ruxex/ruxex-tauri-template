@@ -1,5 +1,7 @@
 import type { Story } from "@ladle/react";
 
+export default { title: "Composite / Terminal / Terminal Pane" };
+
 export const DesktopRuntimeRequired: Story = () => (
   <section
     aria-label="Terminal"

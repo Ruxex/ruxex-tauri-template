@@ -1,5 +1,7 @@
 import { FormFieldRow } from "./FormFieldRow";
 
+export default { title: "Base / Common / Form Field Row" };
+
 export const Default = () => (
   <div className="max-w-2xl rounded-box border border-base-300 bg-base-100">
     <FormFieldRow controlId="catalog-field" label="Example field">

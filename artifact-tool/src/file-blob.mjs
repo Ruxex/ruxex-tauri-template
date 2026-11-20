@@ -5,6 +5,9 @@ import { ArtifactToolError } from "./a1-range.mjs";
 
 const supportedTypes = new Map([
   [".xlsx", "xlsx"],
+  [".xls", "xls"],
+  [".csv", "csv"],
+  [".tsv", "tsv"],
   [".docx", "docx"],
   [".pptx", "pptx"],
   [".pdf", "pdf"],

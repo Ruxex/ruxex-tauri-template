@@ -1,4 +1,6 @@
 interface:
   display_name: "Documents"
-  short_description: "Create and edit document files"
+  short_description: "Create, review, and inspect Word documents"
+  icon_small: "./assets/word-skill.svg"
+  icon_large: "./assets/word-skill.svg"
   brand_color: "#2563EB"

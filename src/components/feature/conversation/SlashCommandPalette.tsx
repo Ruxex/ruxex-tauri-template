@@ -73,12 +73,23 @@ export const SlashCommandPalette = forwardRef<SlashCommandPaletteHandle, SlashCo
     ];
     const optionsRef = useRef(options);
     optionsRef.current = options;
+    const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const [activeIndex, setActiveIndex] = useState(0);
     const highlightedIndex = options.length ? Math.min(activeIndex, options.length - 1) : 0;
     const activeOptionId = options.length ? `slash-command-option-${highlightedIndex}` : null;
+    const activeOption = options[highlightedIndex];
+    const activeOptionKey = activeOption
+      ? activeOption.kind === "command"
+        ? `command:${activeOption.command.id}`
+        : `skill:${activeOption.skill.path}`
+      : null;
     useEffect(() => {
       onActiveOptionChange?.(activeOptionId);
     }, [activeOptionId, onActiveOptionChange]);
+    useEffect(() => {
+      if (!activeOptionKey) return;
+      optionRefs.current[highlightedIndex]?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    }, [activeOptionKey, highlightedIndex]);
 
     function selectOption(index: number) {
       const option = options[index];
@@ -124,6 +135,9 @@ export const SlashCommandPalette = forwardRef<SlashCommandPaletteHandle, SlashCo
         "data-active": active ? "true" : undefined,
         id: `slash-command-option-${index}`,
         onMouseEnter: () => setActiveIndex(index),
+        ref: (element: HTMLButtonElement | null) => {
+          optionRefs.current[index] = element;
+        },
         tabIndex: -1,
       };
     }

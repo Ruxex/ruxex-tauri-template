@@ -3,6 +3,8 @@ import type { Story } from "@ladle/react";
 import { CatalogRouter } from "../../../../.ladle/support/catalog-providers";
 import { BrowserNavigationBar } from "./BrowserNavigationBar";
 
+export default { title: "Feature / Layout / Browser Navigation Bar" };
+
 export const SettingsBreadcrumbs: Story = () => (
   <CatalogRouter initialEntries={["/settings/appearance"]}>
     <BrowserNavigationBar />

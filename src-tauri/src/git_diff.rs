@@ -502,9 +502,11 @@ mod tests {
         assert_eq!(files[0].status, "added");
         assert_eq!(files[0].added, 1);
         assert!(files[0].patch.is_none());
-        assert!(file_patch(&repo.0, Path::new("new\nfile.txt"))
-            .unwrap()
-            .contains("+content"));
+        assert!(
+            file_patch(&repo.0, Path::new("new\nfile.txt"))
+                .unwrap()
+                .contains("+content")
+        );
     }
 
     #[test]

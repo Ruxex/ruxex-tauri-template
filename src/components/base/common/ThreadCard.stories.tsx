@@ -3,6 +3,8 @@ import type { Story } from "@ladle/react";
 import { catalogThread } from "../../../../.ladle/support/catalog-data";
 import { ThreadCard } from "./ThreadCard";
 
+export default { title: "Base / Common / Thread Card" };
+
 export const Default: Story = () => (
   <ThreadCard
     actions={

@@ -16,6 +16,8 @@ import {
   UiPreferencesCard,
 } from "./SettingsCards";
 
+export default { title: "Feature / Settings / Settings Cards" };
+
 export const SettingsPanelState: Story = () => (
   <SettingsPanel icon={InformationCircleIcon} title="Catalog panel">
     <SettingRow label="Status">

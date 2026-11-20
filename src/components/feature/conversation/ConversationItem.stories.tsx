@@ -3,6 +3,8 @@ import type { Story } from "@ladle/react";
 import { ConversationItem } from "./ConversationItem";
 import type { ConversationViewItem } from "./conversation-model";
 
+export default { title: "Feature / Conversation / Conversation Item" };
+
 const assistantItem: ConversationViewItem = {
   id: "message-assistant",
   turnId: "turn-catalog",

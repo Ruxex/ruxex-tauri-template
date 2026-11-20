@@ -3,6 +3,8 @@ import type { Story } from "@ladle/react";
 import { noopAsync } from "../../../../.ladle/support/catalog-data";
 import { ChatActivityTimeline } from "./ChatActivityTimeline";
 
+export default { title: "Composite / Chats / Chat Activity Timeline" };
+
 export const Empty: Story = () => (
   <ChatActivityTimeline connected items={[]} onReject={noopAsync} onResolve={noopAsync} pendingRequests={[]} />
 );

@@ -3,7 +3,7 @@ import { Document } from "./document.mjs";
 import { ArtifactOutput, FileBlob } from "./file-blob.mjs";
 import { PresentationFile } from "./presentation-file.mjs";
 import { SpreadsheetFile } from "./spreadsheet-file.mjs";
-import { Presentation } from "./presentation.mjs";
+import { Presentation, fixed, fr } from "./presentation.mjs";
 import { PdfDocument } from "./pdf.mjs";
 
 export { Workbook } from "./workbook.mjs";
@@ -14,6 +14,8 @@ export {
   Document,
   FileBlob,
   Presentation,
+  fixed,
+  fr,
   PresentationFile,
   PdfDocument,
   SpreadsheetFile,

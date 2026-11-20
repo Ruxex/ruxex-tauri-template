@@ -3,6 +3,8 @@ import { Outlet, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./AppLayout";
 
+export default { title: "Feature / Layout / App Layout" };
+
 export const Default: Story = () => (
   <Routes>
     <Route element={<AppLayout />} path="*">

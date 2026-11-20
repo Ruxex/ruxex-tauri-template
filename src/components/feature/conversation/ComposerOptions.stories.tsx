@@ -2,6 +2,8 @@ import type { Story } from "@ladle/react";
 
 import { ComposerOptions, PermissionMenu, SubmissionModeMenu } from "./ComposerOptions";
 
+export default { title: "Feature / Conversation / Composer Options" };
+
 export const Default: Story = () => (
   <div className="flex items-center gap-2">
     <ComposerOptions

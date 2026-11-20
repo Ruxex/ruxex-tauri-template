@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="128"
+   height="128"
+   viewBox="0 0 128 128"
+   fill="none"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg12"
+   sodipodi:docname="word-skill.svg"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview12"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="6.2734375"
+     inkscape:cx="63.920299"
+     inkscape:cy="64"
+     inkscape:window-width="1869"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg12" />
+  <title
+     id="title">Document writing skill icon</title>
+  <desc
+     id="desc">A writing document with abstract text lines and a pen on a cool blue background.</desc>
+  <defs
+     id="defs4">
+    <linearGradient
+       id="bg"
+       x1="12"
+       y1="8"
+       x2="117"
+       y2="122"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#66A4FF"
+         id="stop1" />
+      <stop
+         offset="1"
+         stop-color="#2E67D1"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       id="panel"
+       x1="31"
+       y1="23"
+       x2="101"
+       y2="97"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#FFFFFF"
+         id="stop3" />
+      <stop
+         offset="1"
+         stop-color="#EEF5FF"
+         id="stop4" />
+    </linearGradient>
+  </defs>
+  <rect
+     width="128"
+     height="128"
+     rx="28"
+     fill="url(#bg)"
+     id="rect4" />
+  <g
+     id="g15">
+    <g
+       id="g13">
+      <path
+         d="m 37,20 h 46 l 18,18 v 60 c 0,5.523 -4.477,10 -10,10 H 37 C 31.477,108 27,103.523 27,98 V 30 c 0,-5.523 4.477,-10 10,-10 z"
+         fill="url(#panel)"
+         id="path5"
+         style="fill:url(#panel)" />
+      <path
+         d="m 83,20 v 12 c 0,3.314 2.686,6 6,6 h 12"
+         fill="#d9e7ff"
+         id="path6" />
+    </g>
+    <g
+       id="g12"
+       transform="translate(0.5,2.2316313)">
+      <rect
+         x="39"
+         y="37"
+         width="26"
+         height="6"
+         rx="3"
+         fill="#5474c7"
+         id="rect6" />
+      <rect
+         x="39"
+         y="50"
+         width="49"
+         height="4"
+         rx="2"
+         fill="#b6caf4"
+         id="rect7" />
+      <rect
+         x="39"
+         y="59"
+         width="49"
+         height="4"
+         rx="2"
+         fill="#b6caf4"
+         id="rect8" />
+      <rect
+         x="39"
+         y="68"
+         width="41"
+         height="4"
+         rx="2"
+         fill="#b6caf4"
+         id="rect9" />
+      <rect
+         x="39"
+         y="77"
+         width="44"
+         height="4"
+         rx="2"
+         fill="#b6caf4"
+         id="rect10" />
+    </g>
+  </g>
+  <g
+     id="g14"
+     transform="translate(4.4632628,-1.5940224)">
+    <path
+       d="m 80.5,85.5 15,-15 c 1.933,-1.933 5.067,-1.933 7,0 v 0 c 1.933,1.933 1.933,5.067 0,7 l -15,15 L 78,95 Z"
+       fill="#2e67d1"
+       id="path10" />
+    <path
+       d="m 78,95 9.5,-2.5 -7,-7 z"
+       fill="#9fc0ff"
+       id="path11" />
+    <path
+       d="m 93,73 7,7"
+       stroke="#d9e7ff"
+       stroke-width="3"
+       stroke-linecap="round"
+       id="path12" />
+  </g>
+</svg>
