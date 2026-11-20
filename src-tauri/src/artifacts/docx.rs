@@ -16,6 +16,8 @@ const MAX_DOCX_PART_BYTES: u64 = 2 * 1024 * 1024;
 
 #[path = "docx_content_edit.rs"]
 mod content_edit;
+#[path = "docx_render.rs"]
+mod render;
 
 pub(super) fn run_docx(args: &[String]) -> Result<Value, ArtifactError> {
     let Some(operation) = args.first().map(String::as_str) else {
@@ -67,6 +69,8 @@ fn helper_command(args: &[String]) -> Result<Value, ArtifactError> {
         "note-insert" => note_insert_command(&args[1..]),
         "template-styles-apply" => template_styles_apply_command(&args[1..]),
         "content-edit" => content_edit::command(&args[1..]),
+        "render" => render::render_command(&args[1..]),
+        "compare" => render::compare_command(&args[1..]),
         "watermark-add" => watermark_add_command(&args[1..]),
         "merge-text" => merge_text_command(&args[1..]),
         "redact-text" => redact_text_command(&args[1..]),

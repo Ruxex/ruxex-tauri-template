@@ -101,7 +101,7 @@ append body paragraphs or tables with [Merge documents](merge-documents.md), or
 use the focused helper for that Word feature.
 
 For local formatting changes and simple table-cell edits while keeping the
-existing DOCX package, pass a JSON operation list to the Python helper:
+existing DOCX package, pass a JSON operation list to the Rust helper:
 
 ```json
 [
@@ -119,10 +119,10 @@ existing DOCX package, pass a JSON operation list to the Python helper:
 ```
 
 ```sh
-"/absolute/path/to/skill/documents/ruxex-artifacts" python "/absolute/path/to/skill/documents/scripts/edit_docx_content.py" \
-  "/absolute/path/source.docx" \
-  --out "/absolute/path/source-edited.docx" \
-  --operations-file "/absolute/path/operations.json"
+"/absolute/path/to/skill/ruxex-artifacts" docx helper content-edit \
+  --input "/absolute/path/source.docx" \
+  --output "/absolute/path/source-edited.docx" \
+  --operations-file "/absolute/path/operations.json" --json
 ```
 
 `part` defaults to `"document"`. `format_paragraph`, `format_run`, and

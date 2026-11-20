@@ -105,6 +105,32 @@ class ArtifactSkillContractTest(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, skill)
 
+    def test_document_workflows_use_rust_helpers_without_python_scripts(self) -> None:
+        skill_dir = SKILLS_ROOT / "documents"
+        for guide in sorted((skill_dir / "tasks").glob("*.md")):
+            content = guide.read_text(encoding="utf-8").lower()
+            with self.subTest(guide=guide.name):
+                self.assertNotIn(".py", content)
+                self.assertNotIn(" python ", content)
+        self.assertFalse(list((skill_dir / "scripts").glob("*.py")))
+
+        capability_source = (
+            ROOT.parent.parent / "src-tauri/src/artifacts/cli.rs"
+        ).read_text(encoding="utf-8")
+        for operation in ("content-edit", "render", "compare"):
+            with self.subTest(operation=operation):
+                self.assertIn(f'"{operation}"', capability_source)
+
+    def test_release_docx_render_integration_uses_rust_test_target(self) -> None:
+        makefile = (ROOT.parent.parent / "Makefile").read_text(encoding="utf-8")
+        runtime_ci = (
+            ROOT.parent.parent / "scripts/ci_test_native_artifact_runtime.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("rust-test-docx-render-integration:", makefile)
+        self.assertIn("rust-test-docx-render-integration", runtime_ci)
+        self.assertNotIn("docx_render_integration_test.py", makefile)
+        self.assertNotIn("docx_render_integration_test.py", runtime_ci)
+
     def test_presentation_skill_covers_codex_quality_workflow_without_hosted_routes(self) -> None:
         skill = (SKILLS_ROOT / "presentations" / "SKILL.md").read_text(
             encoding="utf-8",

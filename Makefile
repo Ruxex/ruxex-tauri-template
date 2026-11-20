@@ -6,7 +6,7 @@ export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
 CARGO_LLVM_COV_VERSION := 0.9.1
 
-.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-python-test rust-test rust-test-artifacts-cli rust-build-artifact-engine rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-python-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-build-artifact-engine rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -94,6 +94,10 @@ artifact-python-test:
 rust-test:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml
 
+rust-test-docx-render-integration:
+	cargo test --locked --release --manifest-path src-tauri/Cargo.toml \
+		--test docx_render_integration -- --nocapture
+
 rust-test-artifacts-cli:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts
 
@@ -145,9 +149,7 @@ release:
 		--artifact-engine target/release/ruxex-artifacts-engine
 	RUXEX_RUNTIME_ROOT="$(CURDIR)/src-tauri/resources/ruxex-package/ruxex-resources" \
 	RUXEX_RUNTIME_BIN_DIR="$(CURDIR)/src-tauri/resources/ruxex-package/ruxex-resources/bin/override" \
-		"$(CURDIR)/src-tauri/resources/ruxex-package/ruxex-resources/python/bin/python3" \
-		-m unittest discover -s plugins/ruxex-artifacts/tests \
-		-p 'docx_render_integration_test.py' -v
+		$(MAKE) rust-test-docx-render-integration
 	pnpm tauri build
 
 format-check:

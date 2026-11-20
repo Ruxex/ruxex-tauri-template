@@ -94,18 +94,16 @@ fn capabilities(args: &[String]) -> Result<Value, ArtifactError> {
                 "protectionTypes": ["readOnly", "comments", "trackedChanges", "forms"],
                 "tableOfContentsOptions": ["title", "headingStyleRange", "hyperlink"],
                 "helpers": [
-                    "render_docx.py", "compare_docx.py", "style_lint.py",
-                    "docx_tables_to_csv.py", "content_controls.py", "inspect_review_markup.py",
-                    "redact_docx_text.py", "process_tracked_changes.py", "merge_docx_text.py",
-                    "manage_comments.py", "style_normalize.py", "apply_template_styles.py",
-                    "distill_template.py", "audit_docx_features.py", "remove_publishing_controls.py",
-                    "process_fields.py", "add_comment.py", "extract_comments.py",
-                    "apply_comment_patches.py", "a11y_fixes.py", "strip_rsid_attributes.py",
-                    "add_tracked_replacements.py", "merge_docx_append.py",
-                    "insert_captions.py", "insert_ref_fields.py", "internal_nav.py",
-                    "set_protection.py", "insert_toc.py", "insert_note.py",
-                    "replace_docx_text.py", "set_table_geometry.py",
-                    "edit_docx_content.py", "watermark_add.py", "template_fidelity.py"
+                    "audit-features", "distill-template", "inspect-review-markup",
+                    "protection-set", "publishing-controls-remove", "rsid-strip", "style-lint",
+                    "style-normalize", "tables-to-csv", "watermark-add", "merge-text",
+                    "text-replace", "tracked-process", "redact-text", "merge-append",
+                    "template-fidelity", "a11y-fixes", "comments-extract", "content-controls",
+                    "comments-manage", "comments-add", "comments-apply-patches",
+                    "tracked-add-replacements", "table-geometry-set", "fields-process",
+                    "reference-fields-insert", "captions-insert", "toc-insert",
+                    "internal-nav", "note-insert", "template-styles-apply", "content-edit",
+                    "render", "compare"
                 ],
                 "helperOperations": [
                     "audit-features", "distill-template", "inspect-review-markup",
@@ -116,7 +114,8 @@ fn capabilities(args: &[String]) -> Result<Value, ArtifactError> {
                     "comments-manage", "comments-add", "comments-apply-patches",
                     "tracked-add-replacements", "table-geometry-set", "fields-process",
                     "reference-fields-insert", "captions-insert", "toc-insert",
-                    "internal-nav", "note-insert", "template-styles-apply", "content-edit"
+                    "internal-nav", "note-insert", "template-styles-apply", "content-edit",
+                    "render", "compare"
                 ]
             }
         },
@@ -347,40 +346,15 @@ mod tests {
         assert_eq!(
             capabilities["documentApis"]["docx"]["helpers"],
             json!([
-                "render_docx.py",
-                "compare_docx.py",
-                "style_lint.py",
-                "docx_tables_to_csv.py",
-                "content_controls.py",
-                "inspect_review_markup.py",
-                "redact_docx_text.py",
-                "process_tracked_changes.py",
-                "merge_docx_text.py",
-                "manage_comments.py",
-                "style_normalize.py",
-                "apply_template_styles.py",
-                "distill_template.py",
-                "audit_docx_features.py",
-                "remove_publishing_controls.py",
-                "process_fields.py",
-                "add_comment.py",
-                "extract_comments.py",
-                "apply_comment_patches.py",
-                "a11y_fixes.py",
-                "strip_rsid_attributes.py",
-                "add_tracked_replacements.py",
-                "merge_docx_append.py",
-                "insert_captions.py",
-                "insert_ref_fields.py",
-                "internal_nav.py",
-                "set_protection.py",
-                "insert_toc.py",
-                "insert_note.py",
-                "replace_docx_text.py",
-                "set_table_geometry.py",
-                "edit_docx_content.py",
-                "watermark_add.py",
-                "template_fidelity.py"
+                "audit-features", "distill-template", "inspect-review-markup",
+                "protection-set", "publishing-controls-remove", "rsid-strip", "style-lint",
+                "style-normalize", "tables-to-csv", "watermark-add", "merge-text",
+                "text-replace", "tracked-process", "redact-text", "merge-append",
+                "template-fidelity", "a11y-fixes", "comments-extract", "content-controls",
+                "comments-manage", "comments-add", "comments-apply-patches",
+                "tracked-add-replacements", "table-geometry-set", "fields-process",
+                "reference-fields-insert", "captions-insert", "toc-insert", "internal-nav",
+                "note-insert", "template-styles-apply", "content-edit", "render", "compare"
             ])
         );
         assert!(

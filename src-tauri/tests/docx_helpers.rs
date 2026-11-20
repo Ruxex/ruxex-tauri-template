@@ -1425,6 +1425,185 @@ fn content_edit_sets_section_page_size_orientation_and_margins() {
 }
 
 #[test]
+fn content_edit_inserts_a_styled_paragraph_after_unique_target_before_section_properties() {
+    let dir = temp_dir("content-edit-insert-paragraph");
+    let input = write_docx_with_document(
+        &dir,
+        r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Summary</w:t></w:r></w:p><w:sectPr/></w:body></w:document>"#,
+    );
+    let operations_path = dir.join("operations.json");
+    fs::write(
+        &operations_path,
+        r#"[{"op":"insert_paragraph_after","contains":"Summary","text":"Next steps","style":"Heading 2"}]"#,
+    )
+    .unwrap();
+    let output_path = dir.join("inserted.docx");
+    let output = run(&[
+        "docx", "helper", "content-edit", "--input", input.to_str().unwrap(),
+        "--output", output_path.to_str().unwrap(), "--operations-file", operations_path.to_str().unwrap(), "--json",
+    ]);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let mut archive = zip::ZipArchive::new(File::open(output_path).unwrap()).unwrap();
+    let document = read_zip_part(&mut archive, "word/document.xml");
+    let target = document.find("Summary").unwrap();
+    let inserted = document.find("Next steps").unwrap();
+    let section = document.find("<w:sectPr").unwrap();
+    assert!(target < inserted && inserted < section);
+    assert!(document.contains("w:pStyle w:val=\"Heading2\""));
+}
+
+#[test]
+fn content_edit_replaces_plain_table_cell_text_and_sets_alignment() {
+    let dir = temp_dir("content-edit-cell");
+    let input = write_docx_with_document(
+        &dir,
+        r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:tbl><w:tr><w:tc><w:tcPr/><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Old value</w:t></w:r></w:p></w:tc></w:tr></w:tbl></w:body></w:document>"#,
+    );
+    let operations_path = dir.join("operations.json");
+    fs::write(
+        &operations_path,
+        r#"[{"op":"replace_table_cell_text","tableIndex":0,"row":0,"column":0,"text":"New value","alignment":"center"}]"#,
+    )
+    .unwrap();
+    let output_path = dir.join("cell.docx");
+    let output = run(&[
+        "docx", "helper", "content-edit", "--input", input.to_str().unwrap(),
+        "--output", output_path.to_str().unwrap(), "--operations-file", operations_path.to_str().unwrap(), "--json",
+    ]);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let mut archive = zip::ZipArchive::new(File::open(output_path).unwrap()).unwrap();
+    let document = read_zip_part(&mut archive, "word/document.xml");
+    assert!(document.contains("New value"));
+    assert!(!document.contains("Old value"));
+    assert!(document.contains("w:b"));
+    assert!(document.contains("w:jc w:val=\"center\""));
+}
+
+#[test]
+fn content_edit_inserts_rectangular_table_after_unique_paragraph() {
+    let dir = temp_dir("content-edit-insert-table");
+    let input = write_docx_with_document(
+        &dir,
+        r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Results</w:t></w:r></w:p><w:sectPr/></w:body></w:document>"#,
+    );
+    let operations_path = dir.join("operations.json");
+    fs::write(
+        &operations_path,
+        r#"[{"op":"insert_table_after","contains":"Results","rows":[["Item","Status"],["Docs","Ready"]],"headerRow":true,"columnWidthsDxa":[2500,3500],"style":"TableGrid"}]"#,
+    )
+    .unwrap();
+    let output_path = dir.join("table.docx");
+    let output = run(&[
+        "docx", "helper", "content-edit", "--input", input.to_str().unwrap(),
+        "--output", output_path.to_str().unwrap(), "--operations-file", operations_path.to_str().unwrap(), "--json",
+    ]);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let mut archive = zip::ZipArchive::new(File::open(output_path).unwrap()).unwrap();
+    let document = read_zip_part(&mut archive, "word/document.xml");
+    let target = document.find("Results").unwrap();
+    let table = document.find("<w:tbl").unwrap();
+    let section = document.find("<w:sectPr").unwrap();
+    assert!(target < table && table < section);
+    assert!(document.contains("w:tblStyle w:val=\"TableGrid\""));
+    assert!(document.contains("w:w=\"6000\""));
+    assert!(document.contains("w:tblHeader w:val=\"1\""));
+    assert!(document.contains("Docs"));
+}
+
+#[test]
+fn content_edit_appends_table_row_using_last_row_format_without_header_flag() {
+    let dir = temp_dir("content-edit-append-row");
+    let input = write_docx_with_document(
+        &dir,
+        r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:tbl><w:tblGrid><w:gridCol w:w="3000"/></w:tblGrid><w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc><w:tcPr/><w:p><w:r><w:t>Heading</w:t></w:r></w:p></w:tc></w:tr><w:tr><w:tc><w:tcPr/><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Old</w:t></w:r></w:p></w:tc></w:tr></w:tbl></w:body></w:document>"#,
+    );
+    let operations_path = dir.join("operations.json");
+    fs::write(&operations_path, r#"[{"op":"append_table_row","tableIndex":0,"values":["Added"]}]"#).unwrap();
+    let output_path = dir.join("rows.docx");
+    let output = run(&[
+        "docx", "helper", "content-edit", "--input", input.to_str().unwrap(),
+        "--output", output_path.to_str().unwrap(), "--operations-file", operations_path.to_str().unwrap(), "--json",
+    ]);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let mut archive = zip::ZipArchive::new(File::open(output_path).unwrap()).unwrap();
+    let document = read_zip_part(&mut archive, "word/document.xml");
+    assert_eq!(document.matches("<w:tr>").count(), 3);
+    assert_eq!(document.matches("<w:tblHeader").count(), 1);
+    assert!(document.contains("Heading"));
+    assert!(document.contains("Added"));
+    assert!(document.contains("w:b"));
+}
+
+#[test]
+fn content_edit_replaces_table_rows_with_template_formatting_and_preserves_header() {
+    let dir = temp_dir("content-edit-replace-rows");
+    let input = write_docx_with_document(
+        &dir,
+        r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:tbl><w:tblGrid><w:gridCol w:w="3000"/></w:tblGrid><w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc><w:tcPr/><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Old header</w:t></w:r></w:p></w:tc></w:tr><w:tr><w:tc><w:tcPr/><w:p><w:r><w:rPr><w:i/></w:rPr><w:t>Old body</w:t></w:r></w:p></w:tc></w:tr></w:tbl></w:body></w:document>"#,
+    );
+    let operations_path = dir.join("operations.json");
+    fs::write(
+        &operations_path,
+        r#"[{"op":"replace_table_rows","tableIndex":0,"rows":[["Column"],["First"],["Second"]]}]"#,
+    )
+    .unwrap();
+    let output_path = dir.join("rows.docx");
+    let output = run(&[
+        "docx", "helper", "content-edit", "--input", input.to_str().unwrap(),
+        "--output", output_path.to_str().unwrap(), "--operations-file", operations_path.to_str().unwrap(), "--json",
+    ]);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let mut archive = zip::ZipArchive::new(File::open(output_path).unwrap()).unwrap();
+    let document = read_zip_part(&mut archive, "word/document.xml");
+    assert_eq!(document.matches("<w:tr>").count(), 3);
+    assert_eq!(document.matches("<w:tblHeader").count(), 1);
+    assert!(!document.contains("Old header"));
+    assert!(!document.contains("Old body"));
+    assert!(document.contains("Second"));
+    assert!(document.contains("w:b"));
+}
+
+#[test]
+fn docx_render_requires_the_managed_runtime_without_host_fallback() {
+    let dir = temp_dir("docx-render-runtime");
+    let input = write_docx(&dir);
+    let output_dir = dir.join("pages");
+    let output = Command::new(binary())
+        .args([
+            "docx", "helper", "render", "--input", input.to_str().unwrap(),
+            "--output-dir", output_dir.to_str().unwrap(), "--dpi", "120",
+        ])
+        .env("RUXEX_RUNTIME_ROOT", "")
+        .env("RUXEX_RUNTIME_BIN_DIR", "")
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("managed renderer runtime"));
+    assert!(!output_dir.exists());
+}
+
+#[test]
+fn docx_compare_requires_the_managed_runtime_without_host_fallback() {
+    let dir = temp_dir("docx-compare-runtime");
+    let before = write_docx(&dir);
+    let after = dir.join("after.docx");
+    fs::copy(&before, &after).unwrap();
+    let output_dir = dir.join("comparison");
+    let output = Command::new(binary())
+        .args([
+            "docx", "helper", "compare", "--before", before.to_str().unwrap(),
+            "--after", after.to_str().unwrap(), "--output-dir", output_dir.to_str().unwrap(),
+        ])
+        .env("RUXEX_RUNTIME_ROOT", "")
+        .env("RUXEX_RUNTIME_BIN_DIR", "")
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("managed renderer runtime"));
+    assert!(!output_dir.exists());
+}
+
+#[test]
 fn distill_template_reports_page_defaults_styles_and_numbering_inventory() {
     let dir = temp_dir("distill-template");
     let input = write_docx_with_parts(

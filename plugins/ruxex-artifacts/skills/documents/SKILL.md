@@ -8,9 +8,9 @@ description: Use when creating, reading, inspecting, validating, previewing, or 
 Use the bundled `ruxex-artifacts` command and the Ruxex-owned JavaScript API
 for local DOCX work. Use the absolute path to this `SKILL.md` supplied by the active
 Skill context to locate the sibling `ruxex-artifacts` executable. Invoke it by
-its full path; do not rely on command lookup through `PATH`. Run local helper
-scripts through the shared launcher described in
-[the runtime contract](../RUNTIME.md).
+its full path; do not rely on command lookup through `PATH`. DOCX transformations
+run through the bundled Rust CLI. Page rendering uses the managed LibreOffice
+and Poppler tools described in [the runtime contract](../RUNTIME.md).
 
 ## Choose a workflow
 

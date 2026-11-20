@@ -22,13 +22,13 @@ the Ruxex model does not expose.
 | Exact Word pagination and floating layout | Not provided by the SVG content preview. Use the local page-image renderer for visual QA; verify Word-specific behavior in Word. |
 | Version comparison | The local helper compares rendered page pixels and extracted main-document text; it is not a semantic OOXML diff. |
 | DOCX table export | Extracts visible table cell text to CSV; spreadsheet styling and structure are not retained. |
-| Merge | Append simple text, or copy body OOXML including tables with `merge_docx_append.py`, optionally after the first top-level paragraph containing `--after-marker`. Retains base package parts and final section properties; refuses relationship-backed content and does not reconcile styles, numbering, bookmarks, or fields. See [Merge documents](merge-documents.md). |
+| Merge | Append simple text, or copy body OOXML including tables with `docx helper merge-append`, optionally after the first top-level paragraph containing `--after-marker`. Retains base package parts and final section properties; refuses relationship-backed content and does not reconcile styles, numbering, bookmarks, or fields. See [Merge documents](merge-documents.md). |
 | XLSX-to-DOCX table import | Spreadsheet reader values can feed the DOCX table builder; formulas and spreadsheet formatting/features do not round-trip. |
 | Full style synchronization | Not implemented; template application merges common numbering and remaps imported-style numbering IDs, but does not fully reconcile content-specific style references or cross-document dependencies. |
 
-The local renderer helper uses LibreOffice and Poppler already available on
-`PATH`; it does not install dependencies or call a hosted service. It may differ
-from Microsoft Word. See [Render and verify](render-verify.md).
+The local renderer helper uses bundled LibreOffice and Poppler; it does not
+install dependencies or call a hosted service. It may differ from Microsoft
+Word. See [Render and verify](render-verify.md).
 
 Do not export a loaded document with unsupported-content diagnostics unless the
 user explicitly accepts the risk of losing unsupported structures. Do not

@@ -384,19 +384,9 @@ def main() -> None:
             source = shutil.which(name)
             if source:
                 (runtime_path / name).symlink_to(Path(source).resolve())
-        environment["PATH"] = str(runtime_path)
+        environment["RUXEX_TEST_PATH"] = str(runtime_path)
         subprocess.run(
-            [
-                str(assembled / "python/bin/python3"),
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
-                str(ROOT / "plugins/ruxex-artifacts/tests"),
-                "-p",
-                "docx_render_integration_test.py",
-                "-v",
-            ],
+            [str(executable("make")), "rust-test-docx-render-integration"],
             cwd=ROOT,
             env=environment,
             check=True,
