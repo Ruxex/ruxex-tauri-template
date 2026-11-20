@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use std::ffi::OsString;
 
 use super::{ArtifactError, print_json};
-use super::{docx, ooxml, pdf, xlsx};
+use super::{docx, pdf, xlsx};
 
 pub fn run_cli<I>(args: I) -> std::process::ExitCode
 where
@@ -10,8 +10,13 @@ where
 {
     match run(args.into_iter().skip(1).collect()) {
         Ok(value) => {
-            print_json(&value, false);
-            std::process::ExitCode::SUCCESS
+            let exit_code = value.get("_exitCode").and_then(Value::as_u64).unwrap_or(0);
+            let mut output = value;
+            if let Some(map) = output.as_object_mut() {
+                map.remove("_exitCode");
+            }
+            print_json(&output, false);
+            std::process::ExitCode::from(exit_code.min(255) as u8)
         }
         Err(error) => {
             print_json(
@@ -43,7 +48,7 @@ fn run(args: Vec<OsString>) -> Result<Value, ArtifactError> {
         Some("capabilities") => capabilities(&args[1..]),
         Some("xlsx") => xlsx::run_xlsx(&args[1..]),
         Some("docx") => docx::run_docx(&args[1..]),
-        Some("pptx") => ooxml::run_ooxml("pptx", &args[1..]),
+        Some("pptx") => super::presentation_helpers::run_pptx(&args[1..]),
         Some("pdf") => pdf::run_pdf(&args[1..]),
         Some(command) => Err(ArtifactError::new(
             "invalid_arguments",
@@ -63,9 +68,43 @@ fn capabilities(args: &[String]) -> Result<Value, ArtifactError> {
         "commands": {
             "xlsx": ["create", "read", "validate"],
             "docx": ["create", "read", "validate"],
-            "pptx": ["create", "read", "validate"],
+            "pptx": ["create", "read", "validate", "helper"],
             "pdf": ["create", "read", "validate"],
         },
+        "presentationApis": {
+            "authoring": [
+                "Presentation.create", "PresentationFile.importPptx",
+                "PresentationFile.exportPptx", "presentation.inspect",
+                "presentation.render", "presentation.export"
+            ],
+            "helpers": [
+                "inspect-template", "validate-template-plan",
+                "prepare-template-starter-deck", "check-template-fidelity",
+                "render-slides", "make-contact-sheet",
+                "inspect-package-integrity", "inspect-layout-geometry",
+                "native-chart-title-gate", "native-quantitative-chart-gate",
+                "native-table-arithmetic-gate"
+            ],
+            "references": [
+                "references/accessibility-review.md", "references/api-compatibility.md",
+                "references/api-quick-start.md", "references/api-reference-map.md",
+                "references/charts.md", "references/compose-and-auto-layout.md",
+                "references/connectors.md", "references/cover-guidance.md",
+                "references/custom-paths.md", "references/design-guidance.md",
+                "references/finalization.md", "references/helper-contracts.md",
+                "references/hyperlinks.md", "references/images.md",
+                "references/import-and-fidelity.md", "references/inspection-and-editing.md",
+                "references/masters-and-layouts.md", "references/native-evidence.md",
+                "references/notes-and-comments.md", "references/presentation-object.md",
+                "references/proto-and-layout-export.md", "references/rendering-and-export.md",
+                "references/rendering-review.md", "references/rich-text-and-bullets.md",
+                "references/shapes-and-text.md", "references/slide-management.md",
+                "references/tables.md", "references/template-workflow.md",
+                "references/templates-and-help.md", "references/themes-and-fills.md",
+                "references/view-settings.md", "references/writing-guidance.md"
+            ],
+            "domainGuidance": ["domain-guidance/finance.md"]
+        }
     }))
 }
 

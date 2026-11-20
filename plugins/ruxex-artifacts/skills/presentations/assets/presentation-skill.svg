@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="128"
+   height="128"
+   viewBox="0 0 128 128"
+   fill="none"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg14"
+   sodipodi:docname="presentation-skill.svg"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="6.2734375"
+     inkscape:cx="63.920299"
+     inkscape:cy="64"
+     inkscape:window-width="1869"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg14" />
+  <title
+     id="title">Presentation skill icon</title>
+  <desc
+     id="desc">A presentation screen displaying an abstract chart, on a warm coral background.</desc>
+  <defs
+     id="defs4">
+    <linearGradient
+       id="bg"
+       x1="10"
+       y1="8"
+       x2="119"
+       y2="124"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#F59A5A"
+         id="stop1" />
+      <stop
+         offset="1"
+         stop-color="#D95454"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       id="panel"
+       x1="25"
+       y1="27"
+       x2="103"
+       y2="91"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#FFFFFF"
+         id="stop3" />
+      <stop
+         offset="1"
+         stop-color="#FFF4EB"
+         id="stop4" />
+    </linearGradient>
+  </defs>
+  <rect
+     width="128"
+     height="128"
+     rx="28"
+     fill="url(#bg)"
+     id="rect4" />
+  <rect
+     x="19"
+     y="27"
+     width="90"
+     height="65"
+     rx="9"
+     fill="#823E47"
+     opacity=".20"
+     id="rect5" />
+  <g
+     id="g18"
+     transform="translate(0,0.25)">
+    <path
+       d="m 20,22 h 88"
+       stroke="#8f323d"
+       stroke-width="7"
+       stroke-linecap="round"
+       id="path4" />
+    <rect
+       x="17"
+       y="25"
+       width="94"
+       height="65"
+       rx="9"
+       fill="url(#panel)"
+       id="rect6"
+       style="fill:url(#panel)" />
+    <g
+       id="g16"
+       transform="translate(-0.5)">
+      <g
+         id="g15">
+        <rect
+           x="26"
+           y="37"
+           width="40"
+           height="6"
+           rx="3"
+           fill="#6d4a55"
+           id="rect7" />
+        <rect
+           x="26"
+           y="49"
+           width="27"
+           height="4"
+           rx="2"
+           fill="#d7b9b0"
+           id="rect8" />
+        <path
+           d="M 31,78 V 66"
+           stroke="#f3ac75"
+           stroke-width="10"
+           stroke-linecap="round"
+           id="path8" />
+        <path
+           d="M 48,78 V 60"
+           stroke="#ea8468"
+           stroke-width="10"
+           stroke-linecap="round"
+           id="path9" />
+        <path
+           d="M 65,78 V 54"
+           stroke="#d95a62"
+           stroke-width="10"
+           stroke-linecap="round"
+           id="path10" />
+      </g>
+      <g
+         id="g14"
+         transform="translate(0,-7)">
+        <circle
+           cx="88"
+           cy="67"
+           r="15"
+           fill="#f7d8c5"
+           id="circle10" />
+        <path
+           d="m 88,52 a 15,15 0 0 1 15,15 H 88 Z"
+           fill="#d95a62"
+           id="path11" />
+        <path
+           d="M 88,67 77.4,77.6 A 15,15 0 0 1 88,52 Z"
+           fill="#f0a56c"
+           id="path12" />
+      </g>
+    </g>
+    <g
+       id="g17">
+      <path
+         d="m 64,91 v 12"
+         stroke="#fff5eb"
+         stroke-width="6"
+         stroke-linecap="round"
+         id="path13" />
+      <path
+         d="M 47,106 64,94 81,106"
+         stroke="#fff5eb"
+         stroke-width="6"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         id="path14" />
+    </g>
+  </g>
+</svg>

@@ -6,6 +6,7 @@ mod docx;
 mod engine;
 mod ooxml;
 mod pdf;
+mod presentation_helpers;
 mod xlsx;
 
 pub use cli::run_cli;
