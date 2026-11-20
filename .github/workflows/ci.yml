@@ -44,6 +44,20 @@ jobs:
         with:
           node-version: 22
 
+      - name: Set up pnpm for bundled artifact dependencies (macOS)
+        if: runner.os == 'macOS'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Install locked artifact dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Rust toolchain for artifact executables (macOS)
+        if: runner.os == 'macOS'
+        uses: dtolnay/rust-toolchain@1.98.1
+
       - name: Validate runtime assembly and Skill contracts
         run: make artifact-runtime-test
 
@@ -51,6 +65,21 @@ jobs:
         run: |
           python3 scripts/ci_test_native_artifact_runtime.py \
             --output "$RUNNER_TEMP/ruxex-artifact-runtime"
+
+      - name: Build artifact CLI and engine (macOS)
+        if: runner.os == 'macOS'
+        run: make rust-build-artifact-runtime
+
+      - name: Generate and inspect artifacts with the staged runtime (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          python3 scripts/ci_test_bundled_artifact_runtime.py \
+            --node "$(command -v node)" \
+            --node-modules node_modules \
+            --artifact-sdk artifact-tool \
+            --native-runtime "$RUNNER_TEMP/ruxex-artifact-runtime" \
+            --artifact-cli target/release/ruxex-artifacts \
+            --artifact-engine target/release/ruxex-artifacts-engine
 
   rust:
     name: Rust (${{ matrix.os }})

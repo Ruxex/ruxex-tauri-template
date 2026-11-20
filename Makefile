@@ -6,7 +6,7 @@ export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
 CARGO_LLVM_COV_VERSION := 0.9.1
 
-.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-runtime-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-build-artifact-engine rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-runtime-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-build-artifact-engine rust-build-artifact-runtime rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -88,7 +88,8 @@ package-test:
 	$(MAKE) artifact-runtime-test
 
 artifact-runtime-test:
-	python3 -m unittest scripts.test_build_artifact_runtime scripts.test_stage_ruxex_package scripts.test_ci_native_artifact_runtime -v
+	python3 -m unittest scripts.test_build_artifact_runtime scripts.test_stage_ruxex_package scripts.test_ci_native_artifact_runtime scripts.test_ci_bundled_artifact_runtime -v
+	node --test artifact-tool/tests/loader.test.mjs
 	uv run --project plugins/ruxex-artifacts/tests --locked python -m unittest discover -s plugins/ruxex-artifacts/tests -p '*_test.py' -v
 
 rust-test:
@@ -103,6 +104,9 @@ rust-test-artifacts-cli:
 
 rust-build-artifact-engine:
 	cargo build --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts-engine
+
+rust-build-artifact-runtime:
+	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts --bin ruxex-artifacts-engine
 
 rust-test-artifact-engine:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts-engine
