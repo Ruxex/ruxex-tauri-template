@@ -156,6 +156,14 @@ def main() -> None:
     copy_directory(args.artifact_sdk, output / "ruxex-resources/ruxex-artifact-tool")
     source_skills = Path(__file__).resolve().parents[1] / "plugins/ruxex-artifacts/skills"
     copy_directory(source_skills, output / "ruxex-resources/vendored/skills")
+    github_requirements_skill = (
+        Path(__file__).resolve().parents[1]
+        / "plugins/ruxex-github/skills/requirements-planning"
+    )
+    copy_directory(
+        github_requirements_skill,
+        output / "ruxex-resources/vendored/skills/requirements-planning",
+    )
     for name in ("documents", "presentations", "spreadsheets", "pdf"):
         copy_executable(
             args.artifact_tools,

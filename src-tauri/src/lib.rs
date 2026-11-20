@@ -12,8 +12,12 @@ mod desktop_config;
 mod e2e_screenshot;
 mod editor;
 mod error;
+mod git_context;
 mod git_diff;
 mod git_diff_commands;
+mod github;
+mod github_issue_drafts;
+mod github_links;
 mod marketplace_assets;
 mod ooxml;
 mod platform;
@@ -120,6 +124,7 @@ pub fn run_with_config(config: DesktopConfig) {
         ))
         .manage(runtime)
         .manage(schedule_commands::ScheduleState::default())
+        .manage(github_links::GitHubLinkState::default())
         .manage(terminal::TerminalState::default())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
@@ -186,6 +191,26 @@ pub fn run_with_config(config: DesktopConfig) {
             git_diff_commands::git_diff_summary,
             git_diff_commands::git_diff_details,
             git_diff_commands::git_diff_file_patch,
+            git_context::git_workspace_context,
+            github::github_workspace_discover,
+            github::github_issue_list,
+            github::github_issue_read,
+            github::github_issue_thread_start,
+            github::github_pull_request_list,
+            github::github_pull_request_read,
+            github::github_pull_request_prepare,
+            github::github_pull_request_create,
+            github_issue_drafts::github_issue_drafts_validate,
+            github_issue_drafts::github_issue_drafts_create,
+            github_links::github_repository_bindings_list,
+            github_links::github_repository_binding_save,
+            github_links::github_object_thread_links_list,
+            github_links::github_thread_links_list,
+            github_links::github_object_thread_link_add,
+            github_links::github_object_thread_link_remove,
+            github_links::github_pull_request_issue_links_list,
+            github_links::github_issue_pull_request_links_list,
+            github_links::github_pull_request_issue_link_add,
             app_server::app_server_request,
             app_server::app_server_resolve_server_request,
             app_server::app_server_reject_server_request,

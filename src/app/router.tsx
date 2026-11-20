@@ -15,6 +15,7 @@ import { ModelPage } from "@/pages/ModelPage";
 import { NewChatRedirect } from "@/pages/NewChatRedirect";
 import { PluginDetailPage } from "@/pages/PluginDetailPage";
 import { ProjectHomePage } from "@/pages/ProjectHomePage";
+import { ProjectGitHubPage } from "@/pages/ProjectGitHubPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { SchedulesPage } from "@/pages/SchedulesPage";
 import { ScheduleDetailPage } from "@/pages/ScheduleDetailPage";
@@ -64,6 +65,7 @@ export const router = createHashRouter([
       { path: "chat/:threadId", element: <ThreadPage /> },
       { path: "projects", element: <ProjectsPage /> },
       { path: "projects/:projectId", element: <ProjectHomePage /> },
+      { path: "projects/:projectId/github", element: <ProjectGitHubPage /> },
       {
         path: "projects/:projectId/chat/new",
         element: <NewChatRedirect />,

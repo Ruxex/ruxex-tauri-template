@@ -12,10 +12,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatNumber } from "@/app/locale-format";
 import type { GitDiffSummary } from "@/platform/git-diff";
+import type { GitHubThreadLink } from "@/platform/github";
 import type { v2 } from "@/protocol";
 import { getSubagentIdenticon } from "./subagent-identicon";
 import type { SubagentRow } from "./subagent-model";
 import { TokenUsageSection } from "./TokenUsageSection";
+import { ThreadPullRequestAction } from "./ThreadPullRequestAction";
 
 type ThreadSummaryPanelProps = {
   tokenUsage: v2.ThreadTokenUsage | null;
@@ -26,6 +28,12 @@ type ThreadSummaryPanelProps = {
   onOpenWorkspace?: () => void;
   onOpenEditor?: () => Promise<void>;
   onOpenSubagent?: (target: { threadId: string; label: string }) => void;
+  branch?: string | null;
+  isLinkedWorktree?: boolean;
+  githubLinks?: GitHubThreadLink[];
+  onOpenGitHubLink?: (link: GitHubThreadLink) => void;
+  workspacePath?: string | null;
+  threadId?: string;
 };
 
 export function ThreadSummaryPanel({
@@ -37,6 +45,12 @@ export function ThreadSummaryPanel({
   onOpenWorkspace,
   onOpenEditor,
   onOpenSubagent,
+  branch = null,
+  isLinkedWorktree = false,
+  githubLinks = [],
+  onOpenGitHubLink,
+  workspacePath = null,
+  threadId,
 }: ThreadSummaryPanelProps) {
   const { t, i18n } = useTranslation("conversation");
   const locale = i18n.resolvedLanguage === "ja" ? "ja" : "en";
@@ -51,6 +65,46 @@ export function ThreadSummaryPanel({
       >
         <div className="h-full max-h-full overflow-y-auto" data-testid="thread-summary-scroll">
           <div className="h-fit overflow-hidden rounded-box bg-base-100 p-4" data-testid="thread-summary-content">
+            {(branch || isLinkedWorktree) && (
+              <section aria-label={t("gitCheckout")} className="mb-5 border-b border-base-300 pb-3">
+                <h2 className="font-medium text-base-content/80">{t("gitCheckout")}</h2>
+                {branch && (
+                  <p className="mt-1 truncate" title={branch}>
+                    {t("branchName", { branch })}
+                  </p>
+                )}
+                <p className="mt-1 text-base-content/60">
+                  {isLinkedWorktree ? t("linkedWorktree") : t("mainCheckout")}
+                </p>
+              </section>
+            )}
+            {githubLinks.length > 0 && (
+              <section aria-label={t("githubLinks")} className="mb-5 border-b border-base-300 pb-3">
+                <h2 className="font-medium text-base-content/80">{t("githubLinks")}</h2>
+                <ul className="mt-1 space-y-1">
+                  {githubLinks.map((link) => (
+                    <li
+                      key={`${link.object.kind}:${link.object.repository.host}/${link.object.repository.owner}/${link.object.repository.name}#${link.object.number}`}
+                    >
+                      <button
+                        className="w-full truncate rounded px-1 py-1 text-left text-primary hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+                        onClick={() => onOpenGitHubLink?.(link)}
+                        type="button"
+                      >
+                        {link.object.kind === "issue"
+                          ? t("issueReference")
+                          : t("pullRequestReference", { number: link.object.number })}
+                        {link.object.kind === "issue" ? ` #${link.object.number}` : ""}
+                        <span className="ml-1 text-base-content/60">
+                          {link.object.repository.owner}/{link.object.repository.name}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            {workspacePath && threadId && <ThreadPullRequestAction workspace={workspacePath} threadId={threadId} />}
             {gitDiff && (
               <section aria-label={t("codeChanges")} className={tokenUsage || subagents.length > 0 ? "mb-5" : ""}>
                 {/* Keep change details on one line so the summary stays compact. */}

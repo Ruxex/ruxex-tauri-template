@@ -327,6 +327,45 @@ pub(crate) fn sync_vendored_skills(source_root: &Path, home: &Path) -> Result<Pa
     Ok(skills_dir)
 }
 
+pub(crate) fn sync_vendored_skill(
+    source: &Path,
+    skill_name: &str,
+    home: &Path,
+) -> Result<PathBuf, String> {
+    if skill_name.is_empty()
+        || !skill_name
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+    {
+        return Err("bundled Skill name contains unsupported characters".to_string());
+    }
+    for relative in ["SKILL.md", "agents/ruxex.yaml"] {
+        if !source.join(relative).is_file() {
+            return Err(format!(
+                "bundled Skill asset is missing: {}",
+                source.join(relative).display()
+            ));
+        }
+    }
+    let vendored = home.join("vendored");
+    reject_symlink(&vendored)?;
+    fs::create_dir_all(&vendored)
+        .map_err(|error| format!("failed to create vendored Skills directory: {error}"))?;
+    let skills = vendored.join("skills");
+    reject_symlink(&skills)?;
+    fs::create_dir_all(&skills)
+        .map_err(|error| format!("failed to create vendored Skills directory: {error}"))?;
+    let destination = skills.join(skill_name);
+    remove_path_if_exists(&destination)?;
+    copy_directory_tree(source, &destination).map_err(|error| {
+        format!(
+            "failed to sync bundled Skill `{skill_name}` to {}: {error}",
+            destination.display()
+        )
+    })?;
+    Ok(destination)
+}
+
 fn sync_vendored_artifact_runtime(source_root: &Path, skills_dir: &Path) -> Result<(), String> {
     let Some(package_root) = source_root
         .ancestors()

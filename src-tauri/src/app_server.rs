@@ -36,7 +36,9 @@ mod daemon;
 use self::connection::{clear_connection_state, connect_local_endpoint, install_connection};
 use self::daemon::*;
 
-use crate::desktop::{ruxex_home, select_vendored_skills_source, sync_vendored_skills};
+use crate::desktop::{
+    ruxex_home, select_vendored_skills_source, sync_vendored_skill, sync_vendored_skills,
+};
 use crate::desktop_config::DesktopConfig;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
 
@@ -377,6 +379,28 @@ pub(crate) async fn ensure_app_server(
     let home =
         ruxex_home().map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let vendored_skills_root = sync_vendored_skills(&skill_source, &home)
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
+    let github_skill_candidates = packaged_skill_sources
+        .iter()
+        .map(|root| root.join("requirements-planning"))
+        .collect::<Vec<_>>();
+    let development_github_skill = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../plugins/ruxex-github/skills/requirements-planning");
+    let github_skill_source = github_skill_candidates
+        .iter()
+        .find(|source| source.is_dir())
+        .cloned()
+        .or_else(|| {
+            (cfg!(debug_assertions) && development_github_skill.is_dir())
+                .then_some(development_github_skill)
+        })
+        .ok_or_else(|| {
+            command_error(
+                DesktopAppServerErrorKind::Initialization,
+                "bundled requirements-planning Skill was not found",
+            )
+        })?;
+    sync_vendored_skill(&github_skill_source, "requirements-planning", &home)
         .map_err(|error| command_error(DesktopAppServerErrorKind::Initialization, error))?;
     *state.vendored_skill_root.lock().await = Some(vendored_skills_root.clone());
     let user_skill_roots = state.user_skill_roots.lock().await.clone();

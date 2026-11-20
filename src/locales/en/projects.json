@@ -104,5 +104,6 @@
   "deleteProjectTitle": "Delete project?",
   "closeCreateProjectDialog": "Close create project dialog",
   "worktreeBranchPlaceholder": "branch-name",
-  "detachedBranch": "detached"
+  "detachedBranch": "detached",
+  "githubIssuesAndPullRequests": "Issues & PRs"
 }

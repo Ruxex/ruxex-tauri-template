@@ -104,5 +104,6 @@
   "deleteProjectTitle": "プロジェクトを削除しますか？",
   "closeCreateProjectDialog": "プロジェクト作成ダイアログを閉じる",
   "worktreeBranchPlaceholder": "ブランチ名",
-  "detachedBranch": "ブランチ未接続"
+  "detachedBranch": "ブランチ未接続",
+  "githubIssuesAndPullRequests": "Issue・PR"
 }

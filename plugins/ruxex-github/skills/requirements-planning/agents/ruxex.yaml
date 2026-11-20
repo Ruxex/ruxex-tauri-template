@@ -1,0 +1,4 @@
+interface:
+  display_name: "Requirements Planning"
+  short_description: "Turn an idea into reviewed GitHub Issue drafts"
+  brand_color: "#6E56CF"

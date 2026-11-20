@@ -1,5 +1,6 @@
 import { openPath } from "@tauri-apps/plugin-opener";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useBranding } from "@/app/branding-context";
 import { getEditorCommandPreference } from "@/app/ui-preferences";
@@ -17,7 +18,9 @@ import {
   useThreadTokenUsage,
 } from "@/app-server/hooks";
 import { useGitDiffSummary } from "@/platform/git-diff";
-import { openWorkspaceInEditor } from "@/platform/native";
+import { githubApi } from "@/platform/github";
+import { openBrowserWindow, openWorkspaceInEditor } from "@/platform/native";
+import { useAppServerStatus } from "@/app-server/queries";
 import { ChatActivityTimeline } from "@/components/composite/chats/ChatActivityTimeline";
 import { buildSubagentRows } from "@/components/composite/thread-summary/subagent-model";
 import { ThreadSummaryPanel } from "@/components/composite/thread-summary/ThreadSummaryPanel";
@@ -47,6 +50,27 @@ export function ConversationWorkspace({
   const conversation = useThreadConversation(threadId);
   const tokenUsageQuery = useThreadTokenUsage(threadId);
   const gitDiffQuery = useGitDiffSummary(conversation.data?.thread.cwd ?? null);
+  const appServerStatus = useAppServerStatus();
+  const gitWorkspacePath = conversation.data?.thread.cwd;
+  const appServerHomeDataDir = appServerStatus.data?.homeDataDir;
+  const workspaceContext = useQuery({
+    queryKey: ["git", "workspace-context", gitWorkspacePath],
+    queryFn: () => {
+      if (!gitWorkspacePath) throw new Error("Thread has no workspace.");
+      return githubApi.gitContext(gitWorkspacePath);
+    },
+    enabled: Boolean(gitWorkspacePath),
+    retry: false,
+  });
+  const githubThreadLinks = useQuery({
+    queryKey: ["github", "thread-links", appServerHomeDataDir, threadId],
+    queryFn: () => {
+      if (!appServerHomeDataDir) throw new Error("App Server data directory is unavailable.");
+      return githubApi.threadLinks({ appServerConnectionId: `local:${appServerHomeDataDir}`, threadId });
+    },
+    enabled: Boolean(appServerHomeDataDir && threadId),
+    retry: false,
+  });
   const events = useAppServerEvents();
   const [isRecovering, setIsRecovering] = useState(false);
   const wasConnected = useRef(events.connected);
@@ -329,6 +353,16 @@ export function ConversationWorkspace({
       </div>
       {/* Right column: thread summary column; this component is the thread summary panel. */}
       <ThreadSummaryPanel
+        threadId={threadId}
+        workspacePath={workspacePath}
+        branch={workspaceContext.data?.branch ?? null}
+        isLinkedWorktree={workspaceContext.data?.isLinkedWorktree ?? false}
+        githubLinks={githubThreadLinks.data ?? []}
+        onOpenGitHubLink={(link) => {
+          const { host, owner, name } = link.object.repository;
+          const kind = link.object.kind === "issue" ? "issues" : "pull";
+          void openBrowserWindow(`https://${host}/${owner}/${name}/${kind}/${link.object.number}`);
+        }}
         gitDiff={gitDiff}
         onReviewGitDiff={() => {
           if (workspacePath) {

@@ -1,0 +1,11 @@
+{
+  "name": "ruxex-github",
+  "version": "0.1.0",
+  "description": "Plan repository work and prepare reviewed GitHub Issue drafts with Ruxex.",
+  "skills": "./skills",
+  "interface": {
+    "displayName": "Ruxex GitHub",
+    "shortDescription": "Plan work and draft repository Issues",
+    "category": "Developer Tools"
+  }
+}

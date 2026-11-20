@@ -187,5 +187,12 @@
   "executionStatuses": {
     "declined": "拒否",
     "interrupted": "中断"
-  }
+  },
+  "gitCheckout": "Gitチェックアウト",
+  "branchName": "ブランチ: {{branch}}",
+  "linkedWorktree": "リンクされたワークツリー",
+  "mainCheckout": "メインのチェックアウト",
+  "githubLinks": "GitHubリンク",
+  "issueReference": "Issue",
+  "pullRequestReference": "PR #{{number}}"
 }

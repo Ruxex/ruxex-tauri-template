@@ -203,6 +203,9 @@ export function ProjectHomePage() {
           <Link className="btn btn-primary" to={`/?projectId=${encodeURIComponent(projectId)}`}>
             {t("newChat")}
           </Link>
+          <Link className="btn btn-outline" to={`/projects/${encodeURIComponent(projectId)}/github`}>
+            {t("githubIssuesAndPullRequests")}
+          </Link>
           <button
             aria-label={t("editProject")}
             className="btn btn-outline btn-square"

@@ -187,5 +187,12 @@
   "executionStatuses": {
     "declined": "declined",
     "interrupted": "interrupted"
-  }
+  },
+  "gitCheckout": "Git checkout",
+  "branchName": "Branch: {{branch}}",
+  "linkedWorktree": "Linked Worktree",
+  "mainCheckout": "Main checkout",
+  "githubLinks": "GitHub links",
+  "issueReference": "Issue",
+  "pullRequestReference": "PR #{{number}}"
 }
