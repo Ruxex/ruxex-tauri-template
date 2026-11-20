@@ -203,6 +203,7 @@ export function ThreadPullRequestAction({ workspace, threadId }: { workspace: st
                     <dt className="text-base-content/60">{t("baseBranch")}</dt>
                     <dd>
                       <input
+                        aria-label={t("baseBranch")}
                         className="input input-sm input-bordered w-full"
                         value={baseBranch}
                         onChange={(event) => setBaseBranch(event.target.value)}

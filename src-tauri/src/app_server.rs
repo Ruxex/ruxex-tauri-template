@@ -33,6 +33,8 @@ use crate::scheduler_app_server::{AppServerLogDirection, log_app_server_io};
 
 mod connection;
 mod daemon;
+mod daemon_host;
+pub use daemon_host::run_host_app_server_daemon_with_config;
 use self::connection::{clear_connection_state, connect_local_endpoint, install_connection};
 use self::daemon::*;
 

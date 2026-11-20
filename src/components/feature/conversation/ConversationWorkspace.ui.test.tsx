@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { i18n } from "@/app/i18n";
@@ -21,6 +22,13 @@ const resync = vi.hoisted(() => vi.fn());
 const revertMutation = vi.hoisted(() => vi.fn());
 const sendMutation = vi.hoisted(() => vi.fn());
 const clearThreadLiveItems = vi.hoisted(() => vi.fn());
+
+const renderWorkspace = (element: React.ReactElement) => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(element, {
+    wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+  });
+};
 
 const createCompletedTurnEvent = (id: string, turnId: string) => ({
   id,
@@ -51,6 +59,9 @@ vi.mock("@/app-server/hooks", () => ({
   useServerRequests,
   useRevertThread,
   useSendMessage,
+}));
+vi.mock("@/app-server/queries", () => ({
+  useAppServerStatus: () => ({ data: undefined }),
 }));
 vi.mock("@/app-server/event-store", () => ({ clearThreadLiveItems }));
 vi.mock("@/platform/git-diff", () => ({ useGitDiffSummary }));
@@ -189,7 +200,7 @@ describe("ConversationWorkspace", () => {
   it("shows the thread summary without display toggles", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Token Usage" })).toBeTruthy();
@@ -220,7 +231,7 @@ describe("ConversationWorkspace", () => {
     });
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     expect(screen.getByTitle(/Total tokens: 2,400$/).textContent).toContain("2.4k");
     expect(screen.getByTitle("Total amount: 1.25").textContent).toContain("1.25");
@@ -240,7 +251,7 @@ describe("ConversationWorkspace", () => {
     });
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
     expect(screen.getByText("+7")).toBeTruthy();
@@ -250,7 +261,7 @@ describe("ConversationWorkspace", () => {
   it("renders the minimap when user messages exist", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     const workspace = screen.getByTestId("chat-workspace");
     const mainChat = workspace.querySelector(".chat-main-column");
@@ -280,7 +291,7 @@ describe("ConversationWorkspace", () => {
       },
     });
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     const workspace = screen.getByTestId("chat-workspace");
     expect(screen.getByTestId("thread-summary-panel")).toBeTruthy();
@@ -329,7 +340,7 @@ describe("ConversationWorkspace", () => {
       },
     });
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     const workspace = screen.getByTestId("chat-workspace");
     expect(workspace.className).toContain("chat-workspace");
@@ -368,7 +379,7 @@ describe("ConversationWorkspace", () => {
   it("shows an error when the completed turn fails asynchronously", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     expect(useRetainThreadState).toHaveBeenCalledWith("thread-1");
 
@@ -396,7 +407,7 @@ describe("ConversationWorkspace", () => {
       data: null,
     });
 
-    const { container } = render(<ConversationWorkspace threadId="thread-1" />);
+    const { container } = renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     const loadingWrapper = container.firstElementChild;
     expect(loadingWrapper?.className.split(/\s+/)).toEqual(
@@ -415,7 +426,7 @@ describe("ConversationWorkspace", () => {
       data: null,
     });
 
-    const { container } = render(<ConversationWorkspace threadId="thread-1" />);
+    const { container } = renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     expect(container.querySelector(".loading-spinner")?.className).toContain("loading-lg");
     expect(screen.queryByText("Unable to load this conversation.")).toBeNull();
@@ -424,7 +435,7 @@ describe("ConversationWorkspace", () => {
   it("shows queued messages above the composer on the right", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     const queue = screen.getByRole("region", { name: "Queued messages" });
     const composer = screen.getByTestId("composer");
@@ -452,7 +463,7 @@ describe("ConversationWorkspace", () => {
       },
     });
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     const goal = screen.getByRole("region", { name: "Current goal" });
     const composer = screen.getByTestId("composer");
@@ -465,7 +476,7 @@ describe("ConversationWorkspace", () => {
   it("does not fetch when a turn completes", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     await waitFor(() => expect(screen.getByTestId("composer")).toBeTruthy());
     expect(resync).not.toHaveBeenCalled();
@@ -473,7 +484,7 @@ describe("ConversationWorkspace", () => {
 
   it("does not fetch when a later completion event arrives", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
-    const view = render(<ConversationWorkspace threadId="thread-1" />);
+    const view = renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     await waitFor(() => expect(screen.getByTestId("composer")).toBeTruthy());
 
@@ -517,7 +528,7 @@ describe("ConversationWorkspace", () => {
       threads: {},
     });
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     await waitFor(() => expect(resync).toHaveBeenCalledTimes(1));
     expect(clearThreadLiveItems.mock.calls[0]?.[0]).toBe("thread-1");
@@ -536,7 +547,7 @@ describe("ConversationWorkspace", () => {
       threads: {},
     });
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     await waitFor(() => expect(resync).toHaveBeenCalledTimes(1));
     expect(clearThreadLiveItems).not.toHaveBeenCalled();
@@ -545,7 +556,7 @@ describe("ConversationWorkspace", () => {
   it("reverts an edited user message and starts the edited text", async () => {
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
 
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Edit message" }), {
@@ -573,7 +584,7 @@ describe("ConversationWorkspace", () => {
   it("localizes conversation framing and retains user, model, and server content", async () => {
     await i18n.changeLanguage("ja");
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
     expect(screen.getByText("Original prompt")).toBeTruthy();
     expect(screen.getByText("Assistant reply")).toBeTruthy();
     expect(screen.getByText(/Authentication required/)).toBeTruthy();
@@ -605,7 +616,7 @@ describe("ConversationWorkspace", () => {
       },
     });
     const { ConversationWorkspace } = await import("./ConversationWorkspace");
-    render(<ConversationWorkspace threadId="thread-1" />);
+    renderWorkspace(<ConversationWorkspace threadId="thread-1" />);
     expect(screen.getByText("Command")).toBeTruthy();
     await act(async () => {
       await i18n.changeLanguage("ja");

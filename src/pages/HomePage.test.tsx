@@ -18,6 +18,7 @@ const useSkillsList = vi.hoisted(() => vi.fn());
 const createChatWorkspace = vi.hoisted(() => vi.fn());
 
 vi.mock("@/app-server/hooks", () => ({
+  useAccount: () => ({ data: { authStatus: "authenticated" } }),
   useCreateThread,
   useModelList,
   useProject,

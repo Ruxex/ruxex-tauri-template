@@ -30,6 +30,7 @@ export default defineConfig({
       "fixtures/dummy-home/**/*.spec.ts",
       "fixtures/marketplace-home/**/*.spec.ts",
       "artifact-tool/**",
+      "**/.d/**",
       "**/node_modules/**",
     ],
   },
