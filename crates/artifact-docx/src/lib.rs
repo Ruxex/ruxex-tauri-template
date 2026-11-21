@@ -9,7 +9,8 @@ use zip::write::FullFileOptions;
 use zip::write::SimpleFileOptions;
 use zip::{ZipArchive, ZipWriter};
 
-use super::{ArtifactError, cli, ooxml};
+use ruxex_artifact_common::artifacts::ooxml as shared_ooxml;
+use ruxex_artifact_common::{ArtifactError, cli, ooxml};
 
 const MAX_DOCX_PACKAGE_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_DOCX_PART_BYTES: u64 = 2 * 1024 * 1024;
@@ -19,7 +20,7 @@ mod content_edit;
 #[path = "docx_render.rs"]
 mod render;
 
-pub(super) fn run_docx(args: &[String]) -> Result<Value, ArtifactError> {
+pub fn run_docx(args: &[String]) -> Result<Value, ArtifactError> {
     let Some(operation) = args.first().map(String::as_str) else {
         return Err(ArtifactError::new(
             "invalid_arguments",
@@ -31,7 +32,7 @@ pub(super) fn run_docx(args: &[String]) -> Result<Value, ArtifactError> {
         "audit" => audit_command(&args[1..]),
         "privacy-scrub" => privacy_scrub_command(&args[1..]),
         "read" => read_command(&args[1..]),
-        _ => ooxml::run_ooxml("docx", args),
+        _ => shared_ooxml::run_ooxml("docx", args),
     }
 }
 
@@ -10272,14 +10273,14 @@ fn read_command(args: &[String]) -> Result<Value, ArtifactError> {
     read_docx(cli::required_flag(&flags, "input")?)
 }
 
-pub(super) fn read_docx(input_path: &str) -> Result<Value, ArtifactError> {
+pub fn read_docx(input_path: &str) -> Result<Value, ArtifactError> {
     validate_docx_package(input_path)?;
     let file = File::open(input_path)
         .map_err(|error| ArtifactError::new("ooxml_read_error", error.to_string()))?;
     let mut archive = ZipArchive::new(file)
         .map_err(|error| ArtifactError::new("invalid_ooxml_package", error.to_string()))?;
     let document_xml = read_docx_part(&mut archive, "word/document.xml")?;
-    let mut result = ooxml::read_ooxml("docx", input_path)?;
+    let mut result = shared_ooxml::read_ooxml("docx", input_path)?;
     let diagnostics = advanced_content_diagnostics(input_path)?;
     if let Some(object) = result.as_object_mut() {
         object.insert(

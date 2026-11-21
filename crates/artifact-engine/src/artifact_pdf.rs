@@ -18,44 +18,44 @@ const MAX_PDF_PAGE_WIDTH: f32 = 4096.0;
 const MAX_PDF_PAGE_HEIGHT: f32 = 4096.0;
 
 #[derive(Debug, Clone, Deserialize)]
-pub(crate) struct PdfTextBlock {
-    pub(crate) text: String,
-    pub(crate) x: f32,
-    pub(crate) y: f32,
-    pub(crate) size: f32,
+pub struct PdfTextBlock {
+    pub text: String,
+    pub x: f32,
+    pub y: f32,
+    pub size: f32,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
-pub(crate) struct PdfPageSpec {
-    pub(crate) width: f32,
-    pub(crate) height: f32,
-    pub(crate) blocks: Vec<PdfTextBlock>,
+pub struct PdfPageSpec {
+    pub width: f32,
+    pub height: f32,
+    pub blocks: Vec<PdfTextBlock>,
     #[serde(default)]
-    pub(crate) tables: Vec<PdfTableSpec>,
+    pub tables: Vec<PdfTableSpec>,
     #[serde(default)]
-    pub(crate) images: Vec<PdfImageSpec>,
+    pub images: Vec<PdfImageSpec>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
-pub(crate) struct PdfTableSpec {
-    pub(crate) rows: Vec<Vec<String>>,
-    pub(crate) x: f32,
-    pub(crate) y: f32,
+pub struct PdfTableSpec {
+    pub rows: Vec<Vec<String>>,
+    pub x: f32,
+    pub y: f32,
     #[serde(default = "default_table_row_height")]
-    pub(crate) row_height: f32,
+    pub row_height: f32,
     #[serde(default = "default_table_font_size")]
-    pub(crate) font_size: f32,
+    pub font_size: f32,
     #[serde(default)]
-    pub(crate) column_widths: Vec<f32>,
+    pub column_widths: Vec<f32>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
-pub(crate) struct PdfImageSpec {
-    pub(crate) path: String,
-    pub(crate) x: f32,
-    pub(crate) y: f32,
-    pub(crate) width: f32,
-    pub(crate) height: f32,
+pub struct PdfImageSpec {
+    pub path: String,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
 }
 
 fn default_table_row_height() -> f32 {
@@ -67,17 +67,17 @@ fn default_table_font_size() -> f32 {
 }
 
 #[derive(Debug)]
-pub(crate) struct PdfInspection {
-    pub(crate) page_count: usize,
-    pub(crate) text: Vec<String>,
+pub struct PdfInspection {
+    pub page_count: usize,
+    pub text: Vec<String>,
 }
 
 #[allow(dead_code)]
-pub(crate) fn create_pdf_bytes(pages: &[PdfPageSpec]) -> Result<Vec<u8>, String> {
+pub fn create_pdf_bytes(pages: &[PdfPageSpec]) -> Result<Vec<u8>, String> {
     create_pdf_bytes_with_roots(pages, &[])
 }
 
-pub(crate) fn create_pdf_bytes_with_roots(
+pub fn create_pdf_bytes_with_roots(
     pages: &[PdfPageSpec],
     allowed_roots: &[PathBuf],
 ) -> Result<Vec<u8>, String> {
@@ -173,7 +173,7 @@ pub(crate) fn create_pdf_bytes_with_roots(
     Ok(bytes)
 }
 
-pub(crate) fn inspect_pdf_bytes(bytes: &[u8]) -> Result<PdfInspection, String> {
+pub fn inspect_pdf_bytes(bytes: &[u8]) -> Result<PdfInspection, String> {
     if bytes.is_empty() {
         return Err("PDF is empty".to_string());
     }
@@ -206,7 +206,7 @@ pub(crate) fn inspect_pdf_bytes(bytes: &[u8]) -> Result<PdfInspection, String> {
     })
 }
 
-pub(crate) fn preview_pdf_bytes(bytes: &[u8]) -> Result<ArtifactDocument, String> {
+pub fn preview_pdf_bytes(bytes: &[u8]) -> Result<ArtifactDocument, String> {
     let inspection = inspect_pdf_bytes(bytes)?;
     let sections = inspection
         .text

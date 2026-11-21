@@ -1,25 +1,18 @@
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
-mod cli;
-mod docx;
-mod engine;
-mod ooxml;
-mod pdf;
-mod presentation_helpers;
-mod xlsx;
-
-pub use cli::run_cli;
-pub use engine::run_engine_stdio;
+pub mod artifacts;
+pub mod cli;
+pub mod ooxml;
 
 #[derive(Debug)]
-pub(super) struct ArtifactError {
-    code: &'static str,
-    message: String,
+pub struct ArtifactError {
+    pub code: &'static str,
+    pub message: String,
 }
 
 impl ArtifactError {
-    pub(super) fn new(code: &'static str, message: impl Into<String>) -> Self {
+    pub fn new(code: &'static str, message: impl Into<String>) -> Self {
         Self {
             code,
             message: message.into(),
@@ -33,7 +26,7 @@ impl Display for ArtifactError {
     }
 }
 
-pub(super) fn print_json(value: &Value, stderr: bool) {
+pub fn print_json(value: &Value, stderr: bool) {
     let output = serde_json::to_string(value).expect("artifact JSON is serializable");
     if stderr {
         eprintln!("{output}");

@@ -25,7 +25,8 @@ fn temporary_directory(label: &str) -> Result<TemporaryDirectory, ArtifactError>
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("ruxex-docx-{label}-{}-{nonce}", std::process::id()));
+    let path =
+        std::env::temp_dir().join(format!("ruxex-docx-{label}-{}-{nonce}", std::process::id()));
     fs::create_dir(&path).map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
     Ok(TemporaryDirectory(path))
 }
@@ -50,10 +51,16 @@ fn resolve_tools() -> Result<RenderTools, ArtifactError> {
     };
     let expected = root.join("bin/override");
     let canonical_bin = bin_dir.canonicalize().map_err(|error| {
-        ArtifactError::new("missing_runtime_resource", format!("managed renderer directory is missing: {error}"))
+        ArtifactError::new(
+            "missing_runtime_resource",
+            format!("managed renderer directory is missing: {error}"),
+        )
     })?;
     let canonical_expected = expected.canonicalize().map_err(|error| {
-        ArtifactError::new("missing_runtime_resource", format!("managed renderer directory is missing: {error}"))
+        ArtifactError::new(
+            "missing_runtime_resource",
+            format!("managed renderer directory is missing: {error}"),
+        )
     })?;
     if canonical_bin != canonical_expected {
         return Err(ArtifactError::new(
@@ -62,17 +69,26 @@ fn resolve_tools() -> Result<RenderTools, ArtifactError> {
         ));
     }
     let paths = ["soffice", "pdfinfo", "pdftoppm"].map(|name| bin_dir.join(name));
-    for (name, path) in ["soffice", "pdfinfo", "pdftoppm"].into_iter().zip(paths.iter()) {
+    for (name, path) in ["soffice", "pdfinfo", "pdftoppm"]
+        .into_iter()
+        .zip(paths.iter())
+    {
         let metadata = fs::metadata(path).map_err(|_| {
             ArtifactError::new(
                 "missing_runtime_resource",
-                format!("bundled rendering tool is missing or not executable: {name} ({})", path.display()),
+                format!(
+                    "bundled rendering tool is missing or not executable: {name} ({})",
+                    path.display()
+                ),
             )
         })?;
         if !metadata.is_file() || !is_executable(&metadata) {
             return Err(ArtifactError::new(
                 "missing_runtime_resource",
-                format!("bundled rendering tool is missing or not executable: {name} ({})", path.display()),
+                format!(
+                    "bundled rendering tool is missing or not executable: {name} ({})",
+                    path.display()
+                ),
             ));
         }
     }
@@ -104,7 +120,9 @@ fn discover_packaged_tools_from(executable: &Path) -> Option<(PathBuf, PathBuf)>
         let nested = ancestor.join("ruxex-resources");
         let root = if nested.join("bin/override/soffice").is_file() {
             nested
-        } else if ancestor.file_name().is_some_and(|name| name == "ruxex-resources")
+        } else if ancestor
+            .file_name()
+            .is_some_and(|name| name == "ruxex-resources")
             && ancestor.join("bin/override/soffice").is_file()
         {
             ancestor.to_owned()
@@ -126,7 +144,10 @@ pub(super) fn render_command(args: &[String]) -> Result<Value, ArtifactError> {
     let flags = cli::parse_flags(&normalized)?;
     for (flag, _) in &flags {
         if !matches!(flag.as_str(), "input" | "output-dir" | "dpi" | "--json") {
-            return Err(ArtifactError::new("invalid_arguments", format!("unknown flag: --{flag}")));
+            return Err(ArtifactError::new(
+                "invalid_arguments",
+                format!("unknown flag: --{flag}"),
+            ));
         }
     }
     let input = cli::required_flag(&flags, "input")?;
@@ -139,7 +160,9 @@ pub(super) fn render_command(args: &[String]) -> Result<Value, ArtifactError> {
         .parse::<u32>()
         .ok()
         .filter(|dpi| (72..=600).contains(dpi))
-        .ok_or_else(|| ArtifactError::new("invalid_arguments", "--dpi must be between 72 and 600"))?;
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_arguments", "--dpi must be between 72 and 600")
+        })?;
     let pages = render(input, output_dir, dpi, keep_pdf)?;
     Ok(json!({ "ok": true, "pages": pages, "dpi": dpi, "pdf": keep_pdf }))
 }
@@ -147,8 +170,14 @@ pub(super) fn render_command(args: &[String]) -> Result<Value, ArtifactError> {
 pub(super) fn compare_command(args: &[String]) -> Result<Value, ArtifactError> {
     let flags = cli::parse_flags(args)?;
     for (flag, _) in &flags {
-        if !matches!(flag.as_str(), "before" | "after" | "output-dir" | "dpi" | "--json") {
-            return Err(ArtifactError::new("invalid_arguments", format!("unknown flag: --{flag}")));
+        if !matches!(
+            flag.as_str(),
+            "before" | "after" | "output-dir" | "dpi" | "--json"
+        ) {
+            return Err(ArtifactError::new(
+                "invalid_arguments",
+                format!("unknown flag: --{flag}"),
+            ));
         }
     }
     let before = cli::required_flag(&flags, "before")?;
@@ -162,7 +191,9 @@ pub(super) fn compare_command(args: &[String]) -> Result<Value, ArtifactError> {
         .parse::<u32>()
         .ok()
         .filter(|dpi| (72..=600).contains(dpi))
-        .ok_or_else(|| ArtifactError::new("invalid_arguments", "--dpi must be between 72 and 600"))?;
+        .ok_or_else(|| {
+            ArtifactError::new("invalid_arguments", "--dpi must be between 72 and 600")
+        })?;
     compare(&before, &after, &output_dir, dpi)
 }
 
@@ -197,7 +228,10 @@ fn compare_with_tools(
         .next()
         .is_some()
     {
-        return Err(ArtifactError::new("invalid_arguments", "output directory must be empty"));
+        return Err(ArtifactError::new(
+            "invalid_arguments",
+            "output directory must be empty",
+        ));
     }
     let temp = temporary_directory("compare")?;
     let staged = temp.0.join("results");
@@ -219,13 +253,25 @@ fn compare_with_tools(
     let old_lines = paragraph_text_lines(&before)?;
     let new_lines = paragraph_text_lines(&after)?;
     let text_diff = similar::TextDiff::from_lines(
-        &old_lines.iter().map(|line| format!("{line}\n")).collect::<String>(),
-        &new_lines.iter().map(|line| format!("{line}\n")).collect::<String>(),
+        &old_lines
+            .iter()
+            .map(|line| format!("{line}\n"))
+            .collect::<String>(),
+        &new_lines
+            .iter()
+            .map(|line| format!("{line}\n"))
+            .collect::<String>(),
     )
     .unified_diff()
     .header(
-        before.file_name().and_then(|name| name.to_str()).unwrap_or("before.docx"),
-        after.file_name().and_then(|name| name.to_str()).unwrap_or("after.docx"),
+        before
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("before.docx"),
+        after
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("after.docx"),
     )
     .to_string();
     let text_diff = if text_diff.is_empty() || text_diff.ends_with('\n') {
@@ -257,8 +303,14 @@ fn compare_with_tools(
             let mut sum = 0u64;
             for y in 0..height {
                 for x in 0..width {
-                    let old_pixel = old.get_pixel_checked(x, y).copied().unwrap_or(image::Rgb([255, 255, 255]));
-                    let new_pixel = new.get_pixel_checked(x, y).copied().unwrap_or(image::Rgb([255, 255, 255]));
+                    let old_pixel = old
+                        .get_pixel_checked(x, y)
+                        .copied()
+                        .unwrap_or(image::Rgb([255, 255, 255]));
+                    let new_pixel = new
+                        .get_pixel_checked(x, y)
+                        .copied()
+                        .unwrap_or(image::Rgb([255, 255, 255]));
                     let channels = [
                         old_pixel[0].abs_diff(new_pixel[0]),
                         old_pixel[1].abs_diff(new_pixel[1]),
@@ -273,7 +325,10 @@ fn compare_with_tools(
             difference
                 .save(staged.join(&diff_name))
                 .map_err(|error| ArtifactError::new("image_write_error", error.to_string()))?;
-            entry.insert("meanAbsoluteDifference".to_owned(), json!((mean * 1000.0).round() / 1000.0));
+            entry.insert(
+                "meanAbsoluteDifference".to_owned(),
+                json!((mean * 1000.0).round() / 1000.0),
+            );
             entry.insert("diffImage".to_owned(), json!(output.join(diff_name)));
         }
         page_comparison.push(Value::Object(entry));
@@ -302,7 +357,9 @@ fn compare_with_tools(
         .map_err(|error| ArtifactError::new("json_write_error", error.to_string()))?;
     let mut copied = Vec::new();
     let copy_result = (|| {
-        for entry in fs::read_dir(&staged).map_err(|error| ArtifactError::new("io_error", error.to_string()))? {
+        for entry in fs::read_dir(&staged)
+            .map_err(|error| ArtifactError::new("io_error", error.to_string()))?
+        {
             let entry = entry.map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
             let target = output.join(entry.file_name());
             fs::copy(entry.path(), &target)
@@ -329,14 +386,19 @@ fn valid_docx_path(input: &str) -> Result<PathBuf, ArtifactError> {
             .extension()
             .is_some_and(|extension| extension.eq_ignore_ascii_case("docx"))
     {
-        return Err(ArtifactError::new("invalid_arguments", "both inputs must be regular .docx files"));
+        return Err(ArtifactError::new(
+            "invalid_arguments",
+            "both inputs must be regular .docx files",
+        ));
     }
     Ok(path)
 }
 
 fn paragraph_text_lines(path: &Path) -> Result<Vec<String>, ArtifactError> {
-    let file = File::open(path).map_err(|error| ArtifactError::new("ooxml_read_error", error.to_string()))?;
-    let mut archive = ZipArchive::new(file).map_err(|error| ArtifactError::new("invalid_ooxml_package", error.to_string()))?;
+    let file = File::open(path)
+        .map_err(|error| ArtifactError::new("ooxml_read_error", error.to_string()))?;
+    let mut archive = ZipArchive::new(file)
+        .map_err(|error| ArtifactError::new("invalid_ooxml_package", error.to_string()))?;
     let document = super::read_docx_part(&mut archive, "word/document.xml")?;
     super::ordered_docx_blocks(&document, "w:p")
         .iter()
@@ -369,7 +431,10 @@ fn render_with_tools(
             extension.eq_ignore_ascii_case("docx") || extension.eq_ignore_ascii_case("docm")
         })
     {
-        return Err(ArtifactError::new("invalid_arguments", "input must be a regular .docx or .docm file"));
+        return Err(ArtifactError::new(
+            "invalid_arguments",
+            "input must be a regular .docx or .docm file",
+        ));
     }
     let destination = Path::new(output_dir)
         .canonicalize()
@@ -380,10 +445,14 @@ fn render_with_tools(
         .map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
     let temp = temporary_directory("render")?;
     let render_source = normalized_docx_copy(&source, &temp.0)?;
-    let stem = source.file_stem().and_then(|stem| stem.to_str()).unwrap_or("document");
+    let stem = source
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("document");
     let pdf = temp.0.join(format!("{stem}.pdf"));
-    let profile = url::Url::from_directory_path(temp.0.join("lo-profile"))
-        .map_err(|_| ArtifactError::new("io_error", "could not construct LibreOffice profile URI"))?;
+    let profile = url::Url::from_directory_path(temp.0.join("lo-profile")).map_err(|_| {
+        ArtifactError::new("io_error", "could not construct LibreOffice profile URI")
+    })?;
     let conversion = run_tool(
         Command::new(&tools.soffice)
             .arg("--headless")
@@ -396,18 +465,33 @@ fn render_with_tools(
     if !conversion.status.success() || !pdf.is_file() {
         return Err(ArtifactError::new(
             "render_failed",
-            tool_detail(&conversion).unwrap_or_else(|| "LibreOffice did not create a PDF".to_owned()),
+            tool_detail(&conversion)
+                .unwrap_or_else(|| "LibreOffice did not create a PDF".to_owned()),
         ));
     }
-    let info = run_tool(Command::new(&tools.pdfinfo).arg(&pdf), "PDF metadata inspection")?;
+    let info = run_tool(
+        Command::new(&tools.pdfinfo).arg(&pdf),
+        "PDF metadata inspection",
+    )?;
     if !info.status.success() {
-        return Err(ArtifactError::new("render_failed", tool_detail(&info).unwrap_or_else(|| "pdfinfo failed".to_owned())));
+        return Err(ArtifactError::new(
+            "render_failed",
+            tool_detail(&info).unwrap_or_else(|| "pdfinfo failed".to_owned()),
+        ));
     }
     let page_count = String::from_utf8_lossy(&info.stdout)
         .lines()
-        .find_map(|line| line.strip_prefix("Pages:").and_then(|count| count.trim().parse::<usize>().ok()))
+        .find_map(|line| {
+            line.strip_prefix("Pages:")
+                .and_then(|count| count.trim().parse::<usize>().ok())
+        })
         .filter(|count| *count > 0)
-        .ok_or_else(|| ArtifactError::new("render_failed", "pdfinfo did not report a positive page count"))?;
+        .ok_or_else(|| {
+            ArtifactError::new(
+                "render_failed",
+                "pdfinfo did not report a positive page count",
+            )
+        })?;
     let prefix = temp.0.join(stem);
     let raster = run_tool(
         Command::new(&tools.pdftoppm)
@@ -417,13 +501,19 @@ fn render_with_tools(
         "PDF page rendering",
     )?;
     if !raster.status.success() {
-        return Err(ArtifactError::new("render_failed", tool_detail(&raster).unwrap_or_else(|| "pdftoppm failed".to_owned())));
+        return Err(ArtifactError::new(
+            "render_failed",
+            tool_detail(&raster).unwrap_or_else(|| "pdftoppm failed".to_owned()),
+        ));
     }
     let rendered_pages = (1..=page_count)
         .map(|number| temp.0.join(format!("{stem}-{number}.png")))
         .collect::<Vec<_>>();
     if rendered_pages.iter().any(|page| !page.is_file()) {
-        return Err(ArtifactError::new("render_failed", "renderer completed without producing all page images"));
+        return Err(ArtifactError::new(
+            "render_failed",
+            "renderer completed without producing all page images",
+        ));
     }
     let output_pages = rendered_pages
         .iter()
@@ -431,16 +521,21 @@ fn render_with_tools(
         .collect::<Vec<_>>();
     let retained_pdf = destination.join(format!("{stem}.pdf"));
     if output_pages.iter().any(|page| page.exists()) || (keep_pdf && retained_pdf.exists()) {
-        return Err(ArtifactError::new("invalid_arguments", "one or more page images already exist in the output directory"));
+        return Err(ArtifactError::new(
+            "invalid_arguments",
+            "one or more page images already exist in the output directory",
+        ));
     }
     let mut copied = Vec::new();
     let copy_result = (|| {
         for (source_page, target_page) in rendered_pages.iter().zip(&output_pages) {
-            fs::copy(source_page, target_page).map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
+            fs::copy(source_page, target_page)
+                .map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
             copied.push(target_page.clone());
         }
         if keep_pdf {
-            fs::copy(&pdf, &retained_pdf).map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
+            fs::copy(&pdf, &retained_pdf)
+                .map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
             copied.push(retained_pdf);
         }
         Ok(())
@@ -455,19 +550,28 @@ fn render_with_tools(
 }
 
 fn normalized_docx_copy(source: &Path, temporary: &Path) -> Result<PathBuf, ArtifactError> {
-    let file = File::open(source).map_err(|error| ArtifactError::new("ooxml_read_error", error.to_string()))?;
-    let mut archive = ZipArchive::new(file).map_err(|error| ArtifactError::new("invalid_ooxml_package", error.to_string()))?;
+    let file = File::open(source)
+        .map_err(|error| ArtifactError::new("ooxml_read_error", error.to_string()))?;
+    let mut archive = ZipArchive::new(file)
+        .map_err(|error| ArtifactError::new("invalid_ooxml_package", error.to_string()))?;
     let names = archive.file_names().map(str::to_owned).collect::<Vec<_>>();
-    let repaired = names.iter().map(|name| name.replace('\\', "/")).collect::<Vec<_>>();
+    let repaired = names
+        .iter()
+        .map(|name| name.replace('\\', "/"))
+        .collect::<Vec<_>>();
     let unique = repaired.iter().collect::<BTreeSet<_>>();
     if unique.len() != repaired.len() {
-        return Err(ArtifactError::new("invalid_ooxml_package", "DOCX ZIP member names collide after path separator repair"));
+        return Err(ArtifactError::new(
+            "invalid_ooxml_package",
+            "DOCX ZIP member names collide after path separator repair",
+        ));
     }
     if repaired == names {
         return Ok(source.to_owned());
     }
     let repaired_path = temporary.join(source.file_name().unwrap_or_default());
-    let output = File::create(&repaired_path).map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
+    let output = File::create(&repaired_path)
+        .map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
     let mut writer = ZipWriter::new(output);
     for (name, repaired_name) in names.iter().zip(&repaired) {
         let mut data = Vec::new();
@@ -483,7 +587,9 @@ fn normalized_docx_copy(source: &Path, temporary: &Path) -> Result<PathBuf, Arti
             .write_all(&data)
             .map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
     }
-    writer.finish().map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
+    writer
+        .finish()
+        .map_err(|error| ArtifactError::new("io_error", error.to_string()))?;
     Ok(repaired_path)
 }
 
@@ -492,24 +598,36 @@ fn run_tool(command: &mut Command, operation: &str) -> Result<Output, ArtifactEr
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|error| ArtifactError::new("runtime_launch_error", format!("{operation}: {error}")))?;
+        .map_err(|error| {
+            ArtifactError::new("runtime_launch_error", format!("{operation}: {error}"))
+        })?;
     let started = Instant::now();
     loop {
         match child.try_wait() {
             Ok(Some(_)) => break,
-            Ok(None) if started.elapsed() <= MAX_TOOL_DURATION => thread::sleep(Duration::from_millis(50)),
+            Ok(None) if started.elapsed() <= MAX_TOOL_DURATION => {
+                thread::sleep(Duration::from_millis(50))
+            }
             Ok(None) => {
                 let _ = child.kill();
                 let _ = child.wait();
-                return Err(ArtifactError::new("render_timeout", format!("{operation} exceeded 180 seconds")));
+                return Err(ArtifactError::new(
+                    "render_timeout",
+                    format!("{operation} exceeded 180 seconds"),
+                ));
             }
             Err(error) => {
                 let _ = child.kill();
-                return Err(ArtifactError::new("runtime_launch_error", format!("{operation}: {error}")));
+                return Err(ArtifactError::new(
+                    "runtime_launch_error",
+                    format!("{operation}: {error}"),
+                ));
             }
         }
     }
-    child.wait_with_output().map_err(|error| ArtifactError::new("runtime_launch_error", error.to_string()))
+    child
+        .wait_with_output()
+        .map_err(|error| ArtifactError::new("runtime_launch_error", error.to_string()))
 }
 
 fn tool_detail(output: &Output) -> Option<String> {
@@ -578,12 +696,24 @@ mod tests {
         let temporary = temporary_directory("render-tools-test").unwrap();
         let source = temporary.0.join("report.docx");
         let mut archive = ZipWriter::new(File::create(&source).unwrap());
-        archive.start_file("word/document.xml", zip::write::SimpleFileOptions::default()).unwrap();
+        archive
+            .start_file(
+                "word/document.xml",
+                zip::write::SimpleFileOptions::default(),
+            )
+            .unwrap();
         archive.write_all(b"<document/>").unwrap();
         archive.finish().unwrap();
         let tools = fake_tools(&temporary.0, true);
         let output = temporary.0.join("output");
-        let pages = render_with_tools(source.to_str().unwrap(), output.to_str().unwrap(), 120, true, &tools).unwrap();
+        let pages = render_with_tools(
+            source.to_str().unwrap(),
+            output.to_str().unwrap(),
+            120,
+            true,
+            &tools,
+        )
+        .unwrap();
         assert_eq!(pages.len(), 2);
         assert!(pages.iter().all(|page| page.is_file()));
         assert!(output.join("report.pdf").is_file());
@@ -595,12 +725,26 @@ mod tests {
         let temporary = temporary_directory("render-failure-test").unwrap();
         let source = temporary.0.join("report.docx");
         let mut archive = ZipWriter::new(File::create(&source).unwrap());
-        archive.start_file("word/document.xml", zip::write::SimpleFileOptions::default()).unwrap();
+        archive
+            .start_file(
+                "word/document.xml",
+                zip::write::SimpleFileOptions::default(),
+            )
+            .unwrap();
         archive.write_all(b"<document/>").unwrap();
         archive.finish().unwrap();
         let tools = fake_tools(&temporary.0, false);
         let output = temporary.0.join("output");
-        assert!(render_with_tools(source.to_str().unwrap(), output.to_str().unwrap(), 120, false, &tools).is_err());
+        assert!(
+            render_with_tools(
+                source.to_str().unwrap(),
+                output.to_str().unwrap(),
+                120,
+                false,
+                &tools
+            )
+            .is_err()
+        );
         assert!(fs::read_dir(output).unwrap().next().is_none());
     }
 
@@ -641,7 +785,12 @@ mod tests {
             "<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:body></w:document>"
         );
         let mut archive = ZipWriter::new(File::create(path).unwrap());
-        archive.start_file("word/document.xml", zip::write::SimpleFileOptions::default()).unwrap();
+        archive
+            .start_file(
+                "word/document.xml",
+                zip::write::SimpleFileOptions::default(),
+            )
+            .unwrap();
         archive.write_all(xml.as_bytes()).unwrap();
         archive.finish().unwrap();
     }
@@ -652,7 +801,12 @@ mod tests {
         let source = temporary.0.join("source.docx");
         let file = File::create(&source).unwrap();
         let mut archive = ZipWriter::new(file);
-        archive.start_file("word\\document.xml", zip::write::SimpleFileOptions::default()).unwrap();
+        archive
+            .start_file(
+                "word\\document.xml",
+                zip::write::SimpleFileOptions::default(),
+            )
+            .unwrap();
         archive.write_all(b"<document/>").unwrap();
         archive.finish().unwrap();
         let work = temporary.0.join("work");
@@ -665,7 +819,9 @@ mod tests {
         let collision = temporary.0.join("collision.docx");
         let mut archive = ZipWriter::new(File::create(&collision).unwrap());
         for name in ["word/document.xml", "word\\document.xml"] {
-            archive.start_file(name, zip::write::SimpleFileOptions::default()).unwrap();
+            archive
+                .start_file(name, zip::write::SimpleFileOptions::default())
+                .unwrap();
             archive.write_all(b"<document/>").unwrap();
         }
         archive.finish().unwrap();

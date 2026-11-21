@@ -5,14 +5,14 @@ use std::path::{Path, PathBuf};
 use calamine::{Data, Reader, Xlsx, open_workbook};
 use serde::Serialize;
 
-use crate::artifact_model::{
-    ArtifactDocument, ArtifactElement, ArtifactPreviewPage, ArtifactSection,
-};
-use crate::artifact_pdf::preview_pdf_bytes;
 use crate::desktop::ruxex_home;
 use crate::error::{CommandResult, DesktopAppServerErrorKind, command_error};
-use crate::ooxml;
 use crate::platform;
+use ruxex_artifact_engine::artifact_model::{
+    ArtifactDocument, ArtifactElement, ArtifactPreviewPage, ArtifactSection,
+};
+use ruxex_artifact_engine::artifact_pdf::preview_pdf_bytes;
+use ruxex_artifact_engine::ooxml;
 
 mod renderer;
 
@@ -669,7 +669,7 @@ mod tests {
         PreviewSheet, escape_xml, ooxml_preview_annotations, preview_format, read_ooxml_sections,
         read_preview_sections, read_zip_text, render_svg, truncate_text, validate_preview_path,
     };
-    use crate::artifact_pdf::{PdfPageSpec, PdfTextBlock, create_pdf_bytes};
+    use ruxex_artifact_engine::artifact_pdf::{PdfPageSpec, PdfTextBlock, create_pdf_bytes};
 
     #[test]
     fn svg_escapes_sheet_and_cell_text() {

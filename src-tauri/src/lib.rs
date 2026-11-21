@@ -2,10 +2,7 @@ use tauri::Manager;
 
 mod app_server;
 pub use app_server::run_host_app_server_daemon_with_config;
-mod artifact_model;
-mod artifact_pdf;
 mod artifact_preview;
-pub mod artifacts;
 mod branding;
 mod desktop;
 mod desktop_config;
@@ -20,7 +17,6 @@ mod github;
 mod github_issue_drafts;
 mod github_links;
 mod marketplace_assets;
-mod ooxml;
 mod platform;
 mod quick_panel;
 mod schedule_commands;

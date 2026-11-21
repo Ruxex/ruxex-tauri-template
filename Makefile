@@ -6,7 +6,7 @@ export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_MODEL
 
 CARGO_LLVM_COV_VERSION := 0.9.1
 
-.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-runtime-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-build-artifact-engine rust-build-artifact-runtime rust-test-artifact-engine mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
+.PHONY: help install install-coverage-tools dev mock-app-server test test-coverage ts-coverage rust-coverage coverage typecheck lint check check-tests package-test artifact-runtime-test rust-test rust-test-docx-render-integration rust-test-artifacts-cli rust-check-artifact-common rust-check-artifact-engine rust-check-artifact-docx rust-check-artifact-xlsx rust-check-artifact-pptx rust-build-artifact-engine rust-build-artifact-runtime rust-test-artifact-common rust-test-artifact-engine rust-test-artifact-docx rust-test-artifact-xlsx rust-test-artifact-pptx mcp-fixture-build mcp-fixture-test mcp-python-fixture mcp-python-fixture-config build release fmt-check format-check verify run tauri-dev local-cloudflare local-cloudflare-inprocess e2e-build e2e-plugin-build e2e e2e-headless e2e-diagnostics e2e-diagnostics-headless ui-fixtures ui-fixtures-i18n prepare-dummy-home dummy-home-events dummy-home-pages prepare-marketplace-home
 
 help:
 	@printf '%s\n' '利用可能なターゲット:'
@@ -25,6 +25,11 @@ help:
 	@printf '%s\n' '  make package-test       ランタイムパッケージのテストを実行'
 	@printf '%s\n' '  make artifact-runtime-test ローカル成果物ランタイムのパッケージとSkill契約をテスト'
 	@printf '%s\n' '  make rust-test          Rust/Tauriのテストを実行'
+	@printf '%s\n' '  make rust-check-artifact-engine 成果物エンジンだけを型チェック'
+	@printf '%s\n' '  make rust-check-artifact-common 共通成果物クレートだけを型チェック'
+	@printf '%s\n' '  make rust-check-artifact-docx DOCX 成果物クレートだけを型チェック'
+	@printf '%s\n' '  make rust-check-artifact-xlsx XLSX 成果物クレートだけを型チェック'
+	@printf '%s\n' '  make rust-check-artifact-pptx PPTX 成果物クレートだけを型チェック'
 	@printf '%s\n' '  make mcp-fixture-build  テスト用MCPサーバーをビルド'
 	@printf '%s\n' '  make mcp-fixture-test   テスト用MCPサーバーの疎通を確認'
 	@printf '%s\n' '  make mcp-python-fixture Python製HTTP MCPサーバーを起動'
@@ -92,7 +97,7 @@ artifact-runtime-test:
 	node --test artifact-tool/tests/loader.test.mjs
 	uv run --project plugins/ruxex-artifacts/tests --locked python -m unittest discover -s plugins/ruxex-artifacts/tests -p '*_test.py' -v
 
-rust-test:
+rust-test: rust-test-artifact-common rust-test-artifact-engine rust-test-artifact-docx rust-test-artifact-xlsx rust-test-artifact-pptx
 	cargo test --locked --manifest-path src-tauri/Cargo.toml
 
 rust-test-docx-render-integration:
@@ -102,14 +107,42 @@ rust-test-docx-render-integration:
 rust-test-artifacts-cli:
 	cargo test --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts
 
+rust-check-artifact-engine:
+	cargo check --locked --manifest-path crates/artifact-engine/Cargo.toml
+
+rust-check-artifact-common:
+	cargo check --locked --manifest-path crates/artifact-common/Cargo.toml
+
+rust-check-artifact-docx:
+	cargo check --locked --manifest-path crates/artifact-docx/Cargo.toml
+
+rust-check-artifact-xlsx:
+	cargo check --locked --manifest-path crates/artifact-xlsx/Cargo.toml
+
+rust-check-artifact-pptx:
+	cargo check --locked --manifest-path crates/artifact-pptx/Cargo.toml
+
 rust-build-artifact-engine:
-	cargo build --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts-engine
+	cargo build --locked --manifest-path crates/artifact-engine/Cargo.toml --bin ruxex-artifacts-engine
 
 rust-build-artifact-runtime:
-	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts --bin ruxex-artifacts-engine
+	cargo build --locked --release --manifest-path crates/artifact-engine/Cargo.toml --bin ruxex-artifacts-engine
+	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts
 
 rust-test-artifact-engine:
-	cargo test --locked --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts-engine
+	cargo test --locked --manifest-path crates/artifact-engine/Cargo.toml
+
+rust-test-artifact-common:
+	cargo test --locked --manifest-path crates/artifact-common/Cargo.toml
+
+rust-test-artifact-docx:
+	cargo test --locked --manifest-path crates/artifact-docx/Cargo.toml
+
+rust-test-artifact-xlsx:
+	cargo test --locked --manifest-path crates/artifact-xlsx/Cargo.toml
+
+rust-test-artifact-pptx:
+	cargo test --locked --manifest-path crates/artifact-pptx/Cargo.toml
 
 mcp-fixture-build:
 	cargo build --locked --manifest-path src-tauri/Cargo.toml \
@@ -133,7 +166,8 @@ release:
 		echo 'Usage: make release CODE_MODE_HOST=<ruxex-code-mode-host> NODE_RUNTIME=<node-runtime-dir> ARTIFACT_SDK=<artifact-sdk-dir> ARTIFACT_NATIVE_RUNTIME=<native-runtime-dir> LIBREOFFICE_VERSION=<version> POPPLER_VERSION=<version>' >&2; \
 		exit 2; \
 	fi
-	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts --bin ruxex-artifacts-engine
+	cargo build --locked --release --manifest-path ../crates/artifact-engine/Cargo.toml --bin ruxex-artifacts-engine
+	cargo build --locked --release --manifest-path src-tauri/Cargo.toml --bin ruxex-artifacts
 	python3 scripts/build_artifact_runtime.py \
 		--output target/artifact-runtime \
 		--node-runtime "$(NODE_RUNTIME)" \

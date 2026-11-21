@@ -9618,6 +9618,72 @@ dependencies = [
 ]
 
 [[package]]
+name = "ruxex-artifact-common"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "serde_json",
+ "zip 7.4.0",
+]
+
+[[package]]
+name = "ruxex-artifact-docx"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "image",
+ "quick-xml 0.38.4",
+ "regex",
+ "ruxex-artifact-common",
+ "serde_json",
+ "sha2 0.10.9",
+ "similar",
+ "url",
+ "zip 7.4.0",
+]
+
+[[package]]
+name = "ruxex-artifact-engine"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "image",
+ "lopdf",
+ "pdf-writer",
+ "ruxex-artifact-common",
+ "ruxex-artifact-docx",
+ "ruxex-artifact-pptx",
+ "ruxex-artifact-xlsx",
+ "serde",
+ "serde_json",
+ "zip 7.4.0",
+]
+
+[[package]]
+name = "ruxex-artifact-pptx"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "ruxex-artifact-common",
+ "serde_json",
+ "url",
+ "zip 7.4.0",
+]
+
+[[package]]
+name = "ruxex-artifact-xlsx"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "calamine",
+ "rust_xlsxwriter",
+ "ruxex-artifact-common",
+ "serde",
+ "serde_json",
+ "zip 7.4.0",
+]
+
+[[package]]
 name = "ruxex-async-utils"
 version = "0.8.0"
 source = "git+https://github.com/Ruxex/ruxex.git?rev=36dcd6c9183001e89f6853d96239e9f74b4273ba#36dcd6c9183001e89f6853d96239e9f74b4273ba"
@@ -10014,21 +10080,17 @@ dependencies = [
  "futures",
  "image",
  "libc",
- "lopdf",
- "pdf-writer",
  "portable-pty",
- "quick-xml 0.38.4",
- "regex",
  "rmcp",
  "rust_xlsxwriter",
  "ruxex",
+ "ruxex-artifact-engine",
  "ruxex-provider-host-example",
  "ruxex-scheduler",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "shell-words",
- "similar",
  "tauri",
  "tauri-build",
  "tauri-macros",

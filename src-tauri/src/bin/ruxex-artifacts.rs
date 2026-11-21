@@ -8,7 +8,7 @@ fn main() -> ExitCode {
         Some(command) if command == "run" => return run_builder(&args[2..]),
         _ => {}
     }
-    ruxex_desktop_lib::artifacts::run_cli(args)
+    ruxex_artifact_engine::artifacts::run_cli(args)
 }
 
 #[derive(Debug)]
@@ -129,7 +129,11 @@ fn package_root_from_executable(executable: &std::path::Path) -> Option<PathBuf>
     executable
         .parent()?
         .ancestors()
-        .find(|candidate| candidate.join("ruxex-resources/runtime-manifest.json").is_file())
+        .find(|candidate| {
+            candidate
+                .join("ruxex-resources/runtime-manifest.json")
+                .is_file()
+        })
         .map(PathBuf::from)
 }
 
@@ -191,9 +195,11 @@ mod tests {
         let mut command = std::process::Command::new("node");
         runtime.add_environment(&mut command);
 
-        assert!(command
-            .get_envs()
-            .any(|(key, value)| key == "RUXEX_RUNTIME_PYTHON" && value.is_none()));
+        assert!(
+            command
+                .get_envs()
+                .any(|(key, value)| key == "RUXEX_RUNTIME_PYTHON" && value.is_none())
+        );
         let _ = fs::remove_dir_all(root);
     }
 

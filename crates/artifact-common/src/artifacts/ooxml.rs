@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
 
-use super::{ArtifactError, cli};
 use crate::ooxml;
-pub(super) use crate::ooxml::{blocks, elements, text_values};
+pub use crate::ooxml::{blocks, elements, text_values};
+use crate::{ArtifactError, cli};
 
-pub(super) fn run_ooxml(format: &str, args: &[String]) -> Result<Value, ArtifactError> {
+pub fn run_ooxml(format: &str, args: &[String]) -> Result<Value, ArtifactError> {
     let Some(operation) = args.first().map(String::as_str) else {
         return Err(ArtifactError::new(
             "invalid_arguments",
@@ -38,7 +38,7 @@ pub(super) fn run_ooxml(format: &str, args: &[String]) -> Result<Value, Artifact
     }
 }
 
-pub(super) fn inspect_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError> {
+pub fn inspect_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError> {
     let file = fs::File::open(input_path).map_err(|error| {
         ArtifactError::new(
             "ooxml_read_error",
@@ -102,7 +102,7 @@ pub(super) fn inspect_ooxml(format: &str, input_path: &str) -> Result<Value, Art
     }))
 }
 
-pub(super) fn read_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError> {
+pub fn read_ooxml(format: &str, input_path: &str) -> Result<Value, ArtifactError> {
     let validation = inspect_ooxml(format, input_path)?;
     let file = fs::File::open(input_path).map_err(|error| {
         ArtifactError::new(

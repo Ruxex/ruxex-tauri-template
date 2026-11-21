@@ -2,18 +2,11 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::Stdio;
 use std::process::{Command, Output};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn binary() -> &'static str {
     env!("CARGO_BIN_EXE_ruxex-artifacts")
-}
-
-fn engine_binary() -> String {
-    std::env::var("CARGO_BIN_EXE_ruxex-artifacts-engine")
-        .or_else(|_| std::env::var("CARGO_BIN_EXE_ruxex_artifacts_engine"))
-        .expect("cargo exposes the private artifact engine binary")
 }
 
 fn temp_dir(label: &str) -> PathBuf {
@@ -31,23 +24,6 @@ fn run(args: &[&str]) -> Output {
         .args(args)
         .output()
         .expect("artifact CLI starts")
-}
-
-fn run_engine(request: &str) -> Output {
-    let mut child = Command::new(engine_binary())
-        .arg("--json-stdio")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("artifact engine starts");
-    child
-        .stdin
-        .take()
-        .expect("engine stdin is available")
-        .write_all(request.as_bytes())
-        .expect("engine request is writable");
-    child.wait_with_output().expect("engine exits")
 }
 
 fn write_input(dir: &Path, contents: &str) -> PathBuf {
@@ -454,40 +430,6 @@ fn unknown_xlsx_flags_return_an_invalid_arguments_diagnostic() {
     assert!(!output.status.success());
     let diagnostic: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
     assert_eq!(diagnostic["error"]["code"], "invalid_arguments");
-}
-
-#[test]
-fn json_stdio_engine_creates_a_workbook_from_a_versioned_request() {
-    let dir = temp_dir("engine-create");
-    let input = write_input(
-        &dir,
-        r#"{"sheets":[{"name":"Summary","rows":[["Name","Count"],["Ada",3]]}]}"#,
-    );
-    let workbook = dir.join("engine-report.xlsx");
-    let request = serde_json::json!({
-        "version": 1,
-        "operation": "create",
-        "input_path": input,
-        "output_path": workbook,
-    });
-    let output = run_engine(&format!("{}\n", request));
-
-    assert!(output.status.success());
-    let response: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(response["ok"], true);
-    assert!(workbook.is_file());
-}
-
-#[test]
-fn json_stdio_engine_rejects_unknown_protocol_versions() {
-    let output = run_engine(
-        r#"{"version":999,"operation":"validate","input_path":"missing.xlsx"}
-"#,
-    );
-
-    assert!(!output.status.success());
-    let diagnostic: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
-    assert_eq!(diagnostic["error"]["code"], "unsupported_protocol_version");
 }
 
 #[test]

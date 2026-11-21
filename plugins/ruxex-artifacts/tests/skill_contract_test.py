@@ -115,7 +115,7 @@ class ArtifactSkillContractTest(unittest.TestCase):
         self.assertFalse(list((skill_dir / "scripts").glob("*.py")))
 
         capability_source = (
-            ROOT.parent.parent / "src-tauri/src/artifacts/cli.rs"
+            ROOT.parent.parent / "crates/artifact-engine/src/artifacts/cli.rs"
         ).read_text(encoding="utf-8")
         for operation in ("content-edit", "render", "compare"):
             with self.subTest(operation=operation):
@@ -198,7 +198,9 @@ class ArtifactSkillContractTest(unittest.TestCase):
                 with self.subTest(source=source.relative_to(skill_dir), link=link):
                     self.assertTrue((source.parent / link).is_file())
 
-        capability_source = (ROOT.parent.parent / "src-tauri/src/artifacts/cli.rs").read_text(encoding="utf-8")
+        capability_source = (
+            ROOT.parent.parent / "crates/artifact-engine/src/artifacts/cli.rs"
+        ).read_text(encoding="utf-8")
         self.assertIn('"domainGuidance": ["domain-guidance/finance.md"]', capability_source)
 
     def test_spreadsheet_skill_covers_codex_quality_guidance(self) -> None:

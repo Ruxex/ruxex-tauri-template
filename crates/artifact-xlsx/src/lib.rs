@@ -2,7 +2,6 @@ use std::fs;
 use std::io::Read;
 use std::path::Path;
 
-use crate::ooxml;
 use base64::Engine;
 use calamine::{Data, Reader, Xls, Xlsx, open_workbook};
 use rust_xlsxwriter::{
@@ -10,10 +9,9 @@ use rust_xlsxwriter::{
     DataValidationRule, Format, FormatAlign, Formula, Image, IntoDataValidationValue, Note, Table,
     Workbook,
 };
+use ruxex_artifact_common::{ArtifactError, cli, ooxml};
 use serde::Deserialize;
 use serde_json::{Value, json};
-
-use super::{ArtifactError, cli};
 
 #[derive(Debug, Deserialize)]
 struct WorkbookInput {
@@ -128,7 +126,7 @@ fn default_table_style() -> String {
     "TableStyleMedium2".to_owned()
 }
 
-pub(super) fn run_xlsx(args: &[String]) -> Result<Value, ArtifactError> {
+pub fn run_xlsx(args: &[String]) -> Result<Value, ArtifactError> {
     let Some(operation) = args.first().map(String::as_str) else {
         return Err(ArtifactError::new(
             "invalid_arguments",
@@ -686,7 +684,7 @@ fn chart_range(sheet_name: &str, reference: &str) -> String {
     }
 }
 
-pub(super) fn create_xlsx(input_path: &str, output_path: &str) -> Result<Value, ArtifactError> {
+pub fn create_xlsx(input_path: &str, output_path: &str) -> Result<Value, ArtifactError> {
     let input = fs::read_to_string(input_path).map_err(|error| {
         ArtifactError::new(
             "input_read_error",
@@ -1018,7 +1016,7 @@ fn open_xlsx(path: &str) -> Result<Xlsx<std::io::BufReader<fs::File>>, ArtifactE
     })
 }
 
-pub(super) fn read_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
+pub fn read_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
     if Path::new(input_path)
         .extension()
         .and_then(|extension| extension.to_str())
@@ -1043,7 +1041,7 @@ pub(super) fn read_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
     }))
 }
 
-pub(super) fn validate_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
+pub fn validate_xlsx(input_path: &str) -> Result<Value, ArtifactError> {
     if Path::new(input_path)
         .extension()
         .and_then(|extension| extension.to_str())

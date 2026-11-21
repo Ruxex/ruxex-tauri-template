@@ -1,8 +1,7 @@
 use serde_json::{Value, json};
 use std::ffi::OsString;
 
-use super::{ArtifactError, print_json};
-use super::{docx, pdf, xlsx};
+use super::{ArtifactError, pdf, print_json};
 
 pub fn run_cli<I>(args: I) -> std::process::ExitCode
 where
@@ -46,9 +45,9 @@ fn run(args: Vec<OsString>) -> Result<Value, ArtifactError> {
 
     match args.first().map(String::as_str) {
         Some("capabilities") => capabilities(&args[1..]),
-        Some("xlsx") => xlsx::run_xlsx(&args[1..]),
-        Some("docx") => docx::run_docx(&args[1..]),
-        Some("pptx") => super::presentation_helpers::run_pptx(&args[1..]),
+        Some("xlsx") => ruxex_artifact_xlsx::run_xlsx(&args[1..]),
+        Some("docx") => ruxex_artifact_docx::run_docx(&args[1..]),
+        Some("pptx") => ruxex_artifact_pptx::run_pptx(&args[1..]),
         Some("pdf") => pdf::run_pdf(&args[1..]),
         Some(command) => Err(ArtifactError::new(
             "invalid_arguments",
@@ -346,15 +345,40 @@ mod tests {
         assert_eq!(
             capabilities["documentApis"]["docx"]["helpers"],
             json!([
-                "audit-features", "distill-template", "inspect-review-markup",
-                "protection-set", "publishing-controls-remove", "rsid-strip", "style-lint",
-                "style-normalize", "tables-to-csv", "watermark-add", "merge-text",
-                "text-replace", "tracked-process", "redact-text", "merge-append",
-                "template-fidelity", "a11y-fixes", "comments-extract", "content-controls",
-                "comments-manage", "comments-add", "comments-apply-patches",
-                "tracked-add-replacements", "table-geometry-set", "fields-process",
-                "reference-fields-insert", "captions-insert", "toc-insert", "internal-nav",
-                "note-insert", "template-styles-apply", "content-edit", "render", "compare"
+                "audit-features",
+                "distill-template",
+                "inspect-review-markup",
+                "protection-set",
+                "publishing-controls-remove",
+                "rsid-strip",
+                "style-lint",
+                "style-normalize",
+                "tables-to-csv",
+                "watermark-add",
+                "merge-text",
+                "text-replace",
+                "tracked-process",
+                "redact-text",
+                "merge-append",
+                "template-fidelity",
+                "a11y-fixes",
+                "comments-extract",
+                "content-controls",
+                "comments-manage",
+                "comments-add",
+                "comments-apply-patches",
+                "tracked-add-replacements",
+                "table-geometry-set",
+                "fields-process",
+                "reference-fields-insert",
+                "captions-insert",
+                "toc-insert",
+                "internal-nav",
+                "note-insert",
+                "template-styles-apply",
+                "content-edit",
+                "render",
+                "compare"
             ])
         );
         assert!(

@@ -1,27 +1,27 @@
 use serde::Serialize;
 
-pub(crate) const MAX_ARTIFACT_BYTES: u64 = 16 * 1024 * 1024;
-pub(crate) const MAX_ARTIFACT_SECTIONS: usize = 4;
-pub(crate) const MAX_ARTIFACT_ELEMENTS: usize = 512;
+pub const MAX_ARTIFACT_BYTES: u64 = 16 * 1024 * 1024;
+pub const MAX_ARTIFACT_SECTIONS: usize = 4;
+pub const MAX_ARTIFACT_ELEMENTS: usize = 512;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ArtifactDocument {
-    pub(crate) format: String,
-    pub(crate) byte_size: u64,
-    pub(crate) sections: Vec<ArtifactSection>,
-    pub(crate) diagnostics: Vec<ArtifactDiagnostic>,
+pub struct ArtifactDocument {
+    pub format: String,
+    pub byte_size: u64,
+    pub sections: Vec<ArtifactSection>,
+    pub diagnostics: Vec<ArtifactDiagnostic>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ArtifactSection {
-    pub(crate) label: String,
-    pub(crate) elements: Vec<ArtifactElement>,
+pub struct ArtifactSection {
+    pub label: String,
+    pub elements: Vec<ArtifactElement>,
 }
 
 impl ArtifactSection {
-    pub(crate) fn new(label: impl Into<String>, elements: Vec<ArtifactElement>) -> Self {
+    pub fn new(label: impl Into<String>, elements: Vec<ArtifactElement>) -> Self {
         Self {
             label: label.into(),
             elements,
@@ -32,7 +32,7 @@ impl ArtifactSection {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 #[allow(dead_code)]
-pub(crate) enum ArtifactElement {
+pub enum ArtifactElement {
     Text { value: String },
     Table { rows: Vec<Vec<String>> },
     Shape { kind: String },
@@ -44,23 +44,23 @@ pub(crate) enum ArtifactElement {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
-pub(crate) struct ArtifactAsset {
-    pub(crate) id: String,
-    pub(crate) mime_type: String,
-    pub(crate) data_url: String,
-    pub(crate) byte_size: u64,
+pub struct ArtifactAsset {
+    pub id: String,
+    pub mime_type: String,
+    pub data_url: String,
+    pub byte_size: u64,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ArtifactDiagnostic {
-    pub(crate) code: String,
-    pub(crate) message: String,
-    pub(crate) section: Option<String>,
+pub struct ArtifactDiagnostic {
+    pub code: String,
+    pub message: String,
+    pub section: Option<String>,
 }
 
 impl ArtifactDiagnostic {
-    pub(crate) fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
+    pub fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             code: code.into(),
             message: message.into(),
@@ -71,16 +71,16 @@ impl ArtifactDiagnostic {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ArtifactPreviewPage {
-    pub(crate) label: String,
-    pub(crate) data_url: String,
-    pub(crate) width: usize,
-    pub(crate) height: usize,
-    pub(crate) diagnostics: Vec<String>,
+pub struct ArtifactPreviewPage {
+    pub label: String,
+    pub data_url: String,
+    pub width: usize,
+    pub height: usize,
+    pub diagnostics: Vec<String>,
 }
 
 impl ArtifactDocument {
-    pub(crate) fn new(
+    pub fn new(
         format: impl Into<String>,
         byte_size: u64,
         mut sections: Vec<ArtifactSection>,

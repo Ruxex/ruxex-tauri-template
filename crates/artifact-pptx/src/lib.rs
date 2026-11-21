@@ -1,5 +1,6 @@
-use super::{ArtifactError, ooxml};
 use image::{ImageFormat, Rgb, RgbImage, imageops};
+use ruxex_artifact_common::ArtifactError;
+use ruxex_artifact_common::artifacts::ooxml;
 use serde_json::{Value, json};
 use std::collections::HashSet;
 use std::fs;
@@ -23,7 +24,7 @@ const HELPERS: &[&str] = &[
     "native-table-arithmetic-gate",
 ];
 
-pub(super) fn run_pptx(args: &[String]) -> Result<Value, ArtifactError> {
+pub fn run_pptx(args: &[String]) -> Result<Value, ArtifactError> {
     if args.first().is_some_and(|arg| arg == "helper") {
         return run_helper(&args[1..]);
     }
@@ -389,7 +390,7 @@ fn inspect_package_integrity(flags: &[(String, Option<String>)]) -> Result<Value
             malformed.push(name.clone());
             continue;
         };
-        for rel in crate::ooxml::elements(&xml, "Relationship") {
+        for rel in ruxex_artifact_common::ooxml::elements(&xml, "Relationship") {
             if rel.get("TargetMode").is_some_and(|m| m == "External") {
                 continue;
             }

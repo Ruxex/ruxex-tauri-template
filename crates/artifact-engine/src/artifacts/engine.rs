@@ -3,7 +3,7 @@ use std::io::Read;
 use serde_json::{Value, json};
 
 use super::{ArtifactError, print_json};
-use super::{docx, ooxml, pdf, xlsx};
+use super::{ooxml, pdf};
 
 #[derive(Debug, serde::Deserialize)]
 struct EngineRequest {
@@ -52,7 +52,7 @@ fn process_request(request_json: &str) -> Result<Value, ArtifactError> {
             request.input_path.as_deref(),
             request.output_path.as_deref(),
         ) {
-            (Some(input), Some(output)) => xlsx::create_xlsx(input, output),
+            (Some(input), Some(output)) => ruxex_artifact_xlsx::create_xlsx(input, output),
             _ => Err(ArtifactError::new(
                 "invalid_request",
                 "create requires input_path and output_path",
@@ -62,12 +62,12 @@ fn process_request(request_json: &str) -> Result<Value, ArtifactError> {
             .input_path
             .as_deref()
             .ok_or_else(|| ArtifactError::new("invalid_request", "read requires input_path"))
-            .and_then(xlsx::read_xlsx),
+            .and_then(ruxex_artifact_xlsx::read_xlsx),
         "validate" => request
             .input_path
             .as_deref()
             .ok_or_else(|| ArtifactError::new("invalid_request", "validate requires input_path"))
-            .and_then(xlsx::validate_xlsx),
+            .and_then(ruxex_artifact_xlsx::validate_xlsx),
         "pdf_create" => match (
             request.input_path.as_deref(),
             request.output_path.as_deref(),
@@ -94,7 +94,7 @@ fn process_request(request_json: &str) -> Result<Value, ArtifactError> {
             .input_path
             .as_deref()
             .ok_or_else(|| ArtifactError::new("invalid_request", "docx_read requires input_path"))
-            .and_then(docx::read_docx),
+            .and_then(ruxex_artifact_docx::read_docx),
         "pptx_read" => request
             .input_path
             .as_deref()

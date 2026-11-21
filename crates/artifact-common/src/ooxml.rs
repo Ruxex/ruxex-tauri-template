@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-pub(crate) fn normalize_target(target: &str, base: &str) -> String {
+pub fn normalize_target(target: &str, base: &str) -> String {
     let mut parts = base.split('/').collect::<Vec<_>>();
     for part in target.split('/') {
         match part {
@@ -14,14 +14,14 @@ pub(crate) fn normalize_target(target: &str, base: &str) -> String {
     parts.join("/")
 }
 
-pub(crate) fn attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
+pub fn attribute_values(xml: &str, tag: &str, attribute: &str) -> Vec<String> {
     elements(xml, tag)
         .into_iter()
         .filter_map(|attributes| attributes.get(attribute).cloned())
         .collect()
 }
 
-pub(crate) fn elements(xml: &str, tag: &str) -> Vec<HashMap<String, String>> {
+pub fn elements(xml: &str, tag: &str) -> Vec<HashMap<String, String>> {
     let marker = format!("<{tag}");
     let mut cursor = 0;
     let mut elements = Vec::new();
@@ -45,7 +45,7 @@ pub(crate) fn elements(xml: &str, tag: &str) -> Vec<HashMap<String, String>> {
     elements
 }
 
-pub(crate) fn parse_attributes(value: &str) -> HashMap<String, String> {
+pub fn parse_attributes(value: &str) -> HashMap<String, String> {
     let mut attributes = HashMap::new();
     let mut rest = value;
     while let Some(equal) = rest.find('=') {
@@ -75,7 +75,7 @@ pub(crate) fn decode_entities(value: &str) -> String {
         .replace("&amp;", "&")
 }
 
-pub(crate) fn blocks(xml: &str, tag: &str) -> Vec<String> {
+pub fn blocks(xml: &str, tag: &str) -> Vec<String> {
     let opening = format!("<{tag}");
     let closing = format!("</{tag}>");
     let mut cursor = 0;
@@ -106,7 +106,7 @@ pub(crate) fn blocks(xml: &str, tag: &str) -> Vec<String> {
     blocks
 }
 
-pub(crate) fn text_values(xml: &str, tag: &str) -> Vec<String> {
+pub fn text_values(xml: &str, tag: &str) -> Vec<String> {
     let opening = format!("<{tag}");
     let closing = format!("</{tag}>");
     blocks(xml, tag)
@@ -122,14 +122,14 @@ pub(crate) fn text_values(xml: &str, tag: &str) -> Vec<String> {
         .collect()
 }
 
-pub(crate) fn slide_number(name: &str) -> Option<usize> {
+pub fn slide_number(name: &str) -> Option<usize> {
     name.strip_prefix("ppt/slides/slide")?
         .strip_suffix(".xml")?
         .parse()
         .ok()
 }
 
-pub(crate) fn column_label(number: u32) -> String {
+pub fn column_label(number: u32) -> String {
     let mut index = number.saturating_sub(1);
     let mut result = String::new();
     loop {
